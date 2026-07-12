@@ -1,10 +1,4 @@
-type Status =
-  | "draft"
-  | "profile_completed"
-  | "active_member"
-  | "pending"
-  | "approved"
-  | "rejected";
+type Status = "draft" | "profile_completed" | "active_member" | "pending" | "approved" | "rejected";
 
 const config: Record<Status, { label: string; className: string }> = {
   draft: { label: "მონახაზი", className: "bg-surface text-muted-fg" },

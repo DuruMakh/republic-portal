@@ -1,11 +1,13 @@
 # CLAUDE.md — working rules for this repo
 
 ## What this is
+
 Production app for "ქართული რესპუბლიკა" (Georgian civic platform).
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
 UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
 
 ## Process (non-negotiable)
+
 - Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Claude + /codex review)
   → /qa on preview → OWNER sign-off on the Vercel preview link → merge.
 - Owner writes zero code and reads no code. All evidence for sign-off must be
@@ -13,6 +15,7 @@ UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
 - Never merge with failing CI. Never push directly to main.
 
 ## Code rules
+
 - TypeScript strict. No `any`, no `@ts-ignore`.
 - Domain logic = pure functions in `lib/` (no React/Next imports). UI components in
   `components/`. Route groups: app/(public), app/(member), app/(delegate), app/(admin).
@@ -26,6 +29,7 @@ UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
 - Secrets only in env vars. `.env.local` is never committed.
 
 ## Forbidden patterns
+
 - Storing derivable values (e.g., supporter counts) as editable columns.
 - Fetching with service-role key in any code path reachable without a server-side role check.
 - Skipping the failing-test step of TDD. Copy-pasting components instead of extracting.

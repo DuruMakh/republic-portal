@@ -12,7 +12,11 @@ export function Stepper({ current }: { current: 1 | 2 | 3 }) {
             <span
               aria-current={active ? "step" : undefined}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                active ? "bg-brand text-white" : done ? "bg-ok text-white" : "bg-surface text-muted-fg"
+                active
+                  ? "bg-brand text-white"
+                  : done
+                    ? "bg-ok text-white"
+                    : "bg-surface text-muted-fg"
               }`}
             >
               {step}

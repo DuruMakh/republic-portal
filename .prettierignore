@@ -1,0 +1,9 @@
+node_modules/
+.next/
+prototype/
+docs/
+.superpowers/
+.claude/
+public/sw.js
+package-lock.json
+CHANGELOG.md
