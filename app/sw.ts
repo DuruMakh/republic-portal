@@ -17,14 +17,28 @@
 import { defaultCache } from "@serwist/next/worker";
 import { Serwist } from "serwist";
 
+/**
+ * Build revision, injected by scripts/build-sw.mjs via an esbuild `define`
+ * (git short SHA, falling back to a timestamp when git is unavailable).
+ * Precache entries MUST carry revision info: Serwist's PrecacheRoute is
+ * consulted before `runtimeCaching` (first match wins) and serves precached
+ * URLs cache-first, so un-revisioned entries would be frozen at install time
+ * and never refresh across deploys. A new revision per deploy invalidates the
+ * precache at SW install; skipWaiting/clientsClaim (below) then roll clients
+ * forward promptly.
+ */
+declare const __SW_REVISION__: string;
+
+const revision = __SW_REVISION__;
+
 const serwist = new Serwist({
   precacheEntries: [
-    "/",
-    "/offline",
-    "/manifest.webmanifest",
-    "/icons/icon-192.png",
-    "/icons/icon-512.png",
-    "/icons/icon-maskable-512.png",
+    { url: "/", revision },
+    { url: "/offline", revision },
+    { url: "/manifest.webmanifest", revision },
+    { url: "/icons/icon-192.png", revision },
+    { url: "/icons/icon-512.png", revision },
+    { url: "/icons/icon-maskable-512.png", revision },
   ],
   skipWaiting: true,
   clientsClaim: true,
