@@ -17,7 +17,8 @@ if (e2) throw e2;
 if (cityCount < 30) throw new Error(`expected ≥30 cities, got ${cityCount}`);
 
 const anon = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-const { data: leak } = await anon.from("dev_otp_inbox").select("*").limit(1);
+const { data: leak, error: e3 } = await anon.from("dev_otp_inbox").select("*").limit(1);
+if (e3) throw new Error(`anon query errored — check Data API exposure/grants: ${e3.message}`);
 if (leak && leak.length > 0) throw new Error("RLS FAILURE: anon can read dev_otp_inbox");
 
 console.log(`OK: ${regionCount} regions, ${cityCount} cities, RLS holding`);

@@ -95,6 +95,25 @@ end $$;
 create trigger profiles_updated_at before update on profiles
   for each row execute function set_updated_at();
 
+-- Server-managed profile columns: the "own profile updatable" RLS policy below lets a
+-- member update their own row, but status, personal_id, phone and id must only change
+-- through server-side flows. Client API roles are blocked at trigger level; service-role
+-- and postgres paths pass the role check and stay unrestricted.
+create function protect_profile_columns() returns trigger language plpgsql as $$
+begin
+  if current_user in ('anon', 'authenticated')
+    and (new.status is distinct from old.status
+      or new.personal_id is distinct from old.personal_id
+      or new.phone is distinct from old.phone
+      or new.id is distinct from old.id)
+  then
+    raise exception 'profiles.status, personal_id, phone and id are server-managed';
+  end if;
+  return new;
+end $$;
+create trigger profiles_protect_columns before update on profiles
+  for each row execute function protect_profile_columns();
+
 -- Dev OTP delivery (Send-SMS auth hook writes here in dev/staging)
 create table dev_otp_inbox (
   id bigserial primary key,
@@ -108,12 +127,13 @@ create table dev_otp_inbox (
 -- event = { "user": { "phone": "+1333363128", ... }, "sms": { "otp": "561166" } }
 -- matches event->'user'->>'phone' / event->'sms'->>'otp' below; no adjustment needed.
 create function public.send_sms_hook(event jsonb) returns jsonb
-language plpgsql security definer as $$
+language plpgsql security definer set search_path = '' as $$
 begin
-  insert into dev_otp_inbox (phone, otp)
+  insert into public.dev_otp_inbox (phone, otp)
   values (event->'user'->>'phone', event->'sms'->>'otp');
   return '{}'::jsonb;
 end $$;
+-- The grants below are the load-bearing access path: supabase_auth_admin invokes the hook.
 grant execute on function public.send_sms_hook to supabase_auth_admin;
 revoke execute on function public.send_sms_hook from authenticated, anon, public;
 grant insert on dev_otp_inbox to supabase_auth_admin;
@@ -138,3 +158,12 @@ create policy "own profile updatable" on profiles for update using (auth.uid() =
 create policy "own memberships readable" on memberships for select using (auth.uid() = member_id);
 create policy "own payments readable" on payments for select using (auth.uid() = member_id);
 -- audit_log, admin_roles, dev_otp_inbox: no client policies (service-role/hook only)
+
+-- Explicit Data API grants. New entities in `public` are no longer auto-exposed to the
+-- API roles (legacy auto-expose is deprecated, removed 2026-10-30); without these grants
+-- the RLS policies above would be unreachable (42501). Grants do not widen RLS — e.g.
+-- delegates stays constrained to approved rows by its policy.
+grant select on regions, cities, delegates to anon, authenticated;
+grant select, update on profiles to authenticated;
+grant select on memberships, payments to authenticated;
+-- admin_roles, audit_log, dev_otp_inbox: no client grants (server-side only)
