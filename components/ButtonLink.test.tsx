@@ -17,4 +17,10 @@ describe("ButtonLink", () => {
     render(<ButtonLink href="/join" variant="ghost-inverse">დელეგატი</ButtonLink>);
     expect(screen.getByRole("link", { name: "დელეგატი" }).className).toContain("text-white");
   });
+  it("supports the sm size without leaking md padding", () => {
+    render(<ButtonLink href="/x" size="sm">შესვლა</ButtonLink>);
+    const cls = screen.getByRole("link", { name: "შესვლა" }).className;
+    expect(cls).toContain("px-3");
+    expect(cls).not.toContain("px-5");
+  });
 });

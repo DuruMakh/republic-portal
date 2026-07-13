@@ -16,3 +16,5 @@ Live gallery: /styleguide. Never restyle ad hoc — extend the component instead
 Status pill mapping: draft=muted, profile_completed=info, active_member=ok,
 pending=warn, approved=ok, rejected=danger.
 Ghost-inverse variant (white text/border on dark) used only on navy/dark backgrounds (footer, etc).
+Button/ButtonLink take size sm|md|lg (md default); size overrides must use the prop,
+never padding/text classes in className (Tailwind order makes those unreliable).

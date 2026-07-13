@@ -28,7 +28,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
               </span>
             </span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm font-semibold text-ink">
+          <nav
+            aria-label="მთავარი ნავიგაცია"
+            className="flex flex-wrap items-center gap-4 text-sm font-semibold text-ink"
+          >
             {nav.map((item) => (
               <Link key={item.href} href={item.href} className="hover:text-brand">
                 {item.label}
@@ -36,10 +39,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-2">
-            <ButtonLink href="/login" variant="ghost" className="px-3 py-2 text-xs">
+            <ButtonLink href="/login" variant="ghost" size="sm">
               შესვლა
             </ButtonLink>
-            <ButtonLink href="/join" className="px-3 py-2 text-xs">
+            <ButtonLink href="/join" size="sm">
               გახდი წევრი
             </ButtonLink>
           </div>
@@ -53,7 +56,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             <div className="font-extrabold text-white">ქართული რესპუბლიკა</div>
             <div className="mt-1">გამჭვირვალე, ანგარიშვალდებული და შენს ხელში.</div>
           </div>
-          <nav className="flex gap-5 font-semibold">
+          <nav aria-label="ქვედა ნავიგაცია" className="flex flex-wrap gap-5 font-semibold">
             {nav.map((item) => (
               <Link key={item.href} href={item.href} className="hover:text-white">
                 {item.label}

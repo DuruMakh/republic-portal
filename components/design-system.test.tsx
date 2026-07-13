@@ -20,6 +20,16 @@ describe("Button", () => {
     render(<Button variant="dark">რეიტინგი</Button>);
     expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-navy");
   });
+  it("keeps md size classes by default (back-compat)", () => {
+    render(<Button>გაგრძელება</Button>);
+    expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain(
+      "px-5 py-2.5 text-sm",
+    );
+  });
+  it("renders lg size", () => {
+    render(<Button size="lg">რეგისტრაცია</Button>);
+    expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("px-6");
+  });
 });
 
 describe("Pill", () => {
