@@ -4,8 +4,14 @@
     {
       "name": "prototype",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
+      "runtimeArgs": ["prototype/server.js"],
       "port": 5599
+    },
+    {
+      "name": "portal-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }
