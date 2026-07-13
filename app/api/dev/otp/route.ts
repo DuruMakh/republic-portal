@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_APP_ENV === "production") {
+  const env = process.env.NEXT_PUBLIC_APP_ENV;
+  if (!(env === "development" || env === "preview")) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
   const phone = request.nextUrl.searchParams.get("phone");

@@ -35,7 +35,10 @@ export default function LoginPage() {
     }
     setPhone(normalized);
     setPhase("otp");
-    if (process.env.NEXT_PUBLIC_APP_ENV !== "production") {
+    if (
+      process.env.NEXT_PUBLIC_APP_ENV === "development" ||
+      process.env.NEXT_PUBLIC_APP_ENV === "preview"
+    ) {
       const res = await fetch(`/api/dev/otp?phone=${encodeURIComponent(normalized)}`);
       if (res.ok) setDevOtp((await res.json()).otp);
     }
