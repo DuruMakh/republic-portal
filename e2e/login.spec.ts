@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-const TEST_PHONE = "599123123"; // staging-only; hook delivers OTP to dev_otp_inbox
+// staging-only; hook delivers OTP to dev_otp_inbox. Overridable per-CI-run so
+// concurrent workflow runs against the same staging project don't collide on
+// the same phone number/profile.
+const TEST_PHONE = process.env.E2E_TEST_PHONE ?? "599123123";
 
 test("phone OTP login end-to-end (dev delivery)", async ({ page }) => {
   await page.goto("/login");
@@ -12,5 +15,5 @@ test("phone OTP login end-to-end (dev delivery)", async ({ page }) => {
   await page.getByLabel("SMS კოდი").fill(otp);
   await page.getByRole("button", { name: "დადასტურება" }).click();
   await expect(page).toHaveURL(/\/me\/profile/);
-  await expect(page.getByTestId("profile-phone")).toContainText("995599123123");
+  await expect(page.getByTestId("profile-phone")).toContainText(`995${TEST_PHONE}`);
 });

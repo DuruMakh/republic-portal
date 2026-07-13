@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -24,6 +28,10 @@ jobs:
           NEXT_PUBLIC_APP_ENV: preview
       - run: npx playwright install --with-deps chromium
         if: hashFiles('playwright.config.ts') != ''
+      - name: Derive per-run e2e test phone
+        if: hashFiles('playwright.config.ts') != ''
+        run: |
+          echo "E2E_TEST_PHONE=5$(printf '%08d' $(( ${{ github.run_number }} % 100000000 )))" >> "$GITHUB_ENV"
       - run: npm run e2e
         if: hashFiles('playwright.config.ts') != ''
         env:

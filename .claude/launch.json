@@ -4,7 +4,7 @@
     {
       "name": "prototype",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
+      "runtimeArgs": ["prototype/server.js"],
       "port": 5599
     },
     {

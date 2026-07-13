@@ -15,7 +15,16 @@
  * at runtime by `defaultCache`'s strategies.
  */
 import { defaultCache } from "@serwist/next/worker";
-import { Serwist } from "serwist";
+import { NetworkOnly, Serwist } from "serwist";
+
+/**
+ * Route prefixes that must never be served from the Cache Storage API. These cover
+ * authenticated pages (/me, /delegate, /admin), the login flow (which can render
+ * signed-in state transiently), and all API routes (which may return
+ * per-session/per-user data). Serving any of these from cache on a shared device
+ * after logout would leak the previous user's data to the next person.
+ */
+const PROTECTED_PREFIXES = ["/me", "/delegate", "/admin", "/api", "/login"];
 
 /**
  * Build revision, injected by scripts/build-sw.mjs via an esbuild `define`
@@ -43,7 +52,19 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // Must precede defaultCache: Serwist's runtimeCaching routes are matched in
+    // order and first-match-wins, so these NetworkOnly entries take precedence
+    // over defaultCache's generic same-origin HTML/RSC/API caching strategies
+    // for any protected/authenticated route.
+    {
+      matcher: ({ url, sameOrigin }) =>
+        sameOrigin &&
+        PROTECTED_PREFIXES.some((p) => url.pathname === p || url.pathname.startsWith(p + "/")),
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {
