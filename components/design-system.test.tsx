@@ -16,6 +16,10 @@ describe("Button", () => {
     render(<Button variant="danger">წაშლა</Button>);
     expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("bg-danger");
   });
+  it("renders dark variant", () => {
+    render(<Button variant="dark">რეიტინგი</Button>);
+    expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-navy");
+  });
 });
 
 describe("Pill", () => {
