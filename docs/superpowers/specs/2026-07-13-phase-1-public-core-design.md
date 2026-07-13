@@ -197,13 +197,18 @@ seed sets it directly. Phase 4 replaces the *writer* of that column, not this re
   `npm run start` when `CI` (real production build — `npm run build` already precedes it in
   the workflow), `npm run dev` locally. Cross-PR e2e sharing staging stays safe: Phase 1 e2e
   is read-only and the login e2e already uses a per-run phone.
+- **Sequencing constraint:** the migration and the seed run against staging *before* the e2e
+  specs that assert on seeded data land in CI — otherwise those runs are guaranteed red. The
+  implementation plan must order tasks accordingly.
 
 ## 9. Hygiene riders (Phase 0 leftovers, one small task)
 
 - Strip UTF-8 BOMs from the three affected files (locate via grep at implementation time).
 - `Field` component: caller-supplied `id`/props must not sever the label↔input link (spread
   order fix).
-- CI: bump `actions/checkout` + `actions/setup-node` to v5 (current majors) if compatible.
+- CI: bump `actions/checkout` + `actions/setup-node` to v5 (current majors). If a v5
+  regression surfaces in the same PR's CI runs, revert the bump and record why in the plan's
+  outcome notes — do not ship a red or flaky pipeline over a version bump.
 - DESIGN.md: add one line making the body-background rule explicit (page background is white;
   `surface` is for wells/inputs/inactive elements — matches prototype usage).
 
