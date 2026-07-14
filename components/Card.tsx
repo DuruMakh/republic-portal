@@ -18,7 +18,9 @@ export function Card({
     </>
   );
   if (!header && padded) {
-    return <section className="rounded-xl border border-line bg-white p-6 shadow-sm">{body}</section>;
+    return (
+      <section className="rounded-xl border border-line bg-white p-6 shadow-sm">{body}</section>
+    );
   }
   return (
     <section

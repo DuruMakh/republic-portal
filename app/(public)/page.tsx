@@ -52,13 +52,21 @@ export default async function HomePage() {
           </div>
           <div className="mt-10 grid max-w-lg grid-cols-2 gap-4">
             <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <div className="text-4xl font-extrabold tabular-nums" data-testid="stat-approved-delegates">
+              <div
+                className="text-4xl font-extrabold tabular-nums"
+                data-testid="stat-approved-delegates"
+              >
                 <CountUp value={stats.approved_delegates} />
               </div>
-              <div className="mt-1.5 text-sm font-semibold text-white/60">დამტკიცებული დელეგატი</div>
+              <div className="mt-1.5 text-sm font-semibold text-white/60">
+                დამტკიცებული დელეგატი
+              </div>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <div className="text-4xl font-extrabold tabular-nums" data-testid="stat-active-members">
+              <div
+                className="text-4xl font-extrabold tabular-nums"
+                data-testid="stat-active-members"
+              >
                 <CountUp value={stats.active_members} />
               </div>
               <div className="mt-1.5 text-sm font-semibold text-white/60">აქტიური წევრი</div>
@@ -71,7 +79,9 @@ export default async function HomePage() {
           {features.map((f) => (
             <div key={f.title} className="rounded-xl border border-line bg-white p-6 shadow-sm">
               <h3 className="font-bold text-ink">
-                <span aria-hidden className="me-2">{f.icon}</span>
+                <span aria-hidden className="me-2">
+                  {f.icon}
+                </span>
                 {f.title}
               </h3>
               <p className="mt-2 text-sm text-muted-fg">{f.text}</p>

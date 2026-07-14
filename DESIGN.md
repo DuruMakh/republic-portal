@@ -19,3 +19,6 @@ Ghost-inverse variant (white text/border on dark) used only on navy/dark backgro
 Button/ButtonLink take size sm|md|lg (md default); size overrides must use the prop,
 never padding/text classes in className (Tailwind order makes those unreliable).
 Phase 1: Card gains header + padded props; Badge = generic count/label chip.
+
+Page background is white (body bg-white); `surface` #F6F7F9 is for wells, inputs,
+pills and inactive elements — matching prototype usage.

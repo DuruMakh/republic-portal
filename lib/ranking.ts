@@ -28,7 +28,7 @@ export function rankDelegates<T extends Rankable>(rows: T[]): (T & { rank: numbe
     .sort(
       (a, b) =>
         b.active_supporters - a.active_supporters ||
-        collator.compare(`${a.first_name} ${a.last_name}`, `${b.first_name} ${b.last_name}`)
+        collator.compare(`${a.first_name} ${a.last_name}`, `${b.first_name} ${b.last_name}`),
     )
     .map((row, i) => ({ ...row, rank: i + 1 }));
 }

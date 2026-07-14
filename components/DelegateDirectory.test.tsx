@@ -19,7 +19,14 @@ const mk = (over: Partial<RankedDelegate>): RankedDelegate => ({
 
 const delegates = [
   mk({ slug: "giorgi-maisuradze", first_name: "გიორგი", last_name: "მაისურაძე", rank: 1 }),
-  mk({ slug: "eka-meladze", first_name: "ეკა", last_name: "მელაძე", region_id: 8, region_name_ka: "გურია", rank: 2 }),
+  mk({
+    slug: "eka-meladze",
+    first_name: "ეკა",
+    last_name: "მელაძე",
+    region_id: 8,
+    region_name_ka: "გურია",
+    rank: 2,
+  }),
 ];
 const regions = [
   { id: 1, name_ka: "თბილისი" },
@@ -50,7 +57,9 @@ describe("DelegateDirectory", () => {
     const input = screen.getByPlaceholderText("ძებნა სახელით...");
     fireEvent.change(input, { target: { value: "zzz" } });
     expect(
-      screen.getByText('ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.')
+      screen.getByText(
+        "ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.",
+      ),
     ).toBeInTheDocument();
   });
 });

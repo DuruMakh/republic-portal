@@ -102,6 +102,11 @@ describe("Field", () => {
     expect(screen.getByLabelText("ტელეფონი")).toBeInTheDocument();
     expect(screen.getByText("სავალდებულოა")).toBeInTheDocument();
   });
+  it("respects a caller-supplied id (label stays linked)", () => {
+    render(<Field label="ქალაქი" id="city-input" name="city" />);
+    const input = screen.getByLabelText("ქალაქი");
+    expect(input.getAttribute("id")).toBe("city-input");
+  });
 });
 
 describe("Stepper", () => {

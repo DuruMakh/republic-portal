@@ -27,19 +27,24 @@ if (e3) console.log("OK: anon dev_otp_inbox query permission-denied (42501) — 
 // --- Phase 1: public read model probes ---
 const { data: viewRows, error: e4 } = await anon
   .from("public_delegates")
-  .select("id, slug, first_name, last_name, region_id, region_name_ka, bio, photo_url, active_supporters")
+  .select(
+    "id, slug, first_name, last_name, region_id, region_name_ka, bio, photo_url, active_supporters",
+  )
   .limit(3);
 if (e4) throw new Error(`anon cannot read public_delegates: ${e4.message}`);
 
 const { error: e5 } = await anon.from("public_stats").select("*").single();
 if (e5) throw new Error(`anon cannot read public_stats: ${e5.message}`);
 
-const { data: baseLeak, error: e6 } = await anon.from("delegates").select("tc_accepted_at").limit(1);
+const { data: baseLeak, error: e6 } = await anon
+  .from("delegates")
+  .select("tc_accepted_at")
+  .limit(1);
 if (!e6 && baseLeak && baseLeak.length > 0)
   throw new Error("LEAK: anon can read the delegates base table");
 if (e6 && e6.code !== "42501")
   console.log(`note: delegates base-table probe returned ${e6.code} (${e6.message})`);
 
 console.log(
-  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed`
+  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed`,
 );

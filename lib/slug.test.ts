@@ -4,7 +4,7 @@ import { makeSlug, transliterateGeorgian } from "./slug";
 describe("transliterateGeorgian", () => {
   it("maps every Georgian letter (aspirates unmarked)", () => {
     expect(transliterateGeorgian("აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ")).toBe(
-      "abgdevztiklmnopzhrstupkghqshchtsdztschkhjh"
+      "abgdevztiklmnopzhrstupkghqshchtsdztschkhjh",
     );
   });
   it("transliterates real names", () => {
@@ -28,8 +28,8 @@ describe("makeSlug", () => {
   it("suffixes on collision", () => {
     const taken = new Set(["giorgi-maisuradze"]);
     expect(makeSlug("გიორგი მაისურაძე", taken)).toBe("giorgi-maisuradze-2");
-    expect(makeSlug("გიორგი მაისურაძე", new Set(["giorgi-maisuradze", "giorgi-maisuradze-2"]))).toBe(
-      "giorgi-maisuradze-3"
-    );
+    expect(
+      makeSlug("გიორგი მაისურაძე", new Set(["giorgi-maisuradze", "giorgi-maisuradze-2"])),
+    ).toBe("giorgi-maisuradze-3");
   });
 });

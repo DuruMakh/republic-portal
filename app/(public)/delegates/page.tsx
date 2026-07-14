@@ -7,8 +7,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "ჩვენი დელეგატები — ქართული რესპუბლიკა",
-  description:
-    "ყველა დელეგატი გადის იურიდიულ ვერიფიკაციას. ნახე, ვინ წარმოადგენს შენს რეგიონს.",
+  description: "ყველა დელეგატი გადის იურიდიულ ვერიფიკაციას. ნახე, ვინ წარმოადგენს შენს რეგიონს.",
 };
 
 export default async function DelegatesPage() {
@@ -21,8 +20,8 @@ export default async function DelegatesPage() {
       </div>
       <h1 className="font-serif text-4xl font-bold text-ink">ჩვენი დელეგატები</h1>
       <p className="mt-3 max-w-2xl text-muted-fg">
-        ყველა დელეგატი გადის იურიდიულ ვერიფიკაციას. მათი მხარდაჭერა ღიად და გამჭვირვალედ
-        ლაგდება — ნახე, ვინ წარმოადგენს შენს რეგიონს.
+        ყველა დელეგატი გადის იურიდიულ ვერიფიკაციას. მათი მხარდაჭერა ღიად და გამჭვირვალედ ლაგდება —
+        ნახე, ვინ წარმოადგენს შენს რეგიონს.
       </p>
       <div className="mt-8">
         <DelegateDirectory delegates={ranked} regions={regions} />

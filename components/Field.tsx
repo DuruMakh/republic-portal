@@ -1,14 +1,15 @@
 import { useId, type InputHTMLAttributes } from "react";
 
-export const inputClasses =
-  "rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-brand";
+export const inputClasses = "rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-brand";
 
 export function Field({
   label,
   error,
+  id: idProp,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
-  const id = useId();
+  const autoId = useId();
+  const id = idProp ?? autoId;
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold text-ink">

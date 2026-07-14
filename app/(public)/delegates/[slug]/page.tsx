@@ -27,16 +27,11 @@ export async function generateMetadata({
   const name = `${delegate.first_name} ${delegate.last_name}`;
   return {
     title: `${name} — ქართული რესპუბლიკა`,
-    description:
-      delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო"),
+    description: delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო"),
   };
 }
 
-export default async function DelegatePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function DelegatePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ranked = rankDelegates(await fetchPublicDelegates());
   const delegate = ranked.find((d) => d.slug === slug);
@@ -96,8 +91,8 @@ export default async function DelegatePage({
           <div className="text-center">
             <h2 className="text-lg font-bold text-ink">დაუდექი მხარში {delegate.first_name}-ს</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg">
-              გახდი მისი აქტიური მხარდამჭერი — შეავსე პროფილი და ჩართე ყოველთვიური საწევრო
-              რამდენიმე წუთში.
+              გახდი მისი აქტიური მხარდამჭერი — შეავსე პროფილი და ჩართე ყოველთვიური საწევრო რამდენიმე
+              წუთში.
             </p>
             <div className="mt-5">
               <ButtonLink href="/join" size="lg">

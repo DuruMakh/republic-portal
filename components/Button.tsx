@@ -20,11 +20,7 @@ const styles: Record<ButtonVariant, string> = {
   "ghost-inverse": "bg-transparent text-white border border-white/30 hover:bg-white/10",
 };
 
-export function buttonClasses(
-  variant: ButtonVariant,
-  size: ButtonSize = "md",
-  extra = "",
-): string {
+export function buttonClasses(variant: ButtonVariant, size: ButtonSize = "md", extra = ""): string {
   return `${base} ${sizes[size]} ${styles[variant]} ${extra}`.trim();
 }
 
@@ -35,11 +31,5 @@ export function Button({
   type = "button",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }) {
-  return (
-    <button
-      type={type}
-      className={buttonClasses(variant, size, className)}
-      {...props}
-    />
-  );
+  return <button type={type} className={buttonClasses(variant, size, className)} {...props} />;
 }
