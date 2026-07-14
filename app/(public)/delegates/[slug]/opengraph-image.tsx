@@ -5,6 +5,7 @@ import { formatCountKa } from "@/lib/format";
 import { fetchDelegateBySlug } from "@/lib/supabase/public";
 
 export const revalidate = 60;
+export const dynamic = "force-static";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
