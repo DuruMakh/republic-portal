@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cardSkin } from "@/components/Card";
+import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
@@ -8,11 +10,9 @@ export function DelegateCard({ delegate }: { delegate: RankedDelegate }) {
     <Link
       href={`/delegates/${delegate.slug}`}
       data-testid="delegate-card"
-      className="block rounded-xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className={`block ${cardSkin} p-6 transition hover:-translate-y-0.5 hover:shadow-md`}
     >
-      <div className="text-xs font-bold uppercase tracking-wide text-brand">
-        {delegate.region_name_ka}
-      </div>
+      <Eyebrow>{delegate.region_name_ka}</Eyebrow>
       <div className="mb-3 mt-1.5 text-lg font-bold text-ink">
         {delegate.first_name} {delegate.last_name}
       </div>

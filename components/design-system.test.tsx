@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
+import { Eyebrow } from "./Eyebrow";
 import { Field } from "./Field";
 import { Pill } from "./Pill";
 import { StatCard } from "./StatCard";
@@ -66,6 +67,15 @@ describe("Card", () => {
     const wrapper = screen.getByText("უპადინგოდ").parentElement;
     expect(wrapper?.className).not.toContain("p-6");
     expect(wrapper?.className).toContain("p-0");
+  });
+});
+
+describe("Eyebrow", () => {
+  it("renders children in uppercase brand-colored text", () => {
+    render(<Eyebrow>საჯარო პორტალი</Eyebrow>);
+    const eyebrow = screen.getByText("საჯარო პორტალი");
+    expect(eyebrow.className).toContain("uppercase");
+    expect(eyebrow.className).toContain("text-brand");
   });
 });
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
+import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
@@ -63,9 +64,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
             </span>
           )}
           <div>
-            <div className="text-xs font-extrabold uppercase tracking-wider text-brand">
-              {delegate.region_name_ka}
-            </div>
+            <Eyebrow>{delegate.region_name_ka}</Eyebrow>
             <h1 className="mt-1 font-serif text-3xl font-bold text-ink">{name}</h1>
           </div>
         </div>

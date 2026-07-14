@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
+import { Eyebrow } from "@/components/Eyebrow";
 import { LeaderRow } from "@/components/LeaderRow";
 import { formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
@@ -17,8 +18,8 @@ export default async function LeaderboardPage() {
   const ranked = rankDelegates(await fetchPublicDelegates());
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <div className="mb-2 text-xs font-extrabold uppercase tracking-wider text-brand">
-        ლიდერბორდი
+      <div className="mb-2">
+        <Eyebrow>ლიდერბორდი</Eyebrow>
       </div>
       <h1 className="font-serif text-4xl font-bold text-ink">დელეგატების რეიტინგი</h1>
       <p className="mt-3 text-muted-fg">

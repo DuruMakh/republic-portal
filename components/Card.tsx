@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+export const cardSkin = "rounded-xl border border-line bg-white shadow-sm";
+
 export function Card({
   title,
   header,
@@ -18,14 +20,10 @@ export function Card({
     </>
   );
   if (!header && padded) {
-    return (
-      <section className="rounded-xl border border-line bg-white p-6 shadow-sm">{body}</section>
-    );
+    return <section className={`${cardSkin} p-6`}>{body}</section>;
   }
   return (
-    <section
-      className={`rounded-xl border border-line bg-white shadow-sm${header ? " overflow-hidden" : ""}`}
-    >
+    <section className={`${cardSkin}${header ? " overflow-hidden" : ""}`}>
       {header ? (
         <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
           {header}

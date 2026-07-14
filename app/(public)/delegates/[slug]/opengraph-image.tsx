@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
 import { formatCountKa } from "@/lib/format";
 import { fetchDelegateBySlug } from "@/lib/supabase/public";
@@ -15,6 +16,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     fetchDelegateBySlug(slug),
     readFile(path.join(process.cwd(), "assets/fonts/NotoSansGeorgian-Bold.ttf")),
   ]);
+  if (!delegate) notFound();
 
   return new ImageResponse(
     <div
@@ -49,17 +51,13 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         <div style={{ fontSize: 34, opacity: 0.9 }}>ქართული რესპუბლიკა</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: 30, opacity: 0.75 }}>
-          {delegate ? (delegate.region_name_ka ?? "") : "საჯარო პორტალი"}
-        </div>
+        <div style={{ fontSize: 30, opacity: 0.75 }}>{delegate.region_name_ka ?? ""}</div>
         <div style={{ fontSize: 76, lineHeight: 1.1 }}>
-          {delegate ? `${delegate.first_name} ${delegate.last_name}` : "დელეგატები"}
+          {delegate.first_name} {delegate.last_name}
         </div>
-        {delegate ? (
-          <div style={{ display: "flex", fontSize: 36, color: "#F4D67A" }}>
-            აქტიური მხარდამჭერი: {formatCountKa(delegate.active_supporters)}
-          </div>
-        ) : null}
+        <div style={{ display: "flex", fontSize: 36, color: "#F4D67A" }}>
+          აქტიური მხარდამჭერი: {formatCountKa(delegate.active_supporters)}
+        </div>
       </div>
       <div style={{ display: "flex", height: 10, width: 260 }}>
         <div style={{ flex: 3, background: "#ffffff" }} />

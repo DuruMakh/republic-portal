@@ -26,7 +26,7 @@ export async function fetchPublicDelegates(): Promise<PublicDelegate[]> {
     .select("*")
     .returns<PublicDelegate[]>();
   if (error) throw new Error(`public_delegates: ${error.message}`);
-  return data;
+  return data ?? [];
 }
 
 export async function fetchDelegateBySlug(slug: string): Promise<PublicDelegate | null> {
@@ -45,6 +45,7 @@ export async function fetchPublicStats(): Promise<PublicStats> {
     .select("*")
     .single<PublicStats>();
   if (error) throw new Error(`public_stats: ${error.message}`);
+  if (!data) throw new Error("public_stats: empty response");
   return data;
 }
 
@@ -55,5 +56,5 @@ export async function fetchRegions(): Promise<Region[]> {
     .order("id")
     .returns<Region[]>();
   if (error) throw new Error(`regions: ${error.message}`);
-  return data;
+  return data ?? [];
 }

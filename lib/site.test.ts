@@ -6,6 +6,7 @@ afterEach(() => vi.unstubAllEnvs());
 describe("siteUrl", () => {
   it("uses the production domain in production", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://prodrefabcdefgh.supabase.co");
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "portal.example.ge");
     expect(siteUrl()).toBe("https://portal.example.ge");
   });
@@ -16,7 +17,15 @@ describe("siteUrl", () => {
   });
   it("falls back to the deployment URL when the production domain is empty", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://prodrefabcdefgh.supabase.co");
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");
+    vi.stubEnv("VERCEL_URL", "portal-abc123.vercel.app");
+    expect(siteUrl()).toBe("https://portal-abc123.vercel.app");
+  });
+  it("falls back to the deployment URL when the production flag is set but the database is still staging", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "portal.example.ge");
     vi.stubEnv("VERCEL_URL", "portal-abc123.vercel.app");
     expect(siteUrl()).toBe("https://portal-abc123.vercel.app");
   });

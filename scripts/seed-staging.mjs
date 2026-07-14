@@ -18,6 +18,9 @@ if (!url || !serviceKey) {
   console.error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
   process.exit(1);
 }
+// Canonical production detection lives in lib/env.ts (isProductionEnv). This .mjs guard mirrors
+// the env-flag half; the --confirm-ref check below pins the exact target project, which is the
+// stronger guard for this destructive script.
 if (process.env.NEXT_PUBLIC_APP_ENV === "production") {
   console.error("Refusing to seed: NEXT_PUBLIC_APP_ENV=production");
   process.exit(1);
