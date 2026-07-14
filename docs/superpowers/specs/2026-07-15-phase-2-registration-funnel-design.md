@@ -10,8 +10,9 @@ Copy, layout and behavior carry over unless stated otherwise. **Known deviations
 prototype, all owner-approved:** step 3 replaces the card-payment modal + recurring checkbox
 with manual bank-transfer instructions (per parent spec §6); the OTP code is 6 digits
 (Supabase's actual length), not 4; the duplicate-phone message appears **after** OTP
-verification, not before (anti-enumeration, §6 below); the pending screen's „გადადი პანელზე"
-button is dropped until Phase 3 ships the panel.
+verification, not before (anti-enumeration, §6 below); OTP entry is inline on step 1 rather
+than the prototype's modal; the pending screen's „გადადი პანელზე" button is dropped until
+Phase 3 ships the panel.
 
 ---
 
@@ -50,8 +51,10 @@ card, dark button „გახდი დელეგატი"). Query params:
 
 - `?role=delegate` (Phase 1 home hero already sends this) → skips the choice, goes straight
   to step 1 in delegate mode.
-- `?ref=<code>` → member mode with referral; the code is persisted server-side at step 1
-  (survives cross-device resume). Invalid/unknown/not-yet-approved codes are **silently
+- `?ref=<code>` → skips the choice, goes straight to step 1 in member mode with the
+  referral retained; the code is persisted server-side at step 1 (survives cross-device
+  resume). If the person later restarts as a delegate (possible only while still `draft`,
+  §4.3), the stored ref is discarded. Invalid/unknown/not-yet-approved codes are **silently
   ignored** (funnel proceeds as direct entry; no error).
 - A signed-in visitor with funnel state is forwarded to their current step / completion
   screen (see 3.8). Completed members/delegates never re-enter the funnel; member→delegate
@@ -64,8 +67,9 @@ Stepper (1 of 3: „კონტაქტი / იურ. პროფილი 
 ნომერზე მოგივა ერთჯერადი SMS კოდი დასადასტურებლად."). Phone validated/normalized with the
 existing `normalizeGeorgianPhone`. Continue → `signInWithOtp` (existing machinery) → inline
 OTP entry: 6 individual digit boxes (prototype's `.otp` visual, auto-advance), „ხელახლა
-გაგზავნა" resend with 30 s cooldown, dev-code display on dev/preview exactly like the login
-page. The OTP UI is extracted into a shared component and the login page is refactored to use
+გაგზავნა" resend with 60 s cooldown (matching Supabase's per-number SMS rate limit; hitting
+the limit anyway shows „კოდი უკვე გაიგზავნა — სცადე ერთ წუთში"), dev-code display on
+dev/preview exactly like the login page. The OTP UI is extracted into a shared component and the login page is refactored to use
 it (no copy-paste, per CLAUDE.md).
 
 On verify: server action calls `funnel_start` (§4.3) — the draft now exists server-side
@@ -144,10 +148,16 @@ before launch (checklist item).
 
 One shared rule, derived purely from DB state (`deriveFunnelStep` in `lib/`, §5): no
 profile → step 1 · profile without personal ID → step 2 · profile without
-tier/reference-code → step 3 · completed → done/pending by role. Applied at: every funnel
-page load (guard + redirect), `/join` entry, and the login page's post-verify redirect
-(replacing today's hardcoded `/me/profile`; a logged-in user with no profile row at all
-lands on `/join`). Steps 2–3 and completion screens require a session; signed-out visitors
+tier/reference-code → step 3 · completed → done/pending by role. **Legacy rows (seed and
+Phase 0/1 users) are first-class inputs:** an existing `delegates` row implies role
+delegate regardless of the backfilled `signup_role` default; `status = 'active_member'`
+**or** a set `registration_completed_at` both mean "completed" (the done screen shows the
+reference-code block only when a code exists — pre-Phase-2 actives have none). Applied at:
+every funnel page load (guard + redirect), `/join` entry, and the login page's post-verify
+redirect (replacing today's hardcoded `/me/profile`; a logged-in user with no profile row
+at all lands on `/join`). Funnel-page guards are **client-side redirects after the mount
+fetch** (per §3's client-fetch rule — never server-rendered redirects, so cached shells
+stay valid). Steps 2–3 and completion screens require a session; signed-out visitors
 hitting them are sent to step 1.
 
 ## 4. Database (one migration)
@@ -157,30 +167,44 @@ hitting them are sent to step 1.
 - `signup_role text not null default 'member' check (signup_role in ('member','delegate'))`
 - `signup_ref_code text` — referral code captured at step 1 (nullable; resolved at step 2)
 - `membership_tier smallint check (membership_tier in (5,10,20))` — null until step 3
-- `reference_code text unique check (reference_code ~ '^GR-[A-HJ-NP-Z2-9]{6}$')` — null
-  until completion; permanent once set
+- `reference_code text unique check (reference_code ~ '^GR-[A-HJKMNP-Z2-9]{6}$')` — null
+  until completion; permanent once set (character class = exactly the §4.2 alphabet:
+  no I, L, O, 0, 1)
 - `registration_completed_at timestamptz` — the "funnel finished" marker
 
 All five join the `protect_profile_columns()` trigger's guarded list (client API roles can
-never write them; the definer RPCs and service role can).
+never write them; the definer RPCs and service role can). The migration also **backfills
+`signup_role = 'delegate'` for every profile that already has a `delegates` row** (seed
+consistency), and **revokes the client `update` grant on `profiles`**: after this phase no
+legitimate client path writes `profiles` directly (all funnel writes go through the RPCs;
+cabinet editing arrives in Phase 3 with its own scoped path), so the open grant was an
+unvalidated side door around the funnel's in-DB checks. The "own profile updatable" RLS
+policy stays in place for Phase 3 reuse — unreachable without the grant.
 
 ### 4.2 Code generation
 
 `gen_funnel_code(len int)` — Postgres function using `pgcrypto` randomness over alphabet
-`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, stored uppercase. Used for member reference codes
-(`'GR-' || gen_funnel_code(6)`, uniqueness-retry loop) and new delegates' `referral_code`
-(`gen_funnel_code(6)`). Seeded delegates keep their `D00101`-style codes — both formats are
-unique and referral lookup is by exact code, so they coexist.
+`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, stored uppercase. Because the funnel RPCs run with
+`set search_path = ''`, it schema-qualifies `extensions.gen_random_bytes` (and the
+migration opens with `create extension if not exists pgcrypto with schema extensions`).
+Used for member reference codes (`'GR-' || gen_funnel_code(6)`, uniqueness-retry loop) and
+new delegates' `referral_code` (`gen_funnel_code(6)`). Seeded delegates keep their
+`D00101`-style codes — both formats are unique and referral lookup is by exact code, so
+they coexist.
 
 ### 4.3 Funnel RPCs — the mutation boundary
 
 Four `security definer` functions (owner `postgres`, `set search_path = ''`), `execute`
-granted to `authenticated` only, all deriving the subject from `auth.uid()` — never from a
-parameter — and each a single transaction:
+granted to `authenticated` **with an explicit `revoke execute … from public, anon`**
+(Postgres grants new functions to PUBLIC by default — same pattern the Phase 0 migration
+already uses for `send_sms_hook`), all deriving the subject from `auth.uid()` — never from
+a parameter — and each a single transaction:
 
 - **`funnel_start(first_name, last_name, role, ref_code)`** — inserts the caller's
-  `profiles` row (names, phone copied from `auth.users`, status `draft`, `signup_role`,
-  `signup_ref_code`) or, while still incomplete, updates the names — role and ref are
+  `profiles` row (names, phone copied from `auth.users` **normalized to E.164 with `+` —
+  the pinned canonical format for `profiles.phone`; Supabase stores auth phones without
+  the `+`**, status `draft`, `signup_role`, `signup_ref_code`) or, while still incomplete,
+  updates the names — role and ref are
   changeable **only while status is still `draft`** (once step 2 has created role-specific
   artifacts, the chosen path is locked; the funnel's own routing means the person never
   sees the choice screen again mid-funnel anyway). No-op with current state returned once
@@ -192,11 +216,15 @@ parameter — and each a single transaction:
   binding (stored valid+approved referral wins over picker choice; picker delegate must be
   approved; null = central) and closes-then-opens the `memberships` row. Delegate: requires
   T&C acceptance flag, creates the `delegates` row (status `pending`, generated
-  `referral_code`, `tc_accepted_at = now()` on first acceptance only). Moves status
-  forward-only `draft → profile_completed`. Rejected when already completed.
+  `referral_code`, `tc_accepted_at = now()` on first acceptance only); a delegate
+  re-submission updates profile fields but **preserves the existing `referral_code`**
+  (never regenerated). Moves status forward-only `draft → profile_completed`. Rejected
+  when already completed.
 - **`funnel_complete(tier)`** — requires `profile_completed` + the role's step-2 artifacts;
   sets `membership_tier`, generates `reference_code`, stamps `registration_completed_at`.
-  **Idempotent: a second call returns the existing code and never regenerates it.**
+  **Idempotent: a second call returns the existing code and never regenerates it — a
+  different tier in a repeat call is ignored** (the funnel is read-only after completion,
+  §3.3; tier changes arrive with the Phase 3 cabinet).
 - **`funnel_state()`** — read-only: role, derived step, saved field values for pre-fill,
   resolved referral-delegate display data (name/region) when valid, and completion data
   (code, tier, delegate name). Only ever the caller's own row.
@@ -209,6 +237,9 @@ funnel can set `active_member` (that is Phase 4's payment-recording engine).
 
 `/api/dev/otp` additionally refuses (404) any phone whose profile has
 `registration_completed_at is not null` **or** `status = 'active_member'` (decision #6).
+The profile lookup must match **both** phone formats (`+995…` and `995…` — the same
+double-format handling the route already applies to the inbox), so a format mismatch can
+never fail *open* and serve a code the rule should block.
 While touching it: opportunistically purge `dev_otp_inbox` rows older than 1 hour (closes a
 Phase 0 minor). The endpoint remains absent outside dev/preview and is deleted in Phase 6.
 
@@ -264,12 +295,19 @@ messages. No service-role usage anywhere in the funnel path.
   (new context, log in, land on the right step pre-filled), referral pre-fill
   (`?ref=<seeded delegate code>` → read-only card), and dev-OTP hardening (completed
   member's phone → 404).
-- **e2e isolation (binding):** per-run phones derived from the CI run number in the
-  **`55XXXXXXX` national block** (each journey gets a distinct final digit) — disjoint from
-  the seed's `50XXXXXXX` block and from the existing login e2e's phone. Runs create only
-  their own users and delete them in teardown (service-role, best-effort; the canonical
-  12-delegate seed and home counters are asserted by existing specs and must stay
-  untouched — new registrants are never `active_member`, so counters can't drift anyway).
+- **e2e isolation (binding):** per-run phones derived from the CI run number **and run
+  attempt** in the **`55XXXXXXX` national block**, each journey with a distinct reserved
+  digit — disjoint from the seed's `50XXXXXXX` block. **The existing login e2e's phone
+  derivation moves into this scheme in the same PR**: today's `5 + %08d(run_number)`
+  formula lands inside the seed block and can collide with a seeded `active_member`, which
+  the §4.4 hardening would then 404 — red CI on this phase's own PR otherwise.
+  `login.spec.ts` is also updated for §3.8: a profile-less login now lands on `/join`, not
+  `/me/profile`. Per-run **personal IDs** get the same treatment: an 11-digit scheme in a
+  reserved prefix (e.g. leading `9`) disjoint from the seed's `1`-prefixed IDs, folding in
+  run attempt. Runs create only their own users and delete them in teardown (service-role,
+  best-effort; the canonical 12-delegate seed and home counters are asserted by existing
+  specs and must stay untouched — new registrants are never `active_member`, so counters
+  can't drift anyway).
 - **Sequencing:** the migration is applied to staging *before* e2e specs depending on it
   land in CI (Phase 1 discipline). `scripts/verify-schema.mjs` gains probes: client roles
   cannot call-bypass (RPC as `anon` fails; direct write to protected columns fails), and a
