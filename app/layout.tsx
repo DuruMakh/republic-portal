@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "ქართული რესპუბლიკა",
   description: "სამოქალაქო პლატფორმა",
+  openGraph: {
+    siteName: "ქართული რესპუბლიკა",
+    images: ["/og-default.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
