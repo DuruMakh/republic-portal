@@ -43,7 +43,9 @@ const { data: baseLeak, error: e6 } = await anon
 if (!e6 && baseLeak && baseLeak.length > 0)
   throw new Error("LEAK: anon can read the delegates base table");
 if (!e6)
-  throw new Error("delegates base-table probe unexpectedly succeeded — expected 42501 permission denial");
+  throw new Error(
+    "delegates base-table probe unexpectedly succeeded — expected 42501 permission denial",
+  );
 if (e6.code !== "42501")
   throw new Error(`delegates base-table probe: expected 42501, got ${e6.code} (${e6.message})`);
 
