@@ -27,8 +27,8 @@ export default function StyleguidePage() {
         </div>
       </Card>
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="დამტკიცებული დელეგატი" value={112} />
-        <StatCard label="აქტიური წევრი" value={1700} />
+        <StatCard label="დამტკიცებული დელეგატი" value={112} accent="brand" />
+        <StatCard label="აქტიური წევრი" value={1700} accent="brand" />
       </div>
       <Card title="ფორმის ველი">
         <Field label="ტელეფონის ნომერი" name="phone" placeholder="5XX XX XX XX" />

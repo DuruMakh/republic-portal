@@ -89,6 +89,11 @@ describe("StatCard", () => {
     expect(screen.getByText("1700")).toBeInTheDocument();
     expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
   });
+  it("supports brand accent and sub text", () => {
+    render(<StatCard label="აქტიური მხარდამჭერი" value={294} accent="brand" sub="ღია რეიტინგში" />);
+    expect(screen.getByText("294").className).toContain("text-brand");
+    expect(screen.getByText("ღია რეიტინგში")).toBeInTheDocument();
+  });
 });
 
 describe("Field", () => {
