@@ -1,6 +1,6 @@
 {
   "name": "republic-portal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": ">=22"
@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "seed:staging": "node --env-file=.env.local scripts/seed-staging.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.0",

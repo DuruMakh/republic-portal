@@ -10,3 +10,4 @@ playwright-report/
 public/sw.js
 supabase/.temp/
 .vercel/
+.superpowers/

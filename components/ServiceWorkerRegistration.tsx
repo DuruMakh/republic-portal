@@ -26,6 +26,14 @@ export function ServiceWorkerRegistration() {
     navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
       console.error("Service worker registration failed", error);
     });
+
+    // Warm the runtime page cache with the home shell: "/" is no longer precached (live
+    // counters must stay fresh), so a user who installs from a deep link and goes offline
+    // before ever visiting "/" would otherwise get the generic offline fallback at PWA
+    // launch (manifest start_url is "/").
+    navigator.serviceWorker.ready.then(() => {
+      fetch("/").catch(() => {});
+    });
   }, []);
 
   return null;

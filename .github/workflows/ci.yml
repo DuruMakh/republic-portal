@@ -12,8 +12,9 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run typecheck
@@ -32,6 +33,11 @@ jobs:
         if: hashFiles('playwright.config.ts') != ''
         run: |
           echo "E2E_TEST_PHONE=5$(printf '%08d' $(( ${{ github.run_number }} % 100000000 )))" >> "$GITHUB_ENV"
+      # e2e asserts exact facts about the CANONICAL STAGING SEED (12 approved delegates,
+      # leaderboard order, pending names absent). CI never seeds. If these fail with
+      # count/name mismatches, staging drifted — restore with:
+      # npm run seed:staging -- --confirm-ref orcxtbedkexoclbfgvzd
+      # (see scripts/seed-staging.mjs; destructive, staging-only).
       - run: npm run e2e
         if: hashFiles('playwright.config.ts') != ''
         env:

@@ -1,4 +1,4 @@
-﻿export function validatePersonalId(value: string): boolean {
+export function validatePersonalId(value: string): boolean {
   return /^\d{11}$/.test(value);
 }
 

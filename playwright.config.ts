@@ -4,9 +4,16 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
-  use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
+  use: {
+    baseURL: "http://localhost:3000",
+    trace: "retain-on-failure",
+    // Makes CountUp's animation effect (components/CountUp.tsx) short-circuit via its
+    // matchMedia("(prefers-reduced-motion: reduce)") check, so e2e reads settled values
+    // immediately — see the direct-read comment in e2e/public.spec.ts.
+    contextOptions: { reducedMotion: "reduce" },
+  },
   webServer: {
-    command: "npm run dev",
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
