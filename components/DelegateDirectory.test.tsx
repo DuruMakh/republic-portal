@@ -50,7 +50,7 @@ describe("DelegateDirectory", () => {
     const input = screen.getByPlaceholderText("ძებნა სახელით...");
     fireEvent.change(input, { target: { value: "zzz" } });
     expect(
-      screen.getByText('ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე "ყველა მხარე".')
+      screen.getByText('ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე".')
     ).toBeInTheDocument();
   });
 });

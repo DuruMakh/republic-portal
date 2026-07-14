@@ -61,7 +61,8 @@ export function DelegateDirectory({
         </div>
       ) : (
         <div className="rounded-xl border border-line bg-white p-8 text-center text-muted-fg shadow-sm">
-          ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე &quot;ყველა მხარე&quot;.
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
+          <span>ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე".</span>
         </div>
       )}
     </div>
