@@ -18,3 +18,4 @@ pending=warn, approved=ok, rejected=danger.
 Ghost-inverse variant (white text/border on dark) used only on navy/dark backgrounds (footer, etc).
 Button/ButtonLink take size sm|md|lg (md default); size overrides must use the prop,
 never padding/text classes in className (Tailwind order makes those unreliable).
+Phase 1: Card gains header + padded props; Badge = generic count/label chip.

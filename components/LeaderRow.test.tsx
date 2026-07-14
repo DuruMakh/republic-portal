@@ -21,6 +21,14 @@ describe("LeaderRow", () => {
     render(<LeaderRow delegate={mk(1)} />);
     expect(screen.getByText("🥇")).toBeInTheDocument();
   });
+  it("shows a silver medal for rank 2", () => {
+    render(<LeaderRow delegate={mk(2)} />);
+    expect(screen.getByText("🥈")).toBeInTheDocument();
+  });
+  it("shows a bronze medal for rank 3", () => {
+    render(<LeaderRow delegate={mk(3)} />);
+    expect(screen.getByText("🥉")).toBeInTheDocument();
+  });
   it("shows the plain rank number from rank 4 on", () => {
     render(<LeaderRow delegate={mk(4)} />);
     expect(screen.getByText("4")).toBeInTheDocument();

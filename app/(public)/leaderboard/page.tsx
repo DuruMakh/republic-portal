@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Badge } from "@/components/Badge";
+import { Card } from "@/components/Card";
 import { LeaderRow } from "@/components/LeaderRow";
 import { formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
@@ -22,16 +24,24 @@ export default async function LeaderboardPage() {
       <p className="mt-3 text-muted-fg">
         ავტომატურად ლაგდება აქტიური გადამხდელი მხარდამჭერების მიხედვით.
       </p>
-      <div className="mt-8 overflow-hidden rounded-xl border border-line bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
-          <h2 className="font-bold text-ink">ცოცხალი რეიტინგი</h2>
-          <span className="rounded-full bg-surface px-3 py-1 text-xs font-bold text-muted-fg">
-            {formatCountKa(ranked.length)} დელეგატი
-          </span>
-        </div>
-        {ranked.map((d) => (
-          <LeaderRow key={d.id} delegate={d} />
-        ))}
+      <div className="mt-8">
+        <Card
+          padded={false}
+          header={
+            <>
+              <h2 className="font-bold text-ink">ცოცხალი რეიტინგი</h2>
+              <Badge>{formatCountKa(ranked.length)} დელეგატი</Badge>
+            </>
+          }
+        >
+          <ol className="list-none divide-y divide-line">
+            {ranked.map((d) => (
+              <li key={d.id}>
+                <LeaderRow delegate={d} />
+              </li>
+            ))}
+          </ol>
+        </Card>
       </div>
       <p className="mt-4 text-center text-xs text-muted-fg/80">
         რეიტინგი ახლდება ავტომატურად ყოველი ახალი აქტიური მხარდამჭერის დამატებისას.

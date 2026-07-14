@@ -14,7 +14,7 @@ export function LeaderRow({ delegate }: { delegate: RankedDelegate }) {
     <Link
       href={`/delegates/${delegate.slug}`}
       data-testid="leader-row"
-      className="flex items-center gap-4 border-b border-line bg-white px-4 py-3.5 transition-colors last:border-b-0 hover:bg-surface sm:px-5"
+      className="flex items-center gap-4 bg-white px-4 py-3.5 transition-colors hover:bg-surface sm:px-5"
     >
       <span
         className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm font-extrabold ${

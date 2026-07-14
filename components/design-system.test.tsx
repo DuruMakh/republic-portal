@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { Card } from "./Card";
 import { Field } from "./Field";
 import { Pill } from "./Pill";
 import { StatCard } from "./StatCard";
@@ -29,6 +31,48 @@ describe("Button", () => {
   it("renders lg size", () => {
     render(<Button size="lg">რეგისტრაცია</Button>);
     expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("px-6");
+  });
+});
+
+describe("Card", () => {
+  it("keeps title and p-6 on the section by default (back-compat)", () => {
+    render(
+      <Card title="სათაური">
+        <p>შიგთავსი</p>
+      </Card>,
+    );
+    expect(screen.getByText("სათაური")).toBeInTheDocument();
+    const section = screen.getByText("შიგთავსი").closest("section");
+    expect(section?.className).toContain("p-6");
+    expect(section?.className).not.toContain("overflow-hidden");
+    expect(screen.getByText("შიგთავსი").parentElement?.tagName).toBe("SECTION");
+  });
+  it("renders header content in a divided header row", () => {
+    render(
+      <Card header={<h2>ცოცხალი რეიტინგი</h2>}>
+        <p>რიგები</p>
+      </Card>,
+    );
+    expect(screen.getByText("ცოცხალი რეიტინგი")).toBeInTheDocument();
+    const section = screen.getByText("რიგები").closest("section");
+    expect(section?.className).toContain("overflow-hidden");
+  });
+  it("drops content padding with padded={false}", () => {
+    render(
+      <Card padded={false}>
+        <p>უპადინგოდ</p>
+      </Card>,
+    );
+    const wrapper = screen.getByText("უპადინგოდ").parentElement;
+    expect(wrapper?.className).not.toContain("p-6");
+    expect(wrapper?.className).toContain("p-0");
+  });
+});
+
+describe("Badge", () => {
+  it("renders children in a rounded chip", () => {
+    render(<Badge>12 დელეგატი</Badge>);
+    expect(screen.getByText("12 დელეგატი").className).toContain("rounded-full");
   });
 });
 
