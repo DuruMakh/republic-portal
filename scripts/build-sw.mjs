@@ -5,7 +5,7 @@ import esbuild from "esbuild";
 import { execSync } from "node:child_process";
 
 // Per-deploy revision for the precache entries in app/sw.ts: without revision
-// info, precached URLs ("/", "/offline", ...) would be served cache-first and
+// info, precached URLs ("/offline", icons, manifest, ...) would be served cache-first and
 // frozen at install time, never refreshing across deploys. Git short SHA when
 // available (CI builds run post-commit, so it changes per deploy); timestamp
 // fallback keeps non-git builds correct too.

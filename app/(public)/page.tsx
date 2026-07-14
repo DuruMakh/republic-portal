@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/ButtonLink";
+import { Card } from "@/components/Card";
 import { CountUp } from "@/components/CountUp";
 import { fetchPublicStats } from "@/lib/supabase/public";
 
@@ -77,7 +78,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-4 sm:grid-cols-3">
           {features.map((f) => (
-            <div key={f.title} className="rounded-xl border border-line bg-white p-6 shadow-sm">
+            <Card key={f.title}>
               <h3 className="font-bold text-ink">
                 <span aria-hidden className="me-2">
                   {f.icon}
@@ -85,7 +86,7 @@ export default async function HomePage() {
                 {f.title}
               </h3>
               <p className="mt-2 text-sm text-muted-fg">{f.text}</p>
-            </div>
+            </Card>
           ))}
         </div>
         <div className="mt-10 text-center">

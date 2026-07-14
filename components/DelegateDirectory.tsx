@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Card } from "@/components/Card";
 import { DelegateCard } from "@/components/DelegateCard";
 import { inputClasses } from "@/components/Field";
 import { formatCountKa } from "@/lib/format";
@@ -33,6 +34,7 @@ export function DelegateDirectory({
         <input
           className={`${inputClasses} min-w-[220px] flex-1 border-line`}
           placeholder="ძებნა სახელით..."
+          aria-label="ძებნა სახელით"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -60,9 +62,11 @@ export function DelegateDirectory({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-line bg-white p-8 text-center text-muted-fg shadow-sm">
-          ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.
-        </div>
+        <Card>
+          <div className="text-center text-muted-fg">
+            ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.
+          </div>
+        </Card>
       )}
     </div>
   );

@@ -34,7 +34,7 @@ export default async function LeaderboardPage() {
             </>
           }
         >
-          <ol className="list-none divide-y divide-line">
+          <ol className="list-none divide-y divide-line" role="list">
             {ranked.map((d) => (
               <li key={d.id}>
                 <LeaderRow delegate={d} />

@@ -42,7 +42,6 @@ const revision = __SW_REVISION__;
 
 const serwist = new Serwist({
   precacheEntries: [
-    { url: "/", revision },
     { url: "/offline", revision },
     { url: "/manifest.webmanifest", revision },
     { url: "/icons/icon-192.png", revision },
