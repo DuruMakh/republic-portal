@@ -2,9 +2,18 @@ import { describe, expect, it } from "vitest";
 import { delegateBioFallback, formatCountKa } from "./format";
 
 describe("formatCountKa", () => {
-  it("formats with ka-GE locale grouping", () => {
-    expect(formatCountKa(342)).toBe((342).toLocaleString("ka-GE"));
-    expect(formatCountKa(1636)).toBe((1636).toLocaleString("ka-GE"));
+  it("returns the bare digits with no grouping below 1000", () => {
+    expect(formatCountKa(0)).toBe("0");
+    expect(formatCountKa(342)).toBe("342");
+  });
+
+  it("groups thousands with NBSP (U+00A0), not a regular space", () => {
+    // Node's ICU and Chromium's ICU disagree on ka-GE thousands grouping
+    // (regular space vs NBSP vs different digit grouping), which caused an
+    // SSR/client hydration mismatch in CountUp. formatCountKa must be a pure,
+    // deterministic string operation with no Intl/toLocaleString dependency.
+    expect(formatCountKa(1636)).toBe("1 636");
+    expect(formatCountKa(1000000)).toBe("1 000 000");
   });
 });
 

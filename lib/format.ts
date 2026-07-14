@@ -1,5 +1,10 @@
+/**
+ * Deterministic NBSP thousands grouping — Node and browser ICUs disagree on
+ * ka-GE grouping, which broke SSR/client hydration of counters; counts here
+ * are non-negative integers.
+ */
 export function formatCountKa(n: number): string {
-  return n.toLocaleString("ka-GE");
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
 /**
