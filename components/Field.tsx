@@ -1,5 +1,8 @@
 import { useId, type InputHTMLAttributes } from "react";
 
+export const inputClasses =
+  "rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-brand";
+
 export function Field({
   label,
   error,
@@ -14,9 +17,7 @@ export function Field({
       <input
         id={id}
         aria-invalid={error ? true : undefined}
-        className={`rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-brand ${
-          error ? "border-danger" : "border-line"
-        }`}
+        className={`${inputClasses} ${error ? "border-danger" : "border-line"}`}
         {...props}
       />
       {error ? <p className="text-xs text-danger">{error}</p> : null}
