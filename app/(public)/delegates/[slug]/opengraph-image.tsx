@@ -52,8 +52,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ fontSize: 30, opacity: 0.75 }}>{delegate.region_name_ka ?? ""}</div>
+        {/* Single interpolated-string child, not two adjacent expressions: satori
+            (next/og's renderer) requires an explicit display: flex/contents/none on
+            any div with more than one child node, and two expressions separated by a
+            JSX whitespace text node count as three children. */}
         <div style={{ fontSize: 76, lineHeight: 1.1 }}>
-          {delegate.first_name} {delegate.last_name}
+          {`${delegate.first_name} ${delegate.last_name}`}
         </div>
         <div style={{ display: "flex", fontSize: 36, color: "#F4D67A" }}>
           აქტიური მხარდამჭერი: {formatCountKa(delegate.active_supporters)}

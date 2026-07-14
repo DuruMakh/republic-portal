@@ -1,3 +1,6 @@
+// This suite asserts exact facts about the CANONICAL STAGING SEED (12 approved
+// delegates, leaderboard order, pending names absent). CI never seeds — if these
+// fail on count/name mismatches, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
@@ -10,17 +13,12 @@ test.describe("home", () => {
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
     for (const id of ["stat-approved-delegates", "stat-active-members"]) {
-      // expect.poll: CountUp (components/CountUp.tsx) renders the real value on the
-      // server, then animates 0 -> value over ~1.1s after hydration. A single-shot
-      // read can land on an early animation frame and see a rounded 0 for small
-      // counts. Poll until the (real, settled) value is read instead of loosening
-      // what's asserted.
-      await expect
-        .poll(async () => {
-          const text = await page.getByTestId(id).innerText();
-          return Number(text.replace(/[^\d]/g, ""));
-        })
-        .toBeGreaterThan(0);
+      // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
+      // CountUp's (components/CountUp.tsx) animation effect short-circuits on its
+      // matchMedia check and the SSR-rendered, already-settled value is what's
+      // on screen immediately — a direct read is deterministic, no polling needed.
+      const text = await page.getByTestId(id).innerText();
+      expect(Number(text.replace(/[^\d]/g, ""))).toBeGreaterThan(0);
     }
     await page.getByRole("navigation").first().getByRole("link", { name: "დელეგატები" }).click();
     await expect(page).toHaveURL(/\/delegates$/);
@@ -28,7 +26,10 @@ test.describe("home", () => {
 
   test("join CTAs land on the opening-soon page", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "გახდი წევრი" }).first().click();
+    // The header's "გახდი წევრი" link lives outside <main> (app/(public)/layout.tsx);
+    // scoping to <main> resolves to exactly the hero CTA (app/(public)/page.tsx)
+    // without relying on DOM order via .first().
+    await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
     await expect(page).toHaveURL(/\/join/);
     await expect(page.getByRole("heading", { name: "რეგისტრაცია მალე გაიხსნება" })).toBeVisible();
   });
