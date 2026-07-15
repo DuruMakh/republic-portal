@@ -9,17 +9,22 @@ vi.mock("../actions", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
+const CITIES_BY_REGION: Record<number, { id: number; name_ka: string }[]> = {
+  1: [
+    { id: 3, name_ka: "თბილისი" },
+    { id: 4, name_ka: "რუსთავი" },
+  ],
+  2: [{ id: 9, name_ka: "ქუთაისი" }],
+};
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     from: () => ({
       select: () => ({
-        eq: () => ({
+        eq: (_column: string, regionId: number) => ({
           order: () =>
             Promise.resolve({
-              data: [
-                { id: 3, name_ka: "თბილისი" },
-                { id: 4, name_ka: "რუსთავი" },
-              ],
+              data: CITIES_BY_REGION[regionId] ?? [],
             }),
         }),
       }),
@@ -59,10 +64,11 @@ describe("ProfileForm", () => {
     await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
   });
 
-  it("non-preset employment renders as „სხვა“ with the custom text", () => {
+  it("non-preset employment renders as „სხვა“ with the custom text", async () => {
     renderForm("მეწარმე");
     expect(screen.getByLabelText("სამუშაო ადგილი / სტატუსი")).toHaveValue("__other");
     expect(screen.getByLabelText("მიუთითე საქმიანობა")).toHaveValue("მეწარმე");
+    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
   });
 
   it("submits the mapped employment and confirms in Georgian", async () => {
@@ -79,5 +85,14 @@ describe("ProfileForm", () => {
     await waitFor(() => expect(updateProfileAction).toHaveBeenCalled());
     expect(updateProfileAction.mock.calls[0]?.[0]).toMatchObject({ employment: "მეწარმე" });
     expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "გიორგი" } });
+    expect(screen.queryByTestId("profile-saved")).toBeNull();
+  });
+
+  it("resets the city selection when the region changes and the current city is invalid there", async () => {
+    renderForm("სტუდენტი");
+    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
+    fireEvent.change(screen.getByLabelText("მხარე"), { target: { value: "2" } });
+    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("9"));
   });
 });

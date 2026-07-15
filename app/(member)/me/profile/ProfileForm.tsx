@@ -48,20 +48,29 @@ export function ProfileForm({
   useEffect(() => {
     let cancelled = false;
     const supabase = createClient();
-    void supabase
-      .from("cities")
-      .select("id, name_ka")
-      .eq("region_id", regionId)
-      .order("id")
-      .then(({ data }) => {
-        if (cancelled || !data) return;
+    void Promise.resolve(
+      supabase.from("cities").select("id, name_ka").eq("region_id", regionId).order("id"),
+    )
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setError(GENERIC_FUNNEL_ERROR);
+          return;
+        }
         setCities(data);
         setCityId((current) => (data.some((c) => c.id === current) ? current : (data[0]?.id ?? 0)));
+      })
+      .catch(() => {
+        if (!cancelled) setError(GENERIC_FUNNEL_ERROR);
       });
     return () => {
       cancelled = true;
     };
   }, [regionId]);
+
+  function touch() {
+    setSaved(false);
+  }
 
   async function save() {
     setError(undefined);
@@ -78,8 +87,15 @@ export function ProfileForm({
       return;
     }
     setBusy(true);
-    const result = await updateProfileAction(parsed.data);
-    setBusy(false);
+    let result: Awaited<ReturnType<typeof updateProfileAction>>;
+    try {
+      result = await updateProfileAction(parsed.data);
+    } catch {
+      setError(GENERIC_FUNNEL_ERROR);
+      return;
+    } finally {
+      setBusy(false);
+    }
     if (!result.ok) {
       setError(result.error);
       return;
@@ -96,13 +112,19 @@ export function ProfileForm({
             label="სახელი"
             name="firstName"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e) => {
+              touch();
+              setFirstName(e.target.value);
+            }}
           />
           <Field
             label="გვარი"
             name="lastName"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => {
+              touch();
+              setLastName(e.target.value);
+            }}
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -145,7 +167,10 @@ export function ProfileForm({
               id="profile-region"
               className={`${inputClasses} border-line`}
               value={regionId}
-              onChange={(e) => setRegionId(Number(e.target.value))}
+              onChange={(e) => {
+                touch();
+                setRegionId(Number(e.target.value));
+              }}
             >
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -162,7 +187,10 @@ export function ProfileForm({
               id="profile-city"
               className={`${inputClasses} border-line`}
               value={cityId}
-              onChange={(e) => setCityId(Number(e.target.value))}
+              onChange={(e) => {
+                touch();
+                setCityId(Number(e.target.value));
+              }}
             >
               {cities.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -180,7 +208,10 @@ export function ProfileForm({
             id="profile-employment"
             className={`${inputClasses} border-line`}
             value={employmentChoice}
-            onChange={(e) => setEmploymentChoice(e.target.value)}
+            onChange={(e) => {
+              touch();
+              setEmploymentChoice(e.target.value);
+            }}
           >
             {EMPLOYMENT_PRESETS.map((p) => (
               <option key={p} value={p}>
@@ -195,7 +226,10 @@ export function ProfileForm({
               name="employmentCustom"
               value={employmentCustom}
               maxLength={100}
-              onChange={(e) => setEmploymentCustom(e.target.value)}
+              onChange={(e) => {
+                touch();
+                setEmploymentCustom(e.target.value);
+              }}
             />
           ) : null}
         </div>
