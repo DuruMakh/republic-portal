@@ -339,8 +339,8 @@ checklist); payment gateway (post-launch). **No new npm dependencies** (zod is a
 
 - Branch `claude/republic-registration-phase-2-4f2474` (this worktree, already off updated
   `main`); superpowers subagent-driven execution (fresh implementer + independent reviewer
-  per task), whole-branch review, independent `/codex review`; single PR; CI green
-  throughout; merges as **v0.3.0**.
+  per task), whole-branch review; single PR; CI green throughout; merges as **v0.3.0**.
+  (Independent `/codex review` removed from the process by owner decision, 2026-07-15.)
 - Owner sign-off package (plain language, no screenshots — DOM-verified evidence + URLs to
   click, per owner's tooling constraint): Vercel preview link; a test member and a test
   delegate registered end-to-end by the AI on the preview against staging, with the exact

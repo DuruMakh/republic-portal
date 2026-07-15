@@ -3132,7 +3132,7 @@ git commit -m "test: funnel e2e journeys (member/delegate/dup/resume/referral) +
 ## After all tasks
 
 1. Full local gate: `npm run typecheck && npm run test && npm run lint && npm run build && npm run e2e` — all green.
-2. Whole-branch review + independent `/codex review` (subagent-driven-development's closing steps), fix waves as needed.
+2. Whole-branch review (subagent-driven-development's closing step), fix waves as needed. (Independent `/codex review` removed by owner decision, 2026-07-15.)
 3. Push branch, open the PR (title "Phase 2 — Registration funnel (v0.3.0)"), CI green.
 4. Preview QA against staging: register one test member AND one test delegate on the Vercel preview URL; capture the done/pending URLs and the `GR-` codes.
 5. Owner sign-off package (plain language + clickable URLs, no screenshots): preview link, both registrations' evidence, pending-delegate-absent-from-public proof, dev-OTP hardening proof.
