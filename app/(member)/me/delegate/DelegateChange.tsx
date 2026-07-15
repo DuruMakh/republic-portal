@@ -39,6 +39,15 @@ export function DelegateChange({
     [delegates, regionId],
   );
 
+  function changeRegion(nextRegionId: number) {
+    setRegionId(nextRegionId);
+    setChoice((prev) => {
+      if (prev === CENTRAL) return prev;
+      const visible = delegates.some((d) => d.region_id === nextRegionId && d.id === prev);
+      return visible ? prev : CENTRAL;
+    });
+  }
+
   async function change() {
     setMessage(undefined);
     const selected = choice === CENTRAL ? null : choice;
@@ -79,7 +88,7 @@ export function DelegateChange({
           id="change-region"
           className={`${inputClasses} border-line`}
           value={regionId}
-          onChange={(e) => setRegionId(Number(e.target.value))}
+          onChange={(e) => changeRegion(Number(e.target.value))}
         >
           {regions.map((r) => (
             <option key={r.id} value={r.id}>
@@ -114,6 +123,7 @@ export function DelegateChange({
       </div>
       {message ? (
         <p
+          role="status"
           className={`text-sm font-semibold ${
             message.kind === "ok"
               ? "text-ok"

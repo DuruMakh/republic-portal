@@ -106,7 +106,7 @@ export default async function MyDelegatePage() {
             regions={regions ?? []}
             delegates={delegates ?? []}
             currentDelegateId={state.chosenDelegate?.id ?? null}
-            initialRegionId={state.regionId ?? regions?.[0]?.id ?? 1}
+            initialRegionId={current?.region_id ?? state.regionId ?? regions?.[0]?.id ?? 1}
           />
         </Card>
       </div>
