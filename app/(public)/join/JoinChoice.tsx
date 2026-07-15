@@ -14,7 +14,15 @@ import { createClient } from "@/lib/supabase/client";
 
 // Delegate card reuses Card's own skin (not a wrapper div around <Card>) to avoid a
 // double border when the red ring is layered on — see components/Card.tsx.
-const delegateCardSkin = `${cardSkin.replace("border-line", "border-brand")} shadow-[0_0_0_3px_rgba(200,16,46,0.08)]`;
+// Exactly ONE shadow utility: `shadow-sm` + `shadow-[...]` both set --tw-shadow and
+// stylesheet order (not class order) decides, so the ring would be lost. The arbitrary
+// value layers the ring plus shadow-sm's own v4 value in a single declaration.
+const delegateCardSkin = cardSkin
+  .replace("border-line", "border-brand")
+  .replace(
+    "shadow-sm",
+    "shadow-[0_0_0_3px_rgba(200,16,46,0.08),0_1px_3px_0_rgb(0_0_0/0.1),0_1px_2px_-1px_rgb(0_0_0/0.1)]",
+  );
 
 export function JoinChoice() {
   const router = useRouter();
