@@ -121,3 +121,18 @@ whose `.d.ts` no longer deep-imports the old path — `0.6.1` → latest (`0.12.
 jump with real behavioral changes upstream (cookie handling, `get`/`set`/`remove` deprecation) that
 this types-only task's "behavior must not change" constraint rules out; revisit as its own
 reviewed/tested upgrade.
+
+## ADR-013 (2026-07-15): Cabinet DB access is a mixed model — scoped grant + definer RPCs
+
+Phase 2 revoked the blanket client `update` on profiles and kept the "own profile
+updatable" RLS policy dormant for exactly this phase. Phase 3 re-grants `UPDATE`
+on precisely (first_name, last_name, region_id, city_id, employment): three
+independent locks — the column-scoped grant (any other column is 42501), the
+own-row RLS policy, and the protect_profile_columns() trigger as depth against
+future grant-widening. Everything compound or protected stays SECURITY DEFINER
+RPCs per ADR-009: member_change_delegate (atomic close-then-open membership
+history), member_change_tier (trigger-protected column), delegate_panel /
+delegate_team (own-delegates-row-gated reads; referral codes stay out of every
+table grant and public view). Rejected: all-RPC uniformity (wastes the prepared
+RLS path and adds definer surface for single-column own-row writes) and
+client-direct membership writes (close/open is not atomic from the client).
