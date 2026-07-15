@@ -3,8 +3,9 @@
 import { renderSVG } from "uqr";
 
 /**
- * QR of a URL as inline SVG. The markup comes from uqr (pure, zero-dep —
- * ADR-011) applied to our own value, never to user input, so inlining is safe.
+ * QR of a URL as inline SVG. Safe to inline: uqr's renderSVG encodes the value
+ * into QR geometry (paths/rects) — the input string is never reflected as
+ * markup, so no caller-supplied value can inject content (ADR-011).
  */
 export function QrCode({
   value,

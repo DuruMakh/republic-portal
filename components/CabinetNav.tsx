@@ -10,7 +10,12 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
   const router = useRouter();
 
   async function signOut() {
-    await createClient().auth.signOut();
+    try {
+      await createClient().auth.signOut();
+    } catch {
+      // best-effort: local session may survive a network failure — the cabinet
+      // layout gates re-check the server truth on the next request anyway
+    }
     router.push("/");
     router.refresh();
   }
