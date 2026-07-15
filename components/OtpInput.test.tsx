@@ -39,4 +39,28 @@ describe("OtpInput", () => {
     render(<OtpInput value="" onChange={() => undefined} error="კოდი არასწორია" />);
     expect(screen.getByText("კოდი არასწორია")).toBeInTheDocument();
   });
+  it("associates the error with every box via aria-invalid and aria-describedby", () => {
+    render(<OtpInput value="" onChange={() => undefined} error="კოდი არასწორია" />);
+    for (let i = 0; i < 6; i++) {
+      const box = screen.getByTestId(`otp-${i}`);
+      expect(box).toHaveAttribute("aria-invalid", "true");
+      const describedBy = box.getAttribute("aria-describedby");
+      expect(describedBy).toBeTruthy();
+      const description = document.getElementById(describedBy!);
+      expect(description).toHaveTextContent("კოდი არასწორია");
+    }
+  });
+  it("carries no error attributes when there is no error", () => {
+    render(<OtpInput value="" onChange={() => undefined} />);
+    const box = screen.getByTestId("otp-0");
+    expect(box).not.toHaveAttribute("aria-invalid");
+    expect(box).not.toHaveAttribute("aria-describedby");
+  });
+  it("backspace in an empty box moves focus to the previous box", () => {
+    render(<Harness />);
+    fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "1" } });
+    expect(screen.getByTestId("otp-1")).toHaveFocus();
+    fireEvent.keyDown(screen.getByTestId("otp-1"), { key: "Backspace" });
+    expect(screen.getByTestId("otp-0")).toHaveFocus();
+  });
 });

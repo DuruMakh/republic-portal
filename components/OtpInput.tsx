@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 
 const LENGTH = 6;
 
@@ -14,6 +14,7 @@ export function OtpInput({
   error?: string;
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const errorId = useId();
   const digits = Array.from({ length: LENGTH }, (_, i) => value[i] ?? "");
 
   return (
@@ -29,6 +30,8 @@ export function OtpInput({
             inputMode="numeric"
             autoComplete={i === 0 ? "one-time-code" : "off"}
             aria-label={`ციფრი ${i + 1}`}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             data-testid={`otp-${i}`}
             className={`h-14 w-11 rounded-lg border text-center text-2xl font-extrabold outline-none focus:border-brand ${
               error ? "border-danger" : "border-line"
@@ -53,7 +56,11 @@ export function OtpInput({
           />
         ))}
       </div>
-      {error ? <p className="text-center text-xs text-danger">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="text-center text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
