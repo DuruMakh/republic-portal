@@ -15,9 +15,14 @@ export default async function MemberLayout({ children }: { children: React.React
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data } = await supabase.rpc("funnel_state");
-  const state = data === null ? null : (data as unknown as FunnelState);
-  if (!state || !state.exists || !state.completed) redirect(deriveDestination(state));
+  const { data, error } = await supabase.rpc("funnel_state");
+  if (error || data === null) {
+    // transient backend failure must surface as an error, never route a
+    // completed member back into the funnel as if they had no profile
+    throw new Error(`funnel_state failed: ${error?.message ?? "empty response"}`);
+  }
+  const state = data as unknown as FunnelState;
+  if (!state.exists || !state.completed) redirect(deriveDestination(state));
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <CabinetNav items={cabinetNavItems(state.role)} />

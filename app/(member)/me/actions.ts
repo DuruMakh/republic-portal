@@ -44,7 +44,7 @@ export async function updateProfileAction(input: unknown): Promise<CabinetAction
     .eq("id", user.id);
   if (error) {
     // 23503 = composite (city_id, region_id) FK — the city isn't in the chosen region
-    if (error.code === "23503") return { ok: false, error: "აირჩიე ქალაქი არჩეული მხარიდან." };
+    if (error.code === "23503") return { ok: false, error: mapFunnelError("invalid_city") };
     return { ok: false, error: GENERIC_FUNNEL_ERROR };
   }
   return freshState(supabase);
