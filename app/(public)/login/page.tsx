@@ -3,20 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { Field } from "@/components/Field";
 import { Card } from "@/components/Card";
+import { Field } from "@/components/Field";
+import { OtpVerification } from "@/components/OtpVerification";
+import { deriveFunnelStep, funnelRoute, type FunnelState } from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeGeorgianPhone } from "@/lib/validation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [phase, setPhase] = useState<"phone" | "otp">("phone");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string>();
-  const [devOtp, setDevOtp] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   async function requestOtp() {
@@ -27,6 +26,7 @@ export default function LoginPage() {
       return;
     }
     setBusy(true);
+    const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithOtp({ phone: normalized });
     setBusy(false);
     if (err) {
@@ -35,25 +35,18 @@ export default function LoginPage() {
     }
     setPhone(normalized);
     setPhase("otp");
-    if (
-      process.env.NEXT_PUBLIC_APP_ENV === "development" ||
-      process.env.NEXT_PUBLIC_APP_ENV === "preview"
-    ) {
-      const res = await fetch(`/api/dev/otp?phone=${encodeURIComponent(normalized)}`);
-      if (res.ok) setDevOtp((await res.json()).otp);
-    }
   }
 
-  async function verify() {
-    setError(undefined);
-    setBusy(true);
-    const { error: err } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
-    setBusy(false);
-    if (err) {
-      setError("კოდი არასწორია");
+  async function routeByFunnelState() {
+    // Post-verify landing (spec §3.8): no profile → /join; otherwise the derived step.
+    const supabase = createClient();
+    const { data, error: rpcError } = await supabase.rpc("funnel_state");
+    if (rpcError || data === null) {
+      router.replace("/join");
       return;
     }
-    router.push("/me/profile");
+    const state = data as FunnelState;
+    router.replace(state.exists ? funnelRoute(deriveFunnelStep(state)) : "/join");
   }
 
   return (
@@ -74,24 +67,7 @@ export default function LoginPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            <Field
-              label="SMS კოდი"
-              name="otp"
-              inputMode="numeric"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              error={error}
-            />
-            {devOtp ? (
-              <p className="rounded-lg bg-surface p-3 text-sm text-muted-fg" data-testid="dev-otp">
-                სატესტო კოდი: <strong>{devOtp}</strong>
-              </p>
-            ) : null}
-            <Button onClick={verify} disabled={busy}>
-              დადასტურება
-            </Button>
-          </div>
+          <OtpVerification phone={phone} onVerified={routeByFunnelState} />
         )}
       </Card>
     </main>
