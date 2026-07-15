@@ -1,10 +1,13 @@
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
+import { CabinetNav } from "@/components/CabinetNav";
 import { Card } from "@/components/Card";
+import { CopyButton } from "@/components/CopyButton";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field } from "@/components/Field";
 import { Pill } from "@/components/Pill";
+import { QrCode } from "@/components/QrCode";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import {
@@ -99,6 +102,19 @@ export default function StyleguidePage() {
       </Card>
       <Card title="დელეგატის მიბმა — არჩევანი">
         <DelegateBindingPickerSample />
+      </Card>
+      <Card title="კაბინეტის კომპონენტები">
+        <div className="flex flex-col gap-5">
+          <QrCode value="https://example.org/join?ref=D00101" label="ნიმუში QR" size={140} />
+          <CopyButton text="https://example.org/join?ref=D00101" />
+          <CabinetNav
+            items={[
+              { href: "/styleguide", label: "პროფილი" },
+              { href: "/me/billing", label: "გადახდები" },
+            ]}
+          />
+          <Pill status="profile_completed" label="რეგისტრირებული" />
+        </div>
       </Card>
     </main>
   );

@@ -3,7 +3,7 @@
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { TransferInstructions } from "../TransferInstructions";
+import { TransferInstructions } from "@/components/TransferInstructions";
 import { useFunnelGuard } from "../useFunnelGuard";
 
 export default function DonePage() {

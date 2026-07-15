@@ -136,3 +136,14 @@ delegate_team (own-delegates-row-gated reads; referral codes stay out of every
 table grant and public view). Rejected: all-RPC uniformity (wastes the prepared
 RLS path and adds definer surface for single-column own-row writes) and
 client-direct membership writes (close/open is not atomic from the client).
+
+## ADR-011 (2026-07-15): QR codes via `uqr` (first new dependency since zod)
+
+The delegate panel needs a QR of the referral link (parent spec §6). Writing a
+QR encoder is wheel-reinvention with real failure modes; `uqr` (MIT, unjs) is
+zero-dependency, TypeScript-native ESM with a pure `renderSVG(value): string` —
+no canvas, no DOM, works identically in jsdom tests and the browser. Rejected:
+`qrcode` (drags pngjs/dijkstrajs and server-canvas paths we don't need),
+`qrcode-generator` (venerable but untyped UMD-global style). Rendered client-side
+so the encoded origin is the one the delegate is actually on
+(window.location.origin — previews encode the preview URL, production the real one).

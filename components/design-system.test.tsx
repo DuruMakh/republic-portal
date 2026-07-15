@@ -91,6 +91,10 @@ describe("Pill", () => {
     render(<Pill status="active_member" />);
     expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
   });
+  it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
+    render(<Pill status="profile_completed" label="რეგისტრირებული" />);
+    expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+  });
 });
 
 describe("StatCard", () => {
