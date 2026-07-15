@@ -52,7 +52,7 @@ Phase 2; this phase gives delegates the surface that shows, copies and QR-encode
 | 2 | Login/funnel handoff | **Cabinet takes over fully.** `/join/done` and `/join/pending` render exactly once, at the moment of completion (code-reveal celebration), with buttons leading into the cabinet; any later visit by a completed user — login, `/join`, or the completion URLs directly — forwards to the cabinet. The funnel becomes strictly one-way |
 | 3 | Payment history (empty until Phase 4) | **Table + honest empty state**: „გადახდები ჯერ არ არის აღრიცხული" + a note that transfers are confirmed by the finance team and active status switches on after the first confirmed payment. Fills with real rows when Phase 4 ships — no UI change needed |
 | 4 | Tier change | **Ships now** (honors Phase 2's "tier changes arrive with the Phase 3 cabinet" note). Reuses the funnel's 5/10/20 TierPicker on the payments page; changing tier only changes the monthly amount shown in the transfer instructions |
-| 5 | Cabinet DB access | **Mixed model.** Plain profile fields go through the Phase-2-prepared scoped path: a column-scoped `UPDATE` grant on exactly (first_name, last_name, region_id, city_id, employment), the kept "own profile updatable" RLS policy, and the `protect_profile_columns()` trigger as backstop — three independent locks. Everything compound or protected (change delegate, change tier, delegate panel reads) stays SECURITY DEFINER RPCs per ADR-009. Recorded as ADR-012 |
+| 5 | Cabinet DB access | **Mixed model.** Plain profile fields go through the Phase-2-prepared scoped path: a column-scoped `UPDATE` grant on exactly (first_name, last_name, region_id, city_id, employment), the kept "own profile updatable" RLS policy, and the `protect_profile_columns()` trigger as backstop — three independent locks. Everything compound or protected (change delegate, change tier, delegate panel reads) stays SECURITY DEFINER RPCs per ADR-009. Recorded as ADR-013 |
 | 6 | QR code | One new dependency — a tiny **zero-dependency QR generator** rendering SVG client-side (first new package since zod). Recorded as ADR-011 |
 
 ## 3. Screens
@@ -387,7 +387,7 @@ caller. Reuses the throwaway-user pattern the script already has.
   `/styleguide` gallery updated.
 - **Docs:** ARCHITECTURE.md gains a "Cabinets" section (route gates, mixed mutation
   model, panel read RPCs); DECISIONS.md appends ADR-011 (QR dependency: which package
-  and why) and ADR-012 (mixed cabinet DB access model, decision #5 rationale);
+  and why) and ADR-013 (mixed cabinet DB access model, decision #5 rationale);
   CHANGELOG + version bump to **v0.4.0**. Cabinet routes stay out of the sitemap
   (authed pages).
 

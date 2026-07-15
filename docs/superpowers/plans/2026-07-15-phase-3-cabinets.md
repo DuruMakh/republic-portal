@@ -4,7 +4,7 @@
 
 **Goal:** Give every completed registrant a home — a member cabinet (`/me/profile`, `/me/delegate`, `/me/billing`: profile editing via the Phase-2-prepared scoped path, delegate changing with history, reference code + transfer instructions + tier change + honest empty payment history) and a delegate panel (`/delegate`, `/delegate/team`: live referral link + QR, live counts, team table) — with login/funnel routing handing off so completed users land in the cabinet and the funnel becomes one-way.
 
-**Architecture:** Mixed DB access model (ADR-012): plain profile fields go through a column-scoped `UPDATE` grant + the dormant "own profile updatable" RLS policy + the `protect_profile_columns()` trigger backstop; everything compound or protected (change delegate, change tier, delegate panel reads) is SECURITY DEFINER RPCs per ADR-009. Cabinet pages are per-request **server-rendered** behind server-side layout gates (the service worker has treated `/me` and `/delegate` as NetworkOnly since Phase 0 — verified in `app/sw.ts:27`), with small client components for interactivity. Pure logic in `lib/`.
+**Architecture:** Mixed DB access model (ADR-013): plain profile fields go through a column-scoped `UPDATE` grant + the dormant "own profile updatable" RLS policy + the `protect_profile_columns()` trigger backstop; everything compound or protected (change delegate, change tier, delegate panel reads) is SECURITY DEFINER RPCs per ADR-009. Cabinet pages are per-request **server-rendered** behind server-side layout gates (the service worker has treated `/me` and `/delegate` as NetworkOnly since Phase 0 — verified in `app/sw.ts:27`), with small client components for interactivity. Pure logic in `lib/`.
 
 **Tech Stack:** Next.js 16 (App Router), TypeScript 6 strict, Tailwind 4, Supabase (`@supabase/ssr` + RPCs), zod, `uqr` (QR SVG — the one new dependency, ADR-011), Vitest + Testing Library, Playwright.
 
@@ -846,7 +846,7 @@ git commit -m "feat: typed Database generic for all supabase client factories"
 **Files:**
 - Create: `supabase/migrations/20260715213000_cabinets.sql`
 - Modify: `scripts/verify-schema.mjs` (flip one Phase 2 probe; append the Phase 3 probe block)
-- Modify: `DECISIONS.md` (append ADR-012 — text below; DECISIONS.md is append-only)
+- Modify: `DECISIONS.md` (append ADR-013 — text below; DECISIONS.md is append-only)
 
 **Interfaces:**
 - Consumes: Phase 2 objects — `funnel_state()`, `funnel_start()`, `gen_funnel_code()`, `protect_profile_columns()` trigger, `one_active_membership` unique index.
@@ -993,7 +993,7 @@ Expected: FAIL at the scoped-update probe (`scoped profiles UPDATE (allowed colu
 
 ```sql
 -- Phase 3: cabinets. Spec: docs/superpowers/specs/2026-07-15-phase-3-cabinets-design.md
--- Mixed access model (ADR-012): column-scoped grant for plain profile fields;
+-- Mixed access model (ADR-013): column-scoped grant for plain profile fields;
 -- SECURITY DEFINER RPCs for compound/protected mutations and delegate reads.
 
 -- 1) Scoped profile re-grant (spec §4.1) --------------------------------------
@@ -1281,10 +1281,10 @@ revoke execute on function delegate_team() from public, anon;
 -- replacement (Postgres preserves ACLs on replace), so no re-grant needed.
 ```
 
-- [ ] **Step 4: Append ADR-012 to `DECISIONS.md`**
+- [ ] **Step 4: Append ADR-013 to `DECISIONS.md`**
 
 ```markdown
-## ADR-012 (2026-07-15): Cabinet DB access is a mixed model — scoped grant + definer RPCs
+## ADR-013 (2026-07-15): Cabinet DB access is a mixed model — scoped grant + definer RPCs
 
 Phase 2 revoked the blanket client `update` on profiles and kept the "own profile
 updatable" RLS policy dormant for exactly this phase. Phase 3 re-grants `UPDATE`
@@ -1737,7 +1737,7 @@ async function freshState(
 }
 
 /**
- * Scoped-path profile edit (spec §4.1, ADR-012): a plain UPDATE through the
+ * Scoped-path profile edit (spec §4.1, ADR-013): a plain UPDATE through the
  * caller's own cookie-bound client — the column-scoped grant, own-row RLS and
  * the protect trigger enforce everything in-DB. No service role anywhere.
  */
@@ -4222,7 +4222,7 @@ Run: `npx vitest run components/ && npm run typecheck` — expected PASS (OtpInp
 
 /me/* (member) and /delegate/* (delegate panel) are per-request server-rendered
 behind layout gates (session + completed registration + role) — safe because the
-service worker treats them NetworkOnly. DB access is a mixed model (ADR-012):
+service worker treats them NetworkOnly. DB access is a mixed model (ADR-013):
 the five plain profile fields update through a column-scoped grant + own-row RLS
 + the protect-columns trigger; compound writes (member_change_delegate =
 close-then-open membership history; member_change_tier) and delegate reads
@@ -4250,7 +4250,7 @@ so it can never disagree with the leaderboard.
   table; pending and rejected states; sign-out.
 - Referral links live end-to-end; login/funnel handoff — completed users land
   in the cabinet, the funnel is one-way; session-aware public header.
-- DB: column-scoped profile UPDATE re-grant + four cabinet RPCs (ADR-012);
+- DB: column-scoped profile UPDATE re-grant + four cabinet RPCs (ADR-013);
   funnel_start referral-input cap; funnel_state exposes status + timestamps.
 - Hygiene: typed Database generic on all supabase factories; staging e2e-user
   sweep + login e2e teardown fix; REFERENCE_CODE_RE derived from the alphabet;
