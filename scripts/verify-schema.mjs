@@ -53,10 +53,10 @@ if (e6.code !== "42501")
 // --- Phase 1 rider: created_at protection trigger + authenticated delegates seal ---
 // The probes above only exercise the service-role and anon roles. This block drives
 // the *authenticated* role end-to-end against a throwaway user, proving:
-//   (a) protect_profile_columns() discriminates by column (an ordinary update succeeds)
-//       rather than RLS silently blocking every update outright;
-//   (b) the same trigger actually rejects a created_at write, by message, not just
-//       "some error happened";
+//   (a) direct authenticated UPDATEs on profiles are denied at the grant (Phase 2
+//       revoked the grant; all writes go through the funnel RPCs);
+//   (b) a created_at write is denied the same way; the trigger-message assertion
+//       returns when Phase 3 re-grants scoped updates;
 //   (c) the delegates base-table seal (RLS + revoked grants in
 //       20260713175043_public_read_model.sql) holds for authenticated too, not only anon.
 // Self-contained and idempotent: cleans up its own leftovers on every run.
@@ -102,27 +102,31 @@ try {
   });
   if (signInErr) throw new Error(`probe sign-in failed: ${signInErr.message}`);
 
-  // (a) an ordinary column update must succeed end-to-end — check the row actually
-  // came back updated, since an UPDATE with no matching rows also reports no error.
-  const { data: updated, error: updateErr } = await authed
+  // (a) Phase 2 revoked the authenticated UPDATE grant on profiles (all writes go
+  // through the funnel RPCs); the protect_profile_columns trigger remains as
+  // defense-in-depth for Phase 3's scoped re-grant. An ordinary column update
+  // must now be DENIED at the grant.
+  const { error: updateErr } = await authed
     .from("profiles")
     .update({ first_name: "პრობი2" })
-    .eq("id", probeUserId)
-    .select("first_name");
-  if (updateErr)
-    throw new Error(`expected first_name update to succeed, got: ${updateErr.message}`);
-  if (!updated || updated.length !== 1 || updated[0].first_name !== "პრობი2")
-    throw new Error(`first_name update affected ${updated?.length ?? 0} rows, expected 1`);
+    .eq("id", probeUserId);
+  if (!updateErr)
+    throw new Error("LEAK: expected first_name update to be denied (grant revoked), but it succeeded");
+  if (updateErr.code !== "42501" && !updateErr.message.includes("permission denied"))
+    throw new Error(
+      `expected 42501/permission denied for first_name update, got (${updateErr.code}) ${updateErr.message}`,
+    );
 
-  // (b) created_at must be rejected by the trigger, by message — not RLS, not silence.
+  // (b) created_at: denied at the revoked grant too. The trigger-message
+  // ("server-managed") assertion returns when Phase 3 re-grants scoped updates.
   const { error: createdAtErr } = await authed
     .from("profiles")
     .update({ created_at: "2020-01-01T00:00:00Z" })
     .eq("id", probeUserId);
   if (!createdAtErr) throw new Error("expected created_at update to fail, but it succeeded");
-  if (!createdAtErr.message.includes("server-managed"))
+  if (createdAtErr.code !== "42501" && !createdAtErr.message.includes("permission denied"))
     throw new Error(
-      `expected a "server-managed" trigger error, got (${createdAtErr.code}) ${createdAtErr.message}`,
+      `expected 42501/permission denied for created_at update, got (${createdAtErr.code}) ${createdAtErr.message}`,
     );
 
   // (c) delegates base table must stay sealed to authenticated too (revoked grants +
@@ -236,5 +240,5 @@ try {
 }
 
 console.log(
-  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed, created_at trigger enforced, authenticated sealed`,
+  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed, client profiles UPDATE revoked, authenticated sealed`,
 );
