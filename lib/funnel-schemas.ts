@@ -9,7 +9,7 @@ export const EMPLOYMENT_PRESETS = [
   "დროებით უმუშევარი",
 ] as const;
 
-const nameSchema = z
+export const nameSchema = z
   .string()
   .trim()
   .min(1, { message: "შეავსე ეს ველი" })
@@ -47,6 +47,12 @@ export const startSchema = z.object({
   refCode: refCodeSchema.nullish(),
 });
 
+export const employmentSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "მიუთითე საქმიანობა." })
+  .max(100, { message: "მაქსიმუმ 100 სიმბოლო" });
+
 const profileBase = {
   personalId: z.string().regex(/^\d{11}$/, { message: "პირადი ნომერი უნდა იყოს 11 ციფრი." }),
   birthDate: z
@@ -57,11 +63,7 @@ const profileBase = {
     }),
   regionId: z.number().int().positive({ message: "აირჩიე მხარე." }),
   cityId: z.number().int().positive({ message: "აირჩიე ქალაქი." }),
-  employment: z
-    .string()
-    .trim()
-    .min(1, { message: "მიუთითე საქმიანობა." })
-    .max(100, { message: "მაქსიმუმ 100 სიმბოლო" }),
+  employment: employmentSchema,
 };
 
 export const profileActionSchema = z.discriminatedUnion("role", [
