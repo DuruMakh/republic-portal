@@ -1,0 +1,14 @@
+# Text files always use LF, matching Prettier's endOfLine default — otherwise
+# fresh checkouts on Windows (core.autocrlf=true) materialize CRLF and the next
+# `npm run format` rewrites every file, flooding git status with phantom changes.
+* text=auto eol=lf
+
+# Binary assets: never eol-convert
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
