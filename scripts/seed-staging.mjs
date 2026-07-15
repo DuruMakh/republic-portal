@@ -168,6 +168,7 @@ await insertChunked(
     personal_id: personalIdFor(p.i),
     region_id: regionId.get(p.region),
     status: p.status,
+    ...(p.delegate ? { signup_role: "delegate" } : {}),
   })),
 );
 

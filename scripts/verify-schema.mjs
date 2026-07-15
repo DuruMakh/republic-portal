@@ -53,10 +53,10 @@ if (e6.code !== "42501")
 // --- Phase 1 rider: created_at protection trigger + authenticated delegates seal ---
 // The probes above only exercise the service-role and anon roles. This block drives
 // the *authenticated* role end-to-end against a throwaway user, proving:
-//   (a) protect_profile_columns() discriminates by column (an ordinary update succeeds)
-//       rather than RLS silently blocking every update outright;
-//   (b) the same trigger actually rejects a created_at write, by message, not just
-//       "some error happened";
+//   (a) direct authenticated UPDATEs on profiles are denied at the grant (Phase 2
+//       revoked the grant; all writes go through the funnel RPCs);
+//   (b) a created_at write is denied the same way; the trigger-message assertion
+//       returns when Phase 3 re-grants scoped updates;
 //   (c) the delegates base-table seal (RLS + revoked grants in
 //       20260713175043_public_read_model.sql) holds for authenticated too, not only anon.
 // Self-contained and idempotent: cleans up its own leftovers on every run.
@@ -102,27 +102,33 @@ try {
   });
   if (signInErr) throw new Error(`probe sign-in failed: ${signInErr.message}`);
 
-  // (a) an ordinary column update must succeed end-to-end — check the row actually
-  // came back updated, since an UPDATE with no matching rows also reports no error.
-  const { data: updated, error: updateErr } = await authed
+  // (a) Phase 2 revoked the authenticated UPDATE grant on profiles (all writes go
+  // through the funnel RPCs); the protect_profile_columns trigger remains as
+  // defense-in-depth for Phase 3's scoped re-grant. An ordinary column update
+  // must now be DENIED at the grant.
+  const { error: updateErr } = await authed
     .from("profiles")
     .update({ first_name: "პრობი2" })
-    .eq("id", probeUserId)
-    .select("first_name");
-  if (updateErr)
-    throw new Error(`expected first_name update to succeed, got: ${updateErr.message}`);
-  if (!updated || updated.length !== 1 || updated[0].first_name !== "პრობი2")
-    throw new Error(`first_name update affected ${updated?.length ?? 0} rows, expected 1`);
+    .eq("id", probeUserId);
+  if (!updateErr)
+    throw new Error(
+      "LEAK: expected first_name update to be denied (grant revoked), but it succeeded",
+    );
+  if (updateErr.code !== "42501" && !updateErr.message.includes("permission denied"))
+    throw new Error(
+      `expected 42501/permission denied for first_name update, got (${updateErr.code}) ${updateErr.message}`,
+    );
 
-  // (b) created_at must be rejected by the trigger, by message — not RLS, not silence.
+  // (b) created_at: denied at the revoked grant too. The trigger-message
+  // ("server-managed") assertion returns when Phase 3 re-grants scoped updates.
   const { error: createdAtErr } = await authed
     .from("profiles")
     .update({ created_at: "2020-01-01T00:00:00Z" })
     .eq("id", probeUserId);
   if (!createdAtErr) throw new Error("expected created_at update to fail, but it succeeded");
-  if (!createdAtErr.message.includes("server-managed"))
+  if (createdAtErr.code !== "42501" && !createdAtErr.message.includes("permission denied"))
     throw new Error(
-      `expected a "server-managed" trigger error, got (${createdAtErr.code}) ${createdAtErr.message}`,
+      `expected 42501/permission denied for created_at update, got (${createdAtErr.code}) ${createdAtErr.message}`,
     );
 
   // (c) delegates base table must stay sealed to authenticated too (revoked grants +
@@ -149,6 +155,92 @@ try {
   }
 }
 
+// --- Phase 2: registration funnel probes ---
+{
+  // anon must not be able to call the funnel RPCs at all
+  const { error: anonRpcErr } = await anon.rpc("funnel_state");
+  if (!anonRpcErr) throw new Error("LEAK: anon can call funnel_state()");
+  console.log("OK: anon funnel_state() rejected");
+
+  // authenticated end-to-end: start → save profile → complete (twice, idempotent)
+  const FUNNEL_PROBE_EMAIL = "funnel-probe@example.com";
+  const leftover = await findUserByEmail(FUNNEL_PROBE_EMAIL);
+  if (leftover) {
+    const { error } = await db.auth.admin.deleteUser(leftover.id);
+    if (error) throw new Error(`cleanup of leftover funnel probe failed: ${error.message}`);
+  }
+  const funnelProbePassword = randomBytes(24).toString("hex");
+  const { data: fpUser, error: fpCreateErr } = await db.auth.admin.createUser({
+    email: FUNNEL_PROBE_EMAIL,
+    password: funnelProbePassword,
+    email_confirm: true,
+  });
+  if (fpCreateErr) throw new Error(`funnel probe createUser failed: ${fpCreateErr.message}`);
+  const fpId = fpUser.user.id;
+  try {
+    const authed = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    const { error: fpSignInErr } = await authed.auth.signInWithPassword({
+      email: FUNNEL_PROBE_EMAIL,
+      password: funnelProbePassword,
+    });
+    if (fpSignInErr) throw new Error(`funnel probe sign-in failed: ${fpSignInErr.message}`);
+
+    const { data: s1, error: e1r } = await authed.rpc("funnel_start", {
+      p_first_name: "პრობი",
+      p_last_name: "ფანელი",
+      p_role: "member",
+      p_ref_code: null,
+    });
+    if (e1r) throw new Error(`funnel_start failed: ${e1r.message}`);
+    if (s1.exists !== true || s1.role !== "member")
+      throw new Error(`funnel_start returned unexpected state: ${JSON.stringify(s1)}`);
+
+    // direct client write to a guarded funnel column must be denied (grant revoked)
+    const { error: directErr } = await authed
+      .from("profiles")
+      .update({ first_name: "შეცვლილი" })
+      .eq("id", fpId);
+    if (!directErr)
+      throw new Error("LEAK: authenticated can still UPDATE profiles directly (grant not revoked)");
+    console.log("OK: direct authenticated profiles UPDATE denied");
+
+    const { data: firstCity, error: cityErr } = await db
+      .from("cities")
+      .select("id, region_id")
+      .limit(1)
+      .single();
+    if (cityErr) throw new Error(`city lookup failed: ${cityErr.message}`);
+
+    const { error: e2r } = await authed.rpc("funnel_save_profile", {
+      p_personal_id: "98765432109",
+      p_birth_date: "1990-01-15",
+      p_region_id: firstCity.region_id,
+      p_city_id: firstCity.id,
+      p_employment: "პრობის საქმიანობა",
+      p_delegate_id: null,
+      p_tc_accepted: false,
+    });
+    if (e2r) throw new Error(`funnel_save_profile failed: ${e2r.message}`);
+
+    const { data: c1, error: e3r } = await authed.rpc("funnel_complete", { p_tier: 10 });
+    if (e3r) throw new Error(`funnel_complete failed: ${e3r.message}`);
+    if (!/^GR-[A-HJKMNP-Z2-9]{6}$/.test(c1.referenceCode ?? ""))
+      throw new Error(`reference code malformed: ${c1.referenceCode}`);
+
+    const { data: c2, error: e4r } = await authed.rpc("funnel_complete", { p_tier: 20 });
+    if (e4r) throw new Error(`repeat funnel_complete errored: ${e4r.message}`);
+    if (c2.referenceCode !== c1.referenceCode || c2.tier !== 10)
+      throw new Error(
+        `funnel_complete not idempotent: ${c1.referenceCode}/${c1.tier} → ${c2.referenceCode}/${c2.tier}`,
+      );
+    console.log(`OK: funnel RPCs end-to-end (code ${c1.referenceCode}, idempotent complete)`);
+  } finally {
+    const { error } = await db.auth.admin.deleteUser(fpId);
+    if (error)
+      console.error(`WARNING: funnel probe cleanup (deleteUser ${fpId}) failed: ${error.message}`);
+  }
+}
+
 console.log(
-  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed, created_at trigger enforced, authenticated sealed`,
+  `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed, client profiles UPDATE revoked, authenticated sealed`,
 );

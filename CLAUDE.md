@@ -8,8 +8,10 @@ UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
 
 ## Process (non-negotiable)
 
-- Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Claude + /codex review)
-  → /qa on preview → OWNER sign-off on the Vercel preview link → merge.
+- Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Claude:
+  independent per-task reviews + whole-branch review) → /qa on preview → OWNER sign-off
+  on the Vercel preview link → merge. (Independent /codex review dropped by owner
+  decision, 2026-07-15.)
 - Owner writes zero code and reads no code. All evidence for sign-off must be
   plain-language + screenshots + a preview URL.
 - Never merge with failing CI. Never push directly to main.

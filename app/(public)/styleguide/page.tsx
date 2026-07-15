@@ -7,6 +7,12 @@ import { Field } from "@/components/Field";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
+import {
+  DelegateBindingPickerSample,
+  DelegateBindingReferralSample,
+  OtpInputSample,
+  TierPickerSample,
+} from "./samples";
 
 export default function StyleguidePage() {
   return (
@@ -81,6 +87,18 @@ export default function StyleguidePage() {
       </Card>
       <Card title="სტეპერი">
         <Stepper current={2} />
+      </Card>
+      <Card title="SMS კოდის ველი">
+        <OtpInputSample />
+      </Card>
+      <Card title="საწევროს არჩევა">
+        <TierPickerSample />
+      </Card>
+      <Card title="დელეგატის მიბმა — რეფერალით">
+        <DelegateBindingReferralSample />
+      </Card>
+      <Card title="დელეგატის მიბმა — არჩევანი">
+        <DelegateBindingPickerSample />
       </Card>
     </main>
   );

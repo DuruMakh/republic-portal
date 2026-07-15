@@ -26,6 +26,20 @@ Phone → supabase.auth.signInWithOtp → Send-SMS hook (Postgres fn) delivers c
 dev/staging writes to dev_otp_inbox (surfaced on-screen); production will call a Georgian
 SMS provider (Phase 6). verifyOtp creates the session (cookie via @supabase/ssr session refresh in proxy.ts — Next 16's successor to middleware.ts).
 
+## Registration funnel (Phase 2)
+
+/join is a 3-step client funnel (choice → contact+OTP → legal profile → tier) with
+member and delegate variants. All funnel writes go through four SECURITY DEFINER
+Postgres RPCs (funnel_start / funnel_save_profile / funnel_complete / funnel_state) —
+atomic, subject always auth.uid(), validation re-checked in-DB. The client UPDATE
+grant on profiles is revoked, so the RPCs are the only client write path (Phase 3
+re-grants a scoped path for cabinet editing). Thin zod-validated server actions sit
+in front; funnel pages fetch state client-side on mount (useFunnelGuard) and redirect
+client-side only. After OTP verification the login page routes by funnel state (no
+profile → /join; draft → the derived step; completed → done/pending) instead of
+/me/profile. Member reference codes (GR-XXXXXX) and delegate referral codes are
+generated in-DB (gen_funnel_code, Crockford-style 31-char alphabet, no I/L/O/0/1).
+
 ## Status derivation
 
 Member/delegate statuses and supporter counts are always computed from source tables
