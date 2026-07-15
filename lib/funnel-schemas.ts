@@ -53,6 +53,10 @@ export const employmentSchema = z
   .min(1, { message: "მიუთითე საქმიანობა." })
   .max(100, { message: "მაქსიმუმ 100 სიმბოლო" });
 
+export const regionIdSchema = z.number().int().positive({ message: "აირჩიე მხარე." });
+export const cityIdSchema = z.number().int().positive({ message: "აირჩიე ქალაქი." });
+export const delegateIdSchema = z.string().uuid({ message: "არასწორი დელეგატი" }).nullable();
+
 const profileBase = {
   personalId: z.string().regex(/^\d{11}$/, { message: "პირადი ნომერი უნდა იყოს 11 ციფრი." }),
   birthDate: z
@@ -61,8 +65,8 @@ const profileBase = {
     .refine((v) => v >= "1900-01-01" && v < new Date().toISOString().slice(0, 10), {
       message: "თარიღი უნდა იყოს წარსულში.",
     }),
-  regionId: z.number().int().positive({ message: "აირჩიე მხარე." }),
-  cityId: z.number().int().positive({ message: "აირჩიე ქალაქი." }),
+  regionId: regionIdSchema,
+  cityId: cityIdSchema,
   employment: employmentSchema,
 };
 
@@ -70,7 +74,7 @@ export const profileActionSchema = z.discriminatedUnion("role", [
   z.object({
     role: z.literal("member"),
     ...profileBase,
-    delegateId: z.string().uuid({ message: "არასწორი დელეგატი" }).nullable(),
+    delegateId: delegateIdSchema,
   }),
   z.object({
     role: z.literal("delegate"),

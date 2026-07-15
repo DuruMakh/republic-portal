@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { employmentSchema, nameSchema } from "./funnel-schemas";
+import {
+  cityIdSchema,
+  delegateIdSchema,
+  employmentSchema,
+  nameSchema,
+  regionIdSchema,
+} from "./funnel-schemas";
 
 /**
  * Cabinet profile edit (spec §3.3): exactly the five re-granted columns.
@@ -9,12 +15,12 @@ import { employmentSchema, nameSchema } from "./funnel-schemas";
 export const profileUpdateSchema = z.object({
   firstName: nameSchema,
   lastName: nameSchema,
-  regionId: z.number().int().positive({ message: "აირჩიე მხარე." }),
-  cityId: z.number().int().positive({ message: "აირჩიე ქალაქი." }),
+  regionId: regionIdSchema,
+  cityId: cityIdSchema,
   employment: employmentSchema,
 });
 
 /** Change delegate (spec §4.2): null = ცენტრალური მოძრაობა. */
 export const changeDelegateSchema = z.object({
-  delegateId: z.string().uuid({ message: "არასწორი დელეგატი" }).nullable(),
+  delegateId: delegateIdSchema,
 });
