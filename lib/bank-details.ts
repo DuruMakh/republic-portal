@@ -6,7 +6,7 @@
  */
 export const BANK_DETAILS = {
   placeholder: true,
-  recipientName: "ააიპ „ქართული რესპუბლიკა” (დროებითი)",
+  recipientName: "ააიპ „ქართული რესპუბლიკა“ (დროებითი)",
   bankName: "საბანკო რეკვიზიტები ზუსტდება",
   iban: "GE00 XXXX 0000 0000 0000 00",
 } as const;
