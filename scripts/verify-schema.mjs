@@ -120,8 +120,9 @@ try {
       `expected 42501/permission denied for status update, got (${updateErr.code}) ${updateErr.message}`,
     );
 
-  // (b) created_at: denied at the revoked grant too. The trigger-message
-  // ("server-managed") assertion returns when Phase 3 re-grants scoped updates.
+  // (b) created_at: denied at the column grant (42501) — it sits outside Phase 3's
+  // scoped re-grant, same as (a). The protect_profile_columns trigger remains
+  // behind the grant as defense-in-depth.
   const { error: createdAtErr } = await authed
     .from("profiles")
     .update({ created_at: "2020-01-01T00:00:00Z" })
@@ -195,6 +196,27 @@ try {
     if (e1r) throw new Error(`funnel_start failed: ${e1r.message}`);
     if (s1.exists !== true || s1.role !== "member")
       throw new Error(`funnel_start returned unexpected state: ${JSON.stringify(s1)}`);
+
+    // referral-cap rider (spec §4.6): while still draft, an oversized ref input
+    // must be silently nulled on the WRITE path (stored column, not the lookup)
+    const { error: capErr } = await authed.rpc("funnel_start", {
+      p_first_name: "პრობა",
+      p_last_name: "პრობიშვილი",
+      p_role: "member",
+      p_ref_code: "x".repeat(64),
+    });
+    if (capErr)
+      throw new Error(`funnel_start with oversized ref must not error: ${capErr.message}`);
+    const { data: capRow, error: capReadErr } = await db
+      .from("profiles")
+      .select("signup_ref_code")
+      .eq("id", fpId)
+      .single();
+    if (capReadErr) throw new Error(`cap probe read failed: ${capReadErr.message}`);
+    if (capRow.signup_ref_code !== null)
+      throw new Error(
+        `oversized referral input must be stored as null, got ${capRow.signup_ref_code}`,
+      );
 
     // Phase 3 (spec §4.1): the scoped re-grant. An allowed column writes; a
     // server-managed column is refused at the column-privilege level (42501) —
@@ -317,17 +339,6 @@ try {
     });
     if (!anonRpcErr) throw new Error("LEAK: anon can execute member_change_delegate");
 
-    // referral-cap rider (spec §4.6): oversized ref must be silently nulled, not error
-    const { data: capState, error: capErr } = await authed.rpc("funnel_start", {
-      p_first_name: "პრობა",
-      p_last_name: "პრობიშვილი",
-      p_role: "member",
-      p_ref_code: "x".repeat(64),
-    });
-    if (capErr)
-      throw new Error(`funnel_start with oversized ref must not error: ${capErr.message}`);
-    if (capState.referral !== null)
-      throw new Error("oversized referral input must resolve to null referral");
     console.log(
       "OK: cabinet RPCs — history-keeping change, no-op guard, tier change, gates, ref cap",
     );
