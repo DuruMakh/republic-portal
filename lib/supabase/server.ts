@@ -1,7 +1,12 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./types";
 
-export async function createServerSupabase() {
+// No explicit <Database> on createServerClient — see the comment in client.ts
+// (@supabase/ssr@0.6.x's generic is broken against the installed @supabase/supabase-js;
+// annotating the function return instead gets the correct typed client). See DECISIONS.md ADR-012.
+export async function createServerSupabase(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

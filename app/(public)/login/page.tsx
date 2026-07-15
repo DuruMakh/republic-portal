@@ -45,7 +45,7 @@ export default function LoginPage() {
       router.replace("/join");
       return;
     }
-    const state = data as FunnelState;
+    const state = data as unknown as FunnelState;
     router.replace(state.exists ? funnelRoute(deriveFunnelStep(state)) : "/join");
   }
 

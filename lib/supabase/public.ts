@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { PublicDelegate } from "@/lib/ranking";
+import type { Database } from "./types";
 
 export interface PublicStats {
   approved_delegates: number;
@@ -13,7 +14,7 @@ export interface Region {
 }
 
 function publicClient() {
-  return createClient(
+  return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } },

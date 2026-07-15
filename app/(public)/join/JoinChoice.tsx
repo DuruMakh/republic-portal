@@ -47,7 +47,7 @@ export function JoinChoice() {
       if (!user || cancelled) return;
       const { data, error } = await supabase.rpc("funnel_state");
       if (error || cancelled || data === null) return;
-      const state = data as FunnelState;
+      const state = data as unknown as FunnelState;
       if (state.exists) router.replace(funnelRoute(deriveFunnelStep(state)));
     });
     return () => {

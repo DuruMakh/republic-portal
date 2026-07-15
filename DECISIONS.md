@@ -91,3 +91,33 @@ rejected personal-ID-as-reference after a data-protection briefing (IDs would le
 bank statements and finance tooling). Bank recipient details ship as clearly-marked
 placeholders in `lib/bank-details.ts` until the owner opens the account (launch-checklist
 item; swapping = editing that one module).
+
+## ADR-012 (2026-07-16): Typed Supabase clients omit the ssr helpers' own `<Database>` generic
+
+`lib/supabase/types.ts` hand-maintains the `Database` type (ADR-005: no `supabase gen types`
+without local Docker). Wiring it into the five client factories (Phase 3 hygiene item) surfaced
+a real dependency-version-skew bug, not a `types.ts` drift issue: `@supabase/ssr@0.6.1`'s
+`createBrowserClient`/`createServerClient` `.d.ts` files import `GenericSchema` from
+`"@supabase/supabase-js/dist/module/lib/types"`, a path that no longer exists in the installed
+`@supabase/supabase-js@2.110.2` (its build output was restructured to a flat `dist/index.d.mts`).
+`skipLibCheck: true` (tsconfig) silences the resulting unresolved-module error inside that `.d.ts`
+rather than failing the build, and the import silently resolves to `any`; that `any` then flows
+into ssr's `SupabaseClient<Database, SchemaName, Schema>` return-type expression and lands in the
+wrong positional slot against the current (also restructured) `SupabaseClient` class signature —
+RPC argument objects were typed as unassignable to `undefined`, and every table/view row typed as
+`never`. Confirmed by isolated repro: calling the _same_ `@supabase/supabase-js` `createClient`
+(used unmodified by `lib/supabase/admin.ts` and `lib/supabase/public.ts`) with `<Database>` types
+correctly; only the three `@supabase/ssr`-routed factories (`client.ts`, `server.ts`,
+`middleware.ts`) were affected.
+
+Fix: those three factories call `createBrowserClient`/`createServerClient` **without** an explicit
+`<Database>` argument, and instead type the function's return (`client.ts`, `server.ts`) or the
+local variable (`middleware.ts`) as `SupabaseClient<Database>` — imported directly from
+`@supabase/supabase-js`, whose own default type-parameter resolution is unaffected by ssr's broken
+passthrough. Since ssr's un-parameterized return type involves `any` throughout, the assignment to
+the explicitly-typed target succeeds without a cast. Zero runtime difference (same function calls,
+same arguments); purely a types-only workaround. Rejected: bumping `@supabase/ssr` to a version
+whose `.d.ts` no longer deep-imports the old path — `0.6.1` → latest (`0.12.3`) is a 6-minor-version
+jump with real behavioral changes upstream (cookie handling, `get`/`set`/`remove` deprecation) that
+this types-only task's "behavior must not change" constraint rules out; revisit as its own
+reviewed/tested upgrade.

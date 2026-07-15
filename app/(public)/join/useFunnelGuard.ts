@@ -47,7 +47,7 @@ export function useFunnelGuard(step: FunnelStep): {
       if (mountedRef.current) setState(null);
       return null;
     }
-    const next = data as FunnelState;
+    const next = data as unknown as FunnelState;
     if (mountedRef.current) setState(next);
     return next;
   }, []);

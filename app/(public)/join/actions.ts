@@ -21,7 +21,7 @@ export async function funnelStartAction(input: unknown): Promise<ActionResult> {
     p_ref_code: parsed.data.refCode ?? null,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true, state: data as FunnelState };
+  return { ok: true, state: data as unknown as FunnelState };
 }
 
 export async function funnelSaveProfileAction(input: unknown): Promise<ActionResult> {
@@ -38,7 +38,7 @@ export async function funnelSaveProfileAction(input: unknown): Promise<ActionRes
     p_tc_accepted: parsed.data.role === "delegate",
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true, state: data as FunnelState };
+  return { ok: true, state: data as unknown as FunnelState };
 }
 
 export async function funnelCompleteAction(input: unknown): Promise<ActionResult> {
@@ -47,5 +47,5 @@ export async function funnelCompleteAction(input: unknown): Promise<ActionResult
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc("funnel_complete", { p_tier: parsed.data.tier });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true, state: data as FunnelState };
+  return { ok: true, state: data as unknown as FunnelState };
 }
