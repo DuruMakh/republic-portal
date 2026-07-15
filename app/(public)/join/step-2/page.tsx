@@ -14,13 +14,20 @@ import { useFunnelGuard } from "../useFunnelGuard";
 
 const DUPLICATE_PID_MESSAGE = "ეს პირადი ნომერი უკვე რეგისტრირებულია.";
 
-type FieldKey =
-  | "personalId"
-  | "birthDate"
-  | "regionId"
-  | "cityId"
-  | "employment"
-  | "tcAccepted";
+const FIELD_KEYS = [
+  "personalId",
+  "birthDate",
+  "regionId",
+  "cityId",
+  "employment",
+  "tcAccepted",
+] as const;
+
+type FieldKey = (typeof FIELD_KEYS)[number];
+
+function isFieldKey(key: unknown): key is FieldKey {
+  return typeof key === "string" && (FIELD_KEYS as readonly string[]).includes(key);
+}
 
 function LabeledSelect({
   label,
@@ -164,11 +171,18 @@ export default function Step2Page() {
     const parsed = profileActionSchema.safeParse(input);
     if (!parsed.success) {
       const next: Partial<Record<FieldKey, string>> = {};
+      let unmapped: string | undefined;
       for (const issue of parsed.error.issues) {
         const key = issue.path[0];
-        if (typeof key === "string" && key !== "role") next[key as FieldKey] = issue.message;
+        if (isFieldKey(key)) {
+          next[key] = issue.message;
+        } else {
+          // e.g. delegateId — no field renders it, so surface via the form-level error
+          unmapped ??= issue.message;
+        }
       }
       setErrors(next);
+      if (unmapped !== undefined) setFormError(unmapped);
       return;
     }
     setErrors({});
