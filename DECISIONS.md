@@ -68,3 +68,26 @@ and eslint-ignored (generated artifact, rebuilt every production build).
 New dependency: `esbuild` (devDependency, pinned `^0.28.1` — already present in the
 tree as a transitive dependency at that exact version, so this made it explicit
 rather than implicit) — used only by `scripts/build-sw.mjs`.
+
+## ADR-009 (2026-07-15): Funnel mutations are SECURITY DEFINER Postgres RPCs
+
+Every registration-funnel write (funnel_start / funnel_save_profile / funnel_complete) is
+one definer function: atomic by construction, subject always auth.uid(), all validation
+re-checked in-DB, exposed to `authenticated` only. Server actions stay thin (zod parse +
+RPC call + Georgian error mapping). Rejected: service-role TS orchestration (multi-write
+non-atomic without a pg driver dependency) and client-direct writes under RLS (violates
+server-source-of-truth). Rider: the client `update` grant on `profiles` is revoked — no
+legitimate direct client write path remains until Phase 3's scoped cabinet editing.
+Note (deferred from Phase 0): the composite FK `profiles(city_id, region_id)` uses MATCH
+SIMPLE, so a partial update (one column NULL) would bypass the city-in-region pairing;
+acceptable because the funnel RPC always writes both together and validates the pair.
+
+## ADR-010 (2026-07-15): Payment reference codes are platform-issued, not personal IDs
+
+Members get a permanent random `GR-XXXXXX` code (31-char Crockford-style alphabet, no
+I/L/O/0/1) generated in-DB at funnel completion; new delegates' referral codes use the
+same generator (6 chars, no prefix; seeded `D#####` codes coexist). The owner explicitly
+rejected personal-ID-as-reference after a data-protection briefing (IDs would leak into
+bank statements and finance tooling). Bank recipient details ship as clearly-marked
+placeholders in `lib/bank-details.ts` until the owner opens the account (launch-checklist
+item; swapping = editing that one module).
