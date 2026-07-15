@@ -74,12 +74,22 @@ export const profileActionSchema = z.discriminatedUnion("role", [
   z.object({
     role: z.literal("delegate"),
     ...profileBase,
-    tcAccepted: z.literal(true, { message: "საჭიროა წესებზე თანხმობა." }),
+    // zod v3's `{ message }` shorthand only feeds invalid_type / invalid_enum_value
+    // issues (see processCreateParams in zod/v3/types.js) — a literal mismatch
+    // raises `invalid_literal`, so `z.literal(true, { message })` silently falls
+    // back to zod's English default ("Invalid literal value, expected true") and
+    // breaks the Georgian-only UI text rule (CLAUDE.md). An explicit errorMap
+    // applies unconditionally and fixes it.
+    tcAccepted: z.literal(true, {
+      errorMap: () => ({ message: "საჭიროა წესებზე თანხმობა." }),
+    }),
   }),
 ]);
 
 export const tierSchema = z.object({
+  // Same zod v3 quirk as tcAccepted above: a z.union's `invalid_union` issue code
+  // ignores the `{ message }` shorthand too, so this needs an explicit errorMap.
   tier: z.union([z.literal(5), z.literal(10), z.literal(20)], {
-    message: "აირჩიე საწევრო პაკეტი.",
+    errorMap: () => ({ message: "აირჩიე საწევრო პაკეტი." }),
   }),
 });

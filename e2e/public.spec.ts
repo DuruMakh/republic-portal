@@ -24,14 +24,16 @@ test.describe("home", () => {
     await expect(page).toHaveURL(/\/delegates$/);
   });
 
-  test("join CTAs land on the opening-soon page", async ({ page }) => {
+  test("join CTAs land on the registration choice screen", async ({ page }) => {
     await page.goto("/");
     // The header's "გახდი წევრი" link lives outside <main> (app/(public)/layout.tsx);
     // scoping to <main> resolves to exactly the hero CTA (app/(public)/page.tsx)
     // without relying on DOM order via .first().
     await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
     await expect(page).toHaveURL(/\/join/);
-    await expect(page.getByRole("heading", { name: "რეგისტრაცია მალე გაიხსნება" })).toBeVisible();
+    // Phase 2 (Task 5) replaced the Phase-1 "opening soon" placeholder with the
+    // live funnel choice screen (app/(public)/join/JoinChoice.tsx) — see funnel.spec.ts.
+    await expect(page.getByRole("heading", { name: "როგორ გსურს შემოგვიერთდე?" })).toBeVisible();
   });
 });
 

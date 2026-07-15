@@ -88,10 +88,18 @@ describe("profileActionSchema", () => {
       profileActionSchema.safeParse({ role: "delegate", ...validProfileBase, tcAccepted: true })
         .success,
     ).toBe(true);
-    expect(
-      profileActionSchema.safeParse({ role: "delegate", ...validProfileBase, tcAccepted: false })
-        .success,
-    ).toBe(false);
+    const result = profileActionSchema.safeParse({
+      role: "delegate",
+      ...validProfileBase,
+      tcAccepted: false,
+    });
+    expect(result.success).toBe(false);
+    // regression: zod v3's `z.literal(true, { message })` shorthand ignores the
+    // custom message for invalid_literal issues and falls back to English —
+    // must go through an explicit errorMap instead (see lib/funnel-schemas.ts).
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("საჭიროა წესებზე თანხმობა.");
+    }
   });
   it("rejects bad personal IDs, future birth dates, empty employment", () => {
     expect(
@@ -124,7 +132,13 @@ describe("profileActionSchema", () => {
 describe("tierSchema", () => {
   it("accepts only 5, 10, 20", () => {
     expect(tierSchema.safeParse({ tier: 10 }).success).toBe(true);
-    expect(tierSchema.safeParse({ tier: 15 }).success).toBe(false);
+    const result = tierSchema.safeParse({ tier: 15 });
+    expect(result.success).toBe(false);
+    // regression: z.union's `{ message }` shorthand ignores invalid_union issues
+    // too — same zod v3 quirk as tcAccepted above.
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("აირჩიე საწევრო პაკეტი.");
+    }
   });
 });
 
