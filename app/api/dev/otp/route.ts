@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
   // Phase 2 hardening (spec §4.4, decision #6): never serve codes for completed or
   // active accounts — this endpoint must not be an account-takeover oracle. Both
   // phone formats are matched so a format mismatch can never fail OPEN.
+  // .limit(1) is safe: profiles.phone is UNIQUE and every write path (funnel_start, seed) pins +E.164 format — at most one row can match.
   const { data: profiles, error: profileErr } = await admin
     .from("profiles")
     .select("status, registration_completed_at")

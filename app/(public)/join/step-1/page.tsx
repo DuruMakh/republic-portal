@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -39,6 +39,13 @@ function Step1() {
   const [formError, setFormError] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current !== null) clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
 
   async function submitContact() {
     setFormError(undefined);
@@ -75,7 +82,10 @@ function Step1() {
     if (result.state.completed) {
       // duplicate registration — only revealed after proving phone ownership (spec §6)
       setNotice("ეს ნომერი უკვე რეგისტრირებულია");
-      setTimeout(() => router.replace(funnelRoute(deriveFunnelStep(result.state))), 1500);
+      redirectTimeoutRef.current = setTimeout(
+        () => router.replace(funnelRoute(deriveFunnelStep(result.state))),
+        1500,
+      );
       return;
     }
     router.replace(funnelRoute(deriveFunnelStep(result.state)));

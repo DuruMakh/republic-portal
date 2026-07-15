@@ -7,12 +7,11 @@ import { Card } from "@/components/Card";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Field, inputClasses } from "@/components/Field";
 import { Stepper } from "@/components/Stepper";
+import { DUPLICATE_PERSONAL_ID_MESSAGE } from "@/lib/funnel";
 import { EMPLOYMENT_PRESETS, profileActionSchema } from "@/lib/funnel-schemas";
 import { createClient } from "@/lib/supabase/client";
 import { funnelSaveProfileAction } from "../actions";
 import { useFunnelGuard } from "../useFunnelGuard";
-
-const DUPLICATE_PID_MESSAGE = "ეს პირადი ნომერი უკვე რეგისტრირებულია.";
 
 const FIELD_KEYS = [
   "personalId",
@@ -190,7 +189,7 @@ export default function Step2Page() {
     const result = await funnelSaveProfileAction(parsed.data);
     setBusy(false);
     if (!result.ok) {
-      if (result.error === DUPLICATE_PID_MESSAGE) {
+      if (result.error === DUPLICATE_PERSONAL_ID_MESSAGE) {
         setErrors({ personalId: result.error });
       } else {
         setFormError(result.error);
@@ -326,6 +325,7 @@ export default function Step2Page() {
                   <a
                     href="/join/terms"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="font-semibold text-brand underline underline-offset-2"
                   >
                     წესებსა და პირობებს

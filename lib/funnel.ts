@@ -85,6 +85,8 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   invalid_name: "შეავსე სახელი და გვარი.",
 };
 
+export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;
+
 export const GENERIC_FUNNEL_ERROR = "რაღაც შეცდომა მოხდა — სცადე თავიდან.";
 
 export function mapFunnelError(message: string | null | undefined): string {
