@@ -48,13 +48,20 @@ describe("deriveFunnelStep", () => {
     expect(deriveFunnelStep(state({ personalIdSet: true, completed: true }))).toBe("done");
     expect(
       deriveFunnelStep(
-        state({ role: "delegate", personalIdSet: true, completed: true, delegateStatus: "pending" }),
+        state({
+          role: "delegate",
+          personalIdSet: true,
+          completed: true,
+          delegateStatus: "pending",
+        }),
       ),
     ).toBe("pending");
   });
   it("legacy active_member without funnel data counts as completed (spec §3.8)", () => {
     // funnel_state() sets completed=true for status='active_member'; lib trusts the flag
-    expect(deriveFunnelStep(state({ personalIdSet: true, completed: true, tier: null }))).toBe("done");
+    expect(deriveFunnelStep(state({ personalIdSet: true, completed: true, tier: null }))).toBe(
+      "done",
+    );
   });
 });
 

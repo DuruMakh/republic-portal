@@ -55,12 +55,16 @@ export async function getSeededReferral(): Promise<{ code: string; fullName: str
     .eq("status", "approved")
     .limit(1)
     .single();
-  if (delegateErr || !delegate) throw new Error(`no approved seeded delegate found: ${delegateErr?.message}`);
+  if (delegateErr || !delegate)
+    throw new Error(`no approved seeded delegate found: ${delegateErr?.message}`);
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
     .select("first_name, last_name")
     .eq("id", delegate.id)
     .single();
   if (profileErr || !profile) throw new Error(`delegate profile not found: ${profileErr?.message}`);
-  return { code: delegate.referral_code as string, fullName: `${profile.first_name} ${profile.last_name}` };
+  return {
+    code: delegate.referral_code as string,
+    fullName: `${profile.first_name} ${profile.last_name}`,
+  };
 }

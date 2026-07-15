@@ -16,7 +16,5 @@ test("phone OTP login end-to-end (dev delivery)", async ({ page }) => {
   await page.getByRole("button", { name: "დადასტურება" }).click();
   // fresh phone with no profile row → funnel entry (spec §3.8)
   await expect(page).toHaveURL(/\/join$/);
-  await expect(
-    page.getByRole("heading", { name: "როგორ გსურს შემოგვიერთდე?" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "როგორ გსურს შემოგვიერთდე?" })).toBeVisible();
 });

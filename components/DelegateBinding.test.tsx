@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { DelegateBinding } from "./DelegateBinding";
 
 const options = [
-  { id: "11111111-1111-4111-8111-111111111111", fullName: "გიორგი მაისურაძე", regionNameKa: "თბილისი" },
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    fullName: "გიორგი მაისურაძე",
+    regionNameKa: "თბილისი",
+  },
 ];
 
 describe("DelegateBinding", () => {
@@ -21,7 +25,9 @@ describe("DelegateBinding", () => {
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
   it("picker mode: central movement first and default", () => {
-    render(<DelegateBinding referral={null} options={options} value={null} onChange={() => undefined} />);
+    render(
+      <DelegateBinding referral={null} options={options} value={null} onChange={() => undefined} />,
+    );
     const select = screen.getByRole("combobox");
     const items = screen.getAllByRole("option");
     expect(items[0]).toHaveTextContent("ცენტრალური მოძრაობა");

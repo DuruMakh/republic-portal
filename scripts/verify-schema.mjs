@@ -111,7 +111,9 @@ try {
     .update({ first_name: "პრობი2" })
     .eq("id", probeUserId);
   if (!updateErr)
-    throw new Error("LEAK: expected first_name update to be denied (grant revoked), but it succeeded");
+    throw new Error(
+      "LEAK: expected first_name update to be denied (grant revoked), but it succeeded",
+    );
   if (updateErr.code !== "42501" && !updateErr.message.includes("permission denied"))
     throw new Error(
       `expected 42501/permission denied for first_name update, got (${updateErr.code}) ${updateErr.message}`,

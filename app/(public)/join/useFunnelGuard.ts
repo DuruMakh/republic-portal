@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { canAccess, deriveFunnelStep, funnelRoute, type FunnelState, type FunnelStep } from "@/lib/funnel";
+import {
+  canAccess,
+  deriveFunnelStep,
+  funnelRoute,
+  type FunnelState,
+  type FunnelStep,
+} from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 
 /**

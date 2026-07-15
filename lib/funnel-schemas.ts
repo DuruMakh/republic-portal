@@ -52,10 +52,9 @@ const profileBase = {
   birthDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "მიუთითე დაბადების თარიღი." })
-    .refine(
-      (v) => v >= "1900-01-01" && v < new Date().toISOString().slice(0, 10),
-      { message: "თარიღი უნდა იყოს წარსულში." },
-    ),
+    .refine((v) => v >= "1900-01-01" && v < new Date().toISOString().slice(0, 10), {
+      message: "თარიღი უნდა იყოს წარსულში.",
+    }),
   regionId: z.number().int().positive({ message: "აირჩიე მხარე." }),
   cityId: z.number().int().positive({ message: "აირჩიე ქალაქი." }),
   employment: z

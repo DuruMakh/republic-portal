@@ -56,12 +56,12 @@ describe("startSchema", () => {
       startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "member", refCode: "D00101" })
         .success,
     ).toBe(true);
-    expect(
-      startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "delegate" }).success,
-    ).toBe(true);
-    expect(
-      startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "admin" }).success,
-    ).toBe(false);
+    expect(startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "delegate" }).success).toBe(
+      true,
+    );
+    expect(startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "admin" }).success).toBe(
+      false,
+    );
     expect(
       startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "member", refCode: "bad ref!" })
         .success,

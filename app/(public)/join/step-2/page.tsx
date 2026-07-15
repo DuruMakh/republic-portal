@@ -333,7 +333,9 @@ export default function Step2Page() {
                   . ვადასტურებ, რომ მოწოდებული მონაცემები ნამდვილია.
                 </span>
               </label>
-              {errors.tcAccepted ? <p className="text-xs text-danger">{errors.tcAccepted}</p> : null}
+              {errors.tcAccepted ? (
+                <p className="text-xs text-danger">{errors.tcAccepted}</p>
+              ) : null}
             </div>
           )}
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}

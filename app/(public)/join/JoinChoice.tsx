@@ -90,8 +90,8 @@ export function JoinChoice() {
             </span>
             <h3 className="text-lg font-bold text-ink">დელეგატი</h3>
             <p className="flex-1 text-sm text-muted-fg">
-              ააგე საკუთარი გუნდი, მიიღე პერსონალური რეფერალური ლინკი და მართვის პანელი.
-              საჯაროდ ჩნდები დადასტურების შემდეგ.
+              ააგე საკუთარი გუნდი, მიიღე პერსონალური რეფერალური ლინკი და მართვის პანელი. საჯაროდ
+              ჩნდები დადასტურების შემდეგ.
             </p>
             <ButtonLink href="/join/step-1?role=delegate" variant="dark" className="w-full">
               გახდი დელეგატი
