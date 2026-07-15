@@ -1,4 +1,4 @@
-const labels = ["კონტაქტი", "პროფილი", "წევრობა"] as const;
+const labels = ["კონტაქტი", "იურ. პროფილი", "საწევრო"] as const;
 
 export function Stepper({ current }: { current: 1 | 2 | 3 }) {
   return (

@@ -22,3 +22,7 @@ Phase 1: Card gains header + padded props; Badge = generic count/label chip.
 
 Page background is white (body bg-white); `surface` #F6F7F9 is for wells, inputs,
 pills and inactive elements — matching prototype usage.
+
+Phase 2: OtpInput (6-box SMS code entry), TierPicker (5/10/20 ₾ radiogroup),
+DelegateBinding (referral card / region-filtered picker with „ცენტრალური მოძრაობა"
+default). Stepper labels are the funnel's: კონტაქტი / იურ. პროფილი / საწევრო.
