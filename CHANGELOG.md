@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.0 — Phase 2: Registration funnel (2026-07-15)
+
+- Real 3-step /join funnel (member + delegate variants): contact + 6-digit OTP with
+  resumable server-side drafts
+- Legal profile step: duplicate personal-ID check, region→city cascade, delegate
+  binding (referral links pre-fill, „ცენტრალური მოძრაობა" default)
+- Tier step: 5/10/20 GEL + manual bank-transfer instructions with permanent
+  per-member GR-XXXXXX reference codes (placeholder recipient details until launch)
+- Delegate T&C (placeholder terms page) + pending-approval end state; pending
+  delegates on no public surface
+- Four SECURITY DEFINER RPCs as the sole client write path to profiles (client
+  UPDATE grant revoked); statuses stay derived
+- Login routes by funnel state
+- Dev OTP endpoint hardened: refuses completed/active accounts, purges stale codes
+  (closes the Phase 0 oracle)
+- e2e: five funnel journeys (member/delegate/dup/resume/referral) on a
+  collision-safe 55-block per-run phone scheme
+
 ## 0.2.0 — Phase 1: Public core
 
 - Real public site on seeded staging data: home (hero + live counters), delegate
