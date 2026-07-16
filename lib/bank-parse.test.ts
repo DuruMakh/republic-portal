@@ -82,4 +82,22 @@ describe("parseStatementRows (spec §3.5, §5)", () => {
     expect(rows[0]!.code).toBeNull();
     expect(rows[1]!.code).toBeNull();
   });
+
+  it("too-long code bodies do not match at all (no silent truncation)", () => {
+    const [r] = parseStatementRows("15.07.2026 GR-ABC2345 20.00");
+    expect(r!.code).toBeNull();
+    expect(r!.problems).toContain("no_code");
+  });
+
+  it("the earliest date token wins regardless of format", () => {
+    const [r] = parseStatementRows("2026-07-15 payment 01.08.2026 GR-ABC234 20.00");
+    expect(r!.paidAt).toBe("2026-07-15");
+  });
+
+  it("a code repeated in the narration never pollutes amount candidates", () => {
+    const [r] = parseStatementRows("15.07.2026 GR-ABC234 GR-ABC234 20");
+    expect(r!.code).toBe("GR-ABC234");
+    expect(r!.amountGel).toBe(20);
+    expect(r!.problems).toEqual([]);
+  });
 });

@@ -19,8 +19,9 @@ export interface ParsedStatementRow {
   problems: ParserProblem[];
 }
 
-// hyphen optional, any case; captured body normalized to GR-UPPER
-const CODE_RE = new RegExp(`GR-?([${FUNNEL_CODE_ALPHABET}]{6})`, "i");
+// hyphen optional, any case; captured body normalized to GR-UPPER;
+// trailing lookahead: an over-long body must not match at all (no silent truncation)
+const CODE_RE = new RegExp(`GR-?([${FUNNEL_CODE_ALPHABET}]{6})(?![${FUNNEL_CODE_ALPHABET}])`, "i");
 // dd.mm.yyyy or yyyy-mm-dd
 const DATE_DOT_RE = /\b(\d{2})\.(\d{2})\.(\d{4})\b/;
 const DATE_ISO_RE = /\b(\d{4})-(\d{2})-(\d{2})\b/;
@@ -34,19 +35,26 @@ function plausibleDate(y: number, m: number, d: number): boolean {
 }
 
 function extractDate(line: string): { iso: string; raw: string } | null {
+  // spec §5: the FIRST plausible date token wins, regardless of format — so
+  // collect each format's first match and pick the one starting earliest.
+  const candidates: { at: number; iso: string; raw: string }[] = [];
   const dot = DATE_DOT_RE.exec(line);
   if (dot) {
-    const [raw, dd, mm, yyyy] = dot;
+    // `!`: a successful match guarantees capture groups 1–3 exist
+    const [dd, mm, yyyy] = [dot[1]!, dot[2]!, dot[3]!];
     if (plausibleDate(Number(yyyy), Number(mm), Number(dd)))
-      return { iso: `${yyyy}-${mm}-${dd}`, raw };
+      candidates.push({ at: dot.index, iso: `${yyyy}-${mm}-${dd}`, raw: dot[0] });
   }
   const iso = DATE_ISO_RE.exec(line);
   if (iso) {
-    const [raw, yyyy, mm, dd] = iso;
+    // `!`: a successful match guarantees capture groups 1–3 exist
+    const [yyyy, mm, dd] = [iso[1]!, iso[2]!, iso[3]!];
     if (plausibleDate(Number(yyyy), Number(mm), Number(dd)))
-      return { iso: `${yyyy}-${mm}-${dd}`, raw };
+      candidates.push({ at: iso.index, iso: `${yyyy}-${mm}-${dd}`, raw: iso[0] });
   }
-  return null;
+  candidates.sort((a, b) => a.at - b.at);
+  const first = candidates[0];
+  return first ? { iso: first.iso, raw: first.raw } : null;
 }
 
 function toAmount(token: string): number {
@@ -62,10 +70,11 @@ function parseLine(line: string, index: number): ParsedStatementRow {
 
   const date = extractDate(line);
 
-  // strip code + date substrings so their digits never become amount candidates
+  // strip code + date substrings (every occurrence) so their digits never
+  // become amount candidates
   let cleaned = line;
-  if (codeMatch) cleaned = cleaned.replace(codeMatch[0], " ");
-  if (date) cleaned = cleaned.replace(date.raw, " ");
+  if (codeMatch) cleaned = cleaned.replaceAll(codeMatch[0], " ");
+  if (date) cleaned = cleaned.replaceAll(date.raw, " ");
 
   let amountGel: number | null = null;
   const decimals = [...cleaned.matchAll(DECIMAL_RE)].map((m) => toAmount(m[0]));
@@ -99,7 +108,7 @@ export function parseStatementRows(text: string): ParsedStatementRow[] {
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
-  const rows = lines.map(parseLine).map((row, index) => ({ ...row, index }));
+  const rows = lines.map(parseLine);
   const seen = new Map<string, number>();
   for (const row of rows) {
     const prior = seen.get(row.line);
