@@ -1,32 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
+import { PendingExplainer } from "@/components/PendingExplainer";
 import { Pill } from "@/components/Pill";
-import { TransferInstructions } from "../TransferInstructions";
+import { TransferInstructions } from "@/components/TransferInstructions";
+import { deriveDestination } from "@/lib/cabinet";
+import { clearFreshCompletion, peekFreshCompletion } from "../fresh-completion";
 import { useFunnelGuard } from "../useFunnelGuard";
 
-const POINTS: { icon: string; title: string; body: string }[] = [
-  {
-    icon: "🔗",
-    title: "რეფერალური ბმული ჯერ დეაქტივირებულია.",
-    body: "დამტკიცების შემდეგ პერსონალური ბმული გააქტიურდება და შეძლებ გუნდის აწყობას.",
-  },
-  {
-    icon: "🙈",
-    title: "პროფილი ჯერ არ არის საჯარო.",
-    body: "დელეგატი არ ჩანს პორტალსა და რეიტინგში, სანამ მონაცემები არ დადასტურდება.",
-  },
-  {
-    icon: "✅",
-    title: "დამტკიცების შემდეგ.",
-    body: "ბმული გააქტიურდება, პროფილი გახდება საჯარო და გამოჩნდები დელეგატების რეიტინგში.",
-  },
-];
-
 export default function PendingPage() {
+  const router = useRouter();
   const { state, ready } = useFunnelGuard("pending");
-  if (!ready || !state) return null;
+  const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
+
+  useEffect(() => {
+    // consume only once this screen renders (see done/page.tsx) — clearing on bare
+    // mount could skip the confirmation screen on a transient guard failure.
+    if (ready && state && fresh) clearFreshCompletion();
+  }, [ready, state, fresh]);
+
+  useEffect(() => {
+    if (ready && state && !fresh) router.replace(deriveDestination(state));
+  }, [ready, state, fresh, router]);
+
+  if (!ready || !state || !fresh) return null;
 
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
@@ -44,22 +44,11 @@ export default function PendingPage() {
             ადასტურებს დელეგატის იურიდიულ ვერიფიკაციას.
           </p>
         </div>
-        <div className="mt-6 flex flex-col gap-4">
-          {POINTS.map((p) => (
-            <div key={p.icon} className="flex items-start gap-3">
-              <span className="text-lg" aria-hidden>
-                {p.icon}
-              </span>
-              <div>
-                <p className="text-sm font-bold text-ink">{p.title}</p>
-                <p className="text-sm text-muted-fg">{p.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PendingExplainer />
         <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
-        <div className="mt-6">
-          <ButtonLink href="/" className="w-full">
+        <div className="mt-6 flex flex-col gap-2">
+          <ButtonLink href="/delegate">გადადი პანელზე</ButtonLink>
+          <ButtonLink href="/" variant="ghost">
             მთავარი გვერდი
           </ButtonLink>
         </div>

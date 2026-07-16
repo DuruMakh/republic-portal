@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0 — 2026-07-16 (Phase 3: cabinets)
+
+- Member cabinet: profile editing (five scoped fields; phone + personal ID
+  visibly locked), delegate change with full history and instant counters,
+  payments page — permanent GR-code + transfer instructions + tier change +
+  honest empty history.
+- Delegate panel: live referral link + QR (uqr, ADR-011), live counts
+  (active / total / drafts), leaderboard-consistent rank, searchable team
+  table; pending and rejected states; sign-out.
+- Referral links live end-to-end; login/funnel handoff — completed users land
+  in the cabinet, the funnel is one-way; session-aware public header.
+- DB: column-scoped profile UPDATE re-grant + four cabinet RPCs (ADR-013);
+  funnel_start referral-input cap; funnel_state exposes status + timestamps.
+- Hygiene: typed Database generic on all supabase factories; staging e2e-user
+  sweep + login e2e teardown fix; REFERENCE_CODE_RE derived from the alphabet;
+  deterministic seeded-referral pick; OtpVerification robustness minors;
+  TransferInstructions shared.
+
 ## 0.3.0 — Phase 2: Registration funnel (2026-07-15)
 
 - Real 3-step /join funnel (member + delegate variants): contact + 6-digit OTP with

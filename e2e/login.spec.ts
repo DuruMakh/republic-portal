@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { cleanupLoginUser } from "./funnel-helpers";
 
 // staging-only; hook delivers OTP to dev_otp_inbox. CI derives a per-run 55-block
 // phone (run number + attempt, final digit 9 = login journey) so concurrent runs
 // and the canonical 50-block seed can never collide.
 const TEST_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
+
+test.afterAll(cleanupLoginUser);
 
 test("phone OTP login end-to-end (dev delivery)", async ({ page }) => {
   await page.goto("/login");

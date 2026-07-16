@@ -6,7 +6,8 @@ import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
-import { deriveFunnelStep, funnelRoute, type FunnelState } from "@/lib/funnel";
+import { deriveDestination } from "@/lib/cabinet";
+import type { FunnelState } from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeGeorgianPhone } from "@/lib/validation";
 
@@ -45,8 +46,7 @@ export default function LoginPage() {
       router.replace("/join");
       return;
     }
-    const state = data as FunnelState;
-    router.replace(state.exists ? funnelRoute(deriveFunnelStep(state)) : "/join");
+    router.replace(deriveDestination(data as unknown as FunnelState));
   }
 
   return (

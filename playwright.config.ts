@@ -4,6 +4,8 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
+  // shared staging state (per-run users + seed-count assertions) — spec files must never overlap
+  workers: 1,
   use: {
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",

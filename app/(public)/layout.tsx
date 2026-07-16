@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ButtonLink";
 import { DemoBanner } from "@/components/DemoBanner";
+import { HeaderSessionAction } from "@/components/HeaderSessionAction";
 
 const nav = [
   { href: "/", label: "მთავარი" },
@@ -39,9 +40,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-2">
-            <ButtonLink href="/login" variant="ghost" size="sm">
-              შესვლა
-            </ButtonLink>
+            <HeaderSessionAction />
             <ButtonLink href="/join" size="sm">
               გახდი წევრი
             </ButtonLink>

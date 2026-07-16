@@ -40,6 +40,23 @@ profile → /join; draft → the derived step; completed → done/pending) inste
 /me/profile. Member reference codes (GR-XXXXXX) and delegate referral codes are
 generated in-DB (gen_funnel_code, Crockford-style 31-char alphabet, no I/L/O/0/1).
 
+## Cabinets (Phase 3)
+
+`/me/*` (member) and `/delegate/*` (delegate panel) are per-request server-rendered
+behind layout gates (session + completed registration + role) — safe because the
+service worker treats them NetworkOnly. DB access is a mixed model (ADR-013):
+the five plain profile fields update through a column-scoped grant + own-row RLS +
+the protect-columns trigger; compound writes (member_change_delegate =
+close-then-open membership history; member_change_tier) and delegate reads
+(delegate_panel / delegate_team — the only client path to the caller's referral
+code) are SECURITY DEFINER RPCs. funnel_state() also returns
+status/registrationCompletedAt/createdAt. deriveDestination (lib/cabinet.ts)
+sends completed users to their cabinet from login, /join and the funnel guards;
+the funnel is one-way — done/pending render once via a sessionStorage marker set
+by step 3. The public header swaps შესვლა→კაბინეტი client-side (the cached shell
+stays session-agnostic). Dashboard rank reuses lib/ranking over public_delegates,
+so it can never disagree with the leaderboard.
+
 ## Status derivation
 
 Member/delegate statuses and supporter counts are always computed from source tables

@@ -1,17 +1,104 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { Card } from "@/components/Card";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { Eyebrow } from "@/components/Eyebrow";
+import { Pill } from "@/components/Pill";
+import { initialsKa, memberSinceKa } from "@/lib/cabinet";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { ProfileForm } from "./ProfileForm";
+
+export const metadata: Metadata = { title: "ჩემი პროფილი — ქართული რესპუბლიკა" };
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // funnel_state is request-cached (already fetched by the layout); the user and
+  // region lookups are independent, so fan them out in parallel.
+  const [state, { data: userData }, { data: regions, error: regionsError }] = await Promise.all([
+    getFunnelState(), // (member) layout guarantees exists+completed
+    supabase.auth.getUser(),
+    supabase.from("regions").select("id, name_ka").order("id"),
+  ]);
+  const user = userData.user;
+  if (regionsError) {
+    // a failed regions load must not render an empty region picker
+    throw new Error(`regions query failed: ${regionsError.message}`);
+  }
+  const regionName = (regions ?? []).find((r) => r.id === state.regionId)?.name_ka ?? "—";
+  const since = memberSinceKa(state.registrationCompletedAt ?? state.createdAt);
+
   return (
-    <Card title="ჩემი პროფილი">
-      <p className="text-sm text-muted-fg" data-testid="profile-phone">
-        ტელეფონი: {user?.phone ?? "—"}
-      </p>
-      <p className="mt-2 text-sm text-muted-fg">პროფილის სრული ფუნქციონალი მალე დაემატება.</p>
-    </Card>
+    <main>
+      <div className="mb-8">
+        <Eyebrow>პირადი კაბინეტი</Eyebrow>
+        <h1 className="mt-1 text-2xl font-bold text-ink">ჩემი პროფილი</h1>
+        <p className="mt-2 text-sm text-muted-fg">
+          მართე შენი პერსონალური მონაცემები და წევრობის სტატუსი.
+        </p>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr] lg:items-start">
+        <Card>
+          <div className="text-center">
+            <div
+              className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-xl font-bold text-brand"
+              aria-hidden
+            >
+              {initialsKa(state.firstName, state.lastName)}
+            </div>
+            <h2 className="text-lg font-bold text-ink">
+              {state.firstName} {state.lastName}
+            </h2>
+            <div className="mt-2">
+              <Pill
+                status={state.status === "active_member" ? "active_member" : "profile_completed"}
+                label={state.status === "active_member" ? "აქტიური" : "რეგისტრირებული"}
+              />
+            </div>
+          </div>
+          <dl className="mt-5 flex flex-col gap-2.5 border-t border-line pt-4 text-sm">
+            {since ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-fg">წევრი</dt>
+                <dd className="font-semibold text-ink">{since}</dd>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-fg">რეგიონი</dt>
+              <dd className="font-semibold text-ink" data-testid="summary-region">
+                {regionName}
+              </dd>
+            </div>
+            {state.role === "member" ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-fg">დელეგატი</dt>
+                <dd className="font-semibold text-ink" data-testid="summary-delegate">
+                  {state.chosenDelegate
+                    ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
+                    : "ცენტრალური მოძრაობა"}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          {state.role === "member" ? (
+            <Link
+              href="/me/delegate"
+              className="mt-4 inline-block text-sm font-semibold text-brand hover:underline"
+            >
+              დელეგატის შეცვლა →
+            </Link>
+          ) : null}
+        </Card>
+        <ProfileForm
+          initial={{
+            firstName: state.firstName,
+            lastName: state.lastName,
+            regionId: state.regionId,
+            cityId: state.cityId,
+            employment: state.employment,
+          }}
+          phone={user?.phone ?? null}
+          regions={regions ?? []}
+        />
+      </div>
+    </main>
   );
 }

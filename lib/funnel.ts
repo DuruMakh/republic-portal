@@ -19,6 +19,9 @@ export interface FunnelChosenDelegate {
   lastName: string;
 }
 
+/** profiles.status values a signed-in client can ever see for itself. */
+export type MemberStatus = "draft" | "profile_completed" | "active_member";
+
 /** Mirrors the funnel_state() RPC jsonb exactly (keys are camelCase in SQL). */
 export interface FunnelState {
   exists: boolean;
@@ -33,6 +36,9 @@ export interface FunnelState {
   tier: Tier | null;
   referenceCode: string | null;
   completed: boolean;
+  status: MemberStatus;
+  registrationCompletedAt: string | null; // ISO timestamptz; null on legacy pre-Phase-2 rows
+  createdAt: string; // profile creation — member-since fallback for legacy rows (spec §3.3)
   delegateStatus: "pending" | "approved" | "rejected" | null;
   referral: FunnelReferral | null;
   chosenDelegate: FunnelChosenDelegate | null; // null = ცენტრალური მოძრაობა (or none yet)
@@ -58,7 +64,7 @@ export function canAccess(step: FunnelStep, state: FunnelState | null): boolean 
   return step === "step-2" && current === "step-3";
 }
 
-const REFERENCE_CODE_RE = /^GR-[A-HJKMNP-Z2-9]{6}$/;
+const REFERENCE_CODE_RE = new RegExp(`^GR-[${FUNNEL_CODE_ALPHABET}]{6}$`);
 
 export function isReferenceCode(value: string): boolean {
   return REFERENCE_CODE_RE.test(value);
@@ -81,6 +87,9 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   profile_incomplete: "ჯერ შეავსე წინა ნაბიჯები.",
   already_completed: "რეგისტრაცია უკვე დასრულებულია.",
   not_authenticated: "სესია ამოიწურა — დაადასტურე ნომერი თავიდან.",
+  not_completed: "ჯერ დაასრულე რეგისტრაცია.",
+  not_a_member: "ეს მოქმედება მხოლოდ წევრებისთვისაა.",
+  not_a_delegate: "დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.",
   invalid_role: "დაფიქსირდა შეცდომა — სცადე თავიდან.",
   invalid_name: "შეავსე სახელი და გვარი.",
 };

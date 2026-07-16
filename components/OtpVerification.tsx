@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { OtpInput } from "@/components/OtpInput";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
@@ -21,6 +21,14 @@ export function OtpVerification({
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_S);
   const [devOtp, setDevOtp] = useState<string>();
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -39,7 +47,7 @@ export function OtpVerification({
       const res = await fetch(`/api/dev/otp?phone=${encodeURIComponent(phone)}`);
       if (res.ok) {
         const data = (await res.json()) as { otp?: string };
-        if (data.otp) setDevOtp(data.otp);
+        if (data.otp && mountedRef.current) setDevOtp(data.otp);
       }
     } catch {
       // dev helper only — ignore
@@ -47,7 +55,7 @@ export function OtpVerification({
   }, [phone]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- dev-code fetch is intentionally fire-and-forget on mount
     void fetchDevOtp();
   }, [fetchDevOtp]);
 
@@ -77,8 +85,10 @@ export function OtpVerification({
   async function resend() {
     if (cooldown > 0 || busy) return;
     setError(undefined);
+    setBusy(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithOtp({ phone });
+    setBusy(false);
     if (err) {
       setError("კოდი უკვე გაიგზავნა — სცადე ერთ წუთში");
       return;

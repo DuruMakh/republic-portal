@@ -26,3 +26,9 @@ pills and inactive elements — matching prototype usage.
 Phase 2: OtpInput (6-box SMS code entry), TierPicker (5/10/20 ₾ radiogroup),
 DelegateBinding (referral card / region-filtered picker with „ცენტრალური მოძრაობა"
 default). Stepper labels are the funnel's: კონტაქტი / იურ. პროფილი / საწევრო.
+
+Phase 3: CabinetNav (role-aware cabinet tabs + გასვლა sign-out), QrCode (uqr
+inline SVG, ADR-011), CopyButton, PendingExplainer (shared by /join/pending and
+the pending delegate panel). Pill gains an optional `label` override (colors
+stay keyed by status). TransferInstructions moved from app/(public)/join/ to
+components/ — now shared by /join/done, /join/pending and /me/billing.

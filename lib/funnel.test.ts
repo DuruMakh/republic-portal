@@ -25,6 +25,9 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     tier: null,
     referenceCode: null,
     completed: false,
+    status: "draft",
+    registrationCompletedAt: null,
+    createdAt: "2026-07-01T00:00:00Z",
     delegateStatus: null,
     referral: null,
     chosenDelegate: null,
@@ -128,5 +131,28 @@ describe("mapFunnelError", () => {
 describe("TIERS", () => {
   it("is exactly 5/10/20", () => {
     expect([...TIERS]).toEqual([5, 10, 20]);
+  });
+});
+
+describe("isReferenceCode — derived from FUNNEL_CODE_ALPHABET (Phase 3 hygiene)", () => {
+  it("accepts exactly the Phase 2 fixtures", () => {
+    expect(isReferenceCode("GR-APQ694")).toBe(true);
+    expect(isReferenceCode("GR-7K3M9Q")).toBe(true);
+  });
+  it("rejects excluded characters I/L/O/0/1, lowercase, wrong length", () => {
+    for (const bad of ["GR-AAAAI2", "GR-AAAAL2", "GR-AAAAO2", "GR-AAAA02", "GR-AAAA12"]) {
+      expect(isReferenceCode(bad)).toBe(false);
+    }
+    expect(isReferenceCode("gr-apq694")).toBe(false);
+    expect(isReferenceCode("GR-APQ69")).toBe(false);
+    expect(isReferenceCode("GR-APQ6944")).toBe(false);
+  });
+});
+
+describe("mapFunnelError — Phase 3 tokens", () => {
+  it("maps the cabinet RPC tokens to Georgian", () => {
+    expect(mapFunnelError("not_completed")).toBe("ჯერ დაასრულე რეგისტრაცია.");
+    expect(mapFunnelError("P0001: not_a_member")).toBe("ეს მოქმედება მხოლოდ წევრებისთვისაა.");
+    expect(mapFunnelError("not_a_delegate")).toBe("დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.");
   });
 });

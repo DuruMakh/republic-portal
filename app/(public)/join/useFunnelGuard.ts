@@ -2,13 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  canAccess,
-  deriveFunnelStep,
-  funnelRoute,
-  type FunnelState,
-  type FunnelStep,
-} from "@/lib/funnel";
+import { deriveDestination } from "@/lib/cabinet";
+import { canAccess, type FunnelState, type FunnelStep } from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -47,7 +42,7 @@ export function useFunnelGuard(step: FunnelStep): {
       if (mountedRef.current) setState(null);
       return null;
     }
-    const next = data as FunnelState;
+    const next = data as unknown as FunnelState;
     if (mountedRef.current) setState(next);
     return next;
   }, []);
@@ -61,7 +56,7 @@ export function useFunnelGuard(step: FunnelStep): {
           // signed out: only step 1 (and the choice screen, which doesn't guard) works
           if (step !== "step-1") router.replace("/join/step-1");
         } else if (!canAccess(step, fetched)) {
-          router.replace(funnelRoute(deriveFunnelStep(fetched)));
+          router.replace(deriveDestination(fetched));
         }
         setReady(true);
       })

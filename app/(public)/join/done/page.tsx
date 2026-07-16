@@ -1,14 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { TransferInstructions } from "../TransferInstructions";
+import { TransferInstructions } from "@/components/TransferInstructions";
+import { deriveDestination } from "@/lib/cabinet";
+import { clearFreshCompletion, peekFreshCompletion } from "../fresh-completion";
 import { useFunnelGuard } from "../useFunnelGuard";
 
 export default function DonePage() {
+  const router = useRouter();
   const { state, ready } = useFunnelGuard("done");
-  if (!ready || !state) return null;
+  const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
+
+  useEffect(() => {
+    // consume the marker only once this screen actually renders — clearing on bare
+    // mount consumed it even when the guard then redirected away (transient
+    // funnel_state failure → the just-registered member never saw this screen).
+    if (ready && state && fresh) clearFreshCompletion();
+  }, [ready, state, fresh]);
+
+  useEffect(() => {
+    if (ready && state && !fresh) router.replace(deriveDestination(state));
+  }, [ready, state, fresh, router]);
+
+  if (!ready || !state || !fresh) return null;
 
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
@@ -32,9 +50,9 @@ export default function DonePage() {
           აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
         </p>
         <div className="mt-6 flex flex-col gap-2">
-          <ButtonLink href="/">მთავარი გვერდი</ButtonLink>
-          <ButtonLink href="/leaderboard" variant="ghost">
-            დელეგატების რეიტინგი
+          <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
+          <ButtonLink href="/" variant="ghost">
+            მთავარი გვერდი
           </ButtonLink>
         </div>
       </Card>

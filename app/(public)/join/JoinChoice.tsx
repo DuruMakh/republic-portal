@@ -4,12 +4,8 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card, cardSkin } from "@/components/Card";
-import {
-  deriveFunnelStep,
-  funnelRoute,
-  isReferralCodeCandidate,
-  type FunnelState,
-} from "@/lib/funnel";
+import { deriveDestination } from "@/lib/cabinet";
+import { isReferralCodeCandidate, type FunnelState } from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 
 // Delegate card reuses Card's own skin (not a wrapper div around <Card>) to avoid a
@@ -47,8 +43,8 @@ export function JoinChoice() {
       if (!user || cancelled) return;
       const { data, error } = await supabase.rpc("funnel_state");
       if (error || cancelled || data === null) return;
-      const state = data as FunnelState;
-      if (state.exists) router.replace(funnelRoute(deriveFunnelStep(state)));
+      const state = data as unknown as FunnelState;
+      if (state.exists) router.replace(deriveDestination(state));
     });
     return () => {
       cancelled = true;

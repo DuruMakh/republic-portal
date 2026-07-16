@@ -8,6 +8,7 @@ import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
 import { deriveFunnelStep, funnelRoute, type Tier } from "@/lib/funnel";
 import { funnelCompleteAction } from "../actions";
+import { markFreshCompletion } from "../fresh-completion";
 import { useFunnelGuard } from "../useFunnelGuard";
 
 export default function Step3Page() {
@@ -26,6 +27,7 @@ export default function Step3Page() {
       setError(result.error);
       return;
     }
+    markFreshCompletion();
     router.replace(funnelRoute(deriveFunnelStep(result.state)));
   }
 

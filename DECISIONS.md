@@ -91,3 +91,59 @@ rejected personal-ID-as-reference after a data-protection briefing (IDs would le
 bank statements and finance tooling). Bank recipient details ship as clearly-marked
 placeholders in `lib/bank-details.ts` until the owner opens the account (launch-checklist
 item; swapping = editing that one module).
+
+## ADR-012 (2026-07-16): Typed Supabase clients omit the ssr helpers' own `<Database>` generic
+
+`lib/supabase/types.ts` hand-maintains the `Database` type (ADR-005: no `supabase gen types`
+without local Docker). Wiring it into the five client factories (Phase 3 hygiene item) surfaced
+a real dependency-version-skew bug, not a `types.ts` drift issue: `@supabase/ssr@0.6.1`'s
+`createBrowserClient`/`createServerClient` `.d.ts` files import `GenericSchema` from
+`"@supabase/supabase-js/dist/module/lib/types"`, a path that no longer exists in the installed
+`@supabase/supabase-js@2.110.2` (its build output was restructured to a flat `dist/index.d.mts`).
+`skipLibCheck: true` (tsconfig) silences the resulting unresolved-module error inside that `.d.ts`
+rather than failing the build, and the import silently resolves to `any`; that `any` then flows
+into ssr's `SupabaseClient<Database, SchemaName, Schema>` return-type expression and lands in the
+wrong positional slot against the current (also restructured) `SupabaseClient` class signature —
+RPC argument objects were typed as unassignable to `undefined`, and every table/view row typed as
+`never`. Confirmed by isolated repro: calling the _same_ `@supabase/supabase-js` `createClient`
+(used unmodified by `lib/supabase/admin.ts` and `lib/supabase/public.ts`) with `<Database>` types
+correctly; only the three `@supabase/ssr`-routed factories (`client.ts`, `server.ts`,
+`middleware.ts`) were affected.
+
+Fix: those three factories call `createBrowserClient`/`createServerClient` **without** an explicit
+`<Database>` argument, and instead type the function's return (`client.ts`, `server.ts`) or the
+local variable (`middleware.ts`) as `SupabaseClient<Database>` — imported directly from
+`@supabase/supabase-js`, whose own default type-parameter resolution is unaffected by ssr's broken
+passthrough. Since ssr's un-parameterized return type involves `any` throughout, the assignment to
+the explicitly-typed target succeeds without a cast. Zero runtime difference (same function calls,
+same arguments); purely a types-only workaround. Rejected: bumping `@supabase/ssr` to a version
+whose `.d.ts` no longer deep-imports the old path — `0.6.1` → latest (`0.12.3`) is a 6-minor-version
+jump with real behavioral changes upstream (cookie handling, `get`/`set`/`remove` deprecation) that
+this types-only task's "behavior must not change" constraint rules out; revisit as its own
+reviewed/tested upgrade.
+
+## ADR-013 (2026-07-15): Cabinet DB access is a mixed model — scoped grant + definer RPCs
+
+Phase 2 revoked the blanket client `update` on profiles and kept the "own profile
+updatable" RLS policy dormant for exactly this phase. Phase 3 re-grants `UPDATE`
+on precisely (first_name, last_name, region_id, city_id, employment): three
+independent locks — the column-scoped grant (any other column is 42501), the
+own-row RLS policy, and the protect_profile_columns() trigger as depth against
+future grant-widening. Everything compound or protected stays SECURITY DEFINER
+RPCs per ADR-009: member_change_delegate (atomic close-then-open membership
+history), member_change_tier (trigger-protected column), delegate_panel /
+delegate_team (own-delegates-row-gated reads; referral codes stay out of every
+table grant and public view). Rejected: all-RPC uniformity (wastes the prepared
+RLS path and adds definer surface for single-column own-row writes) and
+client-direct membership writes (close/open is not atomic from the client).
+
+## ADR-011 (2026-07-15): QR codes via `uqr` (first new dependency since zod)
+
+The delegate panel needs a QR of the referral link (parent spec §6). Writing a
+QR encoder is wheel-reinvention with real failure modes; `uqr` (MIT, unjs) is
+zero-dependency, TypeScript-native ESM with a pure `renderSVG(value): string` —
+no canvas, no DOM, works identically in jsdom tests and the browser. Rejected:
+`qrcode` (drags pngjs/dijkstrajs and server-canvas paths we don't need),
+`qrcode-generator` (venerable but untyped UMD-global style). Rendered client-side
+so the encoded origin is the one the delegate is actually on
+(window.location.origin — previews encode the preview URL, production the real one).
