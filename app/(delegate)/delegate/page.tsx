@@ -15,10 +15,11 @@ export const metadata: Metadata = { title: "დელეგატის პა�
 
 export default async function DelegateDashboardPage() {
   const supabase = await createServerSupabase();
-  const [{ data: stateData }, { data: panelData, error: panelError }] = await Promise.all([
-    supabase.rpc("funnel_state"),
-    supabase.rpc("delegate_panel"),
-  ]);
+  const [{ data: stateData, error: stateError }, { data: panelData, error: panelError }] =
+    await Promise.all([supabase.rpc("funnel_state"), supabase.rpc("delegate_panel")]);
+  if (stateError || stateData === null) {
+    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
+  }
   if (panelError || panelData === null) {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }
