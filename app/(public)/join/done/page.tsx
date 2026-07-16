@@ -1,14 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
+import { deriveDestination } from "@/lib/cabinet";
+import { clearFreshCompletion, peekFreshCompletion } from "../fresh-completion";
 import { useFunnelGuard } from "../useFunnelGuard";
 
 export default function DonePage() {
+  const router = useRouter();
   const { state, ready } = useFunnelGuard("done");
-  if (!ready || !state) return null;
+  const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
+
+  useEffect(() => {
+    clearFreshCompletion(); // consume once mounted; later visits forward below
+  }, []);
+
+  useEffect(() => {
+    if (ready && state && !fresh) router.replace(deriveDestination(state));
+  }, [ready, state, fresh, router]);
+
+  if (!ready || !state || !fresh) return null;
 
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
@@ -32,9 +47,9 @@ export default function DonePage() {
           აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
         </p>
         <div className="mt-6 flex flex-col gap-2">
-          <ButtonLink href="/">მთავარი გვერდი</ButtonLink>
-          <ButtonLink href="/leaderboard" variant="ghost">
-            დელეგატების რეიტინგი
+          <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
+          <ButtonLink href="/" variant="ghost">
+            მთავარი გვერდი
           </ButtonLink>
         </div>
       </Card>
