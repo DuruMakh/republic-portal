@@ -1,10 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   cleanupJourneyUsers,
+  fillStep2Basics,
   getSeededReferral,
   JOURNEY,
   journeyPersonalId,
   journeyPhone,
+  passStep1,
 } from "./funnel-helpers";
 
 // Journeys share per-run users and the duplicate test depends on the member
@@ -13,32 +15,6 @@ test.describe.configure({ mode: "serial" });
 
 test.beforeAll(cleanupJourneyUsers);
 test.afterAll(cleanupJourneyUsers);
-
-async function passStep1(
-  page: Page,
-  opts: { phone: string; firstName: string; lastName: string },
-): Promise<void> {
-  await page.getByLabel("სახელი").fill(opts.firstName);
-  await page.getByLabel("გვარი").fill(opts.lastName);
-  await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  const devOtp = page.getByTestId("dev-otp");
-  await expect(devOtp).toBeVisible({ timeout: 15_000 });
-  const otp = (await devOtp.locator("strong").innerText()).trim();
-  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes pasted digits
-  await page.getByRole("button", { name: "დადასტურება" }).click();
-}
-
-async function fillStep2Basics(
-  page: Page,
-  opts: { personalId: string; regionLabel: string },
-): Promise<void> {
-  await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
-  await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
-  await page.getByLabel("მხარე").selectOption({ label: opts.regionLabel });
-  await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 1 });
-  await page.getByLabel("სამუშაო ადგილი / სტატუსი").selectOption({ label: "სტუდენტი" });
-}
 
 test("member registers end-to-end and gets a reference code", async ({ page, request }) => {
   const phone = journeyPhone(JOURNEY.member);

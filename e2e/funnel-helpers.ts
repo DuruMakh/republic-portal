@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
@@ -12,6 +14,9 @@ export const JOURNEY = {
   duplicate: 2,
   resume: 3,
   referral: 4,
+  cabinet: 5,
+  panelDelegate: 6,
+  viaLink: 7,
 } as const;
 
 export function journeyPhone(journey: number): string {
@@ -20,6 +25,32 @@ export function journeyPhone(journey: number): string {
 
 export function journeyPersonalId(journey: number): string {
   return `9${BASE.slice(1)}${journey}00`; // 11 digits, 9-prefixed
+}
+
+export async function passStep1(
+  page: Page,
+  opts: { phone: string; firstName: string; lastName: string },
+): Promise<void> {
+  await page.getByLabel("სახელი").fill(opts.firstName);
+  await page.getByLabel("გვარი").fill(opts.lastName);
+  await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
+  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+  const devOtp = page.getByTestId("dev-otp");
+  await expect(devOtp).toBeVisible({ timeout: 15_000 });
+  const otp = (await devOtp.locator("strong").innerText()).trim();
+  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes pasted digits
+  await page.getByRole("button", { name: "დადასტურება" }).click();
+}
+
+export async function fillStep2Basics(
+  page: Page,
+  opts: { personalId: string; regionLabel: string },
+): Promise<void> {
+  await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
+  await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
+  await page.getByLabel("მხარე").selectOption({ label: opts.regionLabel });
+  await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 1 });
+  await page.getByLabel("სამუშაო ადგილი / სტატუსი").selectOption({ label: "სტუდენტი" });
 }
 
 export async function cleanupJourneyUsers(): Promise<void> {
@@ -53,6 +84,7 @@ export async function getSeededReferral(): Promise<{ code: string; fullName: str
     .from("delegates")
     .select("id, referral_code")
     .eq("status", "approved")
+    .order("id")
     .limit(1)
     .single();
   if (delegateErr || !delegate)
@@ -67,4 +99,51 @@ export async function getSeededReferral(): Promise<{ code: string; fullName: str
     code: delegate.referral_code as string,
     fullName: `${profile.first_name} ${profile.last_name}`,
   };
+}
+
+export async function approveOwnDelegate(phoneNational: string): Promise<void> {
+  if (!phoneNational.startsWith("55")) {
+    throw new Error(`refusing to approve non-e2e phone ${phoneNational}`);
+  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("approveOwnDelegate needs staging service credentials");
+  const admin = createClient(url, key);
+  const { data: rows, error: pErr } = await admin
+    .from("profiles")
+    .select("id")
+    .in("phone", [`+995${phoneNational}`, `995${phoneNational}`]);
+  if (pErr || !rows || rows.length !== 1) {
+    throw new Error(`delegate profile lookup failed: ${pErr?.message ?? `rows=${rows?.length}`}`);
+  }
+  const { error } = await admin
+    .from("delegates")
+    .update({
+      status: "approved",
+      verified_at: new Date().toISOString(),
+      slug: `e2e-delegate-${phoneNational}`,
+    })
+    .eq("id", rows[0]!.id);
+  if (error) throw new Error(`approve failed: ${error.message}`);
+}
+
+export async function cleanupLoginUser(): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.warn("login cleanup skipped: staging service credentials not in env");
+    return;
+  }
+  const admin = createClient(url, key);
+  const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || data.users.length === 0) return;
+    const orphan = data.users.find((u) => u.phone === loginPhone);
+    if (orphan) {
+      await admin.auth.admin.deleteUser(orphan.id);
+      return;
+    }
+    if (data.users.length < 1000) return;
+  }
 }
