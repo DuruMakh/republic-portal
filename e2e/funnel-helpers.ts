@@ -149,7 +149,8 @@ export async function cleanupLoginUser(): Promise<void> {
     if (error || data.users.length === 0) return;
     const orphan = data.users.find((u) => u.phone === loginPhone);
     if (orphan) {
-      await admin.auth.admin.deleteUser(orphan.id);
+      const { error: delErr } = await admin.auth.admin.deleteUser(orphan.id);
+      if (delErr) console.warn(`login cleanup: deleteUser ${orphan.id} failed: ${delErr.message}`);
       return;
     }
     if (data.users.length < 1000) return;
