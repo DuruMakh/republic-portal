@@ -11,6 +11,9 @@ if (!url || !key) {
     "needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (run with --env-file=.env.local)",
   );
 }
+if (!url.includes("orcxtbedkexoclbfgvzd")) {
+  throw new Error("refusing: this sweep is staging-only (project ref mismatch)");
+}
 const db = createClient(url, key);
 
 const KEEP_PHONES = new Set([
