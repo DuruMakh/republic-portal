@@ -12,7 +12,9 @@ import {
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(cleanupJourneyUsers);
-test.afterAll(cleanupJourneyUsers);
+// Single afterAll: delete this run's users FIRST, then settle the ISR caches (the
+// polling block below) — two separate afterAll hooks would run in reverse
+// declaration order and poll while the 13th delegate still exists.
 
 test("delegate lifecycle: pending panel → approval → live link → member via link → team", async ({
   browser,
@@ -87,4 +89,26 @@ test("delegate lifecycle: pending panel → approval → live link → member vi
   await dPage.getByLabel("ძებნა სახელით ან გვარით").fill("არავინა");
   await expect(dPage.getByTestId("team-no-results")).toBeVisible();
   await delegateContext.close();
+});
+
+// This spec temporarily approves a 13th delegate, and /delegates + /leaderboard are
+// ISR pages (revalidate 60): a Link prefetch during the approved window caches a
+// 13-delegate render that public.spec (which runs later and asserts the canonical
+// 12) can then read within its freshness window — the exact flake seen in CI run
+// 29515512529. Leaving the world as we found it includes the ISR caches: after
+// deleting this run's users, poll both pages until they render 12 again.
+test.afterAll(async ({ browser }) => {
+  await cleanupJourneyUsers();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  for (const [path, testId] of [
+    ["/delegates", "delegate-card"],
+    ["/leaderboard", "leader-row"],
+  ] as const) {
+    await expect(async () => {
+      await page.goto(path);
+      await expect(page.getByTestId(testId)).toHaveCount(12, { timeout: 2_000 });
+    }).toPass({ timeout: 90_000, intervals: [2_000] });
+  }
+  await context.close();
 });
