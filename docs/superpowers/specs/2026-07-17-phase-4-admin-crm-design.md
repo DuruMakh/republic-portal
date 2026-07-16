@@ -276,7 +276,8 @@ granted to `authenticated`; PostgREST supplies filtering/search/order/pagination
 | `admin_members` | staff¹ | profile id, first/last name, phone, region id+name, city name, current delegate id+name (null = central), status, membership_tier, reference_code, created_at, registration_completed_at, is_delegate flag |
 | `admin_delegate_queue` | verifier, super_admin | delegate id, name, region, phone, status, slug, bio, photo_url, review_note, tc_accepted_at, created_at, verified_at, verifier name, active/total supporter counts |
 | `admin_payments` | finance, super_admin | payment id, member id+name+reference_code, amount_gel, months_covered, paid_at, bank_reference, source, recorded_by name, created_at, voided_at/by name/reason |
-| `admin_finance_stats` | finance, super_admin | one row: mrr_gel, active_count, avg_gel, tier5/tier10/tier20 active-member counts |
+| `admin_finance_stats` | finance, super_admin | one row: mrr_gel, active_count, tier5/tier10/tier20 active-member counts (average is derived in-app: mrr ÷ active) |
+| `admin_settings` | super_admin | key, value, updated_at, updated-by name (the sealed `app_settings` table's read path) |
 | `admin_admins` | super_admin | user id, name, phone, role, granted_at, granted-by name (one row per held role) |
 | `admin_audit` | super_admin | audit id, created_at, actor id+name, action, target_type, target_id, resolved target label (profile/delegate/payment names via left joins), details |
 
