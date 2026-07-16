@@ -18,7 +18,7 @@
 - Schema changes ONLY via `supabase/migrations/`. Local dev + previews + CI all use the STAGING Supabase project (`orcxtbedkexoclbfgvzd`).
 - **Zero new npm dependencies this phase.** CSV, statement parsing, storage and cron are hand-rolled or platform-side.
 - zod validation at every boundary: the same schemas drive client forms and server actions; the DB re-validates inside RPCs/grants/RLS. Server is the source of truth.
-- **Every admin mutation is a definer RPC that writes `audit_log` in the same transaction.** No admin page ever reads via the service-role client; the service key appears in exactly one new app path — the photo-upload server action (behind an app-side role precheck, paired with an in-DB re-checking RPC).
+- **Every admin mutation is a definer RPC that writes `audit_log` in the same transaction.** No admin page ever reads via the service-role client; the service key appears in exactly one unconditional new app path — the photo-upload server action (behind an app-side role precheck, paired with an in-DB re-checking RPC). Sole exception: if Task 7 takes the Vercel-cron fallback, the `CRON_SECRET`-gated `/api/cron/active-sweep` route is a second, fail-closed service-role path (401 without the secret).
 - Statuses/counters stay derived. `profiles.status` is written ONLY by the engine functions (and the funnel's draft→profile_completed step). `payments.months_covered` is a GENERATED column — never written by anyone.
 - **Engine semantics single source:** SQL (`active_coverage` + friends, Task 6) and TS (`lib/active.ts`, Task 1) must implement identical date math: `coverage_end = greatest(prev_end, paid_at) + months × 30 days`, active iff `today ≤ coverage_end + grace_days`, grace default 30. The §Task-1 test dates are the shared fixtures; the Task 10 probe replays them against SQL.
 - TDD: write the failing test first, run it, watch it fail, then implement. Frequent commits (conventional style); each task ends committed.
@@ -533,7 +533,7 @@ git commit -m "feat(admin): conservative bank-statement paste parser"
 
 **Interfaces:**
 - Consumes: nothing (pure).
-- Produces (consumed by Task 13's export route):
+- Produces (consumed by Task 14's export route):
   - `csvEscape(value: string): string`
   - `toCsv(headers: readonly string[], rows: readonly (readonly string[])[]): string` — UTF-8 BOM prefix + CRLF line endings (Excel-compatible Georgian).
   - `interface MemberExportRow { firstName: string; lastName: string; phone: string | null; regionNameKa: string | null; cityNameKa: string | null; delegateName: string | null; statusKa: string; tier: number | null; referenceCode: string | null; registeredAt: string; personalId?: string | null }`
@@ -568,8 +568,8 @@ describe("csvEscape (RFC 4180)", () => {
 describe("toCsv", () => {
   it("BOM + CRLF + header row (Excel opens Georgian correctly)", () => {
     const csv = toCsv(["ა", "ბ"], [["1", "2"]]);
-    expect(csv.startsWith("FEFF")).toBe(true);
-    expect(csv).toBe("FEFFა,ბ\r\n1,2\r\n");
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toBe("\uFEFFა,ბ\r\n1,2\r\n");
   });
 });
 
@@ -649,7 +649,7 @@ export function toCsv(
 ): string {
   const lines = [headers, ...rows].map((cells) => cells.map(csvEscape).join(","));
   // explicit escape — an invisible literal BOM would not survive copy-paste review
-  return `FEFF${lines.join("\r\n")}\r\n`;
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
 }
 
 export interface MemberExportRow {
@@ -1349,7 +1349,7 @@ git commit -m "feat(admin): zod schemas for every admin boundary"
 
 **Interfaces:**
 - Consumes: the Phase 0–3 schema (see `supabase/migrations/*`); `funnel_state()` body from `20260715213000_cabinets.sql` (replaced here, additively).
-- Produces (consumed by Tasks 7, 9–10, 11–23): the 9 admin views, 13 admin RPCs, 4 engine functions, `has_admin_role`/`has_any_admin_role`, `app_settings`, payments columns (`tier_gel_at_payment`, generated `months_covered`, `voided_at/by`, `void_reason`), `delegates.review_note`, the personal-ID column lockdown, the own-roles policy on `admin_roles`, the `delegate-photos` bucket, the pg_cron sweep, and `funnel_state().admin`.
+- Produces (consumed by Tasks 7, 9–10, 11–23): the 9 admin views, 13 admin RPCs, 5 engine functions, `has_admin_role`/`has_any_admin_role`, `app_settings`, payments columns (`tier_gel_at_payment`, generated `months_covered`, `voided_at/by`, `void_reason`), `delegates.review_note`, the personal-ID column lockdown, the own-roles policy on `admin_roles`, the `delegate-photos` bucket, the pg_cron sweep, and `funnel_state().admin`.
 
 There is no local database (ADR-005) — this task's "test" is `npm run typecheck` (types mirror) plus Task 7's live probes after the apply. The SQL below is complete; copy it verbatim.
 
@@ -1404,10 +1404,13 @@ alter table payments add column voided_at timestamptz;
 alter table payments add column voided_by uuid references profiles(id);
 alter table payments add column void_reason text;
 
--- Double-pasting a statement cannot double-record; voiding frees the reference.
+-- Referenced (single-entry) payments cannot double-record — live references are
+-- unique; voiding frees the reference. Bulk rows carry no reference: the bulk RPC
+-- enforces its own live member+amount+date duplicate check per row (see §7).
 create unique index payments_bank_ref_live on payments (bank_reference)
   where bank_reference is not null and voided_at is null;
-create index payments_member_paid on payments (member_id, paid_at);
+-- No new (member_id, paid_at) index: payments_by_member_paid_at (Phase 3,
+-- 20260716140000_cabinet_hardening.sql) already covers the engine's scan.
 
 -- e2e/staging deletability (spec §4.3): no product deletion flow exists; cleanup
 -- deletes e2e users, and their payments must go with them (audit keeps the trail —
@@ -1911,6 +1914,16 @@ begin
     if v_profile.membership_tier is null then
       raise exception 'bulk_row:%:not_completed', v_idx;
     end if;
+    -- In-DB duplicate backstop (bulk rows have no bank_reference, so the live-ref
+    -- unique index cannot protect them): an identical live payment — same member,
+    -- amount and date — aborts the batch. The preview classifies these as
+    -- duplicates and excludes them; reaching this raise means a stale/bypassed
+    -- confirm payload. Covers within-batch repeats too (earlier row already inserted).
+    if exists (select 1 from public.payments pay
+               where pay.member_id = v_profile.id and pay.amount_gel = v_amount
+                 and pay.paid_at = v_paid and pay.voided_at is null) then
+      raise exception 'bulk_row:%:duplicate', v_idx;
+    end if;
 
     insert into public.payments
       (member_id, amount_gel, paid_at, bank_reference, source, recorded_by, tier_gel_at_payment)
@@ -2018,14 +2031,18 @@ begin
   select m.delegate_id, true into v_open_delegate, v_has_open
     from public.memberships m where m.member_id = p_member_id and m.ended_at is null;
 
-  if coalesce(v_has_open, false) and v_open_delegate = v_target then
+  if not coalesce(v_has_open, false) then
+    -- spec §4.5 precondition: completed members always hold an open membership row
+    -- (possibly with delegate_id null = ცენტრალური მოძრაობა, ADR-013); a missing
+    -- row means this member is not reassignable — refuse rather than self-heal.
+    raise exception 'invalid_target';
+  end if;
+  if v_open_delegate = v_target then
     return; -- same target: friendly no-op, no history row, no audit noise
   end if;
 
-  if coalesce(v_has_open, false) then
-    update public.memberships set ended_at = now()
-      where member_id = p_member_id and ended_at is null;
-  end if;
+  update public.memberships set ended_at = now()
+    where member_id = p_member_id and ended_at is null;
   insert into public.memberships (member_id, delegate_id) values (p_member_id, v_target);
 
   select case when v_open_delegate is null then 'ცენტრალური მოძრაობა'
@@ -2245,9 +2262,13 @@ begin
   if v_days is null or v_days < 0 or v_days > 365 then raise exception 'invalid_setting'; end if;
 
   select value into v_old from public.app_settings where key = p_key;
-  update public.app_settings
-    set value = to_jsonb(v_days), updated_at = now(), updated_by = v_uid
-    where key = p_key;
+  -- upsert (spec §3.9): the migration seeds the row, but the RPC must not
+  -- silently no-op if the row is ever absent
+  insert into public.app_settings (key, value, updated_at, updated_by)
+    values (p_key, to_jsonb(v_days), now(), v_uid)
+  on conflict (key) do update
+    set value = excluded.value, updated_at = excluded.updated_at,
+        updated_by = excluded.updated_by;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'settings.update', 'setting', p_key,
@@ -2357,7 +2378,7 @@ on conflict (id) do update set public = true;
 
 Apply ALL of the following to `lib/supabase/types.ts` (same commit as the migration — house rule stated in the file header):
 
-1. `payments.Row` gains four fields (after `recorded_by: string | null;` keep `created_at` last):
+1. `payments.Row` gains five fields (after `recorded_by: string | null;` keep `created_at` last):
 
 ```ts
           tier_gel_at_payment: number;
@@ -2590,7 +2611,7 @@ git commit -m "feat(admin): Phase 4 migration — views, RPCs, engine, lockdown,
 - Execute: `supabase/migrations/20260717150000_admin_crm.sql` (committed in Task 6)
 - Create ONLY IF pg_cron is unavailable (fallback below): `app/api/cron/active-sweep/route.ts`, `vercel.json`
 
-Operational task — no code changes on the happy path. The project is already linked (`supabase/.temp/project-ref` = `orcxtbedkexoclbfgvzd`); the procedure is the documented Phase 3 one (`docs/superpowers/plans/2026-07-15-supabase-staging-connection.md`, Task 4).
+Operational task — no code changes on the happy path. The CLI link is LOCAL state (`supabase/.temp/` is gitignored and absent on a fresh checkout/worktree), so Step 2 links first — `link` is idempotent, harmless if this machine linked during Phase 3. The procedure is the documented Phase 3 one (`docs/superpowers/plans/2026-07-15-supabase-staging-connection.md`, Tasks 3–4).
 
 - [ ] **Step 1: Ask the owner for the database password**
 
@@ -2600,6 +2621,7 @@ Ask the owner (plain language) to add the `SUPABASE_DB_PASSWORD=...` line to `.e
 
 ```powershell
 $env:SUPABASE_DB_PASSWORD = (Get-Content .env.local | Where-Object { $_ -match '^SUPABASE_DB_PASSWORD=' }) -replace '^SUPABASE_DB_PASSWORD=', ''
+npx --no-install supabase link --project-ref orcxtbedkexoclbfgvzd
 npx --no-install supabase migration list
 npx --no-install supabase db push --dry-run
 npx --no-install supabase db push
@@ -2750,7 +2772,12 @@ console.log(`OK: ${p.first_name} ${p.last_name} (${phone}) ← ${role} on projec
 ```bash
 node scripts/grant-admin.mjs
 ```
-Expected: the usage error and exit code 1 (no env needed to hit the guard). Live use happens after Task 9's seed (the canonical admins are created by the seed itself; this script is for the owner's own account and, later, production).
+Expected: `Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY` and exit code 1 — the env guard fires before the usage guard. Then hit the usage guard itself:
+
+```bash
+node --env-file=.env.local scripts/grant-admin.mjs
+```
+Expected: the `Usage: …` error and exit code 1. Live use happens after Task 9's seed (the canonical admins are created by the seed itself; this script is for the owner's own account and, later, production).
 
 - [ ] **Step 3: Format, commit**
 
@@ -2769,7 +2796,7 @@ git commit -m "feat(admin): grant-admin bootstrap script (audited, completed-mem
 
 **Interfaces:**
 - Consumes: the Task 6 schema (payments columns, `recompute_all_active` granted to service_role, cascade FK).
-- Produces (consumed by Tasks 10, 25–27): canonical admin accounts — super `+995509000001` / verifier `+995509000002` / finance `+995509000003` / editor `+995509000004`; every non-draft seeded person has `reference_code` (`GR-…`, deterministic), `membership_tier` (5/10/20 by index), `registration_completed_at`; every active person has a seeded payment (`bank_reference` `SEED-<i>`); statuses are **derived** by `recompute_all_active()`. Existing assertions (12 approved delegates, 1636 actives, top `giorgi-maisuradze` = 294) keep holding — the same people are active, now honestly.
+- Produces (consumed by Tasks 10, 25–27): canonical admin accounts — super `+995509000001` / verifier `+995509000002` / finance `+995509000003` / editor `+995509000004` (survive every reseed — permanent audit actors); every non-draft seeded person has `reference_code` (`GR-…`, deterministic), `membership_tier` (5/10/20 by index), `registration_completed_at`; every active person has a seeded payment (`bank_reference` `SEED-<i>`) and every 5th completed person a LAPSED one (`SEED-L<i>`, 70–99 days old — spec §8's "outside the window" histories); statuses are **derived** by `recompute_all_active()`. Existing assertions (12 approved delegates, 1636 actives, top `giorgi-maisuradze` = 294) keep holding — the same people are active, now honestly.
 
 - [ ] **Step 1: Update the header + constants**
 
@@ -2777,9 +2804,10 @@ Replace the header comment (lines 1–10) with:
 
 ```js
 /**
- * Seeds STAGING with the prototype roster. Destructive by design:
- * wipes ALL auth users (staging holds synthetic data only), then recreates
- * roster delegates + their supporter members deterministically.
+ * Seeds STAGING with the prototype roster. Destructive by design: wipes all
+ * auth users EXCEPT the 4 canonical admins (permanent audit actors — see below),
+ * then recreates roster delegates + their supporter members deterministically.
+ * Reseeding is routine drift recovery: the admin steps are all idempotent.
  *
  * Phase 4: statuses are NO LONGER hand-written. The seed writes payment
  * histories (bank_reference "SEED-<i>") and lets the engine derive
@@ -2815,6 +2843,48 @@ const refCodeFor = (i) => {
 };
 const daysAgoIso = (d) => new Date(Date.now() - d * 86_400_000).toISOString();
 const daysAgoDate = (d) => daysAgoIso(d).slice(0, 10);
+```
+
+Then replace the wipe block (currently `// 1) Full reset: …` through ``console.log(`wiped ${wiped} auth users + dev_otp_inbox`);``) with:
+
+```js
+// 1) Full reset: delete every auth user EXCEPT the canonical admins. They are
+// permanent audit ACTORS — audit_log.actor_id is a plain FK and audit rows are
+// append-only, so once an admin has acted, deleting them is IMPOSSIBLE (FK 23503);
+// skipping them is what keeps reseeds repeatable. Cascades handle everyone else:
+// profiles → delegates/memberships/payments.
+const ADMIN_AUTH_PHONES = new Set(
+  [1, 2, 3, 4].map((n) => `99550900000${n}`), // auth stores phones without '+'
+);
+const isCanonicalAdmin = (u) => ADMIN_AUTH_PHONES.has((u.phone ?? "").replace(/^\+/, ""));
+// Admin membership rows point at a roster delegate this wipe deletes, and
+// memberships.delegate_id has NO cascade — detach first (re-attached in the
+// canonical-admins step below).
+const { data: oldAdmins, error: oldAdminErr } = await db
+  .from("profiles")
+  .select("id")
+  .in("phone", [1, 2, 3, 4].flatMap((n) => [`+99550900000${n}`, `99550900000${n}`]));
+if (oldAdminErr) throw oldAdminErr;
+const oldAdminIds = (oldAdmins ?? []).map((r) => r.id);
+if (oldAdminIds.length > 0) {
+  const { error: detachErr } = await db.from("memberships").delete().in("member_id", oldAdminIds);
+  if (detachErr) throw new Error(`admin membership detach failed: ${detachErr.message}`);
+}
+let wiped = 0;
+for (;;) {
+  const { data, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (error) throw error;
+  const doomed = data.users.filter((u) => !isCanonicalAdmin(u));
+  if (doomed.length === 0) break;
+  await mapLimit(doomed, 10, async (u) => {
+    const { error: e } = await db.auth.admin.deleteUser(u.id);
+    if (e) throw new Error(`deleteUser ${u.id}: ${e.message}`);
+  });
+  wiped += doomed.length;
+}
+const { error: otpWipe } = await db.from("dev_otp_inbox").delete().gte("id", 0);
+if (otpWipe) throw otpWipe;
+console.log(`wiped ${wiped} auth users + dev_otp_inbox (canonical admins kept)`);
 ```
 
 - [ ] **Step 2: Switch the people list from statuses to kinds**
@@ -2884,32 +2954,53 @@ await insertChunked(
 // Payments make people active — the engine derives status from these rows.
 // paid_at within the last 25 days ⇒ coverage (30d) + grace (30d) safely covers today.
 // Every 7th active person prepays 3 months (multi-month coverage in the demo data).
-await insertChunked(
-  "payments",
-  created
-    .filter((p) => p.kind === "active")
-    .map((p) => {
-      const tier = tierFor(p.i);
-      const months = p.i % 7 === 0 ? 3 : 1;
-      return {
-        member_id: p.id,
-        amount_gel: tier * months,
-        paid_at: daysAgoDate(p.i % 25),
-        bank_reference: `SEED-${p.i}`,
-        source: "manual",
-        recorded_by: null,
-        tier_gel_at_payment: tier,
-      };
-    }),
-);
+// Every 5th COMPLETED person carries a LAPSED payment (70–99 days old — outside the
+// 60-day window): staging demonstrates expiry histories (spec §8) without changing
+// who is active. Keep `paymentRows` in scope — the step-6 assertion counts it.
+const paymentRows = created
+  .filter((p) => p.kind === "active")
+  .map((p) => {
+    const tier = tierFor(p.i);
+    const months = p.i % 7 === 0 ? 3 : 1;
+    return {
+      member_id: p.id,
+      amount_gel: tier * months,
+      paid_at: daysAgoDate(p.i % 25),
+      bank_reference: `SEED-${p.i}`,
+      source: "manual",
+      recorded_by: null,
+      tier_gel_at_payment: tier,
+    };
+  })
+  .concat(
+    created
+      .filter((p) => p.kind === "completed" && p.i % 5 === 0)
+      .map((p) => {
+        const tier = tierFor(p.i);
+        return {
+          member_id: p.id,
+          amount_gel: tier,
+          paid_at: daysAgoDate(70 + (p.i % 30)),
+          bank_reference: `SEED-L${p.i}`,
+          source: "manual",
+          recorded_by: null,
+          tier_gel_at_payment: tier,
+        };
+      }),
+  );
+await insertChunked("payments", paymentRows);
 ```
 
 - [ ] **Step 5: Seed the canonical admin accounts (after payments)**
 
 ```js
-// Canonical admins (spec §7): fixed phones, completed members, roles attached.
+// Canonical admins (spec §7 + §8): fixed phones, completed members, roles attached.
 // e2e + probes sign in as these via the dev OTP inbox. NEVER deleted — they are
-// audit ACTORS (audit_log.actor_id FK + append-only trigger make actors permanent).
+// audit ACTORS (audit_log.actor_id FK + append-only trigger make actors permanent);
+// the wipe above skips them, so this step is get-or-create (idempotent reseeds).
+// Deliberate spec §8 deviation, recorded there: FOUR roles (the e2e editor-notice
+// flow needs an editor login) on the 509-block — the 55-block is the DISPOSABLE
+// e2e range, and permanent audit actors must live outside it.
 const ADMIN_SEED = [
   { n: 1, role: "super_admin", first_name: "ადმინი", last_name: "მთავარი" },
   { n: 2, role: "verifier", first_name: "ვერიფიკატორი", last_name: "გუნდი" },
@@ -2920,31 +3011,45 @@ const tbilisiId = regionId.get("თბილისი");
 const firstDelegateId = delegateIdBySlug.get(roster[0].slug);
 for (const a of ADMIN_SEED) {
   const phone = `+99550900000${a.n}`;
-  const { data: u, error: uErr } = await db.auth.admin.createUser({
-    phone,
-    phone_confirm: true,
-  });
-  if (uErr) throw new Error(`admin createUser ${phone}: ${uErr.message}`);
-  const { error: pErr } = await db.from("profiles").insert({
-    id: u.user.id,
-    first_name: a.first_name,
-    last_name: a.last_name,
-    phone,
-    personal_id: `1${pad(9000000 + a.n, 10)}`,
-    region_id: tbilisiId,
-    status: "profile_completed",
-    membership_tier: 10,
-    reference_code: refCodeFor(900000 + a.n),
-    registration_completed_at: daysAgoIso(10),
-  });
-  if (pErr) throw new Error(`admin profile ${phone}: ${pErr.message}`);
+  const { data: prior, error: priorErr } = await db
+    .from("profiles")
+    .select("id")
+    .in("phone", [phone, phone.slice(1)]);
+  if (priorErr) throw new Error(`admin lookup ${phone}: ${priorErr.message}`);
+  let adminId = prior?.[0]?.id;
+  if (!adminId) {
+    const { data: u, error: uErr } = await db.auth.admin.createUser({
+      phone,
+      phone_confirm: true,
+    });
+    if (uErr) throw new Error(`admin createUser ${phone}: ${uErr.message}`);
+    adminId = u.user.id;
+    const { error: pErr } = await db.from("profiles").insert({
+      id: adminId,
+      first_name: a.first_name,
+      last_name: a.last_name,
+      phone,
+      personal_id: `1${pad(9000000 + a.n, 10)}`,
+      region_id: tbilisiId,
+      status: "profile_completed",
+      membership_tier: 10,
+      reference_code: refCodeFor(900000 + a.n),
+      registration_completed_at: daysAgoIso(10),
+    });
+    if (pErr) throw new Error(`admin profile ${phone}: ${pErr.message}`);
+  }
+  // open membership row: detached before the wipe (the old delegate is gone) —
+  // attach to this run's first roster delegate
   const { error: mErr } = await db
     .from("memberships")
-    .insert({ member_id: u.user.id, delegate_id: firstDelegateId });
+    .insert({ member_id: adminId, delegate_id: firstDelegateId });
   if (mErr) throw new Error(`admin membership ${phone}: ${mErr.message}`);
   const { error: rErr } = await db
     .from("admin_roles")
-    .insert({ user_id: u.user.id, role: a.role, granted_by: null });
+    .upsert(
+      { user_id: adminId, role: a.role, granted_by: null },
+      { onConflict: "user_id,role", ignoreDuplicates: true },
+    );
   if (rErr) throw new Error(`admin role ${phone}: ${rErr.message}`);
 }
 console.log("seeded 4 canonical admin accounts (+99550900000{1..4})");
@@ -2968,13 +3073,24 @@ const { count: paymentCount, error: payCountErr } = await db
   .select("*", { count: "exact", head: true })
   .like("bank_reference", "SEED-%");
 if (payCountErr) throw payCountErr;
-if (paymentCount !== 1636)
-  throw new Error(`expected 1636 seeded payments, got ${paymentCount}`);
+if (paymentCount !== paymentRows.length)
+  throw new Error(`expected ${paymentRows.length} seeded payments, got ${paymentCount}`);
+// Count only the CANONICAL admins' roles — the owner's own grant-admin.mjs grant
+// must not break reseeds.
+const { data: canonAdmins, error: canonErr } = await db
+  .from("profiles")
+  .select("id")
+  .in("phone", [1, 2, 3, 4].flatMap((n) => [`+99550900000${n}`, `99550900000${n}`]));
+if (canonErr) throw canonErr;
 const { count: adminCount, error: adminCountErr } = await db
   .from("admin_roles")
-  .select("*", { count: "exact", head: true });
+  .select("*", { count: "exact", head: true })
+  .in(
+    "user_id",
+    (canonAdmins ?? []).map((r) => r.id),
+  );
 if (adminCountErr) throw adminCountErr;
-if (adminCount !== 4) throw new Error(`expected 4 admin roles, got ${adminCount}`);
+if (adminCount !== 4) throw new Error(`expected 4 canonical admin roles, got ${adminCount}`);
 ```
 
 - [ ] **Step 7: Reseed staging and watch the assertions**
@@ -2983,7 +3099,7 @@ if (adminCount !== 4) throw new Error(`expected 4 admin roles, got ${adminCount}
 node --env-file=.env.local scripts/seed-staging.mjs --confirm-ref orcxtbedkexoclbfgvzd
 ```
 
-Expected output ends with the seeded-admins line, `public_stats: {"approved_delegates":12,"active_members":1636}`, the top-delegate line, and `SEED OK`. (This wipes prior e2e leftovers too — by design.)
+Expected output ends with the seeded-admins line, `public_stats: {"approved_delegates":12,"active_members":1636}`, the top-delegate line, and `SEED OK`. (Wipes prior e2e leftovers too — by design. The canonical admins survive, so reseeding keeps working even after probes/e2e have written audit rows with admin actors — rerun this seed as the standard drift recovery.)
 
 - [ ] **Step 8: Format, commit**
 
@@ -3106,11 +3222,16 @@ Insert before the final `console.log(` at the bottom of `scripts/verify-schema.m
     }
     console.log("OK: all 9 admin views return zero rows to a non-admin");
 
-    // personal_id exists in NO admin view (42703 undefined column), and the
-    // base-table grant no longer includes it (42501)
-    const { error: colErr } = await na.from("admin_members").select("personal_id").limit(1);
-    if (!colErr || colErr.code !== "42703")
-      throw new Error(`admin_members must not have personal_id: ${colErr?.code}`);
+    // personal_id/birth_date exist in NO admin view (42703 undefined column — a
+    // column-list assertion over all 9), and the base-table grant no longer
+    // includes them (42501)
+    for (const view of ADMIN_VIEWS) {
+      for (const col of ["personal_id", "birth_date"]) {
+        const { error: colErr } = await na.from(view).select(col).limit(1);
+        if (!colErr || colErr.code !== "42703")
+          throw new Error(`${view} must not have ${col}: ${colErr?.code}`);
+      }
+    }
     const { error: baseErr } = await na.from("profiles").select("personal_id").eq("id", naId);
     if (!baseErr || baseErr.code !== "42501")
       throw new Error(`profiles.personal_id must be revoked: ${baseErr?.code}`);
@@ -3126,31 +3247,37 @@ Insert before the final `console.log(` at the bottom of `scripts/verify-schema.m
     if (okColsErr) throw new Error(`scoped profile select broke: ${okColsErr.message}`);
     console.log("OK: personal_id/birth_date locked down (views 42703, base grant 42501)");
 
-    await expectToken(
-      na.rpc("admin_reveal_personal_id", { p_member_id: naId }),
-      "missing_role",
-      "non-admin reveal",
-    );
-    await expectToken(
-      na.rpc("admin_record_payment", {
-        p_member_id: naId,
-        p_amount_gel: 10,
-        p_paid_at: "2026-07-01",
-        p_bank_reference: null,
-      }),
-      "missing_role",
-      "non-admin record_payment",
-    );
-    await expectToken(
-      na.rpc("admin_grant_role", { p_user_id: naId, p_role: "editor" }),
-      "missing_role",
-      "non-admin grant_role",
-    );
+    // spec §4.7: EVERY §4.5 RPC refuses a non-admin. The role check precedes
+    // argument validation in all 13, so type-valid dummy args suffice.
+    const RPC_REFUSALS = [
+      ["admin_approve_delegate", { p_delegate_id: naId, p_slug: null }],
+      ["admin_reject_delegate", { p_delegate_id: naId, p_note: "პრობა" }],
+      ["admin_update_delegate_profile", { p_delegate_id: naId, p_bio: "პრობა", p_photo_url: null }],
+      ["admin_reveal_applicant_personal_id", { p_delegate_id: naId }],
+      ["admin_reveal_personal_id", { p_member_id: naId }],
+      [
+        "admin_export_members",
+        { p_search: null, p_region_id: null, p_status: null, p_include_ids: false },
+      ],
+      ["admin_reassign_member", { p_member_id: naId, p_delegate_id: naId }],
+      [
+        "admin_record_payment",
+        { p_member_id: naId, p_amount_gel: 10, p_paid_at: "2026-07-01", p_bank_reference: null },
+      ],
+      ["admin_record_payments_bulk", { p_rows: [] }],
+      ["admin_void_payment", { p_payment_id: 1, p_reason: "პრობის მიზეზი" }],
+      ["admin_grant_role", { p_user_id: naId, p_role: "editor" }],
+      ["admin_revoke_role", { p_user_id: naId, p_role: "editor" }],
+      ["admin_update_setting", { p_key: "active_grace_days", p_value: 30 }],
+    ];
+    for (const [fn, args] of RPC_REFUSALS) {
+      await expectToken(na.rpc(fn, args), "missing_role", `non-admin ${fn}`);
+    }
     const { error: anonAdminErr } = await anon.rpc("admin_reveal_personal_id", {
       p_member_id: naId,
     });
     if (!anonAdminErr) throw new Error("LEAK: anon can call admin_reveal_personal_id");
-    console.log("OK: admin RPCs refuse non-admins and anon");
+    console.log("OK: all 13 admin RPCs refuse a non-admin (anon spot-check too)");
 
     // own admin_roles are readable (empty for a non-admin) — the layout's gate read
     const { data: ownRoles, error: ownRolesErr } = await na
@@ -3159,6 +3286,28 @@ Insert before the final `console.log(` at the bottom of `scripts/verify-schema.m
       .eq("user_id", naId);
     if (ownRolesErr) throw new Error(`own admin_roles read failed: ${ownRolesErr.message}`);
     if (ownRoles.length !== 0) throw new Error("non-admin should hold no roles");
+
+    // deletability invariant (spec §4.7): no e2e 55-block user may EVER hold an
+    // admin role — role holders act, actors become undeletable, and the 55-block
+    // must stay disposable
+    const { data: allRoleRows, error: allRolesErr } = await db
+      .from("admin_roles")
+      .select("user_id");
+    if (allRolesErr) throw new Error(`admin_roles scan failed: ${allRolesErr.message}`);
+    const roleHolderIds = [...new Set((allRoleRows ?? []).map((r) => r.user_id))];
+    const { data: holderProfiles, error: holderErr } = await db
+      .from("profiles")
+      .select("id, phone")
+      .in("id", roleHolderIds);
+    if (holderErr) throw new Error(`role-holder profiles read failed: ${holderErr.message}`);
+    const e2eHolders = (holderProfiles ?? []).filter((p) =>
+      (p.phone ?? "").replace(/^\+?995/, "").startsWith("55"),
+    );
+    if (e2eHolders.length > 0)
+      throw new Error(
+        `LEAK: e2e 55-block users hold admin roles: ${e2eHolders.map((p) => p.phone).join(", ")}`,
+      );
+    console.log("OK: no e2e-block user holds an admin role (deletability invariant)");
 
     // ---- (2) verifier: scope edges + audited applicant reveal ----
     const verifier = await signInAsSeededAdmin("509000002");
@@ -3283,6 +3432,52 @@ Insert before the final `console.log(` at the bottom of `scripts/verify-schema.m
       throw new Error("LEAK: failed bulk landed rows — batch must be all-or-nothing");
     console.log("OK: finance flows — record, dedup, void-frees-ref, months math, atomic bulk");
 
+    // ---- (3b) engine date fixtures vs SQL — Task 1's semantics, replayed live ----
+    // Relative dates make the assertions run-date-independent: with grace 30 and
+    // 10 GEL on tier 10 (= one 30-day month), a member is active through day 60
+    // after payment (the owner's "single payment = exactly 60 days") and lapsed on
+    // day 61. Stacking: neither old payment alone covers today — only the
+    // greatest(prev_end, paid_at) fold does. Void: voided rows never count.
+    const probeDaysAgo = (d) => new Date(Date.now() - d * 86_400_000).toISOString().slice(0, 10);
+    async function engineCase(label, paidDaysAgo, expectStatus, voidAll = false) {
+      const { error: wipeErr } = await db.from("payments").delete().eq("member_id", naId);
+      if (wipeErr) throw new Error(`engine ${label}: wipe failed: ${wipeErr.message}`);
+      const { error: insErr } = await db.from("payments").insert(
+        paidDaysAgo.map((d, i) => ({
+          member_id: naId,
+          amount_gel: 10,
+          paid_at: probeDaysAgo(d),
+          bank_reference: `PROBE-EN-${label}-${i}`,
+          source: "manual",
+          recorded_by: null,
+          tier_gel_at_payment: 10,
+        })),
+      );
+      if (insErr) throw new Error(`engine ${label}: insert failed: ${insErr.message}`);
+      if (voidAll) {
+        const { error: vErr } = await db
+          .from("payments")
+          .update({ voided_at: new Date().toISOString(), void_reason: "engine probe" })
+          .eq("member_id", naId);
+        if (vErr) throw new Error(`engine ${label}: void failed: ${vErr.message}`);
+      }
+      const { error: rcErr } = await db.rpc("recompute_all_active");
+      if (rcErr) throw new Error(`engine ${label}: recompute failed: ${rcErr.message}`);
+      const { data: prof, error: profErr } = await db
+        .from("profiles")
+        .select("status")
+        .eq("id", naId)
+        .single();
+      if (profErr) throw new Error(`engine ${label}: status read failed: ${profErr.message}`);
+      if (prof.status !== expectStatus)
+        throw new Error(`engine ${label}: expected ${expectStatus}, got ${prof.status}`);
+    }
+    await engineCase("day60", [60], "active_member"); // last covered day — still active
+    await engineCase("day61", [61], "profile_completed"); // one day past the window
+    await engineCase("stack", [80, 65], "active_member"); // only the fold covers today
+    await engineCase("voided", [60], "profile_completed", true); // voided rows don't count
+    console.log("OK: engine date fixtures hold in SQL (60/61 boundary, stacking, void)");
+
     // ---- (4) super_admin: audited reveal, grant/revoke, lockout guard, settings ----
     const superAdmin = await signInAsSeededAdmin("509000001");
     const { data: revealed, error: revealErr } = await superAdmin.rpc(
@@ -3385,7 +3580,7 @@ Insert before the final `console.log(` at the bottom of `scripts/verify-schema.m
 node --env-file=.env.local scripts/verify-schema.mjs
 ```
 
-Expected: every existing Phase 0–3 probe still green, then the six `OK:` Phase 4 lines, exit 0. (The canonical-admin OTP sign-ins depend on Task 9's seed; if a sign-in rate-limits, wait 60 seconds and re-run.)
+Expected: every existing Phase 0–3 probe still green, then the eleven Phase 4 `OK:` lines, exit 0. (The canonical-admin OTP sign-ins depend on Task 9's seed; if a sign-in rate-limits, wait 60 seconds and re-run.)
 
 - [ ] **Step 3: Format, commit**
 
@@ -3403,6 +3598,7 @@ git commit -m "test(admin): live schema probes — lockdown, scopes, engine, swe
 - Create: `components/AdminNav.tsx`
 - Create: `components/AdminNav.test.tsx`
 - Modify: `lib/supabase/server.ts` (add `getAdminRoles`)
+- Modify: `components/Field.tsx` (export `adminControlClasses`)
 - Modify: `lib/admin.ts` + `lib/admin.test.ts` (add `hasAnyRole`)
 - Modify: `lib/cabinet.ts` + `lib/cabinet.test.ts` (`cabinetNavItems` admin item)
 - Modify: `app/(member)/layout.tsx`, `app/(delegate)/layout.tsx` (pass the admin flag)
@@ -3415,6 +3611,19 @@ git commit -m "test(admin): live schema probes — lockdown, scopes, engine, swe
   - `AdminNav` client component: `{ tabs: AdminTab[] }` props, sign-out included.
   - Every `/admin/*` request passes the layout gate: session required, ≥1 admin role required (others bounce via `deriveDestination`).
   - `cabinetNavItems(role, isAdmin)` — second parameter appends `{ href: "/admin", label: "ადმინისტრირება" }`.
+  - `adminControlClasses` in `components/Field.tsx` — the admin dense form-control style every Task 13–23 input/select/textarea reuses (`import { adminControlClasses } from "@/components/Field";`). One definition, zero copy-pasted class strings (CLAUDE.md forbidden pattern).
+
+- [ ] **Step 0: Export the admin control style from the design system**
+
+Append to `components/Field.tsx` (beside the existing `inputClasses` — the funnel's roomier variant):
+
+```ts
+/** Admin dense register (DESIGN.md Phase 4): shared by every admin form control. */
+export const adminControlClasses =
+  "rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal";
+```
+
+No test — a style constant; the consuming components' tests render it.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -3695,6 +3904,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { StatCard } from "@/components/StatCard";
 import { barPct, hasAnyRole, isStaff } from "@/lib/admin";
 import { formatAmountGel, formatDateKa } from "@/lib/cabinet";
+import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "ადმინისტრირება — ქართული რესპუბლიკა" };
@@ -3705,9 +3915,9 @@ export default async function AdminOverviewPage() {
     // editor-only (spec §3.1): no dead links — a single honest notice
     return (
       <CenteredNotice
-        icon="🗞️"
-        title="შენი განყოფილება მე-5 ფაზაში ჩაირთვება"
-        body="სიახლეებისა და ღონისძიებების მართვა (რედაქტორის როლი) მომდევნო ფაზაში ამოქმედდება."
+        decoration="🗞️"
+        title="შენი განყოფილება (სიახლეები და ღონისძიებები) მე-5 ფაზაში ჩაირთვება"
+        description="სიახლეებისა და ღონისძიებების მართვა (რედაქტორის როლი) მომდევნო ფაზაში ამოქმედდება."
       />
     );
   }
@@ -3749,10 +3959,10 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard n={overview.approved_delegates} label="დამტკიცებული დელეგატი" trend="↑ აქტიური რეგიონული ქსელი" />
-        <StatCard n={overview.active_members} label="აქტიური წევრი" trend="↑ გადამხდელი მხარდამჭერები" />
-        <StatCard n={overview.pending_delegates} label="ვერიფიკაციის მოლოდინში" trend="საჭიროებს გადახედვას" accent />
-        <StatCard n={`${overview.mrr_gel.toLocaleString("ka-GE")} ₾`} label="სავარაუდო MRR" trend="აქტიური წევრების საწევროების ჯამი" />
+        <StatCard value={formatCountKa(overview.approved_delegates)} label="დამტკიცებული დელეგატი" sub="↑ აქტიური რეგიონული ქსელი" />
+        <StatCard value={formatCountKa(overview.active_members)} label="აქტიური წევრი" sub="↑ გადამხდელი მხარდამჭერები" />
+        <StatCard value={formatCountKa(overview.pending_delegates)} label="ვერიფიკაციის მოლოდინში" sub="საჭიროებს გადახედვას" accent="brand" />
+        <StatCard value={`${formatCountKa(overview.mrr_gel)} ₾`} label="სავარაუდო MRR" sub="აქტიური წევრების საწევროების ჯამი" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -3800,7 +4010,7 @@ export default async function AdminOverviewPage() {
               ვერიფიკაციის რიგი
             </p>
             <p className="mt-2 text-4xl font-extrabold text-brand">
-              {overview.pending_delegates.toLocaleString("ka-GE")}
+              {formatCountKa(overview.pending_delegates)}
             </p>
             <p className="mt-1 text-sm font-semibold text-muted-fg">
               დელეგატი ელოდება დადასტურებას
@@ -3823,7 +4033,7 @@ export default async function AdminOverviewPage() {
                   <div className="flex items-baseline justify-between">
                     <span className="text-sm font-semibold text-ink">{r.name_ka}</span>
                     <span className="text-sm font-extrabold text-ink">
-                      {r.member_count.toLocaleString("ka-GE")}
+                      {formatCountKa(r.member_count)}
                     </span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-md bg-surface">
@@ -3843,7 +4053,7 @@ export default async function AdminOverviewPage() {
 }
 ```
 
-Adjust `StatCard`/`CenteredNotice` props to their REAL signatures — read `components/StatCard.tsx` and `components/CenteredNotice.tsx` first and adapt the JSX above to the actual prop names (e.g. StatCard may use `value`/`hint` naming; keep the Georgian strings byte-identical). Do not restyle the components.
+The props above match the REAL Phase 3 signatures — `StatCard`: `label`/`value`/`sub?`/`accent?: "brand"`; `CenteredNotice`: `title`/`description?`/`actions?`/`decoration?` — verify against `components/StatCard.tsx` / `components/CenteredNotice.tsx` before copying in case they drifted; keep the Georgian strings byte-identical. Do not restyle the components. Counts use `formatCountKa` (`lib/format.ts`) — NEVER `toLocaleString("ka-GE")`, whose Node/browser ICU disagreement already broke hydration once (see lib/format.ts header).
 
 - [ ] **Step 2: Verify build + suite**
 
@@ -3877,8 +4087,7 @@ Filters are a plain GET form (server round-trip, shareable URLs, zero client sta
 - [ ] **Step 1: Write the failing component test — `RevealPersonalId.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RevealPersonalId } from "./RevealPersonalId";
 
@@ -3887,7 +4096,7 @@ describe("RevealPersonalId (spec §3.3 — audited click-to-reveal)", () => {
     const reveal = vi.fn().mockResolvedValue({ ok: true, personalId: "01017056789" });
     render(<RevealPersonalId memberId="m-1" reveal={reveal} />);
     expect(screen.getByText("•••••••••••")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
+    fireEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
     await waitFor(() => expect(screen.getByText("01017056789")).toBeInTheDocument());
     expect(reveal).toHaveBeenCalledWith("m-1");
     expect(screen.queryByRole("button", { name: "ჩვენება" })).not.toBeInTheDocument();
@@ -3895,14 +4104,14 @@ describe("RevealPersonalId (spec §3.3 — audited click-to-reveal)", () => {
   it("renders a Georgian error and keeps the mask on failure", async () => {
     const reveal = vi.fn().mockResolvedValue({ ok: false, error: "შეცდომა" });
     render(<RevealPersonalId memberId="m-1" reveal={reveal} />);
-    await userEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
+    fireEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
     await waitFor(() => expect(screen.getByText("შეცდომა")).toBeInTheDocument());
     expect(screen.getByText("•••••••••••")).toBeInTheDocument();
   });
   it("null ID (legacy row) renders an em dash", async () => {
     const reveal = vi.fn().mockResolvedValue({ ok: true, personalId: null });
     render(<RevealPersonalId memberId="m-1" reveal={reveal} />);
-    await userEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
+    fireEvent.click(screen.getByRole("button", { name: "ჩვენება" }));
     await waitFor(() => expect(screen.getByText("—")).toBeInTheDocument());
   });
 });
@@ -4005,6 +4214,8 @@ import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { hasAnyRole, isStaff, MEMBER_STATUS_LABELS_KA } from "@/lib/admin";
+import { adminControlClasses } from "@/components/Field";
+import { formatCountKa } from "@/lib/format";
 import { membersFilterSchema } from "@/lib/admin-schemas";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -4084,7 +4295,7 @@ export default async function AdminMembersPage({
               name="search"
               defaultValue={filter.search ?? ""}
               placeholder="სახელი, ტელეფონი ან GR-კოდი…"
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+              className={adminControlClasses}
             />
           </label>
           <label className="flex min-w-[170px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
@@ -4092,7 +4303,7 @@ export default async function AdminMembersPage({
             <select
               name="regionId"
               defaultValue={filter.regionId ? String(filter.regionId) : ""}
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+              className={adminControlClasses}
             >
               <option value="">ყველა მხარე</option>
               {regions.map((r) => (
@@ -4107,7 +4318,7 @@ export default async function AdminMembersPage({
             <select
               name="status"
               defaultValue={filter.status ?? ""}
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+              className={adminControlClasses}
             >
               <option value="">ყველა სტატუსი</option>
               <option value="active_member">აქტიური</option>
@@ -4123,14 +4334,15 @@ export default async function AdminMembersPage({
 
       <div className="mt-4 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-fg">
-          ნაჩვენებია {shownFrom.toLocaleString("ka-GE")}–{shownTo.toLocaleString("ka-GE")} /{" "}
-          {total.toLocaleString("ka-GE")}
+          ნაჩვენებია {formatCountKa(shownFrom)}–{formatCountKa(shownTo)} /{" "}
+          {formatCountKa(total)}
         </p>
         {/* Export controls arrive in Task 14 for finance/super_admin */}
         {canExport ? <div data-slot="export-controls" /> : null}
       </div>
 
-      <Card padded={false} className="mt-2">
+      <div className="mt-2">
+      <Card padded={false}>
         {members.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-fg">შედეგი ვერ მოიძებნა.</p>
         ) : (
@@ -4139,6 +4351,8 @@ export default async function AdminMembersPage({
             head={
               <>
                 <th className={tableThClass}>სახელი გვარი</th>
+                {/* ტელეფონი is a deliberate addition to the spec's column list:
+                    search matches phone, so operators must see why a row matched */}
                 <th className={tableThClass}>ტელეფონი</th>
                 <th className={tableThClass}>რეგიონი</th>
                 <th className={tableThClass}>დელეგატი</th>
@@ -4179,6 +4393,7 @@ export default async function AdminMembersPage({
           </DataTable>
         )}
       </Card>
+      </div>
 
       <div className="mt-4 flex items-center justify-between">
         {filter.page > 1 ? (
@@ -4201,7 +4416,7 @@ export default async function AdminMembersPage({
 }
 ```
 
-Check `Card`'s real props first (Phase 1 added `header` + `padded`; if `className` is not a prop, wrap in a `<div className="mt-2">` instead — never restyle the component).
+`Card` has no `className` prop (checked against the Phase 1 source) — that's why the snippet wraps it in `<div className="mt-2">`. Never restyle the component; `npm run format` will normalize the flat JSX indentation.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -4231,8 +4446,7 @@ git commit -m "feat(admin): member list — search/filters/pagination + audited 
 - [ ] **Step 1: Write the failing component test — `ExportControls.test.tsx`**
 
 ```tsx
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ExportControls } from "./ExportControls";
 
@@ -4261,7 +4475,7 @@ describe("ExportControls (spec §3.3 — decision #4/#6)", () => {
       "href",
       "/admin/members/export?",
     );
-    await userEvent.click(checkbox);
+    fireEvent.click(checkbox);
     expect(screen.getByRole("link", { name: "ექსპორტი (CSV)" })).toHaveAttribute(
       "href",
       "/admin/members/export?includeIds=1",
@@ -4358,13 +4572,13 @@ interface ExportedRow {
 export async function GET(request: Request) {
   const roles = await getAdminRoles();
   if (!hasAnyRole(roles, ["finance", "super_admin"])) {
-    return new Response("forbidden", { status: 403 });
+    return new Response("წვდომა აკრძალულია", { status: 403 });
   }
   const url = new URL(request.url);
   const filter = membersFilterSchema.parse(Object.fromEntries(url.searchParams));
   const includeIds = url.searchParams.get("includeIds") === "1";
   if (includeIds && !hasAnyRole(roles, ["super_admin"])) {
-    return new Response("forbidden", { status: 403 });
+    return new Response("წვდომა აკრძალულია", { status: 403 });
   }
 
   const supabase = await createServerSupabase();
@@ -4374,7 +4588,10 @@ export async function GET(request: Request) {
     p_status: filter.status ?? null,
     p_include_ids: includeIds,
   });
-  if (error) return new Response(`export failed: ${error.message}`, { status: 500 });
+  if (error) {
+    console.error(`member export failed: ${error.message}`); // detail stays server-side
+    return new Response("ექსპორტი ვერ შესრულდა", { status: 500 });
+  }
 
   const rows = (data as unknown as ExportedRow[]).map(
     (r): MemberExportRow => ({
@@ -4447,8 +4664,7 @@ git commit -m "feat(admin): audited CSV export — filtered roster, super-only I
 - [ ] **Step 1: Write the failing component test — `VerifyCard.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { VerifyCard } from "./VerifyCard";
 
@@ -4460,6 +4676,8 @@ const applicant = {
   phone: "+995551112233",
   createdAt: "2026-07-10T10:00:00Z",
   reviewNote: null as string | null,
+  verifiedAt: null as string | null,
+  verifiedByName: null as string | null,
 };
 
 function noopReveal() {
@@ -4495,7 +4713,7 @@ describe("VerifyCard (spec §3.4)", () => {
         reject={vi.fn()}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
     await waitFor(() =>
       expect(screen.getByText(/დელეგატი დამტკიცდა/)).toBeInTheDocument(),
     );
@@ -4517,17 +4735,24 @@ describe("VerifyCard (spec §3.4)", () => {
         reject={reject}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "უარყოფა" }));
-    await userEvent.type(screen.getByLabelText(/შიდა შენიშვნა/), "დოკუმენტები აკლია");
-    await userEvent.click(screen.getByRole("button", { name: "უარყოფის დადასტურება" }));
+    fireEvent.click(screen.getByRole("button", { name: "უარყოფა" }));
+    fireEvent.change(screen.getByLabelText(/შიდა შენიშვნა/), {
+      target: { value: "დოკუმენტები აკლია" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "უარყოფის დადასტურება" }));
     await waitFor(() => expect(screen.getByText(/უარყოფილია/)).toBeInTheDocument());
     expect(reject).toHaveBeenCalledWith("d-1", "დოკუმენტები აკლია");
   });
 
-  it("rejected mode shows the stored note and only the re-approve action", () => {
+  it("rejected mode shows the stored note, the decision stamp, and only re-approve", () => {
     render(
       <VerifyCard
-        applicant={{ ...applicant, reviewNote: "დოკუმენტები აკლია" }}
+        applicant={{
+          ...applicant,
+          reviewNote: "დოკუმენტები აკლია",
+          verifiedAt: "2026-07-12T09:30:00Z",
+          verifiedByName: "ვერიფიკატორი გუნდი",
+        }}
         mode="rejected"
         reveal={noopReveal}
         approve={vi.fn()}
@@ -4535,6 +4760,8 @@ describe("VerifyCard (spec §3.4)", () => {
       />,
     );
     expect(screen.getByText(/დოკუმენტები აკლია/)).toBeInTheDocument();
+    // the decision stamp (spec §3.4): date + who decided
+    expect(screen.getByText(/უარყოფილია 12\.07\.2026 · ვერიფიკატორი გუნდი/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "დადასტურება" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "უარყოფა" })).not.toBeInTheDocument();
   });
@@ -4550,7 +4777,7 @@ describe("VerifyCard (spec §3.4)", () => {
         reject={vi.fn()}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
     await waitFor(() => expect(screen.getByText("შეცდომა")).toBeInTheDocument());
   });
 });
@@ -4660,6 +4887,7 @@ export async function revealApplicantIdAction(delegateId: unknown): Promise<Reve
 
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
 import { formatDateKa, formatPhoneKa, initialsKa } from "@/lib/cabinet";
 import { RevealPersonalId } from "../members/RevealPersonalId";
@@ -4673,6 +4901,8 @@ export interface QueueApplicant {
   phone: string | null;
   createdAt: string;
   reviewNote: string | null;
+  verifiedAt: string | null; // decision stamp (spec §3.4 — rejected tab)
+  verifiedByName: string | null;
 }
 
 export function VerifyCard({
@@ -4716,7 +4946,7 @@ export function VerifyCard({
 
   if (done?.kind === "approved") {
     return (
-      <div className="rounded-xl border border-line bg-white p-5">
+      <div className="rounded-xl border border-line bg-white p-5" data-testid={`verify-card-${applicant.id}`}>
         <p className="text-sm font-semibold text-ok">
           დელეგატი დამტკიცდა ✓ · რეფერალური ბმული აქტიურია
         </p>
@@ -4733,14 +4963,14 @@ export function VerifyCard({
   }
   if (done?.kind === "rejected") {
     return (
-      <div className="rounded-xl border border-line bg-white p-5">
+      <div className="rounded-xl border border-line bg-white p-5" data-testid={`verify-card-${applicant.id}`}>
         <p className="text-sm font-semibold text-danger">განაცხადი უარყოფილია.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-line bg-white p-5">
+    <div className="rounded-xl border border-line bg-white p-5" data-testid={`verify-card-${applicant.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-[260px] flex-1 items-start gap-4">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-sm font-bold text-ink">
@@ -4759,6 +4989,13 @@ export function VerifyCard({
             <p className="text-sm font-semibold text-muted-fg">
               {applicant.regionNameKa ?? "—"}
             </p>
+            {mode === "rejected" && applicant.verifiedAt ? (
+              // the decision stamp (spec §3.4): when and by whom
+              <p className="mt-1 text-xs font-semibold text-muted-fg">
+                უარყოფილია {formatDateKa(applicant.verifiedAt)}
+                {applicant.verifiedByName ? ` · ${applicant.verifiedByName}` : null}
+              </p>
+            ) : null}
             <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
               <div>
                 <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
@@ -4809,7 +5046,7 @@ export function VerifyCard({
               value={note}
               maxLength={500}
               onChange={(e) => setNote(e.target.value)}
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+              className={adminControlClasses}
             />
           </label>
           <Button variant="danger" onClick={onReject} disabled={busy}>
@@ -4982,6 +5219,10 @@ export default async function AdminVerifyPage({
                 phone: d.phone,
                 createdAt: d.created_at,
                 reviewNote: d.review_note,
+                verifiedAt: d.verified_at,
+                verifiedByName: d.verified_by_first_name
+                  ? `${d.verified_by_first_name} ${d.verified_by_last_name}`
+                  : null,
               }}
               mode={tab}
               reveal={revealApplicantIdAction}
@@ -5018,16 +5259,18 @@ git commit -m "feat(admin): verification queue — three tabs, slug-minting appr
 - Create: `app/(admin)/admin/verify/[id]/DelegateProfileForm.tsx`
 - Create: `app/(admin)/admin/verify/[id]/DelegateProfileForm.test.tsx`
 - Create: `app/(admin)/admin/verify/[id]/actions.ts`
+- Modify: `next.config.ts` (raise the server-action body limit — see Step 3a)
 
 **Interfaces:**
 - Consumes: `admin_delegate_queue` view, `admin_update_delegate_profile` RPC, `delegate-photos` bucket (Task 6); `delegateProfileSchema`, `PHOTO_MAX_BYTES`, `PHOTO_TYPES` (Task 5); `createAdminClient` (the ONE service-role app path this phase — behind the role precheck + in-DB re-check).
 - Produces: photo URLs shaped `https://<project>.supabase.co/storage/v1/object/public/delegate-photos/<id>-<ts>.<ext>` stored on `delegates.photo_url`; public pages render them via their existing `<img>`.
 
+**Framework constraint:** Next.js caps server-action request bodies at **1 MB by default** — without the Step 3a config change, every 1–5 MB photo is rejected by the framework ("Body exceeded 1mb limit") before `updateDelegateProfileAction` even runs, and the advertised 5 MB limit is a lie.
+
 - [ ] **Step 1: Write the failing component test — `DelegateProfileForm.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DelegateProfileForm } from "./DelegateProfileForm";
 
@@ -5039,9 +5282,8 @@ describe("DelegateProfileForm (spec §3.4)", () => {
     );
     const bio = screen.getByLabelText(/ბიოგრაფია/);
     expect(bio).toHaveValue("ძველი ბიო");
-    await userEvent.clear(bio);
-    await userEvent.type(bio, "ახალი ბიო");
-    await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    fireEvent.change(bio, { target: { value: "ახალი ბიო" } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() => expect(screen.getByText(/პროფილი განახლდა/)).toBeInTheDocument());
     const fd = save.mock.calls[0]![0] as FormData;
     expect(fd.get("delegateId")).toBe("d-1");
@@ -5054,8 +5296,8 @@ describe("DelegateProfileForm (spec §3.4)", () => {
     const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.jpg", {
       type: "image/jpeg",
     });
-    await userEvent.upload(screen.getByLabelText(/ფოტო/), big);
-    await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    fireEvent.change(screen.getByLabelText(/ფოტო/), { target: { files: [big] } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
       expect(screen.getByText(/ფოტო არ უნდა აღემატებოდეს 5 MB-ს/)).toBeInTheDocument(),
     );
@@ -5066,8 +5308,10 @@ describe("DelegateProfileForm (spec §3.4)", () => {
     const save = vi.fn();
     render(<DelegateProfileForm delegateId="d-1" initialBio="" photoUrl={null} save={save} />);
     const pdf = new File([new Uint8Array(10)], "cv.pdf", { type: "application/pdf" });
-    await userEvent.upload(screen.getByLabelText(/ფოტო/), pdf);
-    await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    // fireEvent bypasses the input's `accept` filter (unlike user-event) — exactly
+    // what this wrong-type case needs to reach the action's own MIME check
+    fireEvent.change(screen.getByLabelText(/ფოტო/), { target: { files: [pdf] } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
       expect(screen.getByText(/დაშვებულია მხოლოდ JPEG, PNG ან WebP/)).toBeInTheDocument(),
     );
@@ -5081,7 +5325,23 @@ describe("DelegateProfileForm (spec §3.4)", () => {
 Run: `npx vitest run "app/(admin)/admin/verify/[id]/DelegateProfileForm.test.tsx"`
 Expected: FAIL — component missing.
 
-- [ ] **Step 3: Implement the action, form and page**
+- [ ] **Step 3a: Raise the server-action body limit in `next.config.ts`**
+
+The default 1 MB body cap would reject 1–5 MB photos before the action runs. Edit `next.config.ts` (currently only `reactStrictMode` + `outputFileTracingIncludes`) and add inside the config object:
+
+```ts
+  experimental: {
+    // photo upload (admin delegate editor) sends up to 5 MB through a server
+    // action; Next's default body cap is 1 MB. 6mb leaves headroom for the
+    // multipart envelope. Scope stays global-but-harmless: every other action
+    // in the app carries tiny payloads.
+    serverActions: { bodySizeLimit: "6mb" },
+  },
+```
+
+`npm run typecheck` validates the key against the installed Next 16's `NextConfig` type — if the option has moved out of `experimental` in this Next version, the type error will name the new location; follow it and keep the comment.
+
+- [ ] **Step 3b: Implement the action, form and page**
 
 `app/(admin)/admin/verify/[id]/actions.ts`:
 
@@ -5169,6 +5429,7 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
 
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import { PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
 import type { SaveProfileResult } from "./actions";
 
@@ -5221,7 +5482,7 @@ export function DelegateProfileForm({
           maxLength={1000}
           rows={6}
           onChange={(e) => setBio(e.target.value)}
-          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+          className={adminControlClasses}
         />
         <span className="text-xs font-normal text-muted-fg">{bio.length} / 1000</span>
       </label>
@@ -5373,7 +5634,9 @@ export type BulkStatus =
   | "ambiguous_amount"
   | "unknown_code"
   | "duplicate"
-  | "duplicate_line";
+  | "duplicate_line"
+  | "not_completed"
+  | "bad_date";
 export interface BulkPreviewRow {
   index: number;
   line: string;
@@ -5397,8 +5660,7 @@ export type BulkConfirmResult =
 - [ ] **Step 1: Write the failing component test — `RecordPayment.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RecordPayment } from "./RecordPayment";
 
@@ -5417,17 +5679,16 @@ describe("RecordPayment (spec §3.5 — single entry)", () => {
     const record = vi.fn().mockResolvedValue({ ok: true, months: 3, newStatus: "active_member" });
     render(<RecordPayment lookup={lookup} record={record} />);
 
-    await userEvent.type(screen.getByLabelText(/წევრის ძებნა/), "GR-ABC234");
-    await userEvent.click(screen.getByRole("button", { name: "ძებნა" }));
+    fireEvent.change(screen.getByLabelText(/წევრის ძებნა/), { target: { value: "GR-ABC234" } });
+    fireEvent.click(screen.getByRole("button", { name: "ძებნა" }));
     await waitFor(() => expect(screen.getByText(/ნინო ბერიძე/)).toBeInTheDocument());
-    await userEvent.click(screen.getByRole("button", { name: /ნინო ბერიძე/ }));
+    fireEvent.click(screen.getByRole("button", { name: /ნინო ბერიძე/ }));
 
     const amount = screen.getByLabelText(/თანხა/);
-    await userEvent.clear(amount);
-    await userEvent.type(amount, "60");
+    fireEvent.change(amount, { target: { value: "60" } });
     expect(screen.getByText(/→ 3 თვე/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "აღრიცხვა" }));
+    fireEvent.click(screen.getByRole("button", { name: "აღრიცხვა" }));
     await waitFor(() => expect(screen.getByText(/აღირიცხა — 3 თვე/)).toBeInTheDocument());
     expect(screen.getByText(/წევრი ახლა აქტიურია/)).toBeInTheDocument();
     expect(record).toHaveBeenCalledWith(
@@ -5438,8 +5699,8 @@ describe("RecordPayment (spec §3.5 — single entry)", () => {
   it("no candidates → honest empty result", async () => {
     const lookup = vi.fn().mockResolvedValue({ ok: true, candidates: [] });
     render(<RecordPayment lookup={lookup} record={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText(/წევრის ძებნა/), "არავინ");
-    await userEvent.click(screen.getByRole("button", { name: "ძებნა" }));
+    fireEvent.change(screen.getByLabelText(/წევრის ძებნა/), { target: { value: "არავინ" } });
+    fireEvent.click(screen.getByRole("button", { name: "ძებნა" }));
     await waitFor(() => expect(screen.getByText(/ვერ მოიძებნა/)).toBeInTheDocument());
   });
 
@@ -5449,12 +5710,12 @@ describe("RecordPayment (spec §3.5 — single entry)", () => {
       .fn()
       .mockResolvedValue({ ok: false, error: "ამ საბანკო რეფერენსით გადახდა უკვე აღრიცხულია." });
     render(<RecordPayment lookup={lookup} record={record} />);
-    await userEvent.type(screen.getByLabelText(/წევრის ძებნა/), "GR-ABC234");
-    await userEvent.click(screen.getByRole("button", { name: "ძებნა" }));
+    fireEvent.change(screen.getByLabelText(/წევრის ძებნა/), { target: { value: "GR-ABC234" } });
+    fireEvent.click(screen.getByRole("button", { name: "ძებნა" }));
     await waitFor(() => expect(screen.getByText(/ნინო ბერიძე/)).toBeInTheDocument());
-    await userEvent.click(screen.getByRole("button", { name: /ნინო ბერიძე/ }));
-    await userEvent.type(screen.getByLabelText(/თანხა/), "20");
-    await userEvent.click(screen.getByRole("button", { name: "აღრიცხვა" }));
+    fireEvent.click(screen.getByRole("button", { name: /ნინო ბერიძე/ }));
+    fireEvent.change(screen.getByLabelText(/თანხა/), { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: "აღრიცხვა" }));
     await waitFor(() =>
       expect(screen.getByText(/უკვე აღრიცხულია/)).toBeInTheDocument(),
     );
@@ -5547,6 +5808,7 @@ export async function recordPaymentAction(input: unknown): Promise<RecordResult>
 
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
 import { MEMBER_STATUS_LABELS_KA } from "@/lib/admin";
 import { todayTbilisiIso } from "@/lib/admin-schemas";
@@ -5630,7 +5892,7 @@ export function RecordPayment({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="GR-XXXXXX…"
-            className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+            className={adminControlClasses}
           />
         </label>
         <Button variant="dark" onClick={onLookup} disabled={busy || query.trim().length < 2}>
@@ -5666,9 +5928,11 @@ export function RecordPayment({
 
       {member ? (
         <div className="rounded-xl border border-line bg-surface/50 p-4">
-          <p className="text-sm font-semibold text-ink">
-            {member.name} <span className="font-mono text-xs">{member.referenceCode}</span> ·
-            საწევრო: {member.tier === null ? "—" : `${member.tier} ₾`}
+          <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
+            {member.name} <span className="font-mono text-xs">{member.referenceCode}</span>
+            <span className="font-normal text-muted-fg">{member.regionNameKa ?? "—"}</span>
+            <span>· საწევრო: {member.tier === null ? "—" : `${member.tier} ₾`}</span>
+            <Pill status={member.status} label={MEMBER_STATUS_LABELS_KA[member.status]} />
           </p>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="flex w-32 flex-col gap-1 text-sm font-semibold text-ink">
@@ -5802,17 +6066,22 @@ git commit -m "feat(admin): single-entry payment recording with live month previ
 - [ ] **Step 1: Write the failing component test — `BulkMatch.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { BulkMatch } from "./BulkMatch";
 import type { BulkPreviewRow } from "./types";
 
+// one row per BulkStatus — spec §3.5's component test covers EVERY pill
 const rows: BulkPreviewRow[] = [
   { index: 0, line: "GR-ABC234 20.00", code: "GR-ABC234", amountGel: 20, paidAt: "2026-07-01", status: "ok", memberName: "ნინო ბერიძე", months: 1 },
   { index: 1, line: "GR-ZZZZZ9 20.00", code: "GR-ZZZZZ9", amountGel: 20, paidAt: "2026-07-01", status: "unknown_code", memberName: null, months: null },
   { index: 2, line: "უცნობი 20.00", code: null, amountGel: 20, paidAt: "2026-07-01", status: "no_code", memberName: null, months: null },
   { index: 3, line: "GR-ABC234 20.00 დუბლი", code: "GR-ABC234", amountGel: 20, paidAt: "2026-07-01", status: "duplicate", memberName: "ნინო ბერიძე", months: null },
+  { index: 4, line: "GR-KMP234 20 30", code: "GR-KMP234", amountGel: null, paidAt: "2026-07-01", status: "ambiguous_amount", memberName: null, months: null },
+  { index: 5, line: "GR-KMP234 საწევრო", code: "GR-KMP234", amountGel: null, paidAt: "2026-07-01", status: "no_amount", memberName: null, months: null },
+  { index: 6, line: "GR-ABC234 20.00", code: "GR-ABC234", amountGel: 20, paidAt: "2026-07-01", status: "duplicate_line", memberName: null, months: null },
+  { index: 7, line: "GR-DDD234 20.00", code: "GR-DDD234", amountGel: 20, paidAt: "2026-07-01", status: "not_completed", memberName: "გია რაზმაძე", months: null },
+  { index: 8, line: "GR-ABC234 20.00 15.03.2025", code: "GR-ABC234", amountGel: 20, paidAt: "2025-03-15", status: "bad_date", memberName: null, months: null },
 ];
 
 describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
@@ -5821,26 +6090,37 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
     const confirm = vi.fn().mockResolvedValue({ ok: true, count: 1, totalGel: 20 });
     render(<BulkMatch preview={preview} confirm={confirm} />);
 
-    await userEvent.type(screen.getByLabelText(/ამონაწერის სტრიქონები/), "რამე ტექსტი");
-    await userEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
+    fireEvent.change(screen.getByLabelText(/ამონაწერის სტრიქონები/), {
+      target: { value: "რამე ტექსტი" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
     await waitFor(() => expect(screen.getByText("ნაპოვნია")).toBeInTheDocument());
     expect(screen.getByText("უცნობი კოდი")).toBeInTheDocument();
     expect(screen.getByText("კოდი ვერ მოიძებნა")).toBeInTheDocument();
     expect(screen.getByText("დუბლიკატი")).toBeInTheDocument();
+    expect(screen.getByText("გაურკვეველი თანხა")).toBeInTheDocument();
+    expect(screen.getByText("თანხა ვერ დადგინდა")).toBeInTheDocument();
+    expect(screen.getByText("განმეორებული ხაზი")).toBeInTheDocument();
+    expect(screen.getByText("დაუსრულებელი რეგისტრაცია")).toBeInTheDocument();
+    expect(screen.getByText("თარიღი დიაპაზონს გარეთაა")).toBeInTheDocument();
     expect(screen.getByText(/ჩაიწერება: 1/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
+    fireEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
     await waitFor(() => expect(screen.getByText(/აღირიცხა 1 გადახდა/)).toBeInTheDocument());
     expect(confirm).toHaveBeenCalledWith([
       { referenceCode: "GR-ABC234", amountGel: 20, paidAt: "2026-07-01" },
     ]);
+    // spec §3.5: non-✓ rows STAY on screen for manual handling; the ✓ row is gone
+    expect(screen.getByText("უცნობი კოდი")).toBeInTheDocument();
+    expect(screen.queryByText("ნაპოვნია")).not.toBeInTheDocument();
+    expect(screen.getByText(/დარჩენილი 8 რიგი აღრიცხე ერთეულად/)).toBeInTheDocument();
   });
 
   it("zero ✓ rows disables the confirm button", async () => {
     const preview = vi.fn().mockResolvedValue({ ok: true, rows: [rows[1]!] });
     render(<BulkMatch preview={preview} confirm={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText(/ამონაწერის სტრიქონები/), "x");
-    await userEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
+    fireEvent.change(screen.getByLabelText(/ამონაწერის სტრიქონები/), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
     await waitFor(() => expect(screen.getByText("უცნობი კოდი")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: /დადასტურება/ })).toBeDisabled();
   });
@@ -5851,10 +6131,10 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
       .fn()
       .mockResolvedValue({ ok: false, error: "უცნობი კოდი", rowIndex: 0 });
     render(<BulkMatch preview={preview} confirm={confirm} />);
-    await userEvent.type(screen.getByLabelText(/ამონაწერის სტრიქონები/), "x");
-    await userEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
+    fireEvent.change(screen.getByLabelText(/ამონაწერის სტრიქონები/), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
     await waitFor(() => expect(screen.getByText("ნაპოვნია")).toBeInTheDocument());
-    await userEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
+    fireEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
     await waitFor(() =>
       expect(screen.getByText(/ვერ ჩაიწერა — შეცდომა მე-1 რიგში/)).toBeInTheDocument(),
     );
@@ -5932,9 +6212,17 @@ export async function previewBulkAction(text: unknown): Promise<BulkPreviewResul
     if (r.problems.includes("no_code")) return { ...base, status: "no_code" };
     if (r.problems.includes("ambiguous_amount")) return { ...base, status: "ambiguous_amount" };
     if (r.problems.includes("no_amount")) return { ...base, status: "no_amount" };
+    // outside the confirm schema's window (2026-01-01..today) — classify HERE so a
+    // single out-of-range date can never abort the whole all-or-nothing confirm
+    if (paidAt < "2026-01-01" || paidAt > today) return { ...base, status: "bad_date" };
     const member = byCode.get(r.code as string);
     if (!member) return { ...base, status: "unknown_code" };
     const name = `${member.first_name} ${member.last_name}`;
+    if (member.membership_tier === null) {
+      // matched a real code, but the registration is incomplete — the RPC would
+      // refuse this row (not_completed), so it must not preview as ✓
+      return { ...base, status: "not_completed", memberName: name };
+    }
     if (existingKeys.has(`${member.id}|${r.amountGel}|${paidAt}`)) {
       return { ...base, status: "duplicate", memberName: name };
     }
@@ -5973,11 +6261,18 @@ export async function confirmBulkAction(rows: unknown): Promise<BulkConfirmResul
 }
 ```
 
-Also add `monthsFor` (from `@/lib/active`) and `Json` (from `@/lib/supabase/types`) to the import block, and map `unknown_code` in `lib/funnel.ts` ERROR_MESSAGES if the reason tokens should read well:
-append to the Phase 4 token block in `lib/funnel.ts` (and a matching test line in `lib/funnel.test.ts`):
+Also add `monthsFor` (from `@/lib/active`) and `Json` (from `@/lib/supabase/types`) to the import block. Then map the two bulk-only RPC reason tokens — append to the Phase 4 token block in `lib/funnel.ts` ERROR_MESSAGES:
 
 ```ts
   unknown_code: "უცნობი კოდი",
+  duplicate: "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
+```
+
+and the matching lines in `lib/funnel.test.ts`'s Phase 4 token test:
+
+```ts
+    expect(mapFunnelError("unknown_code")).toBe("უცნობი კოდი");
+    expect(mapFunnelError("duplicate")).toBe("დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.");
 ```
 
 `app/(admin)/admin/finances/BulkMatch.tsx`:
@@ -5999,6 +6294,8 @@ const STATUS_LABELS: Record<BulkStatus, string> = {
   unknown_code: "უცნობი კოდი",
   duplicate: "დუბლიკატი",
   duplicate_line: "განმეორებული ხაზი",
+  not_completed: "დაუსრულებელი რეგისტრაცია",
+  bad_date: "თარიღი დიაპაზონს გარეთაა",
 };
 
 export function BulkMatch({
@@ -6051,11 +6348,16 @@ export function BulkMatch({
       });
       return;
     }
+    const leftovers = (rows ?? []).filter((r) => r.status !== "ok");
     setNotice({
       kind: "ok",
-      text: `აღირიცხა ${result.count} გადახდა (${formatAmountGel(result.totalGel)} ₾). დანარჩენი რიგები აღრიცხე ერთეულად.`,
+      text:
+        leftovers.length === 0
+          ? `აღირიცხა ${result.count} გადახდა (${formatAmountGel(result.totalGel)} ₾).`
+          : `აღირიცხა ${result.count} გადახდა (${formatAmountGel(result.totalGel)} ₾). დარჩენილი ${leftovers.length} რიგი აღრიცხე ერთეულად.`,
     });
-    setRows(null);
+    // spec §3.5: non-✓ rows STAY on screen for manual single-entry handling
+    setRows(leftovers.length === 0 ? null : leftovers);
     setText("");
   }
 
@@ -6126,7 +6428,15 @@ export function BulkMatch({
           </DataTable>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-fg">
-              ჩაიწერება: {okRows.length} · გამოტოვებული: {(rows.length - okRows.length)}
+              {/* spec §3.5: the summary counts each kind, not just two aggregates */}
+              {(Object.entries(STATUS_LABELS) as [BulkStatus, string][])
+                .map(([status, label]) => ({
+                  label: status === "ok" ? "ჩაიწერება" : label,
+                  count: rows.filter((r) => r.status === status).length,
+                }))
+                .filter((s) => s.count > 0)
+                .map((s) => `${s.label}: ${s.count}`)
+                .join(" · ")}
             </p>
             <Button variant="primary" onClick={onConfirm} disabled={busy || okRows.length === 0}>
               დადასტურება ({okRows.length})
@@ -6176,6 +6486,7 @@ git commit -m "feat(admin): bulk paste matching — classify preview, all-or-not
 - Create: `app/(admin)/admin/finances/VoidPaymentButton.tsx`
 - Create: `app/(admin)/admin/finances/VoidPaymentButton.test.tsx`
 - Modify: `app/(admin)/admin/finances/actions.ts` (add `voidPaymentAction`)
+- Modify: `app/(admin)/admin/finances/types.ts` (add `VoidResult`)
 - Modify: `app/(admin)/admin/finances/page.tsx` (replace the `{/* FINANCE-STATS (Task 19) */}` marker)
 
 **Interfaces:**
@@ -6185,8 +6496,7 @@ git commit -m "feat(admin): bulk paste matching — classify preview, all-or-not
 - [ ] **Step 1: Write the failing component test — `VoidPaymentButton.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { VoidPaymentButton } from "./VoidPaymentButton";
 
@@ -6198,12 +6508,12 @@ describe("VoidPaymentButton (spec §3.5 — void with required reason)", () => {
   it("reveals the reason field, requires ≥3 chars, then voids", async () => {
     const voidPayment = vi.fn().mockResolvedValue({ ok: true });
     render(<VoidPaymentButton paymentId={7} voidPayment={voidPayment} />);
-    await userEvent.click(screen.getByRole("button", { name: "გაუქმება" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაუქმება" }));
     const confirmButton = screen.getByRole("button", { name: "გაუქმების დადასტურება" });
     expect(confirmButton).toBeDisabled();
-    await userEvent.type(screen.getByLabelText(/მიზეზი/), "შეცდომით ჩაიწერა");
+    fireEvent.change(screen.getByLabelText(/მიზეზი/), { target: { value: "შეცდომით ჩაიწერა" } });
     expect(confirmButton).toBeEnabled();
-    await userEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
     await waitFor(() => expect(voidPayment).toHaveBeenCalledWith(7, "შეცდომით ჩაიწერა"));
   });
   it("shows the action's Georgian error", async () => {
@@ -6211,9 +6521,9 @@ describe("VoidPaymentButton (spec §3.5 — void with required reason)", () => {
       .fn()
       .mockResolvedValue({ ok: false, error: "ეს გადახდა უკვე გაუქმებულია." });
     render(<VoidPaymentButton paymentId={7} voidPayment={voidPayment} />);
-    await userEvent.click(screen.getByRole("button", { name: "გაუქმება" }));
-    await userEvent.type(screen.getByLabelText(/მიზეზი/), "შეცდომით");
-    await userEvent.click(screen.getByRole("button", { name: "გაუქმების დადასტურება" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაუქმება" }));
+    fireEvent.change(screen.getByLabelText(/მიზეზი/), { target: { value: "შეცდომით" } });
+    fireEvent.click(screen.getByRole("button", { name: "გაუქმების დადასტურება" }));
     await waitFor(() =>
       expect(screen.getByText("ეს გადახდა უკვე გაუქმებულია.")).toBeInTheDocument(),
     );
@@ -6320,7 +6630,7 @@ export function VoidPaymentButton({
 }
 ```
 
-In `page.tsx`, replace `{/* FINANCE-STATS (Task 19) */}` with the stats + transactions sections and extend the page's data loading (before the `return`):
+In `page.tsx`, replace `{/* FINANCE-STATS (Task 19) */}` with the stats + transactions sections and extend the page's data loading (before the `return`). Extend the page's imports accordingly: `StatCard` from `@/components/StatCard`, `DataTable, tableCellClass, tableRowClass, tableThClass` from `@/components/DataTable`, `barPct` merged into the `@/lib/admin` import, `formatCountKa` from `@/lib/format`, `formatAmountGel, formatDateKa` merged into the `@/lib/cabinet` import, and `VoidPaymentButton` from `./VoidPaymentButton`:
 
 ```tsx
   const supabase = await createServerSupabase();
@@ -6354,9 +6664,9 @@ and render (JSX in place of the marker):
 
 ```tsx
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard n={`${stats.mrr_gel.toLocaleString("ka-GE")} ₾`} label="თვიური შემოსავალი (MRR)" trend="აქტიური საწევროების ჯამი" accent />
-          <StatCard n={stats.active_count} label="აქტიური გამომწერი" trend="გადამხდელი წევრები" />
-          <StatCard n={`${avgGel.toFixed(2)} ₾`} label="საშ. შენატანი" trend="ერთ წევრზე თვეში" />
+          <StatCard value={`${formatCountKa(stats.mrr_gel)} ₾`} label="თვიური შემოსავალი (MRR)" sub="აქტიური საწევროების ჯამი" accent="brand" />
+          <StatCard value={formatCountKa(stats.active_count)} label="აქტიური გამომწერი" sub="გადამხდელი წევრები" />
+          <StatCard value={`${avgGel.toFixed(2)} ₾`} label="საშ. შენატანი" sub="ერთ წევრზე თვეში" />
         </div>
 
         <Card header={<h3 className="text-base font-bold text-ink">განმეორებადი შენატანები დონეების მიხედვით</h3>}>
@@ -6368,7 +6678,7 @@ and render (JSX in place of the marker):
                     {t.tier} ₾ <span className="font-semibold text-muted-fg">/ თვეში</span>
                   </span>
                   <span className="text-sm font-extrabold text-ink">
-                    {t.count.toLocaleString("ka-GE")} გამომწერი
+                    {formatCountKa(t.count)} გამომწერი
                   </span>
                 </div>
                 <div className="mt-1 h-2.5 overflow-hidden rounded-md bg-surface">
@@ -6387,7 +6697,7 @@ and render (JSX in place of the marker):
             <>
               <h3 className="text-base font-bold text-ink">ტრანზაქციები</h3>
               <span className="text-xs font-semibold text-muted-fg">
-                ნაჩვენებია {transactions.length} / {(txCount ?? 0).toLocaleString("ka-GE")}
+                ნაჩვენებია {transactions.length} / {formatCountKa(txCount ?? 0)}
               </span>
             </>
           }
@@ -6495,10 +6805,11 @@ git commit -m "feat(admin): finance stats, transactions table, void with reason"
 - [ ] **Step 1: Write the failing component test — `ReassignRow.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ReassignRow } from "./ReassignRow";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 const options = [
   { id: "d-1", name: "გიორგი მაისურაძე" },
@@ -6509,8 +6820,8 @@ describe("ReassignRow (spec §3.6)", () => {
   it("reassigns to the selected same-region delegate", async () => {
     const reassign = vi.fn().mockResolvedValue({ ok: true });
     render(<ReassignRow memberId="m-1" options={options} reassign={reassign} />);
-    await userEvent.selectOptions(screen.getByRole("combobox"), "d-2");
-    await userEvent.click(screen.getByRole("button", { name: "გადანაწილება" }));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "d-2" } });
+    fireEvent.click(screen.getByRole("button", { name: "გადანაწილება" }));
     await waitFor(() => expect(screen.getByText(/გადანაწილდა/)).toBeInTheDocument());
     expect(reassign).toHaveBeenCalledWith("m-1", "d-2");
   });
@@ -6524,7 +6835,7 @@ describe("ReassignRow (spec §3.6)", () => {
   it("surfaces errors and keeps the row usable", async () => {
     const reassign = vi.fn().mockResolvedValue({ ok: false, error: "შეცდომა" });
     render(<ReassignRow memberId="m-1" options={options} reassign={reassign} />);
-    await userEvent.click(screen.getByRole("button", { name: "გადანაწილება" }));
+    fireEvent.click(screen.getByRole("button", { name: "გადანაწილება" }));
     await waitFor(() => expect(screen.getByText("შეცდომა")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "გადანაწილება" })).toBeEnabled();
   });
@@ -6647,6 +6958,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { hasAnyRole } from "@/lib/admin";
+import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { reassignMemberAction } from "./actions";
 import { ReassignRow } from "./ReassignRow";
@@ -6711,11 +7023,12 @@ export default async function AdminTransferPage({
       </Card>
 
       <p className="mt-4 text-sm text-muted-fg">
-        ობოლი წევრები: {total.toLocaleString("ka-GE")}
+        ობოლი წევრები: {formatCountKa(total)}
       </p>
 
+      <div className="mt-2">
       {total === 0 ? (
-        <Card className="mt-2">
+        <Card>
           <div className="p-4 text-center">
             <p className="text-2xl">✅</p>
             <h3 className="mt-2 text-base font-bold text-ink">ყველა წევრი გადანაწილებულია</h3>
@@ -6725,7 +7038,7 @@ export default async function AdminTransferPage({
           </div>
         </Card>
       ) : (
-        <Card padded={false} className="mt-2">
+        <Card padded={false}>
           <DataTable
             bodyTestId="admin-transfer-body"
             head={
@@ -6754,6 +7067,7 @@ export default async function AdminTransferPage({
           </DataTable>
         </Card>
       )}
+      </div>
 
       <div className="mt-4 flex items-center justify-between">
         {page > 1 ? (
@@ -6776,7 +7090,7 @@ export default async function AdminTransferPage({
 }
 ```
 
-(As in Task 13: if `Card` has no `className` prop, wrap in a `<div className="mt-2">`.)
+(As in Task 13: `Card` has no `className` prop, so the snippet wraps it in `<div className="mt-2">`.)
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -6811,10 +7125,11 @@ git commit -m "feat(admin): orphan reassignment — same-region picker, history-
 `GrantRoleForm.test.tsx`:
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GrantRoleForm } from "./GrantRoleForm";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 describe("GrantRoleForm (spec §3.7)", () => {
   it("finds a member by phone, grants the chosen role", async () => {
@@ -6823,19 +7138,19 @@ describe("GrantRoleForm (spec §3.7)", () => {
       .mockResolvedValue({ ok: true, candidate: { id: "u-1", name: "ნინო ბერიძე", phone: "+995509000009" } });
     const grant = vi.fn().mockResolvedValue({ ok: true });
     render(<GrantRoleForm find={find} grant={grant} />);
-    await userEvent.type(screen.getByLabelText(/ტელეფონი/), "509000009");
-    await userEvent.click(screen.getByRole("button", { name: "მოძებნა" }));
+    fireEvent.change(screen.getByLabelText(/ტელეფონი/), { target: { value: "509000009" } });
+    fireEvent.click(screen.getByRole("button", { name: "მოძებნა" }));
     await waitFor(() => expect(screen.getByText(/ნინო ბერიძე/)).toBeInTheDocument());
-    await userEvent.selectOptions(screen.getByLabelText(/როლი/), "finance");
-    await userEvent.click(screen.getByRole("button", { name: "მინიჭება" }));
+    fireEvent.change(screen.getByLabelText(/როლი/), { target: { value: "finance" } });
+    fireEvent.click(screen.getByRole("button", { name: "მინიჭება" }));
     await waitFor(() => expect(screen.getByText(/როლი მიენიჭა/)).toBeInTheDocument());
     expect(grant).toHaveBeenCalledWith("u-1", "finance");
   });
   it("member not found → honest notice", async () => {
     const find = vi.fn().mockResolvedValue({ ok: true, candidate: null });
     render(<GrantRoleForm find={find} grant={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText(/ტელეფონი/), "500000000");
-    await userEvent.click(screen.getByRole("button", { name: "მოძებნა" }));
+    fireEvent.change(screen.getByLabelText(/ტელეფონი/), { target: { value: "500000000" } });
+    fireEvent.click(screen.getByRole("button", { name: "მოძებნა" }));
     await waitFor(() =>
       expect(screen.getByText(/წევრი ვერ მოიძებნა/)).toBeInTheDocument(),
     );
@@ -6846,8 +7161,7 @@ describe("GrantRoleForm (spec §3.7)", () => {
 `RevokeRoleButton.test.tsx`:
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RevokeRoleButton } from "./RevokeRoleButton";
 
@@ -6857,8 +7171,8 @@ describe("RevokeRoleButton (spec §3.7)", () => {
   it("asks for confirmation, then revokes", async () => {
     const revoke = vi.fn().mockResolvedValue({ ok: true });
     render(<RevokeRoleButton userId="u-1" role="finance" revoke={revoke} />);
-    await userEvent.click(screen.getByRole("button", { name: "✕" }));
-    await userEvent.click(screen.getByRole("button", { name: "მოხსნა" }));
+    fireEvent.click(screen.getByRole("button", { name: "როლის მოხსნა" }));
+    fireEvent.click(screen.getByRole("button", { name: "მოხსნა" }));
     await waitFor(() => expect(revoke).toHaveBeenCalledWith("u-1", "finance"));
   });
   it("surfaces the last-super_admin lockout error", async () => {
@@ -6866,8 +7180,8 @@ describe("RevokeRoleButton (spec §3.7)", () => {
       .fn()
       .mockResolvedValue({ ok: false, error: "ბოლო super_admin-ის მოხსნა შეუძლებელია." });
     render(<RevokeRoleButton userId="u-1" role="super_admin" revoke={revoke} />);
-    await userEvent.click(screen.getByRole("button", { name: "✕" }));
-    await userEvent.click(screen.getByRole("button", { name: "მოხსნა" }));
+    fireEvent.click(screen.getByRole("button", { name: "როლის მოხსნა" }));
+    fireEvent.click(screen.getByRole("button", { name: "მოხსნა" }));
     await waitFor(() =>
       expect(screen.getByText("ბოლო super_admin-ის მოხსნა შეუძლებელია.")).toBeInTheDocument(),
     );
@@ -6973,6 +7287,7 @@ export async function revokeRoleAction(userId: unknown, role: unknown): Promise<
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import { ADMIN_ROLE_VALUES, ROLE_DUTIES_KA, ROLE_LABELS_KA, type AdminRole } from "@/lib/admin";
 import type { AdminCandidateResult, AdminRoleActionResult } from "./actions";
 
@@ -7032,7 +7347,7 @@ export function GrantRoleForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="5XX XX XX XX"
-            className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+            className={adminControlClasses}
           />
         </label>
         <Button variant="dark" onClick={onFind} disabled={busy || phone.trim().length < 9}>
@@ -7141,7 +7456,7 @@ export function RevokeRoleButton({
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          aria-label="✕"
+          aria-label="როლის მოხსნა"
           title="როლის მოხსნა"
           className="rounded px-1 text-xs font-bold text-muted-fg hover:text-danger"
         >
@@ -7323,6 +7638,7 @@ import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { adminControlClasses } from "@/components/Field";
 import {
   AUDIT_ACTION_LABELS_KA,
   auditActionLabel,
@@ -7330,6 +7646,7 @@ import {
   hasAnyRole,
   TARGET_TYPE_LABELS_KA,
 } from "@/lib/admin";
+import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 
@@ -7355,7 +7672,12 @@ export default async function AdminAuditPage({
   const page = Math.max(1, Number(typeof raw.page === "string" ? raw.page : "1") || 1);
   const action =
     typeof raw.action === "string" && raw.action in AUDIT_ACTION_LABELS_KA ? raw.action : undefined;
-  const actorId = typeof raw.actorId === "string" && raw.actorId !== "" ? raw.actorId : undefined;
+  // uuid-shape check — a hand-edited ?actorId=garbage must degrade to "all", not 500
+  const actorId =
+    typeof raw.actorId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw.actorId)
+      ? raw.actorId
+      : undefined;
   const from = typeof raw.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.from) ? raw.from : undefined;
   const to = typeof raw.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.to) ? raw.to : undefined;
 
@@ -7402,7 +7724,7 @@ export default async function AdminAuditPage({
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="flex min-w-[200px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             მოქმედება
-            <select name="action" defaultValue={action ?? ""} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal">
+            <select name="action" defaultValue={action ?? ""} className={adminControlClasses}>
               <option value="">ყველა მოქმედება</option>
               {Object.entries(AUDIT_ACTION_LABELS_KA).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -7413,7 +7735,7 @@ export default async function AdminAuditPage({
           </label>
           <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             ადმინი
-            <select name="actorId" defaultValue={actorId ?? ""} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal">
+            <select name="actorId" defaultValue={actorId ?? ""} className={adminControlClasses}>
               <option value="">ყველა ადმინი</option>
               {uniqueAdmins.map((a) => (
                 <option key={a.user_id} value={a.user_id}>
@@ -7424,11 +7746,11 @@ export default async function AdminAuditPage({
           </label>
           <label className="flex flex-col gap-1 text-sm font-semibold text-ink">
             დან
-            <input type="date" name="from" defaultValue={from ?? ""} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal" />
+            <input type="date" name="from" defaultValue={from ?? ""} className={adminControlClasses} />
           </label>
           <label className="flex flex-col gap-1 text-sm font-semibold text-ink">
             მდე
-            <input type="date" name="to" defaultValue={to ?? ""} className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal" />
+            <input type="date" name="to" defaultValue={to ?? ""} className={adminControlClasses} />
           </label>
           <Button type="submit" variant="dark">
             ფილტრი
@@ -7436,9 +7758,10 @@ export default async function AdminAuditPage({
         </form>
       </Card>
 
-      <p className="mt-4 text-sm text-muted-fg">სულ: {total.toLocaleString("ka-GE")}</p>
+      <p className="mt-4 text-sm text-muted-fg">სულ: {formatCountKa(total)}</p>
 
-      <Card padded={false} className="mt-2">
+      <div className="mt-2">
+      <Card padded={false}>
         {entries.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-fg">ჩანაწერები ვერ მოიძებნა.</p>
         ) : (
@@ -7489,6 +7812,7 @@ export default async function AdminAuditPage({
           </DataTable>
         )}
       </Card>
+      </div>
 
       <div className="mt-4 flex items-center justify-between">
         {page > 1 ? (
@@ -7540,8 +7864,7 @@ git commit -m "feat(admin): audit-log viewer — filters, Georgian labels, expan
 - [ ] **Step 1: Write the failing component test — `SettingsForm.test.tsx`**
 
 ```tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SettingsForm } from "./SettingsForm";
 
@@ -7554,10 +7877,11 @@ describe("SettingsForm (spec §3.9)", () => {
     const input = screen.getByLabelText(/დამატებითი დღეები/);
     expect(input).toHaveValue(30);
     expect(screen.getByText(/კიდევ 30 დღე/)).toBeInTheDocument();
-    await userEvent.clear(input);
-    await userEvent.type(input, "45");
+    fireEvent.change(input, { target: { value: "45" } });
     expect(screen.getByText(/კიდევ 45 დღე/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    // the live example recomputes: 31 July + 45 days = 14 September
+    expect(screen.getByText(/14\.09\.2026-მდე/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
       expect(screen.getByText(/შენახულია ✓ — სტატუსები გადაითვალა/)).toBeInTheDocument(),
     );
@@ -7567,9 +7891,8 @@ describe("SettingsForm (spec §3.9)", () => {
     const save = vi.fn();
     render(<SettingsForm initialGraceDays={30} save={save} />);
     const input = screen.getByLabelText(/დამატებითი დღეები/);
-    await userEvent.clear(input);
-    await userEvent.type(input, "400");
-    await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    fireEvent.change(input, { target: { value: "400" } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
       expect(screen.getByText(/0-დან 365-მდე/)).toBeInTheDocument(),
     );
@@ -7622,6 +7945,9 @@ export async function updateGraceDaysAction(graceDays: unknown): Promise<Setting
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
+import { addDaysIso } from "@/lib/active";
+import { formatDateKa } from "@/lib/cabinet";
 import type { SettingsActionResult } from "./actions";
 
 export function SettingsForm({
@@ -7661,8 +7987,12 @@ export function SettingsForm({
       <p className="text-sm text-ink">
         წევრი აქტიურია გადახდილი პერიოდის ბოლოდან კიდევ{" "}
         <strong>{valid ? days : "—"} დღე</strong>. მაგალითად: 20 ₾ (ერთი თვის საწევრო),
-        გადახდილი 1 ივლისს, ფარავს 31 ივლისამდე — წევრი აქტიური რჩება კიდევ{" "}
-        {valid ? days : "—"} დღე.
+        გადახდილი 1 ივლისს, ფარავს 31 ივლისამდე → აქტიურია{" "}
+        <strong>
+          {/* spec §3.9: the example recomputes live as N changes */}
+          {valid ? `${formatDateKa(addDaysIso("2026-07-31", days))}-მდე` : "—"}
+        </strong>
+        .
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex w-56 flex-col gap-1 text-sm font-semibold text-ink">
@@ -7673,7 +8003,7 @@ export function SettingsForm({
             max={365}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-normal"
+            className={adminControlClasses}
           />
         </label>
         <Button variant="primary" onClick={onSave} disabled={busy}>
@@ -7845,9 +8175,9 @@ git commit -m "feat(cabinet): billing history shows voided payments honestly"
 
 **Interfaces:**
 - Consumes: Task 9's canonical admins; `passStep1`, `fillStep2Basics` from `e2e/funnel-helpers.ts`; the existing funnel journeys in `e2e/funnel.spec.ts` (the delegate and referral journeys are the copy-source for registration steps).
-- Produces (consumed by Tasks 26–27): `ADMIN_PHONES`, `phase4Phone(k)`, `phase4PersonalId(k)`, `loginAs(page, phone)`, `signOutViaNav(page)`, `serviceClient()`, `getReferenceCode(phone)`, `getReferralCode(phone)`, `getAuditRows(action, targetId)`, `cleanupPhase4Users(ks)`.
+- Produces (consumed by Tasks 26–27): `ADMIN_PHONES`, `phase4Phone(k)`, `phase4PersonalId(k)`, `loginAs(page, phone)`, `signOutViaNav(page)`, `serviceClient()`, `profileIdByPhone(db, phone)`, `getReferenceCode(phone)`, `getReferralCode(phone)`, `getAuditRows(action, targetId)`, `cleanupPhase4Users(ks)`. Reserved `k` slots: 0/1/4 approval spec, 2 payments spec, 3 rbac spec.
 
-Phase-4 phone scheme: `BASE7 + "8" + k` (replaces the run block's last TWO digits — digit 8 was the only free single slot). The attempt digit is consumed, so every phase-4 spec cleans its own phones in `beforeAll` AND `afterAll` (a crashed previous attempt can't collide). Personal IDs stay 9-prefixed. E2e users are only ever audit TARGETS — the seeded canonical admins act (Global Constraints).
+Phase-4 phone scheme: `BASE7 + k + "8"` — the LAST digit is pinned to `8`, the only slot `funnel-helpers` never uses (journeys take 0–7, login takes 9), and `k` occupies the attempt position. That makes a phase-4 phone unequal to any journey/login phone of ANY attempt of the same run (the old `…8k` form collided with journey phones whenever `run_attempt % 10 === 8`). The scheme is attempt-independent, so every phase-4 spec cleans its own phones in `beforeAll` AND `afterAll` (a crashed previous attempt can't collide). Personal IDs stay 9-prefixed. E2e users are only ever audit TARGETS — the seeded canonical admins act (Global Constraints).
 
 - [ ] **Step 1: Write `e2e/admin-helpers.ts`**
 
@@ -7867,12 +8197,18 @@ export const ADMIN_PHONES = {
 const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE7 = LOGIN_PHONE.slice(0, 7);
 
-/** Phase-4 per-run users: 55-block, '8'+k tail. Cleaned beforeAll AND afterAll. */
+/**
+ * Phase-4 per-run users: 55-block, LAST digit pinned to 8 — the only slot
+ * funnel-helpers never uses (journeys take 0–7, login takes 9), so these can
+ * never equal a journey/login phone of ANY attempt of the same run. k sits in
+ * the attempt position, which makes the phones attempt-independent — hence
+ * cleanup in beforeAll AND afterAll.
+ */
 export function phase4Phone(k: number): string {
-  return `${BASE7}8${k}`;
+  return `${BASE7}${k}8`;
 }
 export function phase4PersonalId(k: number): string {
-  return `9${BASE7.slice(1)}8${k}00`; // 11 digits, reserved 9-prefix
+  return `9${BASE7.slice(1)}${k}800`; // 11 digits, reserved 9-prefix
 }
 
 export function serviceClient(): SupabaseClient {
@@ -7901,7 +8237,8 @@ export async function signOutViaNav(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
 }
 
-async function profileIdByPhone(db: SupabaseClient, phoneNational: string): Promise<string> {
+/** Exported: specs scope card interactions to `verify-card-<id>` testids with it. */
+export async function profileIdByPhone(db: SupabaseClient, phoneNational: string): Promise<string> {
   const { data, error } = await db
     .from("profiles")
     .select("id")
@@ -7976,52 +8313,52 @@ import {
   loginAs,
   phase4PersonalId,
   phase4Phone,
+  profileIdByPhone,
   serviceClient,
   signOutViaNav,
 } from "./admin-helpers";
 
-const APPLICANT = 0; // phase4Phone(0) — the delegate applicant (target only)
-const SUPPORTER = 1; // phase4Phone(1) — registers through the referral link
+// The canonical seed keeps 3 PENDING roster delegates in the queue, so every
+// interaction is scoped to this run's applicants via verify-card-<id> testids —
+// a bare .first() would land on (and MUTATE) seeded data.
+const APPLICANT_A = 0; // approved straight from the pending tab (spec §7 path 1)
+const SUPPORTER = 1; // registers through A's referral link
+const APPLICANT_B = 4; // rejected with a note, then re-approved (spec §7 path 2)
 
 test.describe.configure({ mode: "serial" });
-test.beforeAll(() => cleanupPhase4Users([APPLICANT, SUPPORTER]));
-test.afterAll(() => cleanupPhase4Users([APPLICANT, SUPPORTER]));
+test.beforeAll(() => cleanupPhase4Users([APPLICANT_A, SUPPORTER, APPLICANT_B]));
+test.afterAll(() => cleanupPhase4Users([APPLICANT_A, SUPPORTER, APPLICANT_B]));
 
-test("delegate applies and lands in the pending queue", async ({ page }) => {
-  // >>> copy e2e/funnel.spec.ts's delegate journey here, with:
-  //     phone: phase4Phone(APPLICANT), personalId: phase4PersonalId(APPLICANT),
-  //     firstName: "ვაჟა", lastName: "ფშაველა"
-  //     (choice → passStep1 → fillStep2Basics + T&C → tier → /join/pending) <<<
+test("two delegates apply and land in the pending queue", async ({ page }) => {
+  // >>> copy e2e/funnel.spec.ts's delegate journey here TWICE:
+  //     A: phone phase4Phone(APPLICANT_A), personalId phase4PersonalId(APPLICANT_A),
+  //        firstName "ვაჟა", lastName "ფშაველა"
+  //     then `await page.context().clearCookies();` (end A's session)
+  //     B: phone phase4Phone(APPLICANT_B), personalId phase4PersonalId(APPLICANT_B),
+  //        firstName "აკაკი", lastName "წერეთელი"
+  //     (each: choice → passStep1 → fillStep2Basics + T&C → tier → /join/pending) <<<
   await expect(page).toHaveURL(/\/join\/pending$/);
 });
 
-test("verifier reveals, rejects with a note, then re-approves — public page goes live", async ({
+test("verifier reveals + approves A from the pending queue — public page goes live", async ({
   page,
 }) => {
+  const idA = await profileIdByPhone(serviceClient(), phase4Phone(APPLICANT_A));
   await loginAs(page, ADMIN_PHONES.verifier);
   await page.goto("/admin/verify");
-  const card = page.locator("div").filter({ hasText: "ვაჟა ფშაველა" }).last();
-  await expect(card).toBeVisible();
+  const cardA = page.getByTestId(`verify-card-${idA}`);
+  await expect(cardA).toBeVisible();
 
-  // audited reveal: masked → full personal ID
-  await page.getByRole("button", { name: "ჩვენება" }).first().click();
-  await expect(page.getByText(phase4PersonalId(APPLICANT))).toBeVisible();
+  // audited reveal on A's card: masked → full personal ID
+  await cardA.getByRole("button", { name: "ჩვენება" }).click();
+  await expect(cardA.getByText(phase4PersonalId(APPLICANT_A))).toBeVisible();
 
-  // reject with an internal note
-  await page.getByRole("button", { name: "უარყოფა" }).first().click();
-  await page.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
-  await page.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
-  await expect(page.getByText("განაცხადი უარყოფილია.")).toBeVisible();
-
-  // rejected tab holds the applicant + the note; re-approve from there
-  await page.goto("/admin/verify?tab=rejected");
-  await expect(page.getByText("ვაჟა ფშაველა")).toBeVisible();
-  await expect(page.getByText(/დოკუმენტები გადასამოწმებელია/)).toBeVisible();
-  await page.getByRole("button", { name: "დადასტურება" }).first().click();
-  await expect(page.getByText(/დელეგატი დამტკიცდა/)).toBeVisible();
+  // the primary critical path: approve straight from pending
+  await cardA.getByRole("button", { name: "დადასტურება" }).click();
+  await expect(cardA.getByText(/დელეგატი დამტკიცდა/)).toBeVisible();
 
   // the success notice links the live public page — open it and see the applicant
-  const publicHref = await page
+  const publicHref = await cardA
     .getByRole("link", { name: /საჯარო გვერდი/ })
     .getAttribute("href");
   expect(publicHref).toMatch(/^\/delegates\/.+/);
@@ -8032,20 +8369,46 @@ test("verifier reveals, rejects with a note, then re-approves — public page go
   await signOutViaNav(page);
 });
 
-test("audit trail holds the reveal, reject and approve rows", async () => {
+test("verifier rejects B with a note, then re-approves from the rejected tab", async ({
+  page,
+}) => {
+  const idB = await profileIdByPhone(serviceClient(), phase4Phone(APPLICANT_B));
+  await loginAs(page, ADMIN_PHONES.verifier);
+  await page.goto("/admin/verify");
+  const cardB = page.getByTestId(`verify-card-${idB}`);
+  await expect(cardB).toBeVisible();
+
+  await cardB.getByRole("button", { name: "უარყოფა" }).click();
+  await cardB.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
+  await cardB.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
+  await expect(cardB.getByText("განაცხადი უარყოფილია.")).toBeVisible();
+
+  // rejected tab: the stored note + the decision stamp; re-approve from there
+  await page.goto("/admin/verify?tab=rejected");
+  const rejectedB = page.getByTestId(`verify-card-${idB}`);
+  await expect(rejectedB.getByText(/დოკუმენტები გადასამოწმებელია/)).toBeVisible();
+  await expect(
+    rejectedB.getByText(/უარყოფილია \d{2}\.\d{2}\.\d{4} · ვერიფიკატორი გუნდი/),
+  ).toBeVisible();
+  await rejectedB.getByRole("button", { name: "დადასტურება" }).click();
+  await expect(rejectedB.getByText(/დელეგატი დამტკიცდა/)).toBeVisible();
+
+  await page.goto("/admin");
+  await signOutViaNav(page);
+});
+
+test("audit trail holds the reveal, approve, reject and re-approve rows", async () => {
   const db = serviceClient();
-  const { data } = await db
-    .from("profiles")
-    .select("id")
-    .in("phone", [`+995${phase4Phone(APPLICANT)}`, `995${phase4Phone(APPLICANT)}`]);
-  const applicantId = data![0]!.id as string;
-  expect(await getAuditRows("delegate.reveal_personal_id", applicantId)).toBeGreaterThan(0);
-  expect(await getAuditRows("delegate.reject", applicantId)).toBe(1);
-  expect(await getAuditRows("delegate.approve", applicantId)).toBe(1);
+  const idA = await profileIdByPhone(db, phase4Phone(APPLICANT_A));
+  const idB = await profileIdByPhone(db, phase4Phone(APPLICANT_B));
+  expect(await getAuditRows("delegate.reveal_personal_id", idA)).toBeGreaterThan(0);
+  expect(await getAuditRows("delegate.approve", idA)).toBe(1);
+  expect(await getAuditRows("delegate.reject", idB)).toBe(1);
+  expect(await getAuditRows("delegate.approve", idB)).toBe(1);
 });
 
 test("the activated referral link registers a real supporter", async ({ page }) => {
-  const refCode = await getReferralCode(phase4Phone(APPLICANT));
+  const refCode = await getReferralCode(phase4Phone(APPLICANT_A));
   // >>> copy e2e/funnel.spec.ts's referral journey here, with:
   //     entry URL `/join?ref=${refCode}`, phone: phase4Phone(SUPPORTER),
   //     personalId: phase4PersonalId(SUPPORTER), firstName: "მხარდამჭერი", lastName: "პირველი"
@@ -8062,7 +8425,7 @@ test("the activated referral link registers a real supporter", async ({ page }) 
 ```bash
 npx playwright test e2e/admin-approval.spec.ts
 ```
-Expected: all 4 serial tests green. (Requires Tasks 7–10 done on staging; run the full `npx playwright test` afterwards to confirm the existing suites stayed green.)
+Expected: all 5 serial tests green. (Requires Tasks 7–10 done on staging; run the full `npx playwright test` afterwards to confirm the existing suites stayed green.)
 
 - [ ] **Step 4: Format, commit**
 
@@ -8247,7 +8610,9 @@ test("verifier is blocked from finance surfaces server-side, not just hidden tab
 test("editor-only admin sees the Phase 5 notice and no tabs", async ({ page }) => {
   await loginAs(page, ADMIN_PHONES.editor);
   await page.goto("/admin");
-  await expect(page.getByText("შენი განყოფილება მე-5 ფაზაში ჩაირთვება")).toBeVisible();
+  await expect(
+    page.getByText("შენი განყოფილება (სიახლეები და ღონისძიებები) მე-5 ფაზაში ჩაირთვება"),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "წევრები" })).not.toBeVisible();
   await signOutViaNav(page);
 });
@@ -8286,7 +8651,7 @@ git commit -m "test(e2e): RBAC smoke — server-side scope enforcement, editor n
 
 **Files:**
 - Modify: `ARCHITECTURE.md`, `DESIGN.md`, `DECISIONS.md`, `CHANGELOG.md`, `package.json`
-- Check: `app/(public)/styleguide` (mirror how CabinetNav was or wasn't included; follow suit for AdminNav)
+- Modify: `app/(public)/styleguide/page.tsx` (AdminNav + admin table-pattern samples — Step 2a)
 
 - [ ] **Step 1: ARCHITECTURE.md — append the Admin CRM section**
 
@@ -8319,14 +8684,64 @@ public `delegate-photos` bucket; uploads go only through the admin server action
 
 If Task 7 took the Vercel-cron fallback, replace the pg_cron sentence accordingly.
 
+Also amend the EXISTING "## Status derivation" section in ARCHITECTURE.md — it still
+claims statuses are computed "by functions in `lib/`", which Phase 4 makes stale.
+Replace that claim (keep the rest of the section) with:
+
+```markdown
+Derived values are never stored as editable state. Since Phase 4 the
+active-member computation itself lives in the database engine functions
+(ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
+`profiles.status` is written only by the engine (plus the funnel's
+draft→profile_completed step).
+```
+
 - [ ] **Step 2: DESIGN.md — append the Phase 4 note**
 
 ```markdown
 Phase 4: AdminNav (role-filtered admin tabs + გასვლა; dense register). Admin list
 pattern: GET-form filters + server-side range pagination (50/page) + DataTable;
 masked personal IDs with an audited ჩვენება reveal; bulk-preview status chips
-(ok=ok-green, duplicates=warn, failures=danger). StatCard reused for admin KPIs.
+(ok=ok-green, duplicates=warn, failures=danger); form controls share
+`adminControlClasses` (components/Field.tsx). StatCard reused for admin KPIs.
 ```
+
+- [ ] **Step 2a: styleguide — AdminNav + the admin table pattern**
+
+`app/(public)/styleguide/page.tsx` already mounts `CabinetNav` with sample items
+(around line 110) — mount `AdminNav` the same way right after it, plus one sample
+of the admin list pattern (spec §8: "DESIGN.md + /styleguide gain AdminNav and the
+new admin table patterns"):
+
+```tsx
+          <AdminNav
+            tabs={[
+              { href: "/styleguide", label: "მიმოხილვა" },
+              { href: "/admin/members", label: "წევრები" },
+              { href: "/admin/verify", label: "ვერიფიკაცია" },
+            ]}
+          />
+          <div className="flex flex-col gap-2">
+            <input
+              readOnly
+              value="ძებნის ველი (adminControlClasses)"
+              className={adminControlClasses}
+            />
+            <div className="flex gap-2">
+              <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-semibold text-ok">ნაპოვნია</span>
+              <span className="rounded-full bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn">დუბლიკატი</span>
+              <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">უცნობი კოდი</span>
+            </div>
+            <p className="font-mono text-sm">GR-ABC234 → ეს არის ნიღბიანი ID: ・・・・・・・・・・・</p>
+          </div>
+```
+
+with the imports `import { AdminNav } from "@/components/AdminNav";` and
+`adminControlClasses` merged into the existing `@/components/Field` import (add
+one if the styleguide doesn't import Field yet). AdminNav renders a sign-out
+button — if mounting it in the public styleguide trips the client boundary or
+looks wrong, mirror EXACTLY what was acceptable for CabinetNav and keep the
+sample minimal; never restyle.
 
 - [ ] **Step 3: DECISIONS.md — append ADR-014 and ADR-015**
 
@@ -8348,7 +8763,11 @@ exposure, no DB backstop) and all-RPC reads (hand-wired filter/paging plumbing f
 zero extra safety over self-gating views). Operational consequence: audit_log
 actors are permanent (plain FK + append-only trigger blocks even ON DELETE SET
 NULL), so e2e/probe users must never act as admins — canonical seeded admins
-(+99550900000{1..4}) do; targets are stored as text and stay deletable.
+(+99550900000{1..4}) do; targets are stored as text and stay deletable; the
+staging seed skips the canonical admins in its wipe for the same reason. The very
+first super_admin is bootstrapped by `scripts/grant-admin.mjs` (service role,
+completed members only), which writes the same `admin.grant_role` audit row with
+a null actor and a `via` marker — bootstrap grants stay visible in the viewer.
 
 ## ADR-015 (2026-07-17): Active-member engine — 30-day months, snapshot tiers, grace, nightly sweep
 
@@ -8362,9 +8781,11 @@ mirrors the SQL; the schema probe replays the shared fixtures against both.
 profiles.status is written ONLY by the engine (plus the funnel's
 draft→profile_completed); the seed now writes payment histories and derives.
 Payments are immutable — corrections are voids (voided_at/by/reason, audited,
-required reason); the live-rows-only unique index on bank_reference makes
-double-pasting a statement unrecordable while letting a voided reference be
-re-entered. payments.member_id now cascades on profile deletion (e2e/staging
+required reason). Duplicate protection is two-layer: referenced (single-entry)
+payments hit the live-rows-only unique index on bank_reference (a voided
+reference is reusable), and bulk rows — which carry no reference — are guarded
+in-RPC by a live member+amount+date check, so a double-pasted statement is
+unrecordable on either path. payments.member_id now cascades on profile deletion (e2e/staging
 cleanup; the platform has no member-deletion flow; audit targets are text).
 Expiry runs nightly via pg_cron ('active-member-sweep', 01:00 UTC = 05:00
 Tbilisi), auditing system.active_sweep with the demoted count.
@@ -8377,7 +8798,7 @@ route + CRON_SECRET description and why pg_cron was unavailable.]
 Match the existing entry format (read the file first). Entry:
 
 ```markdown
-## v0.5.0 — Phase 4: Admin CRM (2026-07-17)
+## 0.5.0 — Phase 4: Admin CRM (2026-07-17)
 
 - /admin area with DB-enforced roles (super_admin / verifier / finance / editor)
 - Delegate verification: approve (mints the public slug — page + referral link live
@@ -8399,7 +8820,7 @@ In `package.json`: `"version": "0.5.0"`.
 
 ```bash
 npm run lint && npm run typecheck && npx vitest run && npm run build && npm run format:check
-git add ARCHITECTURE.md DESIGN.md DECISIONS.md CHANGELOG.md package.json
+git add ARCHITECTURE.md DESIGN.md DECISIONS.md CHANGELOG.md package.json "app/(public)/styleguide/page.tsx"
 git commit -m "docs: Phase 4 — architecture, ADR-014/015, changelog, v0.5.0"
 git push -u origin claude/phase-4-admin-crm-1fd359
 ```

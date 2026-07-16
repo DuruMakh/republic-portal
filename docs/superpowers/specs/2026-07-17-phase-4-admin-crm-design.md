@@ -182,8 +182,11 @@ Recording first (the daily job), statistics below.
   parses server-side (lib/bank-parse.ts, §5) → **preview table**, one row per pasted
   line: the raw line, extracted კოდი/თანხა/თარიღი, and a status pill —
   ✓ ნაპოვნია (member name + „→ N თვე") · კოდი ვერ მოიძებნა · უცნობი კოდი ·
-  დუბლიკატი (bank reference already recorded) · გაურკვეველი თანხა (ambiguous —
-  parser refuses to guess between multiple numbers) · დაუსრულებელი რეგისტრაცია.
+  დუბლიკატი (an identical live payment — same member, amount and date — is already
+  recorded) · გაურკვეველი თანხა (ambiguous — parser refuses to guess between
+  multiple numbers) · დაუსრულებელი რეგისტრაცია · თარიღი დიაპაზონს გარეთაა (outside
+  2026-01-01…today; classified at preview so one bad date can never abort the
+  all-or-nothing confirm).
   A summary line counts each kind. **დადასტურება** records exactly the ✓ rows via
   `admin_record_payments_bulk` — **all-or-nothing** (any server-side failure lands
   nothing and returns the failing rows). Non-✓ rows stay on screen for manual
@@ -349,7 +352,7 @@ one transaction**, error tokens for the Georgian map (§5). Subject of every aud
 | `admin_reject_delegate(p_delegate_id, p_note)` | verifier, super_admin | target pending → rejected; stores review_note; stamps verified_at/by; audit `delegate.reject` |
 | `admin_update_delegate_profile(p_delegate_id, p_bio, p_photo_url)` | verifier, super_admin | target approved; updates bio/photo_url; audit `delegate.update_profile` {changed fields} |
 | `admin_record_payment(p_member_id, p_amount_gel, p_paid_at, p_bank_reference)` | finance, super_admin | member must be completed (has reference_code); inserts payment with tier snapshot; recomputes the member; audit `payment.record` {amount, months, bank_ref}; returns months + new status for the inline confirmation |
-| `admin_record_payments_bulk(p_rows jsonb)` | finance, super_admin | ≤500 rows; re-validates **every** row in-DB (codes resolve, refs unique incl. within the batch, members completed); any failure → whole batch rejected with failing rows identified; else inserts all + recomputes affected members; audit: one `payment.record` row per payment {batch_id} + one `payment.bulk_record` summary {count, total_gel} |
+| `admin_record_payments_bulk(p_rows jsonb)` | finance, super_admin | ≤500 rows; re-validates **every** row in-DB (codes resolve, members completed, and a live member+amount+date duplicate check — bulk rows carry no bank reference, so this stands in for the single-entry unique-reference index and also covers within-batch repeats); any failure → whole batch rejected with failing rows identified; else inserts all + recomputes affected members; audit: one `payment.record` row per payment {batch_id} + one `payment.bulk_record` summary {count, total_gel} |
 | `admin_void_payment(p_payment_id, p_reason)` | finance, super_admin | not already voided; reason required; sets voided_at/by/reason; recomputes the member; audit `payment.void` {reason} |
 | `admin_reassign_member(p_member_id, p_delegate_id)` | verifier, super_admin | member completed, not a delegate, has an open membership; target approved; same-target → friendly no-op; close-then-open (ADR-013); audit `member.reassign` {from, to} |
 | `admin_reveal_personal_id(p_member_id)` | super_admin | returns the personal ID; audit `member.reveal_personal_id` — one row per call, always |
@@ -427,10 +430,14 @@ public.
   paid_at not future + not before 2026-01-01, bank_reference ≤64), bulk confirm
   (≤500 rows), void (reason 3–500), reassign, grant/revoke (role enum), settings
   (int 0–365), export params, photo constraints (type/size).
-- Server actions under `app/(admin)/admin/**/actions.ts`: thin zod → own-roles UX
-  precheck → RPC → Georgian error mapping. New error tokens join the house map:
+- Server actions under `app/(admin)/admin/**/actions.ts`: thin zod → RPC →
+  Georgian error mapping. The own-roles UX precheck is REQUIRED wherever the
+  action does non-RPC work first (view reads, storage uploads); for pure
+  RPC-wrappers it is optional — the RPC re-checks in-DB and `missing_role` maps
+  to the same Georgian message either way. New error tokens join the house map:
   `missing_role`, `slug_taken` (internal retry), `not_completed`, `invalid_target`,
-  `already_voided`, `duplicate_reference`, `last_super_admin`, `invalid_setting`.
+  `already_voided`, `duplicate_reference`, `last_super_admin`, `invalid_setting`,
+  and the bulk-only `unknown_code` / `duplicate`.
 - `lib/supabase/types.ts` — Database type gains the new views/RPCs/columns
   (hand-maintained per ADR-005/ADR-012).
 
@@ -473,9 +480,9 @@ public.
   flows), settings form, pagination controls.
 - **DB probes:** §4.7 list, run green on staging before dependent e2e lands in CI
   (Phase 1–3 discipline).
-- **e2e (Playwright vs staging; established per-run isolation — 55-block phones with
-  the run-attempt digit, 9-prefixed personal IDs, canonical seed untouched; canonical
-  seeded admin accounts for the three roles act as actors):**
+- **e2e (Playwright vs staging; established per-run isolation — 55-block phones,
+  9-prefixed personal IDs, canonical seed untouched; the canonical seeded admin
+  accounts — one per role — act as actors):**
   1. **Delegate approval (critical flow):** fresh delegate registers → seeded
      verifier opens /admin/verify, reveals the applicant's personal ID (audited),
      approves → public page live at the generated slug, delegate visible in the
@@ -501,9 +508,12 @@ public.
   paid_at offsets inside/outside the window) and runs `recompute_all_active()`; the
   script asserts the **derived** active count equals the expected constant (same
   spirit as today's 1636 assertion, new number fixed at implementation). Adds the
-  three canonical admin accounts (super_admin / verifier / finance; fixed 55-block
-  phones documented in the script). Staging activity now decays honestly over time;
-  reseeding refreshes it (documented in the script header).
+  four canonical admin accounts (super_admin / verifier / finance / editor — the
+  editor-notice e2e needs a login too) on fixed 509-block phones
+  (`+99550900000{1..4}`): audit actors are permanent, so they live OUTSIDE the
+  disposable 55-block e2e range and the seed's wipe skips them. Staging activity
+  now decays honestly over time; reseeding refreshes it (documented in the script
+  header).
 - **Member cabinet touch:** /me/billing's history table marks voided rows
   „გაუქმებული" (Phase 3 shipped the table; this is the honest-void rider, decided in
   brainstorming §2).
