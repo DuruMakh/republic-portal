@@ -11,8 +11,9 @@ if (!url || !key) {
     "needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (run with --env-file=.env.local)",
   );
 }
-if (!url.includes("orcxtbedkexoclbfgvzd")) {
-  throw new Error("refusing: this sweep is staging-only (project ref mismatch)");
+const { protocol, hostname } = new URL(url);
+if (protocol !== "https:" || hostname !== "orcxtbedkexoclbfgvzd.supabase.co") {
+  throw new Error("refusing: this sweep is staging-only (project host mismatch)");
 }
 const db = createClient(url, key);
 
@@ -60,10 +61,14 @@ for (let page = 1; page <= 50; page++) {
 
 console.log(`${APPLY ? "DELETING" : "DRY RUN"}: ${doomed.size} users`);
 for (const [id, reason] of doomed) console.log(`  ${id} — ${reason}`);
+let failedDeletions = 0;
 if (APPLY) {
   for (const [id] of doomed) {
     const { error } = await db.auth.admin.deleteUser(id);
-    if (error) console.error(`  FAILED ${id}: ${error.message}`);
+    if (error) {
+      failedDeletions++;
+      console.error(`  FAILED ${id}: ${error.message}`);
+    }
   }
 }
 
@@ -72,3 +77,7 @@ if (e3) throw e3;
 console.log(
   `seed check: approved_delegates=${stats.approved_delegates} active_members=${stats.active_members} (expect 12 / 1636)`,
 );
+if (failedDeletions > 0) {
+  console.error(`${failedDeletions} deletion(s) failed`);
+  process.exitCode = 1;
+}

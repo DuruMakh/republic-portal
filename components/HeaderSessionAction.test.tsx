@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const getSession = vi.fn();
+const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {

@@ -281,7 +281,8 @@ IDs, no tiers, no payment data.
 ### 4.7 Verification probes (`scripts/verify-schema.mjs`)
 
 New live probes: scoped update as `authenticated` **succeeds** on `employment` and
-**fails** on `status` and `reference_code` (trigger raise); `member_change_delegate`
+**fails** on `status` and `reference_code` (42501 at the column grant; the trigger
+remains backstop); `member_change_delegate`
 demonstrably closes-and-opens (membership history row count grows by one, old row gains
 `ended_at`); `anon` cannot execute any new RPC; `delegate_panel` refuses a non-delegate
 caller. Reuses the throwaway-user pattern the script already has.

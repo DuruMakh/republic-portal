@@ -42,7 +42,7 @@ generated in-DB (gen_funnel_code, Crockford-style 31-char alphabet, no I/L/O/0/1
 
 ## Cabinets (Phase 3)
 
-/me/* (member) and /delegate/* (delegate panel) are per-request server-rendered
+`/me/*` (member) and `/delegate/*` (delegate panel) are per-request server-rendered
 behind layout gates (session + completed registration + role) — safe because the
 service worker treats them NetworkOnly. DB access is a mixed model (ADR-013):
 the five plain profile fields update through a column-scoped grant + own-row RLS +
