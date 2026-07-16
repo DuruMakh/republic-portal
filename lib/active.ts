@@ -28,9 +28,11 @@ export interface CoverageResult {
 }
 
 export function addDaysIso(isoDate: string, days: number): string {
-  const [y, m, d] = isoDate.split("-").map(Number);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!m) throw new Error(`addDaysIso: malformed ISO date: ${isoDate}`);
+  // regex match above guarantees groups 1-3 exist
   // constructing via Date.UTC keeps this ICU/timezone-free (house lesson: formatDateKa)
-  const dt = new Date(Date.UTC(y!, m! - 1, d! + days));
+  const dt = new Date(Date.UTC(Number(m[1]!), Number(m[2]!) - 1, Number(m[3]!) + days));
   return dt.toISOString().slice(0, 10);
 }
 

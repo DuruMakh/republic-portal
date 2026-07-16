@@ -31,7 +31,7 @@ describe("monthsFor (spec §2 #2)", () => {
     expect(monthsFor(5, 20)).toBe(1);
     expect(monthsFor(0.01, 20)).toBe(1);
   });
-  it('invalid inputs → 0 (preview shows "—")', () => {
+  it("invalid inputs → 0 (preview shows „—“)", () => {
     expect(monthsFor(0, 20)).toBe(0);
     expect(monthsFor(-5, 20)).toBe(0);
     expect(monthsFor(20, 0)).toBe(0);
@@ -45,6 +45,9 @@ describe("addDaysIso", () => {
     expect(addDaysIso("2026-07-01", 30)).toBe("2026-07-31");
     expect(addDaysIso("2026-12-15", 30)).toBe("2027-01-14");
     expect(addDaysIso("2026-07-31", 0)).toBe("2026-07-31");
+  });
+  it("throws on malformed input", () => {
+    expect(() => addDaysIso("2026-7-1", 30)).toThrow();
   });
 });
 
