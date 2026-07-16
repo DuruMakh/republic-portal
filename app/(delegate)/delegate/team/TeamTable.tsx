@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
+import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { inputClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
 import {
@@ -65,33 +66,31 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
           ვერაფერი მოიძებნა ამ ფილტრით.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted-fg">
-                <th className="px-6 py-3 font-semibold">წევრი</th>
-                <th className="px-6 py-3 font-semibold">რეგისტრაციის თარიღი</th>
-                <th className="px-6 py-3 font-semibold">სტატუსი</th>
-              </tr>
-            </thead>
-            <tbody data-testid="team-rows">
-              {filtered.map((m, i) => (
-                <tr
-                  key={`${m.firstName}-${m.lastName}-${m.registeredAt}-${i}`}
-                  className="border-b border-line last:border-0"
-                >
-                  <td className="px-6 py-3 font-semibold text-ink">
-                    {m.firstName} {m.lastName}
-                  </td>
-                  <td className="px-6 py-3">{formatDateKa(m.registeredAt)}</td>
-                  <td className="px-6 py-3">
-                    <Pill status={m.status} label={TEAM_STATUS_LABELS[m.status]} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          bodyTestId="team-rows"
+          head={
+            <>
+              <th className={tableThClass}>წევრი</th>
+              <th className={tableThClass}>რეგისტრაციის თარიღი</th>
+              <th className={tableThClass}>სტატუსი</th>
+            </>
+          }
+        >
+          {filtered.map((m, i) => (
+            <tr
+              key={`${m.firstName}-${m.lastName}-${m.registeredAt}-${i}`}
+              className={tableRowClass}
+            >
+              <td className={`${tableCellClass} font-semibold text-ink`}>
+                {m.firstName} {m.lastName}
+              </td>
+              <td className={tableCellClass}>{formatDateKa(m.registeredAt)}</td>
+              <td className={tableCellClass}>
+                <Pill status={m.status} label={TEAM_STATUS_LABELS[m.status]} />
+              </td>
+            </tr>
+          ))}
+        </DataTable>
       )}
     </Card>
   );

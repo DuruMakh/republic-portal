@@ -8,10 +8,10 @@ import { GENERIC_FUNNEL_ERROR, type Tier } from "@/lib/funnel";
 import { tierSchema } from "@/lib/funnel-schemas";
 import { changeTierAction } from "../actions";
 
-export function TierChange({ currentTier }: { currentTier: Tier }) {
+export function TierChange({ currentTier }: { currentTier: Tier | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [tier, setTier] = useState<Tier>(currentTier);
+  const [tier, setTier] = useState<Tier>(currentTier ?? 5);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string }>();
   const [busy, setBusy] = useState(false);
 
@@ -45,8 +45,14 @@ export function TierChange({ currentTier }: { currentTier: Tier }) {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xl font-extrabold text-ink" data-testid="current-tier">
-          შენი საწევრო: {currentTier} ₾{" "}
-          <span className="text-sm font-semibold text-muted-fg">/ თვეში</span>
+          {currentTier !== null ? (
+            <>
+              შენი საწევრო: {currentTier} ₾{" "}
+              <span className="text-sm font-semibold text-muted-fg">/ თვეში</span>
+            </>
+          ) : (
+            "საწევრო ჯერ არ არის არჩეული"
+          )}
         </p>
         {!open ? (
           <Button
@@ -57,7 +63,7 @@ export function TierChange({ currentTier }: { currentTier: Tier }) {
               setMessage(undefined);
             }}
           >
-            შეცვლა
+            {currentTier !== null ? "შეცვლა" : "აირჩიე საწევრო"}
           </Button>
         ) : null}
       </div>
@@ -72,7 +78,7 @@ export function TierChange({ currentTier }: { currentTier: Tier }) {
               variant="ghost"
               onClick={() => {
                 setOpen(false);
-                setTier(currentTier);
+                setTier(currentTier ?? 5);
                 setMessage(undefined);
               }}
               disabled={busy}

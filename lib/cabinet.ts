@@ -72,10 +72,23 @@ const MONTHS_FROM_KA = [
   "დეკემბრიდან",
 ] as const;
 
+// Georgia is UTC+4 year-round (no DST). timestamptz values arrive as ISO UTC, so
+// the calendar day/month must be read in Tbilisi local time — otherwise anything
+// timestamped 00:00–04:00 local renders a day (and, at month/year edges, a month)
+// early. Shifting by a fixed offset then reading UTC accessors keeps this
+// deterministic (no ICU), the same reason formatDateKa avoids Intl.
+const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
+
+function toTbilisi(iso: string): Date | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getTime() + TBILISI_OFFSET_MS);
+}
+
 export function memberSinceKa(isoTimestamp: string | null): string | null {
   if (!isoTimestamp) return null;
-  const d = new Date(isoTimestamp);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = toTbilisi(isoTimestamp);
+  if (!d) return null;
   const month = MONTHS_FROM_KA[d.getUTCMonth()];
   if (!month) return null;
   return `${d.getUTCFullYear()} წლის ${month}`;
@@ -90,13 +103,18 @@ export function formatPhoneKa(phone: string | null | undefined): string {
   return `+995 ${n.slice(0, 3)} ${n.slice(3, 5)} ${n.slice(5, 7)} ${n.slice(7, 9)}`;
 }
 
-/** Deterministic dd.mm.yyyy — Node/browser ICU disagreements broke ka-GE once already. */
+/** Deterministic dd.mm.yyyy in Tbilisi time — Node/browser ICU disagreements broke ka-GE once already. */
 export function formatDateKa(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
+  const d = toTbilisi(iso);
+  if (!d) return iso;
   const day = String(d.getUTCDate()).padStart(2, "0");
   const month = String(d.getUTCMonth() + 1).padStart(2, "0");
   return `${day}.${month}.${d.getUTCFullYear()}`;
+}
+
+/** GEL amounts are numeric(10,2); render with a fixed 2 decimals so 50.5 → „50.50". */
+export function formatAmountGel(amount: number): string {
+  return amount.toFixed(2);
 }
 
 export function initialsKa(firstName: string, lastName: string): string {
@@ -106,7 +124,7 @@ export function initialsKa(firstName: string, lastName: string): string {
 /** Mirrors the delegate_panel() RPC jsonb exactly (spec §4.4). */
 export interface DelegatePanelData {
   status: "pending" | "approved" | "rejected";
-  referralCode: string;
+  referralCode: string | null; // withheld (null) until the delegate is approved
   activeCount: number;
   totalCount: number;
   draftCount: number;

@@ -108,6 +108,23 @@ describe("DelegateChange", () => {
     expect(options).toContain("თამარ კვარაცხელია (მიმდინარე)");
   });
 
+  it("seeds to central when the bound delegate is no longer an approved option", async () => {
+    changeDelegateAction.mockResolvedValue({ ok: true });
+    render(
+      <DelegateChange
+        regions={REGIONS}
+        delegates={DELEGATES}
+        currentDelegateId="ffffffff-0000-4000-8000-00000000ffff" // absent from approved DELEGATES
+        initialRegionId={1}
+      />,
+    );
+    const select = screen.getByLabelText("დელეგატი") as HTMLSelectElement;
+    expect(select.value).toBe("central"); // not a blank/missing <option>
+    // central differs from the (invisible) current binding, so submit is a real change
+    fireEvent.click(screen.getByRole("button", { name: "დელეგატის შეცვლა" }));
+    await waitFor(() => expect(changeDelegateAction).toHaveBeenCalledWith({ delegateId: null }));
+  });
+
   it("resets a picked delegate to central when the region switches away from them", () => {
     render(
       <DelegateChange

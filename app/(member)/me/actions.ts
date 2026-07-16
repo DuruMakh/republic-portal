@@ -1,22 +1,18 @@
 "use server";
 
 import { changeDelegateSchema, profileUpdateSchema } from "@/lib/cabinet-schemas";
-import { GENERIC_FUNNEL_ERROR, mapFunnelError, type FunnelState } from "@/lib/funnel";
+import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { tierSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-export type CabinetActionResult = { ok: true; state: FunnelState } | { ok: false; error: string };
+// No `state` field: every caller re-reads the truth via router.refresh() (the
+// layout/page funnel_state fetch), so returning state here was dead weight — and,
+// for updateProfileAction, an extra read whose transient failure was wrongly
+// reported as a failed save even though the UPDATE had already committed.
+export type CabinetActionResult = { ok: true } | { ok: false; error: string };
 
 function zodFail(message: string | undefined): CabinetActionResult {
   return { ok: false, error: message ?? GENERIC_FUNNEL_ERROR };
-}
-
-async function freshState(
-  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
-): Promise<CabinetActionResult> {
-  const { data, error } = await supabase.rpc("funnel_state");
-  if (error || data === null) return { ok: false, error: GENERIC_FUNNEL_ERROR };
-  return { ok: true, state: data as unknown as FunnelState };
 }
 
 /**
@@ -47,25 +43,25 @@ export async function updateProfileAction(input: unknown): Promise<CabinetAction
     if (error.code === "23503") return { ok: false, error: mapFunnelError("invalid_city") };
     return { ok: false, error: GENERIC_FUNNEL_ERROR };
   }
-  return freshState(supabase);
+  return { ok: true };
 }
 
 export async function changeDelegateAction(input: unknown): Promise<CabinetActionResult> {
   const parsed = changeDelegateSchema.safeParse(input);
   if (!parsed.success) return zodFail(parsed.error.issues[0]?.message);
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase.rpc("member_change_delegate", {
+  const { error } = await supabase.rpc("member_change_delegate", {
     p_delegate_id: parsed.data.delegateId,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true, state: data as unknown as FunnelState };
+  return { ok: true };
 }
 
 export async function changeTierAction(input: unknown): Promise<CabinetActionResult> {
   const parsed = tierSchema.safeParse(input);
   if (!parsed.success) return zodFail(parsed.error.issues[0]?.message);
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase.rpc("member_change_tier", { p_tier: parsed.data.tier });
+  const { error } = await supabase.rpc("member_change_tier", { p_tier: parsed.data.tier });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true, state: data as unknown as FunnelState };
+  return { ok: true };
 }

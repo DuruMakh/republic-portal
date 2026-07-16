@@ -11,7 +11,10 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
 
   async function signOut() {
     try {
-      await createClient().auth.signOut();
+      // local scope: sign out this device only (spec §nav: "clears the session
+      // client-side"). The default 'global' would revoke every device's refresh
+      // token, forcing a fresh SMS-OTP login elsewhere.
+      await createClient().auth.signOut({ scope: "local" });
     } catch {
       // best-effort: local session may survive a network failure — the cabinet
       // layout gates re-check the server truth on the next request anyway

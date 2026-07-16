@@ -66,8 +66,20 @@ export async function cleanupJourneyUsers(): Promise<void> {
     `995${journeyPhone(j)}`,
   ]);
   const { data: rows } = await admin.from("profiles").select("id").in("phone", phones);
-  for (const row of rows ?? []) {
-    await admin.auth.admin.deleteUser(row.id);
+  const ids = (rows ?? []).map((r) => r.id);
+  if (ids.length === 0) return;
+
+  // memberships.delegate_id has no ON DELETE action, so deleting a delegate whose
+  // link a member joined through fails on the FK. Delete non-delegates (members)
+  // first — their membership rows cascade via member_id — so the delegate deletes
+  // cleanly afterward. Surface errors instead of swallowing them (a silent failure
+  // leaves an approved e2e delegate live on staging and breaks public.spec counts).
+  const { data: delegateRows } = await admin.from("delegates").select("id").in("id", ids);
+  const delegateIds = new Set((delegateRows ?? []).map((d) => d.id));
+  const ordered = [...ids].sort((a, b) => Number(delegateIds.has(a)) - Number(delegateIds.has(b)));
+  for (const id of ordered) {
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) console.warn(`e2e cleanup: deleteUser ${id} failed: ${error.message}`);
   }
 }
 

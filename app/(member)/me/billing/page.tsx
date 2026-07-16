@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/Card";
+import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
-import { formatDateKa, paymentMethodLabel } from "@/lib/cabinet";
-import type { FunnelState } from "@/lib/funnel";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { formatAmountGel, formatDateKa, paymentMethodLabel } from "@/lib/cabinet";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { TierChange } from "./TierChange";
 
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
 export default async function BillingPage() {
   const supabase = await createServerSupabase();
-  const { data, error: stateError } = await supabase.rpc("funnel_state");
-  if (stateError || data === null) {
-    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
-  }
-  const state = data as unknown as FunnelState; // layout guarantees exists+completed
+  const state = await getFunnelState(); // layout guarantees exists+completed
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
     .select("id, amount_gel, paid_at, source")
@@ -38,7 +34,8 @@ export default async function BillingPage() {
 
       <div className="flex flex-col gap-6">
         <Card>
-          {state.tier !== null ? <TierChange currentTier={state.tier} /> : null}
+          {/* null tier (legacy active_member) still gets a picker — the RPC accepts it */}
+          <TierChange currentTier={state.tier} />
           <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
           {state.status !== "active_member" ? (
             <p className="mt-4 text-sm text-muted-fg">
@@ -66,30 +63,29 @@ export default async function BillingPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted-fg">
-                    <th className="px-6 py-3 font-semibold">თარიღი</th>
-                    <th className="px-6 py-3 font-semibold">თანხა</th>
-                    <th className="px-6 py-3 font-semibold">მეთოდი</th>
-                    <th className="px-6 py-3 font-semibold">სტატუსი</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((p) => (
-                    <tr key={p.id} className="border-b border-line last:border-0">
-                      <td className="px-6 py-3">{formatDateKa(p.paid_at)}</td>
-                      <td className="px-6 py-3 font-semibold text-ink">{p.amount_gel} ₾</td>
-                      <td className="px-6 py-3">{paymentMethodLabel(p.source)}</td>
-                      <td className="px-6 py-3">
-                        <Pill status="active_member" label="დადასტურებული" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              head={
+                <>
+                  <th className={tableThClass}>თარიღი</th>
+                  <th className={tableThClass}>თანხა</th>
+                  <th className={tableThClass}>მეთოდი</th>
+                  <th className={tableThClass}>სტატუსი</th>
+                </>
+              }
+            >
+              {rows.map((p) => (
+                <tr key={p.id} className={tableRowClass}>
+                  <td className={tableCellClass}>{formatDateKa(p.paid_at)}</td>
+                  <td className={`${tableCellClass} font-semibold text-ink`}>
+                    {formatAmountGel(p.amount_gel)} ₾
+                  </td>
+                  <td className={tableCellClass}>{paymentMethodLabel(p.source)}</td>
+                  <td className={tableCellClass}>
+                    <Pill status="active_member" label="დადასტურებული" />
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
           )}
         </Card>
       </div>
