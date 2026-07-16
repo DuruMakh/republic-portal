@@ -4,26 +4,21 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { initialsKa, memberSinceKa } from "@/lib/cabinet";
-import type { FunnelState } from "@/lib/funnel";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { ProfileForm } from "./ProfileForm";
 
 export const metadata: Metadata = { title: "ჩემი პროფილი — ქართული რესპუბლიკა" };
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
-  const { data, error: stateError } = await supabase.rpc("funnel_state");
-  if (stateError || data === null) {
-    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
-  }
-  const state = data as unknown as FunnelState; // (member) layout guarantees exists+completed
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: regions, error: regionsError } = await supabase
-    .from("regions")
-    .select("id, name_ka")
-    .order("id");
+  // funnel_state is request-cached (already fetched by the layout); the user and
+  // region lookups are independent, so fan them out in parallel.
+  const [state, { data: userData }, { data: regions, error: regionsError }] = await Promise.all([
+    getFunnelState(), // (member) layout guarantees exists+completed
+    supabase.auth.getUser(),
+    supabase.from("regions").select("id, name_ka").order("id"),
+  ]);
+  const user = userData.user;
   if (regionsError) {
     // a failed regions load must not render an empty region picker
     throw new Error(`regions query failed: ${regionsError.message}`);

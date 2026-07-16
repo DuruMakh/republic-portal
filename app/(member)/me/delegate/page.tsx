@@ -5,19 +5,14 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { initialsKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
-import type { FunnelState } from "@/lib/funnel";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { DelegateChange } from "./DelegateChange";
 
 export const metadata: Metadata = { title: "ჩემი დელეგატი — ქართული რესპუბლიკა" };
 
 export default async function MyDelegatePage() {
   const supabase = await createServerSupabase();
-  const { data, error: stateError } = await supabase.rpc("funnel_state");
-  if (stateError || data === null) {
-    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
-  }
-  const state = data as unknown as FunnelState; // layout guarantees exists+completed
+  const state = await getFunnelState(); // layout guarantees exists+completed
   if (state.role === "delegate") redirect("/delegate"); // members-only page (spec §3.1)
 
   const [{ data: delegates, error: delegatesError }, { data: regions, error: regionsError }] =
@@ -78,19 +73,30 @@ export default async function MyDelegatePage() {
                     {state.chosenDelegate.firstName} {state.chosenDelegate.lastName}
                   </h3>
                   <div className="mt-1 flex items-center gap-2">
-                    <Pill status="approved" />
-                    {current?.region_name_ka ? (
-                      <span className="text-sm text-muted-fg">{current.region_name_ka}</span>
-                    ) : null}
+                    {current ? (
+                      <>
+                        <Pill status="approved" />
+                        {current.region_name_ka ? (
+                          <span className="text-sm text-muted-fg">{current.region_name_ka}</span>
+                        ) : null}
+                      </>
+                    ) : (
+                      // bound delegate is no longer approved/public — don't fake an „approved" pill
+                      <span className="text-sm text-muted-fg" data-testid="delegate-unavailable">
+                        დელეგატი ამჟამად მიუწვდომელია
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-sm">
-                <span className="text-muted-fg">აქტიური მხარდამჭერი</span>
-                <strong className="text-lg text-ink">
-                  {formatCountKa(current?.active_supporters ?? 0)}
-                </strong>
-              </div>
+              {current ? (
+                <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-sm">
+                  <span className="text-muted-fg">აქტიური მხარდამჭერი</span>
+                  <strong className="text-lg text-ink">
+                    {formatCountKa(current.active_supporters)}
+                  </strong>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="flex items-center gap-3">

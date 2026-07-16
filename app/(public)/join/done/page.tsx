@@ -16,8 +16,11 @@ export default function DonePage() {
   const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
 
   useEffect(() => {
-    clearFreshCompletion(); // consume once mounted; later visits forward below
-  }, []);
+    // consume the marker only once this screen actually renders — clearing on bare
+    // mount consumed it even when the guard then redirected away (transient
+    // funnel_state failure → the just-registered member never saw this screen).
+    if (ready && state && fresh) clearFreshCompletion();
+  }, [ready, state, fresh]);
 
   useEffect(() => {
     if (ready && state && !fresh) router.replace(deriveDestination(state));

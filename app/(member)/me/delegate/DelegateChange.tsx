@@ -30,7 +30,14 @@ export function DelegateChange({
 }) {
   const router = useRouter();
   const [regionId, setRegionId] = useState(initialRegionId);
-  const [choice, setChoice] = useState(currentDelegateId ?? CENTRAL);
+  // Seed to the current delegate only if it's a visible (approved) option; a
+  // no-longer-approved binding isn't in `delegates`, so seeding its id would leave
+  // the controlled <select> pointing at a missing <option> (blank, dead-end submit).
+  const [choice, setChoice] = useState(
+    currentDelegateId !== null && delegates.some((d) => d.id === currentDelegateId)
+      ? currentDelegateId
+      : CENTRAL,
+  );
   const [message, setMessage] = useState<{ kind: "ok" | "error" | "info"; text: string }>();
   const [busy, setBusy] = useState(false);
 

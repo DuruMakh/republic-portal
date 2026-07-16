@@ -17,8 +17,10 @@ export default function PendingPage() {
   const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
 
   useEffect(() => {
-    clearFreshCompletion();
-  }, []);
+    // consume only once this screen renders (see done/page.tsx) — clearing on bare
+    // mount could skip the confirmation screen on a transient guard failure.
+    if (ready && state && fresh) clearFreshCompletion();
+  }, [ready, state, fresh]);
 
   useEffect(() => {
     if (ready && state && !fresh) router.replace(deriveDestination(state));

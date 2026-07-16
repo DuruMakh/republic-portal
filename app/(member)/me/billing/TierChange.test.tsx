@@ -46,6 +46,17 @@ describe("TierChange", () => {
     expect(screen.getByRole("radio", { name: /10/ })).toHaveAttribute("aria-checked", "true");
   });
 
+  it("offers a picker for a legacy member with no tier yet, and saves the choice", async () => {
+    changeTierAction.mockResolvedValue({ ok: true });
+    render(<TierChange currentTier={null} />);
+    expect(screen.getByTestId("current-tier")).toHaveTextContent("საწევრო ჯერ არ არის არჩეული");
+    fireEvent.click(screen.getByRole("button", { name: "აირჩიე საწევრო" }));
+    fireEvent.click(screen.getByRole("radio", { name: /10/ }));
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() => expect(changeTierAction).toHaveBeenCalledWith({ tier: 10 }));
+    expect(await screen.findByText("საწევრო შეიცვალა ✓")).toBeInTheDocument();
+  });
+
   it("shows the generic error and keeps the picker open (re-enabled) when the action rejects", async () => {
     // mockRejectedValueOnce (not mockRejectedValue): the persistent variant, combined
     // with this file's beforeEach(mockReset()), triggers a spurious unhandled-rejection

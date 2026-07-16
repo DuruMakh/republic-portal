@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Eyebrow } from "@/components/Eyebrow";
-import type { DelegatePanelData, TeamMember } from "@/lib/cabinet";
-import { createServerSupabase } from "@/lib/supabase/server";
+import type { TeamMember } from "@/lib/cabinet";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { TeamTable } from "./TeamTable";
 
 export const metadata: Metadata = { title: "ჩემი გუნდი — ქართული რესპუბლიკა" };
 
 export default async function DelegateTeamPage() {
   const supabase = await createServerSupabase();
-  const { data: panelData, error: panelError } = await supabase.rpc("delegate_panel");
-  if (panelError || panelData === null) {
-    throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
-  }
-  const panel = panelData as unknown as DelegatePanelData;
-  if (panel.status !== "approved") redirect("/delegate"); // no team pre-approval (spec §3.7)
+  // delegateStatus comes free from the request-cached funnel_state (the layout
+  // already fetched it) — no need for delegate_panel's three count subqueries here.
+  const state = await getFunnelState();
+  if (state.delegateStatus !== "approved") redirect("/delegate"); // no team pre-approval (spec §3.7)
   const { data: teamData, error: teamError } = await supabase.rpc("delegate_team");
   if (teamError || teamData === null) {
     throw new Error(`delegate_team failed: ${teamError?.message ?? "empty"}`);

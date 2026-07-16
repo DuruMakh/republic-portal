@@ -57,6 +57,7 @@ export function ProfileForm({
           setError(GENERIC_FUNNEL_ERROR);
           return;
         }
+        setError(undefined); // clear a prior transient cities-fetch error once it recovers
         setCities(data);
         setCityId((current) => (data.some((c) => c.id === current) ? current : (data[0]?.id ?? 0)));
       })

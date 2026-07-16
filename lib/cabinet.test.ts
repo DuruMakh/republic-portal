@@ -5,6 +5,7 @@ import {
   deriveDestination,
   EMPLOYMENT_OTHER,
   employmentToForm,
+  formatAmountGel,
   formatDateKa,
   formatPhoneKa,
   formToEmployment,
@@ -109,10 +110,11 @@ describe("employment mapping (spec §3.3)", () => {
 });
 
 describe("memberSinceKa", () => {
-  it("formats year + -დან month (syncope forms correct)", () => {
+  it("formats year + -დან month in Tbilisi time (syncope forms correct)", () => {
     expect(memberSinceKa("2026-02-10T08:30:00Z")).toBe("2026 წლის თებერვლიდან");
     expect(memberSinceKa("2026-01-01T00:00:00Z")).toBe("2026 წლის იანვრიდან");
-    expect(memberSinceKa("2026-08-31T23:59:59Z")).toBe("2026 წლის აგვისტოდან");
+    // Georgia is UTC+4: 21:30Z on 31 July is 01:30 on 1 August locally → აგვისტო
+    expect(memberSinceKa("2026-07-31T21:30:00Z")).toBe("2026 წლის აგვისტოდან");
     expect(memberSinceKa("2026-09-15T12:00:00Z")).toBe("2026 წლის სექტემბრიდან");
   });
   it("null / invalid → null", () => {
@@ -134,9 +136,11 @@ describe("formatPhoneKa", () => {
 });
 
 describe("formatDateKa / initialsKa / labels", () => {
-  it("dd.mm.yyyy, deterministic (no ICU)", () => {
-    expect(formatDateKa("2026-07-15")).toBe("15.07.2026");
-    expect(formatDateKa("2026-07-15T22:10:00Z")).toBe("15.07.2026");
+  it("dd.mm.yyyy in Tbilisi time, deterministic (no ICU)", () => {
+    expect(formatDateKa("2026-07-15")).toBe("15.07.2026"); // date-only stays put
+    expect(formatDateKa("2026-07-15T10:00:00Z")).toBe("15.07.2026");
+    // UTC+4: 22:10Z on the 15th is 02:10 on the 16th locally
+    expect(formatDateKa("2026-07-15T22:10:00Z")).toBe("16.07.2026");
     expect(formatDateKa("garbage")).toBe("garbage");
   });
   it("initials from Georgian names", () => {
@@ -149,6 +153,14 @@ describe("formatDateKa / initialsKa / labels", () => {
   it("payment method label", () => {
     expect(paymentMethodLabel("manual")).toBe("გადარიცხვა");
     expect(paymentMethodLabel("future_gateway")).toBe("future_gateway");
+  });
+});
+
+describe("formatAmountGel", () => {
+  it("renders numeric(10,2) amounts with a fixed two decimals", () => {
+    expect(formatAmountGel(50.5)).toBe("50.50"); // trailing zero preserved
+    expect(formatAmountGel(50)).toBe("50.00");
+    expect(formatAmountGel(1234.5)).toBe("1234.50");
   });
 });
 

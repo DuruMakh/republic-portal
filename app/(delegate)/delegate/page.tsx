@@ -6,24 +6,23 @@ import { PendingExplainer } from "@/components/PendingExplainer";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
-import type { FunnelState } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { ReferralCard } from "./ReferralCard";
 
 export const metadata: Metadata = { title: "დელეგატის პანელი — ქართული რესპუბლიკა" };
 
 export default async function DelegateDashboardPage() {
   const supabase = await createServerSupabase();
-  const [{ data: stateData, error: stateError }, { data: panelData, error: panelError }] =
-    await Promise.all([supabase.rpc("funnel_state"), supabase.rpc("delegate_panel")]);
-  if (stateError || stateData === null) {
-    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
-  }
+  // funnel_state is request-cached (the delegate layout already fetched it); pair
+  // its (free) read with the delegate_panel round-trip.
+  const [state, { data: panelData, error: panelError }] = await Promise.all([
+    getFunnelState(), // layout guarantees delegate+completed
+    supabase.rpc("delegate_panel"),
+  ]);
   if (panelError || panelData === null) {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }
-  const state = stateData as unknown as FunnelState; // layout guarantees delegate+completed
   const panel = panelData as unknown as DelegatePanelData;
 
   // Rank reuses the leaderboard's exact inputs + math (spec §3.6) so the two
@@ -39,8 +38,13 @@ export default async function DelegateDashboardPage() {
       // an approved delegate must never see the pending-state's honest „—" because a query failed
       throw new Error(`public_delegates query failed: ${rankError.message}`);
     }
+    if (authResult.error || !authResult.data.user) {
+      // same invariant: a failed auth read must throw, not silently degrade the rank to „—"
+      throw new Error(`auth.getUser failed: ${authResult.error?.message ?? "no user"}`);
+    }
+    const authUser = authResult.data.user;
     const ranked = rankDelegates(publicDelegates ?? []);
-    const mine = ranked.find((d) => d.id === authResult.data.user?.id);
+    const mine = ranked.find((d) => d.id === authUser.id);
     if (mine) {
       rankValue = `#${mine.rank}`;
       rankSub = `${mine.rank} / ${ranked.length} დელეგატი`;
@@ -62,7 +66,7 @@ export default async function DelegateDashboardPage() {
 
       {panel.status === "approved" ? (
         <div className="flex flex-col gap-6">
-          <ReferralCard code={panel.referralCode} />
+          {panel.referralCode ? <ReferralCard code={panel.referralCode} /> : null}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               value={panel.activeCount}
