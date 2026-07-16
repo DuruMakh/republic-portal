@@ -63,6 +63,13 @@ console.log(`${APPLY ? "DELETING" : "DRY RUN"}: ${doomed.size} users`);
 for (const [id, reason] of doomed) console.log(`  ${id} — ${reason}`);
 let failedDeletions = 0;
 if (APPLY) {
+  // memberships.delegate_id has no cascade (deliberate — see initial_schema.sql):
+  // detach doomed delegates' memberships first, or deleteUser fails on FK when a
+  // membership still points at them. memberships of doomed MEMBERS already cascade
+  // via member_id; this only detaches rows pointing AT doomed delegates.
+  const doomedIds = [...doomed.keys()];
+  const { error: detachErr } = await db.from("memberships").delete().in("delegate_id", doomedIds);
+  if (detachErr) console.error(`membership detach failed: ${detachErr.message}`);
   for (const [id] of doomed) {
     const { error } = await db.auth.admin.deleteUser(id);
     if (error) {

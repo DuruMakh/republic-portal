@@ -66,8 +66,16 @@ export async function cleanupJourneyUsers(): Promise<void> {
     `995${journeyPhone(j)}`,
   ]);
   const { data: rows } = await admin.from("profiles").select("id").in("phone", phones);
-  for (const row of rows ?? []) {
-    await admin.auth.admin.deleteUser(row.id);
+  const ids = (rows ?? []).map((r) => r.id);
+  if (ids.length === 0) return;
+  // memberships.delegate_id has NO cascade: a row pointing at a journey DELEGATE
+  // blocks deleteUser when iteration order deletes the delegate first. Detach
+  // first — scoped strictly to this run's own users.
+  const { error: detachErr } = await admin.from("memberships").delete().in("delegate_id", ids);
+  if (detachErr) console.warn(`e2e cleanup: membership detach failed: ${detachErr.message}`);
+  for (const id of ids) {
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) console.warn(`e2e cleanup: deleteUser ${id} failed: ${error.message}`);
   }
 }
 
