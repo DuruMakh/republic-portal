@@ -12,12 +12,22 @@ export const metadata: Metadata = { title: "ჩემი პროფილი �
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
-  const { data } = await supabase.rpc("funnel_state");
+  const { data, error: stateError } = await supabase.rpc("funnel_state");
+  if (stateError || data === null) {
+    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
+  }
   const state = data as unknown as FunnelState; // (member) layout guarantees exists+completed
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: regions } = await supabase.from("regions").select("id, name_ka").order("id");
+  const { data: regions, error: regionsError } = await supabase
+    .from("regions")
+    .select("id, name_ka")
+    .order("id");
+  if (regionsError) {
+    // a failed regions load must not render an empty region picker
+    throw new Error(`regions query failed: ${regionsError.message}`);
+  }
   const regionName = (regions ?? []).find((r) => r.id === state.regionId)?.name_ka ?? "—";
   const since = memberSinceKa(state.registrationCompletedAt ?? state.createdAt);
 

@@ -31,10 +31,14 @@ export default async function DelegateDashboardPage() {
   let rankValue: string = "—";
   let rankSub: string | undefined;
   if (panel.status === "approved") {
-    const [{ data: publicDelegates }, authResult] = await Promise.all([
+    const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
       supabase.from("public_delegates").select("id, first_name, last_name, active_supporters"),
       supabase.auth.getUser(),
     ]);
+    if (rankError) {
+      // an approved delegate must never see the pending-state's honest „—" because a query failed
+      throw new Error(`public_delegates query failed: ${rankError.message}`);
+    }
     const ranked = rankDelegates(publicDelegates ?? []);
     const mine = ranked.find((d) => d.id === authResult.data.user?.id);
     if (mine) {

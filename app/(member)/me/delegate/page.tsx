@@ -13,16 +13,27 @@ export const metadata: Metadata = { title: "ჩემი დელეგატ�
 
 export default async function MyDelegatePage() {
   const supabase = await createServerSupabase();
-  const { data } = await supabase.rpc("funnel_state");
+  const { data, error: stateError } = await supabase.rpc("funnel_state");
+  if (stateError || data === null) {
+    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
+  }
   const state = data as unknown as FunnelState; // layout guarantees exists+completed
   if (state.role === "delegate") redirect("/delegate"); // members-only page (spec §3.1)
 
-  const [{ data: delegates }, { data: regions }] = await Promise.all([
-    supabase
-      .from("public_delegates")
-      .select("id, first_name, last_name, region_id, region_name_ka, active_supporters"),
-    supabase.from("regions").select("id, name_ka").order("id"),
-  ]);
+  const [{ data: delegates, error: delegatesError }, { data: regions, error: regionsError }] =
+    await Promise.all([
+      supabase
+        .from("public_delegates")
+        .select("id, first_name, last_name, region_id, region_name_ka, active_supporters"),
+      supabase.from("regions").select("id, name_ka").order("id"),
+    ]);
+  if (delegatesError) {
+    // a transient failure must not show „0 აქტიური მხარდამჭერი" for a real delegate
+    throw new Error(`public_delegates query failed: ${delegatesError.message}`);
+  }
+  if (regionsError) {
+    throw new Error(`regions query failed: ${regionsError.message}`);
+  }
   const current = state.chosenDelegate
     ? ((delegates ?? []).find((d) => d.id === state.chosenDelegate?.id) ?? null)
     : null;
