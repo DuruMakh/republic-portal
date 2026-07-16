@@ -12,12 +12,19 @@ export const metadata: Metadata = { title: "გადახდები — ქ�
 
 export default async function BillingPage() {
   const supabase = await createServerSupabase();
-  const { data } = await supabase.rpc("funnel_state");
+  const { data, error: stateError } = await supabase.rpc("funnel_state");
+  if (stateError || data === null) {
+    throw new Error(`funnel_state failed: ${stateError?.message ?? "empty response"}`);
+  }
   const state = data as unknown as FunnelState; // layout guarantees exists+completed
-  const { data: payments } = await supabase
+  const { data: payments, error: paymentsError } = await supabase
     .from("payments")
     .select("id, amount_gel, paid_at, source")
     .order("paid_at", { ascending: false }); // RLS scopes to own rows
+  if (paymentsError) {
+    // a failed query must never masquerade as the honest "no payments yet" state
+    throw new Error(`payments query failed: ${paymentsError.message}`);
+  }
 
   const rows = payments ?? [];
 

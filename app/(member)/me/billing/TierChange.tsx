@@ -49,7 +49,14 @@ export function TierChange({ currentTier }: { currentTier: Tier }) {
           <span className="text-sm font-semibold text-muted-fg">/ თვეში</span>
         </p>
         {!open ? (
-          <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setOpen(true);
+              setMessage(undefined);
+            }}
+          >
             შეცვლა
           </Button>
         ) : null}
@@ -68,6 +75,7 @@ export function TierChange({ currentTier }: { currentTier: Tier }) {
                 setTier(currentTier);
                 setMessage(undefined);
               }}
+              disabled={busy}
             >
               გაუქმება
             </Button>
