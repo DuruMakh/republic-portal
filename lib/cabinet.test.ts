@@ -37,6 +37,7 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     referral: null,
     chosenDelegate: null,
     membershipExists: false,
+    admin: false,
     ...overrides,
   };
 }

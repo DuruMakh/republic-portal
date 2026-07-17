@@ -32,6 +32,7 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     referral: null,
     chosenDelegate: null,
     membershipExists: false,
+    admin: false,
     ...overrides,
   };
 }
@@ -154,5 +155,16 @@ describe("mapFunnelError — Phase 3 tokens", () => {
     expect(mapFunnelError("not_completed")).toBe("ჯერ დაასრულე რეგისტრაცია.");
     expect(mapFunnelError("P0001: not_a_member")).toBe("ეს მოქმედება მხოლოდ წევრებისთვისაა.");
     expect(mapFunnelError("not_a_delegate")).toBe("დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.");
+  });
+  it("maps the Phase 4 admin tokens (spec §5)", () => {
+    expect(mapFunnelError("P0001: missing_role")).toBe(
+      "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",
+    );
+    expect(mapFunnelError("duplicate_reference")).toBe(
+      "ამ საბანკო რეფერენსით გადახდა უკვე აღრიცხულია.",
+    );
+    expect(mapFunnelError("last_super_admin")).toBe("ბოლო super_admin-ის მოხსნა შეუძლებელია.");
+    expect(mapFunnelError("already_voided")).toBe("ეს გადახდა უკვე გაუქმებულია.");
+    expect(mapFunnelError("invalid_target")).toBe("ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.");
   });
 });

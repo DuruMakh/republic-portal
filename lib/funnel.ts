@@ -43,6 +43,8 @@ export interface FunnelState {
   referral: FunnelReferral | null;
   chosenDelegate: FunnelChosenDelegate | null; // null = ცენტრალური მოძრაობა (or none yet)
   membershipExists: boolean;
+  /** Phase 4: caller holds ≥1 admin_roles row — shows the cabinet's ადმინისტრირება tab. */
+  admin: boolean;
 }
 
 export function deriveFunnelStep(state: FunnelState | null): FunnelStep {
@@ -92,6 +94,19 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   not_a_delegate: "დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.",
   invalid_role: "დაფიქსირდა შეცდომა — სცადე თავიდან.",
   invalid_name: "შეავსე სახელი და გვარი.",
+  // Phase 4 admin tokens (spec §5)
+  missing_role: "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",
+  invalid_target: "ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.",
+  already_voided: "ეს გადახდა უკვე გაუქმებულია.",
+  duplicate_reference: "ამ საბანკო რეფერენსით გადახდა უკვე აღრიცხულია.",
+  last_super_admin: "ბოლო super_admin-ის მოხსნა შეუძლებელია.",
+  invalid_setting: "პარამეტრის მნიშვნელობა არასწორია.",
+  invalid_slug: "მისამართის შექმნა ვერ მოხერხდა — სცადე თავიდან.",
+  invalid_amount: "თანხა არასწორია.",
+  invalid_date: "თარიღი არასწორია.",
+  invalid_reason: "მიუთითე მიზეზი (3–500 სიმბოლო).",
+  invalid_note: "შენიშვნა ძალიან გრძელია (მაქს. 500).",
+  invalid_rows: "ცხრილის მონაცემები არასწორია — სცადე თავიდან.",
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;
