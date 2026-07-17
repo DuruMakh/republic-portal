@@ -6,12 +6,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 describe("GrantRoleForm (spec §3.7)", () => {
   it("finds a member by phone, grants the chosen role", async () => {
-    const find = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        candidate: { id: "u-1", name: "ნინო ბერიძე", phone: "+995509000009" },
-      });
+    const find = vi.fn().mockResolvedValue({
+      ok: true,
+      candidate: { id: "u-1", name: "ნინო ბერიძე", phone: "+995509000009" },
+    });
     const grant = vi.fn().mockResolvedValue({ ok: true });
     render(<GrantRoleForm find={find} grant={grant} />);
     fireEvent.change(screen.getByLabelText(/ტელეფონი/), { target: { value: "509000009" } });
