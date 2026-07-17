@@ -5,6 +5,7 @@ import {
   AUDIT_ACTION_LABELS_KA,
   auditActionLabel,
   barPct,
+  formatDateTimeKa,
   hasAnyRole,
   isStaff,
   MEMBER_STATUS_LABELS_KA,
@@ -127,5 +128,12 @@ describe("hasAnyRole (page gates)", () => {
     expect(hasAnyRole(["verifier"], ["super_admin", "verifier"])).toBe(true);
     expect(hasAnyRole(["finance"], ["super_admin", "verifier"])).toBe(false);
     expect(hasAnyRole([], ["super_admin"])).toBe(false);
+  });
+});
+
+describe("formatDateTimeKa", () => {
+  it("renders Tbilisi wall-clock time (UTC+4, no DST)", () => {
+    expect(formatDateTimeKa("2026-07-17T20:30:00Z")).toBe("18.07.2026 00:30");
+    expect(formatDateTimeKa("2026-07-17T08:05:00Z")).toBe("17.07.2026 12:05");
   });
 });

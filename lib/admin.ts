@@ -97,3 +97,13 @@ export function barPct(count: number, max: number): number {
 export function hasAnyRole(roles: readonly AdminRole[], allowed: readonly AdminRole[]): boolean {
   return roles.some((r) => allowed.includes(r));
 }
+
+const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
+
+/** dd.mm.yyyy HH:MM in Tbilisi wall-clock time (audit viewer). */
+export function formatDateTimeKa(iso: string): string {
+  const d = new Date(new Date(iso).getTime() + TBILISI_OFFSET_MS);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
