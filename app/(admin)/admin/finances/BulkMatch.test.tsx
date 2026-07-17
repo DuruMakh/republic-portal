@@ -150,4 +150,56 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
       expect(screen.getByText(/ვერ ჩაიწერა — შეცდომა მე-1 რიგში/)).toBeInTheDocument(),
     );
   });
+
+  it("confirm failure names the on-screen row, not the payload index", async () => {
+    // the RPC's rowIndex counts the SENT payload (✓ rows only); the table shows
+    // ALL rows — a non-✓ row before the failing ✓ row must not shift the number
+    const mixed: BulkPreviewRow[] = [
+      {
+        index: 0,
+        line: "GR-ZZZZZ9 20.00",
+        code: "GR-ZZZZZ9",
+        amountGel: 20,
+        paidAt: "2026-07-01",
+        status: "unknown_code",
+        memberName: null,
+        months: null,
+      },
+      {
+        index: 1,
+        line: "GR-ABC234 20.00",
+        code: "GR-ABC234",
+        amountGel: 20,
+        paidAt: "2026-07-01",
+        status: "ok",
+        memberName: "ნინო ბერიძე",
+        months: 1,
+      },
+      {
+        index: 2,
+        line: "GR-KMP234 40.00",
+        code: "GR-KMP234",
+        amountGel: 40,
+        paidAt: "2026-07-01",
+        status: "ok",
+        memberName: "გია რაზმაძე",
+        months: 2,
+      },
+    ];
+    const preview = vi.fn().mockResolvedValue({ ok: true, rows: mixed });
+    // payload rowIndex 1 = the SECOND ✓ row = the table's 3rd visible row
+    const confirm = vi.fn().mockResolvedValue({
+      ok: false,
+      error: "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
+      rowIndex: 1,
+    });
+    render(<BulkMatch preview={preview} confirm={confirm} />);
+    fireEvent.change(screen.getByLabelText(/ამონაწერის სტრიქონები/), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
+    await waitFor(() => expect(screen.getAllByText("ნაპოვნია")).toHaveLength(2));
+    fireEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
+    await waitFor(() =>
+      expect(screen.getByText(/ვერ ჩაიწერა — შეცდომა მე-3 რიგში/)).toBeInTheDocument(),
+    );
+  });
 });

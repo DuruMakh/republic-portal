@@ -59,12 +59,16 @@ export function BulkMatch({
     );
     setBusy(false);
     if (!result.ok) {
+      // the RPC's rowIndex counts the SENT payload (✓ rows only) — translate it
+      // back to the row's position in the on-screen preview table
+      const failedOriginalIndex =
+        result.rowIndex === null ? null : (okRows[result.rowIndex]?.index ?? result.rowIndex);
       setNotice({
         kind: "error",
         text:
-          result.rowIndex === null
+          failedOriginalIndex === null
             ? `ვერ ჩაიწერა — ${result.error}`
-            : `ვერ ჩაიწერა — შეცდომა მე-${result.rowIndex + 1} რიგში: ${result.error}. არცერთი რიგი არ ჩაწერილა.`,
+            : `ვერ ჩაიწერა — შეცდომა მე-${failedOriginalIndex + 1} რიგში: ${result.error}. არცერთი რიგი არ ჩაწერილა.`,
       });
       return;
     }
