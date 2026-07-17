@@ -35,6 +35,8 @@ export default async function AdminTransferPage({
     .is("delegate_id", null)
     .neq("status", "draft")
     .eq("is_delegate", false)
+    // mirror admin_reassign_member's gate: only rows the RPC will accept
+    .or("registration_completed_at.not.is.null,status.eq.active_member")
     .order("created_at", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
   if (error) throw new Error(`admin_members failed: ${error.message}`);
