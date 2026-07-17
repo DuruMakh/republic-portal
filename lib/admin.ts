@@ -22,7 +22,7 @@ export const ROLE_DUTIES_KA: Record<AdminRole, string> = {
   editor: "სიახლეები და ღონისძიებები (ჩაირთვება მე-5 ფაზაში)",
 };
 
-/** Overview/member-list gate: every admin role except editor (spec §4.2 „staff"). */
+/** Overview/member-list gate: every admin role except editor (spec §4.2 „staff“). */
 export function isStaff(roles: readonly AdminRole[]): boolean {
   return roles.some((r) => r === "super_admin" || r === "verifier" || r === "finance");
 }
