@@ -12,7 +12,7 @@ export function csvEscape(value: string): string {
 export function toCsv(headers: readonly string[], rows: readonly (readonly string[])[]): string {
   const lines = [headers, ...rows].map((cells) => cells.map(csvEscape).join(","));
   // explicit escape — an invisible literal BOM would not survive copy-paste review
-  return `﻿${lines.join("\r\n")}\r\n`;
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
 }
 
 export interface MemberExportRow {

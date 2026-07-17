@@ -22,8 +22,8 @@ describe("csvEscape (RFC 4180)", () => {
 describe("toCsv", () => {
   it("BOM + CRLF + header row (Excel opens Georgian correctly)", () => {
     const csv = toCsv(["ა", "ბ"], [["1", "2"]]);
-    expect(csv.startsWith("﻿")).toBe(true);
-    expect(csv).toBe("﻿ა,ბ\r\n1,2\r\n");
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toBe("\uFEFFა,ბ\r\n1,2\r\n");
   });
 });
 
