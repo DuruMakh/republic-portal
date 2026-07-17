@@ -12,6 +12,7 @@ import {
   initialsKa,
   memberSinceKa,
   paymentMethodLabel,
+  paymentStatusKa,
   TEAM_STATUS_LABELS,
 } from "./cabinet";
 import type { FunnelState } from "./funnel";
@@ -185,5 +186,15 @@ describe("buildReferralUrl", () => {
     expect(buildReferralUrl("http://localhost:3000/", "AB2C3D")).toBe(
       "http://localhost:3000/join?ref=AB2C3D",
     );
+  });
+});
+
+describe("paymentStatusKa (Phase 4 §8 — honest voids)", () => {
+  it("live rows are დადასტურებული, voided rows are გაუქმებული", () => {
+    expect(paymentStatusKa(null)).toEqual({ label: "დადასტურებული", pillStatus: "active_member" });
+    expect(paymentStatusKa("2026-07-17T10:00:00Z")).toEqual({
+      label: "გაუქმებული",
+      pillStatus: "rejected",
+    });
   });
 });

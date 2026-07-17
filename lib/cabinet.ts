@@ -156,3 +156,13 @@ export function paymentMethodLabel(source: string): string {
 export function buildReferralUrl(origin: string, code: string): string {
   return `${origin.replace(/\/+$/, "")}/join?ref=${encodeURIComponent(code)}`;
 }
+
+/** Billing-history status cell (Phase 4: voided payments stay visible, honestly). */
+export function paymentStatusKa(voidedAt: string | null): {
+  label: string;
+  pillStatus: "active_member" | "rejected";
+} {
+  return voidedAt === null
+    ? { label: "დადასტურებული", pillStatus: "active_member" }
+    : { label: "გაუქმებული", pillStatus: "rejected" };
+}

@@ -4,7 +4,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
-import { formatAmountGel, formatDateKa, paymentMethodLabel } from "@/lib/cabinet";
+import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
 import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { TierChange } from "./TierChange";
 
@@ -15,7 +15,7 @@ export default async function BillingPage() {
   const state = await getFunnelState(); // layout guarantees exists+completed
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
-    .select("id, amount_gel, paid_at, source")
+    .select("id, amount_gel, paid_at, source, voided_at")
     .order("paid_at", { ascending: false }); // RLS scopes to own rows
   if (paymentsError) {
     // a failed query must never masquerade as the honest "no payments yet" state
@@ -73,18 +73,25 @@ export default async function BillingPage() {
                 </>
               }
             >
-              {rows.map((p) => (
-                <tr key={p.id} className={tableRowClass}>
-                  <td className={tableCellClass}>{formatDateKa(p.paid_at)}</td>
-                  <td className={`${tableCellClass} font-semibold text-ink`}>
-                    {formatAmountGel(p.amount_gel)} ₾
-                  </td>
-                  <td className={tableCellClass}>{paymentMethodLabel(p.source)}</td>
-                  <td className={tableCellClass}>
-                    <Pill status="active_member" label="დადასტურებული" />
-                  </td>
-                </tr>
-              ))}
+              {rows.map((p) => {
+                const status = paymentStatusKa(p.voided_at);
+                return (
+                  <tr key={p.id} className={tableRowClass}>
+                    <td className={tableCellClass}>{formatDateKa(p.paid_at)}</td>
+                    <td
+                      className={`${tableCellClass} font-semibold text-ink ${
+                        p.voided_at ? "line-through opacity-60" : ""
+                      }`}
+                    >
+                      {formatAmountGel(p.amount_gel)} ₾
+                    </td>
+                    <td className={tableCellClass}>{paymentMethodLabel(p.source)}</td>
+                    <td className={tableCellClass}>
+                      <Pill status={status.pillStatus} label={status.label} />
+                    </td>
+                  </tr>
+                );
+              })}
             </DataTable>
           )}
         </Card>
