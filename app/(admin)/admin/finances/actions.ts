@@ -7,6 +7,7 @@ import {
   memberLookupSchema,
   recordPaymentSchema,
   todayTbilisiIso,
+  voidPaymentSchema,
 } from "@/lib/admin-schemas";
 import { monthsFor } from "@/lib/active";
 import { parseStatementRows } from "@/lib/bank-parse";
@@ -19,6 +20,7 @@ import type {
   LookupResult,
   MemberCandidate,
   RecordResult,
+  VoidResult,
 } from "./types";
 import type { Json, MemberStatusRow } from "@/lib/supabase/types";
 
@@ -178,4 +180,18 @@ export async function confirmBulkAction(rows: unknown): Promise<BulkConfirmResul
   }
   const result = data as { count: number; totalGel: number };
   return { ok: true, count: result.count, totalGel: result.totalGel };
+}
+
+export async function voidPaymentAction(paymentId: unknown, reason: unknown): Promise<VoidResult> {
+  const parsed = voidPaymentSchema.safeParse({ paymentId, reason });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR };
+  }
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("admin_void_payment", {
+    p_payment_id: parsed.data.paymentId,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, error: mapFunnelError(error.message) };
+  return { ok: true };
 }

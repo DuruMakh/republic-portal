@@ -37,3 +37,5 @@ export type BulkPreviewResult = { ok: true; rows: BulkPreviewRow[] } | { ok: fal
 export type BulkConfirmResult =
   | { ok: true; count: number; totalGel: number }
   | { ok: false; error: string; rowIndex: number | null };
+
+export type VoidResult = { ok: true } | { ok: false; error: string };
