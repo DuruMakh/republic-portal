@@ -94,6 +94,18 @@ describe("cabinetNavItems (spec §3.1)", () => {
       { href: "/delegate", label: "დელეგატის პანელი" },
     ]);
   });
+  it("admins get the ადმინისტრირება tab appended (spec §3.1)", () => {
+    expect(cabinetNavItems("member", true).at(-1)).toEqual({
+      href: "/admin",
+      label: "ადმინისტრირება",
+    });
+    expect(cabinetNavItems("delegate", true).at(-1)).toEqual({
+      href: "/admin",
+      label: "ადმინისტრირება",
+    });
+    expect(cabinetNavItems("member", false).some((i) => i.href === "/admin")).toBe(false);
+    expect(cabinetNavItems("member")).toEqual(cabinetNavItems("member", false));
+  });
 });
 
 describe("employment mapping (spec §3.3)", () => {

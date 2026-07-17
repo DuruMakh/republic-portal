@@ -18,19 +18,22 @@ export interface CabinetNavItem {
   label: string;
 }
 
-export function cabinetNavItems(role: "member" | "delegate"): CabinetNavItem[] {
-  if (role === "delegate") {
-    return [
-      { href: "/me/profile", label: "პროფილი" },
-      { href: "/me/billing", label: "გადახდები" },
-      { href: "/delegate", label: "დელეგატის პანელი" },
-    ];
-  }
-  return [
-    { href: "/me/profile", label: "პროფილი" },
-    { href: "/me/delegate", label: "ჩემი დელეგატი" },
-    { href: "/me/billing", label: "გადახდები" },
-  ];
+export function cabinetNavItems(role: "member" | "delegate", isAdmin = false): CabinetNavItem[] {
+  const items: CabinetNavItem[] =
+    role === "delegate"
+      ? [
+          { href: "/me/profile", label: "პროფილი" },
+          { href: "/me/billing", label: "გადახდები" },
+          { href: "/delegate", label: "დელეგატის პანელი" },
+        ]
+      : [
+          { href: "/me/profile", label: "პროფილი" },
+          { href: "/me/delegate", label: "ჩემი დელეგატი" },
+          { href: "/me/billing", label: "გადახდები" },
+        ];
+  // Phase 4 (spec §3.1): admins reach /admin from their own cabinet
+  if (isAdmin) items.push({ href: "/admin", label: "ადმინისტრირება" });
+  return items;
 }
 
 /** Select value for the employment „სხვა (მიუთითე)“ branch (never a stored value). */

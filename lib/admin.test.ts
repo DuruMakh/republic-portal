@@ -5,6 +5,7 @@ import {
   AUDIT_ACTION_LABELS_KA,
   auditActionLabel,
   barPct,
+  hasAnyRole,
   isStaff,
   MEMBER_STATUS_LABELS_KA,
   ROLE_LABELS_KA,
@@ -118,5 +119,13 @@ describe("vocabulary and bars", () => {
     expect(barPct(0, 294)).toBe(0);
     expect(barPct(147, 294)).toBe(50);
     expect(barPct(5, 0)).toBe(0);
+  });
+});
+
+describe("hasAnyRole (page gates)", () => {
+  it("checks intersection", () => {
+    expect(hasAnyRole(["verifier"], ["super_admin", "verifier"])).toBe(true);
+    expect(hasAnyRole(["finance"], ["super_admin", "verifier"])).toBe(false);
+    expect(hasAnyRole([], ["super_admin"])).toBe(false);
   });
 });
