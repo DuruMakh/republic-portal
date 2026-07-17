@@ -12,6 +12,7 @@ import { membersFilterSchema } from "@/lib/admin-schemas";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { revealPersonalIdAction } from "./actions";
+import { ExportControls } from "./ExportControls";
 import { RevealPersonalId } from "./RevealPersonalId";
 
 export const metadata: Metadata = { title: "წევრები — ადმინისტრირება" };
@@ -130,8 +131,14 @@ export default async function AdminMembersPage({
         <p className="text-sm text-muted-fg">
           ნაჩვენებია {formatCountKa(shownFrom)}–{formatCountKa(shownTo)} / {formatCountKa(total)}
         </p>
-        {/* Export controls arrive in Task 14 for finance/super_admin */}
-        {canExport ? <div data-slot="export-controls" /> : null}
+        {canExport ? (
+          <ExportControls
+            search={filter.search}
+            regionId={filter.regionId}
+            status={filter.status}
+            canIncludeIds={hasAnyRole(roles, ["super_admin"])}
+          />
+        ) : null}
       </div>
 
       <div className="mt-2">
