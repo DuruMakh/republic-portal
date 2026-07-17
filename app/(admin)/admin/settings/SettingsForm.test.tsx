@@ -10,9 +10,13 @@ describe("SettingsForm (spec §3.9)", () => {
     render(<SettingsForm initialGraceDays={30} save={save} />);
     const input = screen.getByLabelText(/დამატებითი დღეები/);
     expect(input).toHaveValue(30);
-    expect(screen.getByText(/კიდევ 30 დღე/)).toBeInTheDocument();
+    // spec §3.9 bolds only „N დღე", so „კიდევ N დღე" spans the <strong> boundary —
+    // assert on the sentence paragraph's full textContent, not one text node.
+    expect(screen.getByText(/წევრი აქტიურია/)).toHaveTextContent("კიდევ 30 დღე");
+    // and the emphasis wraps ONLY „N დღე" — „კიდევ" must stay unbolded (spec §3.9).
+    expect(screen.getByText("30 დღე").tagName).toBe("STRONG");
     fireEvent.change(input, { target: { value: "45" } });
-    expect(screen.getByText(/კიდევ 45 დღე/)).toBeInTheDocument();
+    expect(screen.getByText(/წევრი აქტიურია/)).toHaveTextContent("კიდევ 45 დღე");
     // the live example recomputes: 31 July + 45 days = 14 September
     expect(screen.getByText(/14\.09\.2026-მდე/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));

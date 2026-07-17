@@ -43,12 +43,15 @@ export function SettingsForm({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-ink">
-        წევრი აქტიურია გადახდილი პერიოდის ბოლოდან{" "}
-        {/* the whole dynamic phrase stays inside one element (spec §3.9 live example;
-            house lesson from RecordPayment.tsx: text split across tags breaks text matchers) */}
-        <strong>კიდევ {valid ? days : "—"} დღე</strong>. მაგალითად: 20 ₾ (ერთი თვის საწევრო),
-        გადახდილი 1 ივლისს, ფარავს 31 ივლისამდე → აქტიურია{" "}
-        <strong>{valid ? `${formatDateKa(addDaysIso("2026-07-31", days))}-მდე` : "—"}</strong>.
+        წევრი აქტიურია გადახდილი პერიოდის ბოლოდან კიდევ{" "}
+        {/* spec §3.9: bold covers ONLY „N დღე" — „კიდევ" stays outside the emphasis */}
+        <strong>{valid ? days : "—"} დღე</strong>. მაგალითად: 20 ₾ (ერთი თვის საწევრო), გადახდილი 1
+        ივლისს, ფარავს 31 ივლისამდე → აქტიურია{" "}
+        <strong>
+          {/* spec §3.9: the example recomputes live as N changes */}
+          {valid ? `${formatDateKa(addDaysIso("2026-07-31", days))}-მდე` : "—"}
+        </strong>
+        .
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex w-56 flex-col gap-1 text-sm font-semibold text-ink">
