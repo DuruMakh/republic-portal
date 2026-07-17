@@ -35,7 +35,10 @@ export default async function AdminAuditPage({
   const roles = await getAdminRoles();
   if (!hasAnyRole(roles, ["super_admin"])) redirect("/admin");
   const raw = await searchParams;
-  const page = Math.max(1, Number(typeof raw.page === "string" ? raw.page : "1") || 1);
+  // integer-shape guard — a hand-edited ?page=1.5 / Infinity must degrade to 1, not
+  // hand PostgREST a non-integer .range() bound → 500 (matches the other filters' contract)
+  const parsedPage = Math.floor(Number(typeof raw.page === "string" ? raw.page : "1"));
+  const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
   const action =
     typeof raw.action === "string" && raw.action in AUDIT_ACTION_LABELS_KA ? raw.action : undefined;
   // uuid-shape check — a hand-edited ?actorId=garbage must degrade to "all", not 500
@@ -52,8 +55,11 @@ export default async function AdminAuditPage({
   let query = supabase.from("admin_audit").select("*", { count: "exact" });
   if (action) query = query.eq("action", action);
   if (actorId) query = query.eq("actor_id", actorId);
-  if (from) query = query.gte("created_at", `${from}T00:00:00Z`);
-  if (to) query = query.lte("created_at", `${to}T23:59:59Z`);
+  // Tbilisi (UTC+4, no DST) day boundaries: created_at is timestamptz and the table
+  // renders it in Tbilisi wall-clock (formatDateTimeKa), so a UTC-anchored bound would
+  // shift the window 4h off the visible dates. Offset-aware literals align both.
+  if (from) query = query.gte("created_at", `${from}T00:00:00+04:00`);
+  if (to) query = query.lte("created_at", `${to}T23:59:59+04:00`);
   const rangeFrom = (page - 1) * PAGE_SIZE;
   const {
     data: entries,
