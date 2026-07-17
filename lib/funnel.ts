@@ -107,6 +107,8 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   invalid_reason: "მიუთითე მიზეზი (3–500 სიმბოლო).",
   invalid_note: "შენიშვნა ძალიან გრძელია (მაქს. 500).",
   invalid_rows: "ცხრილის მონაცემები არასწორია — სცადე თავიდან.",
+  unknown_code: "უცნობი კოდი",
+  duplicate: "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;

@@ -3,7 +3,13 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { hasAnyRole } from "@/lib/admin";
 import { getAdminRoles } from "@/lib/supabase/server";
-import { lookupMemberAction, recordPaymentAction } from "./actions";
+import {
+  confirmBulkAction,
+  lookupMemberAction,
+  previewBulkAction,
+  recordPaymentAction,
+} from "./actions";
+import { BulkMatch } from "./BulkMatch";
 import { RecordPayment } from "./RecordPayment";
 
 export const metadata: Metadata = { title: "ფინანსები — ადმინისტრირება" };
@@ -31,7 +37,9 @@ export default async function AdminFinancesPage({
           <RecordPayment lookup={lookupMemberAction} record={recordPaymentAction} />
         </Card>
 
-        {/* BULK-MATCH (Task 18) */}
+        <Card header={<h3 className="text-base font-bold text-ink">ბალკ შესატყვისება</h3>}>
+          <BulkMatch preview={previewBulkAction} confirm={confirmBulkAction} />
+        </Card>
 
         {/* FINANCE-STATS (Task 19) */}
       </div>

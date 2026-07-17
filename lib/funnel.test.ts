@@ -166,5 +166,7 @@ describe("mapFunnelError — Phase 3 tokens", () => {
     expect(mapFunnelError("last_super_admin")).toBe("ბოლო super_admin-ის მოხსნა შეუძლებელია.");
     expect(mapFunnelError("already_voided")).toBe("ეს გადახდა უკვე გაუქმებულია.");
     expect(mapFunnelError("invalid_target")).toBe("ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.");
+    expect(mapFunnelError("unknown_code")).toBe("უცნობი კოდი");
+    expect(mapFunnelError("duplicate")).toBe("დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.");
   });
 });
