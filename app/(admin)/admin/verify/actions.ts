@@ -58,6 +58,13 @@ export async function rejectDelegateAction(
   delegateId: unknown,
   note: unknown,
 ): Promise<VerifyActionResult> {
+  // server actions are POST-reachable; non-string payloads must degrade to the Georgian generic, not zod's English default
+  if (
+    typeof delegateId !== "string" ||
+    (note !== undefined && note !== null && typeof note !== "string")
+  ) {
+    return { ok: false, error: GENERIC_FUNNEL_ERROR };
+  }
   const parsed = rejectDelegateSchema.safeParse({ delegateId, note: note ?? "" });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR };
