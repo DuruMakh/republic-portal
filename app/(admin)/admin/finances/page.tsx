@@ -6,6 +6,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import { barPct, hasAnyRole } from "@/lib/admin";
+import { pageParamSchema } from "@/lib/admin-schemas";
 import { formatAmountGel, formatDateKa, paymentMethodLabel } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export default async function AdminFinancesPage({
 
   const supabase = await createServerSupabase();
   const raw = await searchParams;
-  const txPage = Math.max(1, Number(typeof raw.txPage === "string" ? raw.txPage : "1") || 1);
+  const txPage = pageParamSchema.parse(raw.txPage);
   const TX_PAGE_SIZE = 20;
 
   const { data: stats, error: statsError } = await supabase

@@ -12,6 +12,8 @@ import {
   hasAnyRole,
   TARGET_TYPE_LABELS_KA,
 } from "@/lib/admin";
+import { pageParamSchema } from "@/lib/admin-schemas";
+import { addDaysIso } from "@/lib/active";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
@@ -35,10 +37,7 @@ export default async function AdminAuditPage({
   const roles = await getAdminRoles();
   if (!hasAnyRole(roles, ["super_admin"])) redirect("/admin");
   const raw = await searchParams;
-  // integer-shape guard — a hand-edited ?page=1.5 / Infinity must degrade to 1, not
-  // hand PostgREST a non-integer .range() bound → 500 (matches the other filters' contract)
-  const parsedPage = Math.floor(Number(typeof raw.page === "string" ? raw.page : "1"));
-  const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
+  const page = pageParamSchema.parse(raw.page);
   const action =
     typeof raw.action === "string" && raw.action in AUDIT_ACTION_LABELS_KA ? raw.action : undefined;
   // uuid-shape check — a hand-edited ?actorId=garbage must degrade to "all", not 500
@@ -59,7 +58,9 @@ export default async function AdminAuditPage({
   // renders it in Tbilisi wall-clock (formatDateTimeKa), so a UTC-anchored bound would
   // shift the window 4h off the visible dates. Offset-aware literals align both.
   if (from) query = query.gte("created_at", `${from}T00:00:00+04:00`);
-  if (to) query = query.lte("created_at", `${to}T23:59:59+04:00`);
+  // strict < next-day midnight: an lte …T23:59:59 bound silently drops entries
+  // logged in the final fractional second of the chosen day (now() is µs-precise)
+  if (to) query = query.lt("created_at", `${addDaysIso(to, 1)}T00:00:00+04:00`);
   const rangeFrom = (page - 1) * PAGE_SIZE;
   const {
     data: entries,

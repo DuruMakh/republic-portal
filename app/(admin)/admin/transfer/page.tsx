@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { hasAnyRole } from "@/lib/admin";
+import { pageParamSchema } from "@/lib/admin-schemas";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { reassignMemberAction } from "./actions";
@@ -21,7 +22,7 @@ export default async function AdminTransferPage({
   const roles = await getAdminRoles();
   if (!hasAnyRole(roles, ["verifier", "super_admin"])) redirect("/admin");
   const raw = await searchParams;
-  const page = Math.max(1, Number(typeof raw.page === "string" ? raw.page : "1") || 1);
+  const page = pageParamSchema.parse(raw.page);
   const supabase = await createServerSupabase();
 
   const from = (page - 1) * PAGE_SIZE;

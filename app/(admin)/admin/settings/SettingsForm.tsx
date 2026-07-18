@@ -21,7 +21,9 @@ export function SettingsForm({
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const days = Number(value);
-  const valid = Number.isInteger(days) && days >= 0 && days <= 365;
+  // Number("") === 0 — a cleared field must read as invalid, not as saving 0
+  // (0 grace days would demote every member past bare coverage end on save)
+  const valid = value.trim() !== "" && Number.isInteger(days) && days >= 0 && days <= 365;
 
   async function onSave() {
     if (!valid) {

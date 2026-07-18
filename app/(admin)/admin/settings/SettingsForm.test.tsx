@@ -34,4 +34,19 @@ describe("SettingsForm (spec §3.9)", () => {
     await waitFor(() => expect(screen.getByText(/0-დან 365-მდე/)).toBeInTheDocument());
     expect(save).not.toHaveBeenCalled();
   });
+  it("a cleared field never saves 0 (Number('') === 0 trap)", async () => {
+    const save = vi.fn();
+    render(<SettingsForm initialGraceDays={30} save={save} />);
+    fireEvent.change(screen.getByLabelText(/დამატებითი დღეები/), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() => expect(screen.getByText(/0-დან 365-მდე/)).toBeInTheDocument());
+    expect(save).not.toHaveBeenCalled();
+  });
+  it("an explicit 0 still saves (0 is a legal grace value)", async () => {
+    const save = vi.fn().mockResolvedValue({ ok: true });
+    render(<SettingsForm initialGraceDays={30} save={save} />);
+    fireEvent.change(screen.getByLabelText(/დამატებითი დღეები/), { target: { value: "0" } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith(0));
+  });
 });

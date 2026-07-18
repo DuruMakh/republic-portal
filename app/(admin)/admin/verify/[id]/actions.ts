@@ -30,12 +30,16 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
 
   const { data: current, error: currentError } = await supabase
     .from("admin_delegate_queue")
-    .select("photo_url, slug")
+    .select("photo_url, slug, status")
     .eq("id", parsed.data.delegateId)
     .single();
   if (currentError || !current) return { ok: false, error: mapFunnelError("invalid_target") };
+  // the RPC only accepts approved delegates — fail BEFORE the upload so a
+  // rejected target never parks a file in the public bucket
+  if (current.status !== "approved") return { ok: false, error: mapFunnelError("invalid_target") };
 
   let photoUrl = current.photo_url;
+  let newPath: string | null = null;
   let oldPath: string | null = null;
   const photo = formData.get("photo");
   if (photo instanceof File && photo.size > 0) {
@@ -46,12 +50,12 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
     }
     const admin = createAdminClient();
     // versioned filename: an updated photo must never serve stale from CDN caches
-    const path = `${parsed.data.delegateId}-${Date.now()}.${ext}`;
+    newPath = `${parsed.data.delegateId}-${Date.now()}.${ext}`;
     const { error: uploadError } = await admin.storage
       .from("delegate-photos")
-      .upload(path, await photo.arrayBuffer(), { contentType: photo.type });
+      .upload(newPath, await photo.arrayBuffer(), { contentType: photo.type });
     if (uploadError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
-    photoUrl = admin.storage.from("delegate-photos").getPublicUrl(path).data.publicUrl;
+    photoUrl = admin.storage.from("delegate-photos").getPublicUrl(newPath).data.publicUrl;
     const marker = "/delegate-photos/";
     const idx = current.photo_url?.indexOf(marker) ?? -1;
     oldPath = idx >= 0 ? (current.photo_url as string).slice(idx + marker.length) : null;
@@ -62,7 +66,14 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
     p_bio: parsed.data.bio === "" ? null : parsed.data.bio,
     p_photo_url: photoUrl,
   });
-  if (rpcError) return { ok: false, error: mapFunnelError(rpcError.message) };
+  if (rpcError) {
+    if (newPath) {
+      // the row never got the URL — remove the just-uploaded object so a failed
+      // save cannot park an unreferenced public file (best-effort)
+      await createAdminClient().storage.from("delegate-photos").remove([newPath]);
+    }
+    return { ok: false, error: mapFunnelError(rpcError.message) };
+  }
 
   if (oldPath) {
     // best-effort — a stale object is harmless; the row already points at the new one

@@ -1,6 +1,7 @@
 "use server";
 
-import { hasAnyRole } from "@/lib/admin";
+import { revalidatePath } from "next/cache";
+import { hasAnyRole, sanitizeSearch } from "@/lib/admin";
 import {
   bulkConfirmSchema,
   bulkPreviewSchema,
@@ -44,7 +45,10 @@ export async function lookupMemberAction(query: unknown): Promise<LookupResult> 
   if (isReferenceCode(q.toUpperCase())) {
     builder = builder.eq("reference_code", q.toUpperCase());
   } else {
-    const s = q.replaceAll(/[,%()]/g, " ").trim();
+    const s = sanitizeSearch(q);
+    // garbage-only input ("((") sanitizes to "" — an unguarded .or() would then
+    // be ilike '%%' and return arbitrary members as payment candidates
+    if (s.length === 0) return { ok: true, candidates: [] };
     builder = builder.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,phone.ilike.%${s}%`);
   }
   const { data, error } = await builder;
@@ -73,6 +77,9 @@ export async function recordPaymentAction(input: unknown): Promise<RecordResult>
     p_bank_reference: parsed.data.bankReference === "" ? null : parsed.data.bankReference,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
+  // the same page renders the transactions table + MRR stats — without this
+  // they stay stale and an admin who scrolls to verify re-enters the payment
+  revalidatePath("/admin/finances");
   const result = data as { months: number; newStatus: MemberStatusRow };
   return { ok: true, months: result.months, newStatus: result.newStatus };
 }
@@ -100,22 +107,37 @@ export async function previewBulkAction(text: unknown): Promise<BulkPreviewResul
   if (matchError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const byCode = new Map((matches ?? []).map((m) => [m.reference_code as string, m]));
 
-  // duplicate check: an identical LIVE payment (member+amount+date) already recorded
-  const memberIds = [...new Set((matches ?? []).map((m) => m.id))];
-  const { data: existing, error: existingError } =
-    memberIds.length > 0
-      ? await supabase
-          .from("admin_payments")
-          .select("member_id, amount_gel, paid_at")
-          .in("member_id", memberIds)
-          .is("voided_at", null)
-      : { data: [], error: null };
-  if (existingError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
-  const existingKeys = new Set(
-    (existing ?? []).map((p) => `${p.member_id}|${p.amount_gel}|${p.paid_at}`),
-  );
-
+  // duplicate check: an identical LIVE payment (member+amount+date) already recorded.
+  // Narrowed to the batch's candidate dates AND paginated past PostgREST's 1000-row
+  // cap — a truncated read would let a real duplicate preview as ✓ and abort the
+  // all-or-nothing confirm.
   const today = todayTbilisiIso();
+  const memberIds = [...new Set((matches ?? []).map((m) => m.id))];
+  const candidateDates = [...new Set(parsedRows.map((r) => r.paidAt ?? today))];
+  const existingKeys = new Set<string>();
+  if (memberIds.length > 0) {
+    const PAGE = 1000;
+    for (let offset = 0; ; offset += PAGE) {
+      const { data: existing, error: existingError } = await supabase
+        .from("admin_payments")
+        .select("member_id, amount_gel, paid_at")
+        .in("member_id", memberIds)
+        .in("paid_at", candidateDates)
+        .is("voided_at", null)
+        .order("id")
+        .range(offset, offset + PAGE - 1);
+      if (existingError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
+      for (const p of existing ?? []) {
+        existingKeys.add(`${p.member_id}|${p.amount_gel}|${p.paid_at}`);
+      }
+      if ((existing ?? []).length < PAGE) break;
+    }
+  }
+
+  // keys of rows already ✓ in THIS batch: the RPC's backstop rejects same
+  // member+amount+date repeats within the batch too, so two differently-worded
+  // statement lines for one payment must not both preview as recordable
+  const batchKeys = new Set<string>();
   const rows: BulkPreviewRow[] = parsedRows.map((r) => {
     const paidAt = r.paidAt ?? today; // the date that WILL be recorded is shown
     const base: BulkPreviewRow = {
@@ -143,15 +165,16 @@ export async function previewBulkAction(text: unknown): Promise<BulkPreviewResul
       // refuse this row (not_completed), so it must not preview as ✓
       return { ...base, status: "not_completed", memberName: name };
     }
-    if (existingKeys.has(`${member.id}|${r.amountGel}|${paidAt}`)) {
+    const key = `${member.id}|${r.amountGel}|${paidAt}`;
+    if (existingKeys.has(key) || batchKeys.has(key)) {
       return { ...base, status: "duplicate", memberName: name };
     }
+    batchKeys.add(key);
     return {
       ...base,
       memberName: name,
-      months: member.membership_tier
-        ? monthsFor(r.amountGel as number, member.membership_tier)
-        : null,
+      // tier null already early-returned as not_completed — months is always set on ✓ rows
+      months: monthsFor(r.amountGel as number, member.membership_tier),
     };
   });
   return { ok: true, rows };
@@ -178,6 +201,8 @@ export async function confirmBulkAction(rows: unknown): Promise<BulkConfirmResul
     }
     return { ok: false, error: mapFunnelError(error.message), rowIndex: null };
   }
+  // fresh transactions table + MRR stats on the same page (see recordPaymentAction)
+  revalidatePath("/admin/finances");
   const result = data as { count: number; totalGel: number };
   return { ok: true, count: result.count, totalGel: result.totalGel };
 }
@@ -193,5 +218,6 @@ export async function voidPaymentAction(paymentId: unknown, reason: unknown): Pr
     p_reason: parsed.data.reason,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
+  revalidatePath("/admin/finances");
   return { ok: true };
 }

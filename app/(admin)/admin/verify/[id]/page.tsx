@@ -12,6 +12,12 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
   const roles = await getAdminRoles();
   if (!hasAnyRole(roles, ["verifier", "super_admin"])) redirect("/admin");
   const { id } = await params;
+  // uuid-shape guard: a mistyped /admin/verify/abc would otherwise reach
+  // PostgREST as a 22P02 cast error and land on the error boundary instead
+  // of the same not-found redirect a well-formed unknown id gets
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    redirect("/admin/verify");
+  }
   const supabase = await createServerSupabase();
   const { data: delegate, error } = await supabase
     .from("admin_delegate_queue")

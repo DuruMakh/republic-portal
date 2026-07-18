@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { approveDelegateSchema, rejectDelegateSchema } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { makeSlug } from "@/lib/slug";
+import { makeSlug, slugBase } from "@/lib/slug";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type ApproveResult = { ok: true; slug: string } | { ok: false; error: string };
@@ -29,14 +29,19 @@ export async function approveDelegateAction(delegateId: unknown): Promise<Approv
     return { ok: false, error: mapFunnelError(applicantError?.message ?? "invalid_target") };
   }
 
+  const fullName = `${applicant.first_name} ${applicant.last_name}`;
+  // scope the taken-set fetch to this name's base: an unscoped read silently
+  // truncates at PostgREST's 1000-row cap once enough delegates hold slugs,
+  // and a missed collision would burn all three retry attempts on the same slug
+  const base = slugBase(fullName);
   for (let attempt = 0; attempt < 3; attempt++) {
     const { data: taken, error: takenError } = await supabase
       .from("admin_delegate_queue")
       .select("slug")
-      .not("slug", "is", null);
+      .like("slug", `${base}%`);
     if (takenError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
     const takenSet = new Set((taken ?? []).map((t) => t.slug as string));
-    const slug = makeSlug(`${applicant.first_name} ${applicant.last_name}`, takenSet);
+    const slug = makeSlug(fullName, takenSet);
 
     const { data, error } = await supabase.rpc("admin_approve_delegate", {
       p_delegate_id: parsed.data.delegateId,

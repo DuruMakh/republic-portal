@@ -1,4 +1,4 @@
-import { hasAnyRole, MEMBER_STATUS_LABELS_KA } from "@/lib/admin";
+import { hasAnyRole, MEMBER_STATUS_LABELS_KA, sanitizeSearch } from "@/lib/admin";
 import { membersFilterSchema, todayTbilisiIso } from "@/lib/admin-schemas";
 import { exportFileName, memberExportCsv, type MemberExportRow } from "@/lib/csv";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -33,9 +33,12 @@ export async function GET(request: Request) {
     return new Response("წვდომა აკრძალულია", { status: 403 });
   }
 
+  // ONE sanitizer with the on-screen list: raw %/_ would act as ILIKE wildcards
+  // inside the RPC and the audited CSV would diverge from what the admin saw
+  const search = filter.search ? sanitizeSearch(filter.search) : "";
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc("admin_export_members", {
-    p_search: filter.search ?? null,
+    p_search: search.length > 0 ? search : null,
     p_region_id: filter.regionId ?? null,
     p_status: filter.status ?? null,
     p_include_ids: includeIds,

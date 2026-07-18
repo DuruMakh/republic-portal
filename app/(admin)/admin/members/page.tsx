@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
-import { hasAnyRole, isStaff, MEMBER_STATUS_LABELS_KA } from "@/lib/admin";
+import { hasAnyRole, isStaff, MEMBER_STATUS_LABELS_KA, sanitizeSearch } from "@/lib/admin";
 import { adminControlClasses } from "@/components/Field";
 import { formatCountKa } from "@/lib/format";
 import { membersFilterSchema } from "@/lib/admin-schemas";
@@ -40,8 +40,9 @@ export default async function AdminMembersPage({
 
   let query = supabase.from("admin_members").select("*", { count: "exact" });
   if (filter.search) {
-    // strip PostgREST or() syntax + wildcards from user input
-    const s = filter.search.replaceAll(/[,%()]/g, " ").trim();
+    // ONE sanitizer with the payment lookup and the CSV export — the audited
+    // export must never see a different row set than this list
+    const s = sanitizeSearch(filter.search);
     if (s.length > 0) {
       query = query.or(
         `first_name.ilike.%${s}%,last_name.ilike.%${s}%,phone.ilike.%${s}%,reference_code.ilike.%${s}%`,
