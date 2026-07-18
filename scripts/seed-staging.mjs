@@ -127,22 +127,15 @@ const ADMIN_AUTH_PHONES = new Set(
   [1, 2, 3, 4].map((n) => `99550900000${n}`), // auth stores phones without '+'
 );
 const isCanonicalAdmin = (u) => ADMIN_AUTH_PHONES.has((u.phone ?? "").replace(/^\+/, ""));
-// Admin membership rows point at a roster delegate this wipe deletes, and
-// memberships.delegate_id has NO cascade — detach first (re-attached in the
-// canonical-admins step below).
-const { data: oldAdmins, error: oldAdminErr } = await db
-  .from("profiles")
-  .select("id")
-  .in(
-    "phone",
-    [1, 2, 3, 4].flatMap((n) => [`+99550900000${n}`, `99550900000${n}`]),
-  );
-if (oldAdminErr) throw oldAdminErr;
-const oldAdminIds = (oldAdmins ?? []).map((r) => r.id);
-if (oldAdminIds.length > 0) {
-  const { error: detachErr } = await db.from("memberships").delete().in("member_id", oldAdminIds);
-  if (detachErr) throw new Error(`admin membership detach failed: ${detachErr.message}`);
-}
+// memberships.delegate_id has NO cascade, so deleting a roster delegate is
+// blocked while any membership still references it — supporter rows AND the
+// canonical admins' own rows. The auth-user wipe below is concurrent and
+// unordered, so a delegate can be reached before its supporters. Clear EVERY
+// membership up front to make the wipe order-independent; all memberships are
+// re-created in the reseed (supporters below, canonical admins in their step).
+// (id is bigserial, always > 0 — matches all rows.)
+const { error: detachErr } = await db.from("memberships").delete().gte("id", 0);
+if (detachErr) throw new Error(`membership wipe failed: ${detachErr.message}`);
 let wiped = 0;
 for (;;) {
   const { data, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
