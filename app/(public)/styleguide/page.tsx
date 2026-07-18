@@ -1,3 +1,4 @@
+import { AdminNav } from "@/components/AdminNav";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
@@ -5,7 +6,7 @@ import { CabinetNav } from "@/components/CabinetNav";
 import { Card } from "@/components/Card";
 import { CopyButton } from "@/components/CopyButton";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Field } from "@/components/Field";
+import { Field, adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
 import { QrCode } from "@/components/QrCode";
 import { StatCard } from "@/components/StatCard";
@@ -113,6 +114,34 @@ export default function StyleguidePage() {
               { href: "/me/billing", label: "გადახდები" },
             ]}
           />
+          <AdminNav
+            tabs={[
+              { href: "/styleguide", label: "მიმოხილვა" },
+              { href: "/admin/members", label: "წევრები" },
+              { href: "/admin/verify", label: "ვერიფიკაცია" },
+            ]}
+          />
+          <div className="flex flex-col gap-2">
+            <input
+              readOnly
+              value="ძებნის ველი (adminControlClasses)"
+              className={adminControlClasses}
+            />
+            <div className="flex gap-2">
+              <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-semibold text-ok">
+                ნაპოვნია
+              </span>
+              <span className="rounded-full bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn">
+                დუბლიკატი
+              </span>
+              <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
+                უცნობი კოდი
+              </span>
+            </div>
+            <p className="font-mono text-sm">
+              GR-ABC234 → ეს არის ნიღბიანი ID: ・・・・・・・・・・・
+            </p>
+          </div>
           <Pill status="profile_completed" label="რეგისტრირებული" />
         </div>
       </Card>

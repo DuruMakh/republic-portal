@@ -147,3 +147,47 @@ no canvas, no DOM, works identically in jsdom tests and the browser. Rejected:
 `qrcode-generator` (venerable but untyped UMD-global style). Rendered client-side
 so the encoded origin is the one the delegate is actually on
 (window.location.origin — previews encode the preview URL, production the real one).
+
+## ADR-014 (2026-07-17): Admin access = self-gating definer views + in-transaction-audit RPCs
+
+Admin reads are owner-executed views that check has_any_admin_role(auth.uid()) in
+their WHERE — non-admins get zero rows — and physically exclude personal_id and
+birth_date. Admin mutations are SECURITY DEFINER RPCs: role check first, all
+effects plus the audit_log insert in ONE transaction, so an unaudited admin action
+is unrepresentable. Rider: the blanket authenticated SELECT grant on profiles was
+narrowed to an explicit column list without personal_id/birth_date (verified: no
+client-path code ever read them — they are write-only through funnel_save_profile).
+Exactly two audited paths return a personal ID: the reveal RPCs
+(admin_reveal_personal_id — super_admin; admin_reveal_applicant_personal_id —
+verifier scope) and admin_export_members with p_include_ids (super_admin).
+Rejected: service-role reads behind app checks (one forgotten check = full
+exposure, no DB backstop) and all-RPC reads (hand-wired filter/paging plumbing for
+zero extra safety over self-gating views). Operational consequence: audit_log
+actors are permanent (plain FK + append-only trigger blocks even ON DELETE SET
+NULL), so e2e/probe users must never act as admins — canonical seeded admins
+(+99550900000{1..4}) do; targets are stored as text and stay deletable; the
+staging seed skips the canonical admins in its wipe for the same reason. The very
+first super_admin is bootstrapped by `scripts/grant-admin.mjs` (service role,
+completed members only), which writes the same `admin.grant_role` audit row with
+a null actor and a `via` marker — bootstrap grants stay visible in the viewer.
+
+## ADR-015 (2026-07-17): Active-member engine — 30-day months, snapshot tiers, grace, nightly sweep
+
+months = greatest(1, floor(amount_gel / tier_gel_at_payment)) as a GENERATED
+STORED column — tier snapshotted at recording so later tier changes never rewrite
+history. Coverage folds payments in paid_at order:
+end = greatest(prev_end, paid_at) + months × 30 days; a member is active while
+current_date ≤ end + active_grace_days (app_settings, default 30 → a single
+monthly payment = exactly 60 days, the owner's chosen window). lib/active.ts
+mirrors the SQL; the schema probe replays the shared fixtures against both.
+profiles.status is written ONLY by the engine (plus the funnel's
+draft→profile_completed); the seed now writes payment histories and derives.
+Payments are immutable — corrections are voids (voided_at/by/reason, audited,
+required reason). Duplicate protection is two-layer: referenced (single-entry)
+payments hit the live-rows-only unique index on bank_reference (a voided
+reference is reusable), and bulk rows — which carry no reference — are guarded
+in-RPC by a live member+amount+date check, so a double-pasted statement is
+unrecordable on either path. payments.member_id now cascades on profile deletion (e2e/staging
+cleanup; the platform has no member-deletion flow; audit targets are text).
+Expiry runs nightly via pg_cron ('active-member-sweep', 01:00 UTC = 05:00
+Tbilisi), auditing system.active_sweep with the demoted count.
