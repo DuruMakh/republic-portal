@@ -34,17 +34,45 @@ export function serviceClient(): SupabaseClient {
   return createClient(url, key);
 }
 
-/** /login flow (mirrors e2e/login.spec.ts); admins are completed members → cabinet. */
+/**
+ * /login flow for a COMPLETED account (canonical admins). The /api/dev/otp UI
+ * element is withheld for completed accounts (account-takeover guard,
+ * app/api/dev/otp/route.ts), so the `dev-otp` testid never renders for admins —
+ * the code is read straight from dev_otp_inbox via the service client instead,
+ * the same path scripts/verify-schema.mjs uses to sign in as the seeded admins.
+ */
 export async function loginAs(page: Page, phoneNational: string): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("ტელეფონის ნომერი").fill(phoneNational);
+  // record send time to avoid consuming a stale code from a prior attempt
+  const sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew
   await page.getByRole("button", { name: "კოდის მიღება" }).click();
-  const devOtp = page.getByTestId("dev-otp");
-  await expect(devOtp).toBeVisible({ timeout: 15_000 });
-  const otp = (await devOtp.locator("strong").innerText()).trim();
-  await page.getByTestId("otp-0").fill(otp);
+  // OTP step renders once signInWithOtp resolves ("SMS კოდი" input group appears)
+  await expect(page.getByRole("group", { name: "SMS კოდი" })).toBeVisible({ timeout: 15_000 });
+  // The /api/dev/otp UI element is withheld for COMPLETED accounts (account-takeover
+  // guard, route.ts:35-40), so read the code straight from dev_otp_inbox via the
+  // service client — same path the schema probe uses for the seeded admins.
+  const db = serviceClient();
+  const forms = [`+995${phoneNational}`, `995${phoneNational}`];
+  let otp: string | undefined;
+  for (let i = 0; i < 20; i++) {
+    const { data } = await db
+      .from("dev_otp_inbox")
+      .select("otp, created_at")
+      .in("phone", forms)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const row = data?.[0];
+    if (row && new Date(row.created_at as string).getTime() >= sentAt) {
+      otp = row.otp as string;
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!otp) throw new Error(`no fresh OTP in dev_otp_inbox for ${phoneNational}`);
+  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes the pasted digits
   await page.getByRole("button", { name: "დადასტურება" }).click();
-  await expect(page).toHaveURL(/\/(me\/profile|delegate)$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/(me\/profile|me\/delegate|admin)/, { timeout: 15_000 });
 }
 
 /** Both CabinetNav and AdminNav expose the same გასვლა control. */
