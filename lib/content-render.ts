@@ -8,8 +8,8 @@ export type BodyParagraph = BodySpan[];
 
 const URL_RE = /https?:\/\/\S+/g;
 // Punctuation that ends a sentence around a URL, not the URL itself. Includes
-// Georgian typographic quotes „ " " and closing brackets.
-const TRAILING_PUNCT_RE = /[.,;:!?)\]}»'"„""]+$/;
+// Georgian typographic quotes „ “ ” and closing brackets.
+const TRAILING_PUNCT_RE = /[.,;:!?)\]}»'"„“”]+$/;
 
 function paragraphSpans(text: string): BodyParagraph {
   const spans: BodySpan[] = [];

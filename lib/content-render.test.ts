@@ -48,11 +48,11 @@ describe("parseBody (spec §5, decision #12)", () => {
         { type: "text", text: ")" },
       ],
     ]);
-    expect(parseBody(`„https://d.ge/w"`)).toEqual([
+    expect(parseBody("„https://d.ge/w“")).toEqual([
       [
         { type: "text", text: "„" },
         { type: "link", href: "https://d.ge/w" },
-        { type: "text", text: `"` },
+        { type: "text", text: "“" },
       ],
     ]);
   });
