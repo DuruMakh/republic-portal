@@ -301,9 +301,13 @@ begin
   return jsonb_build_object('slug', v_slug);
 end $$;
 
--- The queue hides incomplete applicants for the same reason: they cannot be
--- approved, the verifier cannot tell them apart, and they reappear the moment
--- funnel_complete stamps registration_completed_at. Column list is unchanged.
+-- The queue hides incomplete PENDING/REJECTED applicants for the same reason:
+-- they cannot be (re-)approved, the verifier cannot tell them apart, and they
+-- reappear the moment funnel_complete stamps registration_completed_at.
+-- APPROVED rows stay visible regardless of completion — a delegate approved
+-- while incomplete (possible before this migration) is already publicly
+-- published and must remain manageable here, and their slug must stay in the
+-- approve action's collision set. Column list is unchanged.
 create or replace view admin_delegate_queue as
 select
   d.id,
@@ -337,7 +341,7 @@ left join lateral (
   select count(*) as cnt from memberships m
   where m.delegate_id = d.id and m.ended_at is null
 ) tot on true
-where p.registration_completed_at is not null
+where (d.status = 'approved' or p.registration_completed_at is not null)
   and has_any_admin_role('super_admin', 'verifier');
 
 -- pending count must match the queue the verifier actually sees

@@ -12,7 +12,7 @@ import {
   hasAnyRole,
   TARGET_TYPE_LABELS_KA,
 } from "@/lib/admin";
-import { pageParamSchema } from "@/lib/admin-schemas";
+import { isRealIsoDate, pageParamSchema } from "@/lib/admin-schemas";
 import { addDaysIso } from "@/lib/active";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -46,9 +46,13 @@ export default async function AdminAuditPage({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw.actorId)
       ? raw.actorId
       : undefined;
-  const from =
-    typeof raw.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.from) ? raw.from : undefined;
-  const to = typeof raw.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.to) ? raw.to : undefined;
+  // real-calendar + bounded-year guard: "2026-02-31" or a year past 2999 would
+  // reach PostgREST as an invalid timestamptz literal → 500 instead of degrading
+  // (and to=9999-12-31 would overflow the +1-day upper bound below)
+  const isFilterDate = (v: string): boolean =>
+    /^\d{4}-\d{2}-\d{2}$/.test(v) && isRealIsoDate(v) && v >= "2000-01-01" && v <= "2999-12-31";
+  const from = typeof raw.from === "string" && isFilterDate(raw.from) ? raw.from : undefined;
+  const to = typeof raw.to === "string" && isFilterDate(raw.to) ? raw.to : undefined;
 
   const supabase = await createServerSupabase();
   let query = supabase.from("admin_audit").select("*", { count: "exact" });
