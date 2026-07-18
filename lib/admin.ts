@@ -3,6 +3,7 @@
  * here are UX ONLY (tab filtering, control visibility) — the database re-checks
  * every read (self-gating views) and every mutation (RPC role checks). ADR-014.
  */
+import { TBILISI_OFFSET_MS } from "./cabinet";
 import type { MemberStatusRow } from "./supabase/types";
 
 export const ADMIN_ROLE_VALUES = ["super_admin", "verifier", "finance", "editor"] as const;
@@ -98,7 +99,15 @@ export function hasAnyRole(roles: readonly AdminRole[], allowed: readonly AdminR
   return roles.some((r) => allowed.includes(r));
 }
 
-const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
+/**
+ * ONE sanitizer for every member-search surface (list, payment lookup, CSV
+ * export): strips PostgREST or() syntax AND the ILIKE wildcards %/_/\ so the
+ * on-screen list and the audited export always agree on the row set. Callers
+ * must skip filtering entirely when the result is "" (matches-all otherwise).
+ */
+export function sanitizeSearch(query: string): string {
+  return query.replaceAll(/[,%()_\\]/g, " ").trim();
+}
 
 /** dd.mm.yyyy HH:MM in Tbilisi wall-clock time (audit viewer). */
 export function formatDateTimeKa(iso: string): string {

@@ -80,7 +80,7 @@ const MONTHS_FROM_KA = [
 // timestamped 00:00–04:00 local renders a day (and, at month/year edges, a month)
 // early. Shifting by a fixed offset then reading UTC accessors keeps this
 // deterministic (no ICU), the same reason formatDateKa avoids Intl.
-const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
+export const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
 
 function toTbilisi(iso: string): Date | null {
   const d = new Date(iso);

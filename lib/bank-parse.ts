@@ -20,8 +20,14 @@ export interface ParsedStatementRow {
 }
 
 // hyphen optional, any case; captured body normalized to GR-UPPER;
+// leading lookbehind: "GR" must start a token — without it the leftmost match
+// lands INSIDE ordinary words ("agreement" → gr+eement → phantom GR-EEMENT)
+// and shadows the real code later on the line;
 // trailing lookahead: an over-long body must not match at all (no silent truncation)
-const CODE_RE = new RegExp(`GR-?([${FUNNEL_CODE_ALPHABET}]{6})(?![${FUNNEL_CODE_ALPHABET}])`, "i");
+const CODE_RE = new RegExp(
+  `(?<![A-Za-z0-9])GR-?([${FUNNEL_CODE_ALPHABET}]{6})(?![${FUNNEL_CODE_ALPHABET}])`,
+  "i",
+);
 // dd.mm.yyyy or yyyy-mm-dd
 const DATE_DOT_RE = /\b(\d{2})\.(\d{2})\.(\d{4})\b/;
 const DATE_ISO_RE = /\b(\d{4})-(\d{2})-(\d{2})\b/;
@@ -31,7 +37,12 @@ const DECIMAL_RE = /(?<![\d.,])\d{1,3}(?: \d{3})*[.,]\d{2}(?![\d.,])/g;
 const INT_RE = /(?<![\d.,])\d{1,5}(?![\d.,])/g;
 
 function plausibleDate(y: number, m: number, d: number): boolean {
-  return y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  if (y < 2000 || y > 2100) return false;
+  // round-trip through Date.UTC: "31.02.2026" must NOT yield a paidAt of
+  // 2026-02-31, which every string compare accepts and the DB ::date cast
+  // then rejects — aborting a whole bulk batch with a generic error
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
 function extractDate(line: string): { iso: string; raw: string } | null {

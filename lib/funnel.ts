@@ -118,6 +118,14 @@ export const GENERIC_FUNNEL_ERROR = "რაღაც შეცდომა მ�
 export function mapFunnelError(message: string | null | undefined): string {
   if (!message) return GENERIC_FUNNEL_ERROR;
   for (const [token, ka] of Object.entries(ERROR_MESSAGES)) {
+    if (token === "duplicate") {
+      // bare "duplicate" must match only as the WHOLE token ("duplicate",
+      // "P0001: duplicate") — as a plain substring it would capture any raw
+      // Postgres "duplicate key value…" (23505) and mislabel an unrelated
+      // conflict as an already-recorded payment
+      if (/(?:^|[\s:])duplicate$/.test(message)) return ka;
+      continue;
+    }
     if (message.includes(token)) return ka;
   }
   return GENERIC_FUNNEL_ERROR;

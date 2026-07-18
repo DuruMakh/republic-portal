@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeSlug, transliterateGeorgian } from "./slug";
+import { makeSlug, slugBase, transliterateGeorgian } from "./slug";
 
 describe("transliterateGeorgian", () => {
   it("maps every Georgian letter (aspirates unmarked)", () => {
@@ -31,5 +31,11 @@ describe("makeSlug", () => {
     expect(
       makeSlug("გიორგი მაისურაძე", new Set(["giorgi-maisuradze", "giorgi-maisuradze-2"])),
     ).toBe("giorgi-maisuradze-3");
+  });
+  it("falls back to delegati for names with no Georgian/Latin characters", () => {
+    // a Cyrillic name romanizes to nothing — the applicant must stay approvable
+    expect(slugBase("Николай Петров")).toBe("delegati");
+    expect(makeSlug("Николай Петров", new Set())).toBe("delegati");
+    expect(makeSlug("Николай Петров", new Set(["delegati"]))).toBe("delegati-2");
   });
 });

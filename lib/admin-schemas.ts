@@ -5,11 +5,24 @@
  */
 import { z } from "zod";
 import { ADMIN_ROLE_VALUES } from "./admin";
+import { TBILISI_OFFSET_MS } from "./cabinet";
 import { isReferenceCode } from "./funnel";
 
 /** Georgia is UTC+4 year-round — same fixed-offset trick as lib/cabinet.ts. */
 export function todayTbilisiIso(): string {
-  return new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date(Date.now() + TBILISI_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Regex alone admits impossible calendar dates ("2026-02-31") that survive
+ * every string compare and then blow up on the DB ::date cast — round-trip
+ * through Date.UTC so only real days pass.
+ */
+export function isRealIsoDate(value: string): boolean {
+  const [y, m, d] = value.split("-").map(Number);
+  if (y === undefined || m === undefined || d === undefined) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
 const uuid = z.string().uuid("ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.");
@@ -23,6 +36,7 @@ const amountGel = z
 const paidAt = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "თარიღი არასწორია.")
+  .refine(isRealIsoDate, "თარიღი არასწორია.")
   .refine((v) => v >= "2026-01-01" && v <= todayTbilisiIso(), "თარიღი არასწორია.");
 
 export const approveDelegateSchema = z.object({ delegateId: uuid });
@@ -99,6 +113,13 @@ export const memberLookupSchema = z.object({
   query: z.string().trim().min(2, "ჩაწერე მინ. 2 სიმბოლო.").max(100, "ძებნა ძალიან გრძელია."),
 });
 
+/**
+ * ONE ?page parser for every admin list (members, finances, transfer, audit):
+ * searchParams live in URLs, so garbage ("1.5", "1e999", "abc") must degrade
+ * to page 1 — never hand PostgREST a non-integer .range() bound (→ 500).
+ */
+export const pageParamSchema = z.coerce.number().int().min(1).max(10_000).catch(1).default(1);
+
 /** searchParams live in URLs — degrade gracefully on garbage, never 500. */
 export const membersFilterSchema = z.object({
   search: z
@@ -110,6 +131,6 @@ export const membersFilterSchema = z.object({
     .catch(undefined),
   regionId: z.coerce.number().int().positive().optional().catch(undefined),
   status: z.enum(["draft", "profile_completed", "active_member"]).optional().catch(undefined),
-  page: z.coerce.number().int().min(1).max(10_000).catch(1).default(1),
+  page: pageParamSchema,
 });
 export type MembersFilter = z.infer<typeof membersFilterSchema>;

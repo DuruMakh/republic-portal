@@ -10,7 +10,21 @@ import {
   isStaff,
   MEMBER_STATUS_LABELS_KA,
   ROLE_LABELS_KA,
+  sanitizeSearch,
 } from "./admin";
+
+describe("sanitizeSearch (one sanitizer for list, lookup and export)", () => {
+  it("strips PostgREST or() syntax and ILIKE wildcards", () => {
+    expect(sanitizeSearch("ბერიძე,")).toBe("ბერიძე");
+    expect(sanitizeSearch("5%9")).toBe("5 9");
+    expect(sanitizeSearch("a_b\\c")).toBe("a b c");
+    expect(sanitizeSearch("(x)")).toBe("x");
+  });
+  it("garbage-only input sanitizes to empty (callers must then skip the filter)", () => {
+    expect(sanitizeSearch("((")).toBe("");
+    expect(sanitizeSearch(",,")).toBe("");
+  });
+});
 
 describe("adminTabs (spec §3.1 role → tab matrix)", () => {
   it("super_admin sees all eight tabs in order", () => {

@@ -19,6 +19,26 @@ describe("csvEscape (RFC 4180)", () => {
   });
 });
 
+describe("csvEscape (formula injection)", () => {
+  it("neutralizes leading = @ and tab with an apostrophe", () => {
+    expect(csvEscape('=HYPERLINK("http://evil.example/")')).toBe(
+      `"'=HYPERLINK(""http://evil.example/"")"`,
+    );
+    expect(csvEscape("=1+1")).toBe("'=1+1");
+    expect(csvEscape("@user")).toBe("'@user");
+    expect(csvEscape("\tcmd")).toBe("'\tcmd");
+  });
+  it("neutralizes +/- only when non-numeric (formulas, not phones/amounts)", () => {
+    expect(csvEscape("+A2&B2")).toBe("'+A2&B2");
+    expect(csvEscape("-SUM(A1:A9)")).toBe("'-SUM(A1:A9)");
+    expect(csvEscape("+995550001122")).toBe("+995550001122");
+    expect(csvEscape("-5.50")).toBe("-5.50");
+  });
+  it("leaves ordinary Georgian text untouched", () => {
+    expect(csvEscape("ნინო ბერიძე")).toBe("ნინო ბერიძე");
+  });
+});
+
 describe("toCsv", () => {
   it("BOM + CRLF + header row (Excel opens Georgian correctly)", () => {
     const csv = toCsv(["ა", "ბ"], [["1", "2"]]);

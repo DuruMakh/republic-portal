@@ -168,5 +168,13 @@ describe("mapFunnelError — Phase 3 tokens", () => {
     expect(mapFunnelError("invalid_target")).toBe("ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.");
     expect(mapFunnelError("unknown_code")).toBe("უცნობი კოდი");
     expect(mapFunnelError("duplicate")).toBe("დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.");
+    expect(mapFunnelError("P0001: duplicate")).toBe(
+      "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
+    );
+  });
+  it("raw 23505 unique-violation text never mislabels as a payment duplicate", () => {
+    expect(mapFunnelError('duplicate key value violates unique constraint "one_active"')).toBe(
+      GENERIC_FUNNEL_ERROR,
+    );
   });
 });

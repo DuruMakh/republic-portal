@@ -100,4 +100,20 @@ describe("parseStatementRows (spec §3.5, §5)", () => {
     expect(r!.amountGel).toBe(20);
     expect(r!.problems).toEqual([]);
   });
+
+  it("gr inside an ordinary word never shadows the real code on the line", () => {
+    // "agreement" = a + gr + eement (6 alphabet chars) — without a leading
+    // boundary the leftmost match yields phantom GR-EEMENT and drops the payment
+    const [r] = parseStatementRows("payment agreement GR-ABC234 20.00 01.07.2026");
+    expect(r!.code).toBe("GR-ABC234");
+    expect(r!.amountGel).toBe(20);
+    expect(r!.paidAt).toBe("2026-07-01");
+  });
+
+  it("impossible calendar dates are rejected; leap days are kept", () => {
+    // 2026-02-31 survives string compares but blows up on the DB ::date cast
+    expect(parseStatementRows("31.02.2026 GR-ABC234 20.00")[0]!.paidAt).toBeNull();
+    expect(parseStatementRows("GR-ABC234 20.00 2026-04-31")[0]!.paidAt).toBeNull();
+    expect(parseStatementRows("29.02.2028 GR-ABC234 20.00")[0]!.paidAt).toBe("2028-02-29");
+  });
 });

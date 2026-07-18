@@ -4,9 +4,23 @@
  * Ministry-of-Justice template is a deferred follow-up (spec §9).
  */
 
-export function csvEscape(value: string): string {
-  if (/[",\r\n]/.test(value)) return `"${value.replaceAll('"', '""')}"`;
+// Cells starting with these are evaluated as formulas by Excel/Sheets — a
+// member-supplied name like "=HYPERLINK(…)" must never execute on an admin's
+// machine (CSV injection). +/- get a numeric exception so phones ("+995…")
+// and negative amounts survive untouched.
+const NUMERIC_LEAD_RE = /^[+-][\d\s.,-]*$/;
+
+function neutralizeFormula(value: string): string {
+  const first = value[0];
+  if (first === "=" || first === "@" || first === "\t") return `'${value}`;
+  if ((first === "+" || first === "-") && !NUMERIC_LEAD_RE.test(value)) return `'${value}`;
   return value;
+}
+
+export function csvEscape(value: string): string {
+  const v = neutralizeFormula(value);
+  if (/[",\r\n]/.test(v)) return `"${v.replaceAll('"', '""')}"`;
+  return v;
 }
 
 export function toCsv(headers: readonly string[], rows: readonly (readonly string[])[]): string {

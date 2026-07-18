@@ -6,6 +6,7 @@ import {
   grantRoleSchema,
   memberLookupSchema,
   membersFilterSchema,
+  pageParamSchema,
   recordPaymentSchema,
   rejectDelegateSchema,
   todayTbilisiIso,
@@ -17,6 +18,20 @@ const UUID = "6e08c9a1-2f5e-4b7a-9c3d-1a2b3c4d5e6f";
 describe("todayTbilisiIso", () => {
   it("returns YYYY-MM-DD", () => {
     expect(todayTbilisiIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("pageParamSchema (shared ?page parser)", () => {
+  it("parses valid pages and defaults missing input to 1", () => {
+    expect(pageParamSchema.parse("3")).toBe(3);
+    expect(pageParamSchema.parse(undefined)).toBe(1);
+  });
+  it("degrades garbage to 1 instead of handing PostgREST a bad range", () => {
+    expect(pageParamSchema.parse("1.5")).toBe(1);
+    expect(pageParamSchema.parse("1e999")).toBe(1);
+    expect(pageParamSchema.parse("abc")).toBe(1);
+    expect(pageParamSchema.parse("0")).toBe(1);
+    expect(pageParamSchema.parse("-2")).toBe(1);
   });
 });
 
@@ -43,6 +58,12 @@ describe("recordPaymentSchema (spec §3.5)", () => {
     expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "2025-12-31" }).success).toBe(false);
     expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "2126-01-01" }).success).toBe(false);
     expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "01.07.2026" }).success).toBe(false);
+  });
+  it("rejects impossible calendar dates the regex alone would admit", () => {
+    // "2026-02-31" survives string compares but blows up on the DB ::date cast
+    expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "2026-02-31" }).success).toBe(false);
+    expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "2026-04-31" }).success).toBe(false);
+    expect(recordPaymentSchema.safeParse({ ...ok, paidAt: "2026-06-30" }).success).toBe(true);
   });
   it("caps the bank reference at 64", () => {
     expect(recordPaymentSchema.safeParse({ ...ok, bankReference: "x".repeat(65) }).success).toBe(
