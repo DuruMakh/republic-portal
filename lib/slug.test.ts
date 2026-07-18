@@ -46,7 +46,7 @@ describe("slugFrom / makeSlugFrom (Phase 5: news + events)", () => {
   });
 
   it("collapses punctuation/whitespace runs and trims hyphens", () => {
-    expect(slugFrom('„დიდი შეხვედრა" — 2026!', "event")).toBe("didi-shekhvedra-2026");
+    expect(slugFrom("„დიდი შეხვედრა“ — 2026!", "event")).toBe("didi-shekhvedra-2026");
   });
 
   it("falls back when nothing romanizes", () => {
