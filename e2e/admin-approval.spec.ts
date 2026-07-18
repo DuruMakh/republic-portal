@@ -163,7 +163,8 @@ test("the activated referral link registers a real supporter", async ({ page }) 
   await expect(page).toHaveURL(/\/join\/step-3/);
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
   await expect(page).toHaveURL(/\/join\/done$/);
-  // the supporter's cabinet shows the applicant as their delegate
+  // the supporter's cabinet shows the applicant as their delegate — scope to the
+  // current-delegate heading, since the name also appears as a <select> option
   await page.goto("/me/delegate");
-  await expect(page.getByText("ვაჟა ფშაველა")).toBeVisible();
+  await expect(page.getByTestId("current-delegate")).toContainText("ვაჟა ფშაველა");
 });
