@@ -44,11 +44,22 @@ export function serviceClient(): SupabaseClient {
 export async function loginAs(page: Page, phoneNational: string): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("ტელეფონის ნომერი").fill(phoneNational);
-  // record send time to avoid consuming a stale code from a prior attempt
-  const sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew
-  await page.getByRole("button", { name: "კოდის მიღება" }).click();
-  // OTP step renders once signInWithOtp resolves ("SMS კოდი" input group appears)
-  await expect(page.getByRole("group", { name: "SMS კოდი" })).toBeVisible({ timeout: 15_000 });
+  // Repeated admin logins can hit Supabase's per-phone OTP throttle: signInWithOtp
+  // errors, the login page shows the send-failed notice and stays on the phone step,
+  // so the "SMS კოდი" group never renders. Wait for EITHER outcome; on a throttled
+  // send, ride out the per-phone window (~60s) and retry, up to 3 attempts.
+  const otpGroup = page.getByRole("group", { name: "SMS კოდი" });
+  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
+  let sentAt = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // record send time to avoid consuming a stale code from a prior attempt
+    sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew
+    await page.getByRole("button", { name: "კოდის მიღება" }).click();
+    await expect(otpGroup.or(sendError)).toBeVisible({ timeout: 15_000 });
+    if (await otpGroup.isVisible()) break;
+    if (attempt === 2) throw new Error(`loginAs: OTP send throttled for ${phoneNational}`);
+    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
+  }
   // The /api/dev/otp UI element is withheld for COMPLETED accounts (account-takeover
   // guard, route.ts:35-40), so read the code straight from dev_otp_inbox via the
   // service client — same path the schema probe uses for the seeded admins.

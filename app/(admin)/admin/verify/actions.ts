@@ -44,8 +44,10 @@ export async function approveDelegateAction(delegateId: unknown): Promise<Approv
     });
     if (!error) {
       const approvedSlug = (data as { slug: string }).slug;
-      revalidatePath("/admin/verify");
-      revalidatePath(`/delegates/${approvedSlug}`);
+      // No /admin/verify revalidation: the card's client done-state IS the confirmation,
+      // and the pending list re-fetches on next navigation (admin pages are dynamic) —
+      // an in-place revalidation would unmount the card and race that confirmation away.
+      revalidatePath(`/delegates/${approvedSlug}`); // public page IS cached — must go live
       return { ok: true, slug: approvedSlug };
     }
     // 23505 = a concurrent approval took this slug — refetch and retry
@@ -75,7 +77,9 @@ export async function rejectDelegateAction(
     p_note: parsed.data.note === "" ? null : parsed.data.note,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
-  revalidatePath("/admin/verify");
+  // No /admin/verify revalidation: the card's client done-state IS the confirmation,
+  // and the queue re-fetches on next navigation (admin pages are dynamic) — an in-place
+  // revalidation would unmount the card and race that confirmation away.
   return { ok: true };
 }
 
