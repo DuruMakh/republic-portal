@@ -4,6 +4,7 @@ import {
   ADMIN_PHONES,
   cleanupPhase4Users,
   getAuditRows,
+  getDelegateSlug,
   getReferralCode,
   loginAs,
   phase4PersonalId,
@@ -89,12 +90,12 @@ test("verifier reveals + approves A from the pending queue — public page goes 
 
   // the primary critical path: approve straight from pending
   await cardA.getByRole("button", { name: "დადასტურება" }).click();
-  await expect(cardA.getByText(/დელეგატი დამტკიცდა/)).toBeVisible();
-
-  // the success notice links the live public page — open it and see the applicant
-  const publicHref = await cardA.getByRole("link", { name: /საჯარო გვერდი/ }).getAttribute("href");
-  expect(publicHref).toMatch(/^\/delegates\/.+/);
-  await page.goto(publicHref as string);
+  // approve revalidates the route (to publish /delegates/<slug>), which unmounts the
+  // card before its inline done-state can be asserted — so assert the OUTCOME instead:
+  // A leaves the pending queue, and their public page is now live.
+  await expect(cardA).toBeHidden({ timeout: 15_000 });
+  const slugA = await getDelegateSlug(phase4Phone(APPLICANT_A));
+  await page.goto(`/delegates/${slugA}`);
   await expect(page.getByText("ვაჟა ფშაველა")).toBeVisible();
 
   await page.goto("/admin");
@@ -111,7 +112,9 @@ test("verifier rejects B with a note, then re-approves from the rejected tab", a
   await cardB.getByRole("button", { name: "უარყოფა" }).click();
   await cardB.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
   await cardB.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
-  await expect(cardB.getByText("განაცხადი უარყოფილია.")).toBeVisible();
+  // reject revalidates the route too, unmounting the card — assert the OUTCOME: B
+  // leaves the pending queue.
+  await expect(cardB).toBeHidden({ timeout: 15_000 });
 
   // rejected tab: the stored note + the decision stamp; re-approve from there
   await page.goto("/admin/verify?tab=rejected");
@@ -121,7 +124,8 @@ test("verifier rejects B with a note, then re-approves from the rejected tab", a
     rejectedB.getByText(/უარყოფილია \d{2}\.\d{2}\.\d{4} · ვერიფიკატორი გუნდი/),
   ).toBeVisible();
   await rejectedB.getByRole("button", { name: "დადასტურება" }).click();
-  await expect(rejectedB.getByText(/დელეგატი დამტკიცდა/)).toBeVisible();
+  // re-approve from the rejected tab — assert the OUTCOME: B leaves the rejected list.
+  await expect(rejectedB).toBeHidden({ timeout: 15_000 });
 
   await page.goto("/admin");
   await signOutViaNav(page);

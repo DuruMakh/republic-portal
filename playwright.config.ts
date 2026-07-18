@@ -2,7 +2,9 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 60_000,
+  // 150s per test: an admin loginAs may ride out one Supabase per-phone OTP-throttle
+  // window (~62s wait) and still finish its remaining steps within a single test.
+  timeout: 150_000,
   retries: process.env.CI ? 1 : 0,
   // shared staging state (per-run users + seed-count assertions) — spec files must never overlap
   workers: 1,

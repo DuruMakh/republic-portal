@@ -122,6 +122,15 @@ export async function getReferralCode(phoneNational: string): Promise<string> {
   return data.referral_code as string;
 }
 
+/** The permanent public slug, stamped by admin_approve_delegate — read post-approval. */
+export async function getDelegateSlug(phoneNational: string): Promise<string> {
+  const db = serviceClient();
+  const id = await profileIdByPhone(db, phoneNational);
+  const { data, error } = await db.from("delegates").select("slug").eq("id", id).single();
+  if (error || !data?.slug) throw new Error(`no slug for ${phoneNational}`);
+  return data.slug as string;
+}
+
 export async function getAuditRows(action: string, targetId: string): Promise<number> {
   const db = serviceClient();
   const { count, error } = await db
