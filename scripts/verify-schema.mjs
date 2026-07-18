@@ -507,9 +507,15 @@ try {
     if (ownRolesErr) throw new Error(`own admin_roles read failed: ${ownRolesErr.message}`);
     if (ownRoles.length !== 0) throw new Error("non-admin should hold no roles");
 
-    // deletability invariant (spec §4.7): no e2e 55-block user may EVER hold an
-    // admin role — role holders act, actors become undeletable, and the 55-block
-    // must stay disposable
+    // deletability invariant (spec §4.7): no e2e throwaway user may EVER hold an
+    // admin role — role holders act, actors become undeletable, and the disposable
+    // e2e ranges must stay deletable. Both throwaway markers count: a 55-block phone
+    // OR a 9-prefix personal_id — and a 9-prefix throwaway can carry NO phone at all
+    // (naId itself: personal_id 98765432110, no phone), so the scan reads personal_id
+    // too (service-role db can). The 4 canonical admins are permanent audit ACTORS
+    // with '1'-prefixed IDs and 50-block phones — exclude them by phone so their
+    // legitimate roles are never mistaken for a leak.
+    const CANONICAL_ADMIN_PHONES = new Set([1, 2, 3, 4].map((n) => `+99550900000${n}`));
     const { data: allRoleRows, error: allRolesErr } = await db
       .from("admin_roles")
       .select("user_id");
@@ -517,15 +523,19 @@ try {
     const roleHolderIds = [...new Set((allRoleRows ?? []).map((r) => r.user_id))];
     const { data: holderProfiles, error: holderErr } = await db
       .from("profiles")
-      .select("id, phone")
+      .select("id, phone, personal_id")
       .in("id", roleHolderIds);
     if (holderErr) throw new Error(`role-holder profiles read failed: ${holderErr.message}`);
-    const e2eHolders = (holderProfiles ?? []).filter((p) =>
-      (p.phone ?? "").replace(/^\+?995/, "").startsWith("55"),
-    );
+    const e2eHolders = (holderProfiles ?? []).filter((p) => {
+      if (CANONICAL_ADMIN_PHONES.has(p.phone ?? "")) return false;
+      const national = (p.phone ?? "").replace(/^\+?995/, "");
+      return national.startsWith("55") || (p.personal_id ?? "").startsWith("9");
+    });
     if (e2eHolders.length > 0)
       throw new Error(
-        `LEAK: e2e 55-block users hold admin roles: ${e2eHolders.map((p) => p.phone).join(", ")}`,
+        `LEAK: e2e throwaway users hold admin roles: ${e2eHolders
+          .map((p) => p.phone ?? p.personal_id)
+          .join(", ")}`,
       );
     console.log("OK: no e2e-block user holds an admin role (deletability invariant)");
 
@@ -732,16 +742,35 @@ try {
     });
     if (revokeErr) throw new Error(`revoke editor failed: ${revokeErr.message}`);
 
-    const { data: superRow } = await db
-      .from("profiles")
-      .select("id")
-      .eq("phone", "+995509000001")
-      .single();
-    await expectToken(
-      superAdmin.rpc("admin_revoke_role", { p_user_id: superRow.id, p_role: "super_admin" }),
-      "last_super_admin",
-      "removing the last super_admin",
-    );
+    // lockout guard: the RPC blocks a revoke only when the GLOBAL super_admin count
+    // is exactly 1 (and the target holds it). If the owner's grant-admin.mjs has
+    // added a second super_admin (seed-staging.mjs anticipates this), the guard does
+    // NOT fire and a real revoke would strip the canonical super_admin from the
+    // shared seed. Only attempt the (then guard-blocked, non-destructive) revoke when
+    // the count is 1; otherwise skip — never risk a real revoke.
+    const { count: superCount, error: superCountErr } = await db
+      .from("admin_roles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "super_admin");
+    if (superCountErr) throw new Error(`super_admin count failed: ${superCountErr.message}`);
+    if (superCount === 1) {
+      const { data: superRow, error: superRowErr } = await db
+        .from("profiles")
+        .select("id")
+        .eq("phone", "+995509000001")
+        .single();
+      if (superRowErr) throw new Error(`super_admin row lookup failed: ${superRowErr.message}`);
+      await expectToken(
+        superAdmin.rpc("admin_revoke_role", { p_user_id: superRow.id, p_role: "super_admin" }),
+        "last_super_admin",
+        "removing the last super_admin",
+      );
+      console.log("OK: last_super_admin guard blocks revoking the only super_admin");
+    } else {
+      console.log(
+        `SKIP: last_super_admin guard probe — found ${superCount} super_admins, refusing to risk a real revoke`,
+      );
+    }
     await expectToken(
       superAdmin.rpc("admin_update_setting", { p_key: "active_grace_days", p_value: 999 }),
       "invalid_setting",
