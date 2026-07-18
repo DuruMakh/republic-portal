@@ -57,7 +57,33 @@ by step 3. The public header swaps შესვლა→კაბინეტი
 stays session-agnostic). Dashboard rank reuses lib/ranking over public_delegates,
 so it can never disagree with the leaderboard.
 
+## Admin CRM (Phase 4)
+
+`/admin/*` (route group `app/(admin)`) is per-request server-rendered behind a
+layout gate (session + ≥1 `admin_roles` row, read via the own-rows RLS policy);
+role-specific pages re-gate and the database re-checks everything regardless.
+Reads go through self-gating definer views (`admin_overview`, `admin_region_stats`,
+`admin_members`, `admin_delegate_queue`, `admin_payments`, `admin_finance_stats`,
+`admin_admins`, `admin_audit`, `admin_settings`) — zero rows for non-admins, and
+no view contains `personal_id`/`birth_date`. Every mutation is a SECURITY DEFINER
+RPC that re-checks the caller's role and writes its `audit_log` row in the same
+transaction (ADR-014). Personal IDs: masked with audited click-to-reveal (two RPC
+paths) and super_admin-only export inclusion; since Phase 4 the `authenticated`
+column grant on `profiles` excludes `personal_id`/`birth_date`.
+
+The active-member engine (ADR-015): payments carry a tier snapshot and a GENERATED
+`months_covered`; coverage folds `greatest(prev_end, paid_at) + months × 30 days`;
+a member is active while `today ≤ coverage_end + active_grace_days` (app_settings,
+default 30). Status recomputes on record/void/setting change; a nightly pg_cron
+sweep demotes lapsed members (`system.active_sweep` audit rows). The staging seed
+writes payment histories — statuses are always derived. Delegate photos live in the
+public `delegate-photos` bucket; uploads go only through the admin server action
+(the single service-role app path), paired with the re-checking RPC.
+
 ## Status derivation
 
-Member/delegate statuses and supporter counts are always computed from source tables
-(payments, memberships) by functions in lib/ — never stored as editable state.
+Derived values are never stored as editable state. Since Phase 4 the
+active-member computation itself lives in the database engine functions
+(ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
+`profiles.status` is written only by the engine (plus the funnel's
+draft→profile_completed step).

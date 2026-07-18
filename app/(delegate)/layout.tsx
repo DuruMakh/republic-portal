@@ -19,7 +19,7 @@ export default async function DelegateLayout({ children }: { children: React.Rea
   }
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <CabinetNav items={cabinetNavItems("delegate")} />
+      <CabinetNav items={cabinetNavItems("delegate", state.admin)} />
       {children}
     </div>
   );

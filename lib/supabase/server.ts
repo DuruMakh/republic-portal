@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AdminRole } from "../admin";
 import type { FunnelState } from "../funnel";
 import type { Database } from "./types";
 
@@ -45,4 +46,20 @@ export const getFunnelState = cache(async (): Promise<FunnelState> => {
     throw new Error(`funnel_state failed: ${error?.message ?? "empty response"}`);
   }
   return data as unknown as FunnelState;
+});
+
+/**
+ * Request-memoized own-roles read (Phase 4 §3.1). Backed by the `admin_roles`
+ * "own roles readable" RLS policy — a caller can only ever see their own rows.
+ * UX-only signal (nav filtering, layout gate); every view/RPC re-checks in-DB.
+ */
+export const getAdminRoles = cache(async (): Promise<AdminRole[]> => {
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase.from("admin_roles").select("role").eq("user_id", user.id);
+  if (error) throw new Error(`admin_roles read failed: ${error.message}`);
+  return (data ?? []).map((r) => r.role as AdminRole);
 });

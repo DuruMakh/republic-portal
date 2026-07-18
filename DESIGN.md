@@ -32,3 +32,9 @@ inline SVG, ADR-011), CopyButton, PendingExplainer (shared by /join/pending and
 the pending delegate panel). Pill gains an optional `label` override (colors
 stay keyed by status). TransferInstructions moved from app/(public)/join/ to
 components/ — now shared by /join/done, /join/pending and /me/billing.
+
+Phase 4: AdminNav (role-filtered admin tabs + გასვლა; dense register). Admin list
+pattern: GET-form filters + server-side range pagination (50/page) + DataTable;
+masked personal IDs with an audited ჩვენება reveal; bulk-preview status chips
+(ok=ok-green, duplicates=warn, failures=danger); form controls share
+`adminControlClasses` (components/Field.tsx). StatCard reused for admin KPIs.

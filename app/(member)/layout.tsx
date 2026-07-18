@@ -18,7 +18,7 @@ export default async function MemberLayout({ children }: { children: React.React
   if (!state.exists || !state.completed) redirect(deriveDestination(state));
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <CabinetNav items={cabinetNavItems(state.role)} />
+      <CabinetNav items={cabinetNavItems(state.role, state.admin)} />
       {children}
     </div>
   );

@@ -147,3 +147,85 @@ no canvas, no DOM, works identically in jsdom tests and the browser. Rejected:
 `qrcode-generator` (venerable but untyped UMD-global style). Rendered client-side
 so the encoded origin is the one the delegate is actually on
 (window.location.origin — previews encode the preview URL, production the real one).
+
+## ADR-014 (2026-07-17): Admin access = self-gating definer views + in-transaction-audit RPCs
+
+Admin reads are owner-executed views that check has_any_admin_role(auth.uid()) in
+their WHERE — non-admins get zero rows — and physically exclude personal_id and
+birth_date. Admin mutations are SECURITY DEFINER RPCs: role check first, all
+effects plus the audit_log insert in ONE transaction, so an unaudited admin action
+is unrepresentable. Rider: the blanket authenticated SELECT grant on profiles was
+narrowed to an explicit column list without personal_id/birth_date (verified: no
+client-path code ever read them — they are write-only through funnel_save_profile).
+Exactly two audited paths return a personal ID: the reveal RPCs
+(admin_reveal_personal_id — super_admin; admin_reveal_applicant_personal_id —
+verifier scope) and admin_export_members with p_include_ids (super_admin).
+Rejected: service-role reads behind app checks (one forgotten check = full
+exposure, no DB backstop) and all-RPC reads (hand-wired filter/paging plumbing for
+zero extra safety over self-gating views). Operational consequence: audit_log
+actors are permanent (plain FK + append-only trigger blocks even ON DELETE SET
+NULL), so e2e/probe users must never act as admins — canonical seeded admins
+(+99550900000{1..4}) do; targets are stored as text and stay deletable; the
+staging seed skips the canonical admins in its wipe for the same reason. The very
+first super_admin is bootstrapped by `scripts/grant-admin.mjs` (service role,
+completed members only), which writes the same `admin.grant_role` audit row with
+a null actor and a `via` marker — bootstrap grants stay visible in the viewer.
+
+## ADR-015 (2026-07-17): Active-member engine — 30-day months, snapshot tiers, grace, nightly sweep
+
+months = greatest(1, floor(amount_gel / tier_gel_at_payment)) as a GENERATED
+STORED column — tier snapshotted at recording so later tier changes never rewrite
+history. Coverage folds payments in paid_at order:
+end = greatest(prev_end, paid_at) + months × 30 days; a member is active while
+current_date ≤ end + active_grace_days (app_settings, default 30 → a single
+monthly payment = exactly 60 days, the owner's chosen window). lib/active.ts
+mirrors the SQL; the schema probe replays the shared fixtures against both.
+profiles.status is written ONLY by the engine (plus the funnel's
+draft→profile_completed); the seed now writes payment histories and derives.
+Payments are immutable — corrections are voids (voided_at/by/reason, audited,
+required reason). Duplicate protection is two-layer: referenced (single-entry)
+payments hit the live-rows-only unique index on bank_reference (a voided
+reference is reusable), and bulk rows — which carry no reference — are guarded
+in-RPC by a live member+amount+date check, so a double-pasted statement is
+unrecordable on either path. payments.member_id now cascades on profile deletion (e2e/staging
+cleanup; the platform has no member-deletion flow; audit targets are text).
+Expiry runs nightly via pg_cron ('active-member-sweep', 01:00 UTC = 05:00
+Tbilisi), auditing system.active_sweep with the demoted count.
+
+## ADR-016 (2026-07-18): Post-review hardening batch (v0.5.0 fix pass)
+
+An adversarial 10-angle review of the Phase 4 branch confirmed 26 defects; all
+were fixed pre-release. Decisions worth recording:
+
+- **Tbilisi is THE day source, in SQL too.** All RPC date windows and the
+  active-member engine now call tbilisi_today() ((now() at time zone
+  'Asia/Tbilisi')::date) instead of current_date (UTC session day). Previously
+  a payment dated "today" was rejected between 00:00 and 04:00 Tbilisi and
+  active-ness flipped 4h late; TS (todayTbilisiIso) and SQL now agree at every
+  hour. One TBILISI_OFFSET_MS constant (lib/cabinet.ts) feeds every TS helper.
+- **Reference-less payments get the member+amount+date duplicate backstop in
+  admin_record_payment too** — the live-ref unique index cannot see NULL
+  references, and the reference field is optional, so the same transfer entered
+  twice with the field blank double-credited a member. Distinct same-day
+  same-amount transfers stay recordable: give them their distinct bank refs.
+- **Approval requires registration_completed_at.** The delegates row exists
+  from funnel step 2, so an abandoned applicant could be approved and published
+  with no tier and no reference code. The queue view also hides incomplete
+  applicants (they reappear the moment they finish step 3).
+- **CSV cells are formula-neutralized** (leading = @ tab, and non-numeric +/-,
+  prefixed with an apostrophe): member-supplied names must never execute in the
+  finance team's Excel (CSV injection). Phones and amounts pass through.
+- **payments column privileges**: members read exactly the billing-page columns
+  of their own rows; recorded_by / voided_by / void_reason (may name fraud
+  suspicions) are admin-view-only. Enforced with a column-level grant.
+- **Last-super-admin guard is serialized** with pg_advisory_xact_lock — the
+  count check alone was check-then-act under concurrency.
+- **serverActions.bodySizeLimit stays 6mb globally** (Next has no per-action
+  override; needed by the 5MB photo upload). Accepted exposure: every public
+  action also takes 6MB bodies pre-zod. Revisit if uploads move to signed
+  direct-to-storage URLs (the deeper fix, deferred).
+- **The seed survives real staging life**: it wipes payments outright, skips
+  every append-only audit actor (not just the 4 canonical admins), reuses an
+  orphaned canonical auth user after a mid-seed crash, and widens the
+  approved-delegates assertion by wipe survivors — reseeding can no longer
+  brick on FK 23503, "phone already registered", or a QA payment.

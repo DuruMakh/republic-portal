@@ -12,6 +12,7 @@ import {
   initialsKa,
   memberSinceKa,
   paymentMethodLabel,
+  paymentStatusKa,
   TEAM_STATUS_LABELS,
 } from "./cabinet";
 import type { FunnelState } from "./funnel";
@@ -37,6 +38,7 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     referral: null,
     chosenDelegate: null,
     membershipExists: false,
+    admin: false,
     ...overrides,
   };
 }
@@ -92,6 +94,18 @@ describe("cabinetNavItems (spec §3.1)", () => {
       { href: "/me/billing", label: "გადახდები" },
       { href: "/delegate", label: "დელეგატის პანელი" },
     ]);
+  });
+  it("admins get the ადმინისტრირება tab appended (spec §3.1)", () => {
+    expect(cabinetNavItems("member", true).at(-1)).toEqual({
+      href: "/admin",
+      label: "ადმინისტრირება",
+    });
+    expect(cabinetNavItems("delegate", true).at(-1)).toEqual({
+      href: "/admin",
+      label: "ადმინისტრირება",
+    });
+    expect(cabinetNavItems("member", false).some((i) => i.href === "/admin")).toBe(false);
+    expect(cabinetNavItems("member")).toEqual(cabinetNavItems("member", false));
   });
 });
 
@@ -172,5 +186,15 @@ describe("buildReferralUrl", () => {
     expect(buildReferralUrl("http://localhost:3000/", "AB2C3D")).toBe(
       "http://localhost:3000/join?ref=AB2C3D",
     );
+  });
+});
+
+describe("paymentStatusKa (Phase 4 §8 — honest voids)", () => {
+  it("live rows are დადასტურებული, voided rows are გაუქმებული", () => {
+    expect(paymentStatusKa(null)).toEqual({ label: "დადასტურებული", pillStatus: "active_member" });
+    expect(paymentStatusKa("2026-07-17T10:00:00Z")).toEqual({
+      label: "გაუქმებული",
+      pillStatus: "rejected",
+    });
   });
 });

@@ -18,19 +18,22 @@ export interface CabinetNavItem {
   label: string;
 }
 
-export function cabinetNavItems(role: "member" | "delegate"): CabinetNavItem[] {
-  if (role === "delegate") {
-    return [
-      { href: "/me/profile", label: "პროფილი" },
-      { href: "/me/billing", label: "გადახდები" },
-      { href: "/delegate", label: "დელეგატის პანელი" },
-    ];
-  }
-  return [
-    { href: "/me/profile", label: "პროფილი" },
-    { href: "/me/delegate", label: "ჩემი დელეგატი" },
-    { href: "/me/billing", label: "გადახდები" },
-  ];
+export function cabinetNavItems(role: "member" | "delegate", isAdmin = false): CabinetNavItem[] {
+  const items: CabinetNavItem[] =
+    role === "delegate"
+      ? [
+          { href: "/me/profile", label: "პროფილი" },
+          { href: "/me/billing", label: "გადახდები" },
+          { href: "/delegate", label: "დელეგატის პანელი" },
+        ]
+      : [
+          { href: "/me/profile", label: "პროფილი" },
+          { href: "/me/delegate", label: "ჩემი დელეგატი" },
+          { href: "/me/billing", label: "გადახდები" },
+        ];
+  // Phase 4 (spec §3.1): admins reach /admin from their own cabinet
+  if (isAdmin) items.push({ href: "/admin", label: "ადმინისტრირება" });
+  return items;
 }
 
 /** Select value for the employment „სხვა (მიუთითე)“ branch (never a stored value). */
@@ -77,7 +80,7 @@ const MONTHS_FROM_KA = [
 // timestamped 00:00–04:00 local renders a day (and, at month/year edges, a month)
 // early. Shifting by a fixed offset then reading UTC accessors keeps this
 // deterministic (no ICU), the same reason formatDateKa avoids Intl.
-const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
+export const TBILISI_OFFSET_MS = 4 * 60 * 60 * 1000;
 
 function toTbilisi(iso: string): Date | null {
   const d = new Date(iso);
@@ -152,4 +155,14 @@ export function paymentMethodLabel(source: string): string {
 
 export function buildReferralUrl(origin: string, code: string): string {
   return `${origin.replace(/\/+$/, "")}/join?ref=${encodeURIComponent(code)}`;
+}
+
+/** Billing-history status cell (Phase 4: voided payments stay visible, honestly). */
+export function paymentStatusKa(voidedAt: string | null): {
+  label: string;
+  pillStatus: "active_member" | "rejected";
+} {
+  return voidedAt === null
+    ? { label: "დადასტურებული", pillStatus: "active_member" }
+    : { label: "გაუქმებული", pillStatus: "rejected" };
 }

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0 — Phase 4: Admin CRM (2026-07-17)
+
+- /admin area with DB-enforced roles (super_admin / verifier / finance / editor)
+- Delegate verification: approve (mints the public slug — page + referral link live
+  instantly), reversible reject with internal notes, bio/photo editing (Storage)
+- Member management: search/filter/pagination, audited personal-ID reveals,
+  audited CSV export (personal IDs super_admin-only, off by default)
+- Payment recording: single entry + bulk paste matching by GR-code with
+  classify-then-confirm preview (all-or-nothing), void with required reason
+- Active-member engine: amount buys 30-day months (min 1, stacking), configurable
+  grace (default 30), instant recompute + nightly sweep; seed now derives statuses
+- Reassignment of ცენტრალური მოძრაობა members to delegates (history kept)
+- Append-only audit log for every admin action + viewer with filters
+- Personal-ID column lockdown: exactly two audited read paths remain
+- Pre-release hardening pass, 2026-07-18 (ADR-016): Tbilisi-aligned date checks
+  in SQL, duplicate backstop for reference-less single payments, approval
+  requires a completed registration, CSV formula-injection neutralization,
+  member-facing payments columns restricted, serialized last-super-admin guard,
+  honest bulk previews (within-batch duplicates, real calendar dates, code
+  word-boundary), fresh finance stats after recording, reseed survives real
+  staging life
+
 ## 0.4.0 — 2026-07-16 (Phase 3: cabinets)
 
 - Member cabinet: profile editing (five scoped fields; phone + personal ID
