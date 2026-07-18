@@ -381,8 +381,10 @@ actions, which probes/e2e perform as canonical admins; e2e per-run users
 - `lib/content-schemas.ts` — zod for every boundary: news form (title 1–160, body
   1–20000, visibility enum), event form (fields + Tbilisi datetime parsing +
   ends-after-starts refinement), poll form (question 1–300, 2–10 options each
-  1–120, unique-trimmed, optional future ends_at), rsvp input, vote input, image
-  upload constraints (type/size, mirroring the Phase 4 photo schema).
+  1–120, unique-trimmed, optional future ends_at), rsvp input, vote input. Image
+  upload constraints reuse the Phase 4 photo constants (`PHOTO_TYPES` /
+  `PHOTO_MAX_BYTES` from `lib/admin-schemas.ts`) — identical rules, zero
+  duplication.
 - `lib/admin.ts` riders — შიგთავსი TAB_MATRIX entry (editor + super_admin), audit
   labels for the §4.5 taxonomy (e.g. `news.publish` → „სიახლის გამოქვეყნება",
   `poll.close` → „გამოკითხვის დახურვა"), content-status pill labels.

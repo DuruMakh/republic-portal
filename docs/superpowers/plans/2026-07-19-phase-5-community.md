@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- TypeScript `strict: true`; **no `any`, no `@ts-ignore`**. `noUncheckedIndexedAccess` is on — index access yields `T | undefined`; use `!` only where a regex/loop invariant guarantees presence, with a comment.
+- TypeScript `strict: true`; **no `any`, no `@ts-ignore`**. `noUncheckedIndexedAccess` is on — index access yields `T | undefined`; use `!` only where a regex/loop invariant guarantees presence, with a comment (in test/e2e files, a preceding assertion or fetch-check may establish presence without a comment — existing suite style).
 - Domain logic = pure functions in `lib/` — no React/Next imports there (`lib/supabase/` is the sanctioned data-access location).
 - **All user-facing text Georgian.** Public pages = bold/patriotic register (serif display headlines); cabinet = calm; admin = dense/utilitarian (DESIGN.md). Reuse design-system components; extend, never restyle ad hoc. Georgian typographic quotes are `„ “` (U+201E/U+201C) — byte-exact; never "normalize" them to ASCII.
 - Schema changes ONLY via `supabase/migrations/`. Local dev + previews + CI all use the STAGING Supabase project (`orcxtbedkexoclbfgvzd`).
@@ -35,9 +35,9 @@
 lib/
   content-render.ts / content-render.test.ts   — body parser + excerpt (Task 1)
   slug.ts / slug.test.ts (modify)              — slugFrom/makeSlugFrom generalization (Task 2)
-  community.ts / community.test.ts             — events split/RSVP windows, poll view/percentages, Tbilisi datetime-local (Task 3)
+  community.ts / community.test.ts             — events split/RSVP windows, poll view/percentages, Tbilisi datetime-local (Task 3; +Task 16 adds TeamRsvp types)
   content-schemas.ts / content-schemas.test.ts — zod for every Phase 5 boundary (Task 4)
-  admin.ts / admin.test.ts (modify)            — შიგთავსი tab, audit labels, content pills (Task 5)
+  admin.ts / admin.test.ts (modify)            — შიგთავსი tab, audit labels, content pills (Task 5; +Task 18 adds VISIBILITY_LABELS_KA)
   funnel.ts / funnel.test.ts (modify)          — new error tokens (Task 5)
   cabinet.ts / cabinet.test.ts (modify)        — three cabinet nav items (Task 5)
   supabase/types.ts (modify)                   — 6 tables, 13 views, 16 RPCs (Task 6)
@@ -99,7 +99,7 @@ Route-group note: `(admin)` carries the URL prefix inside it (`app/(admin)/admin
 
 **Interfaces:**
 - Consumes: nothing (pure).
-- Produces (consumed by Tasks 10, 11, 13, 16 and the styleguide):
+- Produces (consumed by Tasks 10, 11, 13, 18 and the styleguide):
   - `type BodySpan = { type: "text"; text: string } | { type: "link"; href: string }`
   - `type BodyParagraph = BodySpan[]`
   - `parseBody(body: string): BodyParagraph[]` — blank-line paragraph split, `https?://` auto-links, trailing punctuation trimmed off links
@@ -362,7 +362,7 @@ git commit -m "feat: plain-text body renderer with auto-links (lib/content-rende
 
 **Interfaces:**
 - Consumes: existing `transliterateGeorgian(text): string`, `slugBase(fullName): string`, `makeSlug(fullName, taken): string` (Phase 1 — delegate approval depends on them; **signatures and behavior must not change**).
-- Produces (consumed by Tasks 16–17 publish actions):
+- Produces (consumed by Tasks 18–19 publish actions):
   - `slugFrom(text: string, fallback: string): string` — transliterate → lowercase → non-`[a-z0-9]` runs → single `-` → trim; returns `fallback` when empty
   - `makeSlugFrom(text: string, fallback: string, taken: ReadonlySet<string>): string` — `slugFrom` + `-2`/`-3`… suffix on collision
 
@@ -464,7 +464,7 @@ git commit -m "refactor: generalize slug minting for news/events (slugFrom/makeS
 
 **Interfaces:**
 - Consumes: `TBILISI_OFFSET_MS`, `formatDateKa` from `lib/cabinet.ts`.
-- Produces (consumed by Tasks 11, 14, 17, 18):
+- Produces (consumed by Tasks 11, 14, 15, 16, 19, 20):
   - `interface EventTimeFields { starts_at: string; ends_at: string | null }`
   - `eventEndIso(e: EventTimeFields): string` — `ends_at ?? starts_at`
   - `splitEvents<T extends EventTimeFields>(events: readonly T[], nowIso: string): { upcoming: T[]; past: T[] }` — upcoming = end instant ≥ now, sorted soonest-first; past sorted most-recent-first
@@ -734,7 +734,7 @@ git commit -m "feat: community domain logic (event windows, poll views, percenta
 
 **Interfaces:**
 - Consumes: nothing (zod only; the local-datetime regex matches Task 3's).
-- Produces (consumed by Tasks 14, 16, 17, 18 server actions and forms):
+- Produces (consumed by Tasks 14, 15, 18, 19, 20 server actions and forms):
   - `newsFormSchema` — `{ id?: uuid; title: 1–160 trimmed; body: 1–20000 trimmed; visibility: "public" | "members" }`
   - `eventFormSchema` — `{ id?: uuid; title; description: 1–20000; location: 1–200; startsAt: "YYYY-MM-DDTHH:mm"; endsAt?: same | "" }` + refinement `endsAt > startsAt` (lexicographic compare is chronological for this format)
   - `pollFormSchema` — `{ id?: uuid; question: 1–300; options: string[2..10] each 1–120, unique after trim; endsAt?: local | "" }`
@@ -976,7 +976,7 @@ git commit -m "feat: zod boundary for news/events/polls/rsvp/vote (lib/content-s
 
 **Interfaces:**
 - Consumes: existing `TAB_MATRIX` shape, `AUDIT_ACTION_LABELS_KA`, `ERROR_MESSAGES`/`mapFunnelError`, `cabinetNavItems(role, isAdmin)`.
-- Produces (consumed by Tasks 13–18):
+- Produces (consumed by Tasks 11, 13–20):
   - AdminNav tab `{ href: "/admin/content", label: "შიგთავსი", roles: ["super_admin", "editor"] }`
   - `type ContentStatus = "draft" | "published" | "cancelled" | "open" | "closed"`
   - `contentPill(status: ContentStatus): { status: "draft" | "approved" | "rejected"; label: string }` — draft→(draft, „მონახაზი“), published→(approved, „გამოქვეყნებული“), cancelled→(rejected, „გაუქმებული“), open→(approved, „ღია“), closed→(draft, „დახურული“) — rendered via `<Pill status={…} label={…} />`
@@ -1249,6 +1249,11 @@ create table news (
     check (slug is null or (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(slug) <= 80)),
   image_url text,
   published_at timestamptz,
+  -- published rows are complete rows (delegates' approved-slug backstop
+  -- precedent): the seed writes status directly, so the RPC path must not be
+  -- the only guard
+  constraint published_news_complete
+    check (status <> 'published' or (slug is not null and published_at is not null)),
   created_by uuid references profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -1274,6 +1279,9 @@ create table events (
     constraint events_slug_format
     check (slug is null or (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(slug) <= 80)),
   published_at timestamptz,
+  -- cancelled rows stay publicly visible, so they too must keep slug/published_at
+  constraint published_events_complete
+    check (status = 'draft' or (slug is not null and published_at is not null)),
   created_by uuid references profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -1360,7 +1368,8 @@ grant select (poll_id, option_id, member_id) on poll_votes to authenticated;
 -- View-callable completed-registration check (the DB-level meaning of
 -- „წევრებისთვის"). Definer so it can read profiles regardless of the caller's
 -- column grants; callers still need EXECUTE (functions in views run as the
--- calling user — has_any_admin_role precedent).
+-- calling user — has_any_admin_role precedent). Stamp-only by design (spec
+-- §4.2): registration_completed_at, not status.
 create function is_completed_member() returns boolean
 language sql stable security definer set search_path = '' as $$
   select exists (
@@ -1464,6 +1473,15 @@ select po.poll_id, po.id as option_id, po.position, po.label,
 from poll_options po
 where has_any_admin_role('super_admin', 'editor');
 
+-- Defense-in-depth (portability): on instances with classic default privileges,
+-- views are born with ALL granted to client roles, and single-relation views
+-- are auto-updatable with OWNER (RLS-exempt) rights — revoke everything before
+-- granting exactly SELECT.
+revoke all on public_news, member_news, public_events, member_event_going_counts,
+  member_polls, member_poll_options, poll_option_counts, transparency_stats,
+  transparency_regions, admin_news, admin_events, admin_polls, admin_poll_options
+  from anon, authenticated;
+
 grant select on public_news, public_events, transparency_stats, transparency_regions
   to anon, authenticated;
 grant select on member_news, member_polls, member_poll_options, poll_option_counts,
@@ -1536,9 +1554,13 @@ begin
     raise exception 'invalid_slug';
   end if;
 
+  -- conditional DML (race guard): a concurrent transition surfaces as
+  -- invalid_status instead of clobbering. Re-publish keeps the ORIGINAL
+  -- published_at (accepted: list order stays stable across unpublish cycles).
   update public.news
   set status = 'published', slug = v_slug, published_at = coalesce(published_at, now())
-  where id = p_id;
+  where id = p_id and status = 'draft';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'news.publish', 'news', p_id::text,
@@ -1561,7 +1583,9 @@ begin
   if not found then raise exception 'invalid_target'; end if;
   if v_row.status <> 'published' then raise exception 'invalid_status'; end if;
 
-  update public.news set status = 'draft' where id = p_id;
+  update public.news set status = 'draft'
+  where id = p_id and status = 'published';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'news.unpublish', 'news', p_id::text,
@@ -1586,7 +1610,11 @@ begin
     raise exception 'invalid_status';
   end if;
 
-  delete from public.news where id = p_id;
+  -- conditional DML: re-checks in the DELETE itself so a racing publish can
+  -- never lose a published article (check-then-act guard)
+  delete from public.news
+  where id = p_id and status = 'draft' and published_at is null;
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'news.delete', 'news', p_id::text,
@@ -1606,7 +1634,10 @@ begin
   end if;
   select * into v_row from public.news where id = p_id;
   if not found then raise exception 'invalid_target'; end if;
-  if v_url is null or v_url !~ '^https://' or char_length(v_url) > 600 then
+  -- pinned to the news-images bucket: this RPC pairs with the upload action,
+  -- so arbitrary external URLs have no business here
+  if v_url is null or char_length(v_url) > 600
+     or v_url not like 'https://%/storage/v1/object/public/news-images/%' then
     raise exception 'invalid_image';
   end if;
 
@@ -1649,6 +1680,8 @@ begin
   else
     select * into v_row from public.events where id = p_id;
     if not found then raise exception 'invalid_target'; end if;
+    -- cancelled events are frozen history (only draft/published are editable)
+    if v_row.status = 'cancelled' then raise exception 'invalid_status'; end if;
     v_action := case when v_row.status = 'published' then 'event.update' else 'event.save' end;
     update public.events
     set title = v_title, description = v_description, location = v_location,
@@ -1686,7 +1719,8 @@ begin
 
   update public.events
   set status = 'published', slug = v_slug, published_at = coalesce(published_at, now())
-  where id = p_id;
+  where id = p_id and status = 'draft';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'event.publish', 'event', p_id::text,
@@ -1708,7 +1742,9 @@ begin
   if not found then raise exception 'invalid_target'; end if;
   if v_row.status <> 'published' then raise exception 'invalid_status'; end if;
 
-  update public.events set status = 'cancelled' where id = p_id;
+  update public.events set status = 'cancelled'
+  where id = p_id and status = 'published';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'event.cancel', 'event', p_id::text,
@@ -1731,7 +1767,9 @@ begin
     raise exception 'invalid_status';
   end if;
 
-  delete from public.events where id = p_id;
+  delete from public.events
+  where id = p_id and status = 'draft' and published_at is null;
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'event.delete', 'event', p_id::text,
@@ -1774,8 +1812,9 @@ begin
     -- content is frozen the moment a poll opens (spec §3.7)
     if v_row.status <> 'draft' then raise exception 'invalid_status'; end if;
     update public.polls set question = v_question, ends_at = p_ends_at
-    where id = p_id
+    where id = p_id and status = 'draft'
     returning * into v_row;
+    if not found then raise exception 'invalid_status'; end if;
     delete from public.poll_options where poll_id = v_row.id;
   end if;
 
@@ -1805,11 +1844,17 @@ begin
   select * into v_row from public.polls where id = p_id;
   if not found then raise exception 'invalid_target'; end if;
   if v_row.status <> 'draft' then raise exception 'invalid_status'; end if;
+  -- an "open" poll nobody can vote in is a trap — fix the date first
+  if v_row.ends_at is not null and v_row.ends_at <= now() then
+    raise exception 'invalid_event_dates';
+  end if;
   if (select count(*) from public.poll_options where poll_id = p_id) < 2 then
     raise exception 'invalid_options';
   end if;
 
-  update public.polls set status = 'open', opened_at = now() where id = p_id;
+  update public.polls set status = 'open', opened_at = now()
+  where id = p_id and status = 'draft';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'poll.open', 'poll', p_id::text,
@@ -1830,7 +1875,9 @@ begin
   if not found then raise exception 'invalid_target'; end if;
   if v_row.status <> 'open' then raise exception 'invalid_status'; end if;
 
-  update public.polls set status = 'closed', closed_at = now() where id = p_id;
+  update public.polls set status = 'closed', closed_at = now()
+  where id = p_id and status = 'open';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'poll.close', 'poll', p_id::text,
@@ -1851,7 +1898,9 @@ begin
   if not found then raise exception 'invalid_target'; end if;
   if v_row.status <> 'draft' then raise exception 'invalid_status'; end if;
 
-  delete from public.polls where id = p_id;
+  delete from public.polls
+  where id = p_id and status = 'draft';
+  if not found then raise exception 'invalid_status'; end if;
 
   insert into public.audit_log (actor_id, action, target_type, target_id, details)
   values (v_uid, 'poll.delete', 'poll', p_id::text,
@@ -1896,7 +1945,9 @@ begin
                  where id = v_uid and registration_completed_at is not null) then
     raise exception 'not_completed';
   end if;
-  select * into v_poll from public.polls where id = p_poll_id;
+  -- FOR SHARE serializes this vote against admin_close_poll's row update
+  -- (check-then-insert race) without votes blocking each other
+  select * into v_poll from public.polls where id = p_poll_id for share;
   if not found or v_poll.status = 'draft' then raise exception 'invalid_target'; end if;
   if v_poll.status <> 'open'
      or (v_poll.ends_at is not null and now() > v_poll.ends_at) then
@@ -1926,6 +1977,14 @@ begin
   if v_uid is null then raise exception 'not_authenticated'; end if;
   if not exists (select 1 from public.delegates where id = v_uid) then
     raise exception 'not_a_delegate';
+  end if;
+  -- approved-only, mirroring delegate_team's hardening migration
+  -- (20260716120000_delegate_team_approved_gate.sql): pending/rejected
+  -- delegates get no team PII. Unreachable via UI (delegate pages gate
+  -- pre-approval) — this is the DB boundary.
+  if not exists (select 1 from public.delegates
+                 where id = v_uid and status = 'approved') then
+    raise exception 'not_approved';
   end if;
 
   return coalesce((
@@ -2249,7 +2308,7 @@ Into `Functions` (mirror the existing function-entry shape):
       admin_delete_poll: { Args: { p_id: string }; Returns: undefined };
       member_rsvp: { Args: { p_event_id: string; p_going: boolean }; Returns: undefined };
       member_cast_vote: { Args: { p_poll_id: string; p_option_id: string }; Returns: undefined };
-      delegate_team_rsvps: { Args: Record<string, never>; Returns: Json };
+      delegate_team_rsvps: { Args: Record<PropertyKey, never>; Returns: Json };
 ```
 
 (Before writing, open `lib/supabase/types.ts` and match the EXACT existing shape of a view entry and a zero-arg function entry — e.g. how `funnel_state`/`public_stats` are declared — and follow it byte-for-byte in style.)
@@ -2504,7 +2563,7 @@ git commit -m "feat: seed staging with community content (news, events+rsvps, po
 
 **Interfaces:**
 - Consumes: the script's existing `db` (service), `anon` clients, `signInAsSeededAdmin(phoneNational)` helper, the Phase 2 probe user (a COMPLETED member by the time earlier blocks ran), and the seeded content from Task 8.
-- Produces: the spec §4.6 guarantees, executable. Mirror the file's existing assertion style (`const { data, error } = …; if (…) { console.error("FAIL …"); process.exitCode = 1; }` or its local helper — match whatever the Phase 4 block uses, byte-for-byte in style).
+- Produces: the spec §4.6 guarantees, executable. Mirror the file's existing assertion style — it throws on failure (`if (cond) throw new Error("…")`) and has an `expectToken(promise, token, what)` helper for RPC-error assertions; match the Phase 4 block byte-for-byte in style.
 
 - [ ] **Step 1: Append the Phase 5 block** at the end of the script (after the Phase 4 block), implementing exactly these probes — complete logic, adapted to the file's helper idiom:
 
@@ -2523,6 +2582,11 @@ git commit -m "feat: seed staging with community content (news, events+rsvps, po
   // expect: no error; total_gel ≥ 0; registered_members > 0; approved_delegates > 0
   const { data: regions, error: regionsErr } = await anon.from("transparency_regions").select("*");
   // expect: no error; exactly 11 rows; every row has registered ≥ active ≥ 0
+  // expect: anon public_news count === 4 (the seed's public published set) AND
+  //         the members-only article's slug is NOT among the returned slugs
+  //         (fetch that slug via the service client by visibility='members')
+  // expect: extend the script's existing non-admin zero-row/denial loop to
+  //         cover admin_news / admin_events / admin_polls / admin_poll_options
 }
 
 // P5.2 transparency figures equal service-side ground truth (derived, never stored)
@@ -2542,7 +2606,9 @@ git commit -m "feat: seed staging with community content (news, events+rsvps, po
   // member_cast_vote(openPollId, anyOptionId) → error containing 'not_completed'
 }
 
-// P5.4 completed member (the Phase 2 probe user, already completed by that block):
+// P5.4 completed member (the Phase 2 probe user, already completed by that block).
+// RE-RUNNABLE: first, service-delete this user's poll_votes/event_rsvps rows on
+// the probe targets — prior runs leave them behind.
 {
   // member_news: ≥1 row with visibility = 'members' (the seeded internal article)
   // member_polls: both open polls + the closed poll visible
@@ -2551,16 +2617,45 @@ git commit -m "feat: seed staging with community content (news, events+rsvps, po
   //   poll_option_counts for that poll → 0 rows (counts stay hidden pre-vote)
   // member_cast_vote(untouchedPollId, firstOptionId) → ok
   //   poll_option_counts for that poll → now 4 rows, votes summing ≥ 1
-  //   own-vote readback: authed.from("poll_votes").select("*") → EXACTLY 1 row (RLS own-row)
+  //   own-vote readback: authed.from("poll_votes").select("poll_id, option_id, member_id")
+  //     → EXACTLY 1 row (RLS own-row). NOTE: select("*") would 42501 —
+  //     created_at is deliberately OUTSIDE the column grant; never widen it
   // member_cast_vote(same poll, secondOptionId) → error containing 'already_voted'
   //   (this is the PK, not app code — assert the error, then confirm the vote count is still 1)
+  // member_cast_vote(untouchedPollId, an option id belonging to ANOTHER poll) → 'invalid_option'
+  // member_cast_vote(a service-created DRAFT poll's id, any option) → 'invalid_target'
+  //   (service-create + delete that draft inside this block)
   // the closed poll: poll_option_counts → rows visible WITHOUT this user voting
-  // RSVP toggle: member_rsvp(upcomingEventId, true) → ok;
-  //   own rsvp row status 'going'; member_rsvp(same, false) → ok;
-  //   authed.from("event_rsvps").select("*").eq("event_id", upcomingEventId) → EXACTLY 1 row, status 'cancelled'
+  // member_event_going_counts: the upcomingEventId row equals a service-side
+  //   count of live 'going' rsvps for that event
+  // RSVP toggle: member_rsvp(upcomingEventId, true) → ok; member_rsvp(same, false) → ok;
+  //   authed.from("event_rsvps").select("event_id, member_id, status")
+  //     .eq("event_id", upcomingEventId) → EXACTLY 1 row, status 'cancelled'
+  //     (same column-grant note as poll_votes — select("*") would 42501)
   // member_rsvp(pastEventId, true) → error 'rsvp_closed'
   // member_rsvp(cancelledEventId, true) → error 'rsvp_closed'
+  // write-denial: authed.from("news").insert({ title: "x", body: "y" }) → error
+  //   (zero client write paths on the six base tables)
 }
+
+// Worked example of the expected idiom for the vote sequence (the file's
+// throw/expectToken style — every other P5 bullet follows this shape):
+//
+//   const { data: openPoll } = await db.from("polls")
+//     .select("id").eq("question", "სად გავმართოთ შემდეგი საერთო კრება?").single();
+//   if (!openPoll) throw new Error("P5: seeded untouched poll missing");
+//   const { data: opts } = await db.from("poll_options")
+//     .select("id, position").eq("poll_id", openPoll.id).order("position");
+//   if (!opts || opts.length !== 4) throw new Error("P5: expected 4 options");
+//   const { error: voteErr } = await authed.rpc("member_cast_vote", {
+//     p_poll_id: openPoll.id, p_option_id: opts[0].id });
+//   if (voteErr) throw new Error(`P5: first vote failed: ${voteErr.message}`);
+//   await expectToken(
+//     authed.rpc("member_cast_vote", { p_poll_id: openPoll.id, p_option_id: opts[1].id }),
+//     "already_voted", "second vote must hit the PK");
+//   const { count: voteCount } = await db.from("poll_votes")
+//     .select("*", { count: "exact", head: true }).eq("poll_id", openPoll.id);
+//   if (voteCount !== 1) throw new Error(`P5: expected exactly 1 vote, got ${voteCount}`);
 
 // P5.5 editor RPCs: audit-in-transaction + role gate + late-vote wall
 {
@@ -2573,7 +2668,28 @@ git commit -m "feat: seed staging with community content (news, events+rsvps, po
   // editor.rpc admin_close_poll(pollId) → ok; audit 'poll.close' → 1
   // verifier = await signInAsSeededAdmin("509000002");
   // verifier.rpc admin_save_news(null, "X", "Y", "public") → error containing 'missing_role'
-  // cleanup: service delete polls where id=pollId (closed → not deletable via RPC; probes clean directly)
+  // slug permanence + delete guard (editor):
+  //   articleId = admin_save_news(null, "პრობის სიახლე", "პრობის ტანი", "public")
+  //   admin_publish_news(articleId, "probis-siakhle") → slug S; audit 'news.publish' → 1
+  //   admin_unpublish_news(articleId) → anon public_news no longer returns S
+  //   admin_publish_news(articleId, "sxva-slagi") → returned slug is STILL S (permanent)
+  //   admin_delete_news(articleId) → error 'invalid_status' (was published once)
+  // cleanup: service delete polls where id=pollId AND the probe article
+  //   (closed/once-published content is not deletable via RPC — probes clean directly)
+}
+
+// P5.7 delegate_team_rsvps — the one PII-bearing surface
+{
+  // the P5.4 completed member (not a delegate): rpc → error 'not_a_delegate'
+  // a seeded APPROVED delegate: sign in via the dev_otp_inbox flow (same
+  //   mechanics as signInAsSeededAdmin, phone = an approved delegate's, read
+  //   from the roster via the service client): rpc → jsonb array of upcoming
+  //   published events; TEAM ISOLATION: every 'going' name in the result must
+  //   belong to THAT delegate's current team (service-verify the name set
+  //   against memberships where delegate_id = that delegate and ended_at is null)
+  // (the pending-delegate 'not_approved' branch is enforced by the migration's
+  //  gate mirroring 20260716120000 and checked in code review — seeded pending
+  //  delegates carry no team, so a live probe would assert nothing)
 }
 
 // P5.6 storage: news-images bucket exists and is public
@@ -4034,6 +4150,7 @@ git commit -m "feat: cabinet polls — prototype voting UX on the real one-vote 
 
 **Interfaces:**
 - Consumes: `delegate_team_rsvps()` RPC (Task 6), `formatEventTimeKa`, `formatCountKa`, `Card`.
+- Deliberate scope: the overview lists PUBLISHED upcoming events only (the RPC filters `status = 'published'`) — a cancelled event's attendance is operationally moot, so it drops off the delegate's list while the member cabinet still shows the cancelled card (pill, no controls). Intentional asymmetry, per review.
 - Produces:
   - `interface TeamRsvpName { firstName: string; lastName: string }`
   - `interface TeamRsvpEvent { eventId: string; title: string; startsAt: string; goingCount: number; going: TeamRsvpName[] }` (mirrors the RPC jsonb exactly — DelegatePanelData precedent)
@@ -4904,38 +5021,38 @@ export default async function AdminNewsListPage() {
           ახალი სიახლე
         </ButtonLink>
       </div>
-      <DataTable>
-        <thead>
-          <tr>
+      <DataTable
+        bodyTestId="admin-news-body"
+        head={
+          <>
             <th className={tableThClass}>სათაური</th>
             <th className={tableThClass}>ხილვადობა</th>
             <th className={tableThClass}>სტატუსი</th>
             <th className={tableThClass}>გამოქვეყნდა</th>
             <th className={tableThClass}></th>
+          </>
+        }
+      >
+        {rows.map((n) => (
+          <tr key={n.id} className={tableRowClass}>
+            <td className={`${tableCellClass} font-semibold text-ink`}>{n.title}</td>
+            <td className={tableCellClass}>{VISIBILITY_LABELS_KA[n.visibility]}</td>
+            <td className={tableCellClass}>
+              <Pill {...contentPill(n.status)} />
+            </td>
+            <td className={tableCellClass}>
+              {n.published_at ? formatDateKa(n.published_at) : "—"}
+            </td>
+            <td className={tableCellClass}>
+              <Link
+                href={`/admin/content/news/${n.id}`}
+                className="font-semibold text-brand hover:underline"
+              >
+                რედაქტირება
+              </Link>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((n) => (
-            <tr key={n.id} className={tableRowClass}>
-              <td className={`${tableCellClass} font-semibold text-ink`}>{n.title}</td>
-              <td className={tableCellClass}>{VISIBILITY_LABELS_KA[n.visibility]}</td>
-              <td className={tableCellClass}>
-                <Pill {...contentPill(n.status)} />
-              </td>
-              <td className={tableCellClass}>
-                {n.published_at ? formatDateKa(n.published_at) : "—"}
-              </td>
-              <td className={tableCellClass}>
-                <Link
-                  href={`/admin/content/news/${n.id}`}
-                  className="font-semibold text-brand hover:underline"
-                >
-                  რედაქტირება
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        ))}
       </DataTable>
       {rows.length === 0 ? <p className="mt-4 text-sm text-muted-fg">ჯერ ცარიელია.</p> : null}
     </div>
@@ -4943,7 +5060,7 @@ export default async function AdminNewsListPage() {
 }
 ```
 
-(Open `components/DataTable.tsx` first and use its REAL exported class names/props — the imports above mirror the admin overview page's usage.)
+(This matches the REAL DataTable API — a required `head` prop taking the `<th>` fragment and bare `<tr>` rows as children; `app/(admin)/admin/audit/page.tsx` is the reference usage. Never pass `<thead>`/`<tbody>` as children — `head` is required and the component builds the table skeleton itself.)
 
 `app/(admin)/admin/content/news/new/page.tsx`:
 
@@ -5482,38 +5599,38 @@ export default async function AdminEventsListPage() {
           ახალი ღონისძიება
         </ButtonLink>
       </div>
-      <DataTable>
-        <thead>
-          <tr>
+      <DataTable
+        bodyTestId="admin-events-body"
+        head={
+          <>
             <th className={tableThClass}>დასახელება</th>
             <th className={tableThClass}>დრო</th>
             <th className={tableThClass}>ადგილი</th>
             <th className={tableThClass}>სტატუსი</th>
             <th className={tableThClass}>მოდის</th>
             <th className={tableThClass}></th>
+          </>
+        }
+      >
+        {rows.map((e) => (
+          <tr key={e.id} className={tableRowClass}>
+            <td className={`${tableCellClass} font-semibold text-ink`}>{e.title}</td>
+            <td className={tableCellClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
+            <td className={tableCellClass}>{e.location}</td>
+            <td className={tableCellClass}>
+              <Pill {...contentPill(e.status)} />
+            </td>
+            <td className={tableCellClass}>{formatCountKa(e.going_count)}</td>
+            <td className={tableCellClass}>
+              <Link
+                href={`/admin/content/events/${e.id}`}
+                className="font-semibold text-brand hover:underline"
+              >
+                რედაქტირება
+              </Link>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((e) => (
-            <tr key={e.id} className={tableRowClass}>
-              <td className={`${tableCellClass} font-semibold text-ink`}>{e.title}</td>
-              <td className={tableCellClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
-              <td className={tableCellClass}>{e.location}</td>
-              <td className={tableCellClass}>
-                <Pill {...contentPill(e.status)} />
-              </td>
-              <td className={tableCellClass}>{formatCountKa(e.going_count)}</td>
-              <td className={tableCellClass}>
-                <Link
-                  href={`/admin/content/events/${e.id}`}
-                  className="font-semibold text-brand hover:underline"
-                >
-                  რედაქტირება
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        ))}
       </DataTable>
       {rows.length === 0 ? <p className="mt-4 text-sm text-muted-fg">ჯერ ცარიელია.</p> : null}
     </div>
@@ -5963,6 +6080,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { contentPill } from "@/lib/admin";
+import { formatDateKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa } from "@/lib/community";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -5986,38 +6104,43 @@ export default async function AdminPollsListPage() {
           ახალი გამოკითხვა
         </ButtonLink>
       </div>
-      <DataTable>
-        <thead>
-          <tr>
+      <DataTable
+        bodyTestId="admin-polls-body"
+        head={
+          <>
             <th className={tableThClass}>კითხვა</th>
             <th className={tableThClass}>სტატუსი</th>
             <th className={tableThClass}>ხმები</th>
+            <th className={tableThClass}>თარიღები</th>
             <th className={tableThClass}>ბოლო ვადა</th>
             <th className={tableThClass}></th>
+          </>
+        }
+      >
+        {rows.map((p) => (
+          <tr key={p.id} className={tableRowClass}>
+            <td className={`${tableCellClass} font-semibold text-ink`}>{p.question}</td>
+            <td className={tableCellClass}>
+              <Pill {...contentPill(p.status)} />
+            </td>
+            <td className={tableCellClass}>{formatCountKa(p.total_votes)}</td>
+            <td className={tableCellClass}>
+              {p.opened_at ? `გაიხსნა ${formatDateKa(p.opened_at)}` : "—"}
+              {p.closed_at ? ` · დაიხურა ${formatDateKa(p.closed_at)}` : ""}
+            </td>
+            <td className={tableCellClass}>
+              {p.ends_at ? formatEventTimeKa(p.ends_at, null) : "—"}
+            </td>
+            <td className={tableCellClass}>
+              <Link
+                href={`/admin/content/polls/${p.id}`}
+                className="font-semibold text-brand hover:underline"
+              >
+                {p.status === "draft" ? "რედაქტირება" : "ნახვა"}
+              </Link>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((p) => (
-            <tr key={p.id} className={tableRowClass}>
-              <td className={`${tableCellClass} font-semibold text-ink`}>{p.question}</td>
-              <td className={tableCellClass}>
-                <Pill {...contentPill(p.status)} />
-              </td>
-              <td className={tableCellClass}>{formatCountKa(p.total_votes)}</td>
-              <td className={tableCellClass}>
-                {p.ends_at ? formatEventTimeKa(p.ends_at, null) : "—"}
-              </td>
-              <td className={tableCellClass}>
-                <Link
-                  href={`/admin/content/polls/${p.id}`}
-                  className="font-semibold text-brand hover:underline"
-                >
-                  {p.status === "draft" ? "რედაქტირება" : "ნახვა"}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        ))}
       </DataTable>
       {rows.length === 0 ? <p className="mt-4 text-sm text-muted-fg">ჯერ ცარიელია.</p> : null}
     </div>
@@ -6156,18 +6279,51 @@ git commit -m "feat: admin polls — option-row form, open/close lifecycle, live
 
 ```ts
 import type { Page } from "@playwright/test";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { serviceClient } from "./admin-helpers";
 
 /**
  * Drive a per-run user (phase4Phone(k)) through the FULL member funnel to
  * completed registration. Implementation: extract the working member-creation
- * sequence VERBATIM from e2e/admin-payments.spec.ts (its PAYER beforeAll) —
- * same passStep1/fillStep2Basics calls, same tier-step interactions, same
- * expectations — parameterized by k. Do not invent new selectors; if
- * admin-payments wraps any step in helpers, reuse those helpers.
+ * sequence VERBATIM from e2e/admin-payments.spec.ts — its FIRST test block
+ * ("a fresh member registers…", ~lines 19–43; the beforeAll only does
+ * cleanup) — same passStep1/fillStep2Basics calls, same tier-step
+ * interactions, same expectations — parameterized by k. Do not invent new
+ * selectors; if admin-payments wraps any step in helpers, reuse those helpers.
  */
 export async function registerCompletedMember(page: Page, k: number): Promise<void> {
   // (verbatim extraction as described above)
+}
+
+/**
+ * A supabase-js client authenticated AS the browser's current member, for
+ * direct RPC assertions (spec §7: "asserted via a direct second RPC call").
+ * Reads the @supabase/ssr auth cookie(s) from the Playwright context —
+ * possibly chunked (`sb-…-auth-token.0/.1`), possibly `base64-`-prefixed —
+ * and mounts the access token as a Bearer header. If the cookie format ever
+ * shifts, inspect the sb-*-auth-token cookie(s): the access_token JWT is
+ * inside; adapt the decode, do not weaken the assertion.
+ */
+export async function memberRpcClient(page: Page): Promise<SupabaseClient> {
+  const cookies = await page.context().cookies();
+  const joined = cookies
+    .filter((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name))
+    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))
+    .map((c) => c.value)
+    .join("");
+  if (!joined) throw new Error("memberRpcClient: no sb auth cookie in context");
+  const raw = joined.startsWith("base64-")
+    ? Buffer.from(joined.slice("base64-".length), "base64").toString("utf8")
+    : decodeURIComponent(joined);
+  const session = JSON.parse(raw) as { access_token?: string };
+  if (!session.access_token) throw new Error("memberRpcClient: no access_token in cookie");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error("memberRpcClient needs staging env");
+  return createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${session.access_token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 /** Service-side cleanup of per-run content by title marker (cascades votes/rsvps/options). */
@@ -6418,7 +6574,7 @@ git commit -m "test(e2e): RSVP toggle + delegate team overview critical flow"
 import { expect, test } from "@playwright/test";
 import { formatCountKa } from "../lib/format";
 import { ADMIN_PHONES, cleanupPhase4Users, loginAs, phase4Phone, serviceClient, signOutViaNav } from "./admin-helpers";
-import { cleanupCommunityContent, registerCompletedMember } from "./community-helpers";
+import { cleanupCommunityContent, memberRpcClient, registerCompletedMember } from "./community-helpers";
 
 const VOTER = 8; // phase4Phone(8)
 const WATCHER = 9; // phase4Phone(9) — never votes; sees results only after close
@@ -6461,7 +6617,6 @@ test("vote once, results per the visibility rule, transparency derives from the 
   await expect(pollCard.getByRole("button", { name: "დიახ" })).not.toBeVisible();
   await page.reload();
   await expect(pollCard.getByText(/✓ შენ უკვე მიეცი ხმა/)).toBeVisible(); // persisted
-  await signOutViaNav(page);
 
   // DB truth: the vote is a single PK row
   const db = serviceClient();
@@ -6471,6 +6626,26 @@ test("vote once, results per the visibility rule, transparency derives from the 
     .select("*", { count: "exact", head: true })
     .eq("poll_id", pollRow!.id as string);
   expect(count).toBe(1);
+
+  // Spec §7: the constraint itself, via a DIRECT second RPC call as the voter
+  // (the UI can't even attempt it — the buttons are gone once voted). Runs
+  // BEFORE sign-out: memberRpcClient reads the live session cookie.
+  const { data: optRows } = await db
+    .from("poll_options")
+    .select("id, position")
+    .eq("poll_id", pollRow!.id as string)
+    .order("position");
+  const voterRpc = await memberRpcClient(page);
+  const { error: directErr } = await voterRpc.rpc("member_cast_vote", {
+    p_poll_id: pollRow!.id as string,
+    p_option_id: optRows![1]!.id as string,
+  });
+  expect(directErr?.message ?? "").toContain("already_voted");
+  const { count: afterDirect } = await db
+    .from("poll_votes")
+    .select("*", { count: "exact", head: true })
+    .eq("poll_id", pollRow!.id as string);
+  expect(afterDirect).toBe(1);
 
   // 2) a NON-voter sees buttons, not results, while open
   await registerCompletedMember(page, WATCHER);
@@ -6510,6 +6685,27 @@ test("vote once, results per the visibility rule, transparency derives from the 
       .locator("..")
       .getByText(formatCountKa(registered ?? 0)),
   ).toBeVisible();
+  const { count: approvedDelegates } = await db
+    .from("delegates")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "approved");
+  await expect(
+    page
+      .locator("div", { hasText: /^დამტკიცებული დელეგატი$/ })
+      .locator("..")
+      .getByText(formatCountKa(approvedDelegates ?? 0)),
+  ).toBeVisible();
+  // one region row (spec §7): the busiest region's numbers, in its table row
+  // (if registered === active there, disambiguate the second assertion with .first())
+  const { data: topRegion } = await db
+    .from("transparency_regions")
+    .select("*")
+    .order("registered", { ascending: false })
+    .limit(1)
+    .single();
+  const regionRow = page.getByRole("row", { name: new RegExp(topRegion!.name_ka) });
+  await expect(regionRow.getByText(formatCountKa(topRegion!.registered))).toBeVisible();
+  await expect(regionRow.getByText(formatCountKa(topRegion!.active))).toBeVisible();
 });
 ```
 
@@ -6646,6 +6842,7 @@ In `package.json`: `"version": "0.6.0"`.
 - [ ] **Step 6: Final gates and push**
 
 ```bash
+npm run format
 npm run lint && npm run typecheck && npx vitest run && npm run build && npm run format:check
 node scripts/verify-schema.mjs
 npx playwright test
