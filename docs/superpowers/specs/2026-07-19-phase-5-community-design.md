@@ -207,9 +207,10 @@ site-wide fallback. Committed asset, generated once during implementation.
 
 All schema via one migration `supabase/migrations/<timestamp>_community.sql`,
 applied with the documented pooler procedure. Enums as text + CHECK constraints (house style).
-`created_by uuid references profiles(id)` on authored rows is internal (never
-exposed publicly). All date-window checks use `tbilisi_today()` / timestamptz
-comparisons per ADR-016.
+`created_by uuid references profiles(id) on delete set null` on authored rows is
+internal (never exposed publicly; in practice authors are canonical admins —
+e2e/per-run users can never author because they never hold the editor role). All
+date-window checks use `tbilisi_today()` / timestamptz comparisons per ADR-016.
 
 ### 4.1 Tables
 
@@ -244,20 +245,27 @@ Base tables get **no** anon/authenticated SELECT grants; reads go through views:
 - `public_events` — status in ('published','cancelled') (id, slug, title,
   description, location, starts_at, ends_at, status, published_at). Granted anon +
   authenticated. (Cancelled stays visible by design; drafts never appear.)
-- `member_news` — published rows of both visibilities, **self-gating**: returns
-  zero rows unless `auth.uid()` has a completed registration
-  (`registration_completed_at is not null`) — the DB-level meaning of
-  „წევრებისთვის". Granted authenticated.
+- `member_news` — published rows of both visibilities (id, slug, title, body,
+  image_path, visibility, published_at — `visibility` drives the feed's
+  „წევრებისთვის" pill), **self-gating**: returns zero rows unless `auth.uid()`
+  has a completed registration (`registration_completed_at is not null`) — the
+  DB-level meaning of „წევრებისთვის". Granted authenticated.
 - `member_polls` — status in ('open','closed') with opened_at/closed_at/ends_at,
   self-gating on completed registration. Granted authenticated.
-- `poll_option_counts` — poll_id, option_id, position, label, votes::int, gated per
-  poll: rows visible iff the caller has a completed registration AND (has a vote in
-  that poll OR the poll is closed) — the decision-#4 rule, enforced in the database.
+- `member_poll_options` — poll_id, option_id, position, label for open/closed
+  polls, self-gating on completed registration. **This is what renders the option
+  buttons before voting** — labels are always member-visible; only counts are
+  gated. Granted authenticated.
+- `poll_option_counts` — poll_id, option_id, votes::int, gated per poll: rows
+  visible iff the caller has a completed registration AND (has a vote in that
+  poll OR the poll is closed) — the decision-#4 rule, enforced in the database.
   Granted authenticated.
 - `event_rsvps`: RLS SELECT own rows (`member_id = auth.uid()`) so the cabinet can
   join its own state; the internal going-count comes through
   `member_event_going_counts` (event_id, going::int; self-gating on completed
   registration).
+- `poll_votes`: RLS SELECT own rows (`member_id = auth.uid()`) — how the cabinet
+  knows whether you voted and marks your choice; never anyone else's row.
 - Admin: `admin_news`, `admin_events` (+ per-event going counts), `admin_polls`
   (+ per-option counts) — self-gating definer views for editor|super_admin, ADR-014
   pattern (zero rows otherwise).
@@ -276,8 +284,9 @@ Base tables get **no** anon/authenticated SELECT grants; reads go through views:
 ### 4.4 Grants and RLS riders
 
 - All six tables: RLS enabled; no direct table grants to anon; authenticated gets
-  only `event_rsvps` SELECT-own (via policy + column-scoped grant). All writes go
-  through RPCs (`authenticated` EXECUTE grants on exactly the §4.5 functions).
+  only own-row SELECT on `event_rsvps` and `poll_votes` (policy + column-scoped
+  grant). All writes go through RPCs (`authenticated` EXECUTE grants on exactly
+  the §4.5 functions).
 - Storage: new **public bucket `news-images`** mirroring `delegate-photos` (public
   read; writes only via the service-role upload action paired with the re-checking
   RPC; path `news/<news_id>/cover-<rev>.<ext>`).
@@ -325,8 +334,10 @@ funnel/cabinet precedent):
 New Phase 5 block: anon sees `public_news`/`public_events`/`transparency_*` but
 zero draft/member-only rows and no base tables; a pre-completion authenticated user
 gets zero rows from the member views; a completed member sees member-only news,
-gets `poll_option_counts` only after voting or close; double vote → `already_voted`
-(PK, not app code); RSVP toggle keeps exactly one row; editor RPCs write audit rows
+sees an open poll's option labels **before** voting (`member_poll_options`) while
+`poll_option_counts` stays empty until they vote or the poll closes, and reads back
+their own vote (and only their own); double vote → `already_voted` (PK, not app
+code); RSVP toggle keeps exactly one row; editor RPCs write audit rows
 in-transaction; non-editor calling an editor RPC → role error; late vote past
 `ends_at` → `poll_closed`.
 
@@ -334,10 +345,11 @@ in-transaction; non-editor calling an editor RPC → role error; late vote past
 
 Extends the wipe-safe seed: ~6 news (mixed visibility, one with a seeded cover, one
 draft), ~5 events (upcoming ×2, past ×2, cancelled ×1) with RSVPs spread across
-teams, 3 polls (open-with-votes, open-untouched, closed-with-results). Content
-authored by the canonical editor admin (+995509000004) so audit actors stay
-canonical; e2e per-run users (`55XXXXXXX` phones, `9…` personal IDs) may only be
-targets/voters, never authors.
+teams, 3 polls (open-with-votes, open-untouched, closed-with-results). The seed writes
+content rows directly (service role, like payments), stamping `created_by` = the
+canonical editor admin (+995509000004); audit rows arise only from real RPC
+actions, which probes/e2e perform as canonical admins; e2e per-run users
+(`55XXXXXXX` phones, `9…` personal IDs) may only be targets/voters, never authors.
 
 ## 5. Domain logic (`lib/`, pure, TDD)
 
@@ -347,8 +359,10 @@ targets/voters, never authors.
   `dangerouslySetInnerHTML`) with `rel="noopener noreferrer nofollow"`,
   `target="_blank"`. Also `excerpt(text, max): string` for list cards and OG
   descriptions (first paragraph, word-boundary trim, ellipsis).
-- `lib/slug.ts` — `transliterateKa(text): string` (national romanization: ა→a …
-  ჰ→h, including წ→ts, ჭ→tch, ხ→kh, ჟ→zh, ღ→gh, შ→sh, ჩ→ch, ც→ts, ძ→dz), then
+- `lib/slug.ts` — `transliterateKa(text): string` (national romanization 2002
+  with apostrophes dropped: ა→a … ჰ→h, e.g. ხ→kh, ჟ→zh, ღ→gh, შ→sh, ჩ→ch, ც→ts,
+  ძ→dz, წ→ts, ჭ→ch, ყ→q; the full 33-letter table lives in the function with an
+  exhaustive test), then
   `mintSlug(title): string` — lowercase, non-`[a-z0-9]` runs → single hyphen,
   trim/collapse, ≤80, empty fallback (`article`/`event` + date); `withSuffix(slug,
   n)` for collision retries. Shared by news and events actions.
@@ -390,6 +404,13 @@ targets/voters, never authors.
   ever round-trips.
 - Public 404s for anything unpublished/member-only keep drafts unenumerable
   (slugs are only minted at publish, so draft URLs don't exist).
+- **Accepted exposure (same model as delegate photos):** cover images — including
+  member-only articles' covers — live in the public `news-images` bucket; anyone
+  holding the exact URL sees the image (never the text). Paths embed unguessable
+  UUIDs; covers are illustrative by policy — a member-only article that would need
+  a sensitive image simply doesn't get one. The stricter alternative (private
+  bucket + signed URLs) is recorded here as the later fix if that policy ever
+  changes.
 - Georgian inline errors for every failure token (`already_voted`, `poll_closed`,
   `rsvp_closed`, `invalid_slug`, role errors) in the house error-mapping location
   (`lib/funnel.ts`'s token → Georgian map, per the Phase 2–4 precedent).
