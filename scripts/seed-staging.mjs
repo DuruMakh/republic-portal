@@ -226,7 +226,7 @@ await insertChunked(
           reference_code: refCodeFor(p.i),
           registration_completed_at: daysAgoIso(30 + (p.i % 200)),
         }),
-    ...(p.delegate ? { signup_role: "delegate" } : {}),
+    signup_role: p.delegate ? "delegate" : "member",
   })),
 );
 
