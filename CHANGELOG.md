@@ -14,6 +14,13 @@
 - Reassignment of ცენტრალური მოძრაობა members to delegates (history kept)
 - Append-only audit log for every admin action + viewer with filters
 - Personal-ID column lockdown: exactly two audited read paths remain
+- Pre-release hardening pass, 2026-07-18 (ADR-016): Tbilisi-aligned date checks
+  in SQL, duplicate backstop for reference-less single payments, approval
+  requires a completed registration, CSV formula-injection neutralization,
+  member-facing payments columns restricted, serialized last-super-admin guard,
+  honest bulk previews (within-batch duplicates, real calendar dates, code
+  word-boundary), fresh finance stats after recording, reseed survives real
+  staging life
 
 ## 0.4.0 — 2026-07-16 (Phase 3: cabinets)
 

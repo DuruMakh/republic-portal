@@ -191,3 +191,41 @@ unrecordable on either path. payments.member_id now cascades on profile deletion
 cleanup; the platform has no member-deletion flow; audit targets are text).
 Expiry runs nightly via pg_cron ('active-member-sweep', 01:00 UTC = 05:00
 Tbilisi), auditing system.active_sweep with the demoted count.
+
+## ADR-016 (2026-07-18): Post-review hardening batch (v0.5.0 fix pass)
+
+An adversarial 10-angle review of the Phase 4 branch confirmed 26 defects; all
+were fixed pre-release. Decisions worth recording:
+
+- **Tbilisi is THE day source, in SQL too.** All RPC date windows and the
+  active-member engine now call tbilisi_today() ((now() at time zone
+  'Asia/Tbilisi')::date) instead of current_date (UTC session day). Previously
+  a payment dated "today" was rejected between 00:00 and 04:00 Tbilisi and
+  active-ness flipped 4h late; TS (todayTbilisiIso) and SQL now agree at every
+  hour. One TBILISI_OFFSET_MS constant (lib/cabinet.ts) feeds every TS helper.
+- **Reference-less payments get the member+amount+date duplicate backstop in
+  admin_record_payment too** — the live-ref unique index cannot see NULL
+  references, and the reference field is optional, so the same transfer entered
+  twice with the field blank double-credited a member. Distinct same-day
+  same-amount transfers stay recordable: give them their distinct bank refs.
+- **Approval requires registration_completed_at.** The delegates row exists
+  from funnel step 2, so an abandoned applicant could be approved and published
+  with no tier and no reference code. The queue view also hides incomplete
+  applicants (they reappear the moment they finish step 3).
+- **CSV cells are formula-neutralized** (leading = @ tab, and non-numeric +/-,
+  prefixed with an apostrophe): member-supplied names must never execute in the
+  finance team's Excel (CSV injection). Phones and amounts pass through.
+- **payments column privileges**: members read exactly the billing-page columns
+  of their own rows; recorded_by / voided_by / void_reason (may name fraud
+  suspicions) are admin-view-only. Enforced with a column-level grant.
+- **Last-super-admin guard is serialized** with pg_advisory_xact_lock — the
+  count check alone was check-then-act under concurrency.
+- **serverActions.bodySizeLimit stays 6mb globally** (Next has no per-action
+  override; needed by the 5MB photo upload). Accepted exposure: every public
+  action also takes 6MB bodies pre-zod. Revisit if uploads move to signed
+  direct-to-storage URLs (the deeper fix, deferred).
+- **The seed survives real staging life**: it wipes payments outright, skips
+  every append-only audit actor (not just the 4 canonical admins), reuses an
+  orphaned canonical auth user after a mid-seed crash, and widens the
+  approved-delegates assertion by wipe survivors — reseeding can no longer
+  brick on FK 23503, "phone already registered", or a QA payment.

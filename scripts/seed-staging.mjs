@@ -1,8 +1,10 @@
 /**
  * Seeds STAGING with the prototype roster. Destructive by design: wipes all
- * auth users EXCEPT the 4 canonical admins (permanent audit actors — see below),
- * then recreates roster delegates + their supporter members deterministically.
- * Reseeding is routine drift recovery: the admin steps are all idempotent.
+ * payments and all auth users EXCEPT permanent audit actors (the 4 canonical
+ * admins + anyone who ever acted in the append-only audit log — deleting an
+ * actor is impossible, FK 23503), then recreates roster delegates + their
+ * supporter members deterministically. Reseeding is routine drift recovery:
+ * the admin steps are all idempotent and orphan-tolerant.
  *
  * Phase 4: statuses are NO LONGER hand-written. The seed writes payment
  * histories (bank_reference "SEED-<i>") and lets the engine derive
@@ -118,11 +120,12 @@ async function insertChunked(table, rows, chunk = 500) {
 
 console.log(`Seeding project ${ref} …`);
 
-// 1) Full reset: delete every auth user EXCEPT the canonical admins. They are
-// permanent audit ACTORS — audit_log.actor_id is a plain FK and audit rows are
-// append-only, so once an admin has acted, deleting them is IMPOSSIBLE (FK 23503);
-// skipping them is what keeps reseeds repeatable. Cascades handle everyone else:
-// profiles → delegates/memberships/payments.
+// 1) Full reset: delete every auth user EXCEPT the permanent audit ACTORS —
+// audit_log.actor_id is a plain FK and audit rows are append-only, so once an
+// admin has acted, deleting them is IMPOSSIBLE (FK 23503). That covers the 4
+// canonical admins AND any admin the owner granted via grant-admin.mjs; the
+// wipe must SKIP all of them or it aborts half-done on the FK. Cascades handle
+// everyone else: profiles → delegates/memberships.
 const ADMIN_AUTH_PHONES = new Set(
   [1, 2, 3, 4].map((n) => `99550900000${n}`), // auth stores phones without '+'
 );
@@ -136,11 +139,42 @@ const isCanonicalAdmin = (u) => ADMIN_AUTH_PHONES.has((u.phone ?? "").replace(/^
 // (id is bigserial, always > 0 — matches all rows.)
 const { error: detachErr } = await db.from("memberships").delete().gte("id", 0);
 if (detachErr) throw new Error(`membership wipe failed: ${detachErr.message}`);
+// Payments are wiped outright, not left to the profile cascade: (a) a QA
+// payment recorded FOR a wipe-surviving admin would otherwise persist, make the
+// engine mark them active and poison the exact-count assertions forever, and
+// (b) payments.recorded_by/voided_by reference the recording admin, blocking
+// user deletion in FK-order-dependent ways. Every payment is re-created below.
+const { error: payWipeErr } = await db.from("payments").delete().gte("id", 0);
+if (payWipeErr) throw new Error(`payments wipe failed: ${payWipeErr.message}`);
+// app_settings.updated_by references profiles — clear it so a settings change
+// by a non-canonical admin never blocks that admin's (or anyone's) deletion.
+const { error: settingsDetachErr } = await db
+  .from("app_settings")
+  .update({ updated_by: null })
+  .not("updated_by", "is", null);
+if (settingsDetachErr) throw new Error(`app_settings detach failed: ${settingsDetachErr.message}`);
+// Undeletable users = anyone who ever ACTED in the audit log (append-only —
+// those rows can never be cleared) + current role holders (about to act).
+const protectedIds = new Set();
+for (let off = 0; ; off += 1000) {
+  const { data: acts, error: actErr } = await db
+    .from("audit_log")
+    .select("actor_id")
+    .not("actor_id", "is", null)
+    .order("id")
+    .range(off, off + 999);
+  if (actErr) throw new Error(`audit actors read failed: ${actErr.message}`);
+  for (const a of acts ?? []) protectedIds.add(a.actor_id);
+  if ((acts ?? []).length < 1000) break;
+}
+const { data: roleHolders, error: roleHoldersErr } = await db.from("admin_roles").select("user_id");
+if (roleHoldersErr) throw new Error(`admin_roles read failed: ${roleHoldersErr.message}`);
+for (const r of roleHolders ?? []) protectedIds.add(r.user_id);
 let wiped = 0;
 for (;;) {
   const { data, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (error) throw error;
-  const doomed = data.users.filter((u) => !isCanonicalAdmin(u));
+  const doomed = data.users.filter((u) => !isCanonicalAdmin(u) && !protectedIds.has(u.id));
   if (doomed.length === 0) break;
   await mapLimit(doomed, 10, async (u) => {
     const { error: e } = await db.auth.admin.deleteUser(u.id);
@@ -150,7 +184,32 @@ for (;;) {
 }
 const { error: otpWipe } = await db.from("dev_otp_inbox").delete().gte("id", 0);
 if (otpWipe) throw otpWipe;
-console.log(`wiped ${wiped} auth users + dev_otp_inbox (canonical admins kept)`);
+// One pass over what survived: canonical auth ids (get-or-create below reuses
+// them even when a prior crash left no profiles row — keying existence on
+// profiles alone bricked reseeding forever) + non-canonical survivors, whose
+// approved-delegate rows must widen the count assertions.
+const canonicalAuthIdByPhone = new Map();
+const survivorIds = [];
+for (let pageNo = 1; ; pageNo++) {
+  const { data: rem, error: remErr } = await db.auth.admin.listUsers({
+    page: pageNo,
+    perPage: 1000,
+  });
+  if (remErr) throw remErr;
+  for (const u of rem.users) {
+    const bare = (u.phone ?? "").replace(/^\+/, "");
+    if (ADMIN_AUTH_PHONES.has(bare)) canonicalAuthIdByPhone.set(`+${bare}`, u.id);
+    else survivorIds.push(u.id);
+  }
+  if (rem.users.length < 1000) break;
+}
+if (survivorIds.length > 0) {
+  console.warn(
+    `WARN: ${survivorIds.length} non-canonical audit actor(s) survive the wipe ` +
+      `(append-only audit rows make them undeletable); count assertions adjust below`,
+  );
+}
+console.log(`wiped ${wiped} auth users + all payments + dev_otp_inbox (audit actors kept)`);
 
 // 2) Region name → id
 const { data: regions, error: regErr } = await db.from("regions").select("id, name_ka");
@@ -310,12 +369,18 @@ for (const a of ADMIN_SEED) {
   if (priorErr) throw new Error(`admin lookup ${phone}: ${priorErr.message}`);
   let adminId = prior?.[0]?.id;
   if (!adminId) {
-    const { data: u, error: uErr } = await db.auth.admin.createUser({
-      phone,
-      phone_confirm: true,
-    });
-    if (uErr) throw new Error(`admin createUser ${phone}: ${uErr.message}`);
-    adminId = u.user.id;
+    // orphan-safe: a prior crash between createUser and the profiles insert
+    // leaves an auth user with no profile — reuse it instead of a createUser
+    // that fails "phone already registered" on every subsequent run
+    adminId = canonicalAuthIdByPhone.get(phone) ?? null;
+    if (!adminId) {
+      const { data: u, error: uErr } = await db.auth.admin.createUser({
+        phone,
+        phone_confirm: true,
+      });
+      if (uErr) throw new Error(`admin createUser ${phone}: ${uErr.message}`);
+      adminId = u.user.id;
+    }
     const { error: pErr } = await db.from("profiles").insert({
       id: adminId,
       first_name: a.first_name,
@@ -362,8 +427,23 @@ const { data: top, error: topErr } = await db
 if (topErr) throw topErr;
 
 console.log(`public_stats: ${JSON.stringify(stats)}; top: ${JSON.stringify(top)}`);
-if (stats.approved_delegates !== 12)
-  throw new Error(`expected 12 approved delegates, got ${stats.approved_delegates}`);
+// Wipe-surviving audit actors may hold approved delegates rows from an earlier
+// world — widen the expectation instead of failing a reseed forever. They can
+// never be active_member (the wipe deleted every payment), so 1636 stays exact.
+let expectedApproved = 12;
+if (survivorIds.length > 0) {
+  const { data: survDelegates, error: survErr } = await db
+    .from("delegates")
+    .select("id")
+    .eq("status", "approved")
+    .in("id", survivorIds);
+  if (survErr) throw new Error(`survivor delegates read failed: ${survErr.message}`);
+  expectedApproved += (survDelegates ?? []).length;
+}
+if (stats.approved_delegates !== expectedApproved)
+  throw new Error(
+    `expected ${expectedApproved} approved delegates, got ${stats.approved_delegates}`,
+  );
 if (stats.active_members !== 1636)
   throw new Error(`expected 1636 active members, got ${stats.active_members}`);
 if (top.slug !== "giorgi-maisuradze" || top.active_supporters !== 294)
