@@ -72,6 +72,42 @@ async function findUserByEmail(email) {
   }
 }
 
+// Shared across Phase 4 and Phase 5: sign in as a canonical seeded admin (or
+// any other phone-authenticated seeded user) via the dev OTP inbox, and
+// assert an RPC call fails with a specific error token.
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+/** Canonical seeded admins (seed-staging.mjs): audit ACTORS must be permanent. */
+async function signInAsSeededAdmin(phoneNational) {
+  const phone = `+995${phoneNational}`;
+  const client = createClient(url, ANON_KEY);
+  const { error: sendErr } = await client.auth.signInWithOtp({ phone });
+  if (sendErr) throw new Error(`OTP send to ${phone} failed: ${sendErr.message}`);
+  // dev hook writes the code to dev_otp_inbox; auth may store phones without '+'
+  const { data: otpRow, error: otpErr } = await db
+    .from("dev_otp_inbox")
+    .select("otp")
+    .in("phone", [phone, phone.slice(1)])
+    .order("id", { ascending: false })
+    .limit(1)
+    .single();
+  if (otpErr) throw new Error(`dev OTP read for ${phone} failed: ${otpErr.message}`);
+  const { error: verifyErr } = await client.auth.verifyOtp({
+    phone,
+    token: otpRow.otp,
+    type: "sms",
+  });
+  if (verifyErr) throw new Error(`verifyOtp for ${phone} failed: ${verifyErr.message}`);
+  return client;
+}
+
+async function expectToken(promise, token, what) {
+  const { error } = await promise;
+  if (!error) throw new Error(`LEAK: ${what} unexpectedly succeeded`);
+  if (!error.message.includes(token))
+    throw new Error(`${what}: expected '${token}', got: ${error.message}`);
+}
+
 let probeUserId;
 try {
   const leftover = await findUserByEmail(PROBE_EMAIL);
@@ -157,6 +193,14 @@ try {
   }
 }
 
+// Shared across Phase 2 and Phase 5: the funnel-completed probe member. Phase
+// 2 creates and completes it below; on success it survives (no cleanup in
+// Phase 2's own finally) so Phase 5 (P5.4) can reuse the SAME completed
+// member without re-deriving funnel state. Phase 5 owns the eventual cleanup.
+const FUNNEL_PROBE_EMAIL = "funnel-probe@example.com";
+let fpId;
+let funnelProbePassword;
+
 // --- Phase 2: registration funnel probes ---
 {
   // anon must not be able to call the funnel RPCs at all
@@ -165,20 +209,20 @@ try {
   console.log("OK: anon funnel_state() rejected");
 
   // authenticated end-to-end: start → save profile → complete (twice, idempotent)
-  const FUNNEL_PROBE_EMAIL = "funnel-probe@example.com";
   const leftover = await findUserByEmail(FUNNEL_PROBE_EMAIL);
   if (leftover) {
     const { error } = await db.auth.admin.deleteUser(leftover.id);
     if (error) throw new Error(`cleanup of leftover funnel probe failed: ${error.message}`);
   }
-  const funnelProbePassword = randomBytes(24).toString("hex");
+  funnelProbePassword = randomBytes(24).toString("hex");
   const { data: fpUser, error: fpCreateErr } = await db.auth.admin.createUser({
     email: FUNNEL_PROBE_EMAIL,
     password: funnelProbePassword,
     email_confirm: true,
   });
   if (fpCreateErr) throw new Error(`funnel probe createUser failed: ${fpCreateErr.message}`);
-  const fpId = fpUser.user.id;
+  fpId = fpUser.user.id;
+  let funnelSucceeded = false;
   try {
     const authed = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     const { error: fpSignInErr } = await authed.auth.signInWithPassword({
@@ -342,16 +386,22 @@ try {
     console.log(
       "OK: cabinet RPCs — history-keeping change, no-op guard, tier change, gates, ref cap",
     );
+    // fpId survives past this block on success — Phase 5 (P5.4) reuses this
+    // SAME completed member and owns its cleanup from there.
+    funnelSucceeded = true;
   } finally {
-    const { error } = await db.auth.admin.deleteUser(fpId);
-    if (error)
-      console.error(`WARNING: funnel probe cleanup (deleteUser ${fpId}) failed: ${error.message}`);
+    if (!funnelSucceeded) {
+      const { error } = await db.auth.admin.deleteUser(fpId);
+      if (error)
+        console.error(
+          `WARNING: funnel probe cleanup (deleteUser ${fpId}) failed: ${error.message}`,
+        );
+    }
   }
 }
 
 // --- Phase 4: admin CRM probes (spec §4.7) ---
 {
-  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const ADMIN_VIEWS = [
     "admin_overview",
     "admin_region_stats",
@@ -362,38 +412,14 @@ try {
     "admin_admins",
     "admin_audit",
     "admin_settings",
+    // Phase 5 (spec §4.7 extension): the community admin views join the same
+    // zero-row/denial sweep below — the non-admin user this block already
+    // sets up is the natural place to cover them too.
+    "admin_news",
+    "admin_events",
+    "admin_polls",
+    "admin_poll_options",
   ];
-
-  /** Canonical seeded admins (seed-staging.mjs): audit ACTORS must be permanent. */
-  async function signInAsSeededAdmin(phoneNational) {
-    const phone = `+995${phoneNational}`;
-    const client = createClient(url, ANON_KEY);
-    const { error: sendErr } = await client.auth.signInWithOtp({ phone });
-    if (sendErr) throw new Error(`OTP send to ${phone} failed: ${sendErr.message}`);
-    // dev hook writes the code to dev_otp_inbox; auth may store phones without '+'
-    const { data: otpRow, error: otpErr } = await db
-      .from("dev_otp_inbox")
-      .select("otp")
-      .in("phone", [phone, phone.slice(1)])
-      .order("id", { ascending: false })
-      .limit(1)
-      .single();
-    if (otpErr) throw new Error(`dev OTP read for ${phone} failed: ${otpErr.message}`);
-    const { error: verifyErr } = await client.auth.verifyOtp({
-      phone,
-      token: otpRow.otp,
-      type: "sms",
-    });
-    if (verifyErr) throw new Error(`verifyOtp for ${phone} failed: ${verifyErr.message}`);
-    return client;
-  }
-
-  async function expectToken(promise, token, what) {
-    const { error } = await promise;
-    if (!error) throw new Error(`LEAK: ${what} unexpectedly succeeded`);
-    if (!error.message.includes(token))
-      throw new Error(`${what}: expected '${token}', got: ${error.message}`);
-  }
 
   // ---- (1) a non-admin authenticated user: zero rows everywhere, refusals on RPCs ----
   const NA_EMAIL = "admin-probe-nonadmin@example.com";
@@ -440,10 +466,10 @@ try {
       if (error) throw new Error(`non-admin ${view} select errored: ${error.message}`);
       if (data.length !== 0) throw new Error(`LEAK: non-admin got rows from ${view}`);
     }
-    console.log("OK: all 9 admin views return zero rows to a non-admin");
+    console.log("OK: all 13 admin views return zero rows to a non-admin");
 
     // personal_id/birth_date exist in NO admin view (42703 undefined column — a
-    // column-list assertion over all 9), and the base-table grant no longer
+    // column-list assertion over all 13), and the base-table grant no longer
     // includes them (42501)
     for (const view of ADMIN_VIEWS) {
       for (const col of ["personal_id", "birth_date"]) {
@@ -825,3 +851,819 @@ try {
 console.log(
   `OK: ${regionCount} regions, ${cityCount} cities, RLS holding, public views readable (${viewRows.length} sample rows), delegates base table sealed, profiles UPDATE column-scoped, authenticated sealed`,
 );
+
+// --- Phase 5: community probes (spec §4.6) ---
+{
+  const nowIso = new Date().toISOString();
+
+  // fixture ids/rows resolved from the live seed (Task 8) — never hardcoded uuids
+  const { data: membersArticle, error: membersArticleErr } = await db
+    .from("news")
+    .select("id, slug")
+    .eq("visibility", "members")
+    .eq("status", "published")
+    .single();
+  if (membersArticleErr || !membersArticle)
+    throw new Error(`P5: seeded members-only article missing: ${membersArticleErr?.message}`);
+
+  const { data: upcomingEvent, error: upcomingEventErr } = await db
+    .from("events")
+    .select("id")
+    .eq("status", "published")
+    .gt("starts_at", nowIso)
+    .order("starts_at", { ascending: true })
+    .limit(1)
+    .single();
+  if (upcomingEventErr || !upcomingEvent)
+    throw new Error(`P5: seeded upcoming event missing: ${upcomingEventErr?.message}`);
+  const upcomingEventId = upcomingEvent.id;
+
+  const { data: pastEvent, error: pastEventErr } = await db
+    .from("events")
+    .select("id")
+    .eq("status", "published")
+    .lte("starts_at", nowIso)
+    .order("starts_at", { ascending: false })
+    .limit(1)
+    .single();
+  if (pastEventErr || !pastEvent)
+    throw new Error(`P5: seeded past event missing: ${pastEventErr?.message}`);
+  const pastEventId = pastEvent.id;
+
+  const { data: cancelledEvent, error: cancelledEventErr } = await db
+    .from("events")
+    .select("id")
+    .eq("status", "cancelled")
+    .limit(1)
+    .single();
+  if (cancelledEventErr || !cancelledEvent)
+    throw new Error(`P5: seeded cancelled event missing: ${cancelledEventErr?.message}`);
+  const cancelledEventId = cancelledEvent.id;
+
+  const { data: untouchedPoll, error: untouchedPollErr } = await db
+    .from("polls")
+    .select("id")
+    .eq("question", "სად გავმართოთ შემდეგი საერთო კრება?")
+    .single();
+  if (untouchedPollErr || !untouchedPoll)
+    throw new Error(`P5: seeded untouched poll missing: ${untouchedPollErr?.message}`);
+  const { data: untouchedOpts, error: untouchedOptsErr } = await db
+    .from("poll_options")
+    .select("id, position")
+    .eq("poll_id", untouchedPoll.id)
+    .order("position");
+  if (untouchedOptsErr || !untouchedOpts || untouchedOpts.length !== 4)
+    throw new Error(`P5: expected 4 options on the untouched poll, got ${untouchedOpts?.length}`);
+
+  const { data: closedPoll, error: closedPollErr } = await db
+    .from("polls")
+    .select("id")
+    .eq("status", "closed")
+    .limit(1)
+    .single();
+  if (closedPollErr || !closedPoll)
+    throw new Error(`P5: seeded closed poll missing: ${closedPollErr?.message}`);
+
+  const { data: otherOpenPoll, error: otherOpenPollErr } = await db
+    .from("polls")
+    .select("id")
+    .eq("status", "open")
+    .neq("id", untouchedPoll.id)
+    .order("opened_at", { ascending: true })
+    .limit(1)
+    .single();
+  if (otherOpenPollErr || !otherOpenPoll)
+    throw new Error(`P5: seeded second open poll missing: ${otherOpenPollErr?.message}`);
+
+  // fresh test data for P5.5 (editor RPCs) — spliced from the brief, not the seed
+  const Q_PROBE_POLL = "პრობის გამოკითხვა?";
+  const OPT_A = "ა";
+  const OPT_B = "ბ";
+  const PROBE_NEWS_TITLE = "პრობის სიახლე";
+  const PROBE_NEWS_BODY = "პრობის ტანი";
+
+  console.log("OK: Phase 5 fixture ids resolved (events, polls, members-only article)");
+
+  // P5.1 anon reads: public views yes, member views no, base tables no
+  {
+    const { data: pubNews, error: pubNewsErr } = await anon
+      .from("public_news")
+      .select("slug, title")
+      .limit(50);
+    if (pubNewsErr) throw new Error(`P5.1: anon cannot read public_news: ${pubNewsErr.message}`);
+    if (!pubNews || pubNews.length === 0) throw new Error("P5.1: public_news returned zero rows");
+    if (pubNews.some((r) => !r.slug))
+      throw new Error("P5.1: public_news has a row with a null slug");
+
+    const { data: memberNewsLeak, error: memberNewsErr } = await anon
+      .from("member_news")
+      .select("*")
+      .limit(1);
+    if (!memberNewsErr)
+      throw new Error(
+        `LEAK: anon can read member_news (${memberNewsLeak?.length ?? 0} rows) — expected 42501`,
+      );
+    if (memberNewsErr.code !== "42501")
+      throw new Error(
+        `P5.1: member_news denial expected 42501, got ${memberNewsErr.code} (${memberNewsErr.message})`,
+      );
+
+    const { data: baseNewsLeak, error: baseNewsErr } = await anon.from("news").select("*").limit(1);
+    if (!baseNewsErr && baseNewsLeak && baseNewsLeak.length > 0)
+      throw new Error("LEAK: anon can read the news base table");
+    if (!baseNewsErr)
+      throw new Error(
+        "news base-table probe unexpectedly succeeded — expected 42501 permission denial",
+      );
+    if (baseNewsErr.code !== "42501")
+      throw new Error(
+        `news base-table probe: expected 42501, got ${baseNewsErr.code} (${baseNewsErr.message})`,
+      );
+
+    const { data: txStats, error: txStatsErr } = await anon
+      .from("transparency_stats")
+      .select("*")
+      .single();
+    if (txStatsErr)
+      throw new Error(`P5.1: anon cannot read transparency_stats: ${txStatsErr.message}`);
+    if (!(Number(txStats.total_gel) >= 0))
+      throw new Error(`P5.1: total_gel should be ≥ 0, got ${txStats.total_gel}`);
+    if (!(txStats.registered_members > 0))
+      throw new Error(`P5.1: registered_members should be > 0, got ${txStats.registered_members}`);
+    if (!(txStats.approved_delegates > 0))
+      throw new Error(`P5.1: approved_delegates should be > 0, got ${txStats.approved_delegates}`);
+
+    const { data: txRegions, error: txRegionsErr } = await anon
+      .from("transparency_regions")
+      .select("*");
+    if (txRegionsErr)
+      throw new Error(`P5.1: anon cannot read transparency_regions: ${txRegionsErr.message}`);
+    if (!txRegions || txRegions.length !== 11)
+      throw new Error(`P5.1: expected 11 transparency_regions rows, got ${txRegions?.length}`);
+    for (const region of txRegions) {
+      if (!(region.registered >= region.active && region.active >= 0))
+        throw new Error(
+          `P5.1: region ${region.region_id} violates registered ≥ active ≥ 0 (${region.registered}/${region.active})`,
+        );
+    }
+
+    if (pubNews.length !== 4)
+      throw new Error(`P5.1: expected exactly 4 public published news rows, got ${pubNews.length}`);
+    if (pubNews.some((r) => r.slug === membersArticle.slug))
+      throw new Error("LEAK: public_news exposes the members-only article's slug");
+
+    console.log(
+      "OK: anon — public_news (4, no members-only leak), member_news/base news tables denied, transparency_stats/regions sane",
+    );
+  }
+
+  // P5.2 transparency figures equal service-side ground truth (derived, never stored)
+  {
+    // PostgREST caps unpaginated selects at its default row limit (well below
+    // this staging project's live payment count) — page through explicitly so
+    // the "ground truth" sum isn't itself a silent undercount.
+    let expectedTotal = 0;
+    for (let page = 0; ; page++) {
+      const { data: paymentsPage, error: paymentsPageErr } = await db
+        .from("payments")
+        .select("amount_gel")
+        .is("voided_at", null)
+        .range(page * 1000, page * 1000 + 999);
+      if (paymentsPageErr)
+        throw new Error(`P5.2: live payments page ${page} read failed: ${paymentsPageErr.message}`);
+      expectedTotal += (paymentsPage ?? []).reduce((s, p) => s + Number(p.amount_gel), 0);
+      if (!paymentsPage || paymentsPage.length < 1000) break;
+    }
+    const { data: derivedStats, error: derivedStatsErr } = await anon
+      .from("transparency_stats")
+      .select("*")
+      .single();
+    if (derivedStatsErr)
+      throw new Error(`P5.2: transparency_stats read failed: ${derivedStatsErr.message}`);
+    if (Math.abs(Number(derivedStats.total_gel) - expectedTotal) >= 0.005)
+      throw new Error(
+        `P5.2: transparency total_gel diverges from ground truth: view=${derivedStats.total_gel}, expected=${expectedTotal}`,
+      );
+    console.log(
+      `OK: transparency_stats.total_gel matches live payments ground truth (${derivedStats.total_gel} GEL)`,
+    );
+  }
+
+  // P5.3 pre-completion authenticated user: member views return ZERO rows (not errors)
+  // (reuses the Phase 2-style throwaway boilerplate — create + sign in — but stops
+  // there: no funnel_start/save_profile/complete call, so registration never completes)
+  {
+    const PRE_EMAIL = "community-precompletion-probe@example.com";
+    const preLeftover = await findUserByEmail(PRE_EMAIL);
+    if (preLeftover) {
+      const { error } = await db.auth.admin.deleteUser(preLeftover.id);
+      if (error)
+        throw new Error(`cleanup of leftover precompletion probe failed: ${error.message}`);
+    }
+    const prePassword = randomBytes(24).toString("hex");
+    const { data: preUser, error: preCreateErr } = await db.auth.admin.createUser({
+      email: PRE_EMAIL,
+      password: prePassword,
+      email_confirm: true,
+    });
+    if (preCreateErr)
+      throw new Error(`P5.3: precompletion probe createUser failed: ${preCreateErr.message}`);
+    const preId = preUser.user.id;
+    try {
+      const pre = createClient(url, ANON_KEY);
+      const { error: preSignInErr } = await pre.auth.signInWithPassword({
+        email: PRE_EMAIL,
+        password: prePassword,
+      });
+      if (preSignInErr)
+        throw new Error(`P5.3: precompletion probe sign-in failed: ${preSignInErr.message}`);
+
+      const { data: preNewsRows, error: preNewsErr } = await pre
+        .from("member_news")
+        .select("*")
+        .limit(1);
+      if (preNewsErr)
+        throw new Error(`P5.3: member_news errored for pre-completion user: ${preNewsErr.message}`);
+      if (preNewsRows.length !== 0)
+        throw new Error("LEAK: pre-completion user got rows from member_news");
+
+      const { data: prePollsRows, error: prePollsErr } = await pre
+        .from("member_polls")
+        .select("*")
+        .limit(1);
+      if (prePollsErr)
+        throw new Error(
+          `P5.3: member_polls errored for pre-completion user: ${prePollsErr.message}`,
+        );
+      if (prePollsRows.length !== 0)
+        throw new Error("LEAK: pre-completion user got rows from member_polls");
+
+      const { data: preOptsRows, error: preOptsErr } = await pre
+        .from("member_poll_options")
+        .select("*")
+        .limit(1);
+      if (preOptsErr)
+        throw new Error(
+          `P5.3: member_poll_options errored for pre-completion user: ${preOptsErr.message}`,
+        );
+      if (preOptsRows.length !== 0)
+        throw new Error("LEAK: pre-completion user got rows from member_poll_options");
+
+      console.log(
+        "OK: pre-completion user gets zero rows (not errors) from member_news/member_polls/member_poll_options",
+      );
+
+      await expectToken(
+        pre.rpc("member_rsvp", { p_event_id: upcomingEventId, p_going: true }),
+        "not_completed",
+        "pre-completion member_rsvp",
+      );
+      await expectToken(
+        pre.rpc("member_cast_vote", {
+          p_poll_id: untouchedPoll.id,
+          p_option_id: untouchedOpts[0].id,
+        }),
+        "not_completed",
+        "pre-completion member_cast_vote",
+      );
+      console.log(
+        "OK: pre-completion user's member_rsvp/member_cast_vote both refuse with not_completed",
+      );
+    } finally {
+      const { error } = await db.auth.admin.deleteUser(preId);
+      if (error)
+        console.error(
+          `WARNING: precompletion probe cleanup (deleteUser ${preId}) failed: ${error.message}`,
+        );
+    }
+  }
+
+  // P5.4 completed member (the Phase 2 probe user, already completed by that block).
+  // RE-RUNNABLE: first, service-delete this user's poll_votes/event_rsvps rows on
+  // the probe targets — prior runs leave them behind.
+  let member;
+  {
+    if (!fpId) throw new Error("P5.4: Phase 2 probe user (fpId) missing — Phase 2 must run first");
+
+    const { error: wipeVotesErr } = await db
+      .from("poll_votes")
+      .delete()
+      .eq("poll_id", untouchedPoll.id)
+      .eq("member_id", fpId);
+    if (wipeVotesErr) throw new Error(`P5.4: pre-clean poll_votes failed: ${wipeVotesErr.message}`);
+    const { error: wipeRsvpsErr } = await db
+      .from("event_rsvps")
+      .delete()
+      .eq("event_id", upcomingEventId)
+      .eq("member_id", fpId);
+    if (wipeRsvpsErr)
+      throw new Error(`P5.4: pre-clean event_rsvps failed: ${wipeRsvpsErr.message}`);
+
+    member = createClient(url, ANON_KEY);
+    const { error: memberSignInErr } = await member.auth.signInWithPassword({
+      email: FUNNEL_PROBE_EMAIL,
+      password: funnelProbePassword,
+    });
+    if (memberSignInErr)
+      throw new Error(`P5.4: completed-member sign-in failed: ${memberSignInErr.message}`);
+
+    // member_news: the seeded internal article is visible
+    const { data: visibleMemberNews, error: visibleMemberNewsErr } = await member
+      .from("member_news")
+      .select("id, visibility")
+      .eq("visibility", "members");
+    if (visibleMemberNewsErr)
+      throw new Error(`P5.4: member_news read failed: ${visibleMemberNewsErr.message}`);
+    if (!visibleMemberNews || visibleMemberNews.length < 1)
+      throw new Error(
+        "P5.4: completed member should see ≥1 members-visibility article via member_news",
+      );
+
+    // member_polls: both open polls + the closed poll visible
+    const { data: memberPolls, error: memberPollsErr } = await member
+      .from("member_polls")
+      .select("id, status");
+    if (memberPollsErr)
+      throw new Error(`P5.4: member_polls read failed: ${memberPollsErr.message}`);
+    const memberPollIds = new Set((memberPolls ?? []).map((p) => p.id));
+    for (const [label, id] of [
+      ["untouched open poll", untouchedPoll.id],
+      ["other open poll", otherOpenPoll.id],
+      ["closed poll", closedPoll.id],
+    ]) {
+      if (!memberPollIds.has(id))
+        throw new Error(`P5.4: member_polls missing the ${label} (${id})`);
+    }
+
+    // the untouched open poll: 4 options BEFORE voting; counts hidden pre-vote
+    const { data: preVoteOptions, error: preVoteOptionsErr } = await member
+      .from("member_poll_options")
+      .select("option_id, position, label")
+      .eq("poll_id", untouchedPoll.id);
+    if (preVoteOptionsErr)
+      throw new Error(`P5.4: member_poll_options read failed: ${preVoteOptionsErr.message}`);
+    if (!preVoteOptions || preVoteOptions.length !== 4)
+      throw new Error(
+        `P5.4: expected 4 member_poll_options for the untouched poll, got ${preVoteOptions?.length}`,
+      );
+
+    const { data: preVoteCounts, error: preVoteCountsErr } = await member
+      .from("poll_option_counts")
+      .select("option_id, votes")
+      .eq("poll_id", untouchedPoll.id);
+    if (preVoteCountsErr)
+      throw new Error(`P5.4: poll_option_counts read failed: ${preVoteCountsErr.message}`);
+    if (preVoteCounts.length !== 0)
+      throw new Error(
+        `P5.4: poll_option_counts should be hidden pre-vote, got ${preVoteCounts.length} rows`,
+      );
+
+    // vote sequence (worked-example idiom)
+    const firstOption = preVoteOptions.find((o) => o.position === 1);
+    const secondOption = preVoteOptions.find((o) => o.position === 2);
+    const { error: voteErr } = await member.rpc("member_cast_vote", {
+      p_poll_id: untouchedPoll.id,
+      p_option_id: firstOption.option_id,
+    });
+    if (voteErr) throw new Error(`P5.4: first vote failed: ${voteErr.message}`);
+
+    const { data: postVoteCounts, error: postVoteCountsErr } = await member
+      .from("poll_option_counts")
+      .select("option_id, votes")
+      .eq("poll_id", untouchedPoll.id);
+    if (postVoteCountsErr)
+      throw new Error(
+        `P5.4: post-vote poll_option_counts read failed: ${postVoteCountsErr.message}`,
+      );
+    if (postVoteCounts.length !== 4)
+      throw new Error(
+        `P5.4: expected 4 poll_option_counts rows after voting, got ${postVoteCounts.length}`,
+      );
+    const totalVotes = postVoteCounts.reduce((s, r) => s + r.votes, 0);
+    if (totalVotes < 1)
+      throw new Error(`P5.4: poll_option_counts votes should sum ≥ 1, got ${totalVotes}`);
+
+    // own-vote readback (column-scoped grant — never select("*"); created_at is
+    // deliberately outside the grant)
+    const { data: ownVote, error: ownVoteErr } = await member
+      .from("poll_votes")
+      .select("poll_id, option_id, member_id")
+      .eq("poll_id", untouchedPoll.id);
+    if (ownVoteErr) throw new Error(`P5.4: own-vote readback failed: ${ownVoteErr.message}`);
+    if (ownVote.length !== 1)
+      throw new Error(`P5.4: expected exactly 1 own poll_votes row, got ${ownVote.length}`);
+
+    // second vote on the SAME poll must hit the PK, not app code
+    await expectToken(
+      member.rpc("member_cast_vote", {
+        p_poll_id: untouchedPoll.id,
+        p_option_id: secondOption.option_id,
+      }),
+      "already_voted",
+      "second vote on the untouched poll",
+    );
+    const { count: voteCountAfterRetry, error: voteCountErr } = await db
+      .from("poll_votes")
+      .select("*", { count: "exact", head: true })
+      .eq("poll_id", untouchedPoll.id)
+      .eq("member_id", fpId);
+    if (voteCountErr) throw new Error(`P5.4: vote recount failed: ${voteCountErr.message}`);
+    if (voteCountAfterRetry !== 1)
+      throw new Error(
+        `P5.4: expected exactly 1 vote after the rejected retry, got ${voteCountAfterRetry}`,
+      );
+
+    // cross-poll option (composite FK)
+    const { data: closedPollOption, error: closedPollOptionErr } = await db
+      .from("poll_options")
+      .select("id")
+      .eq("poll_id", closedPoll.id)
+      .limit(1)
+      .single();
+    if (closedPollOptionErr)
+      throw new Error(`P5.4: closed-poll option lookup failed: ${closedPollOptionErr.message}`);
+    await expectToken(
+      member.rpc("member_cast_vote", {
+        p_poll_id: untouchedPoll.id,
+        p_option_id: closedPollOption.id,
+      }),
+      "invalid_option",
+      "cross-poll option",
+    );
+
+    // a service-created DRAFT poll → invalid_target (status is checked before
+    // the option even needs to be real)
+    const { data: draftPoll, error: draftPollErr } = await db
+      .from("polls")
+      .insert({ question: "draft-poll-probe", status: "draft" })
+      .select("id")
+      .single();
+    if (draftPollErr) throw new Error(`P5.4: draft poll creation failed: ${draftPollErr.message}`);
+    try {
+      await expectToken(
+        member.rpc("member_cast_vote", {
+          p_poll_id: draftPoll.id,
+          p_option_id: firstOption.option_id,
+        }),
+        "invalid_target",
+        "vote on a draft poll",
+      );
+    } finally {
+      const { error: draftPollDeleteErr } = await db.from("polls").delete().eq("id", draftPoll.id);
+      if (draftPollDeleteErr)
+        console.error(`WARNING: P5.4 draft poll cleanup failed: ${draftPollDeleteErr.message}`);
+    }
+
+    // the closed poll: counts visible WITHOUT this user voting
+    const { data: closedCounts, error: closedCountsErr } = await member
+      .from("poll_option_counts")
+      .select("option_id, votes")
+      .eq("poll_id", closedPoll.id);
+    if (closedCountsErr)
+      throw new Error(
+        `P5.4: closed-poll poll_option_counts read failed: ${closedCountsErr.message}`,
+      );
+    const { count: closedOptionCount, error: closedOptionCountErr } = await db
+      .from("poll_options")
+      .select("*", { count: "exact", head: true })
+      .eq("poll_id", closedPoll.id);
+    if (closedOptionCountErr)
+      throw new Error(`P5.4: closed-poll option count failed: ${closedOptionCountErr.message}`);
+    if (!closedCounts || closedCounts.length !== closedOptionCount)
+      throw new Error(
+        `P5.4: closed poll's counts should be visible without voting (got ${closedCounts?.length}, expected ${closedOptionCount})`,
+      );
+
+    // member_event_going_counts: matches a service-side live count (checked
+    // BEFORE this member's own RSVP toggle, which flips its own row twice but
+    // ends back at 'cancelled' — the seed's own rsvps are ground truth here)
+    const { count: liveGoingCount, error: liveGoingErr } = await db
+      .from("event_rsvps")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", upcomingEventId)
+      .eq("status", "going");
+    if (liveGoingErr)
+      throw new Error(`P5.4: live going-count read failed: ${liveGoingErr.message}`);
+    const { data: viewGoingRow, error: viewGoingErr } = await member
+      .from("member_event_going_counts")
+      .select("going")
+      .eq("event_id", upcomingEventId)
+      .single();
+    if (viewGoingErr)
+      throw new Error(`P5.4: member_event_going_counts read failed: ${viewGoingErr.message}`);
+    if (viewGoingRow.going !== liveGoingCount)
+      throw new Error(
+        `P5.4: member_event_going_counts (${viewGoingRow.going}) diverges from live count (${liveGoingCount})`,
+      );
+
+    // RSVP toggle
+    const { error: rsvpGoingErr } = await member.rpc("member_rsvp", {
+      p_event_id: upcomingEventId,
+      p_going: true,
+    });
+    if (rsvpGoingErr) throw new Error(`P5.4: member_rsvp(going) failed: ${rsvpGoingErr.message}`);
+    const { error: rsvpCancelErr } = await member.rpc("member_rsvp", {
+      p_event_id: upcomingEventId,
+      p_going: false,
+    });
+    if (rsvpCancelErr)
+      throw new Error(`P5.4: member_rsvp(cancel) failed: ${rsvpCancelErr.message}`);
+    const { data: ownRsvp, error: ownRsvpErr } = await member
+      .from("event_rsvps")
+      .select("event_id, member_id, status")
+      .eq("event_id", upcomingEventId);
+    if (ownRsvpErr) throw new Error(`P5.4: own-rsvp readback failed: ${ownRsvpErr.message}`);
+    if (ownRsvp.length !== 1)
+      throw new Error(`P5.4: expected exactly 1 own event_rsvps row, got ${ownRsvp.length}`);
+    if (ownRsvp[0].status !== "cancelled")
+      throw new Error(`P5.4: expected status 'cancelled' after toggle, got ${ownRsvp[0].status}`);
+
+    await expectToken(
+      member.rpc("member_rsvp", { p_event_id: pastEventId, p_going: true }),
+      "rsvp_closed",
+      "rsvp on a past event",
+    );
+    await expectToken(
+      member.rpc("member_rsvp", { p_event_id: cancelledEventId, p_going: true }),
+      "rsvp_closed",
+      "rsvp on a cancelled event",
+    );
+
+    // write-denial: zero client write paths on the six base tables
+    const { error: writeDenyErr } = await member.from("news").insert({ title: "x", body: "y" });
+    if (!writeDenyErr) throw new Error("LEAK: authenticated client inserted directly into news");
+    if (writeDenyErr.code !== "42501")
+      throw new Error(
+        `P5.4: news insert-denial expected 42501, got ${writeDenyErr.code} (${writeDenyErr.message})`,
+      );
+
+    console.log(
+      "OK: completed member — news/polls visibility, pre-vote secrecy, vote PK, cross-poll/draft rejection, event going-count, rsvp toggle + closed-event guards",
+    );
+  }
+
+  // P5.5 editor RPCs: audit-in-transaction + role gate + late-vote wall
+  {
+    // defensive: a previous crashed run may have left the probe article's
+    // slug behind (unique constraint) — clear it before creating a fresh one
+    const { error: staleSlugErr } = await db.from("news").delete().eq("slug", "probis-siakhle");
+    if (staleSlugErr)
+      throw new Error(`P5.5: stale probe-article cleanup failed: ${staleSlugErr.message}`);
+
+    const editor = await signInAsSeededAdmin("509000004");
+    let pollId;
+    let articleId;
+    try {
+      const { data: newPollId, error: savePollErr } = await editor.rpc("admin_save_poll", {
+        p_id: null,
+        p_question: Q_PROBE_POLL,
+        p_options: [OPT_A, OPT_B],
+        p_ends_at: null,
+      });
+      if (savePollErr) throw new Error(`P5.5: admin_save_poll failed: ${savePollErr.message}`);
+      pollId = newPollId;
+
+      // first native text[] RPC parameter in this codebase — confirm the
+      // array arrived intact server-side (exactly 2 options, in order)
+      const { data: pollOpts, error: pollOptsErr } = await db
+        .from("poll_options")
+        .select("id, position, label")
+        .eq("poll_id", pollId)
+        .order("position");
+      if (pollOptsErr)
+        throw new Error(`P5.5: probe poll options read failed: ${pollOptsErr.message}`);
+      if (pollOpts?.length !== 2 || pollOpts[0].label !== OPT_A || pollOpts[1].label !== OPT_B)
+        throw new Error(
+          `P5.5: admin_save_poll's text[] p_options did not arrive intact: ${JSON.stringify(pollOpts)}`,
+        );
+
+      const { count: saveAuditCount, error: saveAuditErr } = await db
+        .from("audit_log")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "poll.save")
+        .eq("target_id", pollId);
+      if (saveAuditErr)
+        throw new Error(`P5.5: poll.save audit lookup failed: ${saveAuditErr.message}`);
+      if (saveAuditCount !== 1)
+        throw new Error(`P5.5: expected 1 poll.save audit row, got ${saveAuditCount}`);
+
+      const { error: openErr } = await editor.rpc("admin_open_poll", { p_id: pollId });
+      if (openErr) throw new Error(`P5.5: admin_open_poll failed: ${openErr.message}`);
+      const { count: openAuditCount, error: openAuditErr } = await db
+        .from("audit_log")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "poll.open")
+        .eq("target_id", pollId);
+      if (openAuditErr)
+        throw new Error(`P5.5: poll.open audit lookup failed: ${openAuditErr.message}`);
+      if (openAuditCount !== 1)
+        throw new Error(`P5.5: expected 1 poll.open audit row, got ${openAuditCount}`);
+
+      const { error: expireErr } = await db
+        .from("polls")
+        .update({ ends_at: new Date(Date.now() - 3_600_000).toISOString() })
+        .eq("id", pollId);
+      if (expireErr) throw new Error(`P5.5: forcing poll expiry failed: ${expireErr.message}`);
+
+      await expectToken(
+        member.rpc("member_cast_vote", { p_poll_id: pollId, p_option_id: pollOpts[0].id }),
+        "poll_closed",
+        "vote past the ends_at wall",
+      );
+
+      const { error: closeErr } = await editor.rpc("admin_close_poll", { p_id: pollId });
+      if (closeErr) throw new Error(`P5.5: admin_close_poll failed: ${closeErr.message}`);
+      const { count: closeAuditCount, error: closeAuditErr } = await db
+        .from("audit_log")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "poll.close")
+        .eq("target_id", pollId);
+      if (closeAuditErr)
+        throw new Error(`P5.5: poll.close audit lookup failed: ${closeAuditErr.message}`);
+      if (closeAuditCount !== 1)
+        throw new Error(`P5.5: expected 1 poll.close audit row, got ${closeAuditCount}`);
+
+      console.log(
+        "OK: admin_save_poll/open/close each write exactly 1 audit row; text[] p_options intact; late vote hits poll_closed",
+      );
+
+      const verifier = await signInAsSeededAdmin("509000002");
+      await expectToken(
+        verifier.rpc("admin_save_news", {
+          p_id: null,
+          p_title: "X",
+          p_body: "Y",
+          p_visibility: "public",
+        }),
+        "missing_role",
+        "verifier admin_save_news",
+      );
+
+      const { data: newArticleId, error: saveNewsErr } = await editor.rpc("admin_save_news", {
+        p_id: null,
+        p_title: PROBE_NEWS_TITLE,
+        p_body: PROBE_NEWS_BODY,
+        p_visibility: "public",
+      });
+      if (saveNewsErr) throw new Error(`P5.5: admin_save_news failed: ${saveNewsErr.message}`);
+      articleId = newArticleId;
+
+      const { data: publish1, error: publish1Err } = await editor.rpc("admin_publish_news", {
+        p_id: articleId,
+        p_slug: "probis-siakhle",
+      });
+      if (publish1Err) throw new Error(`P5.5: admin_publish_news failed: ${publish1Err.message}`);
+      const permanentSlug = publish1.slug;
+      if (permanentSlug !== "probis-siakhle")
+        throw new Error(`P5.5: expected slug 'probis-siakhle', got ${permanentSlug}`);
+      const { count: publishAuditCount, error: publishAuditErr } = await db
+        .from("audit_log")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "news.publish")
+        .eq("target_id", articleId);
+      if (publishAuditErr)
+        throw new Error(`P5.5: news.publish audit lookup failed: ${publishAuditErr.message}`);
+      if (publishAuditCount !== 1)
+        throw new Error(`P5.5: expected 1 news.publish audit row, got ${publishAuditCount}`);
+
+      const { error: unpublishErr } = await editor.rpc("admin_unpublish_news", { p_id: articleId });
+      if (unpublishErr)
+        throw new Error(`P5.5: admin_unpublish_news failed: ${unpublishErr.message}`);
+      const { data: hiddenCheck, error: hiddenCheckErr } = await anon
+        .from("public_news")
+        .select("slug")
+        .eq("slug", permanentSlug);
+      if (hiddenCheckErr)
+        throw new Error(`P5.5: post-unpublish public_news check failed: ${hiddenCheckErr.message}`);
+      if (hiddenCheck.length !== 0)
+        throw new Error("LEAK: unpublished article's slug still visible via public_news");
+
+      const { data: publish2, error: publish2Err } = await editor.rpc("admin_publish_news", {
+        p_id: articleId,
+        p_slug: "sxva-slagi",
+      });
+      if (publish2Err) throw new Error(`P5.5: re-publish failed: ${publish2Err.message}`);
+      if (publish2.slug !== permanentSlug)
+        throw new Error(`P5.5: slug must stay permanent across re-publish, got ${publish2.slug}`);
+
+      await expectToken(
+        editor.rpc("admin_delete_news", { p_id: articleId }),
+        "invalid_status",
+        "delete a once-published article",
+      );
+
+      console.log(
+        "OK: news slug is permanent across unpublish/republish; a once-published article resists delete",
+      );
+    } finally {
+      if (pollId) {
+        const { error } = await db.from("polls").delete().eq("id", pollId);
+        if (error) console.error(`WARNING: P5.5 probe poll cleanup failed: ${error.message}`);
+      }
+      if (articleId) {
+        const { error } = await db.from("news").delete().eq("id", articleId);
+        if (error) console.error(`WARNING: P5.5 probe article cleanup failed: ${error.message}`);
+      }
+    }
+  }
+
+  // P5.7 delegate_team_rsvps — the one PII-bearing surface
+  {
+    // the P5.4 completed member (not a delegate): rpc → error 'not_a_delegate'
+    await expectToken(
+      member.rpc("delegate_team_rsvps"),
+      "not_a_delegate",
+      "delegate_team_rsvps for a non-delegate",
+    );
+
+    // a seeded APPROVED delegate: sign in via the dev_otp_inbox flow (same
+    // mechanics as signInAsSeededAdmin, phone = an approved delegate's, read
+    // from the roster via the service client)
+    const { data: approvedDelegateProfile, error: approvedDelegateErr } = await db
+      .from("delegates")
+      .select("id")
+      .eq("status", "approved")
+      .order("id")
+      .limit(1)
+      .single();
+    if (approvedDelegateErr)
+      throw new Error(`P5.7: approved delegate lookup failed: ${approvedDelegateErr.message}`);
+    const { data: approvedDelegatePhoneRow, error: approvedDelegatePhoneErr } = await db
+      .from("profiles")
+      .select("phone")
+      .eq("id", approvedDelegateProfile.id)
+      .single();
+    if (approvedDelegatePhoneErr || !approvedDelegatePhoneRow?.phone)
+      throw new Error(
+        `P5.7: approved delegate has no phone for OTP sign-in: ${approvedDelegatePhoneErr?.message}`,
+      );
+    const delegateClient = await signInAsSeededAdmin(
+      approvedDelegatePhoneRow.phone.replace(/^\+995/, ""),
+    );
+
+    const { data: teamEvents, error: teamEventsErr } =
+      await delegateClient.rpc("delegate_team_rsvps");
+    if (teamEventsErr)
+      throw new Error(`P5.7: delegate_team_rsvps failed: ${teamEventsErr.message}`);
+    if (!Array.isArray(teamEvents))
+      throw new Error(`P5.7: delegate_team_rsvps must return an array, got ${typeof teamEvents}`);
+
+    // TEAM ISOLATION: every 'going' name in the result must belong to THAT
+    // delegate's current team (service-verify the name set against
+    // memberships where delegate_id = that delegate and ended_at is null)
+    const { data: teamMembers, error: teamMembersErr } = await db
+      .from("memberships")
+      .select("member_id")
+      .eq("delegate_id", approvedDelegateProfile.id)
+      .is("ended_at", null);
+    if (teamMembersErr)
+      throw new Error(`P5.7: team roster lookup failed: ${teamMembersErr.message}`);
+    const { data: teamProfiles, error: teamProfilesErr } = await db
+      .from("profiles")
+      .select("first_name, last_name")
+      .in(
+        "id",
+        (teamMembers ?? []).map((m) => m.member_id),
+      );
+    if (teamProfilesErr)
+      throw new Error(`P5.7: team profiles lookup failed: ${teamProfilesErr.message}`);
+    const teamNameSet = new Set((teamProfiles ?? []).map((p) => `${p.first_name} ${p.last_name}`));
+    for (const ev of teamEvents) {
+      if (ev.goingCount !== (ev.going ?? []).length)
+        throw new Error(
+          `P5.7: goingCount (${ev.goingCount}) does not match going.length (${(ev.going ?? []).length}) for event ${ev.eventId}`,
+        );
+      for (const g of ev.going ?? []) {
+        const nameKey = `${g.firstName} ${g.lastName}`;
+        if (!teamNameSet.has(nameKey))
+          throw new Error(
+            `P5.7: TEAM ISOLATION LEAK — ${g.firstName} ${g.lastName} appears in event ${ev.eventId} but is not on delegate ${approvedDelegateProfile.id}'s team`,
+          );
+      }
+    }
+    console.log(
+      `OK: delegate_team_rsvps — not_a_delegate for a member, team isolation holds for an approved delegate (${teamEvents.length} events)`,
+    );
+  }
+
+  // P5.6 storage: news-images bucket exists and is public
+  {
+    const { data: bucket, error: bucketErr } = await db.storage.getBucket("news-images");
+    if (bucketErr || !bucket)
+      throw new Error(`P5.6: news-images bucket missing: ${bucketErr?.message}`);
+    if (!bucket.public) throw new Error("P5.6: news-images bucket must be public-read");
+    console.log("OK: news-images bucket present and public");
+  }
+
+  // fpId (the Phase 2 completed member) was kept alive on success for P5.4/
+  // P5.5/P5.7 to reuse — Phase 5 is its last consumer, so it owns cleanup here.
+  {
+    const { error } = await db.auth.admin.deleteUser(fpId);
+    if (error)
+      console.error(
+        `WARNING: Phase 5 completed-member cleanup (deleteUser ${fpId}) failed: ${error.message}`,
+      );
+  }
+
+  console.log("OK: Phase 5 community probes complete (spec §4.6 guarantees hold)");
+}
