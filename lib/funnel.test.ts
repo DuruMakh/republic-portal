@@ -191,7 +191,11 @@ describe("Phase 5 error tokens", () => {
     expect(mapFunnelError("invalid_status")).toBe(
       "მოქმედება ამ მდგომარეობაში შეუძლებელია — განაახლე გვერდი.",
     );
+    expect(mapFunnelError("invalid_title")).toBe("სათაური არასწორია (1–160 სიმბოლო).");
+    expect(mapFunnelError("invalid_body")).toBe("ტექსტი ცარიელია ან ძალიან გრძელია.");
+    expect(mapFunnelError("invalid_location")).toBe("ადგილმდებარეობა არასწორია (1–200 სიმბოლო).");
     expect(mapFunnelError("invalid_event_dates")).toBe("თარიღები არასწორია.");
+    expect(mapFunnelError("invalid_question")).toBe("კითხვა არასწორია (1–300 სიმბოლო).");
     expect(mapFunnelError("invalid_image")).toBe("სურათის შენახვა ვერ მოხერხდა.");
   });
 });
