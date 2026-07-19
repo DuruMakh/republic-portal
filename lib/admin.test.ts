@@ -5,6 +5,7 @@ import {
   AUDIT_ACTION_LABELS_KA,
   auditActionLabel,
   barPct,
+  contentPill,
   formatDateTimeKa,
   hasAnyRole,
   isStaff,
@@ -27,13 +28,14 @@ describe("sanitizeSearch (one sanitizer for list, lookup and export)", () => {
 });
 
 describe("adminTabs (spec §3.1 role → tab matrix)", () => {
-  it("super_admin sees all eight tabs in order", () => {
+  it("super_admin sees all nine tabs in order", () => {
     expect(adminTabs(["super_admin"]).map((t) => t.href)).toEqual([
       "/admin",
       "/admin/members",
       "/admin/verify",
       "/admin/finances",
       "/admin/transfer",
+      "/admin/content",
       "/admin/admins",
       "/admin/audit",
       "/admin/settings",
@@ -54,8 +56,8 @@ describe("adminTabs (spec §3.1 role → tab matrix)", () => {
       "/admin/finances",
     ]);
   });
-  it("editor sees no tabs (Phase 5 notice instead); combos union", () => {
-    expect(adminTabs(["editor"])).toEqual([]);
+  it("editor gains only the content tab; combos union", () => {
+    expect(adminTabs(["editor"])).toEqual([{ href: "/admin/content", label: "შიგთავსი" }]);
     expect(adminTabs([])).toEqual([]);
     expect(adminTabs(["verifier", "finance"]).map((t) => t.href)).toEqual([
       "/admin",
@@ -73,6 +75,7 @@ describe("adminTabs (spec §3.1 role → tab matrix)", () => {
       "ვერიფიკაცია",
       "ფინანსები",
       "ტრანსფერი",
+      "შიგთავსი",
       "ადმინები",
       "აუდიტი",
       "პარამეტრები",
@@ -92,7 +95,7 @@ describe("isStaff (spec §4.2 gate)", () => {
 });
 
 describe("audit taxonomy (spec §4.5)", () => {
-  it("all 14 actions have Georgian labels", () => {
+  it("all 29 actions have Georgian labels", () => {
     expect(Object.keys(AUDIT_ACTION_LABELS_KA).sort()).toEqual(
       [
         "admin.grant_role",
@@ -101,12 +104,27 @@ describe("audit taxonomy (spec §4.5)", () => {
         "delegate.reject",
         "delegate.reveal_personal_id",
         "delegate.update_profile",
+        "event.cancel",
+        "event.delete",
+        "event.publish",
+        "event.save",
+        "event.update",
         "member.export",
         "member.reassign",
         "member.reveal_personal_id",
+        "news.delete",
+        "news.publish",
+        "news.save",
+        "news.set_image",
+        "news.unpublish",
+        "news.update",
         "payment.bulk_record",
         "payment.record",
         "payment.void",
+        "poll.close",
+        "poll.delete",
+        "poll.open",
+        "poll.save",
         "settings.update",
         "system.active_sweep",
       ].sort(),
@@ -149,5 +167,47 @@ describe("formatDateTimeKa", () => {
   it("renders Tbilisi wall-clock time (UTC+4, no DST)", () => {
     expect(formatDateTimeKa("2026-07-17T20:30:00Z")).toBe("18.07.2026 00:30");
     expect(formatDateTimeKa("2026-07-17T08:05:00Z")).toBe("17.07.2026 12:05");
+  });
+});
+
+describe("Phase 5: შიგთავსი tab", () => {
+  it("editor sees exactly the content tab", () => {
+    expect(adminTabs(["editor"])).toEqual([{ href: "/admin/content", label: "შიგთავსი" }]);
+  });
+  it("super_admin gains the content tab; staff-only roles do not", () => {
+    expect(adminTabs(["super_admin"]).map((t) => t.href)).toContain("/admin/content");
+    expect(adminTabs(["verifier"]).map((t) => t.href)).not.toContain("/admin/content");
+    expect(adminTabs(["finance"]).map((t) => t.href)).not.toContain("/admin/content");
+  });
+});
+
+describe("Phase 5: audit labels + content pills", () => {
+  it("labels every content action", () => {
+    for (const action of [
+      "news.save",
+      "news.update",
+      "news.publish",
+      "news.unpublish",
+      "news.delete",
+      "news.set_image",
+      "event.save",
+      "event.update",
+      "event.publish",
+      "event.cancel",
+      "event.delete",
+      "poll.save",
+      "poll.open",
+      "poll.close",
+      "poll.delete",
+    ]) {
+      expect(AUDIT_ACTION_LABELS_KA[action], action).toBeTruthy();
+    }
+  });
+  it("contentPill maps every status to a Pill config", () => {
+    expect(contentPill("draft")).toEqual({ status: "draft", label: "მონახაზი" });
+    expect(contentPill("published")).toEqual({ status: "approved", label: "გამოქვეყნებული" });
+    expect(contentPill("cancelled")).toEqual({ status: "rejected", label: "გაუქმებული" });
+    expect(contentPill("open")).toEqual({ status: "approved", label: "ღია" });
+    expect(contentPill("closed")).toEqual({ status: "draft", label: "დახურული" });
   });
 });
