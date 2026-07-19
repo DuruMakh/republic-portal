@@ -88,3 +88,34 @@ export async function fetchPublicNewsBySlug(slug: string): Promise<PublicNewsIte
   if (error) throw new Error(`public_news by slug: ${error.message}`);
   return data;
 }
+
+export interface PublicEventItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  status: "published" | "cancelled";
+  published_at: string;
+}
+
+export async function fetchPublicEvents(): Promise<PublicEventItem[]> {
+  const { data, error } = await publicClient()
+    .from("public_events")
+    .select("*")
+    .returns<PublicEventItem[]>();
+  if (error) throw new Error(`public_events: ${error.message}`);
+  return data ?? [];
+}
+
+export async function fetchPublicEventBySlug(slug: string): Promise<PublicEventItem | null> {
+  const { data, error } = await publicClient()
+    .from("public_events")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle<PublicEventItem>();
+  if (error) throw new Error(`public_events by slug: ${error.message}`);
+  return data;
+}
