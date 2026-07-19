@@ -51,7 +51,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
           // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
           <img
             src={article.image_url}
-            alt=""
+            alt={article.title}
             className="mt-6 w-full rounded-xl border border-line object-cover"
           />
         ) : null}
