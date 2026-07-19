@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { CenteredNotice } from "@/components/CenteredNotice";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { StatCard } from "@/components/StatCard";
 import { barPct, hasAnyRole, isStaff } from "@/lib/admin";
@@ -14,14 +14,8 @@ export const metadata: Metadata = { title: "ადმინისტრირე
 export default async function AdminOverviewPage() {
   const roles = await getAdminRoles();
   if (!isStaff(roles)) {
-    // editor-only (spec §3.1): no dead links — a single honest notice
-    return (
-      <CenteredNotice
-        decoration="🗞️"
-        title="შენი განყოფილება (სიახლეები და ღონისძიებები) მე-5 ფაზაში ჩაირთვება"
-        description="სიახლეებისა და ღონისძიებების მართვა (რედაქტორის როლი) მომდევნო ფაზაში ამოქმედდება."
-      />
-    );
+    // editor-only admins live in the content hub (spec §3.7)
+    redirect("/admin/content");
   }
   const supabase = await createServerSupabase();
   const canSeePayments = hasAnyRole(roles, ["finance", "super_admin"]);
