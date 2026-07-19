@@ -153,3 +153,8 @@ export function contentPill(status: ContentStatus): {
       return { status: "draft", label: "მონახაზი" };
   }
 }
+
+export const VISIBILITY_LABELS_KA: Record<"public" | "members", string> = {
+  public: "საჯარო",
+  members: "წევრებისთვის",
+};
