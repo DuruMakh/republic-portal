@@ -66,6 +66,51 @@ const refCodeFor = (i) => {
 };
 const daysAgoIso = (d) => new Date(Date.now() - d * 86_400_000).toISOString();
 const daysAgoDate = (d) => daysAgoIso(d).slice(0, 10);
+const KA_LAT = {
+  ა: "a",
+  ბ: "b",
+  გ: "g",
+  დ: "d",
+  ე: "e",
+  ვ: "v",
+  ზ: "z",
+  თ: "t",
+  ი: "i",
+  კ: "k",
+  ლ: "l",
+  მ: "m",
+  ნ: "n",
+  ო: "o",
+  პ: "p",
+  ჟ: "zh",
+  რ: "r",
+  ს: "s",
+  ტ: "t",
+  უ: "u",
+  ფ: "p",
+  ქ: "k",
+  ღ: "gh",
+  ყ: "q",
+  შ: "sh",
+  ჩ: "ch",
+  ც: "ts",
+  ძ: "dz",
+  წ: "ts",
+  ჭ: "ch",
+  ხ: "kh",
+  ჯ: "j",
+  ჰ: "h",
+};
+const slugify = (text, fallback) => {
+  const s = [...text]
+    .map((c) => KA_LAT[c] ?? c)
+    .join("")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return s || fallback;
+};
+const hoursFromNowIso = (h) => new Date(Date.now() + h * 3_600_000).toISOString();
 
 const FIRST = [
   "ნინო",
@@ -411,6 +456,192 @@ for (const a of ADMIN_SEED) {
 }
 console.log("seeded 4 canonical admin accounts (+99550900000{1..4})");
 
+// --- Phase 5: community content ------------------------------------------------
+console.log("Seeding community content…");
+
+// wipe (uuid PKs — filter on created_at; votes/options/rsvps cascade)
+for (const table of ["news", "events", "polls"]) {
+  const { error } = await db.from(table).delete().gte("created_at", "1970-01-01T00:00:00Z");
+  if (error) throw new Error(`${table} wipe failed: ${error.message}`);
+}
+
+// author: the canonical editor (never wiped — audit-actor invariant)
+const { data: editorProfile, error: editorErr } = await db
+  .from("profiles")
+  .select("id")
+  .in("phone", ["+995509000004", "995509000004"])
+  .single();
+if (editorErr || !editorProfile)
+  throw new Error("canonical editor profile missing — run the admin section first");
+const editorId = editorProfile.id;
+
+// a completed-member pool for votes/RSVPs (never canonical admins as SUBJECTS is
+// fine — votes/RSVPs are member acts, not audited admin acts; still, use roster members)
+const { data: memberPool, error: poolErr } = await db
+  .from("profiles")
+  .select("id")
+  .neq("status", "draft")
+  .not("phone", "like", "+9955090000%")
+  .order("created_at")
+  .limit(120);
+if (poolErr || !memberPool || memberPool.length < 30) {
+  throw new Error(
+    `member pool too small for community seed: ${poolErr?.message ?? memberPool?.length}`,
+  );
+}
+const poolIds = memberPool.map((r) => r.id);
+
+// news: 4 public published, 1 members-only published, 1 draft
+const NEWS = [
+  { t: "მოძრაობა იწყებს რეგიონულ ტურს", d: 2, vis: "public" },
+  { t: "გამოქვეყნდა პლატფორმის განახლება", d: 5, vis: "public" },
+  { t: "შეხვედრა თბილისის გუნდთან", d: 9, vis: "public" },
+  { t: "როგორ მუშაობს დელეგატების სისტემა", d: 14, vis: "public" },
+  { t: "შიდა შეხვედრის ოქმი — მხოლოდ წევრებისთვის", d: 3, vis: "members" },
+  { t: "მონახაზი: მომავალი კამპანია", d: 0, vis: "public", draft: true },
+];
+const newsRows = NEWS.map((n) => ({
+  title: n.t,
+  body: `${n.t} — სრული ტექსტი.\n\nდეტალები: https://respublika.ge/rules\n\nშემოგვიერთდი და მიიღე მონაწილეობა.`,
+  visibility: n.vis,
+  status: n.draft ? "draft" : "published",
+  slug: n.draft ? null : slugify(n.t, "article"),
+  published_at: n.draft ? null : daysAgoIso(n.d),
+  created_by: editorId,
+}));
+await insertChunked("news", newsRows);
+
+// one seeded cover on the first article (public bucket, tiny valid PNG)
+const PNG_1PX = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+{
+  const path = "seed-cover.png";
+  const { error: upErr } = await db.storage
+    .from("news-images")
+    .upload(path, PNG_1PX, { contentType: "image/png", upsert: true });
+  if (upErr) throw new Error(`seed cover upload failed: ${upErr.message}`);
+  const url = db.storage.from("news-images").getPublicUrl(path).data.publicUrl;
+  const { data: first } = await db.from("news").select("id").eq("slug", newsRows[0].slug).single();
+  if (first) {
+    const { error } = await db.from("news").update({ image_url: url }).eq("id", first.id);
+    if (error) throw new Error(`seed cover attach failed: ${error.message}`);
+  }
+}
+
+// events: 2 upcoming, 2 past, 1 cancelled-upcoming
+const EVENTS = [
+  { t: "საერთო კრება თბილისში", startH: 24 * 7, endH: 24 * 7 + 2, status: "published" },
+  { t: "რეგიონული შეხვედრა ქუთაისში", startH: 24 * 21, endH: null, status: "published" },
+  { t: "გუნდის ვორქშოპი", startH: -24 * 7, endH: -24 * 7 + 3, status: "published" },
+  { t: "წევრების პიკნიკი", startH: -24 * 30, endH: null, status: "published" },
+  { t: "გაუქმებული ბრიფინგი", startH: 24 * 10, endH: null, status: "cancelled" },
+];
+const eventRows = EVENTS.map((e) => ({
+  title: e.t,
+  description: `${e.t}.\n\nდღის წესრიგი: https://respublika.ge/agenda`,
+  location: "თბილისი, თავისუფლების მოედანი 1",
+  starts_at: hoursFromNowIso(e.startH),
+  ends_at: e.endH === null ? null : hoursFromNowIso(e.endH),
+  status: e.status,
+  slug: slugify(e.t, "event"),
+  published_at: daysAgoIso(30),
+  created_by: editorId,
+}));
+await insertChunked("events", eventRows);
+const { data: seededEvents } = await db.from("events").select("id, slug, status, starts_at");
+const upcomingIds = (seededEvents ?? [])
+  .filter((e) => e.status === "published" && new Date(e.starts_at) > new Date())
+  .map((e) => e.id);
+const pastIds = (seededEvents ?? [])
+  .filter((e) => e.status === "published" && new Date(e.starts_at) <= new Date())
+  .map((e) => e.id);
+const rsvpRows = [];
+upcomingIds.forEach((eventId, ei) => {
+  poolIds.slice(0, 40 + ei * 10).forEach((memberId, mi) => {
+    rsvpRows.push({
+      event_id: eventId,
+      member_id: memberId,
+      status: mi % 6 === 5 ? "cancelled" : "going",
+    });
+  });
+});
+pastIds.forEach((eventId) => {
+  poolIds.slice(0, 25).forEach((memberId) => {
+    rsvpRows.push({ event_id: eventId, member_id: memberId, status: "going" });
+  });
+});
+await insertChunked("event_rsvps", rsvpRows);
+
+// polls: closed-with-votes, open-with-votes (future ends_at), open-untouched
+const POLLS = [
+  {
+    q: "უნდა ჩატარდეს თუ არა ღია პრაიმერიზი რეგიონულ დელეგატებზე?",
+    opts: ["დიახ", "არა", "თავს ვიკავებ"],
+    status: "closed",
+    openedD: 30,
+    closedD: 10,
+    weights: [0.71, 0.14, 0.15],
+    turnout: 90,
+  },
+  {
+    q: "რომელი მიმართულება უნდა იყოს პრიორიტეტი 2026-ში?",
+    opts: ["დეცენტრალიზაცია", "სასამართლო რეფორმა", "ეკონომიკა"],
+    status: "open",
+    openedD: 5,
+    endsH: 24 * 10,
+    weights: [0.44, 0.38, 0.18],
+    turnout: 60,
+  },
+  {
+    q: "სად გავმართოთ შემდეგი საერთო კრება?",
+    opts: ["თბილისი", "ქუთაისი", "ბათუმი", "ონლაინ"],
+    status: "open",
+    openedD: 1,
+    turnout: 0,
+  },
+];
+for (const p of POLLS) {
+  const { data: poll, error: pollErr } = await db
+    .from("polls")
+    .insert({
+      question: p.q,
+      status: p.status,
+      ends_at: p.endsH ? hoursFromNowIso(p.endsH) : null,
+      opened_at: daysAgoIso(p.openedD),
+      closed_at: p.closedD ? daysAgoIso(p.closedD) : null,
+      created_by: editorId,
+    })
+    .select("id")
+    .single();
+  if (pollErr || !poll) throw new Error(`poll insert failed: ${pollErr?.message}`);
+  const optionRows = p.opts.map((label, i) => ({ poll_id: poll.id, position: i + 1, label }));
+  const { data: options, error: optErr } = await db
+    .from("poll_options")
+    .insert(optionRows)
+    .select("id, position");
+  if (optErr || !options) throw new Error(`poll options failed: ${optErr?.message}`);
+  if (p.turnout > 0) {
+    const sorted = [...options].sort((a, b) => a.position - b.position);
+    const voters = poolIds.slice(0, p.turnout);
+    let cursor = 0;
+    const voteRows = [];
+    p.weights.forEach((w, oi) => {
+      const n =
+        oi === p.weights.length - 1 ? voters.length - cursor : Math.round(voters.length * w);
+      voters.slice(cursor, cursor + n).forEach((memberId) => {
+        voteRows.push({ poll_id: poll.id, option_id: sorted[oi].id, member_id: memberId });
+      });
+      cursor += n;
+    });
+    await insertChunked("poll_votes", voteRows);
+  }
+}
+console.log(
+  `Community: ${newsRows.length} news, ${eventRows.length} events, ${rsvpRows.length} rsvps, ${POLLS.length} polls`,
+);
+
 // 5) Sanity: the views must report exactly the expected world
 // The engine, not the seed, decides who is active (spec §8).
 const { error: recomputeErr } = await db.rpc("recompute_all_active");
@@ -475,4 +706,14 @@ const { count: adminCount, error: adminCountErr } = await db
   );
 if (adminCountErr) throw adminCountErr;
 if (adminCount !== 4) throw new Error(`expected 4 canonical admin roles, got ${adminCount}`);
+const { count: pubNewsCount } = await db
+  .from("news")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "published")
+  .eq("visibility", "public");
+if (pubNewsCount !== 4) throw new Error(`expected 4 public published news, got ${pubNewsCount}`);
+const { count: voteCount } = await db
+  .from("poll_votes")
+  .select("*", { count: "exact", head: true });
+if (!voteCount || voteCount < 100) throw new Error(`expected ≥100 seeded votes, got ${voteCount}`);
 console.log("SEED OK");
