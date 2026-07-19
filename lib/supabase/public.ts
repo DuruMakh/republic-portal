@@ -59,3 +59,32 @@ export async function fetchRegions(): Promise<Region[]> {
   if (error) throw new Error(`regions: ${error.message}`);
   return data ?? [];
 }
+
+export interface PublicNewsItem {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  image_url: string | null;
+  published_at: string;
+}
+
+export async function fetchPublicNews(): Promise<PublicNewsItem[]> {
+  const { data, error } = await publicClient()
+    .from("public_news")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .returns<PublicNewsItem[]>();
+  if (error) throw new Error(`public_news: ${error.message}`);
+  return data ?? [];
+}
+
+export async function fetchPublicNewsBySlug(slug: string): Promise<PublicNewsItem | null> {
+  const { data, error } = await publicClient()
+    .from("public_news")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle<PublicNewsItem>();
+  if (error) throw new Error(`public_news by slug: ${error.message}`);
+  return data;
+}
