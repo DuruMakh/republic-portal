@@ -103,6 +103,18 @@ describe("Tbilisi datetime-local bridge (ADR-016: UTC+4, no DST)", () => {
     expect(tbilisiLocalToIso("garbage")).toBeNull();
     expect(isoToTbilisiLocal("garbage")).toBe("");
   });
+  it("rejects a calendar-invalid day (Feb 30) instead of rolling over to March", () => {
+    expect(tbilisiLocalToIso("2026-02-30T12:00")).toBeNull();
+  });
+  it("rejects a calendar-invalid day (Apr 31) instead of rolling over to May", () => {
+    expect(tbilisiLocalToIso("2026-04-31T10:00")).toBeNull();
+  });
+  it("rejects Feb 29 in a non-leap year (2026) instead of rolling over to March", () => {
+    expect(tbilisiLocalToIso("2026-02-29T08:00")).toBeNull();
+  });
+  it("accepts Feb 29 in a leap year (2028)", () => {
+    expect(tbilisiLocalToIso("2028-02-29T08:00")).toBe("2028-02-29T04:00:00.000Z");
+  });
 });
 
 describe("formatEventTimeKa", () => {

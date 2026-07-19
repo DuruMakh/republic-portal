@@ -25,6 +25,9 @@ export async function saveEventAction(input: unknown): Promise<SaveEventResult> 
   const endsAtIso =
     parsed.data.endsAt && parsed.data.endsAt !== "" ? tbilisiLocalToIso(parsed.data.endsAt) : null;
   if (!startsAtIso) return { ok: false, error: mapFunnelError("invalid_event_dates") };
+  if (parsed.data.endsAt && parsed.data.endsAt !== "" && !endsAtIso) {
+    return { ok: false, error: mapFunnelError("invalid_event_dates") };
+  }
 
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc("admin_save_event", {

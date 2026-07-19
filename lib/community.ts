@@ -67,7 +67,13 @@ export function tbilisiLocalToIso(local: string): string | null {
   if (!LOCAL_RE.test(local)) return null;
   const wallAsUtc = Date.parse(`${local}:00.000Z`);
   if (Number.isNaN(wallAsUtc)) return null;
-  return new Date(wallAsUtc - TBILISI_OFFSET_MS).toISOString();
+  const iso = new Date(wallAsUtc - TBILISI_OFFSET_MS).toISOString();
+  // Date.parse yields NaN for out-of-range hours/minutes/months, but it silently
+  // ROLLS OVER calendar-invalid days (e.g. 2026-02-30 → 2026-03-02) instead of
+  // rejecting them. Round-trip the instant back through the same wall-time math
+  // and compare to the input; a mismatch means the day didn't exist.
+  if (isoToTbilisiLocal(iso) !== local) return null;
+  return iso;
 }
 
 function toTbilisiParts(iso: string): Date | null {
