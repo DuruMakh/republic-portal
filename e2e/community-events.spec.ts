@@ -176,4 +176,13 @@ test("member RSVPs and cancels; delegate sees the team overview", async ({ page,
     .single();
   await page.goto(`/events/${slugRow!.slug as string}`);
   await expect(page.getByText("ღონისძიება გაუქმებულია")).toBeVisible();
+
+  // supporter's cabinet reflects the cancellation: pill label (lib/admin.ts
+  // contentPill("cancelled").label) + RSVP lock (EventRsvp.tsx's closed branch)
+  await loginAs(page, supporterPhone);
+  await page.goto("/me/events");
+  const cancelledCard = page.locator("section", { hasText: `კრება ${RUN}` });
+  await expect(cancelledCard.getByText("გაუქმებული")).toBeVisible();
+  await expect(cancelledCard.getByText("რეგისტრაცია დახურულია")).toBeVisible();
+  await signOutViaNav(page);
 });
