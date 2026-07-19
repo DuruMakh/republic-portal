@@ -102,3 +102,17 @@ export function formatEventTimeKa(startsAt: string, endsAt: string | null): stri
   if (endDate === startDate) return `${startDate}, ${startTime}–${endTime}`;
   return `${startDate}, ${startTime} — ${endDate}, ${endTime}`;
 }
+
+/** Mirrors one delegate_team_rsvps() jsonb element (spec §4.5). */
+export interface TeamRsvpName {
+  firstName: string;
+  lastName: string;
+}
+
+export interface TeamRsvpEvent {
+  eventId: string;
+  title: string;
+  startsAt: string;
+  goingCount: number;
+  going: TeamRsvpName[];
+}
