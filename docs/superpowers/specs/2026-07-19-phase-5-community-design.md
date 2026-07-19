@@ -106,10 +106,10 @@ typographic quotes are „ " (U+201E/U+201C), byte-exact.
 Exact content (owner approves this microcopy as part of the spec gate):
 
 - H1: **გამჭვირვალობა**; intro line: „ღია მონაცემები მოძრაობის წევრობასა და
-  შემოსავლებზე — პირდაპირ რეესტრიდან."
+  შემოსავლებზე — პირდაპირ რეესტრიდან.“
 - Three `StatCard`s:
   - **შეგროვებული საწევრო შენატანები** — `N ₾` (ka-GE formatted), sublabel „სულ,
-    დაარსებიდან" — the all-time sum of recorded, non-voided payments.
+    დაარსებიდან“ — the all-time sum of recorded, non-voided payments.
   - **რეგისტრირებული წევრი** — count of completed registrations
     (`status <> 'draft'`).
   - **დამტკიცებული დელეგატი** — count of approved delegates.
@@ -118,7 +118,7 @@ Exact content (owner approves this microcopy as part of the spec gate):
   desc, then name.
 - Method note (small, muted): „მონაცემები გამოითვლება ავტომატურად: შენატანები —
   აღრიცხული საბანკო გადარიცხვებიდან, წევრობა — რეგისტრაციის რეესტრიდან. გვერდი
-  ახლდება უწყვეტად."
+  ახლდება უწყვეტად.“
 - Every figure comes from the §4.4 anon-granted aggregate views at render time.
   Nothing on this page is stored or editable (parent-spec forbidden pattern).
 - Metadata: static title/description + default OG banner.

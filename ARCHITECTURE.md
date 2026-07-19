@@ -80,6 +80,26 @@ writes payment histories — statuses are always derived. Delegate photos live i
 public `delegate-photos` bucket; uploads go only through the admin server action
 (the single service-role app path), paired with the re-checking RPC.
 
+## Community (Phase 5)
+
+News, events and polls live behind the same locks as Phase 4: base tables carry
+zero client grants; anon reads only `public_news`/`public_events` and the
+aggregate-only `transparency_stats`/`transparency_regions`; completed members
+read self-gating `member_*` views (the DB-level meaning of „წევრებისთვის");
+editors read self-gating `admin_*` views. Every editor mutation is a SECURITY
+DEFINER RPC writing audit_log in-transaction (ADR-014); member acts
+(member_rsvp, member_cast_vote) are definer RPCs without audit rows. One vote
+per member is the poll_votes PRIMARY KEY (poll_id, member_id); RSVPs are one
+row per (event, member) flipped between going/cancelled. Slugs mint at first
+publish (delegate pattern: server suggests via lib/slug, RPC enforces,
+23505 → retry) and are permanent. Member-only articles render ONLY under
+/me/news/* (service-worker NetworkOnly) — the public cache never sees them.
+Public pages are ISR (60s) + revalidatePath on publish/unpublish/cancel.
+News covers ride the Phase 4 photo envelope (editor-prechecked service-role
+upload to the public news-images bucket + audited re-checking RPC) — the one
+service-role app path added this phase. Bodies are plain text rendered to React
+elements (paragraphs + auto-links, lib/content-render) — no HTML round-trips.
+
 ## Status derivation
 
 Derived values are never stored as editable state. Since Phase 4 the
