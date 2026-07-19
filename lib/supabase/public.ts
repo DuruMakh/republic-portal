@@ -119,3 +119,35 @@ export async function fetchPublicEventBySlug(slug: string): Promise<PublicEventI
   if (error) throw new Error(`public_events by slug: ${error.message}`);
   return data;
 }
+
+export interface TransparencyStats {
+  total_gel: number;
+  registered_members: number;
+  approved_delegates: number;
+}
+
+export interface TransparencyRegion {
+  region_id: number;
+  name_ka: string;
+  registered: number;
+  active: number;
+}
+
+export async function fetchTransparencyStats(): Promise<TransparencyStats> {
+  const { data, error } = await publicClient()
+    .from("transparency_stats")
+    .select("*")
+    .single<TransparencyStats>();
+  if (error) throw new Error(`transparency_stats: ${error.message}`);
+  if (!data) throw new Error("transparency_stats: empty response");
+  return data;
+}
+
+export async function fetchTransparencyRegions(): Promise<TransparencyRegion[]> {
+  const { data, error } = await publicClient()
+    .from("transparency_regions")
+    .select("*")
+    .returns<TransparencyRegion[]>();
+  if (error) throw new Error(`transparency_regions: ${error.message}`);
+  return data ?? [];
+}
