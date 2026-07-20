@@ -30,7 +30,7 @@ describe("TeamTable", () => {
     expect(screen.getByText("ნინო ბერიძე")).toBeInTheDocument();
     expect(screen.getByText("10.07.2026")).toBeInTheDocument();
     expect(within(rows).getByText("აქტიური")).toBeInTheDocument();
-    expect(within(rows).getByText("რეგისტრირებული")).toBeInTheDocument();
+    expect(within(rows).getByText("წევრი")).toBeInTheDocument();
   });
 
   it("filters by search and by status", () => {
