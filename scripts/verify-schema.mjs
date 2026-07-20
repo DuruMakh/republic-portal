@@ -694,7 +694,13 @@ let funnelProbePassword;
     // after payment (the owner's "single payment = exactly 60 days") and lapsed on
     // day 61. Stacking: neither old payment alone covers today — only the
     // greatest(prev_end, paid_at) fold does. Void: voided rows never count.
-    const probeDaysAgo = (d) => new Date(Date.now() - d * 86_400_000).toISOString().slice(0, 10);
+    // Fixture dates must be TBILISI calendar days — the engine folds coverage from
+    // tbilisi_today() (ADR-015/016), so a plain UTC slice ran one day out of step
+    // during 00:00–04:00 Tbilisi. Mirrors todayTbilisiIso() (lib/admin-schemas.ts);
+    // Georgia is fixed UTC+4, no DST.
+    const TBILISI_OFFSET_MS = 4 * 3_600_000;
+    const probeDaysAgo = (d) =>
+      new Date(Date.now() - d * 86_400_000 + TBILISI_OFFSET_MS).toISOString().slice(0, 10);
     async function engineCase(label, paidDaysAgo, expectStatus, voidAll = false) {
       const { error: wipeErr } = await db.from("payments").delete().eq("member_id", naId);
       if (wipeErr) throw new Error(`engine ${label}: wipe failed: ${wipeErr.message}`);
