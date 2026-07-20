@@ -255,3 +255,20 @@ apostrophes dropped), mint at first publish, permanent thereafter. Rejected:
 RLS-policy-per-table reads (views centralize the visibility rules exactly like
 public_delegates/admin_*), stored RSVP/vote counters (derivable — forbidden),
 event capacity/waitlists and vote-changing (out of scope v1, spec §9).
+
+## ADR-018 (2026-07-21): Progressive registration — supporter-first funnel, phases renumbered
+
+Owner-driven UX pivot before launch (spec:
+docs/superpowers/specs/2026-07-21-progressive-registration-design.md). The public entry
+becomes one light registration (name, surname, personal ID, mobile + OTP); becoming a
+member moves into the cabinet (profile + delegate choice + tier); delegacy becomes a
+member-only one-confirm request feeding the existing verification queue. Key owner
+decisions: delegate backing stays a member privilege (referrals remembered silently,
+prefilled at upgrade); personal ID stays in the light form (verifiable citizen list);
+registered tier gets events + RSVP (mobilization) but not polls/member news/billing;
+the public delegate pitch is retired; public counters show registered AND active
+members, both derived. Delivered as two releases (v0.7.0 front door, v0.8.0 ladder +
+numbers); the launch checklist shifts to Phase 7. Rationale: the old funnel demanded
+nine decisions including a fee tier before anyone was "in", and offered no
+member→delegate path at all; pre-launch is the cheapest moment this rework will ever
+have.
