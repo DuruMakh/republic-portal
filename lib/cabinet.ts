@@ -24,12 +24,18 @@ export function cabinetNavItems(role: "member" | "delegate", isAdmin = false): C
       ? [
           { href: "/me/profile", label: "პროფილი" },
           { href: "/me/billing", label: "გადახდები" },
+          { href: "/me/news", label: "სიახლეები" },
+          { href: "/me/events", label: "ღონისძიებები" },
+          { href: "/me/polls", label: "გამოკითხვები" },
           { href: "/delegate", label: "დელეგატის პანელი" },
         ]
       : [
           { href: "/me/profile", label: "პროფილი" },
           { href: "/me/delegate", label: "ჩემი დელეგატი" },
           { href: "/me/billing", label: "გადახდები" },
+          { href: "/me/news", label: "სიახლეები" },
+          { href: "/me/events", label: "ღონისძიებები" },
+          { href: "/me/polls", label: "გამოკითხვები" },
         ];
   // Phase 4 (spec §3.1): admins reach /admin from their own cabinet
   if (isAdmin) items.push({ href: "/admin", label: "ადმინისტრირება" });

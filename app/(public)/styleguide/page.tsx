@@ -4,9 +4,12 @@ import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
 import { CabinetNav } from "@/components/CabinetNav";
 import { Card } from "@/components/Card";
+import { ContentBody } from "@/components/ContentBody";
+import { ContentNav } from "@/components/ContentNav";
 import { CopyButton } from "@/components/CopyButton";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field, adminControlClasses } from "@/components/Field";
+import { NewsCard } from "@/components/NewsCard";
 import { Pill } from "@/components/Pill";
 import { QrCode } from "@/components/QrCode";
 import { StatCard } from "@/components/StatCard";
@@ -143,6 +146,20 @@ export default function StyleguidePage() {
             </p>
           </div>
           <Pill status="profile_completed" label="რეგისტრირებული" />
+        </div>
+      </Card>
+      <Card title="შიგთავსის კომპონენტები">
+        <div className="flex flex-col gap-5">
+          <ContentBody body={"აბზაცი პირველი.\n\nბმულით: https://example.ge"} />
+          <NewsCard
+            href="/styleguide"
+            title="სიახლის ბარათი"
+            publishedAt="19.07.2026"
+            imageUrl={null}
+            excerptText="მოკლე შინაარსი ბარათისთვის…"
+            pill={<Pill status="profile_completed" label="წევრებისთვის" />}
+          />
+          <ContentNav />
         </div>
       </Card>
     </main>

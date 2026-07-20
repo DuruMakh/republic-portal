@@ -8,6 +8,9 @@ const nav = [
   { href: "/", label: "მთავარი" },
   { href: "/delegates", label: "დელეგატები" },
   { href: "/leaderboard", label: "რეიტინგი" },
+  { href: "/news", label: "სიახლეები" },
+  { href: "/events", label: "ღონისძიებები" },
+  { href: "/transparency", label: "გამჭვირვალობა" },
 ] as const;
 
 export default function PublicLayout({ children }: { children: ReactNode }) {

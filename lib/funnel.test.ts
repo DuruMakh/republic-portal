@@ -178,3 +178,24 @@ describe("mapFunnelError — Phase 3 tokens", () => {
     );
   });
 });
+
+describe("Phase 5 error tokens", () => {
+  it("maps every community token to Georgian", () => {
+    expect(mapFunnelError("already_voted")).toBe("ხმა უკვე მიცემულია.");
+    expect(mapFunnelError("P0001: poll_closed")).toBe("გამოკითხვა დახურულია.");
+    expect(mapFunnelError("rsvp_closed")).toBe("რეგისტრაცია ამ ღონისძიებაზე დახურულია.");
+    expect(mapFunnelError("invalid_option")).toBe("აირჩიე პასუხი სიიდან.");
+    expect(mapFunnelError("invalid_options")).toBe(
+      "პასუხის ვარიანტები არასწორია (2–10, უნიკალური).",
+    );
+    expect(mapFunnelError("invalid_status")).toBe(
+      "მოქმედება ამ მდგომარეობაში შეუძლებელია — განაახლე გვერდი.",
+    );
+    expect(mapFunnelError("invalid_title")).toBe("სათაური არასწორია (1–160 სიმბოლო).");
+    expect(mapFunnelError("invalid_body")).toBe("ტექსტი ცარიელია ან ძალიან გრძელია.");
+    expect(mapFunnelError("invalid_location")).toBe("ადგილმდებარეობა არასწორია (1–200 სიმბოლო).");
+    expect(mapFunnelError("invalid_event_dates")).toBe("თარიღები არასწორია.");
+    expect(mapFunnelError("invalid_question")).toBe("კითხვა არასწორია (1–300 სიმბოლო).");
+    expect(mapFunnelError("invalid_image")).toBe("სურათის შენახვა ვერ მოხერხდა.");
+  });
+});

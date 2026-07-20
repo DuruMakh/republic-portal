@@ -41,12 +41,11 @@ test("verifier is blocked from finance surfaces server-side, not just hidden tab
   await signOutViaNav(page);
 });
 
-test("editor-only admin sees the Phase 5 notice and no tabs", async ({ page }) => {
+test("editor-only admin lands on the content hub with no staff tabs", async ({ page }) => {
   await loginAs(page, ADMIN_PHONES.editor);
   await page.goto("/admin");
-  await expect(
-    page.getByText("შენი განყოფილება (სიახლეები და ღონისძიებები) მე-5 ფაზაში ჩაირთვება"),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/content\/news$/); // editor lands on the hub
+  await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "ადმინისტრირების ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "წევრები" })).not.toBeVisible();
   await signOutViaNav(page);

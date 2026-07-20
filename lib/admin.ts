@@ -20,7 +20,7 @@ export const ROLE_DUTIES_KA: Record<AdminRole, string> = {
   super_admin: "სრული წვდომა — ადმინების მართვა, აუდიტი, პარამეტრები",
   verifier: "დელეგატების ვერიფიკაცია, პროფილები, ტრანსფერი",
   finance: "გადახდების აღრიცხვა და ექსპორტი",
-  editor: "სიახლეები და ღონისძიებები (ჩაირთვება მე-5 ფაზაში)",
+  editor: "სიახლეები, ღონისძიებები და გამოკითხვები",
 };
 
 /** Overview/member-list gate: every admin role except editor (spec §4.2 „staff“). */
@@ -39,6 +39,7 @@ const TAB_MATRIX: { href: string; label: string; roles: readonly AdminRole[] }[]
   { href: "/admin/verify", label: "ვერიფიკაცია", roles: ["super_admin", "verifier"] },
   { href: "/admin/finances", label: "ფინანსები", roles: ["super_admin", "finance"] },
   { href: "/admin/transfer", label: "ტრანსფერი", roles: ["super_admin", "verifier"] },
+  { href: "/admin/content", label: "შიგთავსი", roles: ["super_admin", "editor"] },
   { href: "/admin/admins", label: "ადმინები", roles: ["super_admin"] },
   { href: "/admin/audit", label: "აუდიტი", roles: ["super_admin"] },
   { href: "/admin/settings", label: "პარამეტრები", roles: ["super_admin"] },
@@ -73,6 +74,21 @@ export const AUDIT_ACTION_LABELS_KA: Record<string, string> = {
   "admin.revoke_role": "როლის მოხსნა",
   "settings.update": "პარამეტრის შეცვლა",
   "system.active_sweep": "სტატუსების ავტომატური განახლება",
+  "news.save": "სიახლის შენახვა",
+  "news.update": "სიახლის რედაქტირება",
+  "news.publish": "სიახლის გამოქვეყნება",
+  "news.unpublish": "სიახლის მოხსნა",
+  "news.delete": "სიახლის წაშლა",
+  "news.set_image": "სიახლის ყდის განახლება",
+  "event.save": "ღონისძიების შენახვა",
+  "event.update": "ღონისძიების რედაქტირება",
+  "event.publish": "ღონისძიების გამოქვეყნება",
+  "event.cancel": "ღონისძიების გაუქმება",
+  "event.delete": "ღონისძიების წაშლა",
+  "poll.save": "გამოკითხვის შენახვა",
+  "poll.open": "გამოკითხვის გახსნა",
+  "poll.close": "გამოკითხვის დახურვა",
+  "poll.delete": "გამოკითხვის წაშლა",
 };
 
 export function auditActionLabel(action: string): string {
@@ -116,3 +132,29 @@ export function formatDateTimeKa(iso: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
+
+export type ContentStatus = "draft" | "published" | "cancelled" | "open" | "closed";
+
+/** Content-status → Pill props (status drives the color, label overrides the text). */
+export function contentPill(status: ContentStatus): {
+  status: "draft" | "approved" | "rejected";
+  label: string;
+} {
+  switch (status) {
+    case "published":
+      return { status: "approved", label: "გამოქვეყნებული" };
+    case "cancelled":
+      return { status: "rejected", label: "გაუქმებული" };
+    case "open":
+      return { status: "approved", label: "ღია" };
+    case "closed":
+      return { status: "draft", label: "დახურული" };
+    default:
+      return { status: "draft", label: "მონახაზი" };
+  }
+}
+
+export const VISIBILITY_LABELS_KA: Record<"public" | "members", string> = {
+  public: "საჯარო",
+  members: "წევრებისთვის",
+};

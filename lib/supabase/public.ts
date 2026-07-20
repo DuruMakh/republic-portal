@@ -59,3 +59,95 @@ export async function fetchRegions(): Promise<Region[]> {
   if (error) throw new Error(`regions: ${error.message}`);
   return data ?? [];
 }
+
+export interface PublicNewsItem {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  image_url: string | null;
+  published_at: string;
+}
+
+export async function fetchPublicNews(): Promise<PublicNewsItem[]> {
+  const { data, error } = await publicClient()
+    .from("public_news")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .returns<PublicNewsItem[]>();
+  if (error) throw new Error(`public_news: ${error.message}`);
+  return data ?? [];
+}
+
+export async function fetchPublicNewsBySlug(slug: string): Promise<PublicNewsItem | null> {
+  const { data, error } = await publicClient()
+    .from("public_news")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle<PublicNewsItem>();
+  if (error) throw new Error(`public_news by slug: ${error.message}`);
+  return data;
+}
+
+export interface PublicEventItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  status: "published" | "cancelled";
+  published_at: string;
+}
+
+export async function fetchPublicEvents(): Promise<PublicEventItem[]> {
+  const { data, error } = await publicClient()
+    .from("public_events")
+    .select("*")
+    .returns<PublicEventItem[]>();
+  if (error) throw new Error(`public_events: ${error.message}`);
+  return data ?? [];
+}
+
+export async function fetchPublicEventBySlug(slug: string): Promise<PublicEventItem | null> {
+  const { data, error } = await publicClient()
+    .from("public_events")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle<PublicEventItem>();
+  if (error) throw new Error(`public_events by slug: ${error.message}`);
+  return data;
+}
+
+export interface TransparencyStats {
+  total_gel: number;
+  registered_members: number;
+  approved_delegates: number;
+}
+
+export interface TransparencyRegion {
+  region_id: number;
+  name_ka: string;
+  registered: number;
+  active: number;
+}
+
+export async function fetchTransparencyStats(): Promise<TransparencyStats> {
+  const { data, error } = await publicClient()
+    .from("transparency_stats")
+    .select("*")
+    .single<TransparencyStats>();
+  if (error) throw new Error(`transparency_stats: ${error.message}`);
+  if (!data) throw new Error("transparency_stats: empty response");
+  return data;
+}
+
+export async function fetchTransparencyRegions(): Promise<TransparencyRegion[]> {
+  const { data, error } = await publicClient()
+    .from("transparency_regions")
+    .select("*")
+    .returns<TransparencyRegion[]>();
+  if (error) throw new Error(`transparency_regions: ${error.message}`);
+  return data ?? [];
+}

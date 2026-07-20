@@ -229,3 +229,29 @@ were fixed pre-release. Decisions worth recording:
   orphaned canonical auth user after a mid-seed crash, and widens the
   approved-delegates assertion by wipe survivors — reseeding can no longer
   brick on FK 23503, "phone already registered", or a QA payment.
+
+## ADR-017 (2026-07-19): Community content model — visibility views, PK votes, plain-text bodies
+
+News/events/polls extend the Phase 4 lock pattern instead of inventing a new
+one: zero client grants on base tables; anon → public_* views (published+public
+only) and aggregate-only transparency views; completed members → self-gating
+member_* views (registration_completed_at is the DB meaning of „წევრებისთვის");
+editor|super_admin → self-gating admin_* views; every editor mutation a
+SECURITY DEFINER RPC with its audit row in the same transaction. Member-only
+articles render exclusively under /me/news/* — the service worker's NetworkOnly
+zone — so shared-device caches never hold them; their covers sit in the public
+news-images bucket (delegate-photos model: unguessable UUID paths, illustrative
+by policy; private bucket + signed URLs recorded as the later fix). One vote
+per member is the poll_votes PRIMARY KEY with a composite FK
+(poll_id, option_id) → poll_options — a second vote or a cross-poll option is
+unrepresentable; votes are immutable (prototype lock) and results visibility
+(voted-or-closed) is enforced IN the poll_option_counts view, with option
+LABELS separately member-visible via member_poll_options so ballots can render.
+Bodies are plain text (blank-line paragraphs + auto-linked URLs) rendered to
+React elements by lib/content-render — no markdown dependency, no stored HTML,
+no dangerouslySetInnerHTML; escalate to a markdown subset only via a future
+ADR. Slugs romanize titles through the existing lib/slug (national 2002,
+apostrophes dropped), mint at first publish, permanent thereafter. Rejected:
+RLS-policy-per-table reads (views centralize the visibility rules exactly like
+public_delegates/admin_*), stored RSVP/vote counters (derivable — forbidden),
+event capacity/waitlists and vote-changing (out of scope v1, spec §9).

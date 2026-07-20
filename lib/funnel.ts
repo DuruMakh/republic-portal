@@ -109,6 +109,23 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   invalid_rows: "ცხრილის მონაცემები არასწორია — სცადე თავიდან.",
   unknown_code: "უცნობი კოდი",
   duplicate: "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
+  // Phase 5 community tokens (spec §6). ORDER MATTERS: mapFunnelError matches by
+  // substring in insertion order, so the longer `invalid_options` must precede
+  // its prefix `invalid_option`; and the token is `invalid_event_dates` (NOT
+  // `invalid_dates`) because Phase 4's earlier `invalid_date` entry would
+  // substring-shadow it.
+  already_voted: "ხმა უკვე მიცემულია.",
+  poll_closed: "გამოკითხვა დახურულია.",
+  rsvp_closed: "რეგისტრაცია ამ ღონისძიებაზე დახურულია.",
+  invalid_options: "პასუხის ვარიანტები არასწორია (2–10, უნიკალური).",
+  invalid_option: "აირჩიე პასუხი სიიდან.",
+  invalid_status: "მოქმედება ამ მდგომარეობაში შეუძლებელია — განაახლე გვერდი.",
+  invalid_title: "სათაური არასწორია (1–160 სიმბოლო).",
+  invalid_body: "ტექსტი ცარიელია ან ძალიან გრძელია.",
+  invalid_location: "ადგილმდებარეობა არასწორია (1–200 სიმბოლო).",
+  invalid_event_dates: "თარიღები არასწორია.",
+  invalid_question: "კითხვა არასწორია (1–300 სიმბოლო).",
+  invalid_image: "სურათის შენახვა ვერ მოხერხდა.",
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;

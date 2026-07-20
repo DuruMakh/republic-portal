@@ -16,6 +16,11 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type MemberStatusRow = "draft" | "profile_completed" | "active_member";
 export type DelegateStatusRow = "pending" | "approved" | "rejected";
+export type NewsVisibilityRow = "public" | "members";
+export type NewsStatusRow = "draft" | "published";
+export type EventStatusRow = "draft" | "published" | "cancelled";
+export type PollStatusRow = "draft" | "open" | "closed";
+export type RsvpStatusRow = "going" | "cancelled";
 
 export interface Database {
   public: {
@@ -125,6 +130,83 @@ export interface Database {
           granted_by: string | null;
           granted_at: string;
         };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      news: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          visibility: NewsVisibilityRow;
+          status: NewsStatusRow;
+          slug: string | null;
+          image_url: string | null;
+          published_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      events: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          location: string;
+          starts_at: string;
+          ends_at: string | null;
+          status: EventStatusRow;
+          slug: string | null;
+          published_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      event_rsvps: {
+        Row: {
+          event_id: string;
+          member_id: string;
+          status: RsvpStatusRow;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      polls: {
+        Row: {
+          id: string;
+          question: string;
+          status: PollStatusRow;
+          ends_at: string | null;
+          opened_at: string | null;
+          closed_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      poll_options: {
+        Row: { id: string; poll_id: string; position: number; label: string };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      poll_votes: {
+        Row: { poll_id: string; option_id: string; member_id: string; created_at: string };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -277,6 +359,121 @@ export interface Database {
         };
         Relationships: [];
       };
+      public_news: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          body: string;
+          image_url: string | null;
+          published_at: string;
+        };
+        Relationships: [];
+      };
+      member_news: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          body: string;
+          image_url: string | null;
+          visibility: NewsVisibilityRow;
+          published_at: string;
+        };
+        Relationships: [];
+      };
+      public_events: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          description: string;
+          location: string;
+          starts_at: string;
+          ends_at: string | null;
+          status: "published" | "cancelled";
+          published_at: string;
+        };
+        Relationships: [];
+      };
+      member_event_going_counts: {
+        Row: { event_id: string; going: number };
+        Relationships: [];
+      };
+      member_polls: {
+        Row: {
+          id: string;
+          question: string;
+          status: "open" | "closed";
+          ends_at: string | null;
+          opened_at: string | null;
+          closed_at: string | null;
+        };
+        Relationships: [];
+      };
+      member_poll_options: {
+        Row: { poll_id: string; option_id: string; position: number; label: string };
+        Relationships: [];
+      };
+      poll_option_counts: {
+        Row: { poll_id: string; option_id: string; votes: number };
+        Relationships: [];
+      };
+      transparency_stats: {
+        Row: { total_gel: number; registered_members: number; approved_delegates: number };
+        Relationships: [];
+      };
+      transparency_regions: {
+        Row: { region_id: number; name_ka: string; registered: number; active: number };
+        Relationships: [];
+      };
+      admin_news: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          visibility: NewsVisibilityRow;
+          status: NewsStatusRow;
+          slug: string | null;
+          image_url: string | null;
+          published_at: string | null;
+          updated_at: string;
+        };
+        Relationships: [];
+      };
+      admin_events: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          location: string;
+          starts_at: string;
+          ends_at: string | null;
+          status: EventStatusRow;
+          slug: string | null;
+          published_at: string | null;
+          updated_at: string;
+          going_count: number;
+        };
+        Relationships: [];
+      };
+      admin_polls: {
+        Row: {
+          id: string;
+          question: string;
+          status: PollStatusRow;
+          ends_at: string | null;
+          opened_at: string | null;
+          closed_at: string | null;
+          updated_at: string;
+          total_votes: number;
+        };
+        Relationships: [];
+      };
+      admin_poll_options: {
+        Row: { poll_id: string; option_id: string; position: number; label: string; votes: number };
+        Relationships: [];
+      };
     };
     Functions: {
       funnel_state: { Args: Record<PropertyKey, never>; Returns: Json };
@@ -350,6 +547,43 @@ export interface Database {
       admin_grant_role: { Args: { p_user_id: string; p_role: string }; Returns: undefined };
       admin_revoke_role: { Args: { p_user_id: string; p_role: string }; Returns: undefined };
       admin_update_setting: { Args: { p_key: string; p_value: Json }; Returns: undefined };
+      admin_save_news: {
+        Args: { p_id: string | null; p_title: string; p_body: string; p_visibility: string };
+        Returns: string;
+      };
+      admin_publish_news: { Args: { p_id: string; p_slug: string }; Returns: Json };
+      admin_unpublish_news: { Args: { p_id: string }; Returns: undefined };
+      admin_delete_news: { Args: { p_id: string }; Returns: undefined };
+      admin_set_news_image: { Args: { p_id: string; p_image_url: string }; Returns: undefined };
+      admin_save_event: {
+        Args: {
+          p_id: string | null;
+          p_title: string;
+          p_description: string;
+          p_location: string;
+          p_starts_at: string;
+          p_ends_at: string | null;
+        };
+        Returns: string;
+      };
+      admin_publish_event: { Args: { p_id: string; p_slug: string }; Returns: Json };
+      admin_cancel_event: { Args: { p_id: string }; Returns: undefined };
+      admin_delete_event: { Args: { p_id: string }; Returns: undefined };
+      admin_save_poll: {
+        Args: {
+          p_id: string | null;
+          p_question: string;
+          p_options: string[];
+          p_ends_at: string | null;
+        };
+        Returns: string;
+      };
+      admin_open_poll: { Args: { p_id: string }; Returns: undefined };
+      admin_close_poll: { Args: { p_id: string }; Returns: undefined };
+      admin_delete_poll: { Args: { p_id: string }; Returns: undefined };
+      member_rsvp: { Args: { p_event_id: string; p_going: boolean }; Returns: undefined };
+      member_cast_vote: { Args: { p_poll_id: string; p_option_id: string }; Returns: undefined };
+      delegate_team_rsvps: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {
       member_status: MemberStatusRow;

@@ -6,9 +6,12 @@ import { PendingExplainer } from "@/components/PendingExplainer";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
+import type { TeamRsvpEvent } from "@/lib/community";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
 import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
 import { ReferralCard } from "./ReferralCard";
+import { TeamRsvpCard } from "./TeamRsvpCard";
 
 export const metadata: Metadata = { title: "დელეგატის პანელი — ქართული რესპუბლიკა" };
 
@@ -24,6 +27,15 @@ export default async function DelegateDashboardPage() {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }
   const panel = panelData as unknown as DelegatePanelData;
+
+  const { data: teamRsvpsRaw, error: teamRsvpsError } =
+    panel.status === "approved"
+      ? await supabase.rpc("delegate_team_rsvps")
+      : { data: null, error: null };
+  // A failure here must stay scoped to the team-RSVP card — render a degraded
+  // card in its slot below instead of throwing, so it can never take down the
+  // whole delegate panel (unlike delegate_panel's failure above, which must).
+  const teamRsvps = (teamRsvpsRaw ?? []) as unknown as TeamRsvpEvent[];
 
   // Rank reuses the leaderboard's exact inputs + math (spec §3.6) so the two
   // surfaces can never disagree.
@@ -91,6 +103,13 @@ export default async function DelegateDashboardPage() {
               </ButtonLink>
             </div>
           </Card>
+          {teamRsvpsError ? (
+            <Card title="გუნდის RSVP">
+              <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
+            </Card>
+          ) : (
+            <TeamRsvpCard events={teamRsvps} />
+          )}
         </div>
       ) : panel.status === "pending" ? (
         <Card>

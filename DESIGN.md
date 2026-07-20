@@ -38,3 +38,11 @@ pattern: GET-form filters + server-side range pagination (50/page) + DataTable;
 masked personal IDs with an audited ჩვენება reveal; bulk-preview status chips
 (ok=ok-green, duplicates=warn, failures=danger); form controls share
 `adminControlClasses` (components/Field.tsx). StatCard reused for admin KPIs.
+
+Phase 5: ContentBody (paragraphs+auto-links renderer — the one renderer for
+news/event bodies everywhere incl. the admin live preview), NewsCard (shared by
+/news and /me/news), ContentNav (admin content sub-nav), poll bars (surface
+track + brand fill, prototype me-polls parity), RSVP toggle (მოვალ ⇄ გაუქმება +
+„✓ შენ მოდიხარ"). Content-status pills via contentPill() label overrides.
+Cabinet nav grew to six member tabs; AdminNav gained შიგთავსი (editor +
+super_admin).

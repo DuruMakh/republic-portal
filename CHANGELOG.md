@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0 — Phase 5: Community (2026-07-19)
+
+- Public news (/news + article pages with OG tags), per-article visibility:
+  public or member-only (member-only lives in the cabinet feed only)
+- Public events (/events + detail): upcoming/past archive, cancellation banner,
+  Tbilisi wall-time display; no public attendee counts
+- Transparency page (/transparency): total membership contributions (GEL,
+  all-time), registered members, approved delegates, region table
+  (registered + active) — every figure derived live, nothing stored
+- Member cabinet: news feed (member-only pill), events with RSVP toggle
+  (მოვალ ⇄ გაუქმება until start) + internal going counts, polls with the
+  prototype voting UX — one vote per member enforced by the database
+- Delegate panel: team RSVP overview (who from my team is coming)
+- Admin შიგთავსი hub (editor + super_admin): news with live preview + audited
+  cover upload, events publish/cancel, polls draft→open→closed with optional
+  end date; every action audited in-transaction
+- 15 new audit actions with Georgian viewer labels
+
 ## 0.5.0 — Phase 4: Admin CRM (2026-07-17)
 
 - /admin area with DB-enforced roles (super_admin / verifier / finance / editor)

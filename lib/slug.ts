@@ -43,23 +43,36 @@ export function transliterateGeorgian(text: string): string {
 }
 
 /**
- * Slug base for a delegate name. Names with no Georgian/Latin characters
- * (Cyrillic, Armenian, …) romanize to nothing — fall back to "delegati" so
- * every applicant stays approvable (the RPC rejects empty slugs outright).
+ * Generalized slug minting (Phase 5): news uses fallback "article", events
+ * "event", delegates keep "delegati". Empty romanization (Cyrillic, emoji…)
+ * falls back so every item stays publishable — the RPCs reject empty slugs.
  */
-export function slugBase(fullName: string): string {
-  const base = transliterateGeorgian(fullName)
+export function slugFrom(text: string, fallback: string): string {
+  const base = transliterateGeorgian(text)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return base === "" ? "delegati" : base;
+  return base === "" ? fallback : base;
 }
 
-export function makeSlug(fullName: string, taken: ReadonlySet<string>): string {
-  const base = slugBase(fullName);
+export function makeSlugFrom(text: string, fallback: string, taken: ReadonlySet<string>): string {
+  const base = slugFrom(text, fallback);
   if (!taken.has(base)) return base;
   for (let n = 2; ; n++) {
     const candidate = `${base}-${n}`;
     if (!taken.has(candidate)) return candidate;
   }
+}
+
+/**
+ * Slug base for a delegate name. Names with no Georgian/Latin characters
+ * (Cyrillic, Armenian, …) romanize to nothing — fall back to "delegati" so
+ * every applicant stays approvable (the RPC rejects empty slugs outright).
+ */
+export function slugBase(fullName: string): string {
+  return slugFrom(fullName, "delegati");
+}
+
+export function makeSlug(fullName: string, taken: ReadonlySet<string>): string {
+  return makeSlugFrom(fullName, "delegati", taken);
 }

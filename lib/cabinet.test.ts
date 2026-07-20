@@ -86,12 +86,18 @@ describe("cabinetNavItems (spec §3.1)", () => {
       { href: "/me/profile", label: "პროფილი" },
       { href: "/me/delegate", label: "ჩემი დელეგატი" },
       { href: "/me/billing", label: "გადახდები" },
+      { href: "/me/news", label: "სიახლეები" },
+      { href: "/me/events", label: "ღონისძიებები" },
+      { href: "/me/polls", label: "გამოკითხვები" },
     ]);
   });
   it("delegate: profile / billing / panel — no „ჩემი დელეგატი“", () => {
     expect(cabinetNavItems("delegate")).toEqual([
       { href: "/me/profile", label: "პროფილი" },
       { href: "/me/billing", label: "გადახდები" },
+      { href: "/me/news", label: "სიახლეები" },
+      { href: "/me/events", label: "ღონისძიებები" },
+      { href: "/me/polls", label: "გამოკითხვები" },
       { href: "/delegate", label: "დელეგატის პანელი" },
     ]);
   });
@@ -196,5 +202,40 @@ describe("paymentStatusKa (Phase 4 §8 — honest voids)", () => {
       label: "გაუქმებული",
       pillStatus: "rejected",
     });
+  });
+});
+
+describe("Phase 5 cabinet nav", () => {
+  it("member gains news/events/polls after billing", () => {
+    expect(cabinetNavItems("member").map((i) => i.href)).toEqual([
+      "/me/profile",
+      "/me/delegate",
+      "/me/billing",
+      "/me/news",
+      "/me/events",
+      "/me/polls",
+    ]);
+  });
+  it("delegate gains the same three, panel stays last", () => {
+    expect(cabinetNavItems("delegate").map((i) => i.href)).toEqual([
+      "/me/profile",
+      "/me/billing",
+      "/me/news",
+      "/me/events",
+      "/me/polls",
+      "/delegate",
+    ]);
+  });
+  it("admin link still appends last", () => {
+    expect(
+      cabinetNavItems("member", true)
+        .map((i) => i.href)
+        .at(-1),
+    ).toBe("/admin");
+    expect(
+      cabinetNavItems("delegate", true)
+        .map((i) => i.href)
+        .at(-1),
+    ).toBe("/admin");
   });
 });
