@@ -96,7 +96,7 @@ test("verifier reveals + approves A from the pending queue — public page goes 
   await expect(cardA).toBeHidden({ timeout: 15_000 });
   const slugA = await getDelegateSlug(phase4Phone(APPLICANT_A));
   await page.goto(`/delegates/${slugA}`);
-  await expect(page.getByText("ვაჟა ფშაველა")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ვაჟა ფშაველა" })).toBeVisible();
 
   await page.goto("/admin");
   await signOutViaNav(page);
