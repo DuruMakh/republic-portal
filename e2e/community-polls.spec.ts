@@ -158,24 +158,10 @@ test("vote once, results per the visibility rule, transparency derives from the 
     .from("profiles")
     .select("*", { count: "exact", head: true })
     .neq("status", "draft");
-  await page.goto("/transparency");
-  await expect(page.getByText(`${formatCountKa(expectedTotal)} ₾`)).toBeVisible();
-  await expect(
-    page
-      .locator("div", { hasText: /^რეგისტრირებული წევრი$/ })
-      .locator("..")
-      .getByText(formatCountKa(registered ?? 0)),
-  ).toBeVisible();
   const { count: approvedDelegates } = await db
     .from("delegates")
     .select("*", { count: "exact", head: true })
     .eq("status", "approved");
-  await expect(
-    page
-      .locator("div", { hasText: /^დამტკიცებული დელეგატი$/ })
-      .locator("..")
-      .getByText(formatCountKa(approvedDelegates ?? 0)),
-  ).toBeVisible();
   // one region row (spec §7): the busiest region's numbers, in its table row
   // (if registered === active there, disambiguate the second assertion with .first())
   const { data: topRegion } = await db
@@ -184,7 +170,37 @@ test("vote once, results per the visibility rule, transparency derives from the 
     .order("registered", { ascending: false })
     .limit(1)
     .single();
-  const regionRow = page.getByRole("row", { name: new RegExp(topRegion!.name_ka) });
-  await expect(regionRow.getByText(formatCountKa(topRegion!.registered))).toBeVisible();
-  await expect(regionRow.getByText(formatCountKa(topRegion!.active))).toBeVisible();
+  // /transparency is ISR-cached (revalidate 60) with no on-demand revalidation
+  // trigger, and the production server (CI runs `next start`) serves the stale
+  // snapshot while refreshing in the background — so a render predating this
+  // run's own funnel registrations can outlive a single goto by up to ~2
+  // windows. Re-request until the live-register values appear (the product
+  // contract: derived figures, ≤60s staleness). Dev servers render every
+  // request fresh, which is why this race never fires locally.
+  test.setTimeout(300_000);
+  await expect(async () => {
+    await page.goto("/transparency");
+    await expect(page.getByText(`${formatCountKa(expectedTotal)} ₾`)).toBeVisible({
+      timeout: 1_000,
+    });
+    await expect(
+      page
+        .locator("div", { hasText: /^რეგისტრირებული წევრი$/ })
+        .locator("..")
+        .getByText(formatCountKa(registered ?? 0)),
+    ).toBeVisible({ timeout: 1_000 });
+    await expect(
+      page
+        .locator("div", { hasText: /^დამტკიცებული დელეგატი$/ })
+        .locator("..")
+        .getByText(formatCountKa(approvedDelegates ?? 0)),
+    ).toBeVisible({ timeout: 1_000 });
+    const regionRow = page.getByRole("row", { name: new RegExp(topRegion!.name_ka) });
+    await expect(regionRow.getByText(formatCountKa(topRegion!.registered))).toBeVisible({
+      timeout: 1_000,
+    });
+    await expect(regionRow.getByText(formatCountKa(topRegion!.active))).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass({ timeout: 150_000, intervals: [2_000, 5_000, 10_000] });
 });
