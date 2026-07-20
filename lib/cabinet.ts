@@ -1,15 +1,21 @@
 import { EMPLOYMENT_PRESETS } from "./funnel-schemas";
-import { deriveFunnelStep, funnelRoute, type FunnelState } from "./funnel";
+import type { CabinetState } from "./funnel";
 
 /**
  * Post-login / guard destination (spec §3.2): cabinet for completed users,
- * funnel otherwise. Legacy rows are first-class exactly like deriveFunnelStep —
- * funnel_state() already folds `status = 'active_member'` into `completed`.
+ * funnel otherwise. `role === "delegate"` always wins (delegates have no
+ * membership standing); otherwise the standing decides.
  */
-export function deriveDestination(state: FunnelState | null): string {
+export function deriveDestination(state: CabinetState | null): string {
   if (!state || !state.exists) return "/join";
-  if (!state.completed) return funnelRoute(deriveFunnelStep(state));
-  return state.role === "delegate" ? "/delegate" : "/me/profile";
+  if (state.role === "delegate") return "/delegate";
+  return state.standing === "member" ? "/me/profile" : "/me";
+}
+
+/** Nav variant: delegates-row wins; otherwise the standing decides. */
+export function cabinetRole(state: CabinetState): "registered" | "member" | "delegate" {
+  if (state.role === "delegate") return "delegate";
+  return state.standing === "member" ? "member" : "registered";
 }
 
 /** Cabinet navigation (spec §3.1): delegates have no membership → no „ჩემი დელეგატი“. */
@@ -18,7 +24,10 @@ export interface CabinetNavItem {
   label: string;
 }
 
-export function cabinetNavItems(role: "member" | "delegate", isAdmin = false): CabinetNavItem[] {
+export function cabinetNavItems(
+  role: "registered" | "member" | "delegate",
+  isAdmin = false,
+): CabinetNavItem[] {
   const items: CabinetNavItem[] =
     role === "delegate"
       ? [
@@ -29,14 +38,21 @@ export function cabinetNavItems(role: "member" | "delegate", isAdmin = false): C
           { href: "/me/polls", label: "გამოკითხვები" },
           { href: "/delegate", label: "დელეგატის პანელი" },
         ]
-      : [
-          { href: "/me/profile", label: "პროფილი" },
-          { href: "/me/delegate", label: "ჩემი დელეგატი" },
-          { href: "/me/billing", label: "გადახდები" },
-          { href: "/me/news", label: "სიახლეები" },
-          { href: "/me/events", label: "ღონისძიებები" },
-          { href: "/me/polls", label: "გამოკითხვები" },
-        ];
+      : role === "member"
+        ? [
+            { href: "/me/profile", label: "პროფილი" },
+            { href: "/me/delegate", label: "ჩემი დელეგატი" },
+            { href: "/me/billing", label: "გადახდები" },
+            { href: "/me/news", label: "სიახლეები" },
+            { href: "/me/events", label: "ღონისძიებები" },
+            { href: "/me/polls", label: "გამოკითხვები" },
+          ]
+        : [
+            { href: "/me", label: "მთავარი" },
+            { href: "/me/events", label: "ღონისძიებები" },
+            { href: "/me/news", label: "სიახლეები" },
+            { href: "/me/profile", label: "პროფილი" },
+          ];
   // Phase 4 (spec §3.1): admins reach /admin from their own cabinet
   if (isAdmin) items.push({ href: "/admin", label: "ადმინისტრირება" });
   return items;
@@ -151,7 +167,7 @@ export interface TeamMember {
 
 /** Team-table / summary-pill vocabulary (spec §3.3, §3.7); rendered via Pill's label override. */
 export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
-  profile_completed: "რეგისტრირებული",
+  profile_completed: "წევრი",
   active_member: "აქტიური",
 };
 

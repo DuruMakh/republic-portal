@@ -95,6 +95,10 @@ describe("Pill", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
     expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
   });
+  it("registered status renders the light-tier label", () => {
+    render(<Pill status="registered" />);
+    expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+  });
 });
 
 describe("StatCard", () => {
@@ -125,7 +129,9 @@ describe("Field", () => {
 
 describe("Stepper", () => {
   it("marks the current step", () => {
-    render(<Stepper current={2} />);
-    expect(screen.getByText("2").getAttribute("aria-current")).toBe("step");
+    render(<Stepper steps={["პროფილი", "საწევრო"]} current={1} />);
+    expect(screen.getByText("პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("საწევრო")).toBeInTheDocument();
+    expect(screen.getByText("1").getAttribute("aria-current")).toBe("step");
   });
 });

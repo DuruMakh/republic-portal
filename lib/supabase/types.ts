@@ -14,7 +14,7 @@
  */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type MemberStatusRow = "draft" | "profile_completed" | "active_member";
+export type MemberStatusRow = "registered" | "profile_completed" | "active_member";
 export type DelegateStatusRow = "pending" | "approved" | "rejected";
 export type NewsVisibilityRow = "public" | "members";
 export type NewsStatusRow = "draft" | "published";

@@ -130,7 +130,7 @@ export const membersFilterSchema = z.object({
     .optional()
     .catch(undefined),
   regionId: z.coerce.number().int().positive().optional().catch(undefined),
-  status: z.enum(["draft", "profile_completed", "active_member"]).optional().catch(undefined),
+  status: z.enum(["registered", "profile_completed", "active_member"]).optional().catch(undefined),
   page: pageParamSchema,
 });
 export type MembersFilter = z.infer<typeof membersFilterSchema>;
