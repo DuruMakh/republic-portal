@@ -76,7 +76,8 @@ Execution order is Task 1 → 10. Tasks 1–3 are pure lib (no DB needed); Task 
   - `interface CabinetState` — exact shape below, mirrors the `cabinet_state()` RPC jsonb (Task 4)
   - `deriveMembershipPhase(state: CabinetState): MembershipPhase`
   - Kept as-is: `TIERS`, `Tier`, `FUNNEL_CODE_ALPHABET`, `isReferenceCode`, `isReferralCodeCandidate`, `mapFunnelError`, `GENERIC_FUNNEL_ERROR`, `DUPLICATE_PERSONAL_ID_MESSAGE`, `FunnelReferral`, `FunnelChosenDelegate`
-  - Deleted: `FunnelState`, `FunnelRole`, `FunnelStep`, `MemberStatus`, `deriveFunnelStep`, `funnelRoute`, `canAccess`
+  - Changed: `MemberStatus` becomes `"registered" | "profile_completed" | "active_member"` (enum rename)
+  - Deleted: `FunnelState`, `FunnelRole`, `FunnelStep`, `deriveFunnelStep`, `funnelRoute`, `canAccess`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -92,9 +93,11 @@ function cab(overrides: Partial<CabinetState>): CabinetState {
   return {
     exists: true,
     standing: "registered",
+    status: "registered",
     role: "member",
     firstName: "ნინო",
     lastName: "ბერიძე",
+    personalIdMasked: "010********",
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -150,16 +153,22 @@ In `lib/funnel.ts`:
 export type Standing = "registered" | "member";
 export type CabinetRole = "member" | "delegate";
 export type MembershipPhase = "profile" | "tier" | "done";
+/** profiles.status after the enum rename (draft → registered). */
+export type MemberStatus = "registered" | "profile_completed" | "active_member";
 
 /** Mirrors the cabinet_state() RPC jsonb exactly (keys are camelCase in SQL). */
 export interface CabinetState {
   exists: boolean;
   /** 'member' when registration_completed_at is set (or legacy active_member). */
   standing: Standing;
+  /** Raw profiles.status — billing/profile render the active_member distinction from it. */
+  status: MemberStatus;
   /** delegates-row presence — cabinet routing only, NOT an authorization signal. */
   role: CabinetRole;
   firstName: string;
   lastName: string;
+  /** e.g. "010********" — first 3 digits + asterisks; own-ID display without raw exposure. */
+  personalIdMasked: string;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;
@@ -366,8 +375,8 @@ import type { CabinetState } from "./funnel";
 
 function cab(overrides: Partial<CabinetState>): CabinetState {
   return {
-    exists: true, standing: "registered", role: "member",
-    firstName: "ნინო", lastName: "ბერიძე",
+    exists: true, standing: "registered", status: "registered", role: "member",
+    firstName: "ნინო", lastName: "ბერიძე", personalIdMasked: "010********",
     birthDate: null, regionId: null, cityId: null, employment: null,
     tier: null, referenceCode: null, completed: false, delegateStatus: null,
     referral: null, pendingDelegate: null, chosenDelegate: null,
@@ -477,7 +486,7 @@ export function cabinetNavItems(
 
 (Import type changes from `FunnelState` to `CabinetState`; delete the `deriveFunnelStep`/`funnelRoute` import.) Change `TEAM_STATUS_LABELS.profile_completed` to `"წევრი"`.
 
-`lib/admin.ts`: change `MemberStatusRow` to `"registered" | "profile_completed" | "active_member"` and the label map per the interface block above.
+`lib/admin.ts`: update the label map per the interface block above. `MemberStatusRow` itself is DEFINED in `lib/supabase/types.ts:17` (admin.ts only imports it) — change the union there (`"registered" | "profile_completed" | "active_member"`), and update the `Enums.member_status` union in the same file to match. `lib/admin-schemas.ts:133`: the members-page status-filter `z.enum(["draft", ...])` becomes `z.enum(["registered", "profile_completed", "active_member"])` — update its test cases in `lib/admin-schemas.test.ts` alongside.
 
 `components/Pill.tsx`: extend the `Status` union with `"registered"` and add
 `registered: { label: "რეგისტრირებული", className: "bg-surface text-muted-fg" },` (same muted skin as draft — a registered person is a neutral standing, not a warning).
@@ -551,6 +560,13 @@ In `scripts/verify-schema.mjs`: find every probe that calls `funnel_start` / `fu
 - `become_member_save_profile` + `become_member_complete(10)` flips `standing` to `"member"`, mints a `GR-` reference code, and creates exactly one open membership;
 - `become_member_complete` again is a no-op returning the same reference code;
 - `member_rsvp` succeeds for a *registered* (not completed) probe user against a published probe event (gate widened);
+- `become_member_save_profile` rejects an unknown/unapproved delegate with `invalid_delegate`;
+- `become_member_complete` before any profile save fails with `profile_incomplete`;
+- referral precedence: a probe user registered with a seeded approved delegate's ref code, then `become_member_save_profile` passing a DIFFERENT approved delegate id → returned state's `pendingDelegate` is the REFERRAL delegate (stored referral wins, Phase-2 parity);
+- lost-approval fallback: point a probe user's `pending_delegate_id` at a NON-approved delegates row (service-role write), then `become_member_complete(10)` → membership row lands on central (`delegate_id` null), no error (spec §8);
+- registered probe user hits the member wall everywhere else: `member_cast_vote` raises `not_completed`; `member_polls` returns zero rows;
+- direct PostgREST PATCH of `pending_delegate_id` as the probe user is rejected by the protect trigger;
+- regression probes for the recreated functions: `member_change_delegate` + `member_change_tier` still work for a completed probe member (and return the new state shape), and `admin_record_payment` on a probe member still flips `active_member` (exercises `recompute_member_active` post-rename);
 - old function names are gone: probe `funnel_state` and assert PostgREST returns 404/`PGRST202`.
 Update the probe at `scripts/verify-schema.mjs:148` that writes `status: "draft"` to use `"registered"`.
 
@@ -567,9 +583,23 @@ Expected: FAIL — `register` does not exist yet.
 -- Phase 6 R1: progressive registration.
 -- Spec: docs/superpowers/specs/2026-07-21-progressive-registration-design.md §4, §6, §7.
 
--- 1) Staging cleanup: abandoned old-funnel step-1 rows. Drafts can never carry a
---    personal_id (the old funnel_save_profile set personal_id AND flipped status in
---    one statement), so this exactly matches "started, never passed step 2".
+-- 1) Staging cleanup (spec §7.1). Two classes of unfinishable rows go away:
+--    a) delegate-path mid-registration abandoners: a delegates row with no
+--       completion stamp. Under the new model delegacy sits ON TOP of
+--       membership; a delegates-row + registered-standing hybrid would bounce
+--       between /delegate and the delegate layout's redirect forever. They are
+--       abandoned staging signups — remove them (profiles delete cascades the
+--       delegates row; nothing references an unapproved delegate: only approved
+--       delegates are choosable, and ADR-016 keeps incomplete ones unapprovable).
+delete from profiles p
+  where p.registration_completed_at is null
+    and p.status <> 'active_member'
+    and exists (select 1 from delegates d where d.id = p.id);
+--    b) old-funnel step-1 abandoners: FUNNEL-created drafts never carry a
+--       personal_id (funnel_save_profile set the ID and flipped status in one
+--       statement). SEEDED draft rows (service-role, scripts/seed-staging.mjs)
+--       DO carry an ID (+ region) — those deliberately survive and become
+--       registered people in step 2; Task 8 reseeds staging properly anyway.
 delete from profiles where status = 'draft' and personal_id is null;
 
 -- 2) draft → registered. After (1) zero 'draft' rows remain, so this is a pure
@@ -600,10 +630,13 @@ update profiles set status = 'registered'
 alter table profiles drop column signup_role;
 
 -- 6) Server-managed column protection: minus signup_role, plus pending_delegate_id.
+--    IMPORTANT: based on the LIVE hardened body (20260716140000 §1), which also
+--    enforces value rules on the Phase-3 scoped-grant columns (they render on
+--    PUBLIC pages) — that rider must survive this replacement.
 create or replace function protect_profile_columns() returns trigger language plpgsql as $$
 begin
-  if current_user in ('anon', 'authenticated')
-    and (new.status is distinct from old.status
+  if current_user in ('anon', 'authenticated') then
+    if new.status is distinct from old.status
       or new.personal_id is distinct from old.personal_id
       or new.phone is distinct from old.phone
       or new.id is distinct from old.id
@@ -612,9 +645,23 @@ begin
       or new.membership_tier is distinct from old.membership_tier
       or new.reference_code is distinct from old.reference_code
       or new.registration_completed_at is distinct from old.registration_completed_at
-      or new.pending_delegate_id is distinct from old.pending_delegate_id)
-  then
-    raise exception 'server-managed profile columns cannot be changed by client roles';
+      or new.pending_delegate_id is distinct from old.pending_delegate_id
+    then
+      raise exception 'server-managed profile columns cannot be changed by client roles';
+    end if;
+    -- Phase 3 hardening rider — keep: value rules on direct client PATCHes
+    if new.first_name is distinct from old.first_name
+       and length(btrim(coalesce(new.first_name, ''))) not between 1 and 60 then
+      raise exception 'invalid_name';
+    end if;
+    if new.last_name is distinct from old.last_name
+       and length(btrim(coalesce(new.last_name, ''))) not between 1 and 60 then
+      raise exception 'invalid_name';
+    end if;
+    if new.employment is distinct from old.employment
+       and length(btrim(coalesce(new.employment, ''))) not between 1 and 100 then
+      raise exception 'invalid_employment';
+    end if;
   end if;
   return new;
 end $$;
@@ -624,6 +671,33 @@ drop function funnel_start(text, text, text, text);
 drop function funnel_save_profile(text, date, int, int, text, uuid, boolean);
 drop function funnel_complete(int);
 drop function funnel_state();
+
+-- 7b) Late-bound dependents of the dropped/renamed surface (review finding —
+--     plpgsql resolves names and enum literals at RUN time, so none of these
+--     block the statements above; they would break at first call instead).
+--     Recreate each one against the new surface, copying the LIVE body verbatim
+--     from the named migration and applying exactly the listed change:
+--
+--     * member_change_delegate — copy 20260715213000_cabinets.sql §4; change the
+--       final `return public.funnel_state();` → `return public.cabinet_state();`
+--     * member_change_tier — copy 20260715213000_cabinets.sql §5; same
+--       return-value change.
+--     * delegate_panel — copy 20260716140000_cabinet_hardening.sql §2; change
+--       the draftCount predicate `p.status = 'draft'` → `p.status = 'registered'`
+--       (the jsonb key stays `draftCount` — churn control; the stat now honestly
+--       means "registered via my code, not yet a member". The partial index
+--       profiles_draft_by_ref_code survives the rename by OID and still serves
+--       this predicate. The delegate-page LABEL change is Task 6.)
+--     * recompute_member_active — copy 20260717150000_admin_crm.sql; change
+--       `if not found or v_status = 'draft' then return;` → `... = 'registered' ...`
+--       (registered people have no tier/payments — the engine keeps skipping them).
+--     * recompute_all_active — copy 20260717150000_admin_crm.sql; change
+--       `where p2.status <> 'draft'` → `where p2.status <> 'registered'`.
+--     * admin_export_members — copy the live definition; change the p_status
+--       whitelist `('draft', 'profile_completed', 'active_member')` →
+--       `('registered', 'profile_completed', 'active_member')`.
+--
+--     All are `create or replace` with unchanged signatures and grants.
 
 -- 8) Registered gate (spec §4.2): profile existence IS the registered standing —
 --    register() only ever creates complete rows.
@@ -694,9 +768,11 @@ begin
   return jsonb_build_object(
     'exists', true,
     'standing', v_standing,
+    'status', v_profile.status,
     'role', case when v_has_delegate then 'delegate' else 'member' end,
     'firstName', v_profile.first_name,
     'lastName', v_profile.last_name,
+    'personalIdMasked', left(coalesce(v_profile.personal_id, ''), 3) || '********',
     'birthDate', v_profile.birth_date,
     'regionId', v_profile.region_id,
     'cityId', v_profile.city_id,
@@ -728,6 +804,7 @@ language plpgsql volatile security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
   v_phone text;
+  v_ref text := nullif(btrim(coalesce(p_ref_code, '')), '');
 begin
   if v_uid is null then raise exception 'not_authenticated'; end if;
   if exists (select 1 from public.profiles where id = v_uid) then
@@ -740,6 +817,10 @@ begin
   end if;
   if p_personal_id is null or p_personal_id !~ '^\d{11}$' then
     raise exception 'invalid_personal_id';
+  end if;
+  -- Phase 3 rider parity (20260715213000 §4.6): junk ref codes are silently dropped
+  if v_ref is not null and v_ref !~ '^[A-Za-z0-9-]{1,32}$' then
+    v_ref := null;
   end if;
   if exists (select 1 from public.profiles pr where pr.personal_id = p_personal_id) then
     raise exception 'duplicate_personal_id';
@@ -755,8 +836,7 @@ begin
 
   insert into public.profiles (id, first_name, last_name, phone, personal_id, status, signup_ref_code)
   values (
-    v_uid, btrim(p_first_name), btrim(p_last_name), v_phone, p_personal_id, 'registered',
-    nullif(btrim(coalesce(p_ref_code, '')), '')
+    v_uid, btrim(p_first_name), btrim(p_last_name), v_phone, p_personal_id, 'registered', v_ref
   );
 
   return public.cabinet_state() || jsonb_build_object('created', true);
@@ -923,8 +1003,10 @@ revoke execute on function become_member_complete(int) from public, anon;
 
 Notes for the implementer (verified against the live schema files, do not re-derive):
 - `tbilisi_today()` and `gen_funnel_code()` already exist (ADR-016 / Phase 2).
-- `admin_overview`'s `status <> 'draft'` and `admin_region_stats`' filter survive the rename — view trees store the enum internally, and post-normalization "not registered" = exactly the members. R2 rewrites them for the disjoint buckets; do NOT touch them here.
-- Dropping `signup_role` is safe: no view or function other than the four dropped RPCs references it (checked: `admin_members` column list, `public_delegates`, community views).
+- VIEWS survive the enum rename by OID: `admin_overview` (`status <> 'draft'` → semantically `<> 'registered'` = exactly the members post-normalization), `admin_region_stats`, `transparency_stats.registered_members` (now counts members only — the public LABEL fix is Task 6; R2 rebuilds these for the real counters; do NOT touch the views here).
+- plpgsql FUNCTION bodies do NOT survive: enum literals in function text re-parse at run time — that is why section 7b exists. After writing the migration, grep every live migration for `'draft'` and `funnel_state` and confirm section 7b covers each hit that is a function body (expected hits: the six functions listed, the dropped funnel RPCs, view definitions, and the partial index — nothing else).
+- Dropping `signup_role` is safe: no view or function other than the dropped/recreated RPCs references it (checked: `admin_members` column list, `public_delegates`, community views).
+- `styleguide` and admin CONTENT pages use `"draft"` for news/events/polls statuses — different enums, untouched.
 
 - [ ] **Step 4: Update `lib/supabase/types.ts`**
 
@@ -956,6 +1038,8 @@ is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
 ```
 
 - [ ] **Step 5: Push and verify**
+
+**Cutover warning (shared staging, ADR-005):** the moment this push lands, the deployed main-branch staging app loses `funnel_state`/`funnel_start` — signed-in cabinet visits and new registrations on THAT deployment error until R1 merges and deploys (public pages keep working; this branch's preview works). Push only when proceeding continuously into Tasks 5–9, do not run main-branch e2e during the window, and record the window in the PR/QA evidence so the owner isn't surprised by a broken staging main.
 
 Run: `npx supabase db push` (staging project, per ADR-005 setup), then
 `node --env-file=.env.local scripts/verify-schema.mjs`
@@ -1020,7 +1104,7 @@ export async function registerAction(input: unknown): Promise<ActionResult> {
 - `afterVerify`: call `registerAction({ firstName, lastName, personalId, refCode })`. On `ok`, branch on the deterministic `created` flag (Task 1 interface, set only by `register()`, Task 4):
   - `result.state.created === false` → the phone already had an account (RPC no-opped, nothing overwritten): show the „ეს ნომერი უკვე რეგისტრირებულია“ notice (`data-testid="join-notice"`), then after 1500ms — same timeout-with-cleanup pattern as old step-1 — `router.replace(deriveDestination(result.state))`.
   - `result.state.created === true` → fresh registration: `router.replace("/me")` directly — the cabinet greets them (no ceremony page, spec §4.1).
-- On `!ok` with the duplicate-ID message (`DUPLICATE_PERSONAL_ID_MESSAGE`): return to the form phase with the error attached to the personalId field (mirror old step-2's field-error routing) — the user corrects and resubmits; the OTP session survives, so resubmission calls `registerAction` again directly (add a `resubmit` path: if `phase === "otp-done"` show the form with a „სცადე თავიდან“ submit that calls `registerAction` without a new OTP).
+- The phase machine is explicit: `type JoinPhase = “form” | “otp” | “retry”`. `form` → validate all four fields with `registerSchema` → `signInWithOtp` → `otp`. OTP success → `registerAction`. On `!ok` with `DUPLICATE_PERSONAL_ID_MESSAGE` → `retry`: the same form renders with the error on the personalId field and the **phone field disabled** with helper text „ნომერი დადასტურებულია” (the session is bound to that phone — editing it there would do nothing), and submit now calls `registerAction` directly, **no new OTP**. Any other `!ok` error returns to `form` with the form-level error (a fresh OTP on the next submit is correct there).
 
 - [ ] **Step 3: Homepage CTA (`app/(public)/page.tsx:46-53`)** — replace both ButtonLinks with:
 
@@ -1180,6 +1264,16 @@ and query that view (both expose `id, slug, title, body, image_url, published_at
 
 - [ ] **Step 6: `/me/events`** — verify the page renders for `!completed` (it lives under the same layout; going counts + RSVP now work via the widened DB gates from Task 4). If any client component takes a `completed` prop to hide RSVP buttons, remove that gating so registered users see the buttons.
 
+- [ ] **Step 6b: Member facts keep rendering from `state.status`** — billing (`app/(member)/me/billing/page.tsx:40`) keeps its activation notice via `state.status !== "active_member"`; profile (`app/(member)/me/profile/page.tsx:52-53`) keeps the active/member Pill, but its non-active label changes „რეგისტრირებული" → „წევრი" (that word now means the light tier). The registered profile variant shows the ID as `state.personalIdMasked` („პირადი ნომერი", display-only) — a deliberate refinement of spec §4.2: the own-ID display is masked so the raw ID never rides every cabinet state response (ADR-014 spirit; flag in the owner evidence).
+
+- [ ] **Step 6c: Delegate-layout loop-break (defense in depth)** — `app/(delegate)/layout.tsx`: split the combined gate into `if (!state.exists || state.role !== "delegate") redirect(deriveDestination(state));` then `if (!state.completed) redirect("/me");`. A delegates-row holder who is somehow not completed must land in the cabinet, never bounce back toward `/delegate` (the migration removes the known hybrids; this makes the redirect loop unrepresentable regardless).
+
+- [ ] **Step 6d: Vocabulary sweep on live pages** —
+  - delegate panel stat label `app/(delegate)/delegate/page.tsx:90`: „მონახაზები (Draft)" → „რეგისტრირებული" (the recreated `delegate_panel.draftCount` now counts registered-via-my-code people — same key, honest new meaning);
+  - transparency page `app/(public)/transparency/page.tsx:41`: label „რეგისტრირებული წევრი" → „წევრი" (the view still counts members; the real registered counter is R2);
+  - admin transfer page `app/(admin)/admin/transfer/page.tsx:37`: `.neq("status", "draft")` → `.neq("status", "registered")`;
+  - admin members filter `app/(admin)/admin/members/page.tsx:122`: `<option value="draft">მონახაზი</option>` → `<option value="registered">რეგისტრირებული</option>`, and source all three option labels from `MEMBER_STATUS_LABELS_KA` so the vocabulary can't drift again.
+
 - [ ] **Step 7: Verify + commit**
 
 Run: `npx tsc --noEmit` (only Task-7-owned files may remain red: step-2/3, done, pending, useFunnelGuard). `npx vitest run` PASS.
@@ -1244,7 +1338,7 @@ export async function completeMembershipAction(input: unknown): Promise<ActionRe
 - [ ] **Step 3: `MembershipWizard.tsx`** (client). One component, three phases driven by local state initialized from `deriveMembershipPhase(initialState)`:
 
 - **profile phase**: port the form from the old `step-2/page.tsx` VERBATIM minus the personalId field, minus the tcAccepted branch, minus `useFunnelGuard` (state arrives as a prop; after actions, use the returned state). Keep: `LabeledSelect` helper, region→city cascade, employment preset/„სხვა" logic, `DelegateBinding` with referral card (from `initialState.referral`) and prefill (`initialState.pendingDelegate?.id ?? initialState.chosenDelegate?.id ?? null`), one-time prefill of saved fields from `initialState` (birthDate/regionId/cityId/employment — same `initialized` pattern). Submit → `saveMembershipProfileAction` → on ok: `setState(result.state); setPhase("tier")`.
-- **tier phase**: port from old `step-3/page.tsx`: `TierPicker`, submit → `completeMembershipAction({ tier })` → on ok: `setState(result.state); setPhase("done"); router.refresh()` (refresh so the layout nav flips to the member variant on next server render).
+- **tier phase**: port from old `step-3/page.tsx`: `TierPicker`, submit → `completeMembershipAction({ tier })` → on ok: `setState(result.state); setPhase("done")`. Do **NOT** call `router.refresh()` here — the page's server gate redirects completed members to `/me/profile`, so a refresh would yank away the just-rendered done screen (the only place the GR- code + bank instructions appear). The nav flips to the member variant on the next server navigation (the done phase's own „ჩემი კაბინეტი" link).
 - **done phase**: port the old `done/page.tsx` card body (TransferInstructions with `state.tier`/`state.referenceCode`, chosen-delegate line with `data-testid="chosen-delegate"`, the „აქტიური წევრის სტატუსი…" note), buttons: `<ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>` only. No fresh-completion marker — the done phase renders in-place from the completion result, never on a revisit (revisits hit the page-level `state.completed` redirect).
 - Header: `<Stepper steps={["პროფილი", "საწევრო"]} current={phase === "profile" ? 1 : 2} />` (hidden in done phase). Eyebrow „წევრობის გაფორმება".
 - Back-navigation: in tier phase render a ghost Button „← პროფილის შესწორება" that sets phase back to profile (fields stay editable until completion — the RPC allows re-saving).
@@ -1285,14 +1379,33 @@ Expected: seed completes; canonical admins untouched; summary line reports the r
 **Files:**
 - Create: `e2e/registration.spec.ts`, `e2e/membership.spec.ts`
 - Delete: `e2e/funnel.spec.ts`
-- Modify: `e2e/funnel-helpers.ts`, `e2e/admin-approval.spec.ts`, `e2e/delegate-panel.spec.ts`, `e2e/public.spec.ts`, `e2e/smoke.spec.ts`, `e2e/login.spec.ts`, `e2e/cabinet.spec.ts`
+- Modify: `e2e/funnel-helpers.ts`, `e2e/community-helpers.ts`, `e2e/admin-approval.spec.ts`, `e2e/delegate-panel.spec.ts`, `e2e/admin-payments.spec.ts`, `e2e/admin-rbac.spec.ts`, `e2e/community-events.spec.ts`, `e2e/community-news.spec.ts`, `e2e/community-polls.spec.ts`, `e2e/public.spec.ts`, `e2e/smoke.spec.ts`, `e2e/login.spec.ts`, `e2e/cabinet.spec.ts`
+
+(That list is the FULL import blast radius of `passStep1`/`fillStep2Basics`/funnel routes — verified by grep. After this task, `grep -l "passStep1\|fillStep2Basics\|/join/step-" e2e/` must return nothing.)
 
 **Interfaces:**
 - Produces in `funnel-helpers.ts`:
   - `passRegistration(page, { phone, firstName, lastName, personalId }): Promise<void>` — fills the 4 fields on `/join`, completes dev-OTP (same `dev-otp`/`otp-0` mechanics as the old `passStep1`), waits for `/me`.
   - `fillMembershipProfile(page, { regionLabel }): Promise<void>` — old `fillStep2Basics` minus personalId.
-  - `seedPendingDelegate({ phone, firstName, lastName, personalId }): Promise<{ id: string }>` — service-role: `auth.admin.createUser({ phone, phone_confirm: true })`, insert completed member profile (all wizard fields, `registration_completed_at`, `status: "profile_completed"`, tier 10, reference code `GR-`+random from the funnel alphabet), insert `delegates` row (`status: "pending"`, `referral_code` random 6-char, `tc_accepted_at: new Date().toISOString()`). Guard: throw unless phone starts with `55`. This replaces UI-driven delegate creation until R2's request flow exists.
-  - Keep `JOURNEY` slots + `cleanupJourneyUsers` (they key off phones; unchanged mechanics).
+  - `seedCompletedMember({ phone, firstName, lastName, personalId, tier? }): Promise<{ id: string }>` — service-role: `auth.admin.createUser({ phone, phone_confirm: true })`, insert a COMPLETE member profile (all wizard fields, `status: "profile_completed"`, `registration_completed_at`, tier (default 10), `GR-`+random reference code) **plus an open membership row (delegate_id null = central)** — the new invariant: members always hold a membership. Guard: throw unless the phone starts with `55`.
+  - `seedPendingDelegate({ phone, firstName, lastName, personalId }): Promise<{ id: string }>` — `seedCompletedMember` first, then **close its open membership** (delegates hold none — Phase 3 invariant), then insert the `delegates` row (`status: "pending"`, random 6-char referral code from the funnel alphabet, `tc_accepted_at` now). Replaces UI-driven delegate creation until R2's request flow exists.
+  - `loginAs(page, phone): Promise<void>` — drives `/login` with the dev-OTP oracle (same mechanics as `login.spec.ts`); pairs with the seed helpers whenever a spec needs the BROWSER signed in as a seeded user (community specs read auth cookies via `memberRpcClient`).
+  - `JOURNEY` slots reworked — single digits are scarce (0–9, with 9 reserved for login.spec's fixed phone), so the table is explicit:
+    ```ts
+    export const JOURNEY = {
+      regHappy: 0,     // registration.spec: happy path + duplicate-phone re-entry
+      membFull: 1,     // membership.spec: full upgrade
+      regDupId: 2,     // registration.spec: duplicate personal ID + retry
+      membResume: 3,   // membership.spec: wizard resume
+      regReferral: 4,  // registration.spec + membership.spec: referral capture → completion
+      cabinet: 5,      // cabinet.spec (ported setup)
+      membRsvp: 6,     // membership.spec: RSVP as registered
+      spare: 7,        // 8 also free
+    } as const;
+    ```
+    `cleanupJourneyUsers` keys off phones — mechanics unchanged. Admin/community specs keep their separate `phase4Phone` range (no collision with journey phones).
+- Changes in `community-helpers.ts`:
+  - `registerCompletedMember(page, k)` is REWRITTEN, same signature and same postcondition (browser signed in as a completed member): `seedCompletedMember` with `phase4Phone(k)`/`phase4PersonalId(k)` + `loginAs(page, phone)`. Its consumers (community-events/news/polls, admin-payments) keep working untouched wherever they only need "a signed-in completed member". Direct seeding is deliberate: the wizard UI journey is membership.spec's job; these suites test community/admin behavior and get faster and less flaky.
 
 - [ ] **Step 1: `e2e/registration.spec.ts`** — journeys (serial, own phones):
   1. **happy path**: `/join` → `passRegistration` → lands on `/me`; overview shows „გამარჯობა"; nav shows exactly მთავარი/ღონისძიებები/სიახლეები/პროფილი (assert `/me/polls` link ABSENT); `/me/billing` direct visit redirects to `/me`.
@@ -1304,7 +1417,14 @@ Expected: seed completes; canonical admins untouched; summary line reports the r
   2. **resume**: register → save profile phase only → go to `/me` (CTA reads „გააგრძელე…") → reopen `/me/membership` → lands on TIER phase directly (fields survived).
   3. **referral binding at completion**: the journey-4 user from registration.spec (or a fresh one with `?ref=`) completes the wizard → `/me/delegate` shows that delegate as current.
   4. **registered RSVP**: register (no upgrade) → seed a published event via existing community admin helpers → `/me/events` → RSVP „მოვალ" → count/state visible after reload.
-- [ ] **Step 3: Helper surgery in dependent specs** — `admin-approval.spec.ts` + `delegate-panel.spec.ts`: replace the UI funnel-registration setup with `seedPendingDelegate(...)` (+ existing `approveOwnDelegate` where the journey needs an approved one). `login.spec.ts`: completed-member destinations unchanged (`/me/profile`); add one case — a registered-standing user logging in lands on `/me`. `public.spec.ts`/`smoke.spec.ts`: homepage assertions — single „დარეგისტრირდი" CTA, no „გახდი დელეგატი"; `/join` shows the four-field form (assert „პირადი ნომერი" input present). `cabinet.spec.ts`: its setup registers via the old funnel — port to `passRegistration` + wizard actions (or `seedPendingDelegate`-style direct completed-member seeding where the test's subject is post-registration behavior; prefer direct seeding for speed, UI journeys stay the job of registration/membership specs).
+- [ ] **Step 3: Helper surgery in dependent specs** —
+  - `admin-approval.spec.ts` + `delegate-panel.spec.ts`: replace UI funnel-registration setup with `seedPendingDelegate(...)` (+ existing `approveOwnDelegate` where the journey needs an approved one).
+  - `admin-payments.spec.ts`: its first test drives the old funnel end-to-end ("a fresh member registers…") — its real subject is payment recording against a fresh member, so seed via `seedCompletedMember` + `loginAs` and keep every payment assertion; drop the funnel-walk assertions (that journey lives in registration/membership specs now).
+  - `admin-rbac.spec.ts`: imports `passStep1` for its actor setup — port to the seed helpers the same way.
+  - `community-events.spec.ts` / `community-news.spec.ts` / `community-polls.spec.ts`: keep working through the rewritten `registerCompletedMember`; additionally `community-polls.spec.ts:95` asserts the old JoinChoice redirect — update to the new `/join` behavior (a signed-in completed member visiting `/join` is redirected to their cabinet by the on-mount state check).
+  - `login.spec.ts`: completed-member destinations unchanged (`/me/profile`); add one case — a registered-standing user (seed via `passRegistration` or service-role insert) logging in lands on `/me`.
+  - `public.spec.ts`/`smoke.spec.ts`: homepage assertions — single „დარეგისტრირდი" CTA, no „გახდი დელეგატი"; `/join` shows the four-field form (assert the „პირადი ნომერი" input present).
+  - `cabinet.spec.ts`: its setup registers via the old funnel — port to `seedCompletedMember` + `loginAs` (its subject is post-registration cabinet behavior; UI journeys stay the job of registration/membership specs).
 - [ ] **Step 4: Run**: `npm run e2e`
 Expected: all specs green against staging. Flake rule: Georgian-text locators scope to roles/testids (lesson: PR #8).
 - [ ] **Step 5: Commit**: `git add e2e && git commit -m "test(e2e): registration + membership journeys replace funnel; seeded pending delegates for admin/delegate specs"`
@@ -1325,8 +1445,38 @@ Expected: every stage green. Any failure: fix, re-run the full chain.
 
 ---
 
+## Engineering Review Round (2026-07-21, /plan-eng-review + independent adversarial pass)
+
+Findings verified against live migrations/code and folded into the tasks above:
+
+1. **[P1, fixed]** Five late-bound DB dependents of `funnel_state()` / the `'draft'` literal (`member_change_delegate`, `member_change_tier`, `delegate_panel`, `recompute_member_active`, `recompute_all_active`) plus `admin_export_members`' whitelist would have broken payments recording, the delegate panel, and cabinet actions at first call → migration section 7b recreates all six; regression probes added.
+2. **[P1, fixed]** The planned `protect_profile_columns()` replacement silently reverted the Phase-3 hardening rider (value rules on publicly-rendered columns) → step 6 now bases on the hardened body.
+3. **[P1, fixed]** Admin-UI blast radius was missing (`transfer` page `.neq('draft')`, members filter option, `admin-schemas` z.enum, export whitelist) → Tasks 3/4/6d.
+4. **[P1, fixed]** e2e blast radius understated by six files (`community-helpers` + community suites, `admin-payments`, `admin-rbac`) → Task 9 rewritten with `seedCompletedMember`/`loginAs` helpers and the full grep-verified file list + explicit journey-slot table.
+5. **[P1, fixed]** `CabinetState` dropped `status`, breaking billing's activation notice and profile's active Pill → `status` kept in the RPC + type; profile's non-active label „რეგისტრირებული"→„წევრი".
+6. **[P1, documented]** Shared-staging cutover window (main-branch staging app breaks between db push and R1 merge) → explicit cutover warning + sequencing rule in Task 4 Step 5.
+7. **[P2, fixed]** Wizard done-phase self-destruct via `router.refresh()` (server gate would redirect away the only rendering of the GR- code) → refresh removed; nav flips on next navigation.
+8. **[P2, fixed]** Migration would have minted delegates-row+registered hybrids from delegate-path abandoners → step 1a deletes them; delegate layout loop-break added (Task 6c).
+9. **[P2, fixed]** Spec §4.2 ID display was unimplementable (no personal_id in client reach) → `personalIdMasked` in `cabinet_state()`; masked display recorded as deliberate refinement for owner sign-off.
+10. **[P3, fixed]** `MemberStatusRow` lives in `lib/supabase/types.ts`, not `lib/admin.ts` → Task 3 corrected; `register()` re-validates ref codes in-DB (Phase-3 rider parity); retry-phase phone field disabled; migration step-1 rationale corrected for seeded drafts; transparency/delegate-panel labels swept (Task 6d).
+11. **[resolved tension]** The adversarial pass claimed `app/(admin)/layout.tsx` is not a `getFunnelState` call site — direct grep shows it is (line 19); the plan's rename list stands.
+
 ## Plan Self-Review (performed at authoring time)
 
 - **Spec coverage (R1):** §4.1 registration (Task 5), duplicate paths (Tasks 4+5+9), referral capture (4/5/9), §4.2 nav + gates + RSVP widening (3/4/6), news source (6), profile variant (6), §4.3 wizard incl. membership-at-completion + resume + referral precedence (4/7/9), §4.4 acceptance (no delegacy path — Task 9 seeds pending delegates for admin specs), §6 data model (4), §7 migration incl. mid-step-3 normalization (4), §9 testing (1-4 unit, 9 e2e), §10 ritual (10). Not in R1 by design: §5 (public counters, admin buckets, delegacy request) — Release 2 plan.
 - **Known intentional deviations:** none from spec; `ActionResult` moves to `lib/funnel.ts` (shared type, both action files).
 - **Type consistency:** `CabinetState` field list is identical in Task 1 (TS interface) and Task 4 (`cabinet_state()` jsonb keys); `created?: boolean` is optional and appears ONLY on `register()` responses (both RPC paths append it explicitly) — `cabinet_state()` itself never returns it, and no other consumer may read it.
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | (scope owner-locked in brainstorm, 5 decisions) |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | dropped by owner decision 2026-07-15 |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR (PLAN) | 15 findings (6 P1, 3 P2, 6 P3) — all fixed in-plan or documented |
+| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | UI reuses existing design system verbatim |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | not a developer-facing product |
+
+- **OUTSIDE VOICE:** independent Claude adversarial subagent (fresh context) — 15 findings, 14 verified real, 1 refuted by direct grep (admin layout IS a call site). All folded into the Engineering Review Round section above.
+- **UNRESOLVED:** 0 — every finding fixed in-plan, documented as accepted (staging cutover window), or refuted with evidence.
+- **VERDICT:** ENG CLEARED — ready to implement (owner go still required per house process).
