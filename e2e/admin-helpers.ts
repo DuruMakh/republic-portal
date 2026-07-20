@@ -83,7 +83,12 @@ export async function loginAs(page: Page, phoneNational: string): Promise<void> 
   if (!otp) throw new Error(`no fresh OTP in dev_otp_inbox for ${phoneNational}`);
   await page.getByTestId("otp-0").fill(otp); // OtpInput distributes the pasted digits
   await page.getByRole("button", { name: "დადასტურება" }).click();
-  await expect(page).toHaveURL(/\/(me\/profile|me\/delegate|admin)/, { timeout: 15_000 });
+  // Completed accounts land on /me/profile, /me/delegate, /admin* or — for
+  // delegate-role accounts (deriveDestination, lib/cabinet.ts) — /delegate. The
+  // trailing boundary keeps the public /delegates pages from satisfying the check.
+  await expect(page).toHaveURL(/\/(me\/profile|me\/delegate|admin|delegate)(\/|\?|#|$)/, {
+    timeout: 15_000,
+  });
 }
 
 /** Both CabinetNav and AdminNav expose the same გასვლა control. */
