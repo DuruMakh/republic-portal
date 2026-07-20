@@ -688,11 +688,14 @@ drop function funnel_state();
 --       means "registered via my code, not yet a member". The partial index
 --       profiles_draft_by_ref_code survives the rename by OID and still serves
 --       this predicate. The delegate-page LABEL change is Task 6.)
---     * recompute_member_active — copy 20260717150000_admin_crm.sql; change
+--     * recompute_member_active — copy the LIVE body from
+--       20260718100000_admin_crm_hardening.sql (~lines 33-51; it superseded the
+--       admin_crm.sql original with the tbilisi_today() fix — keep that); change
 --       `if not found or v_status = 'draft' then return;` → `... = 'registered' ...`
 --       (registered people have no tier/payments — the engine keeps skipping them).
---     * recompute_all_active — copy 20260717150000_admin_crm.sql; change
---       `where p2.status <> 'draft'` → `where p2.status <> 'registered'`.
+--     * recompute_all_active — copy the LIVE body from
+--       20260718100000_admin_crm_hardening.sql (~lines 53-70, tbilisi_today()
+--       kept); change `where p2.status <> 'draft'` → `where p2.status <> 'registered'`.
 --     * admin_export_members — copy the live definition; change the p_status
 --       whitelist `('draft', 'profile_completed', 'active_member')` →
 --       `('registered', 'profile_completed', 'active_member')`.
