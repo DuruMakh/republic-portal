@@ -140,4 +140,8 @@ describe("membersFilterSchema — searchParams-tolerant", () => {
   it("empty search becomes undefined", () => {
     expect(membersFilterSchema.parse({ search: "  " }).search).toBeUndefined();
   });
+  it("status vocabulary: registered parses; retired draft degrades to undefined", () => {
+    expect(membersFilterSchema.parse({ status: "registered" }).status).toBe("registered");
+    expect(membersFilterSchema.parse({ status: "draft" }).status).toBeUndefined();
+  });
 });

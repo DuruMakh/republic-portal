@@ -78,7 +78,7 @@ describe("cabinetRole + nav", () => {
     const hrefs = cabinetNavItems("registered").map((i) => i.href);
     expect(hrefs).toEqual(["/me", "/me/events", "/me/news", "/me/profile"]);
   });
-  it("member/delegate navs unchanged; admin tab appends", () => {
+  it("member/delegate/registered navs + admin tab appends", () => {
     expect(cabinetNavItems("member").map((i) => i.href)).toEqual([
       "/me/profile",
       "/me/delegate",
@@ -86,6 +86,14 @@ describe("cabinetRole + nav", () => {
       "/me/news",
       "/me/events",
       "/me/polls",
+    ]);
+    expect(cabinetNavItems("delegate").map((i) => i.href)).toEqual([
+      "/me/profile",
+      "/me/billing",
+      "/me/news",
+      "/me/events",
+      "/me/polls",
+      "/delegate",
     ]);
     expect(cabinetNavItems("registered", true).at(-1)?.href).toBe("/admin");
   });
