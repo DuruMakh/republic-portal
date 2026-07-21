@@ -10,7 +10,7 @@ import { tierSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 // No `state` field: every caller re-reads the truth via router.refresh() (the
-// layout/page funnel_state fetch), so returning state here was dead weight — and,
+// layout/page cabinet_state fetch), so returning state here was dead weight — and,
 // for updateProfileAction, an extra read whose transient failure was wrongly
 // reported as a failed save even though the UPDATE had already committed.
 export type CabinetActionResult = { ok: true } | { ok: false; error: string };
