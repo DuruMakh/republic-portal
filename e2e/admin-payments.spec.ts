@@ -8,7 +8,7 @@ import {
   phase4Phone,
   signOutViaNav,
 } from "./admin-helpers";
-import { fillStep2Basics, passStep1 } from "./funnel-helpers";
+import { seedCompletedMember } from "./funnel-helpers";
 
 const PAYER = 2; // phase4Phone(2) — fresh member, ცენტრალური მოძრაობა, tier 10
 
@@ -16,30 +16,20 @@ test.describe.configure({ mode: "serial" });
 test.beforeAll(() => cleanupPhase4Users([PAYER]));
 test.afterAll(() => cleanupPhase4Users([PAYER]));
 
-test("a fresh member registers (tier 10, central)", async ({ page }) => {
-  const phone = phase4Phone(PAYER);
-  // Mirrors e2e/funnel.spec.ts's member journey (role choice → step 1 → step 2 →
-  // step 3) with this run's own identity, keeping the default tier (10 ₾).
-  await page.goto("/join");
-  await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
-  await expect(page).toHaveURL(/\/join\/step-1\?role=member/);
-  await passStep1(page, { phone, firstName: "გადამხდელი", lastName: "პირველი" });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await fillStep2Basics(page, {
+test("a fresh member is set up (tier 10, central)", async ({ page }) => {
+  // The subject here is payment recording against a fresh member — seed the member
+  // directly (its GR-code drives the finance search below) instead of walking the
+  // wizard, whose journey now lives in registration/membership specs.
+  await seedCompletedMember({
+    phone: phase4Phone(PAYER),
+    firstName: "გადამხდელი",
+    lastName: "პირველი",
     personalId: phase4PersonalId(PAYER),
-    regionLabel: "თბილისი",
+    tier: 10,
   });
-  // binding block: central movement is the default — this is the payments spec's
-  // target actor, so no delegate-picker interaction is needed.
-  await expect(page.getByLabel("დელეგატი")).toHaveValue("central");
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("radio", { name: /10/ }).click(); // tier 10 — TierPicker's own default
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-
-  await expect(page).toHaveURL(/\/join\/done$/);
+  await loginAs(page, phase4Phone(PAYER));
+  await page.goto("/me/profile");
+  await expect(page.getByText("გადამხდელი პირველი")).toBeVisible();
 });
 
 test("finance records a single payment by GR-code — the member turns active", async ({ page }) => {

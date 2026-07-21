@@ -24,16 +24,20 @@ test.describe("home", () => {
     await expect(page).toHaveURL(/\/delegates$/);
   });
 
-  test("join CTAs land on the registration choice screen", async ({ page }) => {
+  test("the single register CTA lands on the one-door /join form", async ({ page }) => {
     await page.goto("/");
-    // The header's "გახდი წევრი" link lives outside <main> (app/(public)/layout.tsx);
-    // scoping to <main> resolves to exactly the hero CTA (app/(public)/page.tsx)
-    // without relying on DOM order via .first().
-    await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
-    await expect(page).toHaveURL(/\/join/);
-    // Phase 2 (Task 5) replaced the Phase-1 "opening soon" placeholder with the
-    // live funnel choice screen (app/(public)/join/JoinChoice.tsx) — see funnel.spec.ts.
-    await expect(page.getByRole("heading", { name: "როგორ გსურს შემოგვიერთდე?" })).toBeVisible();
+    // One door now: the hero CTA is „დარეგისტრირდი" (app/(public)/page.tsx); the old
+    // two-door „გახდი დელეგატი" is gone. Scope to <main> — the header keeps its own
+    // „გახდი წევრი" link outside <main> (app/(public)/layout.tsx).
+    const cta = page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" });
+    await expect(cta).toBeVisible();
+    await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
+    await cta.click();
+    await expect(page).toHaveURL(/\/join$/);
+    // The four-field one-door form replaced the old funnel choice screen — see
+    // registration.spec.ts / membership.spec.ts.
+    await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
+    await expect(page.getByLabel("პირადი ნომერი")).toBeVisible();
   });
 });
 

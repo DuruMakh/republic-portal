@@ -92,14 +92,11 @@ test("vote once, results per the visibility rule, transparency derives from the 
   expect(afterDirect).toBe(1);
 
   // 2) a NON-voter sees buttons, not results, while open. Sign out the still-
-  // authenticated VOTER first: JoinChoice's own useEffect (app/(public)/join/
-  // JoinChoice.tsx) redirects a signed-in visitor with a funnel state away
-  // from /join (to deriveDestination(state), e.g. /me/profile for a completed
-  // member) — confirmed by running this without the sign-out first: the
-  // registration flow raced that redirect and intermittently landed on
-  // /me/profile instead of /join/step-1. Every other identity switch on a
-  // shared `page` in this suite (community-news.spec.ts, community-events.
-  // spec.ts) already signs out first; this mirrors that idiom.
+  // authenticated VOTER first: registerCompletedMember signs the next member in via
+  // /login, and switching identities on a shared `page` without signing out leaves the
+  // prior session's cookies in place. Every other identity switch on a shared `page` in
+  // this suite (community-news.spec.ts, community-events.spec.ts) already signs out
+  // first; this mirrors that idiom.
   await signOutViaNav(page);
   await registerCompletedMember(page, WATCHER);
   await page.goto("/me/polls");
@@ -154,10 +151,14 @@ test("vote once, results per the visibility rule, transparency derives from the 
     if (!chunk || chunk.length < PAYMENTS_PAGE) break;
   }
   const expectedTotal = Math.round(livePayments.reduce((s, p) => s + Number(p.amount_gel), 0));
+  // transparency_stats.registered_members counts non-registered profiles (members):
+  // the enum value 'draft' was renamed to 'registered', so the page's „წევრი" figure is
+  // `count(*) where status <> 'registered'`. Query the same way — a literal 'draft' now
+  // 22P02s against the renamed enum.
   const { count: registered } = await db
     .from("profiles")
     .select("*", { count: "exact", head: true })
-    .neq("status", "draft");
+    .neq("status", "registered");
   const { count: approvedDelegates } = await db
     .from("delegates")
     .select("*", { count: "exact", head: true })
@@ -185,7 +186,7 @@ test("vote once, results per the visibility rule, transparency derives from the 
     });
     await expect(
       page
-        .locator("div", { hasText: /^რეგისტრირებული წევრი$/ })
+        .locator("div", { hasText: /^წევრი$/ })
         .locator("..")
         .getByText(formatCountKa(registered ?? 0)),
     ).toBeVisible({ timeout: 1_000 });
