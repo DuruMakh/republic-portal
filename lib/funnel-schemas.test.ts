@@ -1,44 +1,65 @@
 import { describe, expect, it } from "vitest";
 import {
-  contactSchema,
   EMPLOYMENT_PRESETS,
+  membershipProfileSchema,
   otpSchema,
-  profileActionSchema,
-  startSchema,
+  registerActionSchema,
+  registerSchema,
   tierSchema,
 } from "./funnel-schemas";
 import { BANK_DETAILS } from "./bank-details";
 
-const validProfileBase = {
-  personalId: "01001234567",
-  birthDate: "1990-05-20",
-  regionId: 1,
-  cityId: 3,
-  employment: "სტუდენტი",
-};
-
-describe("contactSchema", () => {
-  it("accepts and normalizes a Georgian phone in any common format", () => {
-    for (const input of ["599 12 34 56", "+995599123456", "995599123456"]) {
-      const parsed = contactSchema.parse({ firstName: "ნინო", lastName: "ბერიძე", phone: input });
-      expect(parsed.phone).toBe("+995599123456");
+describe("registerSchema", () => {
+  const base = {
+    firstName: "ნინო",
+    lastName: "ბერიძე",
+    personalId: "01001012345",
+    phone: "555 12 34 56",
+  };
+  it("accepts the four fields and normalizes the phone", () => {
+    const parsed = registerSchema.parse(base);
+    expect(parsed.phone).toBe("+995555123456");
+  });
+  it("rejects a personal ID that is not 11 digits, in Georgian", () => {
+    const r = registerSchema.safeParse({ ...base, personalId: "123" });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0]?.message).toBe("პირადი ნომერი უნდა იყოს 11 ციფრი.");
     }
   });
-  it("trims names and rejects empty or over-long ones", () => {
-    const ok = contactSchema.parse({ firstName: " ნინო ", lastName: "ბერიძე", phone: "599123456" });
-    expect(ok.firstName).toBe("ნინო");
-    expect(
-      contactSchema.safeParse({ firstName: "", lastName: "ბ", phone: "599123456" }).success,
-    ).toBe(false);
-    expect(
-      contactSchema.safeParse({ firstName: "ა".repeat(61), lastName: "ბ", phone: "599123456" })
-        .success,
-    ).toBe(false);
+  it("accepts an optional referral code and rejects junk", () => {
+    expect(registerSchema.safeParse({ ...base, refCode: "7K3M9Q" }).success).toBe(true);
+    expect(registerSchema.safeParse({ ...base, refCode: "bad code!" }).success).toBe(false);
   });
-  it("rejects non-Georgian-mobile phones", () => {
+});
+
+describe("registerActionSchema", () => {
+  it("has no phone field (session provides it)", () => {
     expect(
-      contactSchema.safeParse({ firstName: "ა", lastName: "ბ", phone: "499123456" }).success,
-    ).toBe(false);
+      registerActionSchema.safeParse({
+        firstName: "ნინო",
+        lastName: "ბერიძე",
+        personalId: "01001012345",
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("membershipProfileSchema", () => {
+  const base = {
+    birthDate: "1990-05-20",
+    regionId: 3,
+    cityId: 7,
+    employment: "სტუდენტი",
+    delegateId: null,
+  };
+  it("accepts a full profile", () => {
+    expect(membershipProfileSchema.safeParse(base).success).toBe(true);
+  });
+  it("rejects a future birth date in Georgian", () => {
+    const r = membershipProfileSchema.safeParse({ ...base, birthDate: "2999-01-01" });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0]?.message).toBe("თარიღი უნდა იყოს წარსულში.");
   });
 });
 
@@ -50,92 +71,13 @@ describe("otpSchema", () => {
   });
 });
 
-describe("startSchema", () => {
-  it("accepts both roles and an optional ref code", () => {
-    expect(
-      startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "member", refCode: "D00101" })
-        .success,
-    ).toBe(true);
-    expect(startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "delegate" }).success).toBe(
-      true,
-    );
-    expect(startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "admin" }).success).toBe(
-      false,
-    );
-    expect(
-      startSchema.safeParse({ firstName: "ა", lastName: "ბ", role: "member", refCode: "bad ref!" })
-        .success,
-    ).toBe(false);
-  });
-});
-
-describe("profileActionSchema", () => {
-  it("accepts a valid member payload (delegateId null = central)", () => {
-    expect(
-      profileActionSchema.safeParse({ role: "member", ...validProfileBase, delegateId: null })
-        .success,
-    ).toBe(true);
-    expect(
-      profileActionSchema.safeParse({
-        role: "member",
-        ...validProfileBase,
-        delegateId: "2f6ae2f0-31a5-4f0f-9b60-2f4bb3170500",
-      }).success,
-    ).toBe(true);
-  });
-  it("delegate payload requires tcAccepted literally true", () => {
-    expect(
-      profileActionSchema.safeParse({ role: "delegate", ...validProfileBase, tcAccepted: true })
-        .success,
-    ).toBe(true);
-    const result = profileActionSchema.safeParse({
-      role: "delegate",
-      ...validProfileBase,
-      tcAccepted: false,
-    });
-    expect(result.success).toBe(false);
-    // regression: zod v3's `z.literal(true, { message })` shorthand ignores the
-    // custom message for invalid_literal issues and falls back to English —
-    // must go through an explicit errorMap instead (see lib/funnel-schemas.ts).
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe("საჭიროა წესებზე თანხმობა.");
-    }
-  });
-  it("rejects bad personal IDs, future birth dates, empty employment", () => {
-    expect(
-      profileActionSchema.safeParse({
-        role: "member",
-        ...validProfileBase,
-        personalId: "123",
-        delegateId: null,
-      }).success,
-    ).toBe(false);
-    expect(
-      profileActionSchema.safeParse({
-        role: "member",
-        ...validProfileBase,
-        birthDate: "2999-01-01",
-        delegateId: null,
-      }).success,
-    ).toBe(false);
-    expect(
-      profileActionSchema.safeParse({
-        role: "member",
-        ...validProfileBase,
-        employment: "  ",
-        delegateId: null,
-      }).success,
-    ).toBe(false);
-  });
-});
-
 describe("tierSchema", () => {
   it("accepts only 5, 10, 20", () => {
     expect(tierSchema.safeParse({ tier: 10 }).success).toBe(true);
     const result = tierSchema.safeParse({ tier: 15 });
     expect(result.success).toBe(false);
     // regression: z.union's `{ message }` shorthand ignores invalid_union issues
-    // too — same zod v3 quirk as tcAccepted above.
+    // (see the errorMap note in lib/funnel-schemas.ts).
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe("აირჩიე საწევრო პაკეტი.");
     }

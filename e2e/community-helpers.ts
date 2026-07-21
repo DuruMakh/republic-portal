@@ -1,40 +1,24 @@
 import type { Page } from "@playwright/test";
-import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { phase4PersonalId, phase4Phone, serviceClient } from "./admin-helpers";
-import { fillStep2Basics, passStep1 } from "./funnel-helpers";
+import { loginAs, seedCompletedMember } from "./funnel-helpers";
 
 /**
- * Drive a per-run user (phase4Phone(k)) through the FULL member funnel to
- * completed registration. Extracted verbatim from e2e/admin-payments.spec.ts's
- * first test ("a fresh member registers…", ~lines 19–43; its beforeAll only
- * does cleanup) — same passStep1/fillStep2Basics calls, same tier-step
- * interactions, same expectations — parameterized by k in place of that
- * spec's fixed PAYER constant.
+ * Sign the browser in as a completed member on phase4Phone(k) (central, tier 10).
+ * Direct-seeded then logged in: the wizard UI journey is membership.spec's job —
+ * these suites test community/admin behavior and get faster and less flaky by
+ * skipping the funnel. Same signature and postcondition as before (browser signed in
+ * as a completed member), so its consumers keep working untouched.
  */
 export async function registerCompletedMember(page: Page, k: number): Promise<void> {
   const phone = phase4Phone(k);
-  // Mirrors e2e/funnel.spec.ts's member journey (role choice → step 1 → step 2 →
-  // step 3) with this run's own identity, keeping the default tier (10 ₾).
-  await page.goto("/join");
-  await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
-  await expect(page).toHaveURL(/\/join\/step-1\?role=member/);
-  await passStep1(page, { phone, firstName: "გადამხდელი", lastName: "პირველი" });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await fillStep2Basics(page, {
+  await seedCompletedMember({
+    phone,
+    firstName: "წევრი",
+    lastName: "ტესტი",
     personalId: phase4PersonalId(k),
-    regionLabel: "თბილისი",
   });
-  // binding block: central movement is the default — no delegate-picker interaction needed.
-  await expect(page.getByLabel("დელეგატი")).toHaveValue("central");
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("radio", { name: /10/ }).click(); // tier 10 — TierPicker's own default
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-
-  await expect(page).toHaveURL(/\/join\/done$/);
+  await loginAs(page, phone);
 }
 
 /**

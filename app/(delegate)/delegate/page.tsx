@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -9,7 +10,7 @@ import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { ReferralCard } from "./ReferralCard";
 import { TeamRsvpCard } from "./TeamRsvpCard";
 
@@ -17,12 +18,13 @@ export const metadata: Metadata = { title: "დელეგატის პა�
 
 export default async function DelegateDashboardPage() {
   const supabase = await createServerSupabase();
-  // funnel_state is request-cached (the delegate layout already fetched it); pair
+  // cabinet_state is request-cached (the delegate layout already fetched it); pair
   // its (free) read with the delegate_panel round-trip.
   const [state, { data: panelData, error: panelError }] = await Promise.all([
-    getFunnelState(), // layout guarantees delegate+completed
+    getCabinetState(), // layout guarantees delegate+completed
     supabase.rpc("delegate_panel"),
   ]);
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading state.firstName
   if (panelError || panelData === null) {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }
@@ -87,7 +89,7 @@ export default async function DelegateDashboardPage() {
               accent="brand"
             />
             <StatCard value={panel.totalCount} label="სულ გუნდში" />
-            <StatCard value={panel.draftCount} label="მონახაზები (Draft)" />
+            <StatCard value={panel.draftCount} label="რეგისტრირებული" />
             <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
           </div>
           <Card>
@@ -118,7 +120,7 @@ export default async function DelegateDashboardPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard value={0} label="აქტიური მხარდამჭერი" />
             <StatCard value={0} label="სულ გუნდში" />
-            <StatCard value={0} label="მონახაზები (Draft)" />
+            <StatCard value={0} label="რეგისტრირებული" />
             <StatCard value="—" label="რეიტინგში ადგილი" />
           </div>
         </Card>

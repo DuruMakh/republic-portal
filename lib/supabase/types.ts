@@ -14,7 +14,7 @@
  */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type MemberStatusRow = "draft" | "profile_completed" | "active_member";
+export type MemberStatusRow = "registered" | "profile_completed" | "active_member";
 export type DelegateStatusRow = "pending" | "approved" | "rejected";
 export type NewsVisibilityRow = "public" | "members";
 export type NewsStatusRow = "draft" | "published";
@@ -37,8 +37,8 @@ export interface Database {
           city_id: number | null;
           employment: string | null;
           status: MemberStatusRow;
-          signup_role: "member" | "delegate";
           signup_ref_code: string | null;
+          pending_delegate_id: string | null;
           membership_tier: number | null;
           reference_code: string | null;
           registration_completed_at: string | null;
@@ -476,29 +476,28 @@ export interface Database {
       };
     };
     Functions: {
-      funnel_state: { Args: Record<PropertyKey, never>; Returns: Json };
-      funnel_start: {
+      cabinet_state: { Args: Record<PropertyKey, never>; Returns: Json };
+      register: {
         Args: {
           p_first_name: string;
           p_last_name: string;
-          p_role: string;
-          p_ref_code: string | null;
+          p_personal_id: string;
+          p_ref_code?: string | null;
         };
         Returns: Json;
       };
-      funnel_save_profile: {
+      become_member_save_profile: {
         Args: {
-          p_personal_id: string;
           p_birth_date: string;
           p_region_id: number;
           p_city_id: number;
           p_employment: string;
-          p_delegate_id: string | null;
-          p_tc_accepted: boolean;
+          p_delegate_id?: string | null;
         };
         Returns: Json;
       };
-      funnel_complete: { Args: { p_tier: number }; Returns: Json };
+      become_member_complete: { Args: { p_tier: number }; Returns: Json };
+      is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
       member_change_delegate: { Args: { p_delegate_id: string | null }; Returns: Json };
       member_change_tier: { Args: { p_tier: number }; Returns: Json };
       delegate_panel: { Args: Record<PropertyKey, never>; Returns: Json };

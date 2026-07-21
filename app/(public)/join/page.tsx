@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { JoinChoice } from "./JoinChoice";
+import JoinForm from "./JoinForm";
 
 export const metadata: Metadata = {
-  title: "გაწევრიანება — ქართული რესპუბლიკა",
-  description: "გახდი ქართული რესპუბლიკის წევრი ან დელეგატი — რეგისტრაცია რამდენიმე წუთში.",
+  title: "რეგისტრაცია — ქართული რესპუბლიკა",
+  description: "დარეგისტრირდი ერთ წუთში — მხოლოდ ძირითადი მონაცემები, დანარჩენს კაბინეტში ნახავ.",
+  openGraph: { images: ["/og-default.png"] },
 };
 
 export default function JoinPage() {
   return (
     <Suspense fallback={null}>
-      <JoinChoice />
+      <JoinForm />
     </Suspense>
   );
 }

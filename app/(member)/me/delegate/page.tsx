@@ -5,14 +5,16 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { initialsKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { DelegateChange } from "./DelegateChange";
 
 export const metadata: Metadata = { title: "ჩემი დელეგატი — ქართული რესპუბლიკა" };
 
 export default async function MyDelegatePage() {
   const supabase = await createServerSupabase();
-  const state = await getFunnelState(); // layout guarantees exists+completed
+  const state = await getCabinetState(); // layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
+  if (!state.completed) redirect("/me"); // members only (spec §4.2)
   if (state.role === "delegate") redirect("/delegate"); // members-only page (spec §3.1)
 
   const [{ data: delegates, error: delegatesError }, { data: regions, error: regionsError }] =

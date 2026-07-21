@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { TierChange } from "./TierChange";
 
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
 export default async function BillingPage() {
   const supabase = await createServerSupabase();
-  const state = await getFunnelState(); // layout guarantees exists+completed
+  const state = await getCabinetState(); // layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
+  if (!state.completed) redirect("/me"); // members only (spec §4.2)
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
     .select("id, amount_gel, paid_at, source, voided_at")

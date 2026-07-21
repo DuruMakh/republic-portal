@@ -1,12 +1,16 @@
 "use server";
 
-import { changeDelegateSchema, profileUpdateSchema } from "@/lib/cabinet-schemas";
+import {
+  changeDelegateSchema,
+  profileUpdateSchema,
+  registeredNameUpdateSchema,
+} from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { tierSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 // No `state` field: every caller re-reads the truth via router.refresh() (the
-// layout/page funnel_state fetch), so returning state here was dead weight — and,
+// layout/page cabinet_state fetch), so returning state here was dead weight — and,
 // for updateProfileAction, an extra read whose transient failure was wrongly
 // reported as a failed save even though the UPDATE had already committed.
 export type CabinetActionResult = { ok: true } | { ok: false; error: string };
@@ -43,6 +47,27 @@ export async function updateProfileAction(input: unknown): Promise<CabinetAction
     if (error.code === "23503") return { ok: false, error: mapFunnelError("invalid_city") };
     return { ok: false, error: GENERIC_FUNNEL_ERROR };
   }
+  return { ok: true };
+}
+
+/**
+ * Registered-standing name edit (spec §4.2): same scoped-path pattern as
+ * updateProfileAction, narrowed to the two columns a registered row actually
+ * has editable meaning for — region/city/employment don't exist yet (Task 7).
+ */
+export async function updateRegisteredNameAction(input: unknown): Promise<CabinetActionResult> {
+  const parsed = registeredNameUpdateSchema.safeParse(input);
+  if (!parsed.success) return zodFail(parsed.error.issues[0]?.message);
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: mapFunnelError("not_authenticated") };
+  const { error } = await supabase
+    .from("profiles")
+    .update({ first_name: parsed.data.firstName, last_name: parsed.data.lastName })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   return { ok: true };
 }
 

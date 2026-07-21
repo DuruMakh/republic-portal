@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { fillStep2Basics, passStep1 } from "./funnel-helpers";
 import {
   ADMIN_PHONES,
   cleanupPhase4Users,
@@ -13,66 +12,41 @@ import {
   serviceClient,
   signOutViaNav,
 } from "./admin-helpers";
+import { seedCompletedMember, seedPendingDelegate } from "./funnel-helpers";
 
 // The canonical seed keeps 3 PENDING roster delegates in the queue, so every
 // interaction is scoped to this run's applicants via verify-card-<id> testids —
 // a bare .first() would land on (and MUTATE) seeded data.
 const APPLICANT_A = 0; // approved straight from the pending tab (spec §7 path 1)
-const SUPPORTER = 1; // registers through A's referral link
+const SUPPORTER = 1; // joins A's team after approval
 const APPLICANT_B = 4; // rejected with a note, then re-approved (spec §7 path 2)
 
 test.describe.configure({ mode: "serial" });
-test.beforeAll(() => cleanupPhase4Users([APPLICANT_A, SUPPORTER, APPLICANT_B]));
+
+// Seed the two applicants as pending delegates (replaces the retired UI funnel walk).
+test.beforeAll(async () => {
+  await cleanupPhase4Users([APPLICANT_A, SUPPORTER, APPLICANT_B]);
+  await seedPendingDelegate({
+    phone: phase4Phone(APPLICANT_A),
+    firstName: "ვაჟა",
+    lastName: "ფშაველა",
+    personalId: phase4PersonalId(APPLICANT_A),
+  });
+  await seedPendingDelegate({
+    phone: phase4Phone(APPLICANT_B),
+    firstName: "აკაკი",
+    lastName: "წერეთელი",
+    personalId: phase4PersonalId(APPLICANT_B),
+  });
+});
 test.afterAll(() => cleanupPhase4Users([APPLICANT_A, SUPPORTER, APPLICANT_B]));
 
-test("two delegates apply and land in the pending queue", async ({ page }) => {
-  // Applicant A — mirrors e2e/funnel.spec.ts's delegate journey (role choice via
-  // ?role=delegate → step 1 → step 2 with T&C → step 3 default tier → pending).
-  const phoneA = phase4Phone(APPLICANT_A);
-  const firstNameA = "ვაჟა";
-  const lastNameA = "ფშაველა";
-  await page.goto("/join?role=delegate");
-  await expect(page).toHaveURL(/\/join\/step-1\?role=delegate/);
-  await passStep1(page, { phone: phoneA, firstName: firstNameA, lastName: lastNameA });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await expect(page.getByText("დელეგატის რეგისტრაცია").first()).toBeVisible();
-  await fillStep2Basics(page, {
-    personalId: phase4PersonalId(APPLICANT_A),
-    regionLabel: "თბილისი",
-  });
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-
-  await expect(page).toHaveURL(/\/join\/pending/);
-
-  // A's session must not bleed into B's registration (isolation rule, spec §7).
-  await page.context().clearCookies();
-
-  // Applicant B — same journey, different identity; ends up in the same queue.
-  const phoneB = phase4Phone(APPLICANT_B);
-  const firstNameB = "აკაკი";
-  const lastNameB = "წერეთელი";
-  await page.goto("/join?role=delegate");
-  await expect(page).toHaveURL(/\/join\/step-1\?role=delegate/);
-  await passStep1(page, { phone: phoneB, firstName: firstNameB, lastName: lastNameB });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await expect(page.getByText("დელეგატის რეგისტრაცია").first()).toBeVisible();
-  await fillStep2Basics(page, {
-    personalId: phase4PersonalId(APPLICANT_B),
-    regionLabel: "იმერეთი",
-  });
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-
-  await expect(page).toHaveURL(/\/join\/pending$/);
+test("both applicants are seeded as pending delegates", async () => {
+  const db = serviceClient();
+  const idA = await profileIdByPhone(db, phase4Phone(APPLICANT_A));
+  const idB = await profileIdByPhone(db, phase4Phone(APPLICANT_B));
+  const { data } = await db.from("delegates").select("status").in("id", [idA, idB]);
+  expect((data ?? []).map((d) => d.status).sort()).toEqual(["pending", "pending"]);
 });
 
 test("verifier reveals + approves A from the pending queue — public page goes live", async ({
@@ -141,28 +115,22 @@ test("audit trail holds the reveal, approve, reject and re-approve rows", async 
   expect(await getAuditRows("delegate.approve", idB)).toBe(1);
 });
 
-test("the activated referral link registers a real supporter", async ({ page }) => {
+test("A's approved referral binds a real supporter to their team", async ({ page }) => {
+  // A is approved (earlier test), so its referral code is now active…
   const refCode = await getReferralCode(phase4Phone(APPLICANT_A));
-  // Referral journey — mirrors e2e/funnel.spec.ts's referral test, with A as the
-  // referring delegate (already approved by the earlier test in this serial file).
-  const phone = phase4Phone(SUPPORTER);
-  await page.goto(`/join?ref=${encodeURIComponent(refCode)}`);
-  await expect(page).toHaveURL(new RegExp(`/join/step-1\\?ref=`));
-  await passStep1(page, { phone, firstName: "მხარდამჭერი", lastName: "პირველი" });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  // read-only referral card instead of the picker — the referring delegate is A
-  await expect(page.getByText("ვაჟა ფშაველა")).toBeVisible();
-  await expect(page.getByText(/რეფერალური ბმულით/)).toBeVisible();
-  await expect(page.getByLabel("დელეგატი")).toHaveCount(0);
-  await fillStep2Basics(page, {
+  expect(refCode).toBeTruthy();
+  // …and a supporter joins A's team. The referral REGISTRATION journey itself lives in
+  // the registration/membership specs; here the subject is A's post-approval team, so
+  // seed the supporter bound to A and assert the binding holds.
+  const idA = await profileIdByPhone(serviceClient(), phase4Phone(APPLICANT_A));
+  await seedCompletedMember({
+    phone: phase4Phone(SUPPORTER),
+    firstName: "მხარდამჭერი",
+    lastName: "პირველი",
     personalId: phase4PersonalId(SUPPORTER),
-    regionLabel: "აჭარა", // any region — referral binding is region-independent
+    delegateId: idA,
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-  await expect(page).toHaveURL(/\/join\/done$/);
+  await loginAs(page, phase4Phone(SUPPORTER));
   // the supporter's cabinet shows the applicant as their delegate — scope to the
   // current-delegate heading, since the name also appears as a <select> option
   await page.goto("/me/delegate");

@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
-  canAccess,
-  deriveFunnelStep,
-  funnelRoute,
+  deriveMembershipPhase,
   GENERIC_FUNNEL_ERROR,
   isReferenceCode,
   isReferralCodeCandidate,
   mapFunnelError,
   TIERS,
-  type FunnelState,
+  type CabinetStatePresent,
 } from "./funnel";
 
-function state(overrides: Partial<FunnelState>): FunnelState {
+function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
   return {
     exists: true,
+    standing: "registered",
+    status: "registered",
     role: "member",
     firstName: "ნინო",
     lastName: "ბერიძე",
-    personalIdSet: false,
+    personalIdMasked: "010********",
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -25,72 +25,41 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     tier: null,
     referenceCode: null,
     completed: false,
-    status: "draft",
-    registrationCompletedAt: null,
-    createdAt: "2026-07-01T00:00:00Z",
     delegateStatus: null,
     referral: null,
+    pendingDelegate: null,
     chosenDelegate: null,
     membershipExists: false,
+    registrationCompletedAt: null,
+    createdAt: "2026-07-21T10:00:00Z",
     admin: false,
     ...overrides,
   };
 }
 
-describe("deriveFunnelStep", () => {
-  it("no state or no profile → step-1", () => {
-    expect(deriveFunnelStep(null)).toBe("step-1");
-    expect(deriveFunnelStep(state({ exists: false }))).toBe("step-1");
+describe("deriveMembershipPhase", () => {
+  it("fresh registered person → profile phase", () => {
+    expect(deriveMembershipPhase(cab({}))).toBe("profile");
   });
-  it("profile without personal ID → step-2", () => {
-    expect(deriveFunnelStep(state({}))).toBe("step-2");
+  it("partially saved profile still → profile phase (any field missing)", () => {
+    expect(deriveMembershipPhase(cab({ birthDate: "1990-05-20", regionId: 3 }))).toBe("profile");
   });
-  it("personal ID saved but not completed → step-3", () => {
-    expect(deriveFunnelStep(state({ personalIdSet: true }))).toBe("step-3");
-  });
-  it("completed member → done; completed delegate → pending", () => {
-    expect(deriveFunnelStep(state({ personalIdSet: true, completed: true }))).toBe("done");
+  it("all wizard fields saved → tier phase", () => {
     expect(
-      deriveFunnelStep(
-        state({
-          role: "delegate",
-          personalIdSet: true,
-          completed: true,
-          delegateStatus: "pending",
-        }),
+      deriveMembershipPhase(
+        cab({ birthDate: "1990-05-20", regionId: 3, cityId: 7, employment: "სტუდენტი" }),
       ),
-    ).toBe("pending");
+    ).toBe("tier");
   });
-  it("legacy active_member without funnel data counts as completed (spec §3.8)", () => {
-    // funnel_state() sets completed=true for status='active_member'; lib trusts the flag
-    expect(deriveFunnelStep(state({ personalIdSet: true, completed: true, tier: null }))).toBe(
-      "done",
-    );
+  it("completed member → done, regardless of field snapshot", () => {
+    expect(deriveMembershipPhase(cab({ standing: "member", completed: true }))).toBe("done");
   });
-});
-
-describe("funnelRoute", () => {
-  it("maps every step to its route", () => {
-    expect(funnelRoute("step-1")).toBe("/join/step-1");
-    expect(funnelRoute("step-2")).toBe("/join/step-2");
-    expect(funnelRoute("step-3")).toBe("/join/step-3");
-    expect(funnelRoute("done")).toBe("/join/done");
-    expect(funnelRoute("pending")).toBe("/join/pending");
-  });
-});
-
-describe("canAccess", () => {
-  it("current step is always accessible", () => {
-    expect(canAccess("step-1", null)).toBe(true);
-    expect(canAccess("step-2", state({}))).toBe(true);
-  });
-  it("step-2 stays editable from step-3 (back navigation)", () => {
-    expect(canAccess("step-2", state({ personalIdSet: true }))).toBe(true);
-  });
-  it("everything else redirects", () => {
-    expect(canAccess("step-3", state({}))).toBe(false);
-    expect(canAccess("done", state({ personalIdSet: true }))).toBe(false);
-    expect(canAccess("step-2", state({ personalIdSet: true, completed: true }))).toBe(false);
+  it("absent profile (cabinet_state() { exists: false }) never mis-derives 'tier'", () => {
+    // The RPC's no-profile branch returns ONLY { exists: false }; every wizard
+    // field is undefined at runtime. The old all-fields-required type let this
+    // reach the `undefined !== null` checks and return 'tier' for a nonexistent
+    // profile (finding V8). It must resolve to the safe 'profile' phase instead.
+    expect(deriveMembershipPhase({ exists: false })).toBe("profile");
   });
 });
 

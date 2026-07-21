@@ -7,7 +7,7 @@ import {
   phase4Phone,
   signOutViaNav,
 } from "./admin-helpers";
-import { fillStep2Basics, passStep1 } from "./funnel-helpers";
+import { seedCompletedMember } from "./funnel-helpers";
 
 // k=3 is reserved for this spec (spec §7 isolation) — phase4Phone(3) ends in 8, a
 // slot no other admin spec touches (admin-approval uses 0/1/4, admin-payments uses
@@ -52,29 +52,18 @@ test("editor-only admin lands on the content hub with no staff tabs", async ({ p
 });
 
 test("an ordinary member is bounced from /admin to their cabinet", async ({ page }) => {
-  // Mirrors e2e/funnel.spec.ts's member journey (role choice → step 1 → step 2 →
-  // step 3) with this run's own identity. CIVILIAN completes registration as an
-  // ordinary member — admin_roles stays empty — so the layout gate (roles.length
-  // === 0) sends it through deriveDestination(), landing on its own cabinet.
+  // CIVILIAN is an ordinary completed member — admin_roles stays empty — so the admin
+  // layout gate (roles.length === 0) sends it through deriveDestination(), landing on
+  // its own cabinet. Seeded directly; the registration journey lives in the
+  // registration/membership specs.
   const phone = phase4Phone(CIVILIAN);
-  await page.goto("/join");
-  await page.getByRole("main").getByRole("link", { name: "გახდი წევრი" }).click();
-  await expect(page).toHaveURL(/\/join\/step-1\?role=member/);
-  await passStep1(page, { phone, firstName: "რიგითი", lastName: "წევრი" });
-
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await fillStep2Basics(page, {
+  await seedCompletedMember({
+    phone,
+    firstName: "რიგითი",
+    lastName: "წევრი",
     personalId: phase4PersonalId(CIVILIAN),
-    regionLabel: "თბილისი",
   });
-  await expect(page.getByLabel("დელეგატი")).toHaveValue("central");
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("radio", { name: /20/ }).click();
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
-
-  await expect(page).toHaveURL(/\/join\/done/);
+  await loginAs(page, phone);
 
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/me\/profile$/);

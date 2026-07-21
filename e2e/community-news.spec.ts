@@ -29,7 +29,7 @@ test("editor publishes public + member-only articles; visibility holds everywher
 }) => {
   // 1) editor drafts + publishes a PUBLIC article
   await loginAs(page, ADMIN_PHONES.editor);
-  // loginAs's post-OTP landing is funnel-state-driven (/login's routeByFunnelState),
+  // loginAs's post-OTP landing is cabinet-state-driven (/login's routeByCabinetState),
   // not role-driven — canonical admins are also completed member profiles, so they
   // land on their own cabinet first (admin-payments.spec.ts / admin-rbac.spec.ts
   // precedent: every admin-page visit explicitly goes there after loginAs).

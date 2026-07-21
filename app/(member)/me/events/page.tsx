@@ -43,7 +43,7 @@ export default async function MemberEventsPage() {
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-ink">{e.title}</h3>
                   <p className="mt-1 text-sm text-muted-fg">
-                    სულ მოდის {formatCountKa(goingByEvent.get(e.id) ?? 0)} წევრი
+                    სულ მოდის {formatCountKa(goingByEvent.get(e.id) ?? 0)} მონაწილე
                   </p>
                 </div>
                 {e.status === "cancelled" ? <Pill {...contentPill("cancelled")} /> : null}

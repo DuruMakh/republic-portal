@@ -1,35 +1,25 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
+import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
-import { deriveDestination } from "@/lib/cabinet";
-import { clearFreshCompletion, peekFreshCompletion } from "../fresh-completion";
-import { useFunnelGuard } from "../useFunnelGuard";
+import { getCabinetState } from "@/lib/supabase/server";
 
-export default function DonePage() {
-  const router = useRouter();
-  const { state, ready } = useFunnelGuard("done");
-  const [fresh] = useState(() => peekFreshCompletion()); // idempotent — StrictMode-safe
+export const metadata: Metadata = { title: "რეგისტრაცია დასრულებულია — ქართული რესპუბლიკა" };
 
-  useEffect(() => {
-    // consume the marker only once this screen actually renders — clearing on bare
-    // mount consumed it even when the guard then redirected away (transient
-    // funnel_state failure → the just-registered member never saw this screen).
-    if (ready && state && fresh) clearFreshCompletion();
-  }, [ready, state, fresh]);
-
-  useEffect(() => {
-    if (ready && state && !fresh) router.replace(deriveDestination(state));
-  }, [ready, state, fresh, router]);
-
-  if (!ready || !state || !fresh) return null;
+export default async function MembershipDonePage() {
+  const state = await getCabinetState(); // (member) layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
+  if (state.role === "delegate") redirect("/delegate"); // members-only journey (spec §3.1)
+  if (!state.completed) redirect("/me/membership"); // nothing to show until the wizard finishes
 
   return (
-    <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
+    <main className="mx-auto max-w-xl">
+      <div className="mb-6">
+        <Eyebrow>წევრობის გაფორმება</Eyebrow>
+      </div>
       <Card>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-ink">რეგისტრაცია დასრულებულია ✓</h2>
@@ -51,9 +41,6 @@ export default function DonePage() {
         </p>
         <div className="mt-6 flex flex-col gap-2">
           <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
-          <ButtonLink href="/" variant="ghost">
-            მთავარი გვერდი
-          </ButtonLink>
         </div>
       </Card>
     </main>

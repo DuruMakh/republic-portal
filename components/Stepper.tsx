@@ -1,10 +1,8 @@
-const labels = ["კონტაქტი", "იურ. პროფილი", "საწევრო"] as const;
-
-export function Stepper({ current }: { current: 1 | 2 | 3 }) {
+export function Stepper({ steps, current }: { steps: readonly string[]; current: number }) {
   return (
     <ol className="flex items-center gap-4">
-      {labels.map((label, i) => {
-        const step = (i + 1) as 1 | 2 | 3;
+      {steps.map((label, i) => {
+        const step = i + 1;
         const active = step === current;
         const done = step < current;
         return (

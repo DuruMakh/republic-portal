@@ -20,6 +20,17 @@ export const profileUpdateSchema = z.object({
   employment: employmentSchema,
 });
 
+/**
+ * Registered-standing profile edit (spec §4.2): name only. Region/city/
+ * employment arrive later via the become-a-member wizard (Task 7) — a
+ * registered row has them as null, so the full profileUpdateSchema (which
+ * requires all five) does not apply here.
+ */
+export const registeredNameUpdateSchema = z.object({
+  firstName: nameSchema,
+  lastName: nameSchema,
+});
+
 /** Change delegate (spec §4.2): null = ცენტრალური მოძრაობა. */
 export const changeDelegateSchema = z.object({
   delegateId: delegateIdSchema,

@@ -1,5 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+// TEAM_STATUS_LABELS is imported here only as a test-time guard against Pill's own
+// STATUS_CONFIG literals drifting out of sync with lib/cabinet — see the "stays in sync
+// with TEAM_STATUS_LABELS" test below. Pill itself must not import from lib/cabinet.
+import { TEAM_STATUS_LABELS } from "@/lib/cabinet";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -89,11 +93,37 @@ describe("Badge", () => {
 describe("Pill", () => {
   it("maps status to Georgian label", () => {
     render(<Pill status="active_member" />);
-    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    // team-status vocabulary (lib/cabinet.ts TEAM_STATUS_LABELS): "აქტიური", not
+    // the retired "აქტიური წევრი" (V17/V23 sweep — Pill's own defaults were missed).
+    expect(screen.getByText("აქტიური")).toBeInTheDocument();
+  });
+  it("profile_completed maps to the current team-status label (V17)", () => {
+    render(<Pill status="profile_completed" />);
+    // was the retired "პროფილი შევსებულია"; every other member-status display
+    // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
+    expect(screen.getByText("წევრი")).toBeInTheDocument();
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
     expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+  });
+  it("registered status renders the light-tier label", () => {
+    render(<Pill status="registered" />);
+    expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+  });
+  it("stays in sync with TEAM_STATUS_LABELS (lib/cabinet) for profile_completed/active_member", () => {
+    // Pill's STATUS_CONFIG duplicates these two labels as its own literals (kept in sync
+    // only by a code comment) — this is the exact drift that let Pill's active_member
+    // default fall behind lib/cabinet's TEAM_STATUS_LABELS previously. Pinning the
+    // *rendered* text to TEAM_STATUS_LABELS' values, rather than to a second hardcoded
+    // copy of the strings, makes that drift fail a test instead of only a code comment.
+    const profileCompleted = render(<Pill status="profile_completed" />);
+    expect(profileCompleted.container.textContent).toBe(TEAM_STATUS_LABELS.profile_completed);
+    profileCompleted.unmount();
+
+    const activeMember = render(<Pill status="active_member" />);
+    expect(activeMember.container.textContent).toBe(TEAM_STATUS_LABELS.active_member);
+    activeMember.unmount();
   });
 });
 
@@ -125,7 +155,9 @@ describe("Field", () => {
 
 describe("Stepper", () => {
   it("marks the current step", () => {
-    render(<Stepper current={2} />);
-    expect(screen.getByText("2").getAttribute("aria-current")).toBe("step");
+    render(<Stepper steps={["პროფილი", "საწევრო"]} current={1} />);
+    expect(screen.getByText("პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("საწევრო")).toBeInTheDocument();
+    expect(screen.getByText("1").getAttribute("aria-current")).toBe("step");
   });
 });

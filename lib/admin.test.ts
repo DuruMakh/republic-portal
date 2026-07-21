@@ -139,8 +139,8 @@ describe("audit taxonomy (spec §4.5)", () => {
 describe("vocabulary and bars", () => {
   it("member statuses cover all three values", () => {
     expect(MEMBER_STATUS_LABELS_KA).toEqual({
-      draft: "მონახაზი",
-      profile_completed: "რეგისტრირებული",
+      registered: "რეგისტრირებული",
+      profile_completed: "წევრი",
       active_member: "აქტიური",
     });
   });

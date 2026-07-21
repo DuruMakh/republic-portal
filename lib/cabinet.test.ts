@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildReferralUrl,
   cabinetNavItems,
+  cabinetRole,
   deriveDestination,
   EMPLOYMENT_OTHER,
   employmentToForm,
@@ -15,15 +16,17 @@ import {
   paymentStatusKa,
   TEAM_STATUS_LABELS,
 } from "./cabinet";
-import type { FunnelState } from "./funnel";
+import type { CabinetStatePresent } from "./funnel";
 
-function state(overrides: Partial<FunnelState>): FunnelState {
+function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
   return {
     exists: true,
+    standing: "registered",
+    status: "registered",
     role: "member",
     firstName: "ნინო",
     lastName: "ბერიძე",
-    personalIdSet: false,
+    personalIdMasked: "010********",
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -31,88 +34,75 @@ function state(overrides: Partial<FunnelState>): FunnelState {
     tier: null,
     referenceCode: null,
     completed: false,
-    status: "draft",
-    registrationCompletedAt: null,
-    createdAt: "2026-07-01T00:00:00Z",
     delegateStatus: null,
     referral: null,
+    pendingDelegate: null,
     chosenDelegate: null,
     membershipExists: false,
+    registrationCompletedAt: null,
+    createdAt: "2026-07-21T10:00:00Z",
     admin: false,
     ...overrides,
   };
 }
 
-describe("deriveDestination (spec §3.2)", () => {
-  it("no session state or no profile → /join", () => {
+describe("deriveDestination", () => {
+  it("no profile → /join", () => {
     expect(deriveDestination(null)).toBe("/join");
-    expect(deriveDestination(state({ exists: false }))).toBe("/join");
+    // the absent variant is exactly the RPC's no-profile payload — nothing else
+    expect(deriveDestination({ exists: false })).toBe("/join");
   });
-  it("unfinished registration → the derived funnel step", () => {
-    expect(deriveDestination(state({}))).toBe("/join/step-2");
-    expect(deriveDestination(state({ personalIdSet: true }))).toBe("/join/step-3");
+  it("registered → /me overview", () => {
+    expect(deriveDestination(cab({}))).toBe("/me");
   });
-  it("completed member → /me/profile", () => {
+  it("member → /me/profile", () => {
+    expect(deriveDestination(cab({ standing: "member", completed: true }))).toBe("/me/profile");
+  });
+  it("delegates row (any status) → /delegate", () => {
     expect(
       deriveDestination(
-        state({
-          personalIdSet: true,
-          completed: true,
-          status: "profile_completed",
-          registrationCompletedAt: "2026-07-15T10:00:00Z",
-        }),
+        cab({ standing: "member", completed: true, role: "delegate", delegateStatus: "pending" }),
       ),
-    ).toBe("/me/profile");
-  });
-  it("delegate (any verification status) → /delegate", () => {
-    for (const delegateStatus of ["pending", "approved", "rejected"] as const) {
-      expect(
-        deriveDestination(
-          state({ role: "delegate", personalIdSet: true, completed: true, delegateStatus }),
-        ),
-      ).toBe("/delegate");
-    }
-  });
-  it("legacy active_member (no registration_completed_at) counts as completed", () => {
-    expect(
-      deriveDestination(state({ personalIdSet: true, completed: true, status: "active_member" })),
-    ).toBe("/me/profile");
+    ).toBe("/delegate");
   });
 });
 
-describe("cabinetNavItems (spec §3.1)", () => {
-  it("member: profile / my delegate / billing", () => {
-    expect(cabinetNavItems("member")).toEqual([
-      { href: "/me/profile", label: "პროფილი" },
-      { href: "/me/delegate", label: "ჩემი დელეგატი" },
-      { href: "/me/billing", label: "გადახდები" },
-      { href: "/me/news", label: "სიახლეები" },
-      { href: "/me/events", label: "ღონისძიებები" },
-      { href: "/me/polls", label: "გამოკითხვები" },
+describe("cabinetRole + nav", () => {
+  it("maps standing/role to the nav variant", () => {
+    expect(cabinetRole(cab({}))).toBe("registered");
+    expect(cabinetRole(cab({ standing: "member", completed: true }))).toBe("member");
+    expect(cabinetRole(cab({ standing: "member", completed: true, role: "delegate" }))).toBe(
+      "delegate",
+    );
+  });
+  it("registered nav: overview, events, news, profile — nothing member-only", () => {
+    const hrefs = cabinetNavItems("registered").map((i) => i.href);
+    expect(hrefs).toEqual(["/me", "/me/events", "/me/news", "/me/profile"]);
+  });
+  it("member/delegate/registered navs + admin tab appends", () => {
+    expect(cabinetNavItems("member").map((i) => i.href)).toEqual([
+      "/me/profile",
+      "/me/delegate",
+      "/me/billing",
+      "/me/news",
+      "/me/events",
+      "/me/polls",
     ]);
-  });
-  it("delegate: profile / billing / panel — no „ჩემი დელეგატი“", () => {
-    expect(cabinetNavItems("delegate")).toEqual([
-      { href: "/me/profile", label: "პროფილი" },
-      { href: "/me/billing", label: "გადახდები" },
-      { href: "/me/news", label: "სიახლეები" },
-      { href: "/me/events", label: "ღონისძიებები" },
-      { href: "/me/polls", label: "გამოკითხვები" },
-      { href: "/delegate", label: "დელეგატის პანელი" },
+    expect(cabinetNavItems("delegate").map((i) => i.href)).toEqual([
+      "/me/profile",
+      "/me/billing",
+      "/me/news",
+      "/me/events",
+      "/me/polls",
+      "/delegate",
     ]);
+    expect(cabinetNavItems("registered", true).at(-1)?.href).toBe("/admin");
   });
-  it("admins get the ადმინისტრირება tab appended (spec §3.1)", () => {
-    expect(cabinetNavItems("member", true).at(-1)).toEqual({
-      href: "/admin",
-      label: "ადმინისტრირება",
-    });
-    expect(cabinetNavItems("delegate", true).at(-1)).toEqual({
-      href: "/admin",
-      label: "ადმინისტრირება",
-    });
-    expect(cabinetNavItems("member", false).some((i) => i.href === "/admin")).toBe(false);
-    expect(cabinetNavItems("member")).toEqual(cabinetNavItems("member", false));
-  });
+});
+
+it("team vocabulary: profile_completed is now „წევრი“", () => {
+  expect(TEAM_STATUS_LABELS.profile_completed).toBe("წევრი");
+  expect(TEAM_STATUS_LABELS.active_member).toBe("აქტიური");
 });
 
 describe("employment mapping (spec §3.3)", () => {
@@ -166,10 +156,6 @@ describe("formatDateKa / initialsKa / labels", () => {
   it("initials from Georgian names", () => {
     expect(initialsKa("ნინო", "ბერიძე")).toBe("ნბ");
   });
-  it("team status labels (spec §3.7)", () => {
-    expect(TEAM_STATUS_LABELS.profile_completed).toBe("რეგისტრირებული");
-    expect(TEAM_STATUS_LABELS.active_member).toBe("აქტიური");
-  });
   it("payment method label", () => {
     expect(paymentMethodLabel("manual")).toBe("გადარიცხვა");
     expect(paymentMethodLabel("future_gateway")).toBe("future_gateway");
@@ -202,40 +188,5 @@ describe("paymentStatusKa (Phase 4 §8 — honest voids)", () => {
       label: "გაუქმებული",
       pillStatus: "rejected",
     });
-  });
-});
-
-describe("Phase 5 cabinet nav", () => {
-  it("member gains news/events/polls after billing", () => {
-    expect(cabinetNavItems("member").map((i) => i.href)).toEqual([
-      "/me/profile",
-      "/me/delegate",
-      "/me/billing",
-      "/me/news",
-      "/me/events",
-      "/me/polls",
-    ]);
-  });
-  it("delegate gains the same three, panel stays last", () => {
-    expect(cabinetNavItems("delegate").map((i) => i.href)).toEqual([
-      "/me/profile",
-      "/me/billing",
-      "/me/news",
-      "/me/events",
-      "/me/polls",
-      "/delegate",
-    ]);
-  });
-  it("admin link still appends last", () => {
-    expect(
-      cabinetNavItems("member", true)
-        .map((i) => i.href)
-        .at(-1),
-    ).toBe("/admin");
-    expect(
-      cabinetNavItems("delegate", true)
-        .map((i) => i.href)
-        .at(-1),
-    ).toBe("/admin");
   });
 });

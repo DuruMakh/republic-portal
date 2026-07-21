@@ -4,9 +4,6 @@ export type Tier = (typeof TIERS)[number];
 /** Crockford-style: no I, L, O, 0, 1 — 31 unambiguous characters. DB mirror: gen_funnel_code(). */
 export const FUNNEL_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-export type FunnelRole = "member" | "delegate";
-export type FunnelStep = "step-1" | "step-2" | "step-3" | "done" | "pending";
-
 export interface FunnelReferral {
   firstName: string;
   lastName: string;
@@ -19,51 +16,80 @@ export interface FunnelChosenDelegate {
   lastName: string;
 }
 
-/** profiles.status values a signed-in client can ever see for itself. */
-export type MemberStatus = "draft" | "profile_completed" | "active_member";
+export type Standing = "registered" | "member";
+export type CabinetRole = "member" | "delegate";
+export type MembershipPhase = "profile" | "tier" | "done";
+/** profiles.status after the enum rename (draft → registered). */
+export type MemberStatus = "registered" | "profile_completed" | "active_member";
 
-/** Mirrors the funnel_state() RPC jsonb exactly (keys are camelCase in SQL). */
-export interface FunnelState {
-  exists: boolean;
-  role: FunnelRole;
+/**
+ * cabinet_state() RPC result, discriminated on `exists`. The RPC's no-profile
+ * branch returns EXACTLY `{ exists: false }`, so for a signed-in user with no
+ * profile row every other field is genuinely `undefined` at runtime. Splitting
+ * the union makes that illegal state unrepresentable: a consumer must narrow on
+ * `exists === true` before it may read any profile field, and the compiler now
+ * enforces it (finding V8 — an absent state used to crash /me/profile and
+ * mis-route the wizard because the old shape declared every field present).
+ */
+export type CabinetState = CabinetStateAbsent | CabinetStatePresent;
+
+/** Authenticated, but register() has not created a profile row yet. */
+export interface CabinetStateAbsent {
+  exists: false;
+}
+
+/** A profile row exists — cabinet_state() populates every field below. */
+export interface CabinetStatePresent {
+  exists: true;
+  /** 'member' when registration_completed_at is set (or legacy active_member). */
+  standing: Standing;
+  /** Raw profiles.status — billing/profile render the active_member distinction from it. */
+  status: MemberStatus;
+  /** delegates-row presence — cabinet routing only, NOT an authorization signal. */
+  role: CabinetRole;
   firstName: string;
   lastName: string;
-  personalIdSet: boolean;
+  /** e.g. "010********" — first 3 digits + asterisks; own-ID display without raw exposure. */
+  personalIdMasked: string;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;
   employment: string | null;
   tier: Tier | null;
   referenceCode: string | null;
+  /** standing === "member" — kept as a flag because most call sites gate on it. */
   completed: boolean;
-  status: MemberStatus;
-  registrationCompletedAt: string | null; // ISO timestamptz; null on legacy pre-Phase-2 rows
-  createdAt: string; // profile creation — member-since fallback for legacy rows (spec §3.3)
   delegateStatus: "pending" | "approved" | "rejected" | null;
   referral: FunnelReferral | null;
+  /** Wizard step-A choice, held server-side until completion (spec §4.3). */
+  pendingDelegate: FunnelChosenDelegate | null;
   chosenDelegate: FunnelChosenDelegate | null; // null = ცენტრალური მოძრაობა (or none yet)
   membershipExists: boolean;
-  /** Phase 4: caller holds ≥1 admin_roles row — shows the cabinet's ადმინისტრირება tab. */
+  registrationCompletedAt: string | null;
+  createdAt: string;
   admin: boolean;
+  /** Present ONLY on register() responses: true = row inserted, false = pre-existing (no-op). */
+  created?: boolean;
 }
 
-export function deriveFunnelStep(state: FunnelState | null): FunnelStep {
-  if (!state || !state.exists) return "step-1";
-  if (state.completed) return state.role === "delegate" ? "pending" : "done";
-  if (!state.personalIdSet) return "step-2";
-  return "step-3";
-}
+/** Shared server-action result shape (Tasks 6–7): register() and the wizard actions. */
+export type ActionResult = { ok: true; state: CabinetState } | { ok: false; error: string };
 
-export function funnelRoute(step: FunnelStep): string {
-  return `/join/${step}`;
-}
-
-/** Which funnel screen a state may open; anything else redirects to the derived step. */
-export function canAccess(step: FunnelStep, state: FunnelState | null): boolean {
-  const current = deriveFunnelStep(state);
-  if (step === current) return true;
-  // step 2 stays editable until completion (back navigation from step 3)
-  return step === "step-2" && current === "step-3";
+/** Which wizard screen a registered person sees; done ⇢ member (spec §4.3). */
+export function deriveMembershipPhase(state: CabinetState): MembershipPhase {
+  // Defense in depth (finding V8): an absent profile has no wizard fields, so
+  // without this guard the `undefined !== null` checks below would mis-derive
+  // 'tier' for a nonexistent profile. Real callers narrow to a present state
+  // first (page guards / the wizard's present-only prop) — this only fires on
+  // the raw RPC { exists: false } payload.
+  if (!state.exists) return "profile";
+  if (state.completed) return "done";
+  const profileSaved =
+    state.birthDate !== null &&
+    state.regionId !== null &&
+    state.cityId !== null &&
+    state.employment !== null;
+  return profileSaved ? "tier" : "profile";
 }
 
 const REFERENCE_CODE_RE = new RegExp(`^GR-[${FUNNEL_CODE_ALPHABET}]{6}$`);
@@ -129,6 +155,13 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;
+
+/**
+ * Mapped message for a genuinely lapsed/absent OTP session. /join routes on this
+ * constant (finding V10): only this failure legitimately drops the registration
+ * back to a fresh OTP — every other failure reuses the already-proven session.
+ */
+export const NOT_AUTHENTICATED_MESSAGE = ERROR_MESSAGES["not_authenticated"]!;
 
 export const GENERIC_FUNNEL_ERROR = "რაღაც შეცდომა მოხდა — სცადე თავიდან.";
 

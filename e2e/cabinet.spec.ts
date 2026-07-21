@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import {
   cleanupJourneyUsers,
-  fillStep2Basics,
   JOURNEY,
   journeyPersonalId,
   journeyPhone,
-  passStep1,
+  loginAs,
+  seedCompletedMember,
 } from "./funnel-helpers";
 
 test.describe.configure({ mode: "serial" });
@@ -18,28 +18,22 @@ test("member cabinet: profile edit, delegate change, tier change, billing, one-w
 }) => {
   const phone = journeyPhone(JOURNEY.cabinet);
 
-  // register a fresh member (tier 20, ცენტრალური მოძრაობა)
-  // region: ქვემო ქართლი (not თბილისი) — needs a real 3rd city for the profile-edit
-  // step below (seed: supabase/migrations/20260712212415_seed_regions.sql — თბილისი
-  // the region has exactly ONE city, itself, so index 2 there can never resolve).
-  await page.goto("/join/step-1?role=member");
-  await passStep1(page, { phone, firstName: "ვატესტ", lastName: "კაბინეტს" });
-  await expect(page).toHaveURL(/\/join\/step-2/);
-  await fillStep2Basics(page, {
+  // Seed a completed member (tier 20). The subject here is post-registration cabinet
+  // behavior — the UI registration journey lives in registration/membership specs. The
+  // default seed region (ქვემო ქართლი) has a real 3rd city, which the profile-edit step
+  // below needs (თბილისი the region has exactly ONE city, so its index 2 never resolves).
+  await seedCompletedMember({
+    phone,
+    firstName: "ვატესტ",
+    lastName: "კაბინეტს",
     personalId: journeyPersonalId(JOURNEY.cabinet),
-    regionLabel: "ქვემო ქართლი",
+    tier: 20,
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  await expect(page).toHaveURL(/\/join\/step-3/);
-  await page.getByRole("radio", { name: /20/ }).click();
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
+  await loginAs(page, phone);
 
-  // fresh completion still shows the one-time done screen, now with a cabinet button
-  await expect(page).toHaveURL(/\/join\/done/);
-  await page.getByRole("link", { name: "ჩემი კაბინეტი" }).click();
-  await expect(page).toHaveURL(/\/me\/profile/);
+  await page.goto("/me/profile");
   await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
-  await expect(page.getByText("რეგისტრირებული").first()).toBeVisible();
+  await expect(page.getByText("წევრი").first()).toBeVisible();
   await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
 
   // profile edit persists across reload
@@ -80,10 +74,8 @@ test("member cabinet: profile edit, delegate change, tier change, billing, one-w
   await expect(page.getByText("გადმორიცხე")).toContainText("5 ₾");
   await expect(page.getByTestId("billing-empty")).toBeVisible();
 
-  // the funnel is one-way now; the header knows the session
+  // the cabinet is one-way now; a signed-in member is bounced off the join/delegate doors
   await page.goto("/join");
-  await expect(page).toHaveURL(/\/me\/profile/);
-  await page.goto("/join/done");
   await expect(page).toHaveURL(/\/me\/profile/);
   await page.goto("/delegate");
   await expect(page).toHaveURL(/\/me\/profile/);

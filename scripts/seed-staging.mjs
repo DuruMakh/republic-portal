@@ -165,6 +165,45 @@ async function insertChunked(table, rows, chunk = 500) {
 
 console.log(`Seeding project ${ref} …`);
 
+// 0) One-off debris cleanup: a prior task's LIVE verification against staging
+// (manual register()/become_member exercise) left disclosed QA rows behind.
+// Idempotent and harmless when the rows are already absent — matched by phone
+// OR personal_id, since a debris row may only carry one of the two disclosed
+// identifiers. Mirrors e2e/funnel-helpers.ts cleanupJourneyUsers'
+// detach-then-delete pattern: memberships.delegate_id has NO cascade, so a
+// membership pointing at a debris row (as a delegate) would block deleteUser.
+{
+  const debrisPhones = ["+995555000071", "995555000071"];
+  const debrisPersonalIds = ["19990000071", "19990000099"];
+  const { data: debrisByPhone, error: debrisPhoneErr } = await db
+    .from("profiles")
+    .select("id")
+    .in("phone", debrisPhones);
+  if (debrisPhoneErr) throw new Error(`debris cleanup (phone lookup): ${debrisPhoneErr.message}`);
+  const { data: debrisByPid, error: debrisPidErr } = await db
+    .from("profiles")
+    .select("id")
+    .in("personal_id", debrisPersonalIds);
+  if (debrisPidErr) throw new Error(`debris cleanup (personal_id lookup): ${debrisPidErr.message}`);
+  const debrisIds = [
+    ...new Set([...(debrisByPhone ?? []), ...(debrisByPid ?? [])].map((r) => r.id)),
+  ];
+  if (debrisIds.length > 0) {
+    const { error: debrisDetachErr } = await db
+      .from("memberships")
+      .delete()
+      .in("delegate_id", debrisIds);
+    if (debrisDetachErr)
+      throw new Error(`debris cleanup: membership detach failed: ${debrisDetachErr.message}`);
+    for (const id of debrisIds) {
+      const { error: debrisDelErr } = await db.auth.admin.deleteUser(id);
+      if (debrisDelErr)
+        throw new Error(`debris cleanup: deleteUser ${id} failed: ${debrisDelErr.message}`);
+    }
+    console.log(`debris cleanup: removed ${debrisIds.length} disclosed QA row(s)`);
+  }
+}
+
 // 1) Full reset: delete every auth user EXCEPT the permanent audit ACTORS —
 // audit_log.actor_id is a plain FK and audit rows are append-only, so once an
 // admin has acted, deleting them is IMPOSSIBLE (FK 23503). That covers the 4
@@ -287,12 +326,17 @@ for (const d of roster) {
       first_name: FIRST[(k + i) % FIRST.length],
       last_name: LAST[(k * 3 + i) % LAST.length],
       region: d.region,
-      kind: k < active ? "active" : k % 2 === 0 ? "completed" : "draft",
+      kind: k < active ? "active" : k % 2 === 0 ? "completed" : "registered",
       delegate: null,
       supporterOf: d.slug,
     });
   }
 }
+const kindCounts = people.reduce((acc, p) => {
+  acc[p.kind] = (acc[p.kind] ?? 0) + 1;
+  return acc;
+}, {});
+console.log(`people by kind: ${JSON.stringify(kindCounts)}`);
 console.log(`creating ${people.length} auth users (a few minutes) …`);
 
 // 4) Auth users (concurrency 10), then bulk-insert profiles/delegates/memberships
@@ -313,17 +357,18 @@ await insertChunked(
     last_name: p.last_name,
     phone: phoneFor(p.i),
     personal_id: personalIdFor(p.i),
-    region_id: regionId.get(p.region),
     // the engine owns profile_completed ⇄ active_member; seed never writes 'active_member'
-    status: p.kind === "draft" ? "draft" : "profile_completed",
-    ...(p.kind === "draft"
+    status: p.kind === "registered" ? "registered" : "profile_completed",
+    // registered-kind rows completed only the light form (name+surname+personal_id+
+    // phone, spec §4.1) — no region/tier/reference_code/completion stamp yet.
+    ...(p.kind === "registered"
       ? {}
       : {
+          region_id: regionId.get(p.region),
           membership_tier: tierFor(p.i),
           reference_code: refCodeFor(p.i),
           registration_completed_at: daysAgoIso(30 + (p.i % 200)),
         }),
-    signup_role: p.delegate ? "delegate" : "member",
   })),
 );
 
@@ -344,12 +389,18 @@ await insertChunked(
       tc_accepted_at: new Date().toISOString(),
     })),
 );
-await insertChunked(
-  "memberships",
-  created
-    .filter((p) => p.supporterOf)
-    .map((p) => ({ member_id: p.id, delegate_id: delegateIdBySlug.get(p.supporterOf) })),
-);
+// Only member-standing kinds (active/completed) open a membership row — spec
+// invariant D1 ("only members hold a membership; backing is a member
+// privilege"). Registered-kind supporters keep supporterOf in-memory only for
+// this filter/grouping; it is deliberately NOT turned into a membership (they
+// are light standing, not members). Note: this seed does not write
+// signup_ref_code, so referral prefill and delegate draftCount are not
+// exercised on staging (pre-existing gap, not required by the R1 plan).
+// Keep `memberRows` in scope — the D1 self-check below counts it.
+const memberRows = created
+  .filter((p) => p.supporterOf && (p.kind === "active" || p.kind === "completed"))
+  .map((p) => ({ member_id: p.id, delegate_id: delegateIdBySlug.get(p.supporterOf) }));
+await insertChunked("memberships", memberRows);
 
 // Payments make people active — the engine derives status from these rows.
 // paid_at within the last 25 days ⇒ coverage (30d) + grace (30d) safely covers today.
@@ -480,7 +531,7 @@ const editorId = editorProfile.id;
 const { data: memberPool, error: poolErr } = await db
   .from("profiles")
   .select("id")
-  .neq("status", "draft")
+  .neq("status", "registered")
   .not("phone", "like", "+9955090000%")
   .order("created_at")
   .limit(120);
@@ -716,4 +767,50 @@ const { count: voteCount } = await db
   .from("poll_votes")
   .select("*", { count: "exact", head: true });
 if (!voteCount || voteCount < 100) throw new Error(`expected ≥100 seeded votes, got ${voteCount}`);
+
+// D1 self-check #1: "only members hold a membership; backing is a member
+// privilege" — no registered-standing profile may hold an open membership.
+// Reads profiles.status fresh from the DB (not the in-memory `kind` the
+// filter above used) so this actually catches a regression in that filter.
+const { data: registeredProfiles, error: registeredErr } = await db
+  .from("profiles")
+  .select("id")
+  .eq("status", "registered");
+if (registeredErr) throw new Error(`registered-profile read failed: ${registeredErr.message}`);
+const registeredIds = (registeredProfiles ?? []).map((r) => r.id);
+let registeredWithMembership = 0;
+if (registeredIds.length > 0) {
+  const { count, error: badMembErr } = await db
+    .from("memberships")
+    .select("*", { count: "exact", head: true })
+    .in("member_id", registeredIds)
+    .is("ended_at", null);
+  if (badMembErr) throw new Error(`D1 check query failed: ${badMembErr.message}`);
+  registeredWithMembership = count ?? 0;
+}
+if (registeredWithMembership !== 0)
+  throw new Error(
+    `D1 VIOLATION: ${registeredWithMembership} registered-standing profile(s) hold an open membership`,
+  );
+console.log(
+  `D1 check: 0/${registeredIds.length} registered-standing profiles hold a membership (OK)`,
+);
+
+// D1 self-check #2 (sanity — don't over-exclude): member-standing rows still
+// get their membership. Every open membership in the table is either a seeded
+// member-kind supporter (memberRows) or one of the 4 canonical admins — the
+// wipe above clears every membership and only those two steps recreate any,
+// so the total must match exactly.
+const { count: openMemberships, error: openMembErr } = await db
+  .from("memberships")
+  .select("*", { count: "exact", head: true })
+  .is("ended_at", null);
+if (openMembErr) throw new Error(`open memberships count failed: ${openMembErr.message}`);
+const expectedOpenMemberships = memberRows.length + ADMIN_SEED.length;
+if (openMemberships !== expectedOpenMemberships)
+  throw new Error(
+    `expected ${expectedOpenMemberships} open memberships (seeded member-kind rows + ${ADMIN_SEED.length} admins), got ${openMemberships}`,
+  );
+console.log(`D1 sanity: ${openMemberships} open memberships match seeded member rows (OK)`);
+
 console.log("SEED OK");

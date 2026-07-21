@@ -34,7 +34,7 @@ export default async function AdminTransferPage({
     .from("admin_members")
     .select("*", { count: "exact" })
     .is("delegate_id", null)
-    .neq("status", "draft")
+    .neq("status", "registered")
     .eq("is_delegate", false)
     // mirror admin_reassign_member's gate: only rows the RPC will accept
     .or("registration_completed_at.not.is.null,status.eq.active_member")

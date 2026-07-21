@@ -145,7 +145,7 @@ try {
   // scoped-grant probe further down, not here.)
   const { error: updateErr } = await authed
     .from("profiles")
-    .update({ status: "draft" })
+    .update({ status: "registered" })
     .eq("id", probeUserId);
   if (!updateErr)
     throw new Error(
@@ -193,22 +193,43 @@ try {
   }
 }
 
-// Shared across Phase 2 and Phase 5: the funnel-completed probe member. Phase
-// 2 creates and completes it below; on success it survives (no cleanup in
-// Phase 2's own finally) so Phase 5 (P5.4) can reuse the SAME completed
-// member without re-deriving funnel state. Phase 5 owns the eventual cleanup.
+// Shared across Phase 2 and Phase 5: the completed probe member. Phase 2
+// completes it below via the progressive-registration flow (register →
+// become_member_save_profile → become_member_complete); on success it survives
+// (no cleanup in Phase 2's own finally) so Phase 5 (P5.4) can reuse the SAME
+// completed member without re-deriving state. Phase 5 owns the eventual cleanup.
 const FUNNEL_PROBE_EMAIL = "funnel-probe@example.com";
 let fpId;
 let funnelProbePassword;
 
-// --- Phase 2: registration funnel probes ---
+// --- Phase 2/6: progressive-registration probes (register → become_member_*) ---
 {
-  // anon must not be able to call the funnel RPCs at all
-  const { error: anonRpcErr } = await anon.rpc("funnel_state");
-  if (!anonRpcErr) throw new Error("LEAK: anon can call funnel_state()");
-  console.log("OK: anon funnel_state() rejected");
+  // anon must not be able to call the new registration RPCs at all
+  const { error: anonRegErr } = await anon.rpc("register", {
+    p_first_name: "x",
+    p_last_name: "y",
+    p_personal_id: "00000000000",
+  });
+  if (!anonRegErr) throw new Error("LEAK: anon can call register()");
+  if (anonRegErr.code === "PGRST202")
+    throw new Error("register() does not exist yet — migration not applied");
+  const { error: anonStateErr } = await anon.rpc("cabinet_state");
+  if (!anonStateErr) throw new Error("LEAK: anon can call cabinet_state()");
+  if (anonStateErr.code === "PGRST202")
+    throw new Error("cabinet_state() does not exist yet — migration not applied");
+  console.log("OK: anon register()/cabinet_state() rejected");
 
-  // authenticated end-to-end: start → save profile → complete (twice, idempotent)
+  // the OLD funnel surface must be GONE: PostgREST answers PGRST202 (unknown
+  // function) — not 42501, which would mean it still exists, merely denied
+  const { error: goneErr } = await anon.rpc("funnel_state");
+  if (!goneErr) throw new Error("LEAK: anon can call funnel_state()");
+  if (goneErr.code !== "PGRST202" && !goneErr.message.includes("Could not find the function"))
+    throw new Error(
+      `funnel_state must be dropped (expected PGRST202), got ${goneErr.code} (${goneErr.message})`,
+    );
+  console.log("OK: funnel_state() is gone (PGRST202)");
+
+  // authenticated end-to-end: register → save profile → complete (twice, idempotent)
   const leftover = await findUserByEmail(FUNNEL_PROBE_EMAIL);
   if (leftover) {
     const { error } = await db.auth.admin.deleteUser(leftover.id);
@@ -231,26 +252,24 @@ let funnelProbePassword;
     });
     if (fpSignInErr) throw new Error(`funnel probe sign-in failed: ${fpSignInErr.message}`);
 
-    const { data: s1, error: e1r } = await authed.rpc("funnel_start", {
+    // register() happy path (spec §4.1) — one door, complete row, registered
+    // standing. The oversized ref input doubles as the Phase 3 cap rider:
+    // junk codes are silently nulled on the WRITE path, never an error.
+    const { data: s1, error: e1r } = await authed.rpc("register", {
       p_first_name: "პრობი",
       p_last_name: "ფანელი",
-      p_role: "member",
-      p_ref_code: null,
-    });
-    if (e1r) throw new Error(`funnel_start failed: ${e1r.message}`);
-    if (s1.exists !== true || s1.role !== "member")
-      throw new Error(`funnel_start returned unexpected state: ${JSON.stringify(s1)}`);
-
-    // referral-cap rider (spec §4.6): while still draft, an oversized ref input
-    // must be silently nulled on the WRITE path (stored column, not the lookup)
-    const { error: capErr } = await authed.rpc("funnel_start", {
-      p_first_name: "პრობა",
-      p_last_name: "პრობიშვილი",
-      p_role: "member",
+      p_personal_id: "98765432109",
       p_ref_code: "x".repeat(64),
     });
-    if (capErr)
-      throw new Error(`funnel_start with oversized ref must not error: ${capErr.message}`);
+    if (e1r) throw new Error(`register failed: ${e1r.message}`);
+    if (s1.exists !== true || s1.standing !== "registered" || s1.status !== "registered")
+      throw new Error(`register returned unexpected state: ${JSON.stringify(s1)}`);
+    if (s1.completed !== false || s1.created !== true)
+      throw new Error(`register must report completed=false, created=true: ${JSON.stringify(s1)}`);
+    if (s1.personalIdMasked !== "987********")
+      throw new Error(`personalIdMasked wrong: ${s1.personalIdMasked}`);
+    if (s1.role !== "member" || s1.admin !== false)
+      throw new Error(`register role/admin unexpected: ${s1.role}/${s1.admin}`);
     const { data: capRow, error: capReadErr } = await db
       .from("profiles")
       .select("signup_ref_code")
@@ -261,6 +280,23 @@ let funnelProbePassword;
       throw new Error(
         `oversized referral input must be stored as null, got ${capRow.signup_ref_code}`,
       );
+
+    // idempotent: a second register() is a state read — nothing overwritten
+    const { data: s2, error: e1b } = await authed.rpc("register", {
+      p_first_name: "სხვა",
+      p_last_name: "სახელი",
+      p_personal_id: "11111111111",
+    });
+    if (e1b) throw new Error(`repeat register errored: ${e1b.message}`);
+    if (s2.created !== false || s2.firstName !== "პრობი" || s2.personalIdMasked !== "987********")
+      throw new Error(`repeat register must be a no-op state read: ${JSON.stringify(s2)}`);
+
+    // registered-but-unsaved: wizard step B refuses until step A ran (spec §4.3)
+    await expectToken(
+      authed.rpc("become_member_complete", { p_tier: 10 }),
+      "profile_incomplete",
+      "become_member_complete before any profile save",
+    );
 
     // Phase 3 (spec §4.1): the scoped re-grant. An allowed column writes; a
     // server-managed column is refused at the column-privilege level (42501) —
@@ -292,29 +328,73 @@ let funnelProbePassword;
       .single();
     if (cityErr) throw new Error(`city lookup failed: ${cityErr.message}`);
 
-    const { error: e2r } = await authed.rpc("funnel_save_profile", {
-      p_personal_id: "98765432109",
+    const countMemberships = async () => {
+      const { count, error } = await db
+        .from("memberships")
+        .select("*", { count: "exact", head: true })
+        .eq("member_id", fpId);
+      if (error) throw new Error(`membership count failed: ${error.message}`);
+      return count ?? 0;
+    };
+
+    // wizard step A — an unknown delegate id must refuse (nothing stored)
+    await expectToken(
+      authed.rpc("become_member_save_profile", {
+        p_birth_date: "1990-01-15",
+        p_region_id: firstCity.region_id,
+        p_city_id: firstCity.id,
+        p_employment: "პრობის საქმიანობა",
+        p_delegate_id: fpId, // a real uuid that is NOT a delegates row
+      }),
+      "invalid_delegate",
+      "save_profile with an unknown delegate id",
+    );
+
+    const { data: savedState, error: e2r } = await authed.rpc("become_member_save_profile", {
       p_birth_date: "1990-01-15",
       p_region_id: firstCity.region_id,
       p_city_id: firstCity.id,
       p_employment: "პრობის საქმიანობა",
       p_delegate_id: null,
-      p_tc_accepted: false,
     });
-    if (e2r) throw new Error(`funnel_save_profile failed: ${e2r.message}`);
+    if (e2r) throw new Error(`become_member_save_profile failed: ${e2r.message}`);
+    if (savedState.standing !== "registered" || savedState.completed !== false)
+      throw new Error(`save_profile must keep registered standing: ${JSON.stringify(savedState)}`);
+    if (savedState.birthDate !== "1990-01-15" || savedState.membershipExists !== false)
+      throw new Error(
+        `save_profile state wrong (membership must NOT exist yet — D1): ${JSON.stringify(savedState)}`,
+      );
+    if ((await countMemberships()) !== 0)
+      throw new Error("save_profile must not open a membership (creation moved to complete — D1)");
 
-    const { data: c1, error: e3r } = await authed.rpc("funnel_complete", { p_tier: 10 });
-    if (e3r) throw new Error(`funnel_complete failed: ${e3r.message}`);
+    const { data: c1, error: e3r } = await authed.rpc("become_member_complete", { p_tier: 10 });
+    if (e3r) throw new Error(`become_member_complete failed: ${e3r.message}`);
     if (!/^GR-[A-HJKMNP-Z2-9]{6}$/.test(c1.referenceCode ?? ""))
       throw new Error(`reference code malformed: ${c1.referenceCode}`);
+    if (c1.standing !== "member" || c1.completed !== true || c1.status !== "profile_completed")
+      throw new Error(`complete must flip standing to member: ${JSON.stringify(c1)}`);
+    if (typeof c1.registrationCompletedAt !== "string" || c1.tier !== 10)
+      throw new Error(`complete state wrong: ${JSON.stringify(c1)}`);
+    if (c1.created !== undefined)
+      throw new Error("created flag must only appear on register() responses");
+    const { data: openAfterComplete, error: oacErr } = await db
+      .from("memberships")
+      .select("delegate_id")
+      .eq("member_id", fpId)
+      .is("ended_at", null);
+    if (oacErr) throw new Error(oacErr.message);
+    if (openAfterComplete.length !== 1 || openAfterComplete[0].delegate_id !== null)
+      throw new Error("complete must open exactly one central membership");
 
-    const { data: c2, error: e4r } = await authed.rpc("funnel_complete", { p_tier: 20 });
-    if (e4r) throw new Error(`repeat funnel_complete errored: ${e4r.message}`);
+    const { data: c2, error: e4r } = await authed.rpc("become_member_complete", { p_tier: 20 });
+    if (e4r) throw new Error(`repeat become_member_complete errored: ${e4r.message}`);
     if (c2.referenceCode !== c1.referenceCode || c2.tier !== 10)
       throw new Error(
-        `funnel_complete not idempotent: ${c1.referenceCode}/${c1.tier} → ${c2.referenceCode}/${c2.tier}`,
+        `become_member_complete not idempotent: ${c1.referenceCode}/${c1.tier} → ${c2.referenceCode}/${c2.tier}`,
       );
-    console.log(`OK: funnel RPCs end-to-end (code ${c1.referenceCode}, idempotent complete)`);
+    console.log(
+      `OK: register → save → complete end-to-end (code ${c1.referenceCode}, idempotent complete)`,
+    );
 
     // --- Phase 3: cabinet RPCs (spec §4.2–§4.5) ---
     const { data: approvedDelegate, error: apErr } = await db
@@ -326,20 +406,15 @@ let funnelProbePassword;
       .single();
     if (apErr) throw new Error(`no approved delegate for change probe: ${apErr.message}`);
 
-    const countMemberships = async () => {
-      const { count, error } = await db
-        .from("memberships")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", fpId);
-      if (error) throw new Error(`membership count failed: ${error.message}`);
-      return count ?? 0;
-    };
-
-    const before = await countMemberships(); // funnel_save_profile opened one (central)
-    const { error: cdErr } = await authed.rpc("member_change_delegate", {
+    const before = await countMemberships(); // become_member_complete opened one (central)
+    const { data: cdState, error: cdErr } = await authed.rpc("member_change_delegate", {
       p_delegate_id: approvedDelegate.id,
     });
     if (cdErr) throw new Error(`member_change_delegate failed: ${cdErr.message}`);
+    if (!cdState.chosenDelegate || cdState.chosenDelegate.id !== approvedDelegate.id)
+      throw new Error(
+        `member_change_delegate must return the new cabinet state: ${JSON.stringify(cdState.chosenDelegate)}`,
+      );
     if ((await countMemberships()) !== before + 1)
       throw new Error("change_delegate must close-and-open (history row expected)");
     const { data: openRows, error: openErr } = await db
@@ -369,7 +444,9 @@ let funnelProbePassword;
       tierState.status !== "profile_completed" ||
       typeof tierState.registrationCompletedAt !== "string"
     )
-      throw new Error("funnel_state must expose status + registrationCompletedAt (spec §4.6)");
+      throw new Error("cabinet_state must expose status + registrationCompletedAt");
+    if (tierState.standing !== "member" || tierState.completed !== true)
+      throw new Error(`cabinet_state standing/completed wrong: ${JSON.stringify(tierState)}`);
 
     const { error: notDelegateErr } = await authed.rpc("delegate_panel");
     if (!notDelegateErr || !notDelegateErr.message.includes("not_a_delegate"))
@@ -396,6 +473,260 @@ let funnelProbePassword;
         console.error(
           `WARNING: funnel probe cleanup (deleteUser ${fpId}) failed: ${error.message}`,
         );
+    }
+  }
+}
+
+// --- Phase 6 R1: wizard edges — duplicate ID, referral precedence, registered
+// gate widening (D3), lost-approval fallback (spec §8), pending_delegate_id seal ---
+{
+  const REF_EMAIL = "register-ref-probe@example.com";
+  const PENDING_FIXTURE_EMAIL = "pending-delegate-fixture@example.com";
+  for (const email of [REF_EMAIL, PENDING_FIXTURE_EMAIL]) {
+    const leftover = await findUserByEmail(email);
+    if (leftover) {
+      const { error } = await db.auth.admin.deleteUser(leftover.id);
+      if (error) throw new Error(`cleanup of leftover ${email} failed: ${error.message}`);
+    }
+  }
+
+  // two DISTINCT approved delegates: one referral source, one picker candidate
+  const { data: twoApproved, error: twoApprovedErr } = await db
+    .from("delegates")
+    .select("id, referral_code")
+    .eq("status", "approved")
+    .order("id")
+    .limit(2);
+  if (twoApprovedErr || !twoApproved || twoApproved.length !== 2)
+    throw new Error(
+      `R1 probes need 2 seeded approved delegates, got ${twoApproved?.length ?? 0}: ${twoApprovedErr?.message ?? ""}`,
+    );
+  const [refDelegate, pickedDelegate] = twoApproved;
+
+  // an upcoming published event for the registered-RSVP probe (same fixture
+  // rule as Phase 5: resolved from the live seed, never hardcoded)
+  const { data: rsvpEvent, error: rsvpEventErr } = await db
+    .from("events")
+    .select("id")
+    .eq("status", "published")
+    .gt("starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(1)
+    .single();
+  if (rsvpEventErr || !rsvpEvent)
+    throw new Error(`R1: seeded upcoming event missing: ${rsvpEventErr?.message}`);
+
+  let refId;
+  let fixtureId;
+  try {
+    // (fixture) a NON-approved delegates row: service-created pending applicant
+    const { data: fixtureUser, error: fixtureCreateErr } = await db.auth.admin.createUser({
+      email: PENDING_FIXTURE_EMAIL,
+      password: randomBytes(24).toString("hex"),
+      email_confirm: true,
+    });
+    if (fixtureCreateErr)
+      throw new Error(`pending fixture createUser failed: ${fixtureCreateErr.message}`);
+    fixtureId = fixtureUser.user.id;
+    const { error: fixtureProfileErr } = await db
+      .from("profiles")
+      .insert({ id: fixtureId, first_name: "პრობი", last_name: "მომლოდინე" });
+    if (fixtureProfileErr)
+      throw new Error(`pending fixture profile insert failed: ${fixtureProfileErr.message}`);
+    // status defaults to 'pending' — never approved
+    const { error: fixtureDelegateErr } = await db.from("delegates").insert({
+      id: fixtureId,
+      referral_code: `PROBE-${randomBytes(6).toString("hex")}`,
+      tc_accepted_at: new Date().toISOString(),
+    });
+    if (fixtureDelegateErr)
+      throw new Error(`pending fixture delegates insert failed: ${fixtureDelegateErr.message}`);
+
+    const refPassword = randomBytes(24).toString("hex");
+    const { data: refUser, error: refCreateErr } = await db.auth.admin.createUser({
+      email: REF_EMAIL,
+      password: refPassword,
+      email_confirm: true,
+    });
+    if (refCreateErr) throw new Error(`ref probe createUser failed: ${refCreateErr.message}`);
+    refId = refUser.user.id;
+    const ref = createClient(url, ANON_KEY);
+    const { error: refSignInErr } = await ref.auth.signInWithPassword({
+      email: REF_EMAIL,
+      password: refPassword,
+    });
+    if (refSignInErr) throw new Error(`ref probe sign-in failed: ${refSignInErr.message}`);
+
+    // no profile at all: wizard step B refuses...
+    await expectToken(
+      ref.rpc("become_member_complete", { p_tier: 10 }),
+      "profile_incomplete",
+      "become_member_complete with no profile row",
+    );
+    // ...and a taken personal ID refuses without creating anything (fp holds it)
+    await expectToken(
+      ref.rpc("register", {
+        p_first_name: "პრობი",
+        p_last_name: "დუბლი",
+        p_personal_id: "98765432109",
+      }),
+      "duplicate_personal_id",
+      "register with a taken personal ID",
+    );
+
+    // register through a REAL approved delegate's referral link
+    const { data: refState, error: refRegErr } = await ref.rpc("register", {
+      p_first_name: "პრობი",
+      p_last_name: "რეფერალი",
+      p_personal_id: "98765432111",
+      p_ref_code: refDelegate.referral_code,
+    });
+    if (refRegErr) throw new Error(`register with ref code failed: ${refRegErr.message}`);
+    if (refState.standing !== "registered" || refState.created !== true)
+      throw new Error(`ref register state unexpected: ${JSON.stringify(refState)}`);
+    if (!refState.referral || typeof refState.referral.firstName !== "string")
+      throw new Error(
+        `referral block missing for a valid approved ref code: ${JSON.stringify(refState.referral)}`,
+      );
+
+    // gate widening (spec §4.2, D3): a REGISTERED (not completed) person can RSVP
+    const { error: regRsvpErr } = await ref.rpc("member_rsvp", {
+      p_event_id: rsvpEvent.id,
+      p_going: true,
+    });
+    if (regRsvpErr)
+      throw new Error(`registered member_rsvp must succeed (widened gate): ${regRsvpErr.message}`);
+    const { data: regRsvpRow, error: regRsvpReadErr } = await db
+      .from("event_rsvps")
+      .select("status")
+      .eq("event_id", rsvpEvent.id)
+      .eq("member_id", refId)
+      .single();
+    if (regRsvpReadErr)
+      throw new Error(`registered rsvp readback failed: ${regRsvpReadErr.message}`);
+    if (regRsvpRow.status !== "going")
+      throw new Error(`registered rsvp row wrong: ${regRsvpRow.status}`);
+    // going counts are registered-level too (same D3 line)
+    const { data: regGoing, error: regGoingErr } = await ref
+      .from("member_event_going_counts")
+      .select("going")
+      .eq("event_id", rsvpEvent.id)
+      .single();
+    if (regGoingErr) throw new Error(`registered going-count read failed: ${regGoingErr.message}`);
+    if (typeof regGoing.going !== "number" || regGoing.going < 1)
+      throw new Error(`registered going count should include own rsvp: ${regGoing.going}`);
+    // leave no residue for Phase 5's ground-truth count comparison
+    const { error: rsvpCleanErr } = await db
+      .from("event_rsvps")
+      .delete()
+      .eq("event_id", rsvpEvent.id)
+      .eq("member_id", refId);
+    if (rsvpCleanErr) throw new Error(`registered rsvp cleanup failed: ${rsvpCleanErr.message}`);
+
+    // everywhere else the member wall holds: votes refuse, member views stay empty
+    await expectToken(
+      ref.rpc("member_cast_vote", { p_poll_id: refId, p_option_id: refId }),
+      "not_completed",
+      "registered member_cast_vote",
+    );
+    const { data: regPolls, error: regPollsErr } = await ref
+      .from("member_polls")
+      .select("id")
+      .limit(1);
+    if (regPollsErr) throw new Error(`registered member_polls errored: ${regPollsErr.message}`);
+    if (regPolls.length !== 0)
+      throw new Error("LEAK: registered (not completed) user got rows from member_polls");
+
+    // pending_delegate_id is server-managed: direct PATCH refused (column grant
+    // 42501 in front, protect_profile_columns trigger behind it as depth)
+    const { error: pdPatchErr } = await ref
+      .from("profiles")
+      .update({ pending_delegate_id: pickedDelegate.id })
+      .eq("id", refId);
+    if (!pdPatchErr) throw new Error("LEAK: client PATCHed pending_delegate_id directly");
+    if (pdPatchErr.code !== "42501" && !pdPatchErr.message.includes("server-managed"))
+      throw new Error(
+        `pending_delegate_id PATCH: expected 42501/protect-trigger, got ${pdPatchErr.code} (${pdPatchErr.message})`,
+      );
+
+    // referral precedence (Phase 2 parity): the stored approved referral WINS
+    // over a different picker choice — the picker input is ignored entirely
+    const { data: probeCity2, error: probeCity2Err } = await db
+      .from("cities")
+      .select("id, region_id")
+      .limit(1)
+      .single();
+    if (probeCity2Err) throw new Error(`city lookup failed: ${probeCity2Err.message}`);
+    const { data: precState, error: precErr } = await ref.rpc("become_member_save_profile", {
+      p_birth_date: "1992-03-03",
+      p_region_id: probeCity2.region_id,
+      p_city_id: probeCity2.id,
+      p_employment: "პრობა",
+      p_delegate_id: pickedDelegate.id,
+    });
+    if (precErr) throw new Error(`precedence save_profile failed: ${precErr.message}`);
+    if (!precState.pendingDelegate || precState.pendingDelegate.id !== refDelegate.id)
+      throw new Error(
+        `referral must beat the picker: pendingDelegate=${JSON.stringify(precState.pendingDelegate)}, expected ${refDelegate.id}`,
+      );
+
+    // wizard step A — an unapproved delegates row refuses like an unknown one.
+    // Only reachable with NO stored approved referral (the referral would win
+    // and shadow the picker — asserted just above), so drop the ref first.
+    const { error: unshadowErr } = await db
+      .from("profiles")
+      .update({ signup_ref_code: null })
+      .eq("id", refId);
+    if (unshadowErr) throw new Error(`service ref-code clear failed: ${unshadowErr.message}`);
+    await expectToken(
+      ref.rpc("become_member_save_profile", {
+        p_birth_date: "1992-03-03",
+        p_region_id: probeCity2.region_id,
+        p_city_id: probeCity2.id,
+        p_employment: "პრობა",
+        p_delegate_id: fixtureId,
+      }),
+      "invalid_delegate",
+      "save_profile with a pending (unapproved) delegate",
+    );
+
+    // lost-approval fallback (spec §8): re-point the held choice at the pending
+    // fixture (service write), complete — lands on central, no error
+    const { error: repointErr } = await db
+      .from("profiles")
+      .update({ pending_delegate_id: fixtureId })
+      .eq("id", refId);
+    if (repointErr) throw new Error(`service repoint failed: ${repointErr.message}`);
+    const { data: fbState, error: fbErr } = await ref.rpc("become_member_complete", {
+      p_tier: 10,
+    });
+    if (fbErr) throw new Error(`fallback complete errored: ${fbErr.message}`);
+    if (fbState.standing !== "member" || fbState.chosenDelegate !== null)
+      throw new Error(
+        `lost-approval completion must land on central: standing=${fbState.standing}, chosenDelegate=${JSON.stringify(fbState.chosenDelegate)}`,
+      );
+    const { data: fbRows, error: fbRowsErr } = await db
+      .from("memberships")
+      .select("delegate_id")
+      .eq("member_id", refId)
+      .is("ended_at", null);
+    if (fbRowsErr) throw new Error(fbRowsErr.message);
+    if (fbRows.length !== 1 || fbRows[0].delegate_id !== null)
+      throw new Error("fallback membership must be exactly one open central row");
+
+    console.log(
+      "OK: R1 edges — duplicate ID, referral precedence, registered RSVP (gate widened), member wall, pending_delegate_id sealed, lost-approval → central",
+    );
+  } finally {
+    for (const [label, id] of [
+      ["ref probe", refId],
+      ["pending fixture", fixtureId],
+    ]) {
+      if (id) {
+        const { error } = await db.auth.admin.deleteUser(id);
+        if (error)
+          console.error(`WARNING: ${label} cleanup (deleteUser ${id}) failed: ${error.message}`);
+      }
     }
   }
 }
@@ -440,25 +771,25 @@ let funnelProbePassword;
       password: naPassword,
     });
     if (naSignIn) throw new Error(`nonadmin sign-in failed: ${naSignIn.message}`);
-    // complete a registration the house way (funnel RPCs) — target material for later probes
-    await na.rpc("funnel_start", {
+    // complete a registration the house way (register + become_member_*) —
+    // target material for later probes
+    await na.rpc("register", {
       p_first_name: "პრობი",
       p_last_name: "ადმინობის",
-      p_role: "member",
-      p_ref_code: null,
+      p_personal_id: "98765432110",
     });
     const { data: probeCity } = await db.from("cities").select("id, region_id").limit(1).single();
-    await na.rpc("funnel_save_profile", {
-      p_personal_id: "98765432110",
+    await na.rpc("become_member_save_profile", {
       p_birth_date: "1991-02-02",
       p_region_id: probeCity.region_id,
       p_city_id: probeCity.id,
       p_employment: "პრობა",
       p_delegate_id: null,
-      p_tc_accepted: false,
     });
-    const { data: naDone, error: naDoneErr } = await na.rpc("funnel_complete", { p_tier: 10 });
-    if (naDoneErr) throw new Error(`probe funnel_complete failed: ${naDoneErr.message}`);
+    const { data: naDone, error: naDoneErr } = await na.rpc("become_member_complete", {
+      p_tier: 10,
+    });
+    if (naDoneErr) throw new Error(`probe become_member_complete failed: ${naDoneErr.message}`);
     const naCode = naDone.referenceCode;
 
     for (const view of ADMIN_VIEWS) {
@@ -813,6 +1144,27 @@ let funnelProbePassword;
       "invalid_setting",
       "unknown setting key",
     );
+
+    // recreated admin_export_members (7b): the p_status whitelist speaks the
+    // NEW enum — the renamed value filters fine, the dead one refuses
+    const { data: exportRegistered, error: exportRegErr } = await superAdmin.rpc(
+      "admin_export_members",
+      { p_search: null, p_region_id: null, p_status: "registered", p_include_ids: false },
+    );
+    if (exportRegErr)
+      throw new Error(`export with p_status=registered failed: ${exportRegErr.message}`);
+    if (!Array.isArray(exportRegistered))
+      throw new Error(`export must return a jsonb array, got ${typeof exportRegistered}`);
+    await expectToken(
+      superAdmin.rpc("admin_export_members", {
+        p_search: null,
+        p_region_id: null,
+        p_status: "draft",
+        p_include_ids: false,
+      }),
+      "invalid_target",
+      "export with the retired 'draft' status",
+    );
     console.log("OK: super flows — audited reveal, grant/revoke, lockout + settings guards");
 
     // ---- (5) the sweep demotes a synthetically-expired member ----
@@ -1084,7 +1436,8 @@ console.log(
 
     // P5.3 pre-completion authenticated user: member views return ZERO rows (not errors)
     // (reuses the Phase 2-style throwaway boilerplate — create + sign in — but stops
-    // there: no funnel_start/save_profile/complete call, so registration never completes)
+    // there: no register() call, so no profile exists and nothing ever completes;
+    // is_registered() is false too, so even the widened RSVP gate refuses)
     {
       const PRE_EMAIL = "community-precompletion-probe@example.com";
       const preLeftover = await findUserByEmail(PRE_EMAIL);
@@ -1700,6 +2053,13 @@ console.log(
       const delegateClient = await signInAsSeededAdmin(
         approvedDelegatePhoneRow.phone.replace(/^\+995/, ""),
       );
+
+      // recreated delegate_panel (7b): still callable; draftCount now counts
+      // 'registered' standing via the same jsonb key (label change is Task 6)
+      const { data: panel, error: panelErr } = await delegateClient.rpc("delegate_panel");
+      if (panelErr) throw new Error(`P5.7: delegate_panel failed: ${panelErr.message}`);
+      if (typeof panel.draftCount !== "number" || panel.draftCount < 0)
+        throw new Error(`P5.7: delegate_panel draftCount malformed: ${JSON.stringify(panel)}`);
 
       const { data: teamEvents, error: teamEventsErr } =
         await delegateClient.rpc("delegate_team_rsvps");

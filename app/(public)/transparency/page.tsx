@@ -38,7 +38,7 @@ export default async function TransparencyPage() {
           label="შეგროვებული საწევრო შენატანები"
           sub="სულ, დაარსებიდან"
         />
-        <StatCard value={formatCountKa(stats.registered_members)} label="რეგისტრირებული წევრი" />
+        <StatCard value={formatCountKa(stats.registered_members)} label="წევრი" />
         <StatCard value={formatCountKa(stats.approved_delegates)} label="დამტკიცებული დელეგატი" />
       </div>
 
@@ -48,7 +48,7 @@ export default async function TransparencyPage() {
             <thead>
               <tr className="border-b border-line text-left text-xs font-semibold text-muted-fg">
                 <th className="px-5 py-3">რეგიონი</th>
-                <th className="px-5 py-3 text-right">რეგისტრირებული</th>
+                <th className="px-5 py-3 text-right">წევრი</th>
                 <th className="px-5 py-3 text-right">აქტიური</th>
               </tr>
             </thead>
