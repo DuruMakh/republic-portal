@@ -389,12 +389,16 @@ await insertChunked(
       tc_accepted_at: new Date().toISOString(),
     })),
 );
-await insertChunked(
-  "memberships",
-  created
-    .filter((p) => p.supporterOf)
-    .map((p) => ({ member_id: p.id, delegate_id: delegateIdBySlug.get(p.supporterOf) })),
-);
+// Only member-standing kinds (active/completed) open a membership row — spec
+// invariant D1 ("only members hold a membership; backing is a member
+// privilege"). Registered-kind supporters keep supporterOf (the referral /
+// signup_ref_code capture is legitimate — they were genuinely referred by a
+// delegate) but must NOT get a membership row: they are light standing, not
+// members. Keep `memberRows` in scope — the D1 self-check below counts it.
+const memberRows = created
+  .filter((p) => p.supporterOf && (p.kind === "active" || p.kind === "completed"))
+  .map((p) => ({ member_id: p.id, delegate_id: delegateIdBySlug.get(p.supporterOf) }));
+await insertChunked("memberships", memberRows);
 
 // Payments make people active — the engine derives status from these rows.
 // paid_at within the last 25 days ⇒ coverage (30d) + grace (30d) safely covers today.
@@ -761,4 +765,50 @@ const { count: voteCount } = await db
   .from("poll_votes")
   .select("*", { count: "exact", head: true });
 if (!voteCount || voteCount < 100) throw new Error(`expected ≥100 seeded votes, got ${voteCount}`);
+
+// D1 self-check #1: "only members hold a membership; backing is a member
+// privilege" — no registered-standing profile may hold an open membership.
+// Reads profiles.status fresh from the DB (not the in-memory `kind` the
+// filter above used) so this actually catches a regression in that filter.
+const { data: registeredProfiles, error: registeredErr } = await db
+  .from("profiles")
+  .select("id")
+  .eq("status", "registered");
+if (registeredErr) throw new Error(`registered-profile read failed: ${registeredErr.message}`);
+const registeredIds = (registeredProfiles ?? []).map((r) => r.id);
+let registeredWithMembership = 0;
+if (registeredIds.length > 0) {
+  const { count, error: badMembErr } = await db
+    .from("memberships")
+    .select("*", { count: "exact", head: true })
+    .in("member_id", registeredIds)
+    .is("ended_at", null);
+  if (badMembErr) throw new Error(`D1 check query failed: ${badMembErr.message}`);
+  registeredWithMembership = count ?? 0;
+}
+if (registeredWithMembership !== 0)
+  throw new Error(
+    `D1 VIOLATION: ${registeredWithMembership} registered-standing profile(s) hold an open membership`,
+  );
+console.log(
+  `D1 check: 0/${registeredIds.length} registered-standing profiles hold a membership (OK)`,
+);
+
+// D1 self-check #2 (sanity — don't over-exclude): member-standing rows still
+// get their membership. Every open membership in the table is either a seeded
+// member-kind supporter (memberRows) or one of the 4 canonical admins — the
+// wipe above clears every membership and only those two steps recreate any,
+// so the total must match exactly.
+const { count: openMemberships, error: openMembErr } = await db
+  .from("memberships")
+  .select("*", { count: "exact", head: true })
+  .is("ended_at", null);
+if (openMembErr) throw new Error(`open memberships count failed: ${openMembErr.message}`);
+const expectedOpenMemberships = memberRows.length + 4;
+if (openMemberships !== expectedOpenMemberships)
+  throw new Error(
+    `expected ${expectedOpenMemberships} open memberships (seeded member-kind rows + 4 admins), got ${openMemberships}`,
+  );
+console.log(`D1 sanity: ${openMemberships} open memberships match seeded member rows (OK)`);
+
 console.log("SEED OK");
