@@ -1,5 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+// TEAM_STATUS_LABELS is imported here only as a test-time guard against Pill's own
+// STATUS_CONFIG literals drifting out of sync with lib/cabinet — see the "stays in sync
+// with TEAM_STATUS_LABELS" test below. Pill itself must not import from lib/cabinet.
+import { TEAM_STATUS_LABELS } from "@/lib/cabinet";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -106,6 +110,20 @@ describe("Pill", () => {
   it("registered status renders the light-tier label", () => {
     render(<Pill status="registered" />);
     expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+  });
+  it("stays in sync with TEAM_STATUS_LABELS (lib/cabinet) for profile_completed/active_member", () => {
+    // Pill's STATUS_CONFIG duplicates these two labels as its own literals (kept in sync
+    // only by a code comment) — this is the exact drift that let Pill's active_member
+    // default fall behind lib/cabinet's TEAM_STATUS_LABELS previously. Pinning the
+    // *rendered* text to TEAM_STATUS_LABELS' values, rather than to a second hardcoded
+    // copy of the strings, makes that drift fail a test instead of only a code comment.
+    const profileCompleted = render(<Pill status="profile_completed" />);
+    expect(profileCompleted.container.textContent).toBe(TEAM_STATUS_LABELS.profile_completed);
+    profileCompleted.unmount();
+
+    const activeMember = render(<Pill status="active_member" />);
+    expect(activeMember.container.textContent).toBe(TEAM_STATUS_LABELS.active_member);
+    activeMember.unmount();
   });
 });
 
