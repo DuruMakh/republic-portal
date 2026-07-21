@@ -165,6 +165,45 @@ async function insertChunked(table, rows, chunk = 500) {
 
 console.log(`Seeding project ${ref} …`);
 
+// 0) One-off debris cleanup: a prior task's LIVE verification against staging
+// (manual register()/become_member exercise) left disclosed QA rows behind.
+// Idempotent and harmless when the rows are already absent — matched by phone
+// OR personal_id, since a debris row may only carry one of the two disclosed
+// identifiers. Mirrors e2e/funnel-helpers.ts cleanupJourneyUsers'
+// detach-then-delete pattern: memberships.delegate_id has NO cascade, so a
+// membership pointing at a debris row (as a delegate) would block deleteUser.
+{
+  const debrisPhones = ["+995555000071", "995555000071"];
+  const debrisPersonalIds = ["19990000071", "19990000099"];
+  const { data: debrisByPhone, error: debrisPhoneErr } = await db
+    .from("profiles")
+    .select("id")
+    .in("phone", debrisPhones);
+  if (debrisPhoneErr) throw new Error(`debris cleanup (phone lookup): ${debrisPhoneErr.message}`);
+  const { data: debrisByPid, error: debrisPidErr } = await db
+    .from("profiles")
+    .select("id")
+    .in("personal_id", debrisPersonalIds);
+  if (debrisPidErr) throw new Error(`debris cleanup (personal_id lookup): ${debrisPidErr.message}`);
+  const debrisIds = [
+    ...new Set([...(debrisByPhone ?? []), ...(debrisByPid ?? [])].map((r) => r.id)),
+  ];
+  if (debrisIds.length > 0) {
+    const { error: debrisDetachErr } = await db
+      .from("memberships")
+      .delete()
+      .in("delegate_id", debrisIds);
+    if (debrisDetachErr)
+      throw new Error(`debris cleanup: membership detach failed: ${debrisDetachErr.message}`);
+    for (const id of debrisIds) {
+      const { error: debrisDelErr } = await db.auth.admin.deleteUser(id);
+      if (debrisDelErr)
+        throw new Error(`debris cleanup: deleteUser ${id} failed: ${debrisDelErr.message}`);
+    }
+    console.log(`debris cleanup: removed ${debrisIds.length} disclosed QA row(s)`);
+  }
+}
+
 // 1) Full reset: delete every auth user EXCEPT the permanent audit ACTORS —
 // audit_log.actor_id is a plain FK and audit rows are append-only, so once an
 // admin has acted, deleting them is IMPOSSIBLE (FK 23503). That covers the 4
@@ -287,12 +326,17 @@ for (const d of roster) {
       first_name: FIRST[(k + i) % FIRST.length],
       last_name: LAST[(k * 3 + i) % LAST.length],
       region: d.region,
-      kind: k < active ? "active" : k % 2 === 0 ? "completed" : "draft",
+      kind: k < active ? "active" : k % 2 === 0 ? "completed" : "registered",
       delegate: null,
       supporterOf: d.slug,
     });
   }
 }
+const kindCounts = people.reduce((acc, p) => {
+  acc[p.kind] = (acc[p.kind] ?? 0) + 1;
+  return acc;
+}, {});
+console.log(`people by kind: ${JSON.stringify(kindCounts)}`);
 console.log(`creating ${people.length} auth users (a few minutes) …`);
 
 // 4) Auth users (concurrency 10), then bulk-insert profiles/delegates/memberships
@@ -313,17 +357,18 @@ await insertChunked(
     last_name: p.last_name,
     phone: phoneFor(p.i),
     personal_id: personalIdFor(p.i),
-    region_id: regionId.get(p.region),
     // the engine owns profile_completed ⇄ active_member; seed never writes 'active_member'
-    status: p.kind === "draft" ? "draft" : "profile_completed",
-    ...(p.kind === "draft"
+    status: p.kind === "registered" ? "registered" : "profile_completed",
+    // registered-kind rows completed only the light form (name+surname+personal_id+
+    // phone, spec §4.1) — no region/tier/reference_code/completion stamp yet.
+    ...(p.kind === "registered"
       ? {}
       : {
+          region_id: regionId.get(p.region),
           membership_tier: tierFor(p.i),
           reference_code: refCodeFor(p.i),
           registration_completed_at: daysAgoIso(30 + (p.i % 200)),
         }),
-    signup_role: p.delegate ? "delegate" : "member",
   })),
 );
 
@@ -480,7 +525,7 @@ const editorId = editorProfile.id;
 const { data: memberPool, error: poolErr } = await db
   .from("profiles")
   .select("id")
-  .neq("status", "draft")
+  .neq("status", "registered")
   .not("phone", "like", "+9955090000%")
   .order("created_at")
   .limit(120);
