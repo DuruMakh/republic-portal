@@ -19,6 +19,7 @@ test.afterAll(cleanupJourneyUsers);
 test("registers in one door, lands in the registered cabinet; same phone re-entry no-ops", async ({
   page,
 }) => {
+  test.setTimeout(200_000); // headroom for the 62s OTP cooldown ride-out below
   const phone = journeyPhone(JOURNEY.regHappy);
   const firstName = "ნინო";
   await page.goto("/join");

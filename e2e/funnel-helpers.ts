@@ -74,12 +74,6 @@ function randomFunnelCode(len: number): string {
 }
 
 /**
- * Drive the one-door /join form (spec §4.1): the four light fields + dev-OTP, then
- * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
- * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
- * the /join page first (page.goto("/join")).
- */
-/**
  * Click „გაგრძელება →" on the filled /join form and wait for the dev-OTP to appear.
  * A phone that was OTP-verified moments ago (the duplicate-phone re-entry, or the same
  * journey slot reused by a sibling spec) hits Supabase's ~60s per-phone OTP cooldown:
@@ -99,6 +93,12 @@ export async function submitJoinAndAwaitOtp(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Drive the one-door /join form (spec §4.1): the four light fields + dev-OTP, then
+ * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
+ * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
+ * the /join page first (page.goto("/join")).
+ */
 export async function passRegistration(
   page: Page,
   opts: { phone: string; firstName: string; lastName: string; personalId: string },

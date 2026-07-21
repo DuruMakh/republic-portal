@@ -44,8 +44,8 @@ describe("recordPaymentSchema (spec §3.5)", () => {
   };
   it("accepts a valid payment; bankReference defaults empty", () => {
     expect(recordPaymentSchema.parse(ok).bankReference).toBe("TBC-123");
-    const { bankReference: _omit, ...rest } = ok;
-    expect(recordPaymentSchema.parse(rest).bankReference).toBe("");
+    const { memberId, amountGel, paidAt } = ok;
+    expect(recordPaymentSchema.parse({ memberId, amountGel, paidAt }).bankReference).toBe("");
   });
   it("rejects non-positive, oversized and sub-cent amounts", () => {
     expect(recordPaymentSchema.safeParse({ ...ok, amountGel: 0 }).success).toBe(false);

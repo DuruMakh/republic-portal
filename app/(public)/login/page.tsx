@@ -38,7 +38,7 @@ export default function LoginPage() {
     setPhase("otp");
   }
 
-  async function routeByFunnelState() {
+  async function routeByCabinetState() {
     // Post-verify landing (spec §3.8): no profile → /join; otherwise the derived step.
     const supabase = createClient();
     const { data, error: rpcError } = await supabase.rpc("cabinet_state");
@@ -67,7 +67,7 @@ export default function LoginPage() {
             </Button>
           </div>
         ) : (
-          <OtpVerification phone={phone} onVerified={routeByFunnelState} />
+          <OtpVerification phone={phone} onVerified={routeByCabinetState} />
         )}
       </Card>
     </main>
