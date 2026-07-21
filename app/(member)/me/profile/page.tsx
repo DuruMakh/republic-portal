@@ -4,17 +4,17 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { initialsKa, memberSinceKa } from "@/lib/cabinet";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { ProfileForm } from "./ProfileForm";
 
 export const metadata: Metadata = { title: "ჩემი პროფილი — ქართული რესპუბლიკა" };
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
-  // funnel_state is request-cached (already fetched by the layout); the user and
+  // cabinet_state is request-cached (already fetched by the layout); the user and
   // region lookups are independent, so fan them out in parallel.
   const [state, { data: userData }, { data: regions, error: regionsError }] = await Promise.all([
-    getFunnelState(), // (member) layout guarantees exists+completed
+    getCabinetState(), // (member) layout guarantees exists+completed
     supabase.auth.getUser(),
     supabase.from("regions").select("id, name_ka").order("id"),
   ]);

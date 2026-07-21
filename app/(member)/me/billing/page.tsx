@@ -5,14 +5,14 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { TierChange } from "./TierChange";
 
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
 export default async function BillingPage() {
   const supabase = await createServerSupabase();
-  const state = await getFunnelState(); // layout guarantees exists+completed
+  const state = await getCabinetState(); // layout guarantees exists+completed
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
     .select("id, amount_gel, paid_at, source, voided_at")

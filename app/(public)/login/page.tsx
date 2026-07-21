@@ -7,7 +7,7 @@ import { Card } from "@/components/Card";
 import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
 import { deriveDestination } from "@/lib/cabinet";
-import type { FunnelState } from "@/lib/funnel";
+import type { CabinetState } from "@/lib/funnel";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeGeorgianPhone } from "@/lib/validation";
 
@@ -41,12 +41,12 @@ export default function LoginPage() {
   async function routeByFunnelState() {
     // Post-verify landing (spec §3.8): no profile → /join; otherwise the derived step.
     const supabase = createClient();
-    const { data, error: rpcError } = await supabase.rpc("funnel_state");
+    const { data, error: rpcError } = await supabase.rpc("cabinet_state");
     if (rpcError || data === null) {
       router.replace("/join");
       return;
     }
-    router.replace(deriveDestination(data as unknown as FunnelState));
+    router.replace(deriveDestination(data as unknown as CabinetState));
   }
 
   return (

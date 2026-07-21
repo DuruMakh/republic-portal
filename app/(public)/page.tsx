@@ -45,10 +45,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <ButtonLink href="/join" size="lg">
-              გახდი წევრი
-            </ButtonLink>
-            <ButtonLink href="/join?role=delegate" variant="ghost-inverse" size="lg">
-              გახდი დელეგატი
+              დარეგისტრირდი
             </ButtonLink>
           </div>
           <div className="mt-10 grid max-w-lg grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { CabinetNav } from "@/components/CabinetNav";
 import { cabinetNavItems, deriveDestination } from "@/lib/cabinet";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
 /**
  * Delegate gate (spec §3.2): completed delegates only (any verification
@@ -13,7 +13,7 @@ export default async function DelegateLayout({ children }: { children: React.Rea
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const state = await getFunnelState();
+  const state = await getCabinetState();
   if (!state.exists || !state.completed || state.role !== "delegate") {
     redirect(deriveDestination(state));
   }

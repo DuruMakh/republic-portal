@@ -93,7 +93,7 @@ export default function StyleguidePage() {
         <Field label="ტელეფონის ნომერი" name="phone" placeholder="5XX XX XX XX" />
       </Card>
       <Card title="სტეპერი">
-        <Stepper current={2} />
+        <Stepper steps={["პროფილი", "საწევრო"]} current={1} />
       </Card>
       <Card title="SMS კოდის ველი">
         <OtpInputSample />

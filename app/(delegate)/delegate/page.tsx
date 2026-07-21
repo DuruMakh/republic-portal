@@ -9,7 +9,7 @@ import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { ReferralCard } from "./ReferralCard";
 import { TeamRsvpCard } from "./TeamRsvpCard";
 
@@ -17,10 +17,10 @@ export const metadata: Metadata = { title: "დელეგატის პა�
 
 export default async function DelegateDashboardPage() {
   const supabase = await createServerSupabase();
-  // funnel_state is request-cached (the delegate layout already fetched it); pair
+  // cabinet_state is request-cached (the delegate layout already fetched it); pair
   // its (free) read with the delegate_panel round-trip.
   const [state, { data: panelData, error: panelError }] = await Promise.all([
-    getFunnelState(), // layout guarantees delegate+completed
+    getCabinetState(), // layout guarantees delegate+completed
     supabase.rpc("delegate_panel"),
   ]);
   if (panelError || panelData === null) {

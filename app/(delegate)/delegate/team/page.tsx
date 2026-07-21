@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { TeamMember } from "@/lib/cabinet";
-import { createServerSupabase, getFunnelState } from "@/lib/supabase/server";
+import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { TeamTable } from "./TeamTable";
 
 export const metadata: Metadata = { title: "ჩემი გუნდი — ქართული რესპუბლიკა" };
 
 export default async function DelegateTeamPage() {
   const supabase = await createServerSupabase();
-  // delegateStatus comes free from the request-cached funnel_state (the layout
+  // delegateStatus comes free from the request-cached cabinet_state (the layout
   // already fetched it) — no need for delegate_panel's three count subqueries here.
-  const state = await getFunnelState();
+  const state = await getCabinetState();
   if (state.delegateStatus !== "approved") redirect("/delegate"); // no team pre-approval (spec §3.7)
   const { data: teamData, error: teamError } = await supabase.rpc("delegate_team");
   if (teamError || teamData === null) {
