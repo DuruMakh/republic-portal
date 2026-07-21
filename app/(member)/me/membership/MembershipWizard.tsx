@@ -9,7 +9,12 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Field, inputClasses } from "@/components/Field";
 import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
-import { deriveMembershipPhase, type CabinetStatePresent, type Tier } from "@/lib/funnel";
+import {
+  deriveMembershipPhase,
+  GENERIC_FUNNEL_ERROR,
+  type CabinetStatePresent,
+  type Tier,
+} from "@/lib/funnel";
 import { EMPLOYMENT_PRESETS, membershipProfileSchema } from "@/lib/funnel-schemas";
 import { createClient } from "@/lib/supabase/client";
 import { completeMembershipAction, saveMembershipProfileAction } from "./actions";
@@ -186,8 +191,15 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     }
     setErrors({});
     setBusy(true);
-    const result = await saveMembershipProfileAction(parsed.data);
-    setBusy(false);
+    let result: Awaited<ReturnType<typeof saveMembershipProfileAction>>;
+    try {
+      result = await saveMembershipProfileAction(parsed.data);
+    } catch {
+      setFormError(GENERIC_FUNNEL_ERROR);
+      return;
+    } finally {
+      setBusy(false);
+    }
     if (!result.ok) {
       setFormError(result.error);
       return;
@@ -202,8 +214,15 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   async function completeTier() {
     setTierError(undefined);
     setTierBusy(true);
-    const result = await completeMembershipAction({ tier });
-    setTierBusy(false);
+    let result: Awaited<ReturnType<typeof completeMembershipAction>>;
+    try {
+      result = await completeMembershipAction({ tier });
+    } catch {
+      setTierError(GENERIC_FUNNEL_ERROR);
+      return;
+    } finally {
+      setTierBusy(false);
+    }
     if (!result.ok) {
       setTierError(result.error);
       return;

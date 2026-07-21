@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CabinetStatePresent } from "@/lib/funnel";
+import { GENERIC_FUNNEL_ERROR, type CabinetStatePresent } from "@/lib/funnel";
 import { MembershipWizard } from "./MembershipWizard";
 
 const saveMembershipProfileAction = vi.fn();
@@ -164,6 +164,22 @@ describe("MembershipWizard — profile phase", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
   });
+
+  it("shows a Georgian error and re-enables the button when the save action rejects", async () => {
+    saveMembershipProfileAction.mockRejectedValue(new Error("network drop"));
+    render(
+      <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
+    );
+    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+      target: { value: "1990-05-20" },
+    });
+    const submitButton = screen.getByRole("button", { name: "გაგრძელება →" });
+    fireEvent.click(submitButton);
+    await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
+    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
+    expect(submitButton).not.toBeDisabled();
+    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+  });
 });
 
 describe("MembershipWizard — tier phase", () => {
@@ -196,6 +212,17 @@ describe("MembershipWizard — tier phase", () => {
     fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
     expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+  });
+
+  it("shows a Georgian error, re-enables the button, and does not navigate when completion rejects", async () => {
+    completeMembershipAction.mockRejectedValue(new Error("network drop"));
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    const completeButton = screen.getByRole("button", { name: "რეგისტრაციის დასრულება" });
+    fireEvent.click(completeButton);
+    await waitFor(() => expect(completeMembershipAction).toHaveBeenCalledWith({ tier: 10 }));
+    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
+    expect(completeButton).not.toBeDisabled();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("returns to the profile phase with fields intact via the back button", async () => {
