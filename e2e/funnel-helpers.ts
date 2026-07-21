@@ -44,7 +44,9 @@ function adminClient(): SupabaseClient {
  * cabinet.spec's profile-edit selects city index 2, so seeded members must sit in a
  * region that offers ≥3 cities. No spec asserts a seeded member's specific region. */
 let cachedLocation: { regionId: number; cityId: number } | null = null;
-async function defaultLocation(admin: SupabaseClient): Promise<{ regionId: number; cityId: number }> {
+async function defaultLocation(
+  admin: SupabaseClient,
+): Promise<{ regionId: number; cityId: number }> {
   if (cachedLocation) return cachedLocation;
   const { data: region, error: rErr } = await admin
     .from("regions")

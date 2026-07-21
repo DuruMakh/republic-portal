@@ -80,7 +80,9 @@ export default async function MemberNewsPage() {
               publishedAt={formatDateKa(n.publishedAt)}
               imageUrl={n.imageUrl}
               excerptText={excerpt(n.body)}
-              pill={n.membersOnly ? <Pill status="profile_completed" label="წევრებისთვის" /> : undefined}
+              pill={
+                n.membersOnly ? <Pill status="profile_completed" label="წევრებისთვის" /> : undefined
+              }
             />
           ))}
         </div>

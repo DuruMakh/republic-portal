@@ -67,7 +67,9 @@ export default async function ProfilePage() {
               personalIdMasked={state.personalIdMasked}
             />
             <Card>
-              <p className="text-xs font-bold uppercase tracking-widest text-brand">შემდეგი ნაბიჯი</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-brand">
+                შემდეგი ნაბიჯი
+              </p>
               <h3 className="mt-1 text-lg font-bold text-ink">გახდი წევრი</h3>
               <p className="mt-1 text-sm text-muted-fg">
                 წევრობა ხსნის ხმის მიცემას გამოკითხვებში, დელეგატის არჩევას და წევრებისთვის

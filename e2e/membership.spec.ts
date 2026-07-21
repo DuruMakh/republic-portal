@@ -66,7 +66,9 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await expect(page.getByText("წევრი").first()).toBeVisible(); // membership pill
 });
 
-test("resume: a saved profile lands straight on the tier phase, fields intact", async ({ page }) => {
+test("resume: a saved profile lands straight on the tier phase, fields intact", async ({
+  page,
+}) => {
   const phone = journeyPhone(JOURNEY.membResume);
   await page.goto("/join");
   await passRegistration(page, {

@@ -52,13 +52,23 @@ export default async function CabinetOverviewPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card>
           <h3 className="text-base font-bold text-ink">ღონისძიებები</h3>
-          <p className="mt-1 text-sm text-muted-fg">ნახე მომავალი შეხვედრები და დაარეგისტრირე დასწრება.</p>
-          <div className="mt-3"><ButtonLink href="/me/events" variant="ghost">ნახვა</ButtonLink></div>
+          <p className="mt-1 text-sm text-muted-fg">
+            ნახე მომავალი შეხვედრები და დაარეგისტრირე დასწრება.
+          </p>
+          <div className="mt-3">
+            <ButtonLink href="/me/events" variant="ghost">
+              ნახვა
+            </ButtonLink>
+          </div>
         </Card>
         <Card>
           <h3 className="text-base font-bold text-ink">სიახლეები</h3>
           <p className="mt-1 text-sm text-muted-fg">მოძრაობის საჯარო განცხადებები და ამბები.</p>
-          <div className="mt-3"><ButtonLink href="/me/news" variant="ghost">ნახვა</ButtonLink></div>
+          <div className="mt-3">
+            <ButtonLink href="/me/news" variant="ghost">
+              ნახვა
+            </ButtonLink>
+          </div>
         </Card>
       </div>
     </main>
