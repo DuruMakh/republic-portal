@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.0 — Phase 6 R1: Progressive registration (front door) (2026-07-21)
+
+- One light registration door (/join): name, surname, personal ID, mobile +
+  6-digit OTP — under a minute — replaces the 3-step member/delegate funnel.
+  New base standing „რეგისტრირებული" (registered), not yet a member.
+- Becoming a member moved inside the cabinet: a two-step wizard (legal profile →
+  fee tier) that issues the permanent GR- bank reference code; delegate choice
+  is a member privilege („ცენტრალური მოძრაობა" default)
+- Standing-aware cabinet: registered tier gets events + RSVP, public news, and a
+  profile with a "become a member" call to action; members keep polls, member
+  news, delegate choice, and billing
+- Public homepage delegate pitch retired for a single registration CTA; delegacy
+  returns as a member-only request in Release 2
+- Vocabulary: „წევრი" now labels the member standing and „რეგისტრირებული" the
+  light tier, consistently across cabinet, delegate team, and admin surfaces
+- Data model (ADR-018): member_status „draft" renamed to „registered";
+  register / become_member_save_profile / become_member_complete / cabinet_state
+  RPCs replace the funnel surface; a membership row is created only at completion
+- Post-review hardening (max-effort review, fixed before merge): dev-OTP endpoint
+  withholds codes for any existing account (closes a preview-only takeover oracle
+  for the new registered tier); registration and membership flows recover from a
+  transient network failure instead of freezing; an absent-profile cabinet state
+  is now a typed impossibility (no more 500s); the staging seed no longer opens a
+  membership for registered-standing rows, with a live D1 self-check
+
 ## 0.6.0 — Phase 5: Community (2026-07-19)
 
 - Public news (/news + article pages with OG tags), per-article visibility:
