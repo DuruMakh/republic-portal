@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { changeDelegateSchema, profileUpdateSchema } from "./cabinet-schemas";
+import {
+  changeDelegateSchema,
+  profileUpdateSchema,
+  registeredNameUpdateSchema,
+} from "./cabinet-schemas";
 
 const valid = {
   firstName: "ნინო",
@@ -35,6 +39,28 @@ describe("profileUpdateSchema", () => {
     expect(profileUpdateSchema.safeParse({ ...valid, employment: "ა".repeat(101) }).success).toBe(
       false,
     );
+  });
+});
+
+describe("registeredNameUpdateSchema", () => {
+  it("accepts valid names and trims them", () => {
+    const parsed = registeredNameUpdateSchema.parse({
+      firstName: " ნინო ",
+      lastName: "ბერიძე",
+    });
+    expect(parsed.firstName).toBe("ნინო");
+    expect(parsed.lastName).toBe("ბერიძე");
+  });
+  it("rejects empty / too-long names with the funnel's Georgian messages", () => {
+    const empty = registeredNameUpdateSchema.safeParse({ firstName: "  ", lastName: "ბერიძე" });
+    expect(empty.success).toBe(false);
+    if (!empty.success) expect(empty.error.issues[0]?.message).toBe("შეავსე ეს ველი");
+    const long = registeredNameUpdateSchema.safeParse({
+      firstName: "ნინო",
+      lastName: "ა".repeat(61),
+    });
+    expect(long.success).toBe(false);
+    if (!long.success) expect(long.error.issues[0]?.message).toBe("მაქსიმუმ 60 სიმბოლო");
   });
 });
 
