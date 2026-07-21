@@ -117,9 +117,9 @@ export default async function AdminMembersPage({
               className={adminControlClasses}
             >
               <option value="">ყველა სტატუსი</option>
-              <option value="active_member">აქტიური</option>
-              <option value="profile_completed">რეგისტრირებული</option>
-              <option value="draft">მონახაზი</option>
+              <option value="active_member">{MEMBER_STATUS_LABELS_KA.active_member}</option>
+              <option value="profile_completed">{MEMBER_STATUS_LABELS_KA.profile_completed}</option>
+              <option value="registered">{MEMBER_STATUS_LABELS_KA.registered}</option>
             </select>
           </label>
           <Button type="submit" variant="dark">

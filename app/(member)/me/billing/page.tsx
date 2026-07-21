@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -12,7 +13,8 @@ export const metadata: Metadata = { title: "გადახდები — ქ�
 
 export default async function BillingPage() {
   const supabase = await createServerSupabase();
-  const state = await getCabinetState(); // layout guarantees exists+completed
+  const state = await getCabinetState(); // layout guarantees exists only
+  if (!state.completed) redirect("/me"); // members only (spec §4.2)
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
     .select("id, amount_gel, paid_at, source, voided_at")
