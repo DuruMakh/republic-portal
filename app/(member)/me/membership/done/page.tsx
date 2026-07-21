@@ -11,6 +11,7 @@ export const metadata: Metadata = { title: "რეგისტრაცია �
 
 export default async function MembershipDonePage() {
   const state = await getCabinetState(); // (member) layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
   if (state.role === "delegate") redirect("/delegate"); // members-only journey (spec §3.1)
   if (!state.completed) redirect("/me/membership"); // nothing to show until the wizard finishes
 

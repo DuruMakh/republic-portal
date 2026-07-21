@@ -16,6 +16,7 @@ const PERKS = [
 
 export default async function CabinetOverviewPage() {
   const state = await getCabinetState();
+  if (!state.exists) redirect("/join"); // soft-nav defense: layout guard doesn't narrow this page
   if (state.role === "delegate") redirect("/delegate");
   if (state.standing === "member") redirect("/me/profile");
 

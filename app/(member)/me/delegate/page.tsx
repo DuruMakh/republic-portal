@@ -13,6 +13,7 @@ export const metadata: Metadata = { title: "ჩემი დელეგატ�
 export default async function MyDelegatePage() {
   const supabase = await createServerSupabase();
   const state = await getCabinetState(); // layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
   if (!state.completed) redirect("/me"); // members only (spec §4.2)
   if (state.role === "delegate") redirect("/delegate"); // members-only page (spec §3.1)
 

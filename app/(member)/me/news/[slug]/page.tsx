@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
 import { Pill } from "@/components/Pill";
 import { formatDateKa } from "@/lib/cabinet";
@@ -25,6 +25,7 @@ export default async function MemberArticlePage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const supabase = await createServerSupabase();
   const state = await getCabinetState();
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before the completed branch
 
   let article: ArticleView | null;
   if (state.completed) {

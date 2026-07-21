@@ -12,6 +12,7 @@ export default async function DelegateTeamPage() {
   // delegateStatus comes free from the request-cached cabinet_state (the layout
   // already fetched it) — no need for delegate_panel's three count subqueries here.
   const state = await getCabinetState();
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading delegateStatus
   if (state.delegateStatus !== "approved") redirect("/delegate"); // no team pre-approval (spec §3.7)
   const { data: teamData, error: teamError } = await supabase.rpc("delegate_team");
   if (teamError || teamData === null) {

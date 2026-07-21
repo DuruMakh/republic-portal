@@ -9,7 +9,7 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Field, inputClasses } from "@/components/Field";
 import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
-import { deriveMembershipPhase, type CabinetState, type Tier } from "@/lib/funnel";
+import { deriveMembershipPhase, type CabinetStatePresent, type Tier } from "@/lib/funnel";
 import { EMPLOYMENT_PRESETS, membershipProfileSchema } from "@/lib/funnel-schemas";
 import { createClient } from "@/lib/supabase/client";
 import { completeMembershipAction, saveMembershipProfileAction } from "./actions";
@@ -58,7 +58,7 @@ function LabeledSelect({
 // reaches this component (the page gate redirects to /me/membership/done first).
 type WizardPhase = "profile" | "tier";
 
-export function MembershipWizard({ initialState }: { initialState: CabinetState }) {
+export function MembershipWizard({ initialState }: { initialState: CabinetStatePresent }) {
   const router = useRouter();
   const [phase, setPhase] = useState<WizardPhase>(() =>
     deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",

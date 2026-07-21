@@ -1,5 +1,5 @@
 import { EMPLOYMENT_PRESETS } from "./funnel-schemas";
-import type { CabinetState } from "./funnel";
+import type { CabinetState, CabinetStatePresent } from "./funnel";
 
 /**
  * Post-login / guard destination (spec §3.2): cabinet for completed users,
@@ -12,8 +12,12 @@ export function deriveDestination(state: CabinetState | null): string {
   return state.standing === "member" ? "/me/profile" : "/me";
 }
 
-/** Nav variant: delegates-row wins; otherwise the standing decides. */
-export function cabinetRole(state: CabinetState): "registered" | "member" | "delegate" {
+/**
+ * Nav variant: delegates-row wins; otherwise the standing decides. Only ever
+ * called for a present profile (the cabinet layouts redirect an absent state to
+ * /join first), so it takes the present variant — an absent state has no role.
+ */
+export function cabinetRole(state: CabinetStatePresent): "registered" | "member" | "delegate" {
   if (state.role === "delegate") return "delegate";
   return state.standing === "member" ? "member" : "registered";
 }

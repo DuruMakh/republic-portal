@@ -8,6 +8,7 @@ export const metadata: Metadata = { title: "შიდა გამოკით�
 
 export default async function MemberPollsPage() {
   const state = await getCabinetState(); // layout guarantees exists only
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
   if (!state.completed) redirect("/me"); // members only (spec §4.2); the views self-gate too
   const supabase = await createServerSupabase();
   const [pollsRes, optionsRes, countsRes, mineRes] = await Promise.all([

@@ -99,9 +99,10 @@ export default function JoinForm() {
       }
       return;
     }
-    if (result.state.created === false) {
+    if (result.state.exists && result.state.created === false) {
       // phone already had an account (RPC no-opped, nothing overwritten) — only
-      // revealed after proving phone ownership (spec §6)
+      // revealed after proving phone ownership (spec §6). register() always
+      // returns a present state, so `created` only ever rides on exists:true.
       setNotice("ეს ნომერი უკვე რეგისტრირებულია");
       redirectTimeoutRef.current = setTimeout(
         () => router.replace(deriveDestination(result.state)),

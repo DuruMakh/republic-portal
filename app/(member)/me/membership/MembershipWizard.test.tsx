@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CabinetState } from "@/lib/funnel";
+import type { CabinetStatePresent } from "@/lib/funnel";
 import { MembershipWizard } from "./MembershipWizard";
 
 const saveMembershipProfileAction = vi.fn();
@@ -57,7 +57,7 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
-function cab(overrides: Partial<CabinetState> = {}): CabinetState {
+function cab(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
   return {
     exists: true,
     standing: "registered",

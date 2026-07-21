@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -20,6 +21,7 @@ export default async function ProfilePage() {
     supabase.auth.getUser(),
     supabase.from("regions").select("id, name_ka").order("id"),
   ]);
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
   const user = userData.user;
   if (regionsError) {
     // a failed regions load must not render an empty region picker

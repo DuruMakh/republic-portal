@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -23,6 +24,7 @@ export default async function DelegateDashboardPage() {
     getCabinetState(), // layout guarantees delegate+completed
     supabase.rpc("delegate_panel"),
   ]);
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading state.firstName
   if (panelError || panelData === null) {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }

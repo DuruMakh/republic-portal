@@ -6,10 +6,10 @@ import {
   isReferralCodeCandidate,
   mapFunnelError,
   TIERS,
-  type CabinetState,
+  type CabinetStatePresent,
 } from "./funnel";
 
-function cab(overrides: Partial<CabinetState>): CabinetState {
+function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
   return {
     exists: true,
     standing: "registered",
@@ -53,6 +53,13 @@ describe("deriveMembershipPhase", () => {
   });
   it("completed member → done, regardless of field snapshot", () => {
     expect(deriveMembershipPhase(cab({ standing: "member", completed: true }))).toBe("done");
+  });
+  it("absent profile (cabinet_state() { exists: false }) never mis-derives 'tier'", () => {
+    // The RPC's no-profile branch returns ONLY { exists: false }; every wizard
+    // field is undefined at runtime. The old all-fields-required type let this
+    // reach the `undefined !== null` checks and return 'tier' for a nonexistent
+    // profile (finding V8). It must resolve to the safe 'profile' phase instead.
+    expect(deriveMembershipPhase({ exists: false })).toBe("profile");
   });
 });
 

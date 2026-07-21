@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { NewsCard } from "@/components/NewsCard";
 import { Pill } from "@/components/Pill";
 import { excerpt } from "@/lib/content-render";
@@ -26,6 +27,7 @@ interface NewsListItem {
 export default async function MemberNewsPage() {
   const supabase = await createServerSupabase();
   const state = await getCabinetState();
+  if (!state.exists) redirect("/join"); // soft-nav defense: narrow before the completed branch
 
   let items: NewsListItem[];
   if (state.completed) {

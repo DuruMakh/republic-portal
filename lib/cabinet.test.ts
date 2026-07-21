@@ -16,9 +16,9 @@ import {
   paymentStatusKa,
   TEAM_STATUS_LABELS,
 } from "./cabinet";
-import type { CabinetState } from "./funnel";
+import type { CabinetStatePresent } from "./funnel";
 
-function cab(overrides: Partial<CabinetState>): CabinetState {
+function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
   return {
     exists: true,
     standing: "registered",
@@ -49,7 +49,8 @@ function cab(overrides: Partial<CabinetState>): CabinetState {
 describe("deriveDestination", () => {
   it("no profile → /join", () => {
     expect(deriveDestination(null)).toBe("/join");
-    expect(deriveDestination(cab({ exists: false }))).toBe("/join");
+    // the absent variant is exactly the RPC's no-profile payload — nothing else
+    expect(deriveDestination({ exists: false })).toBe("/join");
   });
   it("registered → /me overview", () => {
     expect(deriveDestination(cab({}))).toBe("/me");
