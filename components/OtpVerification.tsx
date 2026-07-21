@@ -78,8 +78,18 @@ export function OtpVerification({
       setError("კოდი არასწორია");
       return;
     }
-    await onVerified();
-    setBusy(false);
+    // The OTP is now proven for this session. A rejected onVerified() (e.g. JoinForm's
+    // registerAction throwing on a network blip or a stale deployed Server Action) must
+    // never strand the button: the finally always releases `busy`. onVerified owns its
+    // own failure reporting and routing (JoinForm.afterVerify), so we never rethrow
+    // here — a propagated rejection would leave the screen dead (finding V10).
+    try {
+      await onVerified();
+    } catch {
+      // handled by onVerified; the finally below re-enables the button
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function resend() {

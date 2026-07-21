@@ -156,6 +156,13 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;
 
+/**
+ * Mapped message for a genuinely lapsed/absent OTP session. /join routes on this
+ * constant (finding V10): only this failure legitimately drops the registration
+ * back to a fresh OTP — every other failure reuses the already-proven session.
+ */
+export const NOT_AUTHENTICATED_MESSAGE = ERROR_MESSAGES["not_authenticated"]!;
+
 export const GENERIC_FUNNEL_ERROR = "რაღაც შეცდომა მოხდა — სცადე თავიდან.";
 
 export function mapFunnelError(message: string | null | undefined): string {

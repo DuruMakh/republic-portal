@@ -11,7 +11,9 @@ import { OtpVerification } from "@/components/OtpVerification";
 import { deriveDestination } from "@/lib/cabinet";
 import {
   DUPLICATE_PERSONAL_ID_MESSAGE,
+  GENERIC_FUNNEL_ERROR,
   isReferralCodeCandidate,
+  NOT_AUTHENTICATED_MESSAGE,
   type ActionResult,
   type CabinetState,
 } from "@/lib/funnel";
@@ -93,9 +95,16 @@ export default function JoinForm() {
         // just let them fix the personal ID and resubmit directly
         setErrors({ personalId: result.error });
         setPhase("retry");
-      } else {
+      } else if (result.error === NOT_AUTHENTICATED_MESSAGE) {
+        // the OTP session genuinely lapsed — the ONLY failure that legitimately
+        // needs a fresh code, so drop all the way back to the phone form (finding V10)
         setFormError(result.error);
         setPhase("form");
+      } else {
+        // every other failure (transient/RPC) keeps the proven session: resubmit
+        // registration from the retry phase — never a second SMS (finding V10)
+        setFormError(result.error);
+        setPhase("retry");
       }
       return;
     }
@@ -154,19 +163,34 @@ export default function JoinForm() {
     }
     setErrors({});
     setBusy(true);
-    const result = await registerAction(parsed.data);
-    setBusy(false);
-    handleRegisterResult(result);
+    try {
+      const result = await registerAction(parsed.data);
+      handleRegisterResult(result);
+    } catch {
+      // a rejected action promise (network / stale deployed action) — the phone is
+      // still proven, so stay in the retry phase and let them resubmit (finding V10)
+      setFormError(GENERIC_FUNNEL_ERROR);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function afterVerify() {
-    const result = await registerAction({
-      firstName,
-      lastName,
-      personalId: personalId.replace(/\D/g, ""),
-      refCode,
-    });
-    handleRegisterResult(result);
+    try {
+      const result = await registerAction({
+        firstName,
+        lastName,
+        personalId: personalId.replace(/\D/g, ""),
+        refCode,
+      });
+      handleRegisterResult(result);
+    } catch {
+      // a rejected action promise must never propagate back into OtpVerification and
+      // strand the screen. The OTP is already proven — drop to the retry phase so the
+      // user resubmits registration without a fresh SMS (finding V10).
+      setFormError(GENERIC_FUNNEL_ERROR);
+      setPhase("retry");
+    }
   }
 
   return (
