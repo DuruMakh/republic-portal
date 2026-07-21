@@ -5,7 +5,12 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
-import { initialsKa, memberSinceKa } from "@/lib/cabinet";
+import {
+  initialsKa,
+  memberSinceKa,
+  TEAM_STATUS_LABELS,
+  type TeamMemberStatus,
+} from "@/lib/cabinet";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { ProfileForm } from "./ProfileForm";
 import { RegisteredProfileForm } from "./RegisteredProfileForm";
@@ -88,6 +93,11 @@ export default async function ProfilePage() {
   }
 
   const since = memberSinceKa(state.registrationCompletedAt ?? state.createdAt);
+  // Pill only distinguishes the two "completed" substatuses; state.completed being true
+  // guarantees status isn't "registered" here, but MemberStatus is wider than
+  // TeamMemberStatus, so narrow explicitly before indexing TEAM_STATUS_LABELS (strict mode).
+  const teamStatus: TeamMemberStatus =
+    state.status === "active_member" ? "active_member" : "profile_completed";
 
   return (
     <main>
@@ -111,10 +121,7 @@ export default async function ProfilePage() {
               {state.firstName} {state.lastName}
             </h2>
             <div className="mt-2">
-              <Pill
-                status={state.status === "active_member" ? "active_member" : "profile_completed"}
-                label={state.status === "active_member" ? "აქტიური" : "წევრი"}
-              />
+              <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
             </div>
           </div>
           <dl className="mt-5 flex flex-col gap-2.5 border-t border-line pt-4 text-sm">

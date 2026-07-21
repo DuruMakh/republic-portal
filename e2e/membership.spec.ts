@@ -54,6 +54,9 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await expect(page).toHaveURL(/\/me\/membership\/done/);
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
   await expect(page.getByTestId("chosen-delegate")).toHaveText("ცენტრალური მოძრაობა");
+  // the done screen's own pill must already read „წევრი" (V17) — it used to fall through
+  // to Pill's retired default „პროფილი შევსებულია" since this <Pill> has no label override
+  await expect(page.getByText("წევრი").first()).toBeVisible();
 
   // into the member cabinet — the nav now carries the member-only pages, with NO reload:
   // completeMembershipAction revalidates the (member) layout server-side, so the router

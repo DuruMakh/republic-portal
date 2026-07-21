@@ -48,8 +48,11 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
               onChange={(e) => setStatus(e.target.value as StatusFilter)}
             >
               <option value="all">ყველა სტატუსი</option>
-              <option value="active_member">აქტიური</option>
-              <option value="profile_completed">რეგისტრირებული</option>
+              {/* labels sourced from TEAM_STATUS_LABELS (single source, spec §3.3/§3.7)
+                  so the filter text always matches the row pills it filters; values
+                  stay literal since the filter logic keys on status, not label */}
+              <option value="active_member">{TEAM_STATUS_LABELS.active_member}</option>
+              <option value="profile_completed">{TEAM_STATUS_LABELS.profile_completed}</option>
             </select>
           </div>
         </>

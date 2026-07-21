@@ -89,7 +89,15 @@ describe("Badge", () => {
 describe("Pill", () => {
   it("maps status to Georgian label", () => {
     render(<Pill status="active_member" />);
-    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    // team-status vocabulary (lib/cabinet.ts TEAM_STATUS_LABELS): "აქტიური", not
+    // the retired "აქტიური წევრი" (V17/V23 sweep — Pill's own defaults were missed).
+    expect(screen.getByText("აქტიური")).toBeInTheDocument();
+  });
+  it("profile_completed maps to the current team-status label (V17)", () => {
+    render(<Pill status="profile_completed" />);
+    // was the retired "პროფილი შევსებულია"; every other member-status display
+    // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
+    expect(screen.getByText("წევრი")).toBeInTheDocument();
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
