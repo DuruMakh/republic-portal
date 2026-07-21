@@ -34,6 +34,17 @@ test("a registered-standing user logs in and lands on the registered cabinet", a
     lastName: "ტესტი",
     personalId: `9${TEST_PHONE}9`, // 11-digit, reserved 9-prefix, unique to this phone
   });
+
+  // Regression (restores the lost funnel.spec V13): /api/dev/otp must WITHHOLD the code
+  // for any existing account — now including a REGISTERED one (a real account carrying a
+  // name, personal ID and cabinet). The endpoint is enabled in this env (the fresh-phone
+  // test above renders the on-screen code), so this 404 is the account-takeover guard,
+  // not the env gate.
+  const withheld = await page.request.get(
+    `/api/dev/otp?phone=${encodeURIComponent(`+995${TEST_PHONE}`)}`,
+  );
+  expect(withheld.status()).toBe(404);
+
   await loginAs(page, TEST_PHONE);
   // registered standing routes to /me (the overview), not the member /me/profile
   await expect(page).toHaveURL(/\/me$/);

@@ -6,7 +6,7 @@ import {
   journeyPersonalId,
   journeyPhone,
   passRegistration,
-  submitJoinAndAwaitOtp,
+  submitJoinAndReadInboxOtp,
 } from "./funnel-helpers";
 
 // Journeys share per-run users and the duplicate-ID test depends on the happy-path
@@ -46,17 +46,18 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
 
   // Same phone, fresh (signed-out) session: proving ownership again is a no-op — the
   // RPC never overwrites the existing profile, so the original first name survives.
-  // Re-sending an OTP to the just-verified phone hits Supabase's ~60s per-phone
-  // cooldown, so submitJoinAndAwaitOtp rides the window out before the code appears.
+  // This phone now HAS a registered profile, so /api/dev/otp withholds the on-screen
+  // code (account-takeover guard) — read it from dev_otp_inbox via the service client.
+  // Re-sending to the just-verified phone also hits Supabase's ~60s per-phone cooldown,
+  // which submitJoinAndReadInboxOtp rides out before returning the code.
   await page.context().clearCookies();
   await page.goto("/join");
   await page.getByLabel("სახელი").fill("სხვა");
   await page.getByLabel("გვარი").fill("სახელი");
   await page.getByLabel("პირადი ნომერი").fill(journeyPersonalId(JOURNEY.spare)); // a different ID
   await page.getByLabel("ტელეფონის ნომერი").fill(phone);
-  await submitJoinAndAwaitOtp(page);
-  const devOtp = page.getByTestId("dev-otp");
-  await page.getByTestId("otp-0").fill((await devOtp.locator("strong").innerText()).trim());
+  const reentryOtp = await submitJoinAndReadInboxOtp(page, phone);
+  await page.getByTestId("otp-0").fill(reentryOtp);
   await page.getByRole("button", { name: "დადასტურება" }).click();
 
   await expect(page.getByTestId("join-notice")).toHaveText("ეს ნომერი უკვე რეგისტრირებულია");

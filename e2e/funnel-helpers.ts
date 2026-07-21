@@ -96,6 +96,49 @@ export async function submitJoinAndAwaitOtp(page: Page): Promise<void> {
 }
 
 /**
+ * Re-entry variant of submitJoinAndAwaitOtp for a phone that ALREADY has a profile.
+ * /api/dev/otp withholds the on-screen code for any existing account (account-takeover
+ * guard, app/api/dev/otp/route.ts), so the „სატესტო კოდი" block never renders — wait
+ * on the OtpVerification step (the otp-0 field) instead, then read the fresh code
+ * straight from dev_otp_inbox via the service client, exactly as loginAs does. Re-entry
+ * always follows a just-verified send, so ride out Supabase's ~60s per-phone OTP
+ * cooldown on „კოდის გაგზავნა ვერ მოხერხდა" and retry. Returns the OTP.
+ */
+export async function submitJoinAndReadInboxOtp(
+  page: Page,
+  phoneNational: string,
+): Promise<string> {
+  const otpField = page.getByTestId("otp-0");
+  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
+  let sentAt = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew (matches loginAs)
+    await page.getByRole("button", { name: "გაგრძელება →" }).click();
+    await expect(otpField.or(sendError)).toBeVisible({ timeout: 15_000 });
+    if (await otpField.isVisible()) break;
+    if (attempt === 2)
+      throw new Error(`submitJoinAndReadInboxOtp: OTP send throttled for ${phoneNational}`);
+    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
+  }
+  const db = adminClient();
+  const forms = [`+995${phoneNational}`, `995${phoneNational}`];
+  for (let i = 0; i < 20; i++) {
+    const { data } = await db
+      .from("dev_otp_inbox")
+      .select("otp, created_at")
+      .in("phone", forms)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const row = data?.[0];
+    if (row && new Date(row.created_at as string).getTime() >= sentAt) {
+      return row.otp as string;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`submitJoinAndReadInboxOtp: no fresh OTP in dev_otp_inbox for ${phoneNational}`);
+}
+
+/**
  * Drive the one-door /join form (spec §4.1): the four light fields + dev-OTP, then
  * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
  * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
