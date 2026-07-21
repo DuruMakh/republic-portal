@@ -9,8 +9,6 @@ import {
 import { registerActionSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-export type { ActionResult };
-
 export async function registerAction(input: unknown): Promise<ActionResult> {
   const parsed = registerActionSchema.safeParse(input);
   if (!parsed.success) {
