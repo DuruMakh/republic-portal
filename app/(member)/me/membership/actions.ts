@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   GENERIC_FUNNEL_ERROR,
   mapFunnelError,
@@ -36,5 +37,7 @@ export async function completeMembershipAction(input: unknown): Promise<ActionRe
     p_tier: parsed.data.tier,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
+  // revalidate the (member) layout so the standing flip reaches the client router cache (stale-nav bug)
+  revalidatePath("/me", "layout");
   return { ok: true, state: data as unknown as CabinetState };
 }

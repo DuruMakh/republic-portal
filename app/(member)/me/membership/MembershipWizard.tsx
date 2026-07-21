@@ -1,22 +1,15 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field, inputClasses } from "@/components/Field";
-import { Pill } from "@/components/Pill";
 import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
-import { TransferInstructions } from "@/components/TransferInstructions";
-import {
-  deriveMembershipPhase,
-  type CabinetState,
-  type MembershipPhase,
-  type Tier,
-} from "@/lib/funnel";
+import { deriveMembershipPhase, type CabinetState, type Tier } from "@/lib/funnel";
 import { EMPLOYMENT_PRESETS, membershipProfileSchema } from "@/lib/funnel-schemas";
 import { createClient } from "@/lib/supabase/client";
 import { completeMembershipAction, saveMembershipProfileAction } from "./actions";
@@ -61,9 +54,15 @@ function LabeledSelect({
   );
 }
 
+// The wizard only ever renders "profile" and "tier" — a completed member never
+// reaches this component (the page gate redirects to /me/membership/done first).
+type WizardPhase = "profile" | "tier";
+
 export function MembershipWizard({ initialState }: { initialState: CabinetState }) {
-  const [state, setState] = useState<CabinetState>(initialState);
-  const [phase, setPhase] = useState<MembershipPhase>(() => deriveMembershipPhase(initialState));
+  const router = useRouter();
+  const [phase, setPhase] = useState<WizardPhase>(() =>
+    deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",
+  );
 
   // profile phase — ported from the old /join/step-2 (spec §4.3), minus personalId
   // and the delegate-role tcAccepted branch: this wizard only ever renders for
@@ -193,7 +192,6 @@ export function MembershipWizard({ initialState }: { initialState: CabinetState 
       setFormError(result.error);
       return;
     }
-    setState(result.state);
     // clears a stale error from an earlier failed completion attempt — this is
     // one persistent component, not a fresh page mount, so a prior tier-phase
     // failure would otherwise resurface on re-entry after a back-then-resave loop
@@ -210,13 +208,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetState 
       setTierError(result.error);
       return;
     }
-    setState(result.state);
-    setPhase("done");
-    // No router.refresh() here — the page's server gate redirects completed
-    // members to /me/profile, which would yank away this just-rendered done
-    // screen (the only place the GR- code + bank instructions appear). The nav
-    // flips to the member variant on the next server navigation, via the done
-    // phase's own „ჩემი კაბინეტი" link.
+    // done lives at /me/membership/done — both the client push and any
+    // action-triggered server re-render land there deterministically
+    router.push("/me/membership/done");
   }
 
   let phaseContent: ReactNode;
@@ -318,7 +312,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetState 
         </div>
       </>
     );
-  } else if (phase === "tier") {
+  } else {
     phaseContent = (
       <>
         <h2 className="text-xl font-bold text-ink">საწევრო შენატანი</h2>
@@ -340,32 +334,6 @@ export function MembershipWizard({ initialState }: { initialState: CabinetState 
         </div>
       </>
     );
-  } else {
-    phaseContent = (
-      <>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-ink">რეგისტრაცია დასრულებულია ✓</h2>
-          <div className="mt-2">
-            <Pill status="profile_completed" />
-          </div>
-        </div>
-        <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
-        <p className="mt-4 text-sm text-muted-fg">
-          დელეგატი:{" "}
-          <strong className="text-ink" data-testid="chosen-delegate">
-            {state.chosenDelegate
-              ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-              : "ცენტრალური მოძრაობა"}
-          </strong>
-        </p>
-        <p className="mt-2 text-sm text-muted-fg">
-          აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
-        </p>
-        <div className="mt-6 flex flex-col gap-2">
-          <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
-        </div>
-      </>
-    );
   }
 
   return (
@@ -373,11 +341,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetState 
       <div className="mb-6">
         <Eyebrow>წევრობის გაფორმება</Eyebrow>
       </div>
-      {phase !== "done" ? (
-        <div className="mb-6 flex justify-center">
-          <Stepper steps={["პროფილი", "საწევრო"]} current={phase === "profile" ? 1 : 2} />
-        </div>
-      ) : null}
+      <div className="mb-6 flex justify-center">
+        <Stepper steps={["პროფილი", "საწევრო"]} current={phase === "profile" ? 1 : 2} />
+      </div>
       <Card>{phaseContent}</Card>
     </main>
   );

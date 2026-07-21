@@ -9,6 +9,11 @@ vi.mock("./actions", () => ({
   saveMembershipProfileAction: (input: unknown) => saveMembershipProfileAction(input),
   completeMembershipAction: (input: unknown) => completeMembershipAction(input),
 }));
+const pushMock = vi.fn();
+const refreshMock = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+}));
 
 const REGIONS = [
   { id: 1, name_ka: "თბილისი" },
@@ -91,6 +96,7 @@ const PROFILED = {
 beforeEach(() => {
   saveMembershipProfileAction.mockReset();
   completeMembershipAction.mockReset();
+  pushMock.mockReset();
 });
 
 describe("MembershipWizard — phase derivation", () => {
@@ -161,7 +167,7 @@ describe("MembershipWizard — profile phase", () => {
 });
 
 describe("MembershipWizard — tier phase", () => {
-  it("completes membership and renders the reference code and chosen delegate in the done phase", async () => {
+  it("navigates to the done screen on successful completion", async () => {
     completeMembershipAction.mockResolvedValue({
       ok: true,
       state: cab({
@@ -176,12 +182,9 @@ describe("MembershipWizard — tier phase", () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
     fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
     await waitFor(() => expect(completeMembershipAction).toHaveBeenCalledWith({ tier: 10 }));
-    expect(await screen.findByTestId("reference-code")).toHaveTextContent("GR-APQ694");
-    expect(screen.getByTestId("chosen-delegate")).toHaveTextContent("გია გიგოშვილი");
-    expect(screen.getByRole("link", { name: "ჩემი კაბინეტი" })).toHaveAttribute(
-      "href",
-      "/me/profile",
-    );
+    // the done screen (GR- code, bank instructions, chosen delegate) now lives at its
+    // own route — /me/membership/done — rendered server-side, not in this component
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/me/membership/done"));
   });
 
   it("shows the Georgian error message when completion fails", async () => {

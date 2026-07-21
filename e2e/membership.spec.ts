@@ -50,11 +50,14 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await page.getByRole("radio", { name: /10/ }).click();
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
 
-  // done phase: a GR- code and the central binding
+  // done phase, now its own route: a GR- code and the central binding
+  await expect(page).toHaveURL(/\/me\/membership\/done/);
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
   await expect(page.getByTestId("chosen-delegate")).toHaveText("ცენტრალური მოძრაობა");
 
-  // into the member cabinet — the nav now carries the member-only pages
+  // into the member cabinet — the nav now carries the member-only pages, with NO reload:
+  // completeMembershipAction revalidates the (member) layout server-side, so the router
+  // cache no longer serves the stale registered-nav segment on this soft navigation
   await page.getByRole("link", { name: "ჩემი კაბინეტი" }).click();
   await expect(page).toHaveURL(/\/me\/profile/);
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
