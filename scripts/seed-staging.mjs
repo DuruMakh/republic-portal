@@ -391,10 +391,12 @@ await insertChunked(
 );
 // Only member-standing kinds (active/completed) open a membership row — spec
 // invariant D1 ("only members hold a membership; backing is a member
-// privilege"). Registered-kind supporters keep supporterOf (the referral /
-// signup_ref_code capture is legitimate — they were genuinely referred by a
-// delegate) but must NOT get a membership row: they are light standing, not
-// members. Keep `memberRows` in scope — the D1 self-check below counts it.
+// privilege"). Registered-kind supporters keep supporterOf in-memory only for
+// this filter/grouping; it is deliberately NOT turned into a membership (they
+// are light standing, not members). Note: this seed does not write
+// signup_ref_code, so referral prefill and delegate draftCount are not
+// exercised on staging (pre-existing gap, not required by the R1 plan).
+// Keep `memberRows` in scope — the D1 self-check below counts it.
 const memberRows = created
   .filter((p) => p.supporterOf && (p.kind === "active" || p.kind === "completed"))
   .map((p) => ({ member_id: p.id, delegate_id: delegateIdBySlug.get(p.supporterOf) }));
@@ -804,10 +806,10 @@ const { count: openMemberships, error: openMembErr } = await db
   .select("*", { count: "exact", head: true })
   .is("ended_at", null);
 if (openMembErr) throw new Error(`open memberships count failed: ${openMembErr.message}`);
-const expectedOpenMemberships = memberRows.length + 4;
+const expectedOpenMemberships = memberRows.length + ADMIN_SEED.length;
 if (openMemberships !== expectedOpenMemberships)
   throw new Error(
-    `expected ${expectedOpenMemberships} open memberships (seeded member-kind rows + 4 admins), got ${openMemberships}`,
+    `expected ${expectedOpenMemberships} open memberships (seeded member-kind rows + ${ADMIN_SEED.length} admins), got ${openMemberships}`,
   );
 console.log(`D1 sanity: ${openMemberships} open memberships match seeded member rows (OK)`);
 
