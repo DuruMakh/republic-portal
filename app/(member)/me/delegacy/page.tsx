@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
+import { DelegateTerms } from "@/components/DelegateTerms";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
-import { deriveDelegacyPhase } from "@/lib/cabinet";
+import { DELEGACY_REJECTED_NOTE, DELEGACY_STATUS_LABELS, deriveDelegacyPhase } from "@/lib/cabinet";
 import { getCabinetState } from "@/lib/supabase/server";
 import { DelegacyConfirm } from "./DelegacyConfirm";
 
@@ -28,50 +30,42 @@ export default async function DelegacyPage() {
       {phase === "pending" ? (
         <Card>
           <div className="flex items-center gap-3">
-            <Pill status="pending" label="განიხილება" />
+            <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
             <h2 className="text-lg font-bold text-ink">მოთხოვნა გაგზავნილია</h2>
           </div>
           <p className="mt-2 text-sm text-muted-fg">
             შენი მოთხოვნა ადმინისტრაციასთანაა — შედეგს აქვე ნახავ. ამასობაში წევრობის ყველა
             შესაძლებლობა უცვლელად მუშაობს.
           </p>
+          <Link
+            href="/join/terms"
+            className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+          >
+            დელეგატის წესები და პირობები →
+          </Link>
         </Card>
       ) : phase === "rejected" ? (
         <Card>
           <div className="flex items-center gap-3">
-            <Pill status="rejected" label="არ დამტკიცდა" />
+            <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
             <h2 className="text-lg font-bold text-ink">მოთხოვნა არ დამტკიცდა</h2>
           </div>
           <p className="mt-2 text-sm text-muted-fg">
-            ხელახლა წარდგენა ადმინისტრაციის გადაწყვეტილებით არის შესაძლებელი. შენი წევრობა უცვლელი
-            რჩება.
+            {DELEGACY_REJECTED_NOTE} შენი წევრობა უცვლელი რჩება.
           </p>
+          <Link
+            href="/join/terms"
+            className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+          >
+            დელეგატის წესები და პირობები →
+          </Link>
         </Card>
       ) : (
         <div className="flex flex-col gap-6">
           <p className="rounded-lg bg-warn/10 p-3 text-sm font-semibold text-warn">
             სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
           </p>
-          <Card>
-            <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-ink">
-              <li>
-                დელეგატი ადასტურებს, რომ რეგისტრაციისას მოწოდებული ყველა მონაცემი ნამდვილი და
-                ზუსტია.
-              </li>
-              <li>
-                დელეგატი მოქმედებს კანონმორჩილად და პლატფორმის ღირებულებების — გამჭვირვალობის,
-                ანგარიშვალდებულებისა და პატივისცემის — შესაბამისად.
-              </li>
-              <li>
-                დელეგატის საჯარო პროფილი და რეფერალური ბმული აქტიურდება მხოლოდ ადმინისტრაციული
-                ვერიფიკაციის შემდეგ.
-              </li>
-              <li>
-                წესების დარღვევის შემთხვევაში პლატფორმა იტოვებს უფლებას შეაჩეროს ან გააუქმოს
-                დელეგატის სტატუსი.
-              </li>
-            </ol>
-          </Card>
+          <DelegateTerms />
           <Card>
             <h2 className="text-lg font-bold text-ink">დაადასტურე თანხმობა</h2>
             <p className="mt-1 text-sm text-muted-fg">

@@ -5,6 +5,7 @@ import { contentIdSchema, eventFormSchema } from "@/lib/content-schemas";
 import { tbilisiLocalToIso } from "@/lib/community";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { resolvePublishSlug } from "@/lib/publish-slug";
+import { takenSlugsFetcher } from "@/lib/supabase/slugs";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type SaveEventResult = { ok: true; id: string } | { ok: false; error: string };
@@ -63,14 +64,7 @@ export async function publishEventAction(id: unknown): Promise<EventActionResult
       title: event.title,
       fallback: "event",
       existingSlug: event.slug,
-      fetchTaken: async (base) => {
-        const { data: taken, error: takenError } = await supabase
-          .from("admin_events")
-          .select("slug")
-          .like("slug", `${base}%`);
-        if (takenError) return null;
-        return (taken ?? []).map((t) => t.slug).filter((s): s is string => !!s);
-      },
+      fetchTaken: takenSlugsFetcher(supabase, "admin_events"),
     });
     if (slug === null) return { ok: false, error: GENERIC_FUNNEL_ERROR };
     const { data, error } = await supabase.rpc("admin_publish_event", {

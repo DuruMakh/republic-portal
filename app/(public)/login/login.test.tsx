@@ -80,18 +80,18 @@ describe("LoginPage — cabinet_state lookup failure surface (R2 §7c)", () => {
     expect(screen.queryByText(ROUTE_ERROR_MESSAGE)).toBeNull();
   });
 
-  it("resets the error on retry once the lookup succeeds", async () => {
+  it("retry re-runs ONLY the lookup on the live session — never verifyOtp (the SMS token is single-use)", async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: { message: "boom" } });
     await driveToVerify();
     expect(await screen.findByText(ROUTE_ERROR_MESSAGE)).toBeInTheDocument();
 
-    // OtpVerification.verify() releases `busy` in `finally`, so the button is
-    // live again with no extra wiring — retry re-submits the (still-proven) OTP.
     rpcMock.mockResolvedValueOnce({ data: { exists: false }, error: null });
-    fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "654321" } });
-    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+    fireEvent.click(screen.getByRole("button", { name: "სცადე თავიდან" }));
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/join"));
     expect(screen.queryByText(ROUTE_ERROR_MESSAGE)).toBeNull();
+    // the consumed OTP must not be re-submitted: one verify for the whole journey
+    expect(verifyOtpMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledTimes(2);
   });
 });

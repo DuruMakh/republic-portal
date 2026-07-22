@@ -18,12 +18,15 @@ export function DelegacyConfirm() {
       const result = await requestDelegacyAction();
       if (!result.ok) {
         setError(result.error);
+        setBusy(false);
         return;
       }
+      // stay busy: router.refresh() swaps in the pending card asynchronously, and a
+      // re-enabled button would let a second click surface „delegacy_exists" for a
+      // request that just succeeded
       router.refresh();
     } catch {
       setError(GENERIC_FUNNEL_ERROR);
-    } finally {
       setBusy(false);
     }
   }

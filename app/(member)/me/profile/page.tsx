@@ -7,6 +7,8 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import {
   cabinetRole,
+  DELEGACY_REJECTED_NOTE,
+  DELEGACY_STATUS_LABELS,
   deriveDelegacyPhase,
   initialsKa,
   memberSinceKa,
@@ -189,7 +191,7 @@ export default async function ProfilePage() {
           ) : delegacyPhase === "pending" ? (
             <Card>
               <div className="flex items-center gap-3">
-                <Pill status="pending" label="განიხილება" />
+                <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
                 <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა გაგზავნილია</h3>
               </div>
               <p className="mt-2 text-sm text-muted-fg">შედეგს აქვე ნახავ.</p>
@@ -197,12 +199,10 @@ export default async function ProfilePage() {
           ) : delegacyPhase === "rejected" ? (
             <Card>
               <div className="flex items-center gap-3">
-                <Pill status="rejected" label="არ დამტკიცდა" />
+                <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
                 <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა</h3>
               </div>
-              <p className="mt-2 text-sm text-muted-fg">
-                ხელახლა წარდგენა ადმინისტრაციის გადაწყვეტილებით არის შესაძლებელი.
-              </p>
+              <p className="mt-2 text-sm text-muted-fg">{DELEGACY_REJECTED_NOTE}</p>
             </Card>
           ) : null}
         </div>

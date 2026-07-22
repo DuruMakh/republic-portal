@@ -73,7 +73,16 @@ export default function LoginPage() {
         ) : (
           <div className="flex flex-col gap-3">
             <OtpVerification phone={phone} onVerified={routeByCabinetState} />
-            {routeError ? <p className="text-sm font-semibold text-danger">{routeError}</p> : null}
+            {routeError ? (
+              <div className="flex flex-col items-start gap-2">
+                <p className="text-sm font-semibold text-danger">{routeError}</p>
+                {/* retry ONLY the lookup: the session already exists and the SMS
+                    token is single-use — re-verifying it can only fail */}
+                <Button variant="ghost" size="sm" onClick={routeByCabinetState}>
+                  სცადე თავიდან
+                </Button>
+              </div>
+            ) : null}
           </div>
         )}
       </Card>

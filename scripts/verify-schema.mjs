@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -907,19 +907,32 @@ let funnelProbePassword;
     if (stats.registered_total !== profileCount)
       throw new Error(`registered_total ${stats.registered_total} != profiles ${profileCount}`);
 
-    // admin buckets: disjoint and summing to the total; overview registered_total present
-    const { data: bucketRows, error: bErr } = await superAdmin
-      .from("admin_members")
-      .select("standing");
-    if (bErr) throw new Error(`admin_members standing: ${bErr.message}`);
-    const bucketTotal = bucketRows.length;
+    // admin buckets: disjoint and summing to the EXTERNAL total; overview registered_total
+    // present. Paginated — an unpaginated .select silently truncates at PostgREST's
+    // 1000-row cap (config max_rows) on the ~1900-row roster, and a sum check against
+    // the truncated sample's own length is tautological (it can never fire).
+    const bucketRows = [];
+    for (let off = 0; ; off += 1000) {
+      const { data: bucketPage, error: bErr } = await superAdmin
+        .from("admin_members")
+        .select("standing")
+        .order("id")
+        .range(off, off + 999);
+      if (bErr) throw new Error(`admin_members standing: ${bErr.message}`);
+      bucketRows.push(...(bucketPage ?? []));
+      if (!bucketPage || bucketPage.length < 1000) break;
+    }
     const byBucket = { registered: 0, member: 0, active: 0 };
     for (const row of bucketRows) {
       if (!(row.standing in byBucket)) throw new Error(`unknown standing ${row.standing}`);
       byBucket[row.standing] += 1;
     }
-    if (byBucket.registered + byBucket.member + byBucket.active !== bucketTotal)
-      throw new Error("buckets do not sum to total");
+    // one admin_members row per profile — the buckets must partition the same
+    // ground truth public_stats.registered_total was just checked against
+    if (byBucket.registered + byBucket.member + byBucket.active !== profileCount)
+      throw new Error(
+        `buckets ${JSON.stringify(byBucket)} do not sum to profiles total ${profileCount}`,
+      );
     const { data: ov, error: ovErr } = await superAdmin.from("admin_overview").select("*").single();
     if (ovErr) throw new Error(`admin_overview: ${ovErr.message}`);
     if (typeof ov.registered_total !== "number" || ov.registered_total < ov.total_completed)
@@ -932,18 +945,17 @@ let funnelProbePassword;
       throw new Error(`panel keys wrong: ${Object.keys(panel).join(",")}`);
 
     // dup-ID race premise: the personal_id unique constraint carries the exact
-    // name register()'s handler matches on
+    // name register()'s handler matches on. A FRESH id + the member's personal_id
+    // forces exactly that constraint to fire — an existing id would trip
+    // profiles_pkey first and never consult the personal-id index at all.
     const { error: dupErr } = await db.from("profiles").insert({
-      id: memberId,
+      id: randomUUID(),
       first_name: "x",
       last_name: "y",
       personal_id: "98765432121",
     });
-    if (!dupErr) throw new Error("duplicate insert unexpectedly succeeded");
-    if (
-      !dupErr.message.includes("profiles_pkey") &&
-      !dupErr.message.includes("profiles_personal_id_key")
-    )
+    if (!dupErr) throw new Error("duplicate personal_id insert unexpectedly succeeded");
+    if (!dupErr.message.includes("profiles_personal_id_key"))
       throw new Error(`constraint name premise broken: ${dupErr.message}`);
 
     // pending_delegate_id: deleting a delegate clears the stored choice

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
-import { initialsKa } from "@/lib/cabinet";
+import { initialsKa, isApprovedDelegate } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { DelegateChange } from "./DelegateChange";
@@ -15,7 +15,8 @@ export default async function MyDelegatePage() {
   const state = await getCabinetState(); // layout guarantees exists only
   if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
   if (!state.completed) redirect("/me"); // members only (spec §4.2)
-  if (state.role === "delegate") redirect("/delegate"); // members-only page (spec §3.1)
+  // approved-only: pending/rejected requesters keep their member surfaces (R2 §3.1)
+  if (isApprovedDelegate(state)) redirect("/delegate");
 
   const [{ data: delegates, error: delegatesError }, { data: regions, error: regionsError }] =
     await Promise.all([

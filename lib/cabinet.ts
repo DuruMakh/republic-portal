@@ -191,6 +191,20 @@ export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
   active_member: "აქტიური",
 };
 
+/**
+ * Member-cabinet delegacy request vocabulary (R2 §3.1), rendered via Pill's
+ * label override — one home for both cabinet surfaces (/me/profile and
+ * /me/delegacy), so the pending legal-review rewording lands in one place.
+ */
+export const DELEGACY_STATUS_LABELS: Record<"pending" | "rejected", string> = {
+  pending: "განიხილება",
+  rejected: "არ დამტკიცდა",
+};
+
+/** Shared rejected-state explainer sentence (both cabinet surfaces render it). */
+export const DELEGACY_REJECTED_NOTE =
+  "ხელახლა წარდგენა ადმინისტრაციის გადაწყვეტილებით არის შესაძლებელი.";
+
 export function paymentMethodLabel(source: string): string {
   return source === "manual" ? "გადარიცხვა" : source;
 }
