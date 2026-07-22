@@ -170,8 +170,10 @@ describe("Phase 5 error tokens", () => {
 });
 
 describe("mapFunnelError — Phase 6 R2 tokens", () => {
-  it("maps the new R2 tokens to non-generic Georgian messages", () => {
-    expect(mapFunnelError("delegacy_exists")).not.toBe(GENERIC_FUNNEL_ERROR);
-    expect(mapFunnelError("invalid_visibility")).not.toBe(GENERIC_FUNNEL_ERROR);
+  it("maps each R2 token to its exact Georgian message", () => {
+    expect(mapFunnelError("delegacy_exists")).toBe("დელეგატობის მოთხოვნა უკვე დაფიქსირებულია.");
+    expect(mapFunnelError("invalid_visibility")).toBe(
+      "ხილვადობის პარამეტრი არასწორია — სცადე თავიდან.",
+    );
   });
 });

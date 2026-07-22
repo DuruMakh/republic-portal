@@ -99,7 +99,12 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setOptions((prev) => [...prev, { key: nextKey.current++, value: "" }])}
+            onClick={() => {
+              // allocate outside the updater: React may re-invoke updaters, and a
+              // ref mutation inside one is an impure side effect
+              const key = nextKey.current++;
+              setOptions((prev) => [...prev, { key, value: "" }]);
+            }}
           >
             პასუხის დამატება
           </Button>

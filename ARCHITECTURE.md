@@ -33,8 +33,9 @@ surname, personal ID and phone, verifies an OTP in place, then calls the one SEC
 DEFINER RPC, register() — atomic and idempotent, so a repeat call from an
 already-registered phone is a state read, never a rewrite. cabinet_state() is the one
 state read for every cabinet/registration surface (discriminated CabinetState union,
-lib/funnel.ts); standing ('registered' | 'member') — not role — drives cabinet routing
-and nav. Becoming a member happens entirely inside the cabinet, in two RPCs:
+lib/funnel.ts); standing ('registered' | 'member') drives registered/member cabinet
+routing and nav, and an APPROVED delegacy overrides it (below). Becoming a member
+happens entirely inside the cabinet, in two RPCs:
 become_member_save_profile (profile fields + delegate pick — an approved referral wins
 over the picker) then become_member_complete(tier), which opens the membership, mints
 the reference code and sets registration_completed_at. Delegacy is member-only and a
@@ -112,5 +113,6 @@ elements (paragraphs + auto-links, lib/content-render) — no HTML round-trips.
 Derived values are never stored as editable state. Since Phase 4 the
 active-member computation itself lives in the database engine functions
 (ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
-`profiles.status` is written only by the engine (plus
-`become_member_complete()`'s registered→profile_completed step).
+`profiles.status` is written only by the engine (plus `register()`'s initial
+'registered' insert and `become_member_complete()`'s registered→profile_completed
+step).

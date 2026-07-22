@@ -28,20 +28,20 @@ test.describe("home", () => {
     // registered_total is cumulative — every profile, ever (D5/R2-5) — and the home
     // page is ISR-cached (revalidate 60, app/(public)/page.tsx): a render predating
     // another spec's own seed/cleanup churn can lag a stale snapshot by up to one
-    // window, so settle-poll the read against DB truth exactly like community-polls
-    // .spec's /transparency loop.
+    // window, so settle-poll the UI against a FRESH DB truth on every attempt (a
+    // count captured once could itself go stale mid-loop).
     const db = serviceClient();
-    const { count: registeredTotal, error } = await db
-      .from("profiles")
-      .select("*", { count: "exact", head: true });
-    if (error) throw new Error(`profiles head-count failed: ${error.message}`);
     await expect(async () => {
+      const { count: registeredTotal, error } = await db
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+      if (error) throw new Error(`profiles head-count failed: ${error.message}`);
       await page.goto("/");
       const text = await page.getByTestId("stat-registered-total").innerText();
       expect(Number(text.replace(/[^\d]/g, ""))).toBe(registeredTotal);
+      // registered is the whole register; active is a subset of it (D5/R2-5)
+      expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
     }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
-    // registered is the whole register; active is a subset of it (D5/R2-5)
-    expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
 
     await page.getByRole("navigation").first().getByRole("link", { name: "დელეგატები" }).click();
     await expect(page).toHaveURL(/\/delegates$/);
