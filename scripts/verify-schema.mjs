@@ -519,21 +519,59 @@ let funnelProbePassword;
   let refId;
   let fixtureId;
   try {
-    // (fixture) a NON-approved delegates row: service-created pending applicant
+    // (fixture) a NON-approved delegates row — on a COMPLETED member (R2's
+    // enforce_delegate_completed trigger requires registration_completed_at
+    // before any delegates row can exist). Complete the fixture through the
+    // real funnel first — register → save → complete, same RPC chain + signed-
+    // in-client idiom as the Phase 2/6 probe above — THEN the service-role
+    // delegates insert below is legal.
+    const fixturePassword = randomBytes(24).toString("hex");
     const { data: fixtureUser, error: fixtureCreateErr } = await db.auth.admin.createUser({
       email: PENDING_FIXTURE_EMAIL,
-      password: randomBytes(24).toString("hex"),
+      password: fixturePassword,
       email_confirm: true,
     });
     if (fixtureCreateErr)
       throw new Error(`pending fixture createUser failed: ${fixtureCreateErr.message}`);
     fixtureId = fixtureUser.user.id;
-    const { error: fixtureProfileErr } = await db
-      .from("profiles")
-      .insert({ id: fixtureId, first_name: "პრობი", last_name: "მომლოდინე" });
-    if (fixtureProfileErr)
-      throw new Error(`pending fixture profile insert failed: ${fixtureProfileErr.message}`);
-    // status defaults to 'pending' — never approved
+    const fixtureAuthed = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    const { error: fixtureSignInErr } = await fixtureAuthed.auth.signInWithPassword({
+      email: PENDING_FIXTURE_EMAIL,
+      password: fixturePassword,
+    });
+    if (fixtureSignInErr)
+      throw new Error(`pending fixture sign-in failed: ${fixtureSignInErr.message}`);
+    const { error: fixtureRegErr } = await fixtureAuthed.rpc("register", {
+      p_first_name: "პრობი",
+      p_last_name: "მომლოდინე",
+      p_personal_id: "98765432113",
+    });
+    if (fixtureRegErr) throw new Error(`pending fixture register failed: ${fixtureRegErr.message}`);
+    const { data: fixtureCity, error: fixtureCityErr } = await db
+      .from("cities")
+      .select("id, region_id")
+      .limit(1)
+      .single();
+    if (fixtureCityErr)
+      throw new Error(`pending fixture city lookup failed: ${fixtureCityErr.message}`);
+    const { error: fixtureSaveErr } = await fixtureAuthed.rpc("become_member_save_profile", {
+      p_birth_date: "1987-11-08",
+      p_region_id: fixtureCity.region_id,
+      p_city_id: fixtureCity.id,
+      p_employment: "პრობის საქმიანობა",
+      p_delegate_id: null,
+    });
+    if (fixtureSaveErr)
+      throw new Error(`pending fixture save_profile failed: ${fixtureSaveErr.message}`);
+    const { error: fixtureCompleteErr } = await fixtureAuthed.rpc("become_member_complete", {
+      p_tier: 10,
+    });
+    if (fixtureCompleteErr)
+      throw new Error(
+        `pending fixture become_member_complete failed: ${fixtureCompleteErr.message}`,
+      );
+    // status defaults to 'pending' — never approved. Legal now: fixtureId is a
+    // completed member (registration_completed_at set by the chain above).
     const { error: fixtureDelegateErr } = await db.from("delegates").insert({
       id: fixtureId,
       referral_code: `PROBE-${randomBytes(6).toString("hex")}`,
@@ -925,7 +963,17 @@ let funnelProbePassword;
     if (cleared.pending_delegate_id !== null)
       throw new Error("pending_delegate_id did not clear on delegate deletion");
 
-    // rider tokens: save_news visibility + whitespace bodies + image pin
+    // rider tokens: save_news visibility + whitespace bodies + image pin.
+    // KNOWN ISSUE (tracked, not fixed here — see task-2-report.md): the deployed
+    // admin_save_news guards whitespace-only bodies with plain btrim(), which in
+    // Postgres strips ONLY the space character — a body of "   \n  " collapses
+    // to "\n" (length 1, not 0), so invalid_body never raises and this call
+    // below leaks a real 'პრობა' draft row every run. Fixing the guard needs a
+    // SQL change (out of this file's scope); this pre-clean just stops the
+    // leaked rows from accumulating across runs until that lands.
+    const { error: staleNewsTitleErr } = await db.from("news").delete().eq("title", "პრობა");
+    if (staleNewsTitleErr)
+      throw new Error(`stale probe-news cleanup failed: ${staleNewsTitleErr.message}`);
     const editor = await signInAsSeededAdmin("509000004");
     await expectToken(
       editor.rpc("admin_save_news", {
@@ -947,6 +995,16 @@ let funnelProbePassword;
       "invalid_body",
       "admin_save_news whitespace body",
     );
+    // cancelled events are frozen history (admin_delete_event refuses them) —
+    // a crashed prior run can leave this slug behind, same defensive pre-clean
+    // as the P5.5 news-slug cleanup below (service-role bypasses the RPC-level
+    // delete refusal, which only guards the app's own write path).
+    const { error: staleEventSlugErr } = await db
+      .from("events")
+      .delete()
+      .eq("slug", "r2-probe-cancel-event");
+    if (staleEventSlugErr)
+      throw new Error(`stale probe-event cleanup failed: ${staleEventSlugErr.message}`);
     const { data: savedEventId, error: seErr } = await editor.rpc("admin_save_event", {
       p_id: null,
       p_title: "R2 პრობის ღონისძიება",
@@ -956,6 +1014,13 @@ let funnelProbePassword;
       p_ends_at: null,
     });
     if (seErr) throw new Error(`save_event: ${seErr.message}`);
+    // admin_cancel_event only accepts a PUBLISHED event (draft -> published ->
+    // cancelled) — publish first, matching admin_publish_event's own contract.
+    const { error: pubEvErr } = await editor.rpc("admin_publish_event", {
+      p_id: savedEventId,
+      p_slug: "r2-probe-cancel-event",
+    });
+    if (pubEvErr) throw new Error(`publish_event: ${pubEvErr.message}`);
     const { error: cancErr } = await editor.rpc("admin_cancel_event", { p_id: savedEventId });
     if (cancErr) throw new Error(`cancel_event: ${cancErr.message}`);
     await expectToken(
@@ -2267,11 +2332,11 @@ console.log(
           "invalid_image",
           "admin_set_news_image with a non-bucket URL",
         );
-        // NOTE: a foreign host that still carries the bucket PATH (e.g.
-        // https://evil.example/storage/v1/object/public/news-images/x.png) also
-        // satisfies the LIKE pattern — a known accepted limitation, deliberately
-        // not probed here.
-        const probeImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/news-images/probe.png`;
+        // R2 (§9d) pinned the host AND the uploader's exact filename shape
+        // (<news-uuid>-<epoch-ms>.<ext>) — a foreign host carrying the bucket
+        // path no longer satisfies the old LIKE pattern (closed, not just
+        // "known accepted" as pre-R2). Mirror the real upload filename here.
+        const probeImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/news-images/${articleId}-${Date.now()}.png`;
         const { error: setImageErr } = await editor.rpc("admin_set_news_image", {
           p_id: articleId,
           p_image_url: probeImageUrl,
@@ -2348,12 +2413,13 @@ console.log(
         approvedDelegatePhoneRow.phone.replace(/^\+995/, ""),
       );
 
-      // recreated delegate_panel (7b): still callable; draftCount now counts
-      // 'registered' standing via the same jsonb key (label change is Task 6)
+      // recreated delegate_panel (7b): still callable; registeredCount counts
+      // 'registered' standing via the same jsonb key (rename shipped — R2 §8,
+      // this call site predates it and was still asserting the old key name)
       const { data: panel, error: panelErr } = await delegateClient.rpc("delegate_panel");
       if (panelErr) throw new Error(`P5.7: delegate_panel failed: ${panelErr.message}`);
-      if (typeof panel.draftCount !== "number" || panel.draftCount < 0)
-        throw new Error(`P5.7: delegate_panel draftCount malformed: ${JSON.stringify(panel)}`);
+      if (typeof panel.registeredCount !== "number" || panel.registeredCount < 0)
+        throw new Error(`P5.7: delegate_panel registeredCount malformed: ${JSON.stringify(panel)}`);
 
       const { data: teamEvents, error: teamEventsErr } =
         await delegateClient.rpc("delegate_team_rsvps");
