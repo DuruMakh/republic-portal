@@ -56,7 +56,8 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await expect(page.getByTestId("chosen-delegate")).toHaveText("ცენტრალური მოძრაობა");
   // the done screen's own pill must already read „წევრი" (V17) — it used to fall through
   // to Pill's retired default „პროფილი შევსებულია" since this <Pill> has no label override
-  await expect(page.getByText("წევრი").first()).toBeVisible();
+  // (exact: the old substring match also passed against e.g. the აქტიური-წევრის copy below it)
+  await expect(page.getByText("წევრი", { exact: true })).toBeVisible();
 
   // into the member cabinet — the nav now carries the member-only pages, with NO reload:
   // completeMembershipAction revalidates the (member) layout server-side, so the router
@@ -66,7 +67,15 @@ test("full upgrade: register → wizard → member with a reference code and mem
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "გადახდები" })).toBeVisible();
-  await expect(page.getByText("წევრი").first()).toBeVisible(); // membership pill
+  // membership pill — exact text, pinned to the Pill's <span>: the profile card also
+  // renders a member-since <dt> with the identical word, and the old non-exact .first()
+  // would have kept passing against ANY substring hit (e.g. წევრებისთვის in body copy)
+  const memberPill = page
+    .locator("main")
+    .getByText("წევრი", { exact: true })
+    .and(page.locator("span"));
+  await expect(memberPill).toHaveCount(1);
+  await expect(memberPill).toBeVisible();
 });
 
 test("resume: a saved profile lands straight on the tier phase, fields intact", async ({

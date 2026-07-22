@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { loginAs as sharedLoginAs, serviceClient } from "./otp-helpers";
 
 /** Canonical seeded admins (scripts/seed-staging.mjs) — permanent audit actors. */
 export const ADMIN_PHONES = {
@@ -27,68 +28,19 @@ export function phase4PersonalId(k: number): string {
   return `9${BASE7.slice(1)}${k}800`; // 11 digits, reserved 9-prefix
 }
 
-export function serviceClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("admin e2e needs staging service credentials");
-  return createClient(url, key);
-}
+export { serviceClient };
 
 /**
- * /login flow for a COMPLETED account (canonical admins). The /api/dev/otp UI
- * element is withheld for completed accounts (account-takeover guard,
- * app/api/dev/otp/route.ts), so the `dev-otp` testid never renders for admins —
- * the code is read straight from dev_otp_inbox via the service client instead,
- * the same path scripts/verify-schema.mjs uses to sign in as the seeded admins.
+ * Admin/completed-account login: same shared flow, narrowed landing — completed
+ * accounts land on /me/profile, /me/delegate, /admin* or /delegate, never bare
+ * /me. The trailing boundary keeps public /delegates pages from matching.
  */
 export async function loginAs(page: Page, phoneNational: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("ტელეფონის ნომერი").fill(phoneNational);
-  // Repeated admin logins can hit Supabase's per-phone OTP throttle: signInWithOtp
-  // errors, the login page shows the send-failed notice and stays on the phone step,
-  // so the "SMS კოდი" group never renders. Wait for EITHER outcome; on a throttled
-  // send, ride out the per-phone window (~60s) and retry, up to 3 attempts.
-  const otpGroup = page.getByRole("group", { name: "SMS კოდი" });
-  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
-  let sentAt = 0;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    // record send time to avoid consuming a stale code from a prior attempt
-    sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew
-    await page.getByRole("button", { name: "კოდის მიღება" }).click();
-    await expect(otpGroup.or(sendError)).toBeVisible({ timeout: 15_000 });
-    if (await otpGroup.isVisible()) break;
-    if (attempt === 2) throw new Error(`loginAs: OTP send throttled for ${phoneNational}`);
-    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
-  }
-  // The /api/dev/otp UI element is withheld for COMPLETED accounts (account-takeover
-  // guard, route.ts:35-40), so read the code straight from dev_otp_inbox via the
-  // service client — same path the schema probe uses for the seeded admins.
-  const db = serviceClient();
-  const forms = [`+995${phoneNational}`, `995${phoneNational}`];
-  let otp: string | undefined;
-  for (let i = 0; i < 20; i++) {
-    const { data } = await db
-      .from("dev_otp_inbox")
-      .select("otp, created_at")
-      .in("phone", forms)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    const row = data?.[0];
-    if (row && new Date(row.created_at as string).getTime() >= sentAt) {
-      otp = row.otp as string;
-      break;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!otp) throw new Error(`no fresh OTP in dev_otp_inbox for ${phoneNational}`);
-  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes the pasted digits
-  await page.getByRole("button", { name: "დადასტურება" }).click();
-  // Completed accounts land on /me/profile, /me/delegate, /admin* or — for
-  // delegate-role accounts (deriveDestination, lib/cabinet.ts) — /delegate. The
-  // trailing boundary keeps the public /delegates pages from satisfying the check.
-  await expect(page).toHaveURL(/\/(me\/profile|me\/delegate|admin|delegate)(\/|\?|#|$)/, {
-    timeout: 15_000,
-  });
+  await sharedLoginAs(
+    page,
+    phoneNational,
+    /\/(me\/profile|me\/delegate|admin|delegate)(\/|\?|#|$)/,
+  );
 }
 
 /** Both CabinetNav and AdminNav expose the same გასვლა control. */
