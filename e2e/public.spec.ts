@@ -2,6 +2,7 @@
 // delegates, leaderboard order, pending names absent). CI never seeds — if these
 // fail on count/name mismatches, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
+import { serviceClient } from "./otp-helpers";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
 
@@ -12,14 +13,35 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ავაშენოთ ქართული რესპუბლიკა ერთად" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
+    let active = 0;
     for (const id of ["stat-approved-delegates", "stat-active-members"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
       // CountUp's (components/CountUp.tsx) animation effect short-circuits on its
       // matchMedia check and the SSR-rendered, already-settled value is what's
       // on screen immediately — a direct read is deterministic, no polling needed.
       const text = await page.getByTestId(id).innerText();
-      expect(Number(text.replace(/[^\d]/g, ""))).toBeGreaterThan(0);
+      const n = Number(text.replace(/[^\d]/g, ""));
+      expect(n).toBeGreaterThan(0);
+      if (id === "stat-active-members") active = n;
     }
+
+    // registered_total is cumulative — every profile, ever (D5/R2-5) — and the home
+    // page is ISR-cached (revalidate 60, app/(public)/page.tsx): a render predating
+    // another spec's own seed/cleanup churn can lag a stale snapshot by up to one
+    // window, so settle-poll the read against DB truth exactly like community-polls
+    // .spec's /transparency loop.
+    const db = serviceClient();
+    const { count: registeredTotal } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+    await expect(async () => {
+      await page.goto("/");
+      const text = await page.getByTestId("stat-registered-total").innerText();
+      expect(Number(text.replace(/[^\d]/g, ""))).toBe(registeredTotal);
+    }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
+    // registered is the whole register; active is a subset of it (D5/R2-5)
+    expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
+
     await page.getByRole("navigation").first().getByRole("link", { name: "დელეგატები" }).click();
     await expect(page).toHaveURL(/\/delegates$/);
   });

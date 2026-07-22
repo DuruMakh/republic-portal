@@ -29,7 +29,9 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   const delegateContext = await browser.newContext();
   const dPage = await delegateContext.newPage();
 
-  // seed a pending delegate and sign in — the pending panel (replaces the funnel walk)
+  // seed a pending delegate and sign in — R2 routes a non-approved delegacy through
+  // the member cabinet instead (spec §3.1): the (delegate) layout now gates on
+  // isApprovedDelegate only, so a pending requester lands on /me/profile, not here.
   const { id: delegateId } = await seedPendingDelegate({
     phone: delegatePhone,
     firstName: "ვატესტ",
@@ -37,14 +39,13 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
     personalId: journeyPersonalId(PANEL_DELEGATE),
   });
   await loginAs(dPage, delegatePhone);
-  await expect(dPage).toHaveURL(/\/delegate$/);
-  await expect(dPage.getByText("განხილვის პროცესში").first()).toBeVisible();
-  await expect(dPage.getByText("რეფერალური ბმული ჯერ დეაქტივირებულია.")).toBeVisible();
-  await expect(dPage.getByTestId("referral-url")).toHaveCount(0);
+  await expect(dPage).toHaveURL(/\/me\/profile$/);
+  await expect(dPage.getByText("დელეგატობის მოთხოვნა გაგზავნილია")).toBeVisible();
 
-  // approve OUR OWN e2e delegate via service role (seed untouched; teardown deletes)
+  // approve OUR OWN e2e delegate via service role (seed untouched; teardown deletes) —
+  // isApprovedDelegate flips true, so /delegate itself is reachable now
   await approveOwnDelegate(delegatePhone);
-  await dPage.reload();
+  await dPage.goto("/delegate");
   await expect(dPage.getByText("დამტკიცებული").first()).toBeVisible();
   const url = (await dPage.getByTestId("referral-url").innerText()).trim();
   expect(url).toMatch(/\/join\?ref=/);
