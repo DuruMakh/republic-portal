@@ -45,7 +45,8 @@ not a live migration.
 
 ### 3.1 Flow
 
-- The member overview (`/me`) gains a „გახდი დელეგატი“ card → `/me/delegacy`:
+- The member's cabinet landing page (`/me/profile` — members never see `/me`, it
+  redirects them there) gains a „გახდი დელეგატი“ card → `/me/delegacy`:
   the delegate terms (content moved from the orphaned `/join/terms`, which then
   redirects there) + one confirm button. No new data is collected.
 - `request_delegacy()` RPC (SECURITY DEFINER, ADR-009 pattern, `authenticated` only):
@@ -63,8 +64,16 @@ not a live migration.
   - **approved** — delegate cabinet + public page unlock via existing routing;
   - **rejected** — calm final state in the cabinet; only an admin can approve later
     (queue unchanged).
-- Admin verification queue, `admin_approve_delegate` / `admin_reject_delegate`, and
-  their audit rows: **unchanged**. Member requests simply start feeding the queue again.
+- Routing distinguishes approval: only **approved** delegates land in the delegate
+  cabinet (`/delegate`); pending and rejected requesters stay in the member cabinet
+  with the card states above. (R1 sent any delegates-row holder to `/delegate`; that
+  rule predates member-initiated requests.)
+- Admin verification queue, `admin_reject_delegate`, and all audit rows: **unchanged**.
+  `admin_approve_delegate` gains exactly one rider: approval also closes the new
+  delegate's own open membership (delegates back no one — the standing Phase 3
+  invariant). The membership stays open through the pending wait, so a rejection
+  leaves the member's own delegate backing untouched.
+  Member requests simply start feeding the queue again.
 
 ### 3.2 Integrity and hardening (rides with this feature)
 
@@ -74,9 +83,11 @@ not a live migration.
   service-role script, or seed) can create the half-formed hybrid again.
   `request_delegacy()` satisfies it by construction; ADR-016's approval-time guard
   stays as depth. Staging's seeded delegates already comply (all sit on active members).
-- **Redirect-loop guard:** `/me` (and destination derivation) gets a defensive
-  completed-member guard for a delegate-hybrid session — unreachable once the
-  invariant exists, kept as cheap depth (closes the R1 latent finding).
+- **Redirect-loop retired structurally:** destination derivation and the delegate
+  layout now both key on *approved* delegacy (not mere delegates-row presence), so
+  the R1 latent `/me` ↔ `/delegate` loop for a half-formed hybrid becomes
+  unrepresentable — no bounce target remains even without the invariant, and the
+  invariant removes the hybrid itself.
 - **Stale wizard choice:** `profiles.pending_delegate_id` must never dangle or block —
   deleting a delegate clears it (`on delete set null`; verified/adjusted in the
   migration). Completion-time re-validation (approved-else-central) already covers the
@@ -138,8 +149,9 @@ merged, landing-target parameterized), single service-client factory, single
 OTP-inbox-poll routine consumed by `submitJoinAndReadInboxOtp` (currently the third
 copy). Alongside: fix the stale „withheld for COMPLETED“ comment (the dev-OTP route
 withholds for any existing profile since R1), retarget the toothless
-`membership.spec` substring assertion to a precise locator, and revisit the 150s
-per-test cap vs. the 186s OTP ride-out budget (recorded latent flake). The
+`membership.spec` substring assertion to a precise locator, and raise the 150s
+per-test cap to 210s (a spec that rides out two OTP-throttle windows needs ~186s —
+the recorded latent flake). The
 throttle-race idiom inside the poll loop is kept as-is (pre-existing shape, worst
 case is a spec flake, never a double registration) — recorded, not redesigned.
 
@@ -152,7 +164,8 @@ field-level Georgian error + in-place retry), instead of a raw 23505 → generic
 ### 7c. Login error surface
 
 `/login`'s cabinet-state routing gets an error path: on a failed state lookup the
-button re-enables **with** a Georgian error message (today it re-enables silently).
+person stays on the login screen with a Georgian error message (today a transient
+lookup failure silently bounces even an existing member to `/join`).
 
 ### 7d. Seed + stat key
 
@@ -167,24 +180,34 @@ button re-enables **with** a Georgian error message (today it re-enables silentl
 ## 8. Phase 5 community hardening riders
 
 Queued at the Phase 5 merge gate for "the next hardening migration" — which is this
-one. SQL (in R2's migration):
+one. Planning grounded each item in current code; two of the recorded "SQL" items
+turned out to live in the app layer (same fixes, right layer). SQL (in R2's
+migration):
 
-1. Slug minting truncates the romanized base to 80 chars before dedup — long titles
-   publish instead of failing with `invalid_slug`; mint-once permanence unchanged.
-2. `admin_save_event`'s content UPDATE gains the `status <> 'cancelled'` guard (the
-   one lifecycle RPC missing conditional DML).
-3. Whitespace-only guards (`btrim(...) <> ''`) on news/event body + description
-   CHECKs, matching the existing non-empty intent.
-4. `admin_save_news` visibility failure raises a correct token (today it reuses
-   `invalid_status`).
-5. Cover-image URLs host-pinned to the project storage origin in both save RPCs.
-6. The third copy of the slug-mint/dedup block is consolidated (SQL dedup).
-7. `member_rsvp` gains the `for share` profile lock `member_cast_vote` already has
+1. `admin_save_event`'s content UPDATE becomes conditional DML (`… and status <>
+   'cancelled'`), closing the check-then-act gap behind its existing pre-check (the
+   one lifecycle RPC still missing it).
+2. Whitespace-only guards (`btrim`) on the news body and event description CHECK
+   constraints and in the two save RPCs, matching the existing non-empty intent.
+3. `admin_save_news` visibility failure raises a correct `invalid_visibility` token
+   (today it reuses `invalid_status`).
+4. The news cover-image RPC's URL pin tightens from "any host with the right path"
+   to the supabase.co storage origin + the uploader's exact filename shape. (Events
+   have no image feature — the recorded "both RPCs" premise was wrong; there is
+   exactly one image RPC.)
+5. `member_rsvp` gains the `for share` event-row lock `member_cast_vote` already has
    (closes the recorded cancel/RSVP race; result today is inert, fix is parity).
 
-App-side (three small fixes):
+App-side:
 
-8. `.order("id")` added to the paged payment sums (deterministic paging).
+6. Slug minting (`lib/slug.ts`) truncates the romanized base to 80 chars before
+   dedup, suffix-aware — long titles publish instead of failing with `invalid_slug`;
+   mint-once permanence unchanged. (The 80 cap lives in DB CHECKs; minting is app-side.)
+7. The three near-identical mint-and-retry blocks (news publish, event publish,
+   delegate approve) share one extracted helper — the recorded "third copy" dedup.
+8. `.order("id")` added to the two remaining unordered paged payment sums — both in
+   verification code (`e2e/community-polls.spec.ts`, `scripts/verify-schema.mjs`);
+   the product-side paged query already orders.
 9. `PollForm` option rows get stable keys (mid-list removal no longer misattaches
    input focus/IME state).
 10. Poll status actions `revalidatePath` their admin list (parity with news/event
@@ -193,7 +216,8 @@ App-side (three small fixes):
 ## 9. Data model and RPC surface (summary of changes)
 
 - New RPC: `request_delegacy()` (definer, `authenticated` only, §3.1 contract).
-- Changed RPC: `register(...)` — adds the `unique_violation` handler (§7b);
+- Changed RPCs: `register(...)` — adds the `unique_violation` handler (§7b);
+  `admin_approve_delegate` — closes the new delegate's open membership (§3.1);
   `delegate_panel` — jsonb key rename (§7d); Phase 5 RPC guards per §8.
 - New trigger: delegates-require-completed-member constraint trigger (§3.2).
 - Changed views: `public_stats` (+`registered_total`), `admin_members` (+`standing`,
@@ -214,11 +238,15 @@ One migration file, ordered:
 1. Delegates invariant trigger (§3.2) — staging data already complies.
 2. `request_delegacy()` + grant.
 3. `register()` recreated with the `unique_violation` handler.
-4. `pending_delegate_id` FK adjusted to `on delete set null` (if not already).
-5. `public_stats`, `admin_members`, `admin_overview`, `admin_region_stats` recreated;
-   `admin_export_members` filter parameter.
-6. `delegate_panel` recreated with `registeredCount`.
-7. Phase 5 SQL riders (§8.1–7).
+4. `admin_approve_delegate` recreated with the membership-close rider (§3.1).
+5. `pending_delegate_id` FK adjusted to `on delete set null` (it is `no action`
+   today).
+6. `public_stats`, `admin_members`, `admin_overview`, `admin_region_stats` recreated
+   (column-append only, so `create or replace` is legal). `admin_export_members`
+   already takes the standing filter (the three statuses ARE the disjoint buckets) —
+   verified, no change; the probe asserts it.
+7. `delegate_panel` recreated with `registeredCount`.
+8. Phase 5 SQL riders (§8.1–5).
 
 `scripts/verify-schema.mjs` and `seed-staging.mjs` updated alongside (§7d, §12);
 probes run against staging before the preview QA, as always.
