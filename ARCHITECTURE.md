@@ -28,17 +28,22 @@ SMS provider (Phase 6). verifyOtp creates the session (cookie via @supabase/ssr 
 
 ## Registration funnel (Phase 2)
 
-/join is a 3-step client funnel (choice → contact+OTP → legal profile → tier) with
-member and delegate variants. All funnel writes go through four SECURITY DEFINER
-Postgres RPCs (funnel_start / funnel_save_profile / funnel_complete / funnel_state) —
-atomic, subject always auth.uid(), validation re-checked in-DB. The client UPDATE
-grant on profiles is revoked, so the RPCs are the only client write path (Phase 3
-re-grants a scoped path for cabinet editing). Thin zod-validated server actions sit
-in front; funnel pages fetch state client-side on mount (useFunnelGuard) and redirect
-client-side only. After OTP verification the login page routes by funnel state (no
-profile → /join; draft → the derived step; completed → done/pending) instead of
-/me/profile. Member reference codes (GR-XXXXXX) and delegate referral codes are
-generated in-DB (gen_funnel_code, Crockford-style 31-char alphabet, no I/L/O/0/1).
+/join is the one-door light registration (ADR-018): a single screen collects name,
+surname, personal ID and phone, verifies an OTP in place, then calls the one SECURITY
+DEFINER RPC, register() — atomic and idempotent, so a repeat call from an
+already-registered phone is a state read, never a rewrite. cabinet_state() is the one
+state read for every cabinet/registration surface (discriminated CabinetState union,
+lib/funnel.ts); standing ('registered' | 'member') — not role — drives cabinet routing
+and nav. Becoming a member happens entirely inside the cabinet, in two RPCs:
+become_member_save_profile (profile fields + delegate pick — an approved referral wins
+over the picker) then become_member_complete(tier), which opens the membership, mints
+the reference code and sets registration_completed_at. Delegacy is member-only and a
+role only once approved (ADR-019): request_delegacy() is a one-confirm RPC off a
+completed profile (a trigger makes an incomplete delegates row unrepresentable), and
+deriveDestination/cabinetRole (lib/cabinet.ts) route only an APPROVED delegate to
+/delegate — pending/rejected requesters stay in the member cabinet. Personal ID,
+status, tier and registration_completed_at stay outside the client's column-scoped
+profile grant (ADR-013); these RPCs are the only path to them.
 
 ## Cabinets (Phase 3)
 
