@@ -500,6 +500,8 @@ export interface Database {
       is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
       member_change_delegate: { Args: { p_delegate_id: string | null }; Returns: Json };
       member_change_tier: { Args: { p_tier: number }; Returns: Json };
+      // Phase 6 R2 (spec §3.1): member-only delegacy request; returns cabinet_state().
+      request_delegacy: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_panel: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_team: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_approve_delegate: {

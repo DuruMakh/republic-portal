@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
+import { isApprovedDelegate } from "@/lib/cabinet";
 import { deriveMembershipPhase } from "@/lib/funnel";
 import { getCabinetState } from "@/lib/supabase/server";
 
@@ -17,7 +18,7 @@ const PERKS = [
 export default async function CabinetOverviewPage() {
   const state = await getCabinetState();
   if (!state.exists) redirect("/join"); // soft-nav defense: layout guard doesn't narrow this page
-  if (state.role === "delegate") redirect("/delegate");
+  if (isApprovedDelegate(state)) redirect("/delegate");
   if (state.standing === "member") redirect("/me/profile");
 
   const phase = deriveMembershipPhase(state);
