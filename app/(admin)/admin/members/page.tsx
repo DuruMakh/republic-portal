@@ -176,9 +176,13 @@ export default async function AdminMembersPage({
                   <td className={tableCellClass}>{formatPhoneKa(m.phone)}</td>
                   <td className={tableCellClass}>{m.region_name_ka ?? "—"}</td>
                   <td className={tableCellClass}>
-                    {m.delegate_id
-                      ? `${m.delegate_first_name} ${m.delegate_last_name}`
-                      : "ცენტრალური მოძრაობა"}
+                    {m.standing === "registered"
+                      ? m.signup_delegate_first_name
+                        ? `მოიწვია: ${m.signup_delegate_first_name} ${m.signup_delegate_last_name}`
+                        : "—"
+                      : m.delegate_id
+                        ? `${m.delegate_first_name} ${m.delegate_last_name}`
+                        : "ცენტრალური მოძრაობა"}
                   </td>
                   <td className={tableCellClass}>
                     {m.membership_tier === null ? "—" : `${m.membership_tier} ₾`}

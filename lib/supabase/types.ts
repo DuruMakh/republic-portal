@@ -238,6 +238,7 @@ export interface Database {
           active_members: number;
           total_completed: number;
           mrr_gel: number;
+          registered_total: number;
         };
         Relationships: [];
       };
@@ -263,6 +264,9 @@ export interface Database {
           created_at: string;
           registration_completed_at: string | null;
           is_delegate: boolean;
+          standing: "registered" | "member" | "active";
+          signup_delegate_first_name: string | null;
+          signup_delegate_last_name: string | null;
         };
         Relationships: [];
       };

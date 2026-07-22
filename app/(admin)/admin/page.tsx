@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { StatCard } from "@/components/StatCard";
-import { barPct, hasAnyRole, isStaff } from "@/lib/admin";
+import { barPct, conversionPct, hasAnyRole, isStaff } from "@/lib/admin";
 import { formatAmountGel, formatDateKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -55,14 +55,29 @@ export default async function AdminOverviewPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          value={formatCountKa(overview.approved_delegates)}
-          label="დამტკიცებული დელეგატი"
-          sub="↑ აქტიური რეგიონული ქსელი"
+          value={formatCountKa(overview.registered_total)}
+          label="რეგისტრირებული"
+          sub="ჯამური რეესტრი — წევრებიც შედიან"
+        />
+        <StatCard
+          value={formatCountKa(overview.total_completed)}
+          label="წევრი"
+          sub="დასრულებული წევრობა"
+        />
+        <StatCard
+          value={conversionPct(overview.total_completed, overview.registered_total)}
+          label="კონვერსია"
+          sub="რეგისტრაციიდან წევრობამდე"
         />
         <StatCard
           value={formatCountKa(overview.active_members)}
           label="აქტიური წევრი"
           sub="↑ გადამხდელი მხარდამჭერები"
+        />
+        <StatCard
+          value={formatCountKa(overview.approved_delegates)}
+          label="დამტკიცებული დელეგატი"
+          sub="↑ აქტიური რეგიონული ქსელი"
         />
         <StatCard
           value={formatCountKa(overview.pending_delegates)}

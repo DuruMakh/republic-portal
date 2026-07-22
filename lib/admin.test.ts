@@ -6,6 +6,7 @@ import {
   auditActionLabel,
   barPct,
   contentPill,
+  conversionPct,
   formatDateTimeKa,
   hasAnyRole,
   isStaff,
@@ -152,6 +153,16 @@ describe("vocabulary and bars", () => {
     expect(barPct(0, 294)).toBe(0);
     expect(barPct(147, 294)).toBe(50);
     expect(barPct(5, 0)).toBe(0);
+  });
+});
+
+describe("conversionPct", () => {
+  it("rounds and formats", () => {
+    expect(conversionPct(1770, 1902)).toBe("93%");
+    expect(conversionPct(1, 3)).toBe("33%");
+  });
+  it("dashes on zero registered (no division)", () => {
+    expect(conversionPct(0, 0)).toBe("—");
   });
 });
 
