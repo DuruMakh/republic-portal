@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET } from "../lib/funnel";
+import { clickThroughOtpThrottle, loginAs, readFreshInboxOtp, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
 // (run number + attempt) and ends in 9 — the login journey's digit. Journey phones
@@ -30,14 +31,6 @@ export function journeyPhone(journey: number): string {
 
 export function journeyPersonalId(journey: number): string {
   return `9${BASE.slice(1)}${journey}00`; // 11 digits, 9-prefixed
-}
-
-/** Service-role client for seeding + reading the dev OTP inbox (staging only). */
-function adminClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("e2e seed/login needs staging service credentials");
-  return createClient(url, key, { auth: { persistSession: false } });
 }
 
 /** 6-char default region+city for seeded members. ქვემო ქართლი has 4 cities —
@@ -84,15 +77,7 @@ function randomFunnelCode(len: number): string {
  * send — same idiom as loginAs. Fresh phones reveal the code on the first click (no wait).
  */
 export async function submitJoinAndAwaitOtp(page: Page): Promise<void> {
-  const devOtp = page.getByTestId("dev-otp");
-  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await page.getByRole("button", { name: "გაგრძელება →" }).click();
-    await expect(devOtp.or(sendError)).toBeVisible({ timeout: 15_000 });
-    if (await devOtp.isVisible()) return;
-    if (attempt === 2) throw new Error("join OTP send throttled after 3 attempts");
-    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
-  }
+  await clickThroughOtpThrottle(page, "გაგრძელება →", page.getByTestId("dev-otp"));
 }
 
 /**
@@ -100,42 +85,16 @@ export async function submitJoinAndAwaitOtp(page: Page): Promise<void> {
  * /api/dev/otp withholds the on-screen code for any existing account (account-takeover
  * guard, app/api/dev/otp/route.ts), so the „სატესტო კოდი" block never renders — wait
  * on the OtpVerification step (the otp-0 field) instead, then read the fresh code
- * straight from dev_otp_inbox via the service client, exactly as loginAs does. Re-entry
- * always follows a just-verified send, so ride out Supabase's ~60s per-phone OTP
- * cooldown on „კოდის გაგზავნა ვერ მოხერხდა" and retry. Returns the OTP.
+ * straight from dev_otp_inbox via the service client, exactly as loginAs does. Returns
+ * the OTP.
  */
 export async function submitJoinAndReadInboxOtp(
   page: Page,
   phoneNational: string,
 ): Promise<string> {
   const otpField = page.getByTestId("otp-0");
-  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
-  let sentAt = 0;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew (matches loginAs)
-    await page.getByRole("button", { name: "გაგრძელება →" }).click();
-    await expect(otpField.or(sendError)).toBeVisible({ timeout: 15_000 });
-    if (await otpField.isVisible()) break;
-    if (attempt === 2)
-      throw new Error(`submitJoinAndReadInboxOtp: OTP send throttled for ${phoneNational}`);
-    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
-  }
-  const db = adminClient();
-  const forms = [`+995${phoneNational}`, `995${phoneNational}`];
-  for (let i = 0; i < 20; i++) {
-    const { data } = await db
-      .from("dev_otp_inbox")
-      .select("otp, created_at")
-      .in("phone", forms)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    const row = data?.[0];
-    if (row && new Date(row.created_at as string).getTime() >= sentAt) {
-      return row.otp as string;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`submitJoinAndReadInboxOtp: no fresh OTP in dev_otp_inbox for ${phoneNational}`);
+  const sentAt = await clickThroughOtpThrottle(page, "გაგრძელება →", otpField);
+  return readFreshInboxOtp(phoneNational, sentAt);
 }
 
 /**
@@ -193,7 +152,7 @@ export async function seedCompletedMember(opts: {
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
-  const admin = adminClient();
+  const admin = serviceClient();
   const authPhone = `+995${opts.phone}`;
   const { data: created, error: userErr } = await admin.auth.admin.createUser({
     phone: authPhone,
@@ -241,7 +200,7 @@ export async function seedPendingDelegate(opts: {
   personalId: string;
 }): Promise<{ id: string }> {
   const { id } = await seedCompletedMember(opts); // e2e-phone guard runs inside
-  const admin = adminClient();
+  const admin = serviceClient();
   const { error: closeErr } = await admin
     .from("memberships")
     .update({ ended_at: new Date().toISOString() })
@@ -272,7 +231,7 @@ export async function seedRegisteredMember(opts: {
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
-  const admin = adminClient();
+  const admin = serviceClient();
   const authPhone = `+995${opts.phone}`;
   const { data: created, error: userErr } = await admin.auth.admin.createUser({
     phone: authPhone,
@@ -297,50 +256,11 @@ export async function seedRegisteredMember(opts: {
 /**
  * /login flow that signs the BROWSER in as a seeded user (spec §7). Reads the code
  * straight from dev_otp_inbox via the service client — the /api/dev/otp UI element is
- * withheld for COMPLETED accounts, so this path works for members AND delegates AND
- * registered-standing users alike. The broad landing regex admits the registered
- * cabinet (/me), the member/delegate cabinets, and /admin.
+ * withheld for ANY existing profile (R1 hardening), so this path works for members AND
+ * delegates AND registered-standing users alike. The broad landing regex admits the
+ * registered cabinet (/me), the member/delegate cabinets, and /admin.
  */
-export async function loginAs(page: Page, phoneNational: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("ტელეფონის ნომერი").fill(phoneNational);
-  // Repeated logins can hit Supabase's per-phone OTP throttle: signInWithOtp errors,
-  // the page shows the send-failed notice and stays on the phone step, so the "SMS
-  // კოდი" group never renders. Wait for EITHER outcome; on a throttled send, ride out
-  // the per-phone window (~60s) and retry, up to 3 attempts.
-  const otpGroup = page.getByRole("group", { name: "SMS კოდი" });
-  const sendError = page.getByText("კოდის გაგზავნა ვერ მოხერხდა");
-  let sentAt = 0;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    sentAt = Date.now() - 2000; // 2s slack for test-machine vs DB clock skew
-    await page.getByRole("button", { name: "კოდის მიღება" }).click();
-    await expect(otpGroup.or(sendError)).toBeVisible({ timeout: 15_000 });
-    if (await otpGroup.isVisible()) break;
-    if (attempt === 2) throw new Error(`loginAs: OTP send throttled for ${phoneNational}`);
-    await page.waitForTimeout(62_000); // ride out Supabase's per-phone OTP window, then retry
-  }
-  const db = adminClient();
-  const forms = [`+995${phoneNational}`, `995${phoneNational}`];
-  let otp: string | undefined;
-  for (let i = 0; i < 20; i++) {
-    const { data } = await db
-      .from("dev_otp_inbox")
-      .select("otp, created_at")
-      .in("phone", forms)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    const row = data?.[0];
-    if (row && new Date(row.created_at as string).getTime() >= sentAt) {
-      otp = row.otp as string;
-      break;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!otp) throw new Error(`no fresh OTP in dev_otp_inbox for ${phoneNational}`);
-  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes the pasted digits
-  await page.getByRole("button", { name: "დადასტურება" }).click();
-  await expect(page).toHaveURL(/\/(me|delegate|admin)(\/|\?|#|$)/, { timeout: 15_000 });
-}
+export { loginAs }; // spec imports stay untouched
 
 export async function cleanupJourneyUsers(): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

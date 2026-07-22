@@ -5,8 +5,9 @@ import { hasAnyRole } from "@/lib/admin";
 import { PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
 import { contentIdSchema, newsFormSchema } from "@/lib/content-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { makeSlugFrom } from "@/lib/slug";
+import { resolvePublishSlug } from "@/lib/publish-slug";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { takenSlugsFetcher } from "@/lib/supabase/slugs";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
 export type SaveNewsResult = { ok: true; id: string } | { ok: false; error: string };
@@ -57,17 +58,13 @@ export async function publishNewsAction(id: unknown): Promise<NewsActionResult> 
   }
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    let slug = article.slug;
-    if (!slug) {
-      const base = makeSlugFrom(article.title, "article", new Set());
-      const { data: taken, error: takenError } = await supabase
-        .from("admin_news")
-        .select("slug")
-        .like("slug", `${base}%`);
-      if (takenError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
-      const takenSet = new Set((taken ?? []).map((t) => t.slug).filter((s): s is string => !!s));
-      slug = makeSlugFrom(article.title, "article", takenSet);
-    }
+    const slug = await resolvePublishSlug({
+      title: article.title,
+      fallback: "article",
+      existingSlug: article.slug,
+      fetchTaken: takenSlugsFetcher(supabase, "admin_news"),
+    });
+    if (slug === null) return { ok: false, error: GENERIC_FUNNEL_ERROR };
     const { data, error } = await supabase.rpc("admin_publish_news", {
       p_id: parsed.data.id,
       p_slug: slug,

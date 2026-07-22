@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/Card";
+import { DelegateTerms } from "@/components/DelegateTerms";
 
 export const metadata: Metadata = {
   title: "დელეგატის წესები და პირობები — ქართული რესპუბლიკა",
   description: "დელეგატად ყოფნის წესები და პირობები.",
 };
 
+/**
+ * Public again post-review: request_delegacy stamps tc_accepted_at against these
+ * terms, so everyone who accepted them (pending/rejected/approved) — and anyone
+ * logged out — must stay able to re-read them. The /me/delegacy confirm flow
+ * renders the same <DelegateTerms /> inline.
+ */
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 pb-16 pt-10">
@@ -16,25 +22,7 @@ export default function TermsPage() {
       <p className="mb-6 rounded-lg bg-warn/10 p-3 text-sm font-semibold text-warn">
         სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
       </p>
-      <Card>
-        <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-ink">
-          <li>
-            დელეგატი ადასტურებს, რომ რეგისტრაციისას მოწოდებული ყველა მონაცემი ნამდვილი და ზუსტია.
-          </li>
-          <li>
-            დელეგატი მოქმედებს კანონმორჩილად და პლატფორმის ღირებულებების — გამჭვირვალობის,
-            ანგარიშვალდებულებისა და პატივისცემის — შესაბამისად.
-          </li>
-          <li>
-            დელეგატის საჯარო პროფილი და რეფერალური ბმული აქტიურდება მხოლოდ ადმინისტრაციული
-            ვერიფიკაციის შემდეგ.
-          </li>
-          <li>
-            წესების დარღვევის შემთხვევაში პლატფორმა იტოვებს უფლებას შეაჩეროს ან გააუქმოს დელეგატის
-            სტატუსი.
-          </li>
-        </ol>
-      </Card>
+      <DelegateTerms />
     </main>
   );
 }

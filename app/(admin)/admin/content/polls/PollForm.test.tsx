@@ -46,4 +46,25 @@ describe("PollForm", () => {
     );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/admin/content/polls/p-new"));
   });
+
+  it("keeps option identity stable across a removal (no index-keyed rows)", () => {
+    const { container } = render(<PollForm poll={null} />);
+    const options = () => screen.getAllByLabelText(/^პასუხი \d+$/);
+
+    fireEvent.change(options()[0]!, { target: { value: "პირველი" } });
+    fireEvent.change(options()[1]!, { target: { value: "მეორე" } });
+    fireEvent.click(screen.getByRole("button", { name: "პასუხის დამატება" }));
+    fireEvent.change(options()[2]!, { target: { value: "მესამე" } });
+
+    const rowKeys = () =>
+      Array.from(container.querySelectorAll<HTMLElement>("[data-key]")).map((el) => el.dataset.key);
+    const keysBefore = rowKeys();
+
+    const removes = screen.getAllByRole("button", { name: "წაშალე პასუხი" });
+    fireEvent.click(removes[1]!); // remove the SECOND option row
+
+    expect(options().map((el) => (el as HTMLInputElement).value)).toEqual(["პირველი", "მესამე"]);
+    // the real pin: survivors keep their OWN prior key, not a reindexed 0..n-1
+    expect(rowKeys()).toEqual([keysBefore[0], keysBefore[2]]);
+  });
 });

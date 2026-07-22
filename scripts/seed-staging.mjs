@@ -349,6 +349,21 @@ const created = await mapLimit(people, 10, async (p) => {
   return { ...p, id: data.user.id };
 });
 
+// Built here (ahead of the profiles insert below, not after the delegates
+// insert as before) so the registered-kind branch of the profiles mapper can
+// look up each supporter's delegate's referral code. referral_code mirrors
+// the exact `D${pad(i,5)}` formula the delegates insert below writes — the
+// delegates row itself doesn't exist yet at this point, so this recomputes
+// the same value from the same roster/insert data instead of reading it back.
+const delegateIdBySlug = new Map();
+const referralCodeBySlug = new Map();
+for (const p of created) {
+  if (p.delegate) {
+    delegateIdBySlug.set(p.delegate.slug, p.id);
+    referralCodeBySlug.set(p.delegate.slug, `D${pad(p.i, 5)}`);
+  }
+}
+
 await insertChunked(
   "profiles",
   created.map((p) => ({
@@ -362,7 +377,9 @@ await insertChunked(
     // registered-kind rows completed only the light form (name+surname+personal_id+
     // phone, spec §4.1) — no region/tier/reference_code/completion stamp yet.
     ...(p.kind === "registered"
-      ? {}
+      ? p.i % 2 === 0 && p.supporterOf
+        ? { signup_ref_code: referralCodeBySlug.get(p.supporterOf) }
+        : {}
       : {
           region_id: regionId.get(p.region),
           membership_tier: tierFor(p.i),
@@ -372,10 +389,6 @@ await insertChunked(
   })),
 );
 
-const delegateIdBySlug = new Map();
-for (const p of created) {
-  if (p.delegate) delegateIdBySlug.set(p.delegate.slug, p.id);
-}
 await insertChunked(
   "delegates",
   created
@@ -393,9 +406,9 @@ await insertChunked(
 // invariant D1 ("only members hold a membership; backing is a member
 // privilege"). Registered-kind supporters keep supporterOf in-memory only for
 // this filter/grouping; it is deliberately NOT turned into a membership (they
-// are light standing, not members). Note: this seed does not write
-// signup_ref_code, so referral prefill and delegate draftCount are not
-// exercised on staging (pre-existing gap, not required by the R1 plan).
+// are light standing, not members). Half of them DO carry signup_ref_code now
+// (profiles mapper above, even i backing a delegate), so referral prefill and
+// registeredCount ARE exercised on staging (R1 gap closed by this task).
 // Keep `memberRows` in scope — the D1 self-check below counts it.
 const memberRows = created
   .filter((p) => p.supporterOf && (p.kind === "active" || p.kind === "completed"))
@@ -772,21 +785,33 @@ if (!voteCount || voteCount < 100) throw new Error(`expected ≥100 seeded votes
 // privilege" — no registered-standing profile may hold an open membership.
 // Reads profiles.status fresh from the DB (not the in-memory `kind` the
 // filter above used) so this actually catches a regression in that filter.
-const { data: registeredProfiles, error: registeredErr } = await db
-  .from("profiles")
-  .select("id")
-  .eq("status", "registered");
-if (registeredErr) throw new Error(`registered-profile read failed: ${registeredErr.message}`);
-const registeredIds = (registeredProfiles ?? []).map((r) => r.id);
+// Paginated the same way as the audit-actor read in step 1 above: an
+// unpaginated .select silently truncates at PostgREST's 1000-row cap, which
+// would hide (not catch) a real D1 violation past the 1000th registered row.
+const registeredIds = [];
+for (let off = 0; ; off += 1000) {
+  const { data: regPage, error: registeredErr } = await db
+    .from("profiles")
+    .select("id")
+    .eq("status", "registered")
+    .order("id")
+    .range(off, off + 999);
+  if (registeredErr) throw new Error(`registered-profile read failed: ${registeredErr.message}`);
+  for (const r of regPage ?? []) registeredIds.push(r.id);
+  if ((regPage ?? []).length < 1000) break;
+}
+// Chunked into slices of 200 ids per query — an .in() filter serializes every
+// id into the request URL, and a 1902-scale roster can overflow URL-length
+// limits if sent in one shot.
 let registeredWithMembership = 0;
-if (registeredIds.length > 0) {
+for (let off = 0; off < registeredIds.length; off += 200) {
   const { count, error: badMembErr } = await db
     .from("memberships")
     .select("*", { count: "exact", head: true })
-    .in("member_id", registeredIds)
+    .in("member_id", registeredIds.slice(off, off + 200))
     .is("ended_at", null);
   if (badMembErr) throw new Error(`D1 check query failed: ${badMembErr.message}`);
-  registeredWithMembership = count ?? 0;
+  registeredWithMembership += count ?? 0;
 }
 if (registeredWithMembership !== 0)
   throw new Error(
@@ -812,5 +837,20 @@ if (openMemberships !== expectedOpenMemberships)
     `expected ${expectedOpenMemberships} open memberships (seeded member-kind rows + ${ADMIN_SEED.length} admins), got ${openMemberships}`,
   );
 console.log(`D1 sanity: ${openMemberships} open memberships match seeded member rows (OK)`);
+
+// New self-check (this task): half the registered-standing rows must carry
+// signup_ref_code — the QA-demonstrability guarantee this task exists for
+// (referral prefill + delegate_panel's registeredCount need at least one
+// non-null value to be visible in preview QA). head:true + count:"exact"
+// reports PostgREST's exact server-side total regardless of the 1000-row
+// page cap — no rows are returned, so there is nothing for that cap to trim.
+const { count: refCodeCount, error: refCodeErr } = await db
+  .from("profiles")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "registered")
+  .not("signup_ref_code", "is", null);
+if (refCodeErr) throw new Error(`signup_ref_code presence check failed: ${refCodeErr.message}`);
+console.log(`signup_ref_code: ${refCodeCount} registered-standing profiles carry a code`);
+if (!refCodeCount) throw new Error("signup_ref_code presence check: expected > 0, got 0");
 
 console.log("SEED OK");

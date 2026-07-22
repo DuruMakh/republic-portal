@@ -110,6 +110,12 @@ export function barPct(count: number, max: number): number {
   return Math.round((count / max) * 100);
 }
 
+/** Members ÷ registered as a whole percentage (spec §5); em-dash on an empty registry. */
+export function conversionPct(completed: number, registered: number): string {
+  if (registered <= 0) return "—";
+  return `${Math.round((completed / registered) * 100)}%`;
+}
+
 /** Page-level gate helper (UX; the views/RPCs re-check in-DB). */
 export function hasAnyRole(roles: readonly AdminRole[], allowed: readonly AdminRole[]): boolean {
   return roles.some((r) => allowed.includes(r));

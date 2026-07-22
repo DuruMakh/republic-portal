@@ -145,6 +145,7 @@ test("vote once, results per the visibility rule, transparency derives from the 
       .from("payments")
       .select("amount_gel")
       .is("voided_at", null)
+      .order("id")
       .range(offset, offset + PAYMENTS_PAGE - 1);
     if (chunkErr) throw new Error(`payments page fetch failed: ${chunkErr.message}`);
     livePayments = livePayments.concat(chunk ?? []);

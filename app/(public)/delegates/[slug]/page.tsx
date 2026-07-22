@@ -90,8 +90,8 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
           <div className="text-center">
             <h2 className="text-lg font-bold text-ink">დაუდექი მხარში {delegate.first_name}-ს</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg">
-              გახდი მისი აქტიური მხარდამჭერი — შეავსე პროფილი და ჩართე ყოველთვიური საწევრო რამდენიმე
-              წუთში.
+              დარეგისტრირდი ერთ წუთში და წევრობის გაფორმებისას აირჩიე ის შენს დელეგატად — მხარდაჭერა
+              წევრობით ხდება.
             </p>
             <div className="mt-5">
               <ButtonLink href="/join" size="lg">

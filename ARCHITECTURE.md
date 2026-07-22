@@ -28,17 +28,23 @@ SMS provider (Phase 6). verifyOtp creates the session (cookie via @supabase/ssr 
 
 ## Registration funnel (Phase 2)
 
-/join is a 3-step client funnel (choice → contact+OTP → legal profile → tier) with
-member and delegate variants. All funnel writes go through four SECURITY DEFINER
-Postgres RPCs (funnel_start / funnel_save_profile / funnel_complete / funnel_state) —
-atomic, subject always auth.uid(), validation re-checked in-DB. The client UPDATE
-grant on profiles is revoked, so the RPCs are the only client write path (Phase 3
-re-grants a scoped path for cabinet editing). Thin zod-validated server actions sit
-in front; funnel pages fetch state client-side on mount (useFunnelGuard) and redirect
-client-side only. After OTP verification the login page routes by funnel state (no
-profile → /join; draft → the derived step; completed → done/pending) instead of
-/me/profile. Member reference codes (GR-XXXXXX) and delegate referral codes are
-generated in-DB (gen_funnel_code, Crockford-style 31-char alphabet, no I/L/O/0/1).
+/join is the one-door light registration (ADR-018): a single screen collects name,
+surname, personal ID and phone, verifies an OTP in place, then calls the one SECURITY
+DEFINER RPC, register() — atomic and idempotent, so a repeat call from an
+already-registered phone is a state read, never a rewrite. cabinet_state() is the one
+state read for every cabinet/registration surface (discriminated CabinetState union,
+lib/funnel.ts); standing ('registered' | 'member') drives registered/member cabinet
+routing and nav, and an APPROVED delegacy overrides it (below). Becoming a member
+happens entirely inside the cabinet, in two RPCs:
+become_member_save_profile (profile fields + delegate pick — an approved referral wins
+over the picker) then become_member_complete(tier), which opens the membership, mints
+the reference code and sets registration_completed_at. Delegacy is member-only and a
+role only once approved (ADR-019): request_delegacy() is a one-confirm RPC off a
+completed profile (a trigger makes an incomplete delegates row unrepresentable), and
+deriveDestination/cabinetRole (lib/cabinet.ts) route only an APPROVED delegate to
+/delegate — pending/rejected requesters stay in the member cabinet. Personal ID,
+status, tier and registration_completed_at stay outside the client's column-scoped
+profile grant (ADR-013); these RPCs are the only path to them.
 
 ## Cabinets (Phase 3)
 
@@ -49,12 +55,14 @@ the five plain profile fields update through a column-scoped grant + own-row RLS
 the protect-columns trigger; compound writes (member_change_delegate =
 close-then-open membership history; member_change_tier) and delegate reads
 (delegate_panel / delegate_team — the only client path to the caller's referral
-code) are SECURITY DEFINER RPCs. funnel_state() also returns
+code) are SECURITY DEFINER RPCs. cabinet_state() also returns
 status/registrationCompletedAt/createdAt. deriveDestination (lib/cabinet.ts)
-sends completed users to their cabinet from login, /join and the funnel guards;
-the funnel is one-way — done/pending render once via a sessionStorage marker set
-by step 3. The public header swaps შესვლა→კაბინეტი client-side (the cached shell
-stays session-agnostic). Dashboard rank reuses lib/ranking over public_delegates,
+sends existing users to their cabinet from login and /join. Registration is
+progressive, not a one-way funnel: register() opens the cabinet immediately;
+becoming a member happens later via the in-cabinet wizard
+(become_member_save_profile then become_member_complete). The public header
+swaps შესვლა→კაბინეტი client-side (the cached shell stays session-agnostic).
+Dashboard rank reuses lib/ranking over public_delegates,
 so it can never disagree with the leaderboard.
 
 ## Admin CRM (Phase 4)
@@ -105,5 +113,6 @@ elements (paragraphs + auto-links, lib/content-render) — no HTML round-trips.
 Derived values are never stored as editable state. Since Phase 4 the
 active-member computation itself lives in the database engine functions
 (ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
-`profiles.status` is written only by the engine (plus the funnel's
-draft→profile_completed step).
+`profiles.status` is written only by the engine (plus `register()`'s initial
+'registered' insert and `become_member_complete()`'s registered→profile_completed
+step).

@@ -152,6 +152,9 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   invalid_event_dates: "თარიღები არასწორია.",
   invalid_question: "კითხვა არასწორია (1–300 სიმბოლო).",
   invalid_image: "სურათის შენახვა ვერ მოხერხდა.",
+  // Phase 6 R2 tokens (spec §3.1, §8.3)
+  delegacy_exists: "დელეგატობის მოთხოვნა უკვე დაფიქსირებულია.",
+  invalid_visibility: "ხილვადობის პარამეტრი არასწორია — სცადე თავიდან.",
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;

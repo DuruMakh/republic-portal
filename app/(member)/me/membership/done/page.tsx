@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
+import { isApprovedDelegate } from "@/lib/cabinet";
 import { getCabinetState } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "რეგისტრაცია დასრულებულია — ქართული რესპუბლიკა" };
@@ -12,7 +13,8 @@ export const metadata: Metadata = { title: "რეგისტრაცია �
 export default async function MembershipDonePage() {
   const state = await getCabinetState(); // (member) layout guarantees exists only
   if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields
-  if (state.role === "delegate") redirect("/delegate"); // members-only journey (spec §3.1)
+  // approved-only: pending/rejected requesters keep their member surfaces (R2 §3.1)
+  if (isApprovedDelegate(state)) redirect("/delegate");
   if (!state.completed) redirect("/me/membership"); // nothing to show until the wizard finishes
 
   return (

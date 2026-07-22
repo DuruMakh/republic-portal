@@ -2,6 +2,7 @@
 // delegates, leaderboard order, pending names absent). CI never seeds — if these
 // fail on count/name mismatches, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
+import { serviceClient } from "./otp-helpers";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
 
@@ -12,14 +13,36 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ავაშენოთ ქართული რესპუბლიკა ერთად" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
+    let active = 0;
     for (const id of ["stat-approved-delegates", "stat-active-members"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
       // CountUp's (components/CountUp.tsx) animation effect short-circuits on its
       // matchMedia check and the SSR-rendered, already-settled value is what's
       // on screen immediately — a direct read is deterministic, no polling needed.
       const text = await page.getByTestId(id).innerText();
-      expect(Number(text.replace(/[^\d]/g, ""))).toBeGreaterThan(0);
+      const n = Number(text.replace(/[^\d]/g, ""));
+      expect(n).toBeGreaterThan(0);
+      if (id === "stat-active-members") active = n;
     }
+
+    // registered_total is cumulative — every profile, ever (D5/R2-5) — and the home
+    // page is ISR-cached (revalidate 60, app/(public)/page.tsx): a render predating
+    // another spec's own seed/cleanup churn can lag a stale snapshot by up to one
+    // window, so settle-poll the UI against a FRESH DB truth on every attempt (a
+    // count captured once could itself go stale mid-loop).
+    const db = serviceClient();
+    await expect(async () => {
+      const { count: registeredTotal, error } = await db
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+      if (error) throw new Error(`profiles head-count failed: ${error.message}`);
+      await page.goto("/");
+      const text = await page.getByTestId("stat-registered-total").innerText();
+      expect(Number(text.replace(/[^\d]/g, ""))).toBe(registeredTotal);
+      // registered is the whole register; active is a subset of it (D5/R2-5)
+      expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
+    }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
+
     await page.getByRole("navigation").first().getByRole("link", { name: "დელეგატები" }).click();
     await expect(page).toHaveURL(/\/delegates$/);
   });
@@ -28,7 +51,7 @@ test.describe("home", () => {
     await page.goto("/");
     // One door now: the hero CTA is „დარეგისტრირდი" (app/(public)/page.tsx); the old
     // two-door „გახდი დელეგატი" is gone. Scope to <main> — the header keeps its own
-    // „გახდი წევრი" link outside <main> (app/(public)/layout.tsx).
+    // „დარეგისტრირდი" link outside <main> (app/(public)/layout.tsx).
     const cta = page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" });
     await expect(cta).toBeVisible();
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);

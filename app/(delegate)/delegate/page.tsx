@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
-import { PendingExplainer } from "@/components/PendingExplainer";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
@@ -29,11 +28,11 @@ export default async function DelegateDashboardPage() {
     throw new Error(`delegate_panel failed: ${panelError?.message ?? "empty"}`);
   }
   const panel = panelData as unknown as DelegatePanelData;
+  // The (delegate) layout admits ONLY approved delegates (isApprovedDelegate) and
+  // no RPC demotes an approved row — the old pending/rejected branches below were
+  // unreachable dead weight and were removed with the R2 gate move.
 
-  const { data: teamRsvpsRaw, error: teamRsvpsError } =
-    panel.status === "approved"
-      ? await supabase.rpc("delegate_team_rsvps")
-      : { data: null, error: null };
+  const { data: teamRsvpsRaw, error: teamRsvpsError } = await supabase.rpc("delegate_team_rsvps");
   // A failure here must stay scoped to the team-RSVP card — render a degraded
   // card in its slot below instead of throwing, so it can never take down the
   // whole delegate panel (unlike delegate_panel's failure above, which must).
@@ -43,26 +42,24 @@ export default async function DelegateDashboardPage() {
   // surfaces can never disagree.
   let rankValue: string = "—";
   let rankSub: string | undefined;
-  if (panel.status === "approved") {
-    const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
-      supabase.from("public_delegates").select("id, first_name, last_name, active_supporters"),
-      supabase.auth.getUser(),
-    ]);
-    if (rankError) {
-      // an approved delegate must never see the pending-state's honest „—" because a query failed
-      throw new Error(`public_delegates query failed: ${rankError.message}`);
-    }
-    if (authResult.error || !authResult.data.user) {
-      // same invariant: a failed auth read must throw, not silently degrade the rank to „—"
-      throw new Error(`auth.getUser failed: ${authResult.error?.message ?? "no user"}`);
-    }
-    const authUser = authResult.data.user;
-    const ranked = rankDelegates(publicDelegates ?? []);
-    const mine = ranked.find((d) => d.id === authUser.id);
-    if (mine) {
-      rankValue = `#${mine.rank}`;
-      rankSub = `${mine.rank} / ${ranked.length} დელეგატი`;
-    }
+  const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
+    supabase.from("public_delegates").select("id, first_name, last_name, active_supporters"),
+    supabase.auth.getUser(),
+  ]);
+  if (rankError) {
+    // an approved delegate must never see an honest-looking „—" because a query failed
+    throw new Error(`public_delegates query failed: ${rankError.message}`);
+  }
+  if (authResult.error || !authResult.data.user) {
+    // same invariant: a failed auth read must throw, not silently degrade the rank to „—"
+    throw new Error(`auth.getUser failed: ${authResult.error?.message ?? "no user"}`);
+  }
+  const authUser = authResult.data.user;
+  const ranked = rankDelegates(publicDelegates ?? []);
+  const mine = ranked.find((d) => d.id === authUser.id);
+  if (mine) {
+    rankValue = `#${mine.rank}`;
+    rankSub = `${mine.rank} / ${ranked.length} დელეგატი`;
   }
 
   return (
@@ -78,59 +75,40 @@ export default async function DelegateDashboardPage() {
         </p>
       </div>
 
-      {panel.status === "approved" ? (
-        <div className="flex flex-col gap-6">
-          {panel.referralCode ? <ReferralCard code={panel.referralCode} /> : null}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              value={panel.activeCount}
-              label="აქტიური მხარდამჭერი"
-              sub="ლიმიტის გარეშე"
-              accent="brand"
-            />
-            <StatCard value={panel.totalCount} label="სულ გუნდში" />
-            <StatCard value={panel.draftCount} label="რეგისტრირებული" />
-            <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
-          </div>
-          <Card>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h3 className="font-bold text-ink">გუნდის დეტალური სია</h3>
-                <p className="mt-1 text-sm text-muted-fg">
-                  იხილე ყველა წევრი, მათი სტატუსი და რეგისტრაციის თარიღი.
-                </p>
-              </div>
-              <ButtonLink href="/delegate/team" variant="dark">
-                ნახე შენი გუნდი
-              </ButtonLink>
-            </div>
-          </Card>
-          {teamRsvpsError ? (
-            <Card title="გუნდის RSVP">
-              <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
-            </Card>
-          ) : (
-            <TeamRsvpCard events={teamRsvps} />
-          )}
+      <div className="flex flex-col gap-6">
+        {panel.referralCode ? <ReferralCard code={panel.referralCode} /> : null}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            value={panel.activeCount}
+            label="აქტიური მხარდამჭერი"
+            sub="ლიმიტის გარეშე"
+            accent="brand"
+          />
+          <StatCard value={panel.totalCount} label="სულ გუნდში" />
+          <StatCard value={panel.registeredCount} label="რეგისტრირებული" />
+          <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
         </div>
-      ) : panel.status === "pending" ? (
         <Card>
-          <h2 className="text-lg font-bold text-ink">შენი დელეგატის პროფილი განიხილება</h2>
-          <PendingExplainer />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard value={0} label="აქტიური მხარდამჭერი" />
-            <StatCard value={0} label="სულ გუნდში" />
-            <StatCard value={0} label="რეგისტრირებული" />
-            <StatCard value="—" label="რეიტინგში ადგილი" />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-ink">გუნდის დეტალური სია</h3>
+              <p className="mt-1 text-sm text-muted-fg">
+                იხილე ყველა წევრი, მათი სტატუსი და რეგისტრაციის თარიღი.
+              </p>
+            </div>
+            <ButtonLink href="/delegate/team" variant="dark">
+              ნახე შენი გუნდი
+            </ButtonLink>
           </div>
         </Card>
-      ) : (
-        <Card>
-          <p className="text-sm font-semibold text-danger" data-testid="rejected-notice">
-            დელეგატის პროფილი უარყოფილია — დაგვიკავშირდი დეტალებისთვის.
-          </p>
-        </Card>
-      )}
+        {teamRsvpsError ? (
+          <Card title="გუნდის RSVP">
+            <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
+          </Card>
+        ) : (
+          <TeamRsvpCard events={teamRsvps} />
+        )}
+      </div>
     </main>
   );
 }

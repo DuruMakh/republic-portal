@@ -6,6 +6,10 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import {
+  cabinetRole,
+  DELEGACY_REJECTED_NOTE,
+  DELEGACY_STATUS_LABELS,
+  deriveDelegacyPhase,
   initialsKa,
   memberSinceKa,
   TEAM_STATUS_LABELS,
@@ -93,6 +97,7 @@ export default async function ProfilePage() {
   }
 
   const since = memberSinceKa(state.registrationCompletedAt ?? state.createdAt);
+  const delegacyPhase = deriveDelegacyPhase(state);
   // Pill only distinguishes the two "completed" substatuses; state.completed being true
   // guarantees status isn't "registered" here, but MemberStatus is wider than
   // TeamMemberStatus, so narrow explicitly before indexing TEAM_STATUS_LABELS (strict mode).
@@ -137,7 +142,7 @@ export default async function ProfilePage() {
                 {regionName}
               </dd>
             </div>
-            {state.role === "member" ? (
+            {cabinetRole(state) === "member" ? (
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-fg">დელეგატი</dt>
                 <dd className="font-semibold text-ink" data-testid="summary-delegate">
@@ -148,7 +153,7 @@ export default async function ProfilePage() {
               </div>
             ) : null}
           </dl>
-          {state.role === "member" ? (
+          {cabinetRole(state) === "member" ? (
             <Link
               href="/me/delegate"
               className="mt-4 inline-block text-sm font-semibold text-brand hover:underline"
@@ -157,17 +162,50 @@ export default async function ProfilePage() {
             </Link>
           ) : null}
         </Card>
-        <ProfileForm
-          initial={{
-            firstName: state.firstName,
-            lastName: state.lastName,
-            regionId: state.regionId,
-            cityId: state.cityId,
-            employment: state.employment,
-          }}
-          phone={user?.phone ?? null}
-          regions={regions ?? []}
-        />
+        <div className="flex flex-col gap-6">
+          <ProfileForm
+            initial={{
+              firstName: state.firstName,
+              lastName: state.lastName,
+              regionId: state.regionId,
+              cityId: state.cityId,
+              employment: state.employment,
+            }}
+            phone={user?.phone ?? null}
+            regions={regions ?? []}
+          />
+          {delegacyPhase === "eligible" ? (
+            <Card>
+              <p className="text-xs font-bold uppercase tracking-widest text-brand">
+                შემდეგი საფეხური
+              </p>
+              <h3 className="mt-1 text-lg font-bold text-ink">გახდი დელეგატი</h3>
+              <p className="mt-1 text-sm text-muted-fg">
+                წარადგინე კანდიდატურა და გახდი მოძრაობის რეგიონული ხმა — საჯარო პროფილით და საკუთარი
+                გუნდით.
+              </p>
+              <div className="mt-4">
+                <ButtonLink href="/me/delegacy">გაიგე მეტი →</ButtonLink>
+              </div>
+            </Card>
+          ) : delegacyPhase === "pending" ? (
+            <Card>
+              <div className="flex items-center gap-3">
+                <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
+                <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა გაგზავნილია</h3>
+              </div>
+              <p className="mt-2 text-sm text-muted-fg">შედეგს აქვე ნახავ.</p>
+            </Card>
+          ) : delegacyPhase === "rejected" ? (
+            <Card>
+              <div className="flex items-center gap-3">
+                <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
+                <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა</h3>
+              </div>
+              <p className="mt-2 text-sm text-muted-fg">{DELEGACY_REJECTED_NOTE}</p>
+            </Card>
+          ) : null}
+        </div>
       </div>
     </main>
   );

@@ -3,7 +3,11 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { StatCard } from "@/components/StatCard";
 import { formatCountKa } from "@/lib/format";
-import { fetchTransparencyRegions, fetchTransparencyStats } from "@/lib/supabase/public";
+import {
+  fetchPublicStats,
+  fetchTransparencyRegions,
+  fetchTransparencyStats,
+} from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
@@ -14,9 +18,10 @@ export const metadata: Metadata = {
 };
 
 export default async function TransparencyPage() {
-  const [stats, regionsRaw] = await Promise.all([
+  const [stats, regionsRaw, publicStats] = await Promise.all([
     fetchTransparencyStats(),
     fetchTransparencyRegions(),
+    fetchPublicStats(),
   ]);
   // codepoint compare, not localeCompare: mkhedruli is codepoint-alphabetical and
   // Node/browser ICU disagreements have broken ka-GE rendering before (DECISIONS)
@@ -32,12 +37,13 @@ export default async function TransparencyPage() {
         ღია მონაცემები მოძრაობის წევრობასა და შემოსავლებზე — პირდაპირ რეესტრიდან.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           value={`${formatCountKa(Math.round(stats.total_gel))} ₾`}
           label="შეგროვებული საწევრო შენატანები"
           sub="სულ, დაარსებიდან"
         />
+        <StatCard value={formatCountKa(publicStats.registered_total)} label="რეგისტრირებული" />
         <StatCard value={formatCountKa(stats.registered_members)} label="წევრი" />
         <StatCard value={formatCountKa(stats.approved_delegates)} label="დამტკიცებული დელეგატი" />
       </div>

@@ -272,3 +272,32 @@ numbers); the launch checklist shifts to Phase 7. Rationale: the old funnel dema
 nine decisions including a fee tier before anyone was "in", and offered no
 member→delegate path at all; pre-launch is the cheapest moment this rework will ever
 have.
+
+## ADR-019 (2026-07-22): R2 — delegacy on approval, cumulative counters, rider absorption
+
+Release 2 of progressive registration (spec 2026-07-22, v0.8.0). Decisions:
+
+- **Delegacy is a role only once approved.** Routing/nav gate on approved status;
+  pending/rejected requesters live in the member cabinet. A DB trigger makes a
+  delegates row without a completed member profile unrepresentable, retiring the
+  R1 latent redirect loop structurally. request_delegacy() is the only creation
+  path (definer, member-gated, rejected-is-final per D7).
+- **Approval closes the new delegate's own membership.** Delegates back no one
+  (Phase 3 canon); the membership survives the pending wait so rejection leaves
+  member life untouched. Rider inside admin_approve_delegate, same audit row.
+- **The public "registered" number is cumulative** (count of all profiles) —
+  breadth that never shrinks on upgrade; the disjoint split (registered / member /
+  active — exactly the member_status enum) is admin-only, summing to the total.
+- **Phase 5 hardening queue absorbed** (R2 was "the next hardening migration"):
+  conditional-DML cancel guard, btrim body CHECKs + RPC guards, invalid_visibility
+  token, supabase.co+filename-shape image pin (events have no image RPC — the
+  recorded "both RPCs" premise was wrong), member_rsvp FOR SHARE, 80-char slug cap
+  in lib/slug (the "SQL" premise was wrong — minting is app-side), one shared
+  resolvePublishSlug helper, PollForm stable keys, poll-list revalidation,
+  .order("id") on the two verification-side paged sums.
+- **delegate_panel's draftCount → registeredCount** (churn-control keep from R1,
+  now closed); pending_delegate_id FK → on delete set null; register() maps the
+  duplicate-ID race to the same field-specific token as the pre-check
+  (constraint-name dispatch); /login surfaces lookup failures instead of bouncing
+  members to /join; header CTA is „დარეგისტრირდი“ („გახდი წევრი“ now means only
+  the in-cabinet membership journey).

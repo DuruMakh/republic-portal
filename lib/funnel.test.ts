@@ -168,3 +168,12 @@ describe("Phase 5 error tokens", () => {
     expect(mapFunnelError("invalid_image")).toBe("სურათის შენახვა ვერ მოხერხდა.");
   });
 });
+
+describe("mapFunnelError — Phase 6 R2 tokens", () => {
+  it("maps each R2 token to its exact Georgian message", () => {
+    expect(mapFunnelError("delegacy_exists")).toBe("დელეგატობის მოთხოვნა უკვე დაფიქსირებულია.");
+    expect(mapFunnelError("invalid_visibility")).toBe(
+      "ხილვადობის პარამეტრი არასწორია — სცადე თავიდან.",
+    );
+  });
+});

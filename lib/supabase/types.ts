@@ -228,7 +228,7 @@ export interface Database {
         Relationships: [];
       };
       public_stats: {
-        Row: { approved_delegates: number; active_members: number };
+        Row: { approved_delegates: number; active_members: number; registered_total: number };
         Relationships: [];
       };
       admin_overview: {
@@ -238,6 +238,7 @@ export interface Database {
           active_members: number;
           total_completed: number;
           mrr_gel: number;
+          registered_total: number;
         };
         Relationships: [];
       };
@@ -263,6 +264,9 @@ export interface Database {
           created_at: string;
           registration_completed_at: string | null;
           is_delegate: boolean;
+          standing: "registered" | "member" | "active";
+          signup_delegate_first_name: string | null;
+          signup_delegate_last_name: string | null;
         };
         Relationships: [];
       };
@@ -500,6 +504,8 @@ export interface Database {
       is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
       member_change_delegate: { Args: { p_delegate_id: string | null }; Returns: Json };
       member_change_tier: { Args: { p_tier: number }; Returns: Json };
+      // Phase 6 R2 (spec §3.1): member-only delegacy request; returns cabinet_state().
+      request_delegacy: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_panel: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_team: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_approve_delegate: {

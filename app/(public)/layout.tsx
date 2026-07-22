@@ -45,7 +45,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <div className="ms-auto flex items-center gap-2">
             <HeaderSessionAction />
             <ButtonLink href="/join" size="sm">
-              გახდი წევრი
+              დარეგისტრირდი
             </ButtonLink>
           </div>
         </div>

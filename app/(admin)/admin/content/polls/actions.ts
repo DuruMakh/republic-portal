@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { contentIdSchema, pollFormSchema } from "@/lib/content-schemas";
 import { tbilisiLocalToIso } from "@/lib/community";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
@@ -36,6 +37,10 @@ function makeStatusAction(rpc: "admin_open_poll" | "admin_close_poll" | "admin_d
     const supabase = await createServerSupabase();
     const { error } = await supabase.rpc(rpc, { p_id: parsed.data.id });
     if (error) return { ok: false, error: mapFunnelError(error.message) };
+    revalidatePath("/admin/content/polls");
+    // member surface too, same contract as revalidateNews/revalidateEvents — a
+    // closed/deleted poll must not linger votable in a member's cached /me/polls
+    revalidatePath("/me/polls");
     return { ok: true };
   };
 }

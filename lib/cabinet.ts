@@ -1,25 +1,41 @@
 import { EMPLOYMENT_PRESETS } from "./funnel-schemas";
 import type { CabinetState, CabinetStatePresent } from "./funnel";
 
+/** Delegacy is a ROLE only once approved (R2): pending/rejected live in the member cabinet. */
+export function isApprovedDelegate(state: CabinetStatePresent): boolean {
+  return state.role === "delegate" && state.delegateStatus === "approved";
+}
+
 /**
  * Post-login / guard destination (spec §3.2): cabinet for completed users,
- * funnel otherwise. `role === "delegate"` always wins (delegates have no
- * membership standing); otherwise the standing decides.
+ * funnel otherwise. An APPROVED delegate always wins (R2 §3.1: pending/
+ * rejected requesters have no delegate authority yet); otherwise the standing
+ * decides.
  */
 export function deriveDestination(state: CabinetState | null): string {
   if (!state || !state.exists) return "/join";
-  if (state.role === "delegate") return "/delegate";
+  if (isApprovedDelegate(state)) return "/delegate";
   return state.standing === "member" ? "/me/profile" : "/me";
 }
 
 /**
- * Nav variant: delegates-row wins; otherwise the standing decides. Only ever
- * called for a present profile (the cabinet layouts redirect an absent state to
- * /join first), so it takes the present variant — an absent state has no role.
+ * Nav variant: an APPROVED delegate wins (R2 §3.1); otherwise the standing
+ * decides. Only ever called for a present profile (the cabinet layouts redirect
+ * an absent state to /join first), so it takes the present variant — an absent
+ * state has no role.
  */
 export function cabinetRole(state: CabinetStatePresent): "registered" | "member" | "delegate" {
-  if (state.role === "delegate") return "delegate";
+  if (isApprovedDelegate(state)) return "delegate";
   return state.standing === "member" ? "member" : "registered";
+}
+
+/** Card state for the member-cabinet delegacy journey (spec §3.1). */
+export type DelegacyPhase = "eligible" | "pending" | "rejected" | "approved";
+
+export function deriveDelegacyPhase(state: CabinetStatePresent): DelegacyPhase | null {
+  if (state.standing !== "member") return null; // registered cannot request
+  if (state.delegateStatus !== null) return state.delegateStatus;
+  return "eligible";
 }
 
 /** Cabinet navigation (spec §3.1): delegates have no membership → no „ჩემი დელეგატი“. */
@@ -156,7 +172,7 @@ export interface DelegatePanelData {
   referralCode: string | null; // withheld (null) until the delegate is approved
   activeCount: number;
   totalCount: number;
-  draftCount: number;
+  registeredCount: number;
 }
 
 export type TeamMemberStatus = "profile_completed" | "active_member";
@@ -174,6 +190,20 @@ export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
   profile_completed: "წევრი",
   active_member: "აქტიური",
 };
+
+/**
+ * Member-cabinet delegacy request vocabulary (R2 §3.1), rendered via Pill's
+ * label override — one home for both cabinet surfaces (/me/profile and
+ * /me/delegacy), so the pending legal-review rewording lands in one place.
+ */
+export const DELEGACY_STATUS_LABELS: Record<"pending" | "rejected", string> = {
+  pending: "განიხილება",
+  rejected: "არ დამტკიცდა",
+};
+
+/** Shared rejected-state explainer sentence (both cabinet surfaces render it). */
+export const DELEGACY_REJECTED_NOTE =
+  "ხელახლა წარდგენა ადმინისტრაციის გადაწყვეტილებით არის შესაძლებელი.";
 
 export function paymentMethodLabel(source: string): string {
   return source === "manual" ? "გადარიცხვა" : source;
