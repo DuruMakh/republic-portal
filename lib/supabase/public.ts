@@ -6,6 +6,7 @@ import type { Database } from "./types";
 export interface PublicStats {
   approved_delegates: number;
   active_members: number;
+  registered_total: number;
 }
 
 export interface Region {

@@ -48,7 +48,25 @@ export default async function HomePage() {
               დარეგისტრირდი
             </ButtonLink>
           </div>
-          <div className="mt-10 grid max-w-lg grid-cols-2 gap-4">
+          <div className="mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <div
+                className="text-4xl font-extrabold tabular-nums"
+                data-testid="stat-registered-total"
+              >
+                <CountUp value={stats.registered_total} />
+              </div>
+              <div className="mt-1.5 text-sm font-semibold text-white/60">რეგისტრირებული</div>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <div
+                className="text-4xl font-extrabold tabular-nums"
+                data-testid="stat-active-members"
+              >
+                <CountUp value={stats.active_members} />
+              </div>
+              <div className="mt-1.5 text-sm font-semibold text-white/60">აქტიური წევრი</div>
+            </div>
             <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
               <div
                 className="text-4xl font-extrabold tabular-nums"
@@ -59,15 +77,6 @@ export default async function HomePage() {
               <div className="mt-1.5 text-sm font-semibold text-white/60">
                 დამტკიცებული დელეგატი
               </div>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <div
-                className="text-4xl font-extrabold tabular-nums"
-                data-testid="stat-active-members"
-              >
-                <CountUp value={stats.active_members} />
-              </div>
-              <div className="mt-1.5 text-sm font-semibold text-white/60">აქტიური წევრი</div>
             </div>
           </div>
         </div>

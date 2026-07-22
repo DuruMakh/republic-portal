@@ -228,7 +228,7 @@ export interface Database {
         Relationships: [];
       };
       public_stats: {
-        Row: { approved_delegates: number; active_members: number };
+        Row: { approved_delegates: number; active_members: number; registered_total: number };
         Relationships: [];
       };
       admin_overview: {
