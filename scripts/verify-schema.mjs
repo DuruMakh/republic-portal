@@ -731,6 +731,299 @@ let funnelProbePassword;
   }
 }
 
+// --- Phase 6 R2: delegacy request, counters, buckets, hardening riders ---
+{
+  const MEMBER_EMAIL = "r2-delegacy-member-probe@example.com";
+  const REG_EMAIL = "r2-registered-probe@example.com";
+  for (const email of [MEMBER_EMAIL, REG_EMAIL]) {
+    const leftover = await findUserByEmail(email);
+    if (leftover) {
+      const { error } = await db.auth.admin.deleteUser(leftover.id);
+      if (error) throw new Error(`cleanup of leftover ${email} failed: ${error.message}`);
+    }
+  }
+  let memberId;
+  let regId;
+  try {
+    // fixtures: one COMPLETED member (with an open central membership), one registered-only
+    const memberPassword = randomBytes(24).toString("hex");
+    const { data: mUser, error: mErr } = await db.auth.admin.createUser({
+      email: MEMBER_EMAIL,
+      password: memberPassword,
+      email_confirm: true,
+    });
+    if (mErr) throw new Error(`R2 member createUser failed: ${mErr.message}`);
+    memberId = mUser.user.id;
+    const { error: mpErr } = await db.from("profiles").insert({
+      id: memberId,
+      first_name: "პრობი",
+      last_name: "დელეგატობა",
+      personal_id: "98765432121",
+      status: "profile_completed",
+      membership_tier: 10,
+      reference_code: "GR-PRB2R2",
+      registration_completed_at: new Date().toISOString(),
+    });
+    if (mpErr) throw new Error(`R2 member profile insert failed: ${mpErr.message}`);
+    const { error: mmErr } = await db
+      .from("memberships")
+      .insert({ member_id: memberId, delegate_id: null });
+    if (mmErr) throw new Error(`R2 member membership insert failed: ${mmErr.message}`);
+
+    const regPassword = randomBytes(24).toString("hex");
+    const { data: rUser, error: rErr } = await db.auth.admin.createUser({
+      email: REG_EMAIL,
+      password: regPassword,
+      email_confirm: true,
+    });
+    if (rErr) throw new Error(`R2 registered createUser failed: ${rErr.message}`);
+    regId = rUser.user.id;
+    const { error: rpErr } = await db.from("profiles").insert({
+      id: regId,
+      first_name: "პრობი",
+      last_name: "მსუბუქი",
+      personal_id: "98765432122",
+    });
+    if (rpErr) throw new Error(`R2 registered profile insert failed: ${rpErr.message}`);
+
+    // invariant trigger: a delegates row on an incomplete profile is unrepresentable
+    const { error: trigErr } = await db.from("delegates").insert({
+      id: regId,
+      referral_code: `PROBE-${randomBytes(6).toString("hex")}`,
+      tc_accepted_at: new Date().toISOString(),
+    });
+    if (!trigErr) throw new Error("LEAK: delegates row created on an incomplete profile");
+    if (!trigErr.message.includes("delegate_requires_completed_member"))
+      throw new Error(`trigger token wrong: ${trigErr.message}`);
+
+    // registered caller: request refused with the member-wall token
+    const reg = createClient(url, ANON_KEY);
+    const { error: regSignErr } = await reg.auth.signInWithPassword({
+      email: REG_EMAIL,
+      password: regPassword,
+    });
+    if (regSignErr) throw new Error(`R2 registered sign-in failed: ${regSignErr.message}`);
+    await expectToken(reg.rpc("request_delegacy"), "not_a_member", "registered request_delegacy");
+
+    // member caller: request lands pending with a minted code + T&C stamp
+    const member = createClient(url, ANON_KEY);
+    const { error: mSignErr } = await member.auth.signInWithPassword({
+      email: MEMBER_EMAIL,
+      password: memberPassword,
+    });
+    if (mSignErr) throw new Error(`R2 member sign-in failed: ${mSignErr.message}`);
+    const { data: reqState, error: reqErr } = await member.rpc("request_delegacy");
+    if (reqErr) throw new Error(`request_delegacy failed: ${reqErr.message}`);
+    if (reqState.delegateStatus !== "pending")
+      throw new Error(`state after request: ${JSON.stringify(reqState.delegateStatus)}`);
+    const { data: dRow, error: dRowErr } = await db
+      .from("delegates")
+      .select("status, referral_code, tc_accepted_at")
+      .eq("id", memberId)
+      .single();
+    if (dRowErr) throw new Error(dRowErr.message);
+    if (dRow.status !== "pending" || !dRow.referral_code || !dRow.tc_accepted_at)
+      throw new Error(`delegates row malformed: ${JSON.stringify(dRow)}`);
+
+    // second request refused; rejected stays final (R2-6/D7)
+    await expectToken(member.rpc("request_delegacy"), "delegacy_exists", "double request");
+    const { error: rejErr } = await db
+      .from("delegates")
+      .update({ status: "rejected" })
+      .eq("id", memberId);
+    if (rejErr) throw new Error(rejErr.message);
+    await expectToken(member.rpc("request_delegacy"), "delegacy_exists", "re-request after reject");
+
+    // approval closes the requester's own open membership (spec §3.1 rider)
+    const superAdmin = await signInAsSeededAdmin("509000001");
+    const { error: backErr } = await db
+      .from("delegates")
+      .update({ status: "pending" })
+      .eq("id", memberId);
+    if (backErr) throw new Error(backErr.message);
+    const { error: apprErr } = await superAdmin.rpc("admin_approve_delegate", {
+      p_delegate_id: memberId,
+      p_slug: "r2-probe-delegacy",
+    });
+    if (apprErr) throw new Error(`approve failed: ${apprErr.message}`);
+    const { data: openRows, error: openErr } = await db
+      .from("memberships")
+      .select("id")
+      .eq("member_id", memberId)
+      .is("ended_at", null);
+    if (openErr) throw new Error(openErr.message);
+    if (openRows.length !== 0)
+      throw new Error(`approval left ${openRows.length} open membership(s) on the new delegate`);
+
+    // counters: registered_total is cumulative and matches ground truth
+    const anonStats = createClient(url, ANON_KEY);
+    const { data: stats, error: statsErr } = await anonStats
+      .from("public_stats")
+      .select("*")
+      .single();
+    if (statsErr) throw new Error(`public_stats: ${statsErr.message}`);
+    const { count: profileCount, error: pcErr } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+    if (pcErr) throw new Error(pcErr.message);
+    if (stats.registered_total !== profileCount)
+      throw new Error(`registered_total ${stats.registered_total} != profiles ${profileCount}`);
+
+    // admin buckets: disjoint and summing to the total; overview registered_total present
+    const { data: bucketRows, error: bErr } = await superAdmin
+      .from("admin_members")
+      .select("standing");
+    if (bErr) throw new Error(`admin_members standing: ${bErr.message}`);
+    const bucketTotal = bucketRows.length;
+    const byBucket = { registered: 0, member: 0, active: 0 };
+    for (const row of bucketRows) {
+      if (!(row.standing in byBucket)) throw new Error(`unknown standing ${row.standing}`);
+      byBucket[row.standing] += 1;
+    }
+    if (byBucket.registered + byBucket.member + byBucket.active !== bucketTotal)
+      throw new Error("buckets do not sum to total");
+    const { data: ov, error: ovErr } = await superAdmin.from("admin_overview").select("*").single();
+    if (ovErr) throw new Error(`admin_overview: ${ovErr.message}`);
+    if (typeof ov.registered_total !== "number" || ov.registered_total < ov.total_completed)
+      throw new Error(`overview registered_total wrong: ${JSON.stringify(ov)}`);
+
+    // delegate_panel speaks registeredCount now (rename shipped)
+    const { data: panel, error: panelErr } = await member.rpc("delegate_panel");
+    if (panelErr) throw new Error(`delegate_panel: ${panelErr.message}`);
+    if (!("registeredCount" in panel) || "draftCount" in panel)
+      throw new Error(`panel keys wrong: ${Object.keys(panel).join(",")}`);
+
+    // dup-ID race premise: the personal_id unique constraint carries the exact
+    // name register()'s handler matches on
+    const { error: dupErr } = await db.from("profiles").insert({
+      id: memberId,
+      first_name: "x",
+      last_name: "y",
+      personal_id: "98765432121",
+    });
+    if (!dupErr) throw new Error("duplicate insert unexpectedly succeeded");
+    if (
+      !dupErr.message.includes("profiles_pkey") &&
+      !dupErr.message.includes("profiles_personal_id_key")
+    )
+      throw new Error(`constraint name premise broken: ${dupErr.message}`);
+
+    // pending_delegate_id: deleting a delegate clears the stored choice
+    const { error: pointErr } = await db
+      .from("profiles")
+      .update({ pending_delegate_id: memberId })
+      .eq("id", regId);
+    if (pointErr) throw new Error(pointErr.message);
+    const { error: delDelErr } = await db.from("delegates").delete().eq("id", memberId);
+    if (delDelErr) throw new Error(`delegate delete blocked: ${delDelErr.message}`);
+    const { data: cleared, error: clearedErr } = await db
+      .from("profiles")
+      .select("pending_delegate_id")
+      .eq("id", regId)
+      .single();
+    if (clearedErr) throw new Error(clearedErr.message);
+    if (cleared.pending_delegate_id !== null)
+      throw new Error("pending_delegate_id did not clear on delegate deletion");
+
+    // rider tokens: save_news visibility + whitespace bodies + image pin
+    const editor = await signInAsSeededAdmin("509000004");
+    await expectToken(
+      editor.rpc("admin_save_news", {
+        p_id: null,
+        p_title: "პრობა",
+        p_body: "ტექსტი",
+        p_visibility: "everyone",
+      }),
+      "invalid_visibility",
+      "admin_save_news bad visibility",
+    );
+    await expectToken(
+      editor.rpc("admin_save_news", {
+        p_id: null,
+        p_title: "პრობა",
+        p_body: "   \n  ",
+        p_visibility: "public",
+      }),
+      "invalid_body",
+      "admin_save_news whitespace body",
+    );
+    const { data: savedEventId, error: seErr } = await editor.rpc("admin_save_event", {
+      p_id: null,
+      p_title: "R2 პრობის ღონისძიება",
+      p_description: "აღწერა",
+      p_location: "თბილისი",
+      p_starts_at: new Date(Date.now() + 86400000).toISOString(),
+      p_ends_at: null,
+    });
+    if (seErr) throw new Error(`save_event: ${seErr.message}`);
+    const { error: cancErr } = await editor.rpc("admin_cancel_event", { p_id: savedEventId });
+    if (cancErr) throw new Error(`cancel_event: ${cancErr.message}`);
+    await expectToken(
+      editor.rpc("admin_save_event", {
+        p_id: savedEventId,
+        p_title: "შეცვლა",
+        p_description: "აღწერა",
+        p_location: "თბილისი",
+        p_starts_at: new Date(Date.now() + 86400000).toISOString(),
+        p_ends_at: null,
+      }),
+      "invalid_status",
+      "editing a cancelled event",
+    );
+    const { data: probeNewsId, error: pnErr } = await editor.rpc("admin_save_news", {
+      p_id: null,
+      p_title: "R2 პინის პრობა",
+      p_body: "ტექსტი",
+      p_visibility: "public",
+    });
+    if (pnErr) throw new Error(pnErr.message);
+    await expectToken(
+      editor.rpc("admin_set_news_image", {
+        p_id: probeNewsId,
+        p_image_url: "https://evil.example/storage/v1/object/public/news-images/x.jpg",
+      }),
+      "invalid_image",
+      "foreign-host image URL",
+    );
+    // cleanup the probe content rows
+    for (const [rpc, id] of [
+      ["admin_delete_news", probeNewsId],
+      ["admin_delete_event", savedEventId],
+    ]) {
+      const { error } = await editor.rpc(rpc, { p_id: id });
+      if (error) console.error(`WARNING: R2 probe content cleanup ${rpc} failed: ${error.message}`);
+    }
+
+    // export filter already speaks the bucket vocabulary (spec §10.6: no change — assert it)
+    const { data: exportRows, error: exportErr } = await superAdmin.rpc("admin_export_members", {
+      p_search: null,
+      p_region_id: null,
+      p_status: "registered",
+      p_include_ids: false,
+    });
+    if (exportErr) throw new Error(`export standing filter: ${exportErr.message}`);
+    for (const row of exportRows) {
+      if (row.status !== "registered")
+        throw new Error(`export p_status=registered leaked status ${row.status}`);
+    }
+
+    console.log(
+      "OK: R2 — delegacy lifecycle (request/refuse/reject-final/approve closes membership), invariant trigger, registered_total, disjoint buckets, registeredCount, rider guards",
+    );
+  } finally {
+    for (const [label, id] of [
+      ["R2 member probe", memberId],
+      ["R2 registered probe", regId],
+    ]) {
+      if (id) {
+        const { error } = await db.auth.admin.deleteUser(id);
+        if (error)
+          console.error(`WARNING: ${label} cleanup (deleteUser ${id}) failed: ${error.message}`);
+      }
+    }
+  }
+}
+
 // --- Phase 4: admin CRM probes (spec §4.7) ---
 {
   const ADMIN_VIEWS = [
@@ -1411,6 +1704,7 @@ console.log(
           .from("payments")
           .select("amount_gel")
           .is("voided_at", null)
+          .order("id")
           .range(page * 1000, page * 1000 + 999);
         if (paymentsPageErr)
           throw new Error(
