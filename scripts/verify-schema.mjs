@@ -964,16 +964,11 @@ let funnelProbePassword;
       throw new Error("pending_delegate_id did not clear on delegate deletion");
 
     // rider tokens: save_news visibility + whitespace bodies + image pin.
-    // KNOWN ISSUE (tracked, not fixed here — see task-2-report.md): the deployed
-    // admin_save_news guards whitespace-only bodies with plain btrim(), which in
-    // Postgres strips ONLY the space character — a body of "   \n  " collapses
-    // to "\n" (length 1, not 0), so invalid_body never raises and this call
-    // below leaks a real 'პრობა' draft row every run. Fixing the guard needs a
-    // SQL change (out of this file's scope); this pre-clean just stops the
-    // leaked rows from accumulating across runs until that lands.
-    const { error: staleNewsTitleErr } = await db.from("news").delete().eq("title", "პრობა");
-    if (staleNewsTitleErr)
-      throw new Error(`stale probe-news cleanup failed: ${staleNewsTitleErr.message}`);
+    // HISTORICAL NOTE: this probe originally caught the deployed admin_save_news
+    // guarding whitespace-only bodies with plain btrim(), which in Postgres strips
+    // ONLY the space character — a body of "   \n  " collapsed to "\n" (length 1,
+    // not 0), so invalid_body never raised. Fixed in
+    // 20260722130000_r2_whitespace_guards.sql (explicit whitespace set).
     const editor = await signInAsSeededAdmin("509000004");
     await expectToken(
       editor.rpc("admin_save_news", {

@@ -31,9 +31,10 @@ test.describe("home", () => {
     // window, so settle-poll the read against DB truth exactly like community-polls
     // .spec's /transparency loop.
     const db = serviceClient();
-    const { count: registeredTotal } = await db
+    const { count: registeredTotal, error } = await db
       .from("profiles")
       .select("*", { count: "exact", head: true });
+    if (error) throw new Error(`profiles head-count failed: ${error.message}`);
     await expect(async () => {
       await page.goto("/");
       const text = await page.getByTestId("stat-registered-total").innerText();

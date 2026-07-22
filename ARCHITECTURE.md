@@ -54,12 +54,14 @@ the five plain profile fields update through a column-scoped grant + own-row RLS
 the protect-columns trigger; compound writes (member_change_delegate =
 close-then-open membership history; member_change_tier) and delegate reads
 (delegate_panel / delegate_team — the only client path to the caller's referral
-code) are SECURITY DEFINER RPCs. funnel_state() also returns
+code) are SECURITY DEFINER RPCs. cabinet_state() also returns
 status/registrationCompletedAt/createdAt. deriveDestination (lib/cabinet.ts)
-sends completed users to their cabinet from login, /join and the funnel guards;
-the funnel is one-way — done/pending render once via a sessionStorage marker set
-by step 3. The public header swaps შესვლა→კაბინეტი client-side (the cached shell
-stays session-agnostic). Dashboard rank reuses lib/ranking over public_delegates,
+sends existing users to their cabinet from login and /join. Registration is
+progressive, not a one-way funnel: register() opens the cabinet immediately;
+becoming a member happens later via the in-cabinet wizard
+(become_member_save_profile then become_member_complete). The public header
+swaps შესვლა→კაბინეტი client-side (the cached shell stays session-agnostic).
+Dashboard rank reuses lib/ranking over public_delegates,
 so it can never disagree with the leaderboard.
 
 ## Admin CRM (Phase 4)
@@ -110,5 +112,5 @@ elements (paragraphs + auto-links, lib/content-render) — no HTML round-trips.
 Derived values are never stored as editable state. Since Phase 4 the
 active-member computation itself lives in the database engine functions
 (ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
-`profiles.status` is written only by the engine (plus the funnel's
-draft→profile_completed step).
+`profiles.status` is written only by the engine (plus
+`become_member_complete()`'s registered→profile_completed step).
