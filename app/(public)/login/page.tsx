@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [routeError, setRouteError] = useState<string>();
 
   async function requestOtp() {
     setError(undefined);
@@ -39,11 +40,14 @@ export default function LoginPage() {
   }
 
   async function routeByCabinetState() {
-    // Post-verify landing (spec §3.8): no profile → /join; otherwise the derived step.
+    // Post-verify landing (spec §3.8): the derived destination. A lapsed lookup
+    // must NOT bounce an existing member to /join (R2 §7c) — surface it instead;
+    // deriveDestination handles the legitimate no-profile case via exists:false.
+    setRouteError(undefined);
     const supabase = createClient();
     const { data, error: rpcError } = await supabase.rpc("cabinet_state");
     if (rpcError || data === null) {
-      router.replace("/join");
+      setRouteError("მონაცემების წამოღება ვერ მოხერხდა — სცადე თავიდან.");
       return;
     }
     router.replace(deriveDestination(data as unknown as CabinetState));
@@ -67,7 +71,10 @@ export default function LoginPage() {
             </Button>
           </div>
         ) : (
-          <OtpVerification phone={phone} onVerified={routeByCabinetState} />
+          <div className="flex flex-col gap-3">
+            <OtpVerification phone={phone} onVerified={routeByCabinetState} />
+            {routeError ? <p className="text-sm font-semibold text-danger">{routeError}</p> : null}
+          </div>
         )}
       </Card>
     </main>

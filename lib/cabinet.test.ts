@@ -3,6 +3,7 @@ import {
   buildReferralUrl,
   cabinetNavItems,
   cabinetRole,
+  deriveDelegacyPhase,
   deriveDestination,
   EMPLOYMENT_OTHER,
   employmentToForm,
@@ -58,10 +59,15 @@ describe("deriveDestination", () => {
   it("member → /me/profile", () => {
     expect(deriveDestination(cab({ standing: "member", completed: true }))).toBe("/me/profile");
   });
-  it("delegates row (any status) → /delegate", () => {
+  it("approved delegate → /delegate (R2: pending/rejected stay in the member cabinet — see the dedicated describe block below)", () => {
     expect(
       deriveDestination(
-        cab({ standing: "member", completed: true, role: "delegate", delegateStatus: "pending" }),
+        cab({
+          standing: "member",
+          completed: true,
+          role: "delegate",
+          delegateStatus: "approved",
+        }),
       ),
     ).toBe("/delegate");
   });
@@ -71,9 +77,16 @@ describe("cabinetRole + nav", () => {
   it("maps standing/role to the nav variant", () => {
     expect(cabinetRole(cab({}))).toBe("registered");
     expect(cabinetRole(cab({ standing: "member", completed: true }))).toBe("member");
-    expect(cabinetRole(cab({ standing: "member", completed: true, role: "delegate" }))).toBe(
-      "delegate",
-    );
+    expect(
+      cabinetRole(
+        cab({
+          standing: "member",
+          completed: true,
+          role: "delegate",
+          delegateStatus: "approved",
+        }),
+      ),
+    ).toBe("delegate");
   });
   it("registered nav: overview, events, news, profile — nothing member-only", () => {
     const hrefs = cabinetNavItems("registered").map((i) => i.href);
@@ -188,5 +201,66 @@ describe("paymentStatusKa (Phase 4 §8 — honest voids)", () => {
       label: "გაუქმებული",
       pillStatus: "rejected",
     });
+  });
+});
+
+// R2 shared fixture: a completed member with a PENDING delegacy request (mirrors
+// the task-3 brief's `base` fixture, built through the existing `cab()` helper —
+// same field values except firstName/lastName keep cab()'s defaults, since no
+// assertion below reads either).
+const base = cab({
+  standing: "member",
+  status: "profile_completed",
+  role: "delegate",
+  birthDate: "1990-01-01",
+  regionId: 1,
+  cityId: 1,
+  employment: "x",
+  tier: 10,
+  referenceCode: "GR-ABCDEF",
+  completed: true,
+  delegateStatus: "pending",
+  membershipExists: true,
+  registrationCompletedAt: "2026-07-01T00:00:00Z",
+  createdAt: "2026-07-01T00:00:00Z",
+});
+
+describe("approved-gated delegacy routing (R2)", () => {
+  it("keeps a PENDING requester in the member cabinet", () => {
+    expect(deriveDestination(base)).toBe("/me/profile");
+    expect(cabinetRole(base)).toBe("member");
+  });
+  it("keeps a REJECTED requester in the member cabinet", () => {
+    const s = { ...base, delegateStatus: "rejected" as const };
+    expect(deriveDestination(s)).toBe("/me/profile");
+    expect(cabinetRole(s)).toBe("member");
+  });
+  it("sends an APPROVED delegate to /delegate", () => {
+    const s = { ...base, delegateStatus: "approved" as const };
+    expect(deriveDestination(s)).toBe("/delegate");
+    expect(cabinetRole(s)).toBe("delegate");
+  });
+});
+
+describe("deriveDelegacyPhase", () => {
+  it("eligible for a member with no delegates row", () => {
+    const s = { ...base, role: "member" as const, delegateStatus: null };
+    expect(deriveDelegacyPhase(s)).toBe("eligible");
+  });
+  it("mirrors delegateStatus for pending/rejected/approved", () => {
+    expect(deriveDelegacyPhase(base)).toBe("pending");
+    expect(deriveDelegacyPhase({ ...base, delegateStatus: "rejected" })).toBe("rejected");
+    expect(deriveDelegacyPhase({ ...base, delegateStatus: "approved" })).toBe("approved");
+  });
+  it("null for a registered (non-member) standing", () => {
+    const s = {
+      ...base,
+      standing: "registered" as const,
+      status: "registered" as const,
+      role: "member" as const,
+      delegateStatus: null,
+      completed: false,
+    };
+    expect(deriveDelegacyPhase(s)).toBeNull();
   });
 });

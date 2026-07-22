@@ -89,7 +89,7 @@ export default async function DelegateDashboardPage() {
               accent="brand"
             />
             <StatCard value={panel.totalCount} label="სულ გუნდში" />
-            <StatCard value={panel.draftCount} label="რეგისტრირებული" />
+            <StatCard value={panel.registeredCount} label="რეგისტრირებული" />
             <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
           </div>
           <Card>
