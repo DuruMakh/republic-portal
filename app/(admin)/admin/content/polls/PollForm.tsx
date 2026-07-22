@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
@@ -14,17 +14,26 @@ export interface EditablePoll {
   endsAtLocal: string;
 }
 
+interface OptionRow {
+  key: number;
+  value: string;
+}
+
 export function PollForm({ poll }: { poll: EditablePoll | null }) {
   const router = useRouter();
   const [question, setQuestion] = useState(poll?.question ?? "");
-  const [options, setOptions] = useState<string[]>(poll?.options ?? ["", ""]);
+  const initialOptions = poll?.options ?? ["", ""];
+  const [options, setOptions] = useState<OptionRow[]>(() =>
+    initialOptions.map((value, key) => ({ key, value })),
+  );
+  const nextKey = useRef(initialOptions.length);
   const [endsAt, setEndsAt] = useState(poll?.endsAtLocal ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  function setOption(index: number, value: string) {
-    setOptions((prev) => prev.map((o, i) => (i === index ? value : o)));
+  function setOption(key: number, value: string) {
+    setOptions((prev) => prev.map((o) => (o.key === key ? { ...o, value } : o)));
   }
 
   function submit() {
@@ -34,7 +43,7 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
       const result = await savePollAction({
         id: poll?.id,
         question,
-        options: options.map((o) => o.trim()),
+        options: options.map((o) => o.value.trim()),
         endsAt,
       });
       if (!result.ok) {
@@ -64,13 +73,13 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
 
       <div className="flex flex-col gap-2.5">
         {options.map((option, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <div key={option.key} data-key={option.key} className="flex items-center gap-2">
             <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
               პასუხი {i + 1}
               <input
                 className={adminControlClasses}
-                value={option}
-                onChange={(e) => setOption(i, e.target.value)}
+                value={option.value}
+                onChange={(e) => setOption(option.key, e.target.value)}
                 maxLength={120}
               />
             </label>
@@ -79,7 +88,7 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
                 type="button"
                 aria-label="წაშალე პასუხი"
                 className="mt-6 text-sm font-semibold text-muted-fg hover:text-danger"
-                onClick={() => setOptions((prev) => prev.filter((_, x) => x !== i))}
+                onClick={() => setOptions((prev) => prev.filter((o) => o.key !== option.key))}
               >
                 ✕
               </button>
@@ -87,7 +96,11 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
           </div>
         ))}
         {options.length < POLL_MAX_OPTIONS ? (
-          <Button variant="ghost" size="sm" onClick={() => setOptions((prev) => [...prev, ""])}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setOptions((prev) => [...prev, { key: nextKey.current++, value: "" }])}
+          >
             პასუხის დამატება
           </Button>
         ) : null}

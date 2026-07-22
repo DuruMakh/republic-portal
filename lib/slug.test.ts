@@ -65,3 +65,19 @@ describe("slugFrom / makeSlugFrom (Phase 5: news + events)", () => {
     expect(slugFrom("გიორგი მაისურაძე", "delegati")).toBe("giorgi-maisuradze");
   });
 });
+
+describe("SLUG_MAX truncation (R2 §8.6)", () => {
+  const long = "ძალიან".repeat(30); // romanizes to ~180 latin chars
+  it("caps the base at 80", () => {
+    const s = slugFrom(long, "article");
+    expect(s.length).toBeLessThanOrEqual(80);
+    expect(s.endsWith("-")).toBe(false);
+  });
+  it("keeps deduped candidates within the cap", () => {
+    const base = slugFrom(long, "article");
+    const taken = new Set([base]);
+    const next = makeSlugFrom(long, "article", taken);
+    expect(next.length).toBeLessThanOrEqual(80);
+    expect(next).not.toBe(base);
+  });
+});
