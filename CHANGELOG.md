@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.8.0 — Phase 6 R2: The ladder and the numbers (2026-07-23)
+
+- Delegacy is now a member-only request from the cabinet („გახდი დელეგატი"):
+  the delegate terms + one confirm button, landing in the existing admin
+  verification queue. Someone is a delegate ONLY once approved — pending and
+  rejected requesters keep their full member life untouched, and rejection is
+  a calm final state (re-request is an admin decision)
+- The database makes a delegate without a completed membership unrepresentable
+  (trigger), and approval closes the new delegate's own membership inside the
+  same audited operation — delegates back no one (Phase 3 canon)
+- The public numbers show both rungs honestly: a cumulative „რეგისტრირებული"
+  counter (total registry — never shrinks) on the homepage and transparency
+  page beside the active-member figure; the header CTA now reads
+  „დარეგისტრირდი"; delegate-page supporter copy describes what actually
+  happens (support is expressed through membership)
+- Admin overview grows to seven cards (registered, members, conversion —
+  members ÷ registered); the members table shows who invited each
+  registered-only row instead of the old mislabel
+- Phase-5 riders + R1 review carries absorbed (ADR-019): whitespace-aware text
+  guards (the staging probe caught Postgres btrim stripping spaces only —
+  fixed in a follow-up migration), pinned news-image URLs, cancel-guard
+  conditional DML, RSVP row locking, an 80-char slug cap with one shared
+  slug-mint helper, stable poll-form option keys, poll-list revalidation,
+  consolidated e2e OTP/login helpers, and a login page that surfaces a failed
+  state lookup instead of bouncing existing members to /join
+- Post-review hardening (15-finding max-effort review, fixed before merge):
+  approved-only routing gates everywhere (pending/rejected requesters keep
+  /me/delegate and the membership pages, and may change their delegate); the
+  login lookup failure gained a real retry that never re-submits the
+  single-use OTP; referral codes are case-normalized so hand-typed links keep
+  attribution; a referral-code collision no longer masquerades as „already
+  requested"; the slug-collision blind spot at the 80-char cap is closed; the
+  public delegate terms returned at /join/terms so accepted terms stay
+  readable; a database CHECK ties the two membership-standing bases together
+
 ## 0.7.0 — Phase 6 R1: Progressive registration (front door) (2026-07-21)
 
 - One light registration door (/join): name, surname, personal ID, mobile +
