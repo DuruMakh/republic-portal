@@ -8,6 +8,13 @@ describe("CenteredNotice", () => {
     expect(screen.getByRole("heading", { name: "სათაური" })).toBeInTheDocument();
   });
 
+  it("wraps in the ruled panel (border-y-2 border-ink)", () => {
+    render(<CenteredNotice title="სათაური" />);
+    const main = screen.getByRole("heading", { name: "სათაური" }).closest("main");
+    expect(main?.className).toContain("border-y-2");
+    expect(main?.className).toContain("border-ink");
+  });
+
   it("renders description and actions when given", () => {
     render(
       <CenteredNotice

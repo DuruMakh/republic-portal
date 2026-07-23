@@ -7,9 +7,10 @@ import type { ReactNode } from "react";
  * header cells and body rows; the surrounding Card, empty states and filters stay
  * with each caller. Server-safe (no hooks) — usable from server and client alike.
  */
-export const tableThClass = "px-6 py-3 font-semibold";
-export const tableRowClass = "border-b border-line last:border-0";
-export const tableCellClass = "px-6 py-3";
+export const tableThClass =
+  "pb-2 border-b-2 border-ink text-left text-[0.74rem] font-bold tracking-[.1em] text-muted-fg";
+export const tableRowClass = "border-b border-hairline";
+export const tableCellClass = "py-2.5 text-[0.86rem]";
 
 export function DataTable({
   head,

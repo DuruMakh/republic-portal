@@ -51,6 +51,7 @@ describe("Card", () => {
     expect(screen.getByText("სათაური")).toBeInTheDocument();
     const section = screen.getByText("შიგთავსი").closest("section");
     expect(section?.className).toContain("p-6");
+    expect(section?.className).toContain("bg-paper-bright");
     expect(section?.className).not.toContain("overflow-hidden");
     expect(screen.getByText("შიგთავსი").parentElement?.tagName).toBe("SECTION");
   });
@@ -73,6 +74,15 @@ describe("Card", () => {
     const wrapper = screen.getByText("უპადინგოდ").parentElement;
     expect(wrapper?.className).not.toContain("p-6");
     expect(wrapper?.className).toContain("p-0");
+  });
+  it("variant callout renders the full ink border instead of the hairline", () => {
+    render(
+      <Card variant="callout">
+        <p>რჩევა</p>
+      </Card>,
+    );
+    const section = screen.getByText("რჩევა").closest("section");
+    expect(section?.className).toContain("border-ink");
   });
 });
 
@@ -104,6 +114,8 @@ describe("Pill", () => {
     // was the retired "პროფილი შევსებულია"; every other member-status display
     // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
     expect(screen.getByText("წევრი")).toBeInTheDocument();
+    expect(screen.getByText("წევრი").className).toContain("text-ink");
+    expect(screen.getByText("წევრი").className).not.toContain("text-info");
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
@@ -134,6 +146,7 @@ describe("StatCard", () => {
     render(<StatCard label="აქტიური წევრი" value={1700} />);
     expect(screen.getByText("1700")).toBeInTheDocument();
     expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    expect(screen.getByText("1700").className).toContain("font-serif");
   });
   it("supports brand accent and sub text", () => {
     render(<StatCard label="აქტიური მხარდამჭერი" value={294} accent="brand" sub="ღია რეიტინგში" />);

@@ -202,7 +202,7 @@ export default function JoinForm() {
         <Card>
           {notice ? (
             <p
-              className="mb-4 rounded-lg bg-info/10 p-3 text-sm text-info"
+              className="mb-4 rounded-lg bg-ink/5 p-3 text-sm text-ink"
               data-testid="join-notice"
             >
               {notice}

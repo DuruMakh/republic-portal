@@ -10,12 +10,14 @@ export function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-white p-6 text-center shadow-sm">
-      <div className={`text-4xl font-bold ${accent === "brand" ? "text-brand" : "text-ink"}`}>
+    <div className="border-t-2 border-ink pt-3">
+      <div
+        className={`font-serif text-[2.1rem] font-bold leading-tight ${accent === "brand" ? "text-brand" : "text-ink"}`}
+      >
         {value}
       </div>
-      <div className="mt-1 text-sm text-muted-fg">{label}</div>
-      {sub ? <div className="mt-2 text-xs font-bold text-ok">{sub}</div> : null}
+      <div className="text-[0.74rem] text-muted-fg">{label}</div>
+      {sub ? <div className="text-[0.74rem] text-muted-fg mt-0.5">{sub}</div> : null}
     </div>
   );
 }
