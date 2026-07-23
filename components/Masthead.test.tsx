@@ -55,4 +55,10 @@ describe("Masthead", () => {
     expect(screen.getByText("JOIN_CTA")).toBeInTheDocument();
     expect(screen.getByText("SESSION_SLOT")).toBeInTheDocument();
   });
+
+  it("renders the nav landmark with the accessible name 'მთავარი ნავიგაცია'", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    render(<Masthead navItems={NAV_ITEMS} dateKa={TEST_DATE} cta={<span>CTA</span>} />);
+    expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
+  });
 });

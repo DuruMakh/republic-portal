@@ -16,7 +16,7 @@ export function SiteFooter({
     <footer className="border-t-2 border-ink bg-paper px-5 py-6 text-[0.8rem] text-muted-fg sm:px-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>{copyright}</div>
-        <nav className="flex flex-wrap gap-5 font-semibold">
+        <nav aria-label="ქვედა ნავიგაცია" className="flex flex-wrap gap-5 font-semibold">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="text-ink hover:text-brand">
               {link.label}
