@@ -6,12 +6,11 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 // Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html
-// via the Task-5 brief's Step 3 node snippet (tagline, city) and the same
+// via the Task-5 brief's Step 3 node snippet (city) and the same
 // file's <title> tag (wordmark) — every codepoint re-verified by script
 // against the Georgian (Mkhedruli, U+10D0-U+10FF) Unicode block before commit;
 // see docs/superpowers/sdd/task-5-brief.md and the georgian-quote-
 // transcription-hazard note (never retype Georgian by hand).
-const TAGLINE = "სამოქალაქო პლატფორმა — ღია ჩანაწერი";
 const CITY = "თბილისი";
 // Brand name; shared alt text for both lockup orientations.
 const WORDMARK_ALT = "ქართული რესპუბლიკა";
@@ -19,8 +18,9 @@ const WORDMARK_ALT = "ქართული რესპუბლიკა";
 type NavItem = { href: string; label: string };
 
 /**
- * The site masthead (spec §3.2) — two modes. FULL on the homepage: dateline
- * row, vertical lockup nameplate, tagline, double ink rule, nav row. COMPACT
+ * The site masthead (spec §3.2, amended at the v0.9.0 owner checkpoint) — two
+ * modes. FULL on the homepage: dateline row, horizontal lockup nameplate,
+ * double ink rule, nav row (no tagline). COMPACT
  * everywhere else: horizontal lockup + nav + cta over a single 2px rule. The
  * dateline is the masthead's own first row (no separate Dateline component)
  * and renders ONLY in full mode, so statically-served pages (join/login/
@@ -60,16 +60,13 @@ export function Masthead({
           <span>{CITY}</span>
         </div>
         <Image
-          src="/brand/lockup-vertical-geo-red.png"
+          src="/brand/lockup-horizontal-geo-red.png"
           alt={WORDMARK_ALT}
-          width={269}
-          height={218}
-          className="mx-auto mt-5"
+          width={344}
+          height={116}
+          className="mx-auto mt-5 h-auto max-w-full"
           priority
         />
-        <div className="mt-2 text-[0.74rem] uppercase tracking-[.28em] text-muted-fg">
-          {TAGLINE}
-        </div>
         <div className="mt-3.5 h-[3px] border-y border-ink border-t-2" />
         <nav
           aria-label="მთავარი ნავიგაცია"

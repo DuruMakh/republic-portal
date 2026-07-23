@@ -16,12 +16,12 @@ describe("Masthead", () => {
     vi.mocked(usePathname).mockReset();
   });
 
-  it("renders the full masthead (vertical lockup + dateline) on the homepage", () => {
+  it("renders the full masthead (horizontal lockup + dateline) on the homepage", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Masthead navItems={NAV_ITEMS} dateKa={TEST_DATE} cta={<span>CTA</span>} />);
 
     const image = screen.getByRole("img");
-    expect(image.getAttribute("src")).toContain("lockup-vertical-geo-red");
+    expect(image.getAttribute("src")).toContain("lockup-horizontal-geo-red");
     expect(screen.getByText(TEST_DATE)).toBeInTheDocument();
   });
 
