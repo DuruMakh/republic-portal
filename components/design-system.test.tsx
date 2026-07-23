@@ -17,25 +17,27 @@ describe("Button", () => {
   it("renders primary variant with brand styling by default", () => {
     render(<Button>გაგრძელება</Button>);
     const btn = screen.getByRole("button", { name: "გაგრძელება" });
-    expect(btn.className).toContain("bg-brand");
+    expect(btn.className).toContain("bg-ink");
+    expect(btn.className).toContain("hover:bg-brand");
   });
   it("renders danger variant", () => {
     render(<Button variant="danger">წაშლა</Button>);
-    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("bg-danger");
+    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("border-brand");
+    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("text-brand");
   });
   it("renders dark variant", () => {
     render(<Button variant="dark">რეიტინგი</Button>);
-    expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-navy");
+    expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-ink");
   });
   it("keeps md size classes by default (back-compat)", () => {
     render(<Button>გაგრძელება</Button>);
     expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain(
-      "px-5 py-2.5 text-sm",
+      "h-10 px-5",
     );
   });
   it("renders lg size", () => {
     render(<Button size="lg">რეგისტრაცია</Button>);
-    expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("px-6");
+    expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("h-[46px]");
   });
 });
 
