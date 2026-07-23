@@ -38,15 +38,15 @@ export function TierPicker({ value, onChange }: { value: Tier; onChange: (tier: 
                 moveSelection(i, -1);
               }
             }}
-            className={`rounded-xl border-2 p-4 text-center transition-colors ${
-              selected ? "border-brand bg-brand/5" : "border-line bg-white hover:border-muted-fg"
+            className={`border bg-paper-bright p-4 text-center transition-colors ${
+              selected ? "border-ink" : "border-hairline hover:border-ink"
             }`}
           >
-            <span className="block text-3xl font-extrabold text-ink">
+            <span className="block font-serif text-3xl font-bold text-ink">
               {tier}
-              <small className="text-base font-bold">₾</small>
+              <small className="text-lg font-bold">₾</small>
             </span>
-            <span className="mt-1 block text-xs font-semibold text-muted-fg">თვეში</span>
+            <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
           </button>
         );
       })}

@@ -22,7 +22,7 @@ export function QrCode({
       role="img"
       aria-label={label}
       style={{ width: size }}
-      className="mx-auto overflow-hidden rounded-lg border border-line bg-white p-2 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+      className="mx-auto overflow-hidden border border-hairline bg-paper-bright p-2 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

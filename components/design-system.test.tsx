@@ -31,9 +31,7 @@ describe("Button", () => {
   });
   it("keeps md size classes by default (back-compat)", () => {
     render(<Button>გაგრძელება</Button>);
-    expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain(
-      "h-10 px-5",
-    );
+    expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain("h-10 px-5");
   });
   it("renders lg size", () => {
     render(<Button size="lg">რეგისტრაცია</Button>);
@@ -185,6 +183,8 @@ describe("Stepper", () => {
     render(<Stepper steps={["პროფილი", "საწევრო"]} current={1} />);
     expect(screen.getByText("პროფილი")).toBeInTheDocument();
     expect(screen.getByText("საწევრო")).toBeInTheDocument();
-    expect(screen.getByText("1").getAttribute("aria-current")).toBe("step");
+    // Roman-numeral marker furniture (spec §3.1) replaces the old plain "1" —
+    // aria-current still lands on the current step's marker element.
+    expect(screen.getByText(/^I\./).getAttribute("aria-current")).toBe("step");
   });
 });
