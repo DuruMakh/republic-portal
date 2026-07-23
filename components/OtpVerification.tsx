@@ -115,7 +115,7 @@ export function OtpVerification({
       </p>
       <OtpInput value={code} onChange={setCode} error={error} />
       {devOtp ? (
-        <p className="rounded-lg bg-surface p-3 text-sm text-muted-fg" data-testid="dev-otp">
+        <p className="border border-hairline bg-paper-bright px-3 py-2 text-[0.8rem]" data-testid="dev-otp">
           სატესტო კოდი: <strong>{devOtp}</strong>
         </p>
       ) : null}

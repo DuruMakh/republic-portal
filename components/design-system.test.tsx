@@ -153,6 +153,18 @@ describe("Field", () => {
     const input = screen.getByLabelText("ქალაქი");
     expect(input.getAttribute("id")).toBe("city-input");
   });
+  it("input class contains border-b and bg-transparent and does not contain rounded", () => {
+    render(<Field label="ტელეფონი" name="phone" />);
+    const input = screen.getByLabelText("ტელეფონი");
+    expect(input.className).toContain("border-b");
+    expect(input.className).toContain("bg-transparent");
+    expect(input.className).not.toContain("rounded");
+  });
+  it("label class contains tracking-[.08em]", () => {
+    render(<Field label="ტელეფონი" name="phone" />);
+    const label = screen.getByText("ტელეფონი");
+    expect(label.className).toContain("tracking-[.08em]");
+  });
 });
 
 describe("Stepper", () => {
