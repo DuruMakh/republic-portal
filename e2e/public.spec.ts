@@ -49,10 +49,10 @@ test.describe("home", () => {
 
   test("the single register CTA lands on the one-door /join form", async ({ page }) => {
     await page.goto("/");
-    // One door now: the hero CTA is „დარეგისტრირდი" (app/(public)/page.tsx); the old
-    // two-door „გახდი დელეგატი" is gone. Scope to <main> — the header keeps its own
-    // „დარეგისტრირდი" link outside <main> (app/(public)/layout.tsx).
-    const cta = page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" });
+    // One door now: the ladder's first column CTA is „რეგისტრაცია →“ (app/(public)/page.tsx);
+    // the old two-door „გახდი დელეგატი“ is gone. Scope to <main> — the header keeps its own
+    // „შემოგვიერთდი“ link outside <main> (app/(public)/layout.tsx).
+    const cta = page.getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true });
     await expect(cta).toBeVisible();
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
     await cta.click();
