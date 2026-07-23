@@ -14,12 +14,12 @@
 
 Every task's requirements implicitly include all of these (from the spec):
 
-- **Zero database changes.** No migrations, no new RPCs/views/grants. All new reads (badges, news teaser, homepage rail) use existing fetchers/views only.
+- **Zero database changes.** No migrations, no new RPCs/views/grants. All new reads use existing fetchers/views only, and there are exactly four: the two nav count badges (`member_polls` status filter; `admin_overview.pending_delegates`), the homepage rail/news additions (`public_delegates`, `transparency_stats`, `public_news`), and the profile page's my-delegate card (`public_delegates` — needed to deliver spec §5.1's rank/supporters/region; declared here because the cabinet state alone carries only the delegate's name).
 - **Component contracts frozen** (D4): no prop renames/removals; furniture components are additive. Business logic, forms, validation, data access, routes, redirects, gating: byte-untouched.
 - **Formatters untouched:** `formatCountKa` (NBSP grouping), `formatDateKa`, `memberSinceKa`, GR-code display.
 - **No new npm dependencies.**
-- **Georgian text discipline (spec §7.5):** never type Georgian quote glyphs (U+201E/U+201C/U+201D) or copy blocks by hand. Splice bytes from `prototype/kronika-d3/kronika-d3-template.html` (mock voice) or from existing app source (shipped wording), then run `node scripts/ka-gate.mjs <files...>` (created in Task 1) on every touched file containing Georgian. Reviewers verify via the gate output, not by eye. This plan document deliberately contains no quote glyphs; Georgian strings appear in backticks.
-- **Closed e2e-update list** (spec §7.6). Only these e2e changes are allowed: `smoke.spec.ts:7,10` and `public.spec.ts:52-62` (header/main CTA relabel), `public.spec.ts:86-90` (medal → rank testid), `smoke.spec.ts:20-33` only if styleguide samples move (keep the `ძირითადი` button and `აქტიური` pill samples so it passes unchanged), plus the NEW `e2e/responsive.spec.ts` (Task 22). Any other e2e failure is a regression: fix the code, never the test.
+- **Georgian text discipline (spec §7.5):** never type Georgian quote glyphs (U+201E/U+201C/U+201D) or copy blocks by hand. Splice bytes from `prototype/kronika-d3/kronika-d3-template.html` (mock voice) or from existing app source (shipped wording), then run `node scripts/ka-gate.mjs --diff main <files...>` (created in Task 1) on every touched file containing Georgian. The gate is DIFF-AWARE: it checks only lines added relative to `main`, because three legacy files (`lib/cabinet.ts`, `DECISIONS.md`, `e2e/public.spec.ts`) carry pre-existing ASCII-closed quote pairs in old comments — those are out of scope for this release and must not block tasks. Reviewers verify via the gate output, not by eye. This plan document deliberately contains no quote glyphs; Georgian strings appear in backticks.
+- **Closed e2e-update list** (spec §7.6). Only these e2e changes are allowed: `smoke.spec.ts:10` (banner CTA relabel, Task 10), `smoke.spec.ts:7` + `public.spec.ts:55` and its comments at 52-54 (main CTA relabel, Task 11), `public.spec.ts:86-90` (medal → rank testid, Task 12), `smoke.spec.ts:20-33` only if styleguide samples move (keep the `ძირითადი` button and `აქტიური` pill samples so it passes unchanged), plus the NEW `e2e/responsive.spec.ts` (Task 22). Any other e2e failure is a regression: fix the code, never the test. Corollary: every existing e2e anchor outside this list MUST survive the recompose — Tasks 11, 12 and 17 carry explicit preserve-lists of testids, placeholders and strings.
 - **Existing test intent preserved:** `components/design-system.test.tsx`, `ButtonLink.test.tsx` etc. get their class-string expectations updated to the new skins (shown per task) — behavioral assertions stay identical.
 - **CI hygiene:** run `npm run format` before every push (prettier check fails CI otherwise). e2e runs need `.env.local` vars loaded into the shell first, `workers:1`. Do not run the full e2e suite more than twice per hour (staging OTP send-cap on the canonical admin phone).
 - **Token names are stable:** existing token names (`brand`, `ink`, `muted-fg`, `surface`, `line`, `ok`, `warn`, `danger`) keep working with new values, so call sites don't churn. `navy`, `navy-dark`, `gold`, `info` stay defined (deprecated) until Task 21 removes them after their last usages are gone.
@@ -105,87 +105,152 @@ DESIGN.md, CLAUDE.md, prototype/README.md              (Task 23)
   --font-serif: var(--font-noto-serif-georgian), "Sylfaen", Georgia, serif;
 }
 
-body {
-  @apply bg-stone text-ink font-sans antialiased;
-  font-size: 15px;
-  line-height: 1.65;
-}
+@layer base {
+  body {
+    @apply bg-stone text-ink font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.65;
+  }
 
-a {
-  @apply text-brand underline decoration-1 underline-offset-[3px];
-}
-a:hover {
-  @apply text-brand-dark;
-}
+  a {
+    @apply text-brand underline decoration-1 underline-offset-[3px];
+  }
+  a:hover {
+    @apply text-brand-dark;
+  }
 
-::selection {
-  background: var(--color-ink);
-  color: var(--color-paper);
-}
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: #a79d8d;
-}
+  input::placeholder,
+  textarea::placeholder {
+    color: #a79d8d;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
-}
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 ```
+
+The `@layer base` wrapper is load-bearing, not cosmetic: Tailwind v4 emits utilities inside cascade layers, and UNLAYERED author CSS would beat every utility regardless of specificity — `no-underline` on button-shaped links and `focus-visible:outline-none` on underline fields could never win against unlayered `a`/`:focus-visible` rules. Inside `@layer base`, utilities override base as intended.
 
 Notes: `--color-hairline` is a readable alias of `line` (both defined so existing `border-line` call sites keep compiling). The global `a` rule makes every link red-underlined; nav/button-shaped links opt out via their own classes (`no-underline` is included in `buttonClasses` in Task 2 and the nav components in Tasks 5/7).
 
 - [ ] **Step 2: Create `scripts/ka-gate.mjs`** (reusable Georgian-integrity gate; checks built from escapes, never literal glyphs):
 
 ```js
-// Usage: node scripts/ka-gate.mjs <file> [...files]
-// Fails (exit 1) on: ASCII quote adjacent to Georgian, a U+201E opener closed
-// by an ASCII quote, Greek look-alike characters, unbalanced U+201E vs
-// U+201C/U+201D counts. Prints per-file counts so reviewers can verify.
+// Usage:
+//   node scripts/ka-gate.mjs --selftest
+//   node scripts/ka-gate.mjs --diff <baseRef> <file> [...files]
+// Diff mode checks ONLY lines added relative to <baseRef> (plus whole
+// untracked files), so pre-existing quirks in old comments never block a
+// task. A naive whole-file adjacency check is deliberately absent: an ASCII
+// quote next to Georgian is usually just a TS string delimiter
+// (label: "..."), and three legacy files carry historical ASCII-closed
+// pairs in comments. Checks are built from escapes, never literal glyphs:
+//   1. Greek look-alike characters
+//   2. a U+201E opener whose next quote character is ASCII (the classic
+//      silent-normalization corruption)
+//   3. an ASCII quote BETWEEN two Georgian letters (never a delimiter)
+//   4. unbalanced U+201E vs U+201C/U+201D across the added lines
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 
-const files = process.argv.slice(2);
-if (files.length === 0) {
-  console.error("ka-gate: pass at least one file");
-  process.exit(2);
-}
+const args = process.argv.slice(2);
+const Q_OPEN = "\\u201E";
+const Q_CLOSE = "\\u201C\\u201D";
 const GEO = "\\u10A0-\\u10FF\\u1C90-\\u1CBF\\u2D00-\\u2D2F";
-let failed = false;
-for (const f of files) {
-  const text = readFileSync(f, "utf8");
-  const problems = [];
-  if (new RegExp(`["][${GEO}]|[${GEO}]["]`, "u").test(text))
-    problems.push("ASCII quote adjacent to Georgian");
-  if (new RegExp("\\u201E[^\\u201C\\u201D]{0,120}\\u0022", "u").test(text))
-    problems.push("U+201E opener closed by ASCII quote");
-  if (/\p{Script=Greek}/u.test(text)) problems.push("Greek look-alike character");
-  const nOpen = (text.match(new RegExp("\\u201E", "g")) || []).length;
-  const nClose = (text.match(new RegExp("\\u201C|\\u201D", "g")) || []).length;
+const checks = [
+  { name: "greek look-alike", re: new RegExp("\\p{Script=Greek}", "u") },
+  {
+    name: "U+201E closed by ASCII quote",
+    re: new RegExp(Q_OPEN + "[^" + Q_CLOSE + "]{0,120}\\u0022", "u"),
+  },
+  {
+    name: "ASCII quote inside a Georgian run",
+    re: new RegExp("[" + GEO + "]\\u0022[" + GEO + "]", "u"),
+  },
+];
+
+function scan(label, addedText) {
+  const problems = checks.filter((c) => c.re.test(addedText)).map((c) => c.name);
+  const nOpen = (addedText.match(new RegExp(Q_OPEN, "g")) || []).length;
+  const nClose = (addedText.match(new RegExp("[" + Q_CLOSE + "]", "g")) || []).length;
   if (nOpen !== nClose) problems.push(`unbalanced quotes open=${nOpen} close=${nClose}`);
   if (problems.length > 0) {
-    failed = true;
-    console.error(`FAIL ${f}: ${problems.join("; ")}`);
-  } else {
-    console.log(`ok ${f} (open=${nOpen} close=${nClose})`);
+    console.error(`FAIL ${label}: ${problems.join("; ")}`);
+    return false;
   }
+  console.log(`ok ${label} (open=${nOpen} close=${nClose})`);
+  return true;
+}
+
+if (args[0] === "--selftest") {
+  const g = (cp) => String.fromCodePoint(cp);
+  const cases = [
+    {
+      label: "good: delimited literal + proper pair",
+      text: 'label: "' + g(0x10d0) + g(0x10d1) + '" ' + g(0x201e) + g(0x10d2) + g(0x201c),
+      expectOk: true,
+    },
+    { label: "bad: ASCII-closed opener", text: g(0x201e) + g(0x10d2) + '"', expectOk: false },
+    { label: "bad: quote inside Georgian run", text: g(0x10d0) + '"' + g(0x10d1), expectOk: false },
+    { label: "bad: Greek alpha", text: g(0x3b1), expectOk: false },
+  ];
+  let pass = true;
+  for (const c of cases) {
+    if (scan(c.label, c.text) !== c.expectOk) {
+      pass = false;
+      console.error(`selftest MISMATCH on: ${c.label}`);
+    }
+  }
+  console.log(pass ? "selftest PASS" : "selftest FAIL");
+  process.exit(pass ? 0 : 1);
+}
+
+if (args[0] !== "--diff" || args.length < 3) {
+  console.error("usage: ka-gate.mjs --selftest | --diff <baseRef> <file...>");
+  process.exit(2);
+}
+const [, base, ...files] = args;
+let failed = false;
+for (const f of files) {
+  const status = execFileSync("git", ["status", "--porcelain", "--", f], { encoding: "utf8" });
+  let added;
+  if (status.startsWith("??")) {
+    added = readFileSync(f, "utf8");
+  } else {
+    const diff = execFileSync("git", ["diff", base, "--", f], { encoding: "utf8" });
+    added = diff
+      .split("\n")
+      .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+      .map((l) => l.slice(1))
+      .join("\n");
+  }
+  if (!scan(f, added)) failed = true;
 }
 process.exit(failed ? 1 : 0);
 ```
 
-- [ ] **Step 3: Verify the gate self-tests on a known-good file**
+- [ ] **Step 3: Verify the gate**
 
-Run: `node scripts/ka-gate.mjs lib/cabinet.ts DECISIONS.md`
-Expected: two `ok` lines, exit 0.
+Run: `node scripts/ka-gate.mjs --selftest`
+Expected: `ok` for the good sample, `FAIL` for the three bad samples, final line `selftest PASS`, exit 0.
+Then: `node scripts/ka-gate.mjs --diff main app/globals.css`
+Expected: `ok app/globals.css (open=0 close=0)`, exit 0.
 
 - [ ] **Step 4: Run the unit suite and build**
 
@@ -259,7 +324,7 @@ git commit -m "style(button): ink primary, ghost inversion, one red — Kronika 
 ### Task 3: Underline form fields — Field, adminControlClasses, OtpInput
 
 **Files:**
-- Modify: `components/Field.tsx` (also exports `inputClasses`, `adminControlClasses`), `components/OtpInput.tsx`
+- Modify: `components/Field.tsx` (also exports `inputClasses`, `adminControlClasses`), `components/OtpInput.tsx`, `components/OtpVerification.tsx` (the env-gated dev-code box container lives HERE, around lines 39-55 — not in OtpInput; className-only change)
 - Test: `components/design-system.test.tsx` (Field describe), `components/OtpInput.test.tsx`
 
 **Interfaces:**
@@ -280,14 +345,14 @@ export const adminControlClasses =
   "h-9 border-0 border-b border-ink bg-transparent px-0.5 text-[0.84rem] text-ink focus:border-b-2 focus:border-brand focus-visible:outline-none";
 ```
 
-Label classes become `block text-[0.72rem] font-bold tracking-[.08em] text-muted-fg mb-1`; error text `mt-1 text-[0.74rem] text-brand`. Keep the id/error wiring exactly as-is. OtpInput cells: replace box classes with `w-10 h-11 border-0 border-b-2 border-ink bg-transparent text-center font-serif text-xl focus:border-brand focus-visible:outline-none` (error state swaps `border-ink` for `border-brand`). The env-gated test-code box keeps its logic; restyle its container to `border border-hairline bg-paper-bright px-3 py-2 text-[0.8rem]`.
+Label classes become `block text-[0.74rem] font-bold tracking-[.08em] text-muted-fg mb-1` (0.74rem is the spec §2.3 floor); error text `mt-1 text-[0.74rem] text-brand`. Keep the id/error wiring exactly as-is. OtpInput cells: replace box classes with `w-10 h-11 border-0 border-b-2 border-ink bg-transparent text-center font-serif text-xl focus:border-brand focus-visible:outline-none` (error state swaps `border-ink` for `border-brand`). The env-gated test-code box (in `components/OtpVerification.tsx`) keeps its logic and gating byte-exact; restyle its container to `border border-hairline bg-paper-bright px-3 py-2 text-[0.8rem]`.
 
 - [ ] **Step 4: Run tests to verify pass** — same command → PASS. Also run `npx vitest run components/OtpVerification.test.tsx` (must still pass untouched).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add components/Field.tsx components/OtpInput.tsx components/design-system.test.tsx components/OtpInput.test.tsx
+git add components/Field.tsx components/OtpInput.tsx components/OtpVerification.tsx components/design-system.test.tsx components/OtpInput.test.tsx
 git commit -m "style(forms): underline paper-form fields (Field, admin controls, OTP cells)"
 ```
 
@@ -303,28 +368,29 @@ git commit -m "style(forms): underline paper-form fields (Field, admin controls,
 - Produces: same exports; `cardSkin = "border border-hairline bg-paper-bright"`; StatCard is the figure block (serif value, ruled top) — later tasks use StatCard wherever the spec says figure block.
 - Consumes: Tasks 1–2.
 
-- [ ] **Step 1: Update tests.** design-system.test: Pill `profile_completed` renders label from `TEAM_STATUS_LABELS` (unchanged assertion) but class expectation moves from `text-info` to `text-ink`; Card contains `bg-paper-bright`; StatCard value element contains `font-serif`; Badge contains `rounded-full` still (the one rounded element). Keep the Pill/TEAM_STATUS_LABELS drift guard (`design-system.test.tsx:114-127`) byte-untouched.
+- [ ] **Step 1: Update tests.** design-system.test: the existing Pill assertions are label-only (no class assertion exists — do not hunt for a `text-info` expectation); ADD one new assertion that the `profile_completed` pill's element className contains `text-ink` and NOT `text-info`; Card contains `bg-paper-bright`; ADD a Card `variant="callout"` case asserting `border-ink`; StatCard value element contains `font-serif`; Badge contains `rounded-full` still (the one rounded element). Keep the Pill/TEAM_STATUS_LABELS drift guard (`design-system.test.tsx:114-127`) byte-untouched.
 
 - [ ] **Step 2: Run to verify failure** — `npx vitest run components/design-system.test.tsx components/CenteredNotice.test.tsx` → FAIL.
 
 - [ ] **Step 3: Implement.**
 
-`Pill.tsx` STATUS_CONFIG classes (keys and label defaults unchanged):
+`Pill.tsx` STATUS_CONFIG classes — ALL SEVEN keys (the map also has `registered`; keep every key, every Georgian label default, and the mirror-of-TEAM_STATUS_LABELS comment byte-untouched — only `className` values change):
 
 ```ts
-draft:            "bg-surface text-muted-fg",
-profile_completed:"bg-ink/5 text-ink",
-active_member:    "bg-ok/10 text-ok-deep",
-pending:          "bg-warn/10 text-warn-deep",
-approved:         "bg-ok/10 text-ok-deep",
-rejected:         "bg-brand/10 text-brand",
+draft:             "bg-surface text-muted-fg",
+registered:        "bg-surface text-muted-fg",
+profile_completed: "bg-ink/5 text-ink",
+active_member:     "bg-ok/10 text-ok-deep",
+pending:           "bg-warn/10 text-warn-deep",
+approved:          "bg-ok/10 text-ok-deep",
+rejected:          "bg-brand/10 text-brand",
 ```
 
 Pill base: `inline-flex items-center px-2 py-0.5 text-[0.74rem] font-bold tracking-[.06em]` (square — remove `rounded-full`).
 
 `Badge.tsx`: `inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-brand px-1.5 text-[0.74rem] font-bold text-paper`.
 
-`Card.tsx`: `cardSkin = "border border-hairline bg-paper-bright"`; header renders `text-[0.7rem] font-bold uppercase tracking-[.18em] text-muted-fg border-b-2 border-ink pb-2 mb-4`; padded prop semantics unchanged.
+`Card.tsx`: `cardSkin = "border border-hairline bg-paper-bright"`; header renders `text-[0.7rem] font-bold uppercase tracking-[.18em] text-muted-fg border-b-2 border-ink pb-2 mb-4`; padded prop semantics unchanged. ADD an additive prop `variant?: "callout"` — callout swaps the border to `border-ink` (spec §2.1's call-out surface: bright paper + full ink border). This is THE mechanism for every call-out in later tasks (homepage news box, my-delegate card, poll teaser, clipping card, verification cards) — no ad-hoc border styling.
 
 `Eyebrow.tsx`: `text-[0.7rem] font-bold uppercase tracking-[.18em] text-brand`.
 
@@ -336,7 +402,7 @@ Pill base: `inline-flex items-center px-2 py-0.5 text-[0.74rem] font-bold tracki
 
 `app/(public)/join/JoinForm.tsx:205`: replace `bg-info/10 text-info` with `bg-ink/5 text-ink` (class-only; message text untouched).
 
-- [ ] **Step 4: Run tests to verify pass** — same command → PASS. Then full `npm test` (other component tests must still pass; if any assert removed classes like `shadow-sm`, update that expectation only).
+- [ ] **Step 4: Run tests to verify pass** — same command → PASS. Then full `npm test` (other component tests must still pass; if any assert removed classes like `shadow-sm`, update that expectation only). Gate: `node scripts/ka-gate.mjs --diff main "app/(public)/join/JoinForm.tsx" components/Pill.tsx` → ok.
 
 - [ ] **Step 5: Commit**
 
@@ -387,7 +453,7 @@ Paste the JSON-escaped values into the component as constants. Masthead FULL str
 <Image src="/brand/lockup-vertical-geo-red.png" alt="ქართული რესპუბლიკა" width={269} height={218} className="mx-auto mt-5" priority />
 <div className="mt-2 text-[0.74rem] uppercase tracking-[.28em] text-muted-fg">{TAGLINE}</div>
 <div className="mt-3.5 h-[3px] border-y border-ink border-t-2" />
-<nav className="flex items-center justify-center gap-6 border-b border-ink py-2.5 text-[0.8rem] font-semibold">
+<nav className="flex items-center justify-center gap-4 overflow-x-auto whitespace-nowrap border-b border-ink px-2 py-2.5 text-[0.8rem] font-semibold sm:gap-6">
   {navItems.map((i) => (
     <Link key={i.href} href={i.href} className="no-underline text-ink hover:text-brand aria-[current=page]:text-brand" aria-current={pathname === i.href ? "page" : undefined}>
       {i.label}
@@ -398,9 +464,9 @@ Paste the JSON-escaped values into the component as constants. Masthead FULL str
 </nav>
 ```
 
-COMPACT: one row `flex items-baseline justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`, horizontal lockup `width={172} height={58}`, then the same nav-link markup (smaller gap, `overflow-x-auto whitespace-nowrap` on mobile). SiteFooter: copyright string is spliced in Task 10 (it lives with chrome integration); for now accept it as a `copyright: string` prop. PageSheet per the interface above.
+COMPACT: one row `flex items-baseline justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`, horizontal lockup `width={172} height={58}`, then the same nav-link markup (smaller gap, `overflow-x-auto whitespace-nowrap` on mobile). The dateline renders ONLY in full mode — compact mode shows no date, so fully-static pages (join/login/styleguide) never display a stale date; the homepage's date staleness is bounded by its 60s revalidate. SiteFooter: copyright string is spliced in Task 10 (it lives with chrome integration); for now accept it as a `copyright: string` prop. PageSheet per the interface above.
 
-- [ ] **Step 4: Run tests** — `npx vitest run components/Masthead.test.tsx components/SectionRule.test.tsx` → PASS. Run `node scripts/ka-gate.mjs components/Masthead.tsx` → ok.
+- [ ] **Step 4: Run tests** — `npx vitest run components/Masthead.test.tsx components/SectionRule.test.tsx` → PASS. Run `node scripts/ka-gate.mjs --diff main components/Masthead.tsx` → ok.
 
 - [ ] **Step 5: Commit**
 
@@ -457,7 +523,7 @@ git commit -m "feat(furniture): numbered index rows, ballot language, photo figu
 
 - [ ] **Step 3: Implement.** Add `count?: number` to `CabinetNavItem` (`lib/cabinet.ts`) and `AdminTab` (`lib/admin.ts`) — additive, no call-site churn. Restyle all three navs to the shared visual above (each keeps its own file; copy the class strings verbatim into each — do not create a new abstraction). Render `{item.count ? <Badge>{item.count}</Badge> : null}` inside the link with `inline-flex items-center gap-1.5`. Replace the two stray copies: `verify/page.tsx:58-59` sub-tab links get the same active/inactive classes; `ExportControls.tsx:39` drops `bg-navy … hover:bg-navy-dark` in favor of `buttonClasses("dark", "sm")` (import from `components/Button`).
 
-- [ ] **Step 4: Run tests** — component tests PASS; then `npm test` fully green.
+- [ ] **Step 4: Run tests** — component tests PASS; then `npm test` fully green. Gate: `node scripts/ka-gate.mjs --diff main components/CabinetNav.tsx components/AdminNav.tsx components/ContentNav.tsx` → ok.
 
 - [ ] **Step 5: Commit**
 
@@ -472,24 +538,24 @@ git commit -m "style(nav): underlined section tabs with count badges; fold stray
 
 **Files:**
 - Modify: `components/Stepper.tsx`, `components/TierPicker.tsx`, `components/DelegateBinding.tsx`, `components/NewsCard.tsx`, `components/ContentBody.tsx`, `components/QrCode.tsx`, `components/CopyButton.tsx`, `components/TransferInstructions.tsx`, `components/DemoBanner.tsx`
-- Test: `components/TierPicker.test.tsx`, `components/DelegateBinding.test.tsx`, `components/NewsCard.test.tsx`, `components/ContentBody.test.tsx`, `components/DemoBanner.test.tsx` (update class expectations only where they assert old skins)
+- Test: `components/TierPicker.test.tsx`, `components/DelegateBinding.test.tsx`, `components/NewsCard.test.tsx`, `components/ContentBody.test.tsx`, `components/DemoBanner.test.tsx`, `components/design-system.test.tsx` (Stepper describe — its line ~161 asserts `getByText("1")` carries `aria-current="step"`; the redesigned Stepper renders Roman-prefixed markers, so retarget that assertion to the new marker, e.g. `getByText(/^I\./)`, and KEEP asserting `aria-current="step"` lands on the current step's marker element)
 
 **Interfaces:**
-- Produces: all props unchanged. Visual contracts: Stepper steps render `done` in `text-ok`, `current` in `text-brand font-bold border-b-2 border-brand pb-0.5`, `upcoming` in `text-muted-fg`, prefixed with Roman numerals `I.` `II.` `III.` by position (furniture only — the label strings passed in stay whatever callers pass). TierPicker options: `border border-hairline bg-paper-bright p-4` with the amount in `font-serif font-bold`; selected option `border-ink`. DelegateBinding rows: `flex items-baseline gap-3 border-b border-hairline py-3` with serif names. NewsCard: `border-b border-hairline pb-4` brief — kicker (`Eyebrow`), serif headline, muted dateline; image (when `imageUrl`) via `PhotoFigure`. TransferInstructions: wrapper `border border-ink bg-paper-bright p-5`, GR-code `font-serif text-xl font-bold tracking-wider`, amount serif; QR inside. DemoBanner: `border-b border-ink bg-ink px-4 py-1.5 text-center text-[0.76rem] text-paper` (drop `bg-gold/15`), same gating and text.
+- Produces: all props unchanged. Visual contracts: Stepper steps render `done` in `text-ok`, `current` in `text-brand font-bold border-b-2 border-brand pb-0.5`, `upcoming` in `text-muted-fg`, prefixed with Roman numerals `I.` `II.` `III.` by position (furniture only — the label strings passed in stay whatever callers pass). TierPicker options: `border border-hairline bg-paper-bright p-4` with the amount in `font-serif font-bold`; selected option `border-ink`. DelegateBinding rows: `flex items-baseline gap-3 border-b border-hairline py-3` with serif names; the SELECTED row is marked in brand (spec §3.1): selected-state marker text/check in `text-brand font-bold`. NewsCard: `border-b border-hairline pb-4` brief — kicker (`Eyebrow`), serif headline, muted dateline; image (when `imageUrl`) via `PhotoFigure`. TransferInstructions: wrapper `border border-ink bg-paper-bright p-5`, GR-code `font-serif text-xl font-bold tracking-wider`, amount serif; QR inside. DemoBanner: `border-b border-ink bg-ink px-4 py-1.5 text-center text-[0.76rem] text-paper` (drop `bg-gold/15`), same gating and text.
 - Consumes: Tasks 1–6.
 
 - [ ] **Step 1: Update the listed tests' class expectations** to the contracts above (behavioral assertions — option counts, callbacks, gating — untouched).
 
-- [ ] **Step 2: Run to verify failures** — `npx vitest run components/TierPicker.test.tsx components/DelegateBinding.test.tsx components/NewsCard.test.tsx components/ContentBody.test.tsx components/DemoBanner.test.tsx` → FAIL.
+- [ ] **Step 2: Run to verify failures** — `npx vitest run components/TierPicker.test.tsx components/DelegateBinding.test.tsx components/NewsCard.test.tsx components/ContentBody.test.tsx components/DemoBanner.test.tsx components/design-system.test.tsx` → FAIL.
 
 - [ ] **Step 3: Implement** all nine components per the visual contracts. ContentBody: paragraph classes `text-[0.92rem] leading-[1.75]`, links inherit the global red-underline rule; no other change to `parseBody` handling.
 
-- [ ] **Step 4: Run tests** — same command → PASS; full `npm test` green; `node scripts/ka-gate.mjs components/DemoBanner.tsx components/TransferInstructions.tsx` → ok.
+- [ ] **Step 4: Run tests** — same command → PASS; full `npm test` green; `node scripts/ka-gate.mjs --diff main components/DemoBanner.tsx components/TransferInstructions.tsx` → ok.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add components/Stepper.tsx components/TierPicker.tsx components/DelegateBinding.tsx components/NewsCard.tsx components/ContentBody.tsx components/QrCode.tsx components/CopyButton.tsx components/TransferInstructions.tsx components/DemoBanner.tsx components/TierPicker.test.tsx components/DelegateBinding.test.tsx components/NewsCard.test.tsx components/ContentBody.test.tsx components/DemoBanner.test.tsx
+git add components/Stepper.tsx components/TierPicker.tsx components/DelegateBinding.tsx components/NewsCard.tsx components/ContentBody.tsx components/QrCode.tsx components/CopyButton.tsx components/TransferInstructions.tsx components/DemoBanner.tsx components/TierPicker.test.tsx components/DelegateBinding.test.tsx components/NewsCard.test.tsx components/ContentBody.test.tsx components/DemoBanner.test.tsx components/design-system.test.tsx
 git commit -m "style(components): paper-form steps, classifieds tiers, briefs, payment slip, ink banner"
 ```
 
@@ -506,7 +572,7 @@ git commit -m "style(components): paper-form steps, classifieds tiers, briefs, p
 
 - [ ] **Step 1: Rebuild the page** with sections in this order: (1) palette swatches — one row per token from spec §2.2 with name, hex, and the §2.5 contrast pairs listed beneath; (2) type scale (serif display/h1/lede + sans labels incl. the small-caps register); (3) buttons (all 5 variants × 3 sizes; ghost-inverse demoed on a `bg-ink` box, replacing the old `bg-navy` box at line 48); (4) `სტატუსები` Pill card (unchanged sample set); (5) StatCard figures; (6) Badge; (7) Card with header; (8) Eyebrow; (9) Field + adminControlClasses input; (10) Stepper; (11) OtpInput sample; (12) TierPicker sample; (13) DelegateBinding samples; (14) NEW furniture: Masthead (compact, static props), SectionRule, IndexRow (3 rows), Ballot (BallotBar trio + buttons), PhotoFigure (use `/brand/emblem-roundel-red-notext.png` as the demo image), TransferInstructions sample, DataTable sample; (15) NewsCard/ContentBody/ContentNav. Wrap the page in `PageSheet`.
 
-- [ ] **Step 2: Verify** — `npm run build` succeeds; `npm test` green; run e2e smoke only (env loaded): `npx playwright test e2e/smoke.spec.ts` → styleguide test passes.
+- [ ] **Step 2: Verify** — `npm run build` succeeds; `npm test` green; run e2e smoke only (env loaded): `npx playwright test e2e/smoke.spec.ts` → styleguide test passes. Gate: `node scripts/ka-gate.mjs --diff main "app/(public)/styleguide/page.tsx" "app/(public)/styleguide/samples.tsx"` → ok.
 
 - [ ] **Step 3: Commit**
 
@@ -527,7 +593,7 @@ git commit -m "feat(styleguide): full Kronika gallery — palette, type, compone
 - Consumes: `Masthead`, `PageSheet`, `SiteFooter`, `ButtonLink`, `DemoBanner`, `formatDateKa` (`lib/cabinet.ts:152`).
 - Produces: the public chrome every (public) page renders inside. Nav array labels: keep `მთავარი`, `დელეგატები`, `რეიტინგი`, `სიახლეები`, `ღონისძიებები`; change the `/transparency` label to the spliced `ფინანსები`; CTA label becomes the spliced `შემოგვიერთდი` (still `/join`, still `ButtonLink size="sm"`). Footer links: `/join/terms` label `წესები` (splice), `/news` label `სიახლეები` (copy from the nav array), `/transparency` label `ფინანსები` (same constant as nav).
 
-- [ ] **Step 1: Update the two e2e specs first** (this is the closed list). `smoke.spec.ts:7` main-CTA assertion will be finalized in Task 11 (homepage) — in THIS task change only `smoke.spec.ts:10` banner assertion to `getByRole("banner").getByRole("link", { name: "შემოგვიერთდი", exact: true })`. In `public.spec.ts:52-62` update the header-CTA related lines the same way; leave the `შემოგვიერთდი ერთ წუთში` heading assertions untouched (the `/join` h1 does not change).
+- [ ] **Step 1: Update ONE e2e line first** (closed list, Task-10 share). Change only `smoke.spec.ts:10` — the banner assertion — to `getByRole("banner").getByRole("link", { name: "შემოგვიერთდი", exact: true })`. Touch nothing in `public.spec.ts` in this task (it contains no header-CTA assertion; its line 55 is the MAIN CTA and belongs to Task 11), and leave the `შემოგვიერთდი ერთ წუთში` heading assertions everywhere untouched (the `/join` h1 does not change; those pass because getByRole heading vs link are different roles).
 
 - [ ] **Step 2: Implement the chrome.** Splice labels:
 
@@ -537,12 +603,12 @@ node -e "const s=require('fs').readFileSync('prototype/kronika-d3/kronika-d3-tem
 
 Rewrite `app/(public)/layout.tsx`: body renders `DemoBanner` (above the sheet), then `PageSheet` containing `Masthead` (props: the nav array, `dateKa={formatDateKa(new Date().toISOString())}`, `cta={<ButtonLink href="/join" size="sm">…spliced CTA…</ButtonLink>}`, `sessionSlot={<HeaderSessionAction />}`), then `{children}`, then `SiteFooter` (spliced copyright + the three footer links). Delete the old header (emoji emblem, old nav markup) and the old `bg-navy` footer entirely. `HeaderSessionAction`: keep logic; the signed-in `კაბინეტი` link renders `variant="ghost" size="sm"` as today (classes update via Task 2 automatically — verify only).
 
-- [ ] **Step 3: Verify** — `npm run build`; `npm test`; ka-gate the layout: `node scripts/ka-gate.mjs "app/(public)/layout.tsx"`; run `npx playwright test e2e/smoke.spec.ts` — the banner CTA test passes; the main-CTA test (line 7) is EXPECTED to fail until Task 11 lands (note this in the task handoff; do not adjust it here).
+- [ ] **Step 3: Verify** — `npm run build`; `npm test`; ka-gate the layout: `node scripts/ka-gate.mjs --diff main "app/(public)/layout.tsx"`; run `npx playwright test e2e/smoke.spec.ts` — the WHOLE spec passes: line 10 matches the relabeled banner CTA, and line 7 still passes because the homepage hero (untouched until Task 11) keeps the old main-CTA label. There is no expected-red state; any failure here is a real regression.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add "app/(public)/layout.tsx" components/HeaderSessionAction.tsx e2e/smoke.spec.ts e2e/public.spec.ts
+git add "app/(public)/layout.tsx" components/HeaderSessionAction.tsx e2e/smoke.spec.ts
 git commit -m "feat(chrome): Kronika masthead chrome, financial nav label, join-us CTA, ruled footer"
 ```
 
@@ -566,13 +632,13 @@ const s=require('fs').readFileSync('prototype/kronika-d3/kronika-d3-template.htm
 const m=(re)=>s.match(re)[0];
 const EMD=String.fromCodePoint(0x2014), LARI=String.fromCodePoint(0x20BE);
 const p2=m(/დელეგატები ლაგდებიან[^<]*?მტკიცდება\./).replace(m(/წევრობა ფიქსირებულია[^<]*?თვეში/), 'წევრობის შენატანი არჩევითია '+EMD+' 5, 10 ან 20'+LARI+' თვეში');
-console.log(JSON.stringify({kicker:m(/მანიფესტი/),h:m(/ავაშენოთ[^<]*?ერთად/),lede:m(/გამჭვირვალე სამოქალაქო მოძრაობა[^<]*?შენს ხელში\./),p1:'რ'+m(/ესპუბლიკა არ შენდება[^<]*?არჩევით\./).slice(1),p2,cont:m(/გააგრძელე კითხვა[^<]*/).trim(),byline1:m(/მოძრაობის რედაქცია/),byline2:m(/3 წუთი კითხვა/),reg:m(/რეესტრი[^<]{0,3}დღეს/),src:m(/წყარო: საჯარო დავთარი/),top:m(/რეიტინგი[^<]{0,3}ხუთეული/),full:m(/სრულად[^<]*/).trim(),strip:m(/როგორ შემოგვიერთდები/)}))
+console.log(JSON.stringify({kicker:m(/მანიფესტი/),h:m(/ავაშენოთ[^<]*?ერთად/),lede:m(/გამჭვირვალე სამოქალაქო მოძრაობა[^<]*?შენს ხელში\./),p1:'რ'+m(/ესპუბლიკა არ შენდება[^<]*?არჩევით\./),p2,cont:m(/გააგრძელე კითხვა[^<]*/).trim(),byline1:m(/მოძრაობის რედაქცია/),byline2:m(/3 წუთი კითხვა/),reg:m(/რეესტრი[^<]{0,3}დღეს/),src:m(/წყარო: საჯარო დავთარი/),top:m(/რეიტინგი[^<]{0,3}ხუთეული/),full:m(/სრულად[^<]*/).trim(),strip:m(/როგორ შემოგვიერთდები/)}))
 "
 ```
 
-(`p1` recomposes the drop-cap letter; keep the printed first letter `რ` as the drop cap span below.)
+(`p1` prepends the drop-cap letter to the match, which starts at the SECOND letter of the word — do NOT add any `.slice()` to the match; the render below re-splits `P1` into drop-cap + rest. Print the resulting JSON and eyeball the first word is the full `რესპუბლიკა` before pasting.)
 
-- [ ] **Step 2: Recompose the page.** Delete the navy hero, gradient bar, features array and the old CTA block. New structure inside the existing default export (data: `const [stats, delegates, tStats, news] = await Promise.all([fetchPublicStats(), fetchPublicDelegates(), fetchTransparencyStats(), fetchPublicNews()])`; `const ranked = rankDelegates(delegates)`):
+- [ ] **Step 2: Recompose the page.** Delete the navy hero, gradient bar, features array and the old CTA block. PRESERVE: the page's existing `<main>` root element (both CTA locators scope to `getByRole("main")`), and the three stat `data-testid`s. New structure INSIDE that `<main>` (data: `const [stats, delegates, tStats, news] = await Promise.all([fetchPublicStats(), fetchPublicDelegates(), fetchTransparencyStats(), fetchPublicNews()])`; `const ranked = rankDelegates(delegates)`):
 
 ```tsx
 <div className="grid gap-0 px-5 pb-12 pt-8 sm:px-10 lg:grid-cols-[1fr_348px]">
@@ -604,11 +670,11 @@ Ladder columns (fresh copy from shipped vocabulary — run ka-gate after): each 
 2. title `წევრი` + `<span className="text-[0.7rem] font-bold text-brand">5/10/20₾ თვეში</span>`, desc `სრული წევრობა და შიდა გამოკითხვები — კაბინეტიდან.`, link `<Link href="/join">დაიწყე რეგისტრაციით →</Link>`
 3. title `დელეგატი`, desc `წევრებისთვის, დადასტურებით.`, link `<Link href="/join/terms">გაეცანი წესებს →</Link>`
 
-Rail (three blocks): (a) `SectionRule label={REG}` + four rows — the three counters as `flex justify-between border-b border-hairline py-2.5` rows with `CountUp` values in `font-serif text-xl font-bold` keeping the exact `data-testid` attributes (`stat-approved-delegates`, `stat-active-members`, `stat-registered-total`), plus a fourth row with `tStats.total_gel` formatted `formatCountKa(tStats.total_gel) + "₾"` and the transparency page's shipped label for it (splice from `app/(public)/transparency/page.tsx` — the heading currently at its line ~41, `შეგროვებული საწევრო შენატანები`); then the source line `text-[0.74rem] text-muted-fg` = spliced `SRC` + ` · ` + `<Link href="/transparency">…ფინანსები…</Link>`; (b) `SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>}` + `ranked.slice(0,5)` as `IndexRow` (figure = supporter count, figureLabel from the delegates page shipped vocabulary `მხარდამჭერი`); (c) news box `border border-ink bg-paper-bright p-5`: `Eyebrow` label spliced `სიახლეები`-equivalent — use the nav label constant — then up to 3 `news.slice(0,3)` items (serif title link + muted `formatDateKa(published_at)`), `Link href="/news"` at the bottom.
+Rail (three blocks): (a) `SectionRule label={REG}` + four rows — the three counters as `flex justify-between border-b border-hairline py-2.5` rows with `CountUp` values in `font-serif text-xl font-bold` keeping the exact `data-testid` attributes (`stat-approved-delegates`, `stat-active-members`, `stat-registered-total`), plus a fourth row with `tStats.total_gel` formatted `formatCountKa(tStats.total_gel) + "₾"` and the transparency page's shipped label for it (splice from `app/(public)/transparency/page.tsx` — the heading currently at its line ~41, `შეგროვებული საწევრო შენატანები`); then the source line `text-[0.74rem] text-muted-fg` = spliced `SRC` + ` · ` + `formatDateKa(new Date().toISOString())` (spec S5 wants the real date; staleness bounded by the 60s revalidate) + ` · ` + `<Link href="/transparency">…ფინანსები…</Link>`; (b) `SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>}` + `ranked.slice(0,5)` as `IndexRow` (figure = supporter count, figureLabel from the delegates page shipped vocabulary `მხარდამჭერი`); (c) news box = `Card variant="callout"` (Task 4's surface — no ad-hoc border classes): `Eyebrow` label — use the nav label constant `სიახლეები` — then up to 3 `news.slice(0,3)` items (serif title link + muted `formatDateKa(published_at)`), `Link href="/news"` at the bottom.
 
-- [ ] **Step 3: Update the two remaining e2e lines.** `smoke.spec.ts:7` → `getByRole("main").getByRole("link", { name: "რეგისტრაცია", exact: true })`; `public.spec.ts:55` → the same locator (the comment above it explains the ladder column). Keep the three stat-testid assertions untouched — they must pass as-is.
+- [ ] **Step 3: Update the two remaining e2e lines.** `smoke.spec.ts:7` → `getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true })` — the accessible name INCLUDES the arrow, so `exact: true` must carry it (a bare `რეგისტრაცია` with exact would match nothing); `public.spec.ts:55` → the same locator, and update the comments at lines 52-54 to describe the ladder column. Keep the three stat-testid assertions untouched — they must pass as-is.
 
-- [ ] **Step 4: Verify** — `npm run build`; `npm test`; ka-gate: `node scripts/ka-gate.mjs "app/(public)/page.tsx"`; e2e (env loaded): `npx playwright test e2e/smoke.spec.ts e2e/public.spec.ts` → all green except `public.spec.ts:86-90` (the medal test still expects medals — that update belongs to Task 12; note it in the handoff).
+- [ ] **Step 4: Verify** — `npm run build`; `npm test`; ka-gate: `node scripts/ka-gate.mjs --diff main "app/(public)/page.tsx"`; e2e (env loaded): `npx playwright test e2e/smoke.spec.ts e2e/public.spec.ts` → ALL green, including the medal test at `public.spec.ts:86-90` (the leaderboard is untouched until Task 12, so medals still render there). No expected-red state; any failure is a real regression in this task.
 
 - [ ] **Step 5: Commit**
 
@@ -621,7 +687,7 @@ git commit -m "feat(homepage): the Kronika front page — manifesto, ladder, reg
 
 ## ⛔ OWNER CHECKPOINT (hard pause — do not proceed to Task 12)
 
-After Task 11 is merged into the branch: push, wait for the Vercel preview, and deliver to the owner: the preview URL + screenshots of `/styleguide` (desktop) and `/` (desktop 1280 + mobile 390) in plain language. **Stop and wait for the owner's explicit go.** Direction changes here are cheap; the remaining ~35 pages ride on this approval. (Process memory: never auto-resume past an owner checkpoint.)
+- [ ] **Checkpoint: owner look-and-feel approval.** After Task 11's commit lands on the branch: push, wait for the Vercel preview, and deliver to the owner: the preview URL + screenshots of `/styleguide` (desktop) and `/` (desktop 1280 + mobile 390) in plain language. **Stop and wait for the owner's explicit go.** Direction changes here are cheap; the remaining ~35 pages ride on this approval. (Process memory: never auto-resume past an owner checkpoint.)
 
 ---
 
@@ -633,15 +699,16 @@ After Task 11 is merged into the branch: push, wait for the Vercel preview, and 
 
 **Interfaces:**
 - Consumes: `IndexRow`, `SectionRule`, `StatCard`, `Eyebrow`, splice keys `delegatesKicker` (`საჯარო რეესტრი` without the volume flourish), `delegatesH1` (`ჩვენი დელეგატები`).
-- Produces: `LeaderRow` keeps its props (`{ delegate: RankedDelegate }`) but renders an `IndexRow` internally (rank testids come free). `medalFor` is deleted (only consumer was LeaderRow; spec §3.3 retires medals).
+- Produces: `LeaderRow` keeps its props (`{ delegate: RankedDelegate }`), its `data-testid="leader-row"` AND its whole-row link markup — restyled with IndexRow's class language, with the rank span gaining `data-testid={"rank-" + rank}` (do not replace the component with a bare `IndexRow`; the testid and row-link semantics are load-bearing). `DelegateCard` likewise keeps `data-testid="delegate-card"`. `medalFor` is deleted (only consumer was LeaderRow; spec §3.3 retires medals).
+- PRESERVE-LIST (e2e anchors outside the closed list — all must survive byte-exact): `data-testid="delegate-card"` (`public.spec.ts:70,73,76`; polled by `delegate-panel.spec.ts:89`), `data-testid="leader-row"` (`public.spec.ts:88-89`; polled by `delegate-panel.spec.ts:90`), the search placeholder `ძებნა სახელით...` (`public.spec.ts:72,74,78` — ASCII three dots, splice from the component), the directory empty-state string, and the delegate-profile strings asserted around `public.spec.ts:100-106` (rank position and active-supporter wording — keep shipped labels).
 
 - [ ] **Step 1: Update tests first.** `LeaderRow.test.tsx`: rank 1 renders `1.` with `text-brand` and NO gold-gradient classes, no 🥇 emoji anywhere; delete `lib/ranking.test.ts` medalFor cases. `e2e/public.spec.ts:86-90`: rename the test to a rank-numbering description; replace the 🥇 assertion with `await expect(rows.first().getByTestId("rank-1")).toBeVisible()` and add `await expect(page.getByText("🥇")).toHaveCount(0)`.
 
 - [ ] **Step 2: Run to verify failure** — `npx vitest run components/LeaderRow.test.tsx lib/ranking.test.ts` → FAIL.
 
-- [ ] **Step 3: Implement.** Delegates index page: header block per spec §4.2 — centered `Eyebrow` kicker (spliced), serif h1 (spliced), sub-line from real counts (`formatCountKa`), then `DelegateDirectory` restyled: search + region select swap to `inputClasses`/underline select (visual only; GET-form semantics untouched); results render as `IndexRow`s in `lg:columns-2`-style two-column layout (`grid lg:grid-cols-2 lg:gap-x-16`, left column `lg:border-r lg:border-hairline lg:pr-8`); the shown/total line becomes a `border-t-2 border-ink` centered footer line. Delegate profile: compact masthead comes from chrome; page gets `Eyebrow` (region · status kicker via existing data), serif name h1, `StatCard` for supporters, existing share/join blocks re-dressed with `Card`. Leaderboard: `LeaderRow` → `IndexRow` internals; delete `medalFor` import and the `rankBox` gradient map; page title/h1 dress only.
+- [ ] **Step 3: Implement.** Delegates index page: header block per spec §4.2 — centered `Eyebrow` kicker (spliced), serif h1 (spliced), sub-line from real counts (`formatCountKa`), then `DelegateDirectory` restyled IN PLACE: search + region select swap to `inputClasses`/underline select (visual only; GET-form semantics, placeholder string and empty-state string byte-untouched); result rows keep `DelegateCard` (with its testid) re-dressed to the numbered-row look inside a two-column layout (`grid lg:grid-cols-2 lg:gap-x-16`, left column `lg:border-r lg:border-hairline lg:pr-8`); the shown/total line becomes a `border-t-2 border-ink` centered footer line. Delegate profile: compact masthead comes from chrome; page gets `Eyebrow` (region · status kicker — approved-since is NOT included: the public view exposes no approval date, a declared micro-correction vs spec §4.3), serif name h1, `StatCard` for supporters with shipped labels kept, existing share/join blocks re-dressed with `Card`. Leaderboard: restyle `LeaderRow` per the Produces block (testid + whole-row link kept, `rank-{n}` testid added); delete `medalFor` import and the `rankBox` gradient map; page title/h1 dress only.
 
-- [ ] **Step 4: Verify** — `npm test` green; `npm run build`; e2e: `npx playwright test e2e/public.spec.ts` → green incl. the reworked rank test; ka-gate touched pages.
+- [ ] **Step 4: Verify** — `npm test` green; `npm run build`; e2e: `npx playwright test e2e/public.spec.ts` → green incl. the reworked rank test and ALL preserve-list anchors; `node scripts/ka-gate.mjs --diff main` over the touched pages/components → ok.
 
 - [ ] **Step 5: Commit**
 
@@ -678,22 +745,22 @@ git commit -m "style(public): briefs, article dress, ballot RSVP, transparency l
 ### Task 14: Join, login, terms, offline
 
 **Files:**
-- Modify: `app/(public)/join/page.tsx`, `app/(public)/join/JoinForm.tsx` (visual classes only), `app/(public)/login/page.tsx` (+ its form component file), `app/(public)/join/terms/page.tsx`, `app/offline/page.tsx`
+- Modify: `app/(public)/join/page.tsx`, `app/(public)/join/JoinForm.tsx` (visual classes only), `app/(public)/login/page.tsx` (the phone/OTP form is INLINE in this client page — there is no separate form component), `app/(public)/join/terms/page.tsx`, `app/offline/page.tsx`, plus the six boundary files: `app/error.tsx`, `app/(public)/error.tsx`, `app/(member)/error.tsx`, `app/(delegate)/error.tsx`, `app/(admin)/error.tsx`, `app/(public)/delegates/[slug]/not-found.tsx`
 - Test: e2e `registration.spec.ts`, `login.spec.ts` (must pass unchanged)
 
 **Interfaces:**
 - Consumes: `Field`/`inputClasses`, `OtpInput`, `Card` (form sheet: add `shadow-[0_1px_0_var(--color-hairline)]` on the join/login form container — the single permitted shadow), `Eyebrow`, `CenteredNotice`, `DelegateTerms`.
 - Produces: nothing new.
 
-- [ ] **Step 1: Implement.** Join: `Eyebrow` kicker = spliced `წევრის რეგისტრაცია`; h1 stays the shipped `შემოგვიერთდი ერთ წუთში` byte-untouched (three e2e specs assert it); form sits in a `bg-paper-bright border border-hairline p-8 sm:p-10` sheet with the permitted printed-edge shadow; field-group headings restyled `font-serif font-bold border-b-2 border-ink pb-2` (keep their shipped wording). No draft/autosave line exists — do not add one. Login: same sheet dress; all flows untouched. Terms: `DelegateTerms` wrapped in a ruled document frame (`border-y-2 border-ink py-8`). Offline: `CenteredNotice` (already re-dressed) — verify only.
+- [ ] **Step 1: Implement.** Join: `Eyebrow` kicker = spliced `წევრის რეგისტრაცია`; h1 stays the shipped `შემოგვიერთდი ერთ წუთში` byte-untouched (three e2e specs assert it); form sits in a `bg-paper-bright border border-hairline p-8 sm:p-10` sheet with the permitted printed-edge shadow; field-group headings restyled `font-serif font-bold border-b-2 border-ink pb-2` and PREFIXED with the paper-form section numbering furniture (`§1.`, `§2.` — prefix only, spec §4.8; shipped heading wording kept byte-exact after the prefix). No draft/autosave line exists — do not add one. Login: same sheet dress on the inline form; all flows untouched. Terms: `DelegateTerms` wrapped in a ruled document frame (`border-y-2 border-ink py-8`). Offline: RECOMPOSE `app/offline/page.tsx` to render `CenteredNotice` (it currently hand-rolls its own main/h1/p markup); its shipped Georgian strings byte-exact. Boundary files: re-dress all six with `CenteredNotice`/system classes — wording, retry buttons and the client-component directives byte-untouched (spec D2 covers the whole app; these render inside the paper sheet and must not ship the old white/rounded look).
 
 - [ ] **Step 2: Verify** — `npm run build`; `npm test`; e2e: `npx playwright test e2e/registration.spec.ts e2e/login.spec.ts` → green unchanged; ka-gate touched files.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add "app/(public)/join" "app/(public)/login" app/offline/page.tsx
-git commit -m "style(auth): paper-form registration and login, ruled terms document"
+git add "app/(public)/join" "app/(public)/login" app/offline/page.tsx app/error.tsx "app/(public)/error.tsx" "app/(member)/error.tsx" "app/(delegate)/error.tsx" "app/(admin)/error.tsx" "app/(public)/delegates/[slug]/not-found.tsx"
+git commit -m "style(auth): paper-form registration and login, ruled terms, boundary notices"
 ```
 
 ---
@@ -705,14 +772,14 @@ git commit -m "style(auth): paper-form registration and login, ruled terms docum
 - Test: e2e `cabinet.spec.ts`, `community-polls.spec.ts`, `delegacy.spec.ts` (must pass unchanged)
 
 **Interfaces:**
-- Consumes: `Masthead` (compact — the member layout renders its own compact brand rule: horizontal lockup + the register tag; reuse the compact markup via a `tag` prop added now: `Masthead` gains optional `tag?: string` rendered after the lockup in `text-[0.72rem] font-semibold tracking-[.14em] text-brand`), `CabinetNav` with `count`, `SectionRule`, `StatCard`, `Card`, `Ballot`, `DataTable`, `TransferInstructions`, `Pill`.
+- Consumes: `Masthead` (compact — the member layout renders its own compact brand rule: horizontal lockup + the register tag; reuse the compact markup via a `tag` prop added now: `Masthead` gains optional `tag?: string` rendered after the lockup in `text-[0.74rem] font-semibold tracking-[.14em] text-brand`), `CabinetNav` with `count`, `SectionRule`, `StatCard`, `Card` (+ `variant="callout"`), `Ballot`, `DataTable`, `TransferInstructions`, `Pill`, and for the my-delegate card: `fetchPublicDelegates` + `rankDelegates` (the DECLARED read, see Global Constraints).
 - Produces: `Masthead` `tag` prop (additive) — Task 17/18 reuse it.
 
 - [ ] **Step 1: Add the `tag` prop to Masthead** (+ one test case in `Masthead.test.tsx`: tag text renders in compact mode). Run the test — fails, implement, passes.
 
-- [ ] **Step 2: Wire the polls badge.** In `app/(member)/layout.tsx`, alongside the existing `getCabinetState` call, count open polls with the exact open-determination `/me/polls` already uses: replicate its `member_polls` select (`app/(member)/me/polls/page.tsx:14-19`) limited to the fields the open/closed split needs, apply the same split helper from `lib/community` (`pollView`/close logic), and pass `count` on the `გამოკითხვები` nav item via `cabinetNavItems(...)` result mapping (do NOT change `cabinetNavItems` itself — map the returned array in the layout: `items.map(i => i.href === "/me/polls" ? { ...i, count: openCount || undefined } : i)`). Members/delegates only (the registered fallback nav has no polls tab — mapping is a no-op there).
+- [ ] **Step 2: Wire the polls badge.** Poll openness is simply the view's `status` column (`/me/polls` itself just checks `poll.status === "open"` — there is no separate close-logic helper to reuse). In `app/(member)/layout.tsx`, alongside the existing `getCabinetState` call, run one head-count select: `supabase.from("member_polls").select("id", { count: "exact", head: true }).eq("status", "open")`, then pass `count` on the `გამოკითხვები` nav item via `cabinetNavItems(...)` result mapping (do NOT change `cabinetNavItems` itself — map the returned array in the layout: `items.map(i => i.href === "/me/polls" ? { ...i, count: openCount || undefined } : i)`). Members/delegates only (the registered fallback nav has no polls tab — mapping is a no-op there).
 
-- [ ] **Step 3: Re-dress the pages.** Layout: `PageSheet` + compact masthead (`tag` = the register wording spliced from the mock: `პირადი კაბინეტი`) + `CabinetNav`. Profile: serif name h1 + status line (existing standing Pill, GR-code, `memberSinceKa` — all shipped values); personal data as ruled rows (`flex justify-between border-b border-hairline py-2.5`, values `font-serif`); right rail: my-delegate `Card` (rank via existing data the page already loads — do not add new delegate fetches) + poll teaser `Card` (`Eyebrow` = spliced `დღის კითხვა`) on `/me/profile` per spec §5.1: extract the open-poll determination into a small pure helper in `lib/community` (reusing `pollView`'s close logic), call it from both the layout badge (Step 2) and a minimal `member_polls` fetch in the profile page; render the teaser ONLY when an open poll exists — question title + `ballotButtonClasses`-styled link row pointing to `/me/polls` (no voting on the profile page). Delegate/delegacy/news/events/polls/billing: dress with the system (ledger `DataTable` for billing + year-total row summed from the rows the page already renders + `TransferInstructions` slip; ballots on polls page via `ballotButtonClasses` + `BallotBar` for results — vote forms untouched).
+- [ ] **Step 3: Re-dress the pages.** Layout: `PageSheet` + compact masthead (`tag` = the register wording spliced from the mock: `პირადი კაბინეტი`) + `CabinetNav`. Profile: serif name h1 + status line (existing standing Pill, GR-code, `memberSinceKa` — all shipped values); personal data as ruled rows (`flex justify-between border-b border-hairline py-2.5`, values `font-serif`); right rail: my-delegate `Card variant="callout"` delivering spec §5.1's rank/region/supporters via the DECLARED read: the profile page adds `fetchPublicDelegates()` + `rankDelegates` and looks up `state.chosenDelegate?.id`; when the member follows the central movement (no delegate) or the id is absent from the public list, render the page's existing no-delegate state unchanged. Plus the poll teaser `Card variant="callout"` (`Eyebrow` = spliced `დღის კითხვა`) on `/me/profile` per spec §5.1: one minimal select (`member_polls`, fields `question,status`, `.eq("status", "open").limit(1)`) and render the teaser ONLY when a row exists — question title + `ballotButtonClasses`-styled link row pointing to `/me/polls` (no voting on the profile page). Delegate/delegacy/news/events/polls/billing: dress with the system (ledger `DataTable` for billing + year-total row summed from the rows the page already renders + `TransferInstructions` slip; ballots on polls page via `ballotButtonClasses` + `BallotBar` for results — vote forms untouched).
 
 - [ ] **Step 4: Verify** — `npm run build`; `npm test`; e2e: `npx playwright test e2e/cabinet.spec.ts e2e/community-polls.spec.ts e2e/delegacy.spec.ts` → green unchanged; ka-gate touched files.
 
@@ -758,7 +825,7 @@ git commit -m "style(wizard): paper-form membership steps and GR-code certificat
 - Consumes: `PageSheet`, `Masthead` (`tag` = the shipped panel wording — splice `დელეგატის კაბინეტი` from `app/(delegate)/delegate/page.tsx:68`, NOT from the mock), `StatCard`, `Card`, `QrCode`, `CopyButton`, `DataTable`, `Pill`.
 - Produces: nothing new.
 
-- [ ] **Step 1: Implement.** Layout: `PageSheet` + compact masthead with the panel tag + `CabinetNav`. Dashboard: greeting h1 serif; stats (`activeCount`, `totalCount`, `registeredCount`) as a ruled `StatCard` row; referral link + QR as the clipping `Card` (`border border-ink bg-paper-bright`) with `CopyButton`. Team: filters via `adminControlClasses` visuals, table via `DataTable` ledger (chips/filter semantics untouched).
+- [ ] **Step 1: Implement.** Layout: `PageSheet` + compact masthead with the panel tag + `CabinetNav`. Dashboard: greeting h1 serif; stats (`activeCount`, `totalCount`, `registeredCount`) as a ruled `StatCard` row; referral link + QR as the clipping `Card variant="callout"` with `CopyButton`. Team: filters via `adminControlClasses` visuals, table via `DataTable` ledger (chips/filter semantics untouched). PRESERVE byte-exact: the team search field's accessible label (`delegate-panel.spec.ts:73` finds it via `getByLabel` with the shipped wording) and all filter option labels.
 
 - [ ] **Step 2: Verify** — `npm run build`; `npm test`; e2e: `npx playwright test e2e/delegate-panel.spec.ts` → green unchanged; ka-gate touched files.
 
@@ -774,15 +841,15 @@ git commit -m "style(delegate): the desk — figures, clipping card, team ledger
 ### Task 18: Admin chrome + overview + verify (+ badge)
 
 **Files:**
-- Modify: `app/(admin)/layout.tsx`, `app/(admin)/admin/page.tsx`, `app/(admin)/admin/verify/page.tsx`, `app/(admin)/admin/verify/[id]/page.tsx` (+ `VerifyCard` component file)
-- Test: e2e `admin-rbac.spec.ts`, `admin-approval.spec.ts` (must pass unchanged)
+- Modify: `app/(admin)/layout.tsx`, `app/(admin)/admin/page.tsx`, `app/(admin)/admin/verify/page.tsx`, `app/(admin)/admin/verify/[id]/page.tsx` (+ `VerifyCard` component file), `components/AdminNav.tsx` and `components/Badge.tsx` (the `tone` prop)
+- Test: `components/design-system.test.tsx` (Badge tone case); e2e `admin-rbac.spec.ts`, `admin-approval.spec.ts` (must pass unchanged)
 
 **Interfaces:**
 - Consumes: `PageSheet`, `Masthead` (`tag` = `ადმინისტრირება` — reuse the constant already rendered by `AdminNav`/`lib/admin.ts` vocabulary; splice from app source), `AdminNav` with `count`, `StatCard`, `SectionRule`, `Card`, `DataTable`, `BallotBar` (region bars), `Pill`.
 - Produces: admin badge pattern for Tasks 19–20.
 
 - [ ] **Step 1: Wire the verification badge.** In `app/(admin)/layout.tsx`: fetch `admin_overview` selecting only `pending_delegates` (same client/gating the overview page uses — the view self-gates by role); map the `adminTabs(roles)` result: `tabs.map(t => t.href === "/admin/verify" ? { ...t, count: pending || undefined } : t)`. Badge color: `AdminNav` renders its Badge with an amber override for the verify tab — add optional `tone?: "brand" | "warn"` to Badge (additive prop, default `brand`; warn = `bg-warn text-paper`) with a one-case test in `design-system.test.tsx`.
-- [ ] **Step 2: Overview recompose.** Header row: serif h1 (shipped `დღის მიმოხილვა`-equivalent wording already on the page — keep byte-exact) + the real signed-in admin context line the page already renders. KPI row: existing figures as `StatCard`s in a `grid grid-cols-2 lg:grid-cols-4 border-t-2 border-ink` (queue figure `accent` + amber via existing accent semantics — if `accent` only supports `brand`, render the queue value with `className="text-warn"` on the sub, not a prop change). Region distribution: keep the page's existing `admin_region_stats` fetch; render the top-5 rows it already uses as `BallotBar` rows (tone `brand` for the largest, `ink` for the rest); if that fetch returns more rows than the five shown, add one remainder row summed from the remaining rows of the SAME result (tone `muted`, label `დანარჩენი` — fresh minimal copy, ka-gated); if the view only returns five rows, no remainder row (never estimate). Recent payments: `DataTable` ledger. Verify queue: `Card`-based cards (bright paper, ink border) with the existing approve/reject actions untouched.
+- [ ] **Step 2: Overview recompose.** Header row: serif h1 (shipped `დღის მიმოხილვა`-equivalent wording already on the page — keep byte-exact) + the real signed-in admin context line the page already renders. KPI row: existing figures as `StatCard`s in a `grid grid-cols-2 lg:grid-cols-4 border-t-2 border-ink` (queue figure `accent` + amber via existing accent semantics — if `accent` only supports `brand`, render the queue value with `className="text-warn"` on the sub, not a prop change). Region distribution: keep the page's existing `admin_region_stats` fetch; render the top-5 rows it already uses as `BallotBar` rows (tone `brand` for the largest, `ink` for the rest); if that fetch returns more rows than the five shown, add one remainder row summed from the remaining rows of the SAME result (tone `muted`, label `დანარჩენი` — fresh minimal copy, ka-gated); if the view only returns five rows, no remainder row (never estimate). Recent payments: `DataTable` ledger. Verify queue: `Card variant="callout"` cards with the existing approve/reject actions untouched.
 - [ ] **Step 3: Verify pages.** List tabs re-dressed (Task 7 already fixed the inline sub-tab classes); detail/VerifyCard: document dress — masked-ID reveal button and audit semantics byte-untouched.
 - [ ] **Step 4: Verify** — `npm run build`; `npm test`; e2e: `npx playwright test e2e/admin-rbac.spec.ts e2e/admin-approval.spec.ts` → green unchanged; ka-gate touched files.
 - [ ] **Step 5: Commit**
@@ -871,7 +938,7 @@ await sharp(SRC).resize(48, 48).png().toFile("app/icon.png");
 console.log("icons written");
 ```
 
-`scripts/generate-og-default.mjs` — paper background `#F7F2E9`, left-aligned brand bars `#9F1D35` + `#1A1611`, nameplate text in `Noto Serif Georgian, Sylfaen, serif` fill `#1A1611`, tagline fill `#6E6659`, roundel composited at the right (`composite` the resized roundel buffer). Keep the same output path. Run both:
+`scripts/generate-og-default.mjs` — paper background `#F7F2E9`, left-aligned brand bars `#9F1D35` + `#1A1611`, nameplate text in `Noto Serif Georgian, Sylfaen, serif` fill `#1A1611`, tagline fill `#6E6659`, roundel composited at the right (`composite` the resized roundel buffer). Caveat (same as the current script): sharp rasterizes SVG text with the MACHINE's installed fonts, not the committed TTF — on this Windows machine Noto/Sylfaen render Georgian correctly; visually inspect the regenerated PNG before committing it. Keep the same output path. Run both:
 
 ```bash
 node scripts/generate-icons.mjs && node scripts/generate-og-default.mjs
@@ -885,7 +952,7 @@ git grep -nE "navy|-gold|text-info|bg-info" -- app components lib
 
 Expected: no hits (docs/prototype/scripts excluded by pathspec).
 
-- [ ] **Step 5: Verify + commit** — `npm run build` (sw precache picks up regenerated icons); `npm test`.
+- [ ] **Step 5: Verify + commit** — `npm run build` (sw precache picks up regenerated icons); `npm test`; gate the OG route's Georgian: `node scripts/ka-gate.mjs --diff main "app/(public)/delegates/[slug]/opengraph-image.tsx"` → ok.
 
 ```bash
 git add app/globals.css app/manifest.ts app/icon.png assets/fonts scripts/generate-icons.mjs scripts/generate-og-default.mjs public/icons public/og-default.png "app/(public)/delegates/[slug]/opengraph-image.tsx"
@@ -924,13 +991,13 @@ test.describe("360px viewport has no horizontal overflow", () => {
 
 - [ ] **Step 2: Run it** — `npx playwright test e2e/responsive.spec.ts` → all pass (fix any overflowing page with `min-w-0`/`overflow-x-auto` on the offending container — table wrappers are the usual suspects; wide ledgers must scroll inside their own container per the spec).
 
-- [ ] **Step 3: Full audit.** (a) Full e2e once (env loaded, respecting the 2-runs/hour cap): `npx playwright test` → 100% green. (b) ka-gate sweep over every touched file with Georgian: `git diff --name-only main | xargs node scripts/ka-gate.mjs` (skip binaries — filter to `.ts/.tsx/.md/.css`). (c) Old-identity sweep:
+- [ ] **Step 3: Full audit.** (a) Full e2e once (env loaded, respecting the 2-runs/hour cap): `npx playwright test` → 100% green. (b) ka-gate sweep over every touched text file: `git diff --name-only main -- "*.ts" "*.tsx" "*.md" "*.css" | xargs node scripts/ka-gate.mjs --diff main` → all ok. (c) Old-identity sweep (covers the retired brand AND the old neutrals/navy-dark):
 
 ```bash
-git grep -inE "C8102E|A30D26|B3261E|1A73E8|0E1A2B|C9A24B|F4D67A|🥇|🥈|🥉" -- app components lib
+git grep -inE "C8102E|A30D26|B3261E|1A73E8|0E1A2B|16283F|C9A24B|F4D67A|12141C|5B616E|E4E7EC|🥇|🥈|🥉" -- app components lib
 ```
 
-Expected: zero hits. (d) `npm run format && npm run lint && npm run typecheck && npm test && npm run build` — all clean.
+Expected: zero hits. (d) `npm run format && npm run lint && npm run typecheck && npm test && npm run build` — all clean. (e) Schema probe unchanged and green (spec §9 acceptance): load `.env.local` into the shell, then `node scripts/verify-schema.mjs` → all checks pass (the known deterministic cancelled-probe-event warning is pre-existing and acceptable).
 
 - [ ] **Step 4: Commit**
 
@@ -944,18 +1011,18 @@ git commit -m "test(e2e): 360px no-overflow guard across public pages"
 ### Task 23: Documentation — DESIGN.md rewrite, CLAUDE.md pointer, prototype supersession
 
 **Files:**
-- Modify: `DESIGN.md` (full rewrite), `CLAUDE.md` (one line), `prototype/README.md` (banner)
+- Modify: `DESIGN.md` (full rewrite), `CLAUDE.md` (one line), `prototype/README.md` (banner), `prototype/index.html` (superseded banner comment)
 
 - [ ] **Step 1: Rewrite `DESIGN.md`** as the Kronika system reference: registers (public editorial / cabinet ledger / admin dense — all one material system now); the token table copied from spec §2.2 (values only, no prose duplication); type rules (§2.3 incl. the 0.74rem floor and serif roles); interaction identity (§2.4); the component register — every component from Tasks 2–8 with its one-line visual contract and the furniture set with props; the accessibility floors (§2.5); the rule that `/styleguide` is the living gallery and ad-hoc restyling stays forbidden; the ka-gate script as the mandatory Georgian gate. Reference the contract bundle path.
 
 - [ ] **Step 2: Update `CLAUDE.md`** — the line `UX contract: prototype/index.html.` becomes `UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kronika-redesign-design.md).` (keep the rest of the line's sentence structure intact).
 
-- [ ] **Step 3: Prepend to `prototype/README.md`**: a short banner — this prototype is superseded as UX contract by `prototype/kronika-d3/` as of v0.9.0; kept for history.
+- [ ] **Step 3: Mark the old prototype superseded** — prepend to `prototype/README.md` a short banner (superseded as UX contract by `prototype/kronika-d3/` as of v0.9.0; kept for history), and add the same one-line notice as an HTML comment at the very top of `prototype/index.html` (`<!-- SUPERSEDED ... -->`, above the doctype is invalid — place it immediately AFTER the doctype line).
 
-- [ ] **Step 4: Verify + commit** — `node scripts/ka-gate.mjs DESIGN.md CLAUDE.md prototype/README.md` → ok; `npm run format`.
+- [ ] **Step 4: Verify + commit** — `node scripts/ka-gate.mjs --diff main DESIGN.md CLAUDE.md prototype/README.md` → ok; `npm run format`.
 
 ```bash
-git add DESIGN.md CLAUDE.md prototype/README.md
+git add DESIGN.md CLAUDE.md prototype/README.md prototype/index.html
 git commit -m "docs: DESIGN.md rewritten for Kronika; UX-contract pointer moved; old prototype marked superseded"
 ```
 
