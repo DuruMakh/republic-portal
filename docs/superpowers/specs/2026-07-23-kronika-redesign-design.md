@@ -53,7 +53,7 @@ Selection is inverted (ink background, paper text). Focus-visible is a 2px brand
 
 ### 2.3 Type
 
-Same two families as today — **Noto Sans Georgian** and **Noto Serif Georgian** — redistributed; the serif's loaded weight range extends to 400/500/600/700 through the existing font pipeline (no new dependency).
+Same two families as today — **Noto Sans Georgian** and **Noto Serif Georgian** — redistributed; the full 400-700 serif weight range is already available (next/font loads the variable fonts — verified at planning; no pipeline change needed).
 
 - **Serif:** headlines, people's names, dates, and **all numerals** (counters, amounts, rankings, ledger figures). The homepage manifesto lede and article ledes are serif at ~1.12rem.
 - **Sans:** UI labels, forms, buttons, nav, small-caps section labels (`.7rem`, weight 700, letterspacing ~.18em).
@@ -148,7 +148,7 @@ Substitution ledger for this page (each item = mock fiction → real):
 | S2 | Byline „№ 27“ | მოძრაობის რედაქცია · 3 წუთი კითხვა only |
 | S3 | Fake photo + caption | Slot omitted until the owner supplies a real photograph + caption (PhotoFigure ready) |
 | S4 | Supporter/member-20₾/delegate classifieds | The real ladder: რეგისტრირებული (free, <1 min, `/join`) → წევრი (5/10/20₾ tiers, from the cabinet) → დელეგატი (members-only, verification; descriptive column, links to `/join/terms`) — final Georgian drafted at implementation from shipped vocabulary, ka-gated |
-| S5 | Registry rail static figures | Live shipped counters + monthly income (already public via `/transparency` data), with წყარო: საჯარო დავთარი + real date, linking to `/transparency` |
+| S5 | Registry rail static figures | Live shipped counters + the all-time collected total from the public transparency figures (planning correction: monthly income is admin-only MRR and stays admin-only), with წყარო: საჯარო დავთარი + real date, linking to `/transparency` |
 | S6 | Top-5 რეიტინგი — ხუთეული | Real leaderboard top-5 → `/leaderboard` |
 | S7 | Public poll with percentages | **News box**: same bordered call-out, latest 2–3 public news headlines → `/news` (polls stay member-only) |
 | S8 | Nav „გამოკითხვები“ (public) | Dropped from public nav (member-only feature) |
@@ -225,7 +225,7 @@ M-XXXX record numbers (GR-codes are the real identity), fixed-20₾ any-surface 
 
 ## 6. Mobile, PWA, share cards, motion
 
-- **Mobile (390/360):** paper edge-to-edge; Masthead compresses to the two-line nameplate; section tabs = horizontally scrollable underlined row; ledgers keep printed-table form; ballot buttons equal-width; no floating action buttons; the existing 360px no-overflow e2e guarantee stays.
+- **Mobile (390/360):** paper edge-to-edge; Masthead compresses to the two-line nameplate; section tabs = horizontally scrollable underlined row; ledgers keep printed-table form; ballot buttons equal-width; no floating action buttons; a 360px no-overflow e2e guard is added and must pass (planning correction: no such guard existed before this release).
 - **PWA:** `app/manifest.ts` updates — `background_color` → paper `#F7F2E9`, `theme_color` → paper (browser chrome reads as newsprint), icons regenerated from `emblem-roundel-red-notext.png` (192 crisp; 512 + maskable slightly soft from the 360px source — accepted, swap-ready when a vector arrives). Serwist/precache mechanics untouched; offline page re-dressed.
 - **Share cards (OG):** delegate OG route + `og-default.png` rebuilt: paper background, roundel, serif name (Noto Serif Georgian TTF committed for the OG renderer alongside the existing sans TTF), red kicker. Satori constraints as learned in Phase 1 (explicit flex).
 - **Motion:** §2.4; reduced-motion support and its tests unchanged.
