@@ -48,6 +48,7 @@ describe("IndexRow", () => {
     expect(link).toHaveAttribute("href", "/alice");
     expect(link).toHaveClass("no-underline");
     expect(link).toHaveClass("hover:text-brand");
+    expect(link).toHaveClass("text-ink");
   });
 
   it("name renders without a link when href is not passed", () => {

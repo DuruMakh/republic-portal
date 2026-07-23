@@ -31,7 +31,7 @@ export function IndexRow({
 
       <div className="flex-1">
         {href ? (
-          <Link href={href} className="no-underline hover:text-brand font-serif font-bold">
+          <Link href={href} className="text-ink no-underline hover:text-brand font-serif font-bold">
             {name}
           </Link>
         ) : (
