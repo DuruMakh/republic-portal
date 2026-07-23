@@ -262,7 +262,6 @@ export default function StyleguidePage() {
               { href: "/delegates", label: "დელეგატები" },
               { href: "/leaderboard", label: "რეიტინგი" },
             ]}
-            dateKa={formatDateKa("2026-07-23T00:00:00.000Z")}
             cta={
               <ButtonLink href="/join" size="sm">
                 შემოგვიერთდი

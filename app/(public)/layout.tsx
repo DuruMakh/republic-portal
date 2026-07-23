@@ -5,7 +5,6 @@ import { HeaderSessionAction } from "@/components/HeaderSessionAction";
 import { Masthead } from "@/components/Masthead";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
-import { formatDateKa } from "@/lib/cabinet";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
 // pre-Task-10 app/(public)/layout.tsx). Only the /transparency label changes,
@@ -44,7 +43,6 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <PageSheet>
         <Masthead
           navItems={navItems}
-          dateKa={formatDateKa(new Date().toISOString())}
           cta={
             <ButtonLink href="/join" size="sm">
               {HEADER_CTA_LABEL}
