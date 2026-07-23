@@ -7,7 +7,9 @@ test("home renders in Georgian with a single register CTA", async ({ page }) => 
   await expect(page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" })).toBeVisible();
   await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
   // the header keeps its own CTA (app/(public)/layout.tsx); the ladder's third counter
-  await expect(page.getByRole("banner").getByRole("link", { name: "დარეგისტრირდი" })).toBeVisible();
+  await expect(
+    page.getByRole("banner").getByRole("link", { name: "შემოგვიერთდი", exact: true }),
+  ).toBeVisible();
   await expect(page.getByTestId("stat-registered-total")).toBeVisible();
 });
 

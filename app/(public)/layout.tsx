@@ -1,73 +1,63 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ButtonLink";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HeaderSessionAction } from "@/components/HeaderSessionAction";
+import { Masthead } from "@/components/Masthead";
+import { PageSheet } from "@/components/PageSheet";
+import { SiteFooter } from "@/components/SiteFooter";
+import { formatDateKa } from "@/lib/cabinet";
 
-const nav = [
+// Kept labels copied byte-exact from the prior nav array (git history,
+// pre-Task-10 app/(public)/layout.tsx). Only the /transparency label changes,
+// spliced from the Kronika mock template (never hand-typed) per
+// .superpowers/sdd/task-10-brief.md Step 2.
+const NAV_NEWS_LABEL = "სიახლეები";
+const NAV_TRANSPARENCY_LABEL = "ფინანსები";
+const HEADER_CTA_LABEL = "შემოგვიერთდი";
+const FOOTER_TERMS_LABEL = "წესები";
+const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი";
+
+const navItems: { href: string; label: string }[] = [
   { href: "/", label: "მთავარი" },
   { href: "/delegates", label: "დელეგატები" },
   { href: "/leaderboard", label: "რეიტინგი" },
-  { href: "/news", label: "სიახლეები" },
+  { href: "/news", label: NAV_NEWS_LABEL },
   { href: "/events", label: "ღონისძიებები" },
-  { href: "/transparency", label: "გამჭვირვალობა" },
-] as const;
+  { href: "/transparency", label: NAV_TRANSPARENCY_LABEL },
+];
 
+const footerLinks: { href: string; label: string }[] = [
+  { href: "/join/terms", label: FOOTER_TERMS_LABEL },
+  { href: "/news", label: NAV_NEWS_LABEL },
+  { href: "/transparency", label: NAV_TRANSPARENCY_LABEL },
+];
+
+/**
+ * Public chrome (spec Sec 3.1-3.2): DemoBanner above the paper sheet, then the
+ * sheet itself -- Masthead, the page content, SiteFooter. The old emoji-emblem
+ * header and navy footer are gone (Task 10).
+ */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span
-              aria-hidden
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-dark text-lg text-white shadow-sm"
-            >
-              🏛
-            </span>
-            <span className="leading-tight">
-              <span className="block text-sm font-extrabold text-ink">ქართული რესპუბლიკა</span>
-              <span className="block text-[11px] font-semibold text-muted-fg">
-                სამოქალაქო პლატფორმა
-              </span>
-            </span>
-          </Link>
-          <nav
-            aria-label="მთავარი ნავიგაცია"
-            className="flex flex-wrap items-center gap-4 text-sm font-semibold text-ink"
-          >
-            {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="hover:text-brand">
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="ms-auto flex items-center gap-2">
-            <HeaderSessionAction />
-            <ButtonLink href="/join" size="sm">
-              დარეგისტრირდი
-            </ButtonLink>
-          </div>
-        </div>
-      </header>
+    <>
       <DemoBanner />
-      <div className="flex-1">{children}</div>
-      <footer className="mt-16 bg-navy py-10 text-sm text-white/60">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-4 sm:px-6">
-          <div>
-            <div className="font-extrabold text-white">ქართული რესპუბლიკა</div>
-            <div className="mt-1">გამჭვირვალე, ანგარიშვალდებული და შენს ხელში.</div>
-          </div>
-          <nav aria-label="ქვედა ნავიგაცია" className="flex flex-wrap gap-5 font-semibold">
-            {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="hover:text-white">
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div>© 2026 ქართული რესპუბლიკა</div>
-        </div>
-      </footer>
-    </div>
+      <PageSheet>
+        <Masthead
+          navItems={navItems}
+          dateKa={formatDateKa(new Date().toISOString())}
+          cta={
+            <ButtonLink href="/join" size="sm">
+              {HEADER_CTA_LABEL}
+            </ButtonLink>
+          }
+          sessionSlot={<HeaderSessionAction />}
+        />
+        {/* FOOTER-PIN: PageSheet is min-h-screen flex flex-col; a growing plain
+            div (not <main> -- pages render their own) pins SiteFooter to the
+            bottom on short pages. */}
+        <div className="flex-1">{children}</div>
+        <SiteFooter copyright={FOOTER_COPYRIGHT} links={footerLinks} />
+      </PageSheet>
+    </>
   );
 }
