@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Badge } from "@/components/Badge";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { AdminTab } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
@@ -25,7 +26,7 @@ export function AdminNav({ tabs }: { tabs: AdminTab[] }) {
       <Eyebrow>ადმინისტრირება</Eyebrow>
       <nav
         aria-label="ადმინისტრირების ნავიგაცია"
-        className="mt-2 flex flex-wrap items-center gap-1 border-b border-line pb-2"
+        className="mt-2 flex gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold"
       >
         {tabs.map((tab) => {
           // „მიმოხილვა“ (/admin) matches exactly; subpages match by prefix
@@ -38,19 +39,16 @@ export function AdminNav({ tabs }: { tabs: AdminTab[] }) {
               key={tab.href}
               href={tab.href}
               aria-current={active ? "page" : undefined}
-              className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                active ? "bg-brand/10 text-brand" : "text-muted-fg hover:text-ink"
+              className={`inline-flex items-center gap-1.5 ${
+                active ? "text-brand border-b-2 border-brand pb-1" : "text-ink hover:text-brand"
               }`}
             >
               {tab.label}
+              {tab.count ? <Badge>{tab.count}</Badge> : null}
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={signOut}
-          className="ms-auto rounded-lg px-3 py-1.5 text-sm font-semibold text-muted-fg hover:text-brand"
-        >
+        <button type="button" onClick={signOut} className="ms-auto text-ink hover:text-brand">
           გასვლა
         </button>
       </nav>

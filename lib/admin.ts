@@ -31,6 +31,7 @@ export function isStaff(roles: readonly AdminRole[]): boolean {
 export interface AdminTab {
   href: string;
   label: string;
+  count?: number;
 }
 
 const TAB_MATRIX: { href: string; label: string; roles: readonly AdminRole[] }[] = [

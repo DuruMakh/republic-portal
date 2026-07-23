@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonClasses } from "@/components/Button";
 import type { MemberStatusRow } from "@/lib/supabase/types";
 
 /** Export honors the active filters; the IDs checkbox exists only for super_admin. */
@@ -36,7 +37,7 @@ export function ExportControls({
       ) : null}
       <a
         href={`/admin/members/export?${params.toString()}`}
-        className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark"
+        className={buttonClasses("dark", "sm")}
       >
         ექსპორტი (CSV)
       </a>

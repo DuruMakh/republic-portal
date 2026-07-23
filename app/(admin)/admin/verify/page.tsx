@@ -55,9 +55,11 @@ export default async function AdminVerifyPage({
             key={t.key}
             href={`/admin/verify?tab=${t.key}`}
             aria-current={tab === t.key ? "page" : undefined}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-              tab === t.key ? "bg-brand/10 text-brand" : "text-muted-fg hover:text-ink"
-            }`}
+            className={
+              tab === t.key
+                ? "text-brand border-b-2 border-brand pb-1"
+                : "text-ink hover:text-brand"
+            }
           >
             {t.label}
           </Link>

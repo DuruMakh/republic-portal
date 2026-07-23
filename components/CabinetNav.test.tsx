@@ -54,4 +54,23 @@ describe("CabinetNav", () => {
     fireEvent.click(screen.getByRole("button", { name: "გასვლა" }));
     await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
   });
+
+  it("active item has the brand underline classes, not the old pill highlight", () => {
+    const { container } = render(<CabinetNav items={ITEMS} />);
+    const active = container.querySelector<HTMLAnchorElement>('a[href="/me/profile"]');
+    expect(active!.className).toContain("border-brand");
+    expect(active!.className).not.toContain("bg-brand/10");
+    const inactive = container.querySelector<HTMLAnchorElement>('a[href="/me/billing"]');
+    expect(inactive!.className).not.toContain("bg-brand/10");
+    expect(inactive!.className).toContain("text-ink");
+  });
+
+  it("renders a count badge inside the link when an item has a count", () => {
+    const itemsWithCount = ITEMS.map((item) =>
+      item.href === "/me/delegate" ? { ...item, count: 3 } : item,
+    );
+    const { container } = render(<CabinetNav items={itemsWithCount} />);
+    const link = container.querySelector('a[href="/me/delegate"]');
+    expect(link).toHaveTextContent("3");
+  });
 });
