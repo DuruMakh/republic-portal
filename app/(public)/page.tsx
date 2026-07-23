@@ -156,7 +156,7 @@ export default async function HomePage() {
               <div className="flex justify-between border-b border-hairline py-2.5">
                 <span className="text-[0.85rem] text-muted-fg">{TOTAL_GEL_LABEL}</span>
                 <span className="font-serif text-xl font-bold">
-                  {formatCountKa(tStats.total_gel)}₾
+                  {formatCountKa(Math.round(tStats.total_gel))}₾
                 </span>
               </div>
             </div>
