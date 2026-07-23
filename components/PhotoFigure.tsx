@@ -11,13 +11,7 @@ export interface PhotoFigureProps {
 export function PhotoFigure({ src, alt, caption, width, height }: PhotoFigureProps) {
   return (
     <figure>
-      <Image
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        className="border border-hairline"
-      />
+      <Image src={src} alt={alt} width={width} height={height} className="border border-hairline" />
       {caption && (
         <figcaption className="text-[0.74rem] text-muted-fg mt-1.5 border-b border-hairline pb-2">
           {caption}

@@ -4,30 +4,14 @@ import { IndexRow } from "./IndexRow";
 
 describe("IndexRow", () => {
   it("rank 1 gets text-brand color and testid rank-1", () => {
-    render(
-      <IndexRow
-        rank={1}
-        name="Alice"
-        meta="Region A"
-        figure="100"
-        figureLabel="votes"
-      />
-    );
+    render(<IndexRow rank={1} name="Alice" meta="Region A" figure="100" figureLabel="votes" />);
     const rankSpan = screen.getByTestId("rank-1");
     expect(rankSpan).toBeInTheDocument();
     expect(rankSpan).toHaveClass("text-brand");
   });
 
   it("rank 2 gets text-muted-fg color", () => {
-    render(
-      <IndexRow
-        rank={2}
-        name="Bob"
-        meta="Region B"
-        figure="90"
-        figureLabel="votes"
-      />
-    );
+    render(<IndexRow rank={2} name="Bob" meta="Region B" figure="90" figureLabel="votes" />);
     const rankSpan = screen.getByTestId("rank-2");
     expect(rankSpan).toHaveClass("text-muted-fg");
   });
@@ -41,7 +25,7 @@ describe("IndexRow", () => {
         figure="100"
         figureLabel="votes"
         href="/alice"
-      />
+      />,
     );
     const link = screen.getByRole("link");
     expect(link).toBeInTheDocument();
@@ -52,15 +36,7 @@ describe("IndexRow", () => {
   });
 
   it("name renders without a link when href is not passed", () => {
-    render(
-      <IndexRow
-        rank={1}
-        name="Alice"
-        meta="Region A"
-        figure="100"
-        figureLabel="votes"
-      />
-    );
+    render(<IndexRow rank={1} name="Alice" meta="Region A" figure="100" figureLabel="votes" />);
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });

@@ -22,50 +22,36 @@ describe("Ballot", () => {
 
   describe("BallotBar", () => {
     it("fill has width: 45% for pct={45}", () => {
-      render(
-        <BallotBar label="Yes" pct={45} tone="brand" />
-      );
-      const fillElement = document.querySelector(
-        "[style*='width: 45%']"
-      );
+      render(<BallotBar label="Yes" pct={45} tone="brand" />);
+      const fillElement = document.querySelector("[style*='width: 45%']");
       expect(fillElement).toBeInTheDocument();
     });
 
     it("fill has bg-brand for tone brand", () => {
-      render(
-        <BallotBar label="Yes" pct={45} tone="brand" />
-      );
+      render(<BallotBar label="Yes" pct={45} tone="brand" />);
       const fillElement = document.querySelector(".bg-brand");
       expect(fillElement).toBeInTheDocument();
     });
 
     it("fill has bg-ink for tone ink", () => {
-      render(
-        <BallotBar label="Yes" pct={45} tone="ink" />
-      );
+      render(<BallotBar label="Yes" pct={45} tone="ink" />);
       const fillElement = document.querySelector(".bg-ink");
       expect(fillElement).toBeInTheDocument();
     });
 
     it("fill has bg-muted-fg for tone muted", () => {
-      render(
-        <BallotBar label="Yes" pct={45} tone="muted" />
-      );
+      render(<BallotBar label="Yes" pct={45} tone="muted" />);
       const fillElement = document.querySelector(".bg-muted-fg");
       expect(fillElement).toBeInTheDocument();
     });
 
     it("renders label", () => {
-      render(
-        <BallotBar label="Yes votes" pct={45} tone="brand" />
-      );
+      render(<BallotBar label="Yes votes" pct={45} tone="brand" />);
       expect(screen.getByText("Yes votes")).toBeInTheDocument();
     });
 
     it("renders pct value", () => {
-      render(
-        <BallotBar label="Yes" pct={45} tone="brand" />
-      );
+      render(<BallotBar label="Yes" pct={45} tone="brand" />);
       expect(screen.getByText("45")).toBeInTheDocument();
     });
   });

@@ -201,10 +201,7 @@ export default function JoinForm() {
       <div className="mt-8">
         <Card>
           {notice ? (
-            <p
-              className="mb-4 rounded-lg bg-ink/5 p-3 text-sm text-ink"
-              data-testid="join-notice"
-            >
+            <p className="mb-4 rounded-lg bg-ink/5 p-3 text-sm text-ink" data-testid="join-notice">
               {notice}
             </p>
           ) : null}

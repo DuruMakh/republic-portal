@@ -10,21 +10,12 @@ export interface IndexRowProps {
   href?: string;
 }
 
-export function IndexRow({
-  rank,
-  name,
-  meta,
-  figure,
-  figureLabel,
-  href,
-}: IndexRowProps) {
+export function IndexRow({ rank, name, meta, figure, figureLabel, href }: IndexRowProps) {
   return (
     <div className="flex items-baseline gap-3.5 border-b border-hairline py-3.5">
       <span
         data-testid={`rank-${rank}`}
-        className={`w-7 font-serif font-bold ${
-          rank === 1 ? "text-brand" : "text-muted-fg"
-        }`}
+        className={`w-7 font-serif font-bold ${rank === 1 ? "text-brand" : "text-muted-fg"}`}
       >
         {rank}.
       </span>
@@ -37,16 +28,12 @@ export function IndexRow({
         ) : (
           <span className="font-serif font-bold">{name}</span>
         )}
-        <div className="block text-[0.74rem] text-muted-fg tracking-[.06em] mt-0.5">
-          {meta}
-        </div>
+        <div className="block text-[0.74rem] text-muted-fg tracking-[.06em] mt-0.5">{meta}</div>
       </div>
 
       <div className="text-right">
         <div className="font-serif font-bold">{figure}</div>
-        {figureLabel && (
-          <div className="text-[0.74rem] text-muted-fg">{figureLabel}</div>
-        )}
+        {figureLabel && <div className="text-[0.74rem] text-muted-fg">{figureLabel}</div>}
       </div>
     </div>
   );

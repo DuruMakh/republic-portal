@@ -16,15 +16,13 @@ export function Field({
   const id = idProp ?? autoId;
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="block text-[0.74rem] font-bold tracking-[.08em] text-muted-fg mb-1">
+      <label
+        htmlFor={id}
+        className="block text-[0.74rem] font-bold tracking-[.08em] text-muted-fg mb-1"
+      >
         {label}
       </label>
-      <input
-        id={id}
-        aria-invalid={error ? true : undefined}
-        className={inputClasses}
-        {...props}
-      />
+      <input id={id} aria-invalid={error ? true : undefined} className={inputClasses} {...props} />
       {error ? <p className="mt-1 text-[0.74rem] text-brand">{error}</p> : null}
     </div>
   );

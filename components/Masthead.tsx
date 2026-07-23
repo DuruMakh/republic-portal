@@ -71,7 +71,10 @@ export function Masthead({
           {TAGLINE}
         </div>
         <div className="mt-3.5 h-[3px] border-y border-ink border-t-2" />
-        <nav aria-label="მთავარი ნავიგაცია" className="flex items-center justify-center gap-4 overflow-x-auto whitespace-nowrap border-b border-ink px-2 py-2.5 text-[0.8rem] font-semibold sm:gap-6">
+        <nav
+          aria-label="მთავარი ნავიგაცია"
+          className="flex items-center justify-center gap-4 overflow-x-auto whitespace-nowrap border-b border-ink px-2 py-2.5 text-[0.8rem] font-semibold sm:gap-6"
+        >
           {navLinks}
           {sessionSlot}
           {cta}
@@ -90,7 +93,10 @@ export function Masthead({
           height={58}
         />
       </Link>
-      <nav aria-label="მთავარი ნავიგაცია" className="flex items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold sm:gap-4">
+      <nav
+        aria-label="მთავარი ნავიგაცია"
+        className="flex items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold sm:gap-4"
+      >
         {navLinks}
         {sessionSlot}
         {cta}
