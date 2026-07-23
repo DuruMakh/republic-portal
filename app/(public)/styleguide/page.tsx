@@ -1,7 +1,9 @@
+import { AdminNav } from "@/components/AdminNav";
 import { BallotBar, ballotButtonClasses } from "@/components/Ballot";
 import { Badge } from "@/components/Badge";
 import { Button, type ButtonVariant } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
+import { CabinetNav } from "@/components/CabinetNav";
 import { Card } from "@/components/Card";
 import { ContentBody } from "@/components/ContentBody";
 import { ContentNav } from "@/components/ContentNav";
@@ -18,7 +20,14 @@ import { SectionRule } from "@/components/SectionRule";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
-import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
+import { adminTabs } from "@/lib/admin";
+import {
+  cabinetNavItems,
+  formatAmountGel,
+  formatDateKa,
+  paymentMethodLabel,
+  paymentStatusKa,
+} from "@/lib/cabinet";
 import {
   DelegateBindingPickerSample,
   DelegateBindingReferralSample,
@@ -63,6 +72,17 @@ const BUTTON_VARIANTS: { variant: ButtonVariant; label: string }[] = [
   { variant: "danger", label: "danger" },
   { variant: "dark", label: "dark" },
 ];
+
+// CabinetNav / AdminNav demos (Task 7 re-dress: underlined tabs + a new
+// count-badge slot). Items come from the real cabinetNavItems()/adminTabs()
+// generators -- never hand-typed here -- with a count spliced onto the
+// first item so the gallery also shows the Badge slot.
+const CABINET_NAV_DEMO_ITEMS = cabinetNavItems("member").map((item, i) =>
+  i === 0 ? { ...item, count: 3 } : item,
+);
+const ADMIN_NAV_DEMO_TABS = adminTabs(["super_admin"]).map((tab, i) =>
+  i === 0 ? { ...tab, count: 3 } : tab,
+);
 
 export default function StyleguidePage() {
   const demoPaymentStatus = paymentStatusKa(null);
@@ -364,6 +384,18 @@ export default function StyleguidePage() {
             />
             <ContentNav />
           </div>
+        </Card>
+
+        {/* 16. CabinetNav / AdminNav -- Task 7 re-dress (underlined tabs + a new
+            count-badge slot). Items come from the real cabinetNavItems()/
+            adminTabs() generators, never hand-typed here; one item in each
+            carries a demo count so the Badge slot is visible too. */}
+        <Card title="კაბინეტის ნავიგაცია">
+          <CabinetNav items={CABINET_NAV_DEMO_ITEMS} />
+        </Card>
+
+        <Card title="ადმინისტრირების ნავიგაცია">
+          <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
         </Card>
       </main>
     </PageSheet>
