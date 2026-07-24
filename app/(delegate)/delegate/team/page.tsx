@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Eyebrow } from "@/components/Eyebrow";
 import type { TeamMember } from "@/lib/cabinet";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { TeamTable } from "./TeamTable";
@@ -22,9 +21,8 @@ export default async function DelegateTeamPage() {
 
   return (
     <main>
-      <div className="mb-8">
-        <Eyebrow>დელეგატის კაბინეტი</Eyebrow>
-        <h1 className="mt-1 text-2xl font-bold text-ink">ჩემი გუნდი</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ჩემი გუნდი</h1>
         <p className="mt-2 text-sm text-muted-fg">
           შენს გუნდში{" "}
           <strong className="text-ink" data-testid="team-count">

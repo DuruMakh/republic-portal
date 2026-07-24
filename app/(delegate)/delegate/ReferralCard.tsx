@@ -19,7 +19,7 @@ export function ReferralCard({ code }: { code: string }) {
   }, [code]);
 
   return (
-    <Card>
+    <Card variant="callout">
       <p className="text-xs font-extrabold uppercase tracking-wider text-brand">
         შენი პერსონალური რეფერალური ბმული
       </p>
