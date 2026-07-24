@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { Pill } from "@/components/Pill";
 import { formatAmountGel } from "@/lib/cabinet";
 import type { BulkConfirmResult, BulkPreviewResult, BulkPreviewRow, BulkStatus } from "./types";
 
@@ -94,7 +95,7 @@ export function BulkMatch({
           rows={6}
           onChange={(e) => setText(e.target.value)}
           placeholder={"01.07.2026\tGR-ABC234 საწევრო\t20.00"}
-          className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs font-normal"
+          className="border border-hairline bg-surface px-3 py-2 font-mono text-xs font-normal focus:border-brand focus-visible:outline-none"
         />
       </label>
       <div>
@@ -135,17 +136,16 @@ export function BulkMatch({
                   ) : null}
                 </td>
                 <td className={tableCellClass}>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  <Pill
+                    status={
                       r.status === "ok"
-                        ? "bg-ok/10 text-ok"
+                        ? "active_member"
                         : r.status === "duplicate" || r.status === "duplicate_line"
-                          ? "bg-warn/10 text-warn"
-                          : "bg-danger/10 text-danger"
-                    }`}
-                  >
-                    {STATUS_LABELS[r.status]}
-                  </span>
+                          ? "pending"
+                          : "rejected"
+                    }
+                    label={STATUS_LABELS[r.status]}
+                  />
                 </td>
               </tr>
             ))}

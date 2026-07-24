@@ -75,8 +75,8 @@ export default async function AdminMembersPage({
 
   return (
     <main>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-ink">წევრების მართვა</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">წევრების მართვა</h1>
         <p className="mt-2 text-sm text-muted-fg">
           გაფილტრე, მოძებნე და დაათვალიერე ყველა რეგისტრირებული წევრი.
         </p>
@@ -208,7 +208,7 @@ export default async function AdminMembersPage({
         </Card>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4">
         {filter.page > 1 ? (
           <ButtonLink href={pageHref(currentParams, filter.page - 1)} variant="ghost" size="sm">
             ← წინა

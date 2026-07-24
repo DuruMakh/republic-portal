@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import type { ReassignResult } from "./actions";
 
 export function ReassignRow({
@@ -42,7 +43,7 @@ export function ReassignRow({
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="min-w-[200px] rounded-lg border border-line bg-surface px-3 py-2 text-sm"
+          className={`${adminControlClasses} min-w-[200px]`}
         >
           {options.map((o) => (
             <option key={o.id} value={o.id}>
