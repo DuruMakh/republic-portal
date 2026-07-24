@@ -30,6 +30,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { db, anonClient, url, anonKey } from "./db.mjs";
 import { readFreshInboxOtp } from "./otp.mjs";
+import { getValidCachedSession, mergeCacheEntries } from "./session-cache.mjs";
 
 export { db, anonClient };
 
@@ -123,7 +124,26 @@ async function ensureUser(phone) {
   return data.user;
 }
 
-async function mintSession(phone) {
+/**
+ * Mints (or reuses) a session for `phone`. `pending`, when supplied, is a
+ * shared accumulator that a freshly-minted {accessToken, expiresAt} gets
+ * written into — see provisionActorsOnce for why the actual disk write is
+ * batched rather than done here per-phone. `fresh: true` skips the cache
+ * read entirely (still writes the new session back to `pending`, so a
+ * `--fresh` run still leaves the cache usable for the next normal run).
+ */
+async function mintSession(phone, { fresh = false, pending } = {}) {
+  if (!fresh) {
+    const cached = getValidCachedSession(phone);
+    if (cached) {
+      _sessionStats.hit++;
+      console.log(`session cache HIT  ${phone}`);
+      return cached;
+    }
+  }
+  _sessionStats.minted++;
+  console.log(`session cache MINT ${phone}${fresh ? " (--fresh)" : ""}`);
+
   const client = anonClient();
   const sentAt = Date.now() - 2000;
   const { error: sendError } = await client.auth.signInWithOtp({ phone: `+995${phone}` });
@@ -136,8 +156,16 @@ async function mintSession(phone) {
   });
   if (error) throw new Error(`OTP verify failed for ${phone}: ${error.message}`);
   if (!data.session) throw new Error(`no session returned for ${phone}`);
-  return data.session.access_token;
+
+  const { access_token, expires_at } = data.session;
+  if (pending && typeof expires_at === "number") {
+    pending[phone] = { accessToken: access_token, expiresAt: expires_at };
+  }
+  return access_token;
 }
+
+/** Reset at the start of every provisionActorsOnce() run; read by its closing log line. */
+let _sessionStats = { hit: 0, minted: 0 };
 
 /** A client bound to a specific actor's JWT — or the plain anon client when accessToken is null (A1). */
 export function actorClient(accessToken) {
@@ -363,7 +391,14 @@ async function driveStandings(out, teamMember) {
   await ensureRejected(out.A8, out.A10);
 }
 
-async function provisionActorsOnce() {
+async function provisionActorsOnce(fresh) {
+  _sessionStats = { hit: 0, minted: 0 };
+  // Sessions minted this run, flushed to the on-disk cache ONCE at the end
+  // (see session-cache.mjs's mergeCacheEntries doc comment for why: eleven
+  // actor phones mint in parallel below, and a per-phone read-modify-write
+  // would race and could clobber a sibling's just-written entry).
+  const pending = {};
+
   const out = {};
   await Promise.all(
     ACTOR_IDS.map(async (id) => {
@@ -373,7 +408,11 @@ async function provisionActorsOnce() {
         return;
       }
       const user = await ensureUser(def.phone);
-      out[id] = { phone: def.phone, userId: user.id, accessToken: await mintSession(def.phone) };
+      out[id] = {
+        phone: def.phone,
+        userId: user.id,
+        accessToken: await mintSession(def.phone, { fresh, pending }),
+      };
     }),
   );
 
@@ -381,8 +420,13 @@ async function provisionActorsOnce() {
   const teamMember = {
     phone: TEAM_MEMBER_PHONE,
     userId: teamMemberUser.id,
-    accessToken: await mintSession(TEAM_MEMBER_PHONE),
+    accessToken: await mintSession(TEAM_MEMBER_PHONE, { fresh, pending }),
   };
+
+  mergeCacheEntries(pending);
+  console.log(
+    `session cache: ${_sessionStats.hit} reused, ${_sessionStats.minted} minted (fresh OTP sends)`,
+  );
 
   await driveStandings(out, teamMember);
 
@@ -390,18 +434,26 @@ async function provisionActorsOnce() {
 }
 
 // Memoized: a second call in the same process returns the SAME promise
-// instead of re-minting every session. provisionActors() mints twelve (well,
-// thirteen counting the A7 team-member fixture) OTP sends — safe once per
-// process run, not safe to repeat. Task 4's matrix loop (154 surfaces × 12
-// actors) must call this once and hold onto the result, exactly like this
-// module's own --verify does below; the cache makes that the path of least
-// resistance rather than a rule callers have to remember. A failure clears
-// the cache so a later call can retry instead of permanently caching a
-// transient error (e.g. one throttled send).
+// instead of re-minting every session. provisionActors() sends up to twelve
+// OTPs (eleven ACTORS phones — A1 is anonymous and sends none — plus the one
+// A7 team-member fixture); the on-disk session cache (session-cache.mjs) is
+// what makes a SEPARATE process invocation cheap, this in-memory cache is
+// what makes repeated calls WITHIN one process cheap. Task 4's matrix loop
+// (154 surfaces × 12 actors) must call this once and hold onto the result,
+// exactly like this module's own --verify does below; the cache makes that
+// the path of least resistance rather than a rule callers have to remember.
+// A failure clears the cache so a later call can retry instead of
+// permanently caching a transient error (e.g. one throttled send).
+//
+// `fresh` only has an effect on the call that actually triggers
+// provisioning — once cached, later calls in the same process return that
+// same result regardless of what `fresh` they pass. This matches "call it
+// once per process" being the rule either way; --fresh is a whole-run
+// choice, not a per-call one.
 let _cache = null;
-export function provisionActors() {
+export function provisionActors({ fresh = false } = {}) {
   if (!_cache) {
-    _cache = provisionActorsOnce().catch((err) => {
+    _cache = provisionActorsOnce(fresh).catch((err) => {
       _cache = null;
       throw err;
     });
@@ -475,7 +527,8 @@ async function verifyStanding(id, actorOut) {
 }
 
 if (process.argv.includes("--verify")) {
-  const actors = await provisionActors();
+  const fresh = process.argv.includes("--fresh");
+  const actors = await provisionActors({ fresh });
   let failed = 0;
   for (const [id, a] of Object.entries(actors)) {
     const { data } = await actorClient(a.accessToken).auth.getUser();
