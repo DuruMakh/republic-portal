@@ -64,12 +64,14 @@ export default async function MemberNewsPage() {
 
   return (
     <main>
-      <h1 className="text-2xl font-bold text-ink">სიახლეები</h1>
-      <p className="mt-1 text-sm text-muted-fg">
-        {state.completed
-          ? "მოძრაობის სიახლეები — წევრებისთვის განკუთვნილი მასალების ჩათვლით."
-          : "მოძრაობის საჯარო სიახლეები."}
-      </p>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">სიახლეები</h1>
+        <p className="mt-2 text-sm text-muted-fg">
+          {state.completed
+            ? "მოძრაობის სიახლეები — წევრებისთვის განკუთვნილი მასალების ჩათვლით."
+            : "მოძრაობის საჯარო სიახლეები."}
+        </p>
+      </div>
       {items.length === 0 ? (
         <p className="mt-8 text-muted-fg">სიახლეები მალე გამოჩნდება.</p>
       ) : (

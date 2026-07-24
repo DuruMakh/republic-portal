@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
+import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { formatDateKa } from "@/lib/cabinet";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -69,17 +70,19 @@ export default async function MemberArticlePage({ params }: { params: Promise<{ 
         ← სიახლეები
       </Link>
       <article className="mt-6">
-        <div className="flex items-center gap-3 text-sm font-semibold text-muted-fg">
-          <span>{formatDateKa(article.publishedAt)}</span>
-          {article.membersOnly ? <Pill status="profile_completed" label="წევრებისთვის" /> : null}
+        <div className="border-b border-ink pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Eyebrow>{formatDateKa(article.publishedAt)}</Eyebrow>
+            {article.membersOnly ? <Pill status="profile_completed" label="წევრებისთვის" /> : null}
+          </div>
+          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{article.title}</h1>
         </div>
-        <h1 className="mt-2 text-3xl font-bold text-ink">{article.title}</h1>
         {article.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
           <img
             src={article.imageUrl}
             alt=""
-            className="mt-6 w-full rounded-xl border border-line object-cover"
+            className="mt-6 w-full border border-hairline object-cover"
           />
         ) : null}
         <ContentBody body={article.body} className="mt-6" />

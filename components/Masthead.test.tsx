@@ -48,4 +48,15 @@ describe("Masthead", () => {
     render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
   });
+
+  it("renders the tag text after the lockup when passed, and nothing when omitted", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    const { rerender } = render(
+      <Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} tag="პირადი კაბინეტი" />,
+    );
+    expect(screen.getByText("პირადი კაბინეტი")).toBeInTheDocument();
+
+    rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    expect(screen.queryByText("პირადი კაბინეტი")).not.toBeInTheDocument();
+  });
 });

@@ -26,10 +26,17 @@ export function Masthead({
   navItems,
   cta,
   sessionSlot,
+  tag,
 }: {
   navItems: NavItem[];
   cta: ReactNode;
   sessionSlot?: ReactNode;
+  /**
+   * Page-register label (additive, Task 15): rendered right after the lockup —
+   * e.g. „პირადი კაბინეტი“ for the member cabinet, „ადმინისტრირება“ for admin.
+   * Omitted on the public layout, which keeps the bare lockup.
+   */
+  tag?: string;
 }) {
   const pathname = usePathname();
 
@@ -46,14 +53,19 @@ export function Masthead({
 
   return (
     <header className="flex items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10">
-      <Link href="/" className="shrink-0">
-        <Image
-          src="/brand/lockup-horizontal-geo-red.png"
-          alt={WORDMARK_ALT}
-          width={172}
-          height={58}
-        />
-      </Link>
+      <div className="flex items-center gap-2.5">
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/brand/lockup-horizontal-geo-red.png"
+            alt={WORDMARK_ALT}
+            width={172}
+            height={58}
+          />
+        </Link>
+        {tag ? (
+          <span className="text-[0.74rem] font-semibold tracking-[.14em] text-brand">{tag}</span>
+        ) : null}
+      </div>
       <nav
         aria-label="მთავარი ნავიგაცია"
         className="flex items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold sm:gap-4"
