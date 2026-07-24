@@ -67,10 +67,22 @@ export const ACTORS = {
     standing: "active_member",
     delegate: "rejected",
   },
-  A9: { label: "super_admin", phone: "509000001", standing: "active_member", role: "super_admin" },
-  A10: { label: "verifier", phone: "509000002", standing: "active_member", role: "verifier" },
-  A11: { label: "finance", phone: "509000003", standing: "active_member", role: "finance" },
-  A12: { label: "editor", phone: "509000004", standing: "active_member", role: "editor" },
+  // A9-A12 declare profile_completed, NOT active_member: that is their real
+  // state on staging, verified directly against profiles on 2026-07-25. The
+  // declaration must describe what the account IS, because later tasks read
+  // this table to decide what a given actor should be able to reach — a
+  // standing stated here but not true in the database would silently invalidate
+  // every expectation derived from it. Their standing is now asserted by
+  // --verify like every other actor's.
+  A9: {
+    label: "super_admin",
+    phone: "509000001",
+    standing: "profile_completed",
+    role: "super_admin",
+  },
+  A10: { label: "verifier", phone: "509000002", standing: "profile_completed", role: "verifier" },
+  A11: { label: "finance", phone: "509000003", standing: "profile_completed", role: "finance" },
+  A12: { label: "editor", phone: "509000004", standing: "profile_completed", role: "editor" },
 };
 
 /** Canonical iteration order for the probe matrix used by Task 4. */
@@ -417,17 +429,26 @@ async function verifyStanding(id, actorOut) {
   }
 
   if (["A9", "A10", "A11", "A12"].includes(id)) {
-    // Owned by scripts/seed-staging.mjs, not driven here — role is the only
-    // thing Task 1 asserts for admins. See task-1-report.md for why
-    // ACTORS[id].standing ("active_member") is not checked for A9-A12.
+    // Owned by scripts/seed-staging.mjs — Task 1 never DRIVES these accounts,
+    // but it does assert them: both the admin role and the declared standing.
+    // Asserting the standing is what stops ACTORS drifting away from reality,
+    // which is exactly the defect this check was added to close.
     const { data, error } = await db
       .from("admin_roles")
       .select("role")
       .eq("user_id", actorOut.userId)
       .eq("role", def.role);
     if (error) throw error;
-    const ok = (data?.length ?? 0) > 0;
-    return { ok, detail: ok ? `role=${def.role}` : `MISSING admin_roles row for ${def.role}` };
+    const roleOk = (data?.length ?? 0) > 0;
+
+    const profile = await readProfile(actorOut.userId);
+    const standingOk = profile?.status === def.standing;
+
+    const detail =
+      `role=${roleOk ? def.role : `MISSING admin_roles row for ${def.role}`}` +
+      ` status=${profile?.status ?? "MISSING profile row"}` +
+      (standingOk ? "" : ` (EXPECTED ${def.standing})`);
+    return { ok: roleOk && standingOk, detail };
   }
 
   // A3-A8
