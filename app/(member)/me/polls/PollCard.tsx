@@ -81,8 +81,8 @@ export function PollCard({
                   </span>
                   <span className="font-semibold text-muted-fg">{o.pct}%</span>
                 </div>
-                <div className="overflow-hidden rounded-md bg-surface">
-                  <div className="h-2.5 rounded-md bg-brand" style={{ width: `${o.pct}%` }} />
+                <div className="h-2 bg-surface">
+                  <div className="h-2 bg-brand" style={{ width: `${o.pct}%` }} />
                 </div>
               </div>
             ))}
