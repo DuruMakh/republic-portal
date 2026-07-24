@@ -83,12 +83,13 @@ test.describe("delegate directory", () => {
 });
 
 test.describe("leaderboard", () => {
-  test("ranks 12 delegates with a gold medal on top", async ({ page }) => {
+  test("ranks 12 delegates with plain numbering, no medals", async ({ page }) => {
     await page.goto("/leaderboard");
-    await expect(page.getByTestId("leader-row")).toHaveCount(12);
-    const first = page.getByTestId("leader-row").first();
-    await expect(first).toContainText("🥇");
-    await expect(first).toContainText("გიორგი მაისურაძე");
+    const rows = page.getByTestId("leader-row");
+    await expect(rows).toHaveCount(12);
+    await expect(rows.first().getByTestId("rank-1")).toBeVisible();
+    await expect(page.getByText("🥇")).toHaveCount(0);
+    await expect(rows.first()).toContainText("გიორგი მაისურაძე");
     await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0);
   });
 });

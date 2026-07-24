@@ -32,10 +32,3 @@ export function rankDelegates<T extends Rankable>(rows: T[]): (T & { rank: numbe
     )
     .map((row, i) => ({ ...row, rank: i + 1 }));
 }
-
-export function medalFor(rank: number): "🥇" | "🥈" | "🥉" | null {
-  if (rank === 1) return "🥇";
-  if (rank === 2) return "🥈";
-  if (rank === 3) return "🥉";
-  return null;
-}

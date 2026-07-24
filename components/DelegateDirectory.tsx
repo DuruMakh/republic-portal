@@ -28,18 +28,24 @@ export function DelegateDirectory({
     });
   }, [delegates, query, regionId]);
 
+  // Two-column printed index (spec §4.2): left column takes the extra row on an
+  // odd count, matching the mock's rank-ordered left-then-right split.
+  const splitAt = Math.ceil(filtered.length / 2);
+  const leftColumn = filtered.slice(0, splitAt);
+  const rightColumn = filtered.slice(splitAt);
+
   return (
     <div>
       <div className="mb-5 flex flex-wrap gap-3">
         <input
-          className={`${inputClasses} min-w-[220px] flex-1 border-line`}
+          className={`${inputClasses} min-w-[220px] flex-1`}
           placeholder="ძებნა სახელით..."
           aria-label="ძებნა სახელით"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <select
-          className={`${inputClasses} max-w-[280px] border-line bg-white`}
+          className={`${inputClasses} max-w-[280px]`}
           value={regionId}
           onChange={(e) => setRegionId(e.target.value)}
           aria-label="მხარე"
@@ -52,14 +58,18 @@ export function DelegateDirectory({
           ))}
         </select>
       </div>
-      <p className="mb-4 text-sm text-muted-fg" data-testid="delegate-count">
-        ნაჩვენებია {formatCountKa(filtered.length)} დელეგატი
-      </p>
       {filtered.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((d) => (
-            <DelegateCard key={d.id} delegate={d} />
-          ))}
+        <div className="grid lg:grid-cols-2 lg:gap-x-16">
+          <div className="lg:border-r lg:border-hairline lg:pr-8">
+            {leftColumn.map((d) => (
+              <DelegateCard key={d.id} delegate={d} />
+            ))}
+          </div>
+          <div>
+            {rightColumn.map((d) => (
+              <DelegateCard key={d.id} delegate={d} />
+            ))}
+          </div>
         </div>
       ) : (
         <Card>
@@ -68,6 +78,12 @@ export function DelegateDirectory({
           </div>
         </Card>
       )}
+      <p
+        className="mt-6 border-t-2 border-ink pt-3 text-center text-sm text-muted-fg"
+        data-testid="delegate-count"
+      >
+        ნაჩვენებია {formatCountKa(filtered.length)} დელეგატი
+      </p>
     </div>
   );
 }
