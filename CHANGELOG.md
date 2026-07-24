@@ -20,9 +20,10 @@
 - New brand assets: paper-toned social-share cards with the serif wordmark, plus
   refreshed application icons and favicon; the retired navy, gold, and blue
   accents are fully removed
-- Accessibility: section titles across the site are proper headings again, so
-  screen-reader users can jump between sections (a regression caught and repaired
-  during release QA)
+- Accessibility: section titles across the site are proper headings again, and
+  empty navigation landmarks were removed from the cabinet, delegate, and admin
+  chrome, so screen-reader users can move between sections cleanly (regressions
+  caught and repaired during release QA)
 
 ## 0.8.0 — Phase 6 R2: The ladder and the numbers (2026-07-23)
 
