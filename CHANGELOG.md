@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.9.0 — The Kronika redesign (2026-07-24)
+
+- Complete visual redesign of the whole platform to the "Kronika" civic-newspaper
+  identity: a warm paper-and-ink palette with a single brand red, serif display
+  numerals and headlines, and hairline rules in place of boxes and drop shadows.
+  Every one of the 46 pages was re-dressed — the front page, the delegate registry
+  and leaderboard, news and events, the transparency ledger, the join and
+  membership flow, the member cabinet, the delegate desk, and the full admin
+  surface — behind unchanged component contracts
+- Zero behaviour change and zero database change: no business logic, API, query,
+  validation, or schema was touched. This release changes only how the app looks,
+  not what it does — every existing flow, permission, and number works exactly as
+  before, verified by the full test suite (481 unit + 52 end-to-end), a
+  zero-drift schema probe, and an independent whole-branch review
+- The front page is now an editorial front page: a short manifesto, the
+  how-to-join ladder, a live registry rail, the five-strong leaderboard, and a
+  news box — all drawn from the same live data as before
+- New brand assets: paper-toned social-share cards with the serif wordmark, plus
+  refreshed application icons and favicon; the retired navy, gold, and blue
+  accents are fully removed
+- Accessibility: section titles across the site are proper headings again, so
+  screen-reader users can jump between sections (a regression caught and repaired
+  during release QA)
+
 ## 0.8.0 — Phase 6 R2: The ladder and the numbers (2026-07-23)
 
 - Delegacy is now a member-only request from the cabinet („გახდი დელეგატი"):
