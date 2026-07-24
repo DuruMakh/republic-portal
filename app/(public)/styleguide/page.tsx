@@ -273,6 +273,7 @@ export default function StyleguidePage() {
         <Card title="რეიტინგი">
           <SectionRule
             label="რეიტინგი — ხუთეული"
+            as="div"
             action={
               <a href="/leaderboard" className="text-[0.72rem]">
                 სრულად →
