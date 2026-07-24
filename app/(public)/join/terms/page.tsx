@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DelegateTerms } from "@/components/DelegateTerms";
+import { Eyebrow } from "@/components/Eyebrow";
 
 export const metadata: Metadata = {
   title: "დელეგატის წესები და პირობები — ქართული რესპუბლიკა",
@@ -15,11 +16,11 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 pb-16 pt-10">
-      <p className="mb-2 text-xs font-bold uppercase tracking-widest text-brand">
-        დელეგატის წესები და პირობები
-      </p>
+      <div className="mb-2">
+        <Eyebrow>დელეგატის წესები და პირობები</Eyebrow>
+      </div>
       <h1 className="mb-4 font-serif text-3xl font-bold text-ink">წესები და პირობები</h1>
-      <p className="mb-6 rounded-lg bg-warn/10 p-3 text-sm font-semibold text-warn">
+      <p className="mb-6 border border-warn-deep bg-warn/10 p-3 text-sm font-semibold text-warn-deep">
         სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
       </p>
       <div className="border-y-2 border-ink py-8">
