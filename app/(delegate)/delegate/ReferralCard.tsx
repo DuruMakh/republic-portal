@@ -25,7 +25,7 @@ export function ReferralCard({ code }: { code: string }) {
       </p>
       {url ? (
         <>
-          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3 border border-hairline bg-surface p-3">
             <code
               className="min-w-0 flex-1 break-all font-mono text-sm text-ink"
               data-testid="referral-url"
