@@ -38,7 +38,7 @@ export default async function TransparencyPage() {
         ღია მონაცემები მოძრაობის წევრობასა და შემოსავლებზე — პირდაპირ რეესტრიდან.
       </p>
 
-      <div className="mt-8 grid sm:grid-cols-3 gap-x-8">
+      <div className="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           value={`${formatCountKa(Math.round(stats.total_gel))} ₾`}
           label="შეგროვებული საწევრო შენატანები"
