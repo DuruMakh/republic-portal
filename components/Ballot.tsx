@@ -13,9 +13,12 @@ export interface BallotBarProps {
   label: string;
   pct: number;
   tone: "brand" | "ink" | "muted";
+  /** Displayed in the right-hand slot instead of `pct` when provided; `pct` still
+   *  drives the fill width. Additive — omit to keep today's pct-as-label behavior. */
+  value?: string | number;
 }
 
-export function BallotBar({ label, pct, tone }: BallotBarProps) {
+export function BallotBar({ label, pct, tone, value }: BallotBarProps) {
   const toneClass = tone === "brand" ? "bg-brand" : tone === "ink" ? "bg-ink" : "bg-muted-fg";
 
   return (
@@ -24,7 +27,7 @@ export function BallotBar({ label, pct, tone }: BallotBarProps) {
       <div className="h-2 bg-surface relative">
         <div className={`absolute inset-y-0 left-0 ${toneClass}`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="font-serif font-bold text-right">{pct}</div>
+      <div className="font-serif font-bold text-right">{value ?? pct}</div>
     </div>
   );
 }

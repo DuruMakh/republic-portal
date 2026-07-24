@@ -175,6 +175,7 @@ export default async function AdminOverviewPage() {
                   key={r.region_id}
                   label={r.name_ka}
                   pct={barPct(r.member_count, maxRegion)}
+                  value={formatCountKa(r.member_count)}
                   tone={i === 0 ? "brand" : "ink"}
                 />
               ))}
@@ -186,6 +187,7 @@ export default async function AdminOverviewPage() {
                   // exceed the single largest region's count (unlike any individual
                   // row, which never can by construction).
                   pct={Math.min(100, barPct(remainderCount, maxRegion))}
+                  value={formatCountKa(remainderCount)}
                   tone="muted"
                 />
               ) : null}

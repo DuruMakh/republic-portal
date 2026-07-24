@@ -54,5 +54,13 @@ describe("Ballot", () => {
       render(<BallotBar label="Yes" pct={45} tone="brand" />);
       expect(screen.getByText("45")).toBeInTheDocument();
     });
+
+    it("renders value in place of pct when provided, fill width still from pct", () => {
+      render(<BallotBar label="თბილისი" pct={45} tone="brand" value="1 204" />);
+      expect(screen.getByText("1 204")).toBeInTheDocument();
+      expect(screen.queryByText("45")).not.toBeInTheDocument();
+      const fillElement = document.querySelector("[style*='width: 45%']");
+      expect(fillElement).toBeInTheDocument();
+    });
   });
 });
