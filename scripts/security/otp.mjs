@@ -6,8 +6,13 @@
  * Consolidating every copy of this idiom is a pre-existing tidy-up already
  * tracked separately (.superpowers/sdd/progress.md, decision D-A) — out of
  * scope for the security audit.
+ *
+ * Imports `db` from ./db.mjs, not ./actors.mjs: actors.mjs itself imports
+ * readFreshInboxOtp from this file, so importing `db` back from actors.mjs
+ * would form a circular import. db.mjs is a leaf module (no local imports)
+ * shared by both, which keeps the dependency graph acyclic.
  */
-import { db } from "./actors.mjs";
+import { db } from "./db.mjs";
 
 /** THE dev_otp_inbox poll: newest row for the phone, no older than sentAt. */
 export async function readFreshInboxOtp(phoneNational, sentAt) {

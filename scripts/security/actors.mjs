@@ -15,29 +15,23 @@
  * scripts/seed-staging.mjs; they and A1 are never created here, only looked
  * up.
  *
- * Every audit-created user (A2-A8) is tagged user_metadata.audit_tag so the
- * end-of-phase reseed (scripts/seed-staging.mjs) can identify and sweep them.
+ * A3-A8 are driven to their declared standing (ACTORS[id].standing /
+ * .delegate) through the app's own RPCs — the same doors a real member,
+ * delegate or admin would use — never by hand-writing rows with the service
+ * role. See driveStandings() below; every RPC name/signature is cited against
+ * the migration that defines it.
+ *
+ * Every audit-created user (A2-A8, plus the one auxiliary team-member fixture
+ * for A7) is tagged user_metadata.audit_tag so the end-of-phase reseed
+ * (scripts/seed-staging.mjs) can identify and sweep them.
  *
  * Run: node --env-file=.env.local scripts/security/actors.mjs --verify
  */
 import { createClient } from "@supabase/supabase-js";
+import { db, anonClient, url, anonKey } from "./db.mjs";
 import { readFreshInboxOtp } from "./otp.mjs";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceKey) {
-  throw new Error("security probing needs NEXT_PUBLIC_SUPABASE_URL, ANON_KEY and SERVICE_ROLE_KEY");
-}
-
-/**
- * Service-role client: fixture provisioning + dev_otp_inbox reads ONLY.
- * Never used as a probe actor — it bypasses every check by design and would
- * report every surface as reachable, producing a false all-clear for the
- * whole audit.
- */
-export const db = createClient(url, serviceKey, { auth: { persistSession: false } });
-export const anonClient = () => createClient(url, anonKey, { auth: { persistSession: false } });
+export { db, anonClient };
 
 /**
  * Phones reserved for the audit. +995509001xxx sits outside the seed's
@@ -46,7 +40,8 @@ export const anonClient = () => createClient(url, anonKey, { auth: { persistSess
  * nowhere near 9001xxx) and outside the four canonical admin phones
  * (+995509000001..4, A9-A12 below). Confirmed free against live auth.users
  * and profiles on staging on 2026-07-25 (zero collisions) before this table
- * was written — see .superpowers/sdd/task-1-report.md.
+ * was written — see .superpowers/sdd/task-1-report.md. 509001009 (the
+ * auxiliary team-member fixture below) was confirmed free the same way.
  */
 export const ACTORS = {
   A1: { label: "anonymous", phone: null, standing: null },
@@ -82,6 +77,17 @@ export const ACTORS = {
 export const ACTOR_IDS = Object.keys(ACTORS);
 
 const AUDIT_TAG = "security-audit-2026-07";
+
+/**
+ * Auxiliary fixture, deliberately NOT one of the twelve audit positions (it
+ * has no ActorId and is never added to ACTORS/ACTOR_IDS — Task 4's matrix
+ * loop must keep iterating over exactly twelve). A7 ("approved delegate")
+ * needs a real team member bound to it, or "can a delegate read a rival
+ * delegate's team" has no data to probe against. This is a second real,
+ * completed member who ends up on A7's team via member_change_delegate, the
+ * same RPC any member uses to pick a delegate.
+ */
+const TEAM_MEMBER_PHONE = "509001009";
 
 async function findUserByPhone(phone) {
   for (let page = 1; ; page++) {
@@ -130,16 +136,226 @@ export function actorClient(accessToken) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Standing-driving: every state transition below goes through the same RPC
+// surface a real user/admin would call, never a service-role write. Every
+// helper re-reads ground truth (service role, read-only) before acting, so
+// driving standings is idempotent — a second run (or a resumed partial run)
+// skips whatever is already done rather than re-doing or duplicating it.
+// RPC names/signatures below are cited against the migration that defines
+// the LIVE (latest create-or-replace) body, confirmed by reading the
+// migrations directly rather than assuming names:
+//   register(text,text,text,text default null)                — supabase/migrations/20260722140000_r2_review_fixes.sql:34
+//   become_member_save_profile(date,int,int,text,uuid=null)    — supabase/migrations/20260721120000_progressive_registration.sql:468
+//   become_member_complete(int)                                — supabase/migrations/20260721120000_progressive_registration.sql:529
+//   request_delegacy()                                         — supabase/migrations/20260722140000_r2_review_fixes.sql:107
+//   admin_approve_delegate(uuid,text)                          — supabase/migrations/20260722120000_r2_ladder_and_numbers.sql:130
+//   admin_reject_delegate(uuid,text default null)               — supabase/migrations/20260717150000_admin_crm.sql:385 (never replaced)
+//   admin_record_payment(uuid,numeric,date,text default null)  — supabase/migrations/20260718100000_admin_crm_hardening.sql:98
+//   member_change_delegate(uuid default null)                  — supabase/migrations/20260722140000_r2_review_fixes.sql:149
+// All eight exist under exactly the names/signatures the coordinator listed;
+// nothing needed correcting.
+// ---------------------------------------------------------------------------
+
+async function readProfile(userId) {
+  const { data, error } = await db
+    .from("profiles")
+    .select("status, registration_completed_at")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function readDelegate(userId) {
+  const { data, error } = await db
+    .from("delegates")
+    .select("status")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function countOpenTeam(delegateUserId) {
+  const { count, error } = await db
+    .from("memberships")
+    .select("*", { count: "exact", head: true })
+    .eq("delegate_id", delegateUserId)
+    .is("ended_at", null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+async function fetchAnyCity() {
+  const { data, error } = await db.from("cities").select("id, region_id").limit(1).single();
+  if (error) throw error;
+  return data;
+}
+
+// 11 digits (profiles.personal_id check ^\d{11}$), unique per audit fixture,
+// disjoint from the seed's own scheme (personalIdFor = "1" + 10-digit index
+// in scripts/seed-staging.mjs) so the two can never collide.
+const personalIdFor = (phone) => `99${phone}`;
+
+// Tbilisi (UTC+4) is always the same calendar day as UTC or one day ahead of
+// it, never behind — so UTC-today, as a plain date string, is always <=
+// tbilisi_today() and always satisfies admin_record_payment's
+// "not in the future" check regardless of what wall-clock hour this runs at.
+const todayIsoDate = () => new Date().toISOString().slice(0, 10);
+
+const FIXTURE_BIRTH_DATE = "1990-06-15";
+const FIXTURE_EMPLOYMENT = "უსაფრთხოების აუდიტის ფიქსტურა";
+const FIXTURE_TIER = 10; // one of (5, 10, 20); payment amount below matches it 1:1
+
+/** register(): idempotent by itself (a state read once a profile exists) — always safe to call. */
+async function ensureRegistered(actorOut, firstName, lastName) {
+  const client = actorClient(actorOut.accessToken);
+  const { error } = await client.rpc("register", {
+    p_first_name: firstName,
+    p_last_name: lastName,
+    p_personal_id: personalIdFor(actorOut.phone),
+  });
+  if (error) throw new Error(`register failed for ${actorOut.phone}: ${error.message}`);
+}
+
+/** become_member_save_profile + become_member_complete: skipped once already completed. */
+async function ensureCompleted(actorOut, city) {
+  const profile = await readProfile(actorOut.userId);
+  if (profile?.registration_completed_at) return;
+  const client = actorClient(actorOut.accessToken);
+  const { error: saveErr } = await client.rpc("become_member_save_profile", {
+    p_birth_date: FIXTURE_BIRTH_DATE,
+    p_region_id: city.region_id,
+    p_city_id: city.id,
+    p_employment: FIXTURE_EMPLOYMENT,
+    p_delegate_id: null, // central membership; A7's team member re-points explicitly below
+  });
+  if (saveErr)
+    throw new Error(`become_member_save_profile failed for ${actorOut.phone}: ${saveErr.message}`);
+  const { error: completeErr } = await client.rpc("become_member_complete", {
+    p_tier: FIXTURE_TIER,
+  });
+  if (completeErr)
+    throw new Error(`become_member_complete failed for ${actorOut.phone}: ${completeErr.message}`);
+}
+
 /**
- * Mints all twelve actors. Sessions for distinct phones can be minted in
- * parallel (the OTP throttle is per-phone, ~60s, not global) — but call this
- * ONCE per process run and reuse the result. Minting the same phone twice
- * inside 60s throttles the send.
+ * admin_record_payment as the finance admin: skipped once the member is
+ * already active_member. Guarding on current status (not "any payment ever")
+ * makes this self-healing if a fixture ever lapses past its coverage window,
+ * not just idempotent against an immediate re-run.
  */
-export async function provisionActors() {
+async function ensurePaid(actorOut, financeActorOut) {
+  const profile = await readProfile(actorOut.userId);
+  if (profile?.status === "active_member") return;
+  const finance = actorClient(financeActorOut.accessToken);
+  const { error } = await finance.rpc("admin_record_payment", {
+    p_member_id: actorOut.userId,
+    p_amount_gel: FIXTURE_TIER, // amount == tier -> months_covered = 1 (floor(amount/tier))
+    p_paid_at: todayIsoDate(),
+    p_bank_reference: null,
+  });
+  if (error) throw new Error(`admin_record_payment failed for ${actorOut.phone}: ${error.message}`);
+}
+
+/** request_delegacy(): skipped once a delegates row already exists (any status — a repeat call throws delegacy_exists). */
+async function ensureDelegacyRequested(actorOut) {
+  const existing = await readDelegate(actorOut.userId);
+  if (existing) return;
+  const client = actorClient(actorOut.accessToken);
+  const { error } = await client.rpc("request_delegacy");
+  if (error) throw new Error(`request_delegacy failed for ${actorOut.phone}: ${error.message}`);
+}
+
+/** admin_approve_delegate as verifier: skipped once already approved (a repeat call throws invalid_target). */
+async function ensureApproved(actorOut, verifierActorOut) {
+  const current = await readDelegate(actorOut.userId);
+  if (current?.status === "approved") return;
+  const verifier = actorClient(verifierActorOut.accessToken);
+  const { error } = await verifier.rpc("admin_approve_delegate", {
+    p_delegate_id: actorOut.userId,
+    p_slug: "security-audit-a7-delegate",
+  });
+  if (error)
+    throw new Error(`admin_approve_delegate failed for ${actorOut.phone}: ${error.message}`);
+}
+
+/** admin_reject_delegate as verifier: skipped once already rejected (a repeat call throws invalid_target). */
+async function ensureRejected(actorOut, verifierActorOut) {
+  const current = await readDelegate(actorOut.userId);
+  if (current?.status === "rejected") return;
+  const verifier = actorClient(verifierActorOut.accessToken);
+  const { error } = await verifier.rpc("admin_reject_delegate", {
+    p_delegate_id: actorOut.userId,
+    p_note: "უსაფრთხოების აუდიტის ფიქსტურა — განზრახ უარყოფილი",
+  });
+  if (error)
+    throw new Error(`admin_reject_delegate failed for ${actorOut.phone}: ${error.message}`);
+}
+
+/** member_change_delegate as the team member: naturally idempotent (no-op on an unchanged target). */
+async function ensureBoundToDelegate(memberOut, delegateUserId) {
+  const client = actorClient(memberOut.accessToken);
+  const { error } = await client.rpc("member_change_delegate", { p_delegate_id: delegateUserId });
+  if (error)
+    throw new Error(`member_change_delegate failed for ${memberOut.phone}: ${error.message}`);
+}
+
+/**
+ * Drives A3-A8 (and the A7 team-member fixture) to their declared standing.
+ * A9-A12 are untouched here — they are the canonical seeded admins, owned by
+ * scripts/seed-staging.mjs, and out of this task's remit (see
+ * task-1-report.md for the standing discrepancy this leaves on the record).
+ */
+async function driveStandings(out, teamMember) {
+  const city = await fetchAnyCity();
+
+  // A3: registered only — account + personal data, no membership.
+  await ensureRegistered(out.A3, "აუდიტი", "რეგისტრირებული");
+
+  // A4: profile_completed — member, membership open, unpaid.
+  await ensureRegistered(out.A4, "აუდიტი", "დასრულებული");
+  await ensureCompleted(out.A4, city);
+
+  // A5: active_member — paid, counted in public figures.
+  await ensureRegistered(out.A5, "აუდიტი", "აქტიური");
+  await ensureCompleted(out.A5, city);
+  await ensurePaid(out.A5, out.A11);
+
+  // A6: pending delegate applicant — keeps full (paid) member life.
+  await ensureRegistered(out.A6, "აუდიტი", "მოლოდინში");
+  await ensureCompleted(out.A6, city);
+  await ensurePaid(out.A6, out.A11);
+  await ensureDelegacyRequested(out.A6);
+
+  // A7: approved delegate — keeps full member life, must have a real team.
+  await ensureRegistered(out.A7, "აუდიტი", "დამტკიცებული");
+  await ensureCompleted(out.A7, city);
+  await ensurePaid(out.A7, out.A11);
+  await ensureDelegacyRequested(out.A7);
+  await ensureApproved(out.A7, out.A10);
+
+  // Team-member fixture: a second real completed member, bound to A7 via the
+  // same RPC any member uses to choose a delegate. Must come AFTER A7's
+  // approval — member_change_delegate only accepts an approved delegate id.
+  await ensureRegistered(teamMember, "აუდიტი", "გუნდელი");
+  await ensureCompleted(teamMember, city);
+  await ensureBoundToDelegate(teamMember, out.A7.userId);
+
+  // A8: rejected delegate applicant — terminal, keeps full member life.
+  await ensureRegistered(out.A8, "აუდიტი", "უარყოფილი");
+  await ensureCompleted(out.A8, city);
+  await ensurePaid(out.A8, out.A11);
+  await ensureDelegacyRequested(out.A8);
+  await ensureRejected(out.A8, out.A10);
+}
+
+async function provisionActorsOnce() {
   const out = {};
   await Promise.all(
-    Object.entries(ACTORS).map(async ([id, def]) => {
+    ACTOR_IDS.map(async (id) => {
+      const def = ACTORS[id];
       if (!def.phone) {
         out[id] = { phone: null, userId: null, accessToken: null };
         return;
@@ -148,7 +364,93 @@ export async function provisionActors() {
       out[id] = { phone: def.phone, userId: user.id, accessToken: await mintSession(def.phone) };
     }),
   );
+
+  const teamMemberUser = await ensureUser(TEAM_MEMBER_PHONE);
+  const teamMember = {
+    phone: TEAM_MEMBER_PHONE,
+    userId: teamMemberUser.id,
+    accessToken: await mintSession(TEAM_MEMBER_PHONE),
+  };
+
+  await driveStandings(out, teamMember);
+
   return out;
+}
+
+// Memoized: a second call in the same process returns the SAME promise
+// instead of re-minting every session. provisionActors() mints twelve (well,
+// thirteen counting the A7 team-member fixture) OTP sends — safe once per
+// process run, not safe to repeat. Task 4's matrix loop (154 surfaces × 12
+// actors) must call this once and hold onto the result, exactly like this
+// module's own --verify does below; the cache makes that the path of least
+// resistance rather than a rule callers have to remember. A failure clears
+// the cache so a later call can retry instead of permanently caching a
+// transient error (e.g. one throttled send).
+let _cache = null;
+export function provisionActors() {
+  if (!_cache) {
+    _cache = provisionActorsOnce().catch((err) => {
+      _cache = null;
+      throw err;
+    });
+  }
+  return _cache;
+}
+
+/**
+ * Ground-truth check for --verify: does this actor's real DB state match
+ * what ACTORS declares? Deliberately reads via the service role (`db`), not
+ * through the actor's own client — this is confirming the FIXTURE is set up
+ * correctly, not probing what the actor can see (that is later tasks' job).
+ */
+async function verifyStanding(id, actorOut) {
+  const def = ACTORS[id];
+  if (id === "A1") return { ok: true, detail: "anonymous" };
+
+  if (id === "A2") {
+    const profile = await readProfile(actorOut.userId);
+    const ok = profile === null;
+    return {
+      ok,
+      detail: ok ? "no profile row" : `UNEXPECTED profile row (status=${profile.status})`,
+    };
+  }
+
+  if (["A9", "A10", "A11", "A12"].includes(id)) {
+    // Owned by scripts/seed-staging.mjs, not driven here — role is the only
+    // thing Task 1 asserts for admins. See task-1-report.md for why
+    // ACTORS[id].standing ("active_member") is not checked for A9-A12.
+    const { data, error } = await db
+      .from("admin_roles")
+      .select("role")
+      .eq("user_id", actorOut.userId)
+      .eq("role", def.role);
+    if (error) throw error;
+    const ok = (data?.length ?? 0) > 0;
+    return { ok, detail: ok ? `role=${def.role}` : `MISSING admin_roles row for ${def.role}` };
+  }
+
+  // A3-A8
+  const profile = await readProfile(actorOut.userId);
+  if (!profile) return { ok: false, detail: "MISSING profile row" };
+  let ok = profile.status === def.standing;
+  let detail = `status=${profile.status}`;
+
+  if (def.delegate) {
+    const delegate = await readDelegate(actorOut.userId);
+    const delegateOk = delegate?.status === def.delegate;
+    ok = ok && delegateOk;
+    detail += ` delegate=${delegate?.status ?? "MISSING"}`;
+
+    if (id === "A7") {
+      const teamCount = await countOpenTeam(actorOut.userId);
+      const teamOk = teamCount >= 1;
+      ok = ok && teamOk;
+      detail += ` team=${teamCount}`;
+    }
+  }
+
+  return { ok, detail };
 }
 
 if (process.argv.includes("--verify")) {
@@ -156,9 +458,14 @@ if (process.argv.includes("--verify")) {
   let failed = 0;
   for (const [id, a] of Object.entries(actors)) {
     const { data } = await actorClient(a.accessToken).auth.getUser();
-    const ok = a.accessToken ? data.user?.id === a.userId : true;
+    const jwtOk = a.accessToken ? data.user?.id === a.userId : true;
+    const standing = await verifyStanding(id, a);
+    const ok = jwtOk && standing.ok;
     if (!ok) failed++;
-    console.log(`${ok ? "OK " : "FAIL"} ${id} ${ACTORS[id].label} ${a.userId ?? "(anon)"}`);
+    const jwtNote = jwtOk ? "" : " [JWT MISMATCH]";
+    console.log(
+      `${ok ? "OK " : "FAIL"} ${id} ${ACTORS[id].label} ${a.userId ?? "(anon)"} — ${standing.detail}${jwtNote}`,
+    );
   }
   process.exit(failed === 0 ? 0 : 1);
 }
