@@ -49,6 +49,21 @@ describe("Masthead", () => {
     expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
   });
 
+  it("omits the nav landmark entirely when it has no links, cta, or session slot", () => {
+    // The cabinet/admin/delegate chrome passes navItems={[]} cta={null} (AdminNav/
+    // CabinetNav carry the real nav) — an empty <nav> would announce a hollow
+    // primary-navigation landmark to screen readers, so it must not render.
+    vi.mocked(usePathname).mockReturnValue("/admin");
+    render(<Masthead navItems={[]} cta={null} tag="ADMIN" />);
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  it("still renders the nav when only a cta is supplied (member chrome)", () => {
+    vi.mocked(usePathname).mockReturnValue("/me/profile");
+    render(<Masthead navItems={[]} cta={<span>BACK</span>} />);
+    expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
+  });
+
   it("renders the tag text after the lockup when passed, and nothing when omitted", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     const { rerender } = render(

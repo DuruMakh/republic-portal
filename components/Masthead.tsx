@@ -51,6 +51,12 @@ export function Masthead({
     </Link>
   ));
 
+  // The cabinet/admin/delegate chrome renders the Masthead as a bare nameplate
+  // (navItems=[], cta=null) with AdminNav/CabinetNav carrying the real nav — so
+  // only render the primary-nav landmark when it actually has content, never an
+  // empty <nav> that a screen reader would announce as a hollow landmark.
+  const hasNav = navItems.length > 0 || Boolean(sessionSlot) || Boolean(cta);
+
   return (
     <header className="flex items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10">
       <div className="flex items-center gap-2.5">
@@ -66,14 +72,16 @@ export function Masthead({
           <span className="text-[0.74rem] font-semibold tracking-[.14em] text-brand">{tag}</span>
         ) : null}
       </div>
-      <nav
-        aria-label="მთავარი ნავიგაცია"
-        className="flex items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold sm:gap-4"
-      >
-        {navLinks}
-        {sessionSlot}
-        {cta}
-      </nav>
+      {hasNav ? (
+        <nav
+          aria-label="მთავარი ნავიგაცია"
+          className="flex items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold sm:gap-4"
+        >
+          {navLinks}
+          {sessionSlot}
+          {cta}
+        </nav>
+      ) : null}
     </header>
   );
 }
