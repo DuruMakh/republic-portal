@@ -6,7 +6,9 @@ export const metadata: Metadata = { title: "ახალი გამოკი�
 export default function NewPollPage() {
   return (
     <div>
-      <h1 className="mb-4 text-xl font-bold text-ink">ახალი გამოკითხვა</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ახალი გამოკითხვა</h1>
+      </div>
       <PollForm poll={null} />
     </div>
   );

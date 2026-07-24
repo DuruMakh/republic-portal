@@ -78,14 +78,14 @@ export function GrantRoleForm({
       ) : null}
 
       {candidate ? (
-        <div className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface/50 p-4">
+        <div className="flex flex-wrap items-end gap-3 border border-hairline bg-surface/50 p-4">
           <p className="text-sm font-bold text-ink">{candidate.name}</p>
           <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             როლი
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as AdminRole)}
-              className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal"
+              className={adminControlClasses}
             >
               {ADMIN_ROLE_VALUES.map((r) => (
                 <option key={r} value={r}>

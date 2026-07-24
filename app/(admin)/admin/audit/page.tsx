@@ -95,8 +95,8 @@ export default async function AdminAuditPage({
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">აუდიტის ჟურნალი</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">აუდიტის ჟურნალი</h1>
         <p className="mt-2 text-sm text-muted-fg">
           ყველა ადმინისტრაციული მოქმედება — უახლესი პირველ ადგილას. ჩანაწერები წაუშლელია.
         </p>
@@ -186,7 +186,7 @@ export default async function AdminAuditPage({
                         <summary className="cursor-pointer text-xs font-semibold text-brand">
                           დეტალები
                         </summary>
-                        <pre className="mt-1 max-w-[360px] overflow-x-auto rounded bg-surface p-2 text-xs">
+                        <pre className="mt-1 max-w-[360px] overflow-x-auto bg-surface p-2 text-xs">
                           {JSON.stringify(e.details, null, 2)}
                         </pre>
                       </details>
@@ -201,7 +201,7 @@ export default async function AdminAuditPage({
         </Card>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4">
         {page > 1 ? (
           <ButtonLink href={pageHref(page - 1)} variant="ghost" size="sm">
             ← წინა

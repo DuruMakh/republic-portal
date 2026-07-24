@@ -6,7 +6,9 @@ export const metadata: Metadata = { title: "ახალი სიახლე �
 export default function NewNewsPage() {
   return (
     <div>
-      <h1 className="mb-4 text-xl font-bold text-ink">ახალი სიახლე</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ახალი სიახლე</h1>
+      </div>
       <NewsForm article={null} />
     </div>
   );

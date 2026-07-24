@@ -47,22 +47,19 @@ export default async function AdminAdminsPage() {
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">ადმინების მართვა</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ადმინების მართვა</h1>
         <p className="mt-2 text-sm text-muted-fg">
           როლების მინიჭება და მოხსნა — ყველა ცვლილება აღირიცხება აუდიტის ჟურნალში.
         </p>
       </div>
 
       <div className="flex flex-col gap-6">
-        <Card header={<h3 className="text-base font-bold text-ink">როლის მინიჭება</h3>}>
+        <Card title="როლის მინიჭება">
           <GrantRoleForm find={findAdminCandidateAction} grant={grantRoleAction} />
         </Card>
 
-        <Card
-          header={<h3 className="text-base font-bold text-ink">მიმდინარე ადმინები</h3>}
-          padded={false}
-        >
+        <Card title="მიმდინარე ადმინები" padded={false}>
           <DataTable
             bodyTestId="admin-admins-body"
             head={
@@ -83,7 +80,7 @@ export default async function AdminAdminsPage() {
                     {admin.roles.map((r) => (
                       <span
                         key={r.role}
-                        className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-xs font-semibold text-ink"
+                        className="inline-flex items-center gap-1 bg-surface px-2 py-0.5 text-xs font-semibold text-ink"
                       >
                         {ROLE_LABELS_KA[r.role]}
                         <RevokeRoleButton userId={userId} role={r.role} revoke={revokeRoleAction} />

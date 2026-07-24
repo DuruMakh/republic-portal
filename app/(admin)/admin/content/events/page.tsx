@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ButtonLink";
+import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { contentPill } from "@/lib/admin";
@@ -21,46 +22,53 @@ export default async function AdminEventsListPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-ink">ღონისძიებები</h1>
-        <ButtonLink href="/admin/content/events/new" size="sm">
-          ახალი ღონისძიება
-        </ButtonLink>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიებები</h1>
+          <ButtonLink href="/admin/content/events/new" size="sm">
+            ახალი ღონისძიება
+          </ButtonLink>
+        </div>
       </div>
-      <DataTable
-        bodyTestId="admin-events-body"
-        head={
-          <>
-            <th className={tableThClass}>დასახელება</th>
-            <th className={tableThClass}>დრო</th>
-            <th className={tableThClass}>ადგილი</th>
-            <th className={tableThClass}>სტატუსი</th>
-            <th className={tableThClass}>მოდის</th>
-            <th className={tableThClass}></th>
-          </>
-        }
-      >
-        {rows.map((e) => (
-          <tr key={e.id} className={tableRowClass}>
-            <td className={`${tableCellClass} font-semibold text-ink`}>{e.title}</td>
-            <td className={tableCellClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
-            <td className={tableCellClass}>{e.location}</td>
-            <td className={tableCellClass}>
-              <Pill {...contentPill(e.status)} />
-            </td>
-            <td className={tableCellClass}>{formatCountKa(e.going_count)}</td>
-            <td className={tableCellClass}>
-              <Link
-                href={`/admin/content/events/${e.id}`}
-                className="font-semibold text-brand hover:underline"
-              >
-                რედაქტირება
-              </Link>
-            </td>
-          </tr>
-        ))}
-      </DataTable>
-      {rows.length === 0 ? <p className="mt-4 text-sm text-muted-fg">ჯერ ცარიელია.</p> : null}
+      <Card padded={false}>
+        {rows.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-fg">ჯერ ცარიელია.</p>
+        ) : (
+          <DataTable
+            bodyTestId="admin-events-body"
+            head={
+              <>
+                <th className={tableThClass}>დასახელება</th>
+                <th className={tableThClass}>დრო</th>
+                <th className={tableThClass}>ადგილი</th>
+                <th className={tableThClass}>სტატუსი</th>
+                <th className={tableThClass}>მოდის</th>
+                <th className={tableThClass}></th>
+              </>
+            }
+          >
+            {rows.map((e) => (
+              <tr key={e.id} className={tableRowClass}>
+                <td className={`${tableCellClass} font-semibold text-ink`}>{e.title}</td>
+                <td className={tableCellClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
+                <td className={tableCellClass}>{e.location}</td>
+                <td className={tableCellClass}>
+                  <Pill {...contentPill(e.status)} />
+                </td>
+                <td className={tableCellClass}>{formatCountKa(e.going_count)}</td>
+                <td className={tableCellClass}>
+                  <Link
+                    href={`/admin/content/events/${e.id}`}
+                    className="font-semibold text-brand hover:underline"
+                  >
+                    რედაქტირება
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        )}
+      </Card>
     </div>
   );
 }
