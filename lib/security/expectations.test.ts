@@ -18,6 +18,14 @@ const view = (name: string, overrides?: Surface["overrides"]): Surface => ({
   overrides,
 });
 
+const table = (name: string, overrides?: Surface["overrides"]): Surface => ({
+  id: `table:${name}`,
+  kind: "table",
+  name,
+  layer: "db",
+  overrides,
+});
+
 describe("defaultExpectation", () => {
   it("denies admin_ functions to every non-admin actor", () => {
     for (const actor of ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"] as const) {
@@ -116,6 +124,62 @@ describe("defaultExpectation", () => {
         expect(defaultExpectation(fn(surface), actor)).toBe("deny");
       }
     }
+  });
+});
+
+describe("defaultExpectation — tables are governed by grants, not the admin_/public_ naming convention", () => {
+  // Coordinator-flagged gap (found during Task 2 spec review): admin_roles is
+  // a TABLE (supabase/migrations/20260712212409_initial_schema.sql:64), and
+  // "admin_roles".startsWith("admin_") is true, so before this fix it fell
+  // into the self-gating admin_ branch and defaulted to "deny" for A10-A12 —
+  // three confident false findings on designed behaviour, since those actors
+  // each hold their own row and the probe would return it. The real rule
+  // (supabase/migrations/20260717150000_admin_crm.sql:936-938) is a plain
+  // `grant select ... to authenticated` plus an owner-scoping RLS policy:
+  // every authenticated actor may run the select at all; RLS decides which
+  // rows come back.
+  it("allows admin_roles to every authenticated actor and denies it to anonymous", () => {
+    for (const actor of [
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A9",
+      "A10",
+      "A11",
+      "A12",
+    ] as const) {
+      expect(defaultExpectation(table("admin_roles"), actor)).toBe("allow");
+    }
+    expect(defaultExpectation(table("admin_roles"), "A1")).toBe("deny");
+  });
+
+  it("never applies the admin_ role-family rule to a table, not even for super_admin", () => {
+    // A hypothetical table sharing the admin_ prefix but with no
+    // KNOWN_TABLE_OVERRIDES entry must NOT inherit an "allow" from the
+    // admin_ wildcard the way a same-named function/view would — a table's
+    // access can only come from a verified grant, never a guess from its
+    // name. Fails closed (rule-derived "deny") pending that verification,
+    // same as any other unknown pair.
+    expect(defaultExpectation(table("admin_some_future_table"), "A9")).toBe("deny");
+    expect(isRuleDerived(table("admin_some_future_table"), "A9")).toBe(true);
+  });
+
+  it("never applies the public_ anyone-may-read rule to a table", () => {
+    // Symmetric case: no public_-prefixed table exists today (verified by
+    // grepping `create table` across every migration), but the same
+    // structural reasoning applies — a table isn't auto-opened to anon just
+    // because it shares a view's naming convention.
+    expect(defaultExpectation(table("public_some_future_table"), "A1")).toBe("deny");
+  });
+
+  it("still applies the admin_/public_ conventions normally to functions and views", () => {
+    // The kind gate must narrow the branch, not disable it.
+    expect(defaultExpectation(fn("admin_record_payment"), "A9")).toBe("allow");
+    expect(defaultExpectation(view("public_news"), "A1")).toBe("allow");
   });
 });
 

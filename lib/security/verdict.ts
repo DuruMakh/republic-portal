@@ -1,13 +1,21 @@
 import type { Expectation, ProbeOutcome, SurfaceKind, Verdict } from "./types";
 
 /**
- * Codes that mean "the caller was turned away". 42501 is a true authorization
- * denial; 42883/PGRST202 mean the function or its signature was not found,
- * which on the deny side is equally conclusive (nothing was reachable) but on
- * the allow side means OUR probe was malformed, not that the app is broken.
+ * The only code that means "the caller was turned away by a real privilege
+ * check". 42883 (undefined function) and PGRST202 (function absent from
+ * PostgREST's schema cache) mean no function/signature by that name was
+ * found — and since every surface in the manifest comes from live
+ * introspection (Task 3) and therefore definitely exists, a not-found code
+ * can only mean OUR call was malformed (wrong argument list, a typo in the
+ * probe's argument table — Task 7), never that the app correctly refused the
+ * actor. That holds on BOTH sides: on the allow side it obviously isn't a
+ * finding, but on the deny side it is not proof of denial either — treating
+ * it as "clear" would silently launder a probe defect into a false all-clear
+ * on exactly the surfaces this audit exists to check. So only 42501 clears a
+ * deny expectation; a not-found code always defers to needs-live-proof,
+ * same as any other unexpected error.
  */
 const DENIED_BY_PRIVILEGE = "42501";
-const NOT_FOUND_CODES = new Set(["42883", "PGRST202"]);
 
 /**
  * Surfaces you CALL, as opposed to surfaces you READ. The distinction decides
@@ -21,9 +29,7 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome, kind: Sur
 
   if (expectation === "deny") {
     if (errorCode !== null) {
-      return errorCode === DENIED_BY_PRIVILEGE || NOT_FOUND_CODES.has(errorCode)
-        ? "clear"
-        : "needs-live-proof";
+      return errorCode === DENIED_BY_PRIVILEGE ? "clear" : "needs-live-proof";
     }
     // No error means the grant exists and the caller got through.
     //
