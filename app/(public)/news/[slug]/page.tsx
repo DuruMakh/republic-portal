@@ -45,14 +45,16 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
         ← სიახლეები
       </Link>
       <article className="mt-6">
-        <Eyebrow>{formatDateKa(article.published_at)}</Eyebrow>
-        <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{article.title}</h1>
+        <div className="border-b border-ink pb-4">
+          <Eyebrow>{formatDateKa(article.published_at)}</Eyebrow>
+          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{article.title}</h1>
+        </div>
         {article.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
           <img
             src={article.image_url}
             alt={article.title}
-            className="mt-6 w-full rounded-xl border border-line object-cover"
+            className="mt-6 w-full border border-hairline object-cover"
           />
         ) : null}
         <ContentBody body={article.body} className="mt-6" />

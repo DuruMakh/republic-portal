@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/Card";
+import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
+import { SectionRule } from "@/components/SectionRule";
 import { StatCard } from "@/components/StatCard";
 import { formatCountKa } from "@/lib/format";
 import {
@@ -37,7 +38,7 @@ export default async function TransparencyPage() {
         ღია მონაცემები მოძრაობის წევრობასა და შემოსავლებზე — პირდაპირ რეესტრიდან.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid sm:grid-cols-3 gap-x-8">
         <StatCard
           value={`${formatCountKa(Math.round(stats.total_gel))} ₾`}
           label="შეგროვებული საწევრო შენატანები"
@@ -49,26 +50,24 @@ export default async function TransparencyPage() {
       </div>
 
       <div className="mt-10">
-        <Card title="წევრები რეგიონების მიხედვით" padded={false}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-xs font-semibold text-muted-fg">
-                <th className="px-5 py-3">რეგიონი</th>
-                <th className="px-5 py-3 text-right">წევრი</th>
-                <th className="px-5 py-3 text-right">აქტიური</th>
-              </tr>
-            </thead>
-            <tbody>
-              {regions.map((r) => (
-                <tr key={r.region_id} className="border-b border-line last:border-0">
-                  <td className="px-5 py-3 font-semibold text-ink">{r.name_ka}</td>
-                  <td className="px-5 py-3 text-right">{formatCountKa(r.registered)}</td>
-                  <td className="px-5 py-3 text-right">{formatCountKa(r.active)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+        <SectionRule label="წევრები რეგიონების მიხედვით" />
+        <DataTable
+          head={
+            <>
+              <th className={tableThClass}>რეგიონი</th>
+              <th className={`${tableThClass} text-right`}>წევრი</th>
+              <th className={`${tableThClass} text-right`}>აქტიური</th>
+            </>
+          }
+        >
+          {regions.map((r) => (
+            <tr key={r.region_id} className={tableRowClass}>
+              <td className={`${tableCellClass} font-semibold text-ink`}>{r.name_ka}</td>
+              <td className={`${tableCellClass} text-right`}>{formatCountKa(r.registered)}</td>
+              <td className={`${tableCellClass} text-right`}>{formatCountKa(r.active)}</td>
+            </tr>
+          ))}
+        </DataTable>
       </div>
 
       <p className="mt-6 text-xs text-muted-fg">

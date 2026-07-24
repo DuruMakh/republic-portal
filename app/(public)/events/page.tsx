@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { cardSkin } from "@/components/Card";
+import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatEventTimeKa, splitEvents } from "@/lib/community";
 import { fetchPublicEvents, type PublicEventItem } from "@/lib/supabase/public";
@@ -39,7 +40,7 @@ export default async function EventsPage() {
       <Eyebrow>ქართული რესპუბლიკა</Eyebrow>
       <h1 className="mt-1 font-serif text-4xl font-bold text-ink">ღონისძიებები</h1>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">მომავალი</h2>
+      <SectionRule label="მომავალი" className="mt-10" />
       {upcoming.length === 0 ? (
         <p className="mt-3 text-muted-fg">მომავალი ღონისძიებები მალე გამოცხადდება.</p>
       ) : (
@@ -52,7 +53,7 @@ export default async function EventsPage() {
 
       {past.length > 0 ? (
         <>
-          <h2 className="mt-12 text-lg font-bold text-ink">გასული</h2>
+          <SectionRule label="გასული" className="mt-12" />
           <div className="mt-3 flex flex-col gap-3">
             {past.map((e) => (
               <EventRow key={e.id} event={e} />
