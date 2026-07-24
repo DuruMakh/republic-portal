@@ -117,7 +117,6 @@ describe("Pill", () => {
     // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
     expect(screen.getByText("წევრი")).toBeInTheDocument();
     expect(screen.getByText("წევრი").className).toContain("text-ink");
-    expect(screen.getByText("წევრი").className).not.toContain("text-info");
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);

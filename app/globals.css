@@ -18,11 +18,6 @@
   --color-warn: #b45309;
   --color-warn-deep: #96450a;
   --color-danger: #9f1d35;
-  /* deprecated — removed in the final sweep once all usages are gone */
-  --color-navy: #0e1a2b;
-  --color-navy-dark: #16283f;
-  --color-gold: #c9a24b;
-  --color-info: #1a73e8;
   --font-sans: var(--font-noto-sans-georgian), "Sylfaen", "Segoe UI", system-ui, sans-serif;
   --font-serif: var(--font-noto-serif-georgian), "Sylfaen", Georgia, serif;
 }

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "სამოქალაქო პლატფორმა",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#C8102E",
+    background_color: "#F7F2E9",
+    theme_color: "#F7F2E9",
     lang: "ka",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

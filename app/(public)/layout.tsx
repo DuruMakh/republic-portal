@@ -34,7 +34,7 @@ const footerLinks: { href: string; label: string }[] = [
 /**
  * Public chrome (spec Sec 3.1-3.2): DemoBanner above the paper sheet, then the
  * sheet itself -- Masthead, the page content, SiteFooter. The old emoji-emblem
- * header and navy footer are gone (Task 10).
+ * header and footer are gone (Task 10).
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
