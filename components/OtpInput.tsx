@@ -33,9 +33,9 @@ export function OtpInput({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             data-testid={`otp-${i}`}
-            className={`h-14 w-11 rounded-lg border text-center text-2xl font-extrabold outline-none focus:border-brand ${
-              error ? "border-danger" : "border-line"
-            }`}
+            className={`w-10 h-11 border-0 border-b-2 ${
+              error ? "border-brand" : "border-ink"
+            } bg-transparent text-center font-serif text-xl focus:border-brand focus-visible:outline-none`}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, "");
               if (raw.length > 1) {

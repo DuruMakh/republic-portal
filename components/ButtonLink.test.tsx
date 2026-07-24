@@ -7,7 +7,8 @@ describe("ButtonLink", () => {
     render(<ButtonLink href="/join">გახდი წევრი</ButtonLink>);
     const link = screen.getByRole("link", { name: "გახდი წევრი" });
     expect(link.getAttribute("href")).toBe("/join");
-    expect(link.className).toContain("bg-brand");
+    expect(link.className).toContain("bg-ink");
+    expect(link.className).toContain("hover:bg-brand");
   });
   it("supports the dark variant", () => {
     render(
@@ -15,7 +16,7 @@ describe("ButtonLink", () => {
         რეიტინგი
       </ButtonLink>,
     );
-    expect(screen.getByRole("link", { name: "რეიტინგი" }).className).toContain("bg-navy");
+    expect(screen.getByRole("link", { name: "რეიტინგი" }).className).toContain("bg-ink");
   });
   it("supports the ghost-inverse variant for dark backgrounds", () => {
     render(
@@ -23,7 +24,8 @@ describe("ButtonLink", () => {
         დელეგატი
       </ButtonLink>,
     );
-    expect(screen.getByRole("link", { name: "დელეგატი" }).className).toContain("text-white");
+    expect(screen.getByRole("link", { name: "დელეგატი" }).className).toContain("text-paper");
+    expect(screen.getByRole("link", { name: "დელეგატი" }).className).toContain("border-paper");
   });
   it("supports the sm size without leaking md padding", () => {
     render(
@@ -32,7 +34,8 @@ describe("ButtonLink", () => {
       </ButtonLink>,
     );
     const cls = screen.getByRole("link", { name: "შესვლა" }).className;
-    expect(cls).toContain("px-3");
+    expect(cls).toContain("h-[34px]");
+    expect(cls).toContain("px-4");
     expect(cls).not.toContain("px-5");
   });
 });

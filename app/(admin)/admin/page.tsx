@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { BallotBar } from "@/components/Ballot";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { SectionRule } from "@/components/SectionRule";
 import { StatCard } from "@/components/StatCard";
 import { barPct, conversionPct, hasAnyRole, isStaff } from "@/lib/admin";
 import { formatAmountGel, formatDateKa } from "@/lib/cabinet";
@@ -10,6 +12,10 @@ import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "ადმინისტრირება — ქართული რესპუბლიკა" };
+
+// Fresh, minimal remainder-row label (task-18-brief.md Step 2; ka-gated) — shown only
+// when admin_region_stats returns more rows than the top-5 BallotBar rows above it.
+const REMAINDER_LABEL = "დანარჩენი";
 
 export default async function AdminOverviewPage() {
   const roles = await getAdminRoles();
@@ -26,13 +32,19 @@ export default async function AdminOverviewPage() {
     .single();
   if (overviewError) throw new Error(`admin_overview failed: ${overviewError.message}`);
 
+  // No `.limit(5)` here (unlike the pre-Kronika query): the remainder row below needs
+  // the FULL region result to know whether there's anything left over to summarize —
+  // capping the fetch itself would make that remainder unreachable. Same table, same
+  // columns, same order as before; only the row cap moved from the query to the render.
   const { data: regions, error: regionsError } = await supabase
     .from("admin_region_stats")
     .select("*")
-    .order("member_count", { ascending: false })
-    .limit(5);
+    .order("member_count", { ascending: false });
   if (regionsError) throw new Error(`admin_region_stats failed: ${regionsError.message}`);
   const maxRegion = regions[0]?.member_count ?? 0;
+  const shownRegions = regions.slice(0, 5);
+  const restRegions = regions.slice(5);
+  const remainderCount = restRegions.reduce((sum, r) => sum + r.member_count, 0);
 
   const recent = canSeePayments
     ? await supabase
@@ -46,14 +58,14 @@ export default async function AdminOverviewPage() {
 
   return (
     <main>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-ink">მიმოხილვა</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">მიმოხილვა</h1>
         <p className="mt-2 text-sm text-muted-fg">
           პლატფორმის ცოცხალი მაჩვენებლები — წევრები, დელეგატები, შემოსავალი და ვერიფიკაციის რიგი.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 border-t-2 border-ink">
         <StatCard
           value={formatCountKa(overview.registered_total)}
           label="რეგისტრირებული"
@@ -79,12 +91,18 @@ export default async function AdminOverviewPage() {
           label="დამტკიცებული დელეგატი"
           sub="↑ აქტიური რეგიონული ქსელი"
         />
-        <StatCard
-          value={formatCountKa(overview.pending_delegates)}
-          label="ვერიფიკაციის მოლოდინში"
-          sub="საჭიროებს გადახედვას"
-          accent="brand"
-        />
+        {/* Hand-composed to match StatCard's own markup byte-for-byte instead of a
+            StatCard prop change: `accent` only supports "brand" and `sub` is a plain
+            string with no className slot (StatCard.tsx is out of this task's scope),
+            so the amber "needs attention" signal goes on a manually-styled sub line
+            (task-18-brief.md Step 2). */}
+        <div className="border-t-2 border-ink pt-3">
+          <div className="font-serif text-[2.1rem] font-bold leading-tight text-brand">
+            {formatCountKa(overview.pending_delegates)}
+          </div>
+          <div className="text-[0.74rem] text-muted-fg">ვერიფიკაციის მოლოდინში</div>
+          <div className="text-[0.74rem] text-warn mt-0.5">საჭიროებს გადახედვას</div>
+        </div>
         <StatCard
           value={`${formatCountKa(overview.mrr_gel)} ₾`}
           label="სავარაუდო MRR"
@@ -94,17 +112,15 @@ export default async function AdminOverviewPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         {canSeePayments && recent ? (
-          <Card
-            header={
-              <>
-                <h3 className="text-base font-bold text-ink">ბოლო ტრანზაქციები</h3>
+          <Card>
+            <SectionRule
+              label="ბოლო ტრანზაქციები"
+              action={
                 <ButtonLink href="/admin/finances" variant="ghost" size="sm">
                   ყველა →
                 </ButtonLink>
-              </>
-            }
-            padded={false}
-          >
+              }
+            />
             {recent.data && recent.data.length > 0 ? (
               <DataTable
                 head={
@@ -126,13 +142,13 @@ export default async function AdminOverviewPage() {
                 ))}
               </DataTable>
             ) : (
-              <p className="p-6 text-sm text-muted-fg">გადახდები ჯერ არ არის აღრიცხული.</p>
+              <p className="pt-6 text-sm text-muted-fg">გადახდები ჯერ არ არის აღრიცხული.</p>
             )}
           </Card>
         ) : null}
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <Card variant="callout">
             <p className="text-xs font-bold uppercase tracking-wide text-brand">
               ვერიფიკაციის რიგი
             </p>
@@ -151,26 +167,30 @@ export default async function AdminOverviewPage() {
             ) : null}
           </Card>
 
-          <Card
-            header={<h3 className="text-base font-bold text-ink">წევრები მხარეების მიხედვით</h3>}
-          >
-            <div className="flex flex-col gap-3">
-              {regions.map((r) => (
-                <div key={r.region_id}>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-sm font-semibold text-ink">{r.name_ka}</span>
-                    <span className="text-sm font-extrabold text-ink">
-                      {formatCountKa(r.member_count)}
-                    </span>
-                  </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-md bg-surface">
-                    <div
-                      className="h-full rounded-md bg-brand"
-                      style={{ width: `${barPct(r.member_count, maxRegion)}%` }}
-                    />
-                  </div>
-                </div>
+          <Card>
+            <SectionRule label="წევრები მხარეების მიხედვით" />
+            <div className="mt-4 flex flex-col gap-3">
+              {shownRegions.map((r, i) => (
+                <BallotBar
+                  key={r.region_id}
+                  label={r.name_ka}
+                  pct={barPct(r.member_count, maxRegion)}
+                  value={formatCountKa(r.member_count)}
+                  tone={i === 0 ? "brand" : "ink"}
+                />
               ))}
+              {restRegions.length > 0 ? (
+                <BallotBar
+                  label={REMAINDER_LABEL}
+                  // Same barPct(count, max) formula as the rows above, fed the summed
+                  // remainder — clamped because several smaller regions combined can
+                  // exceed the single largest region's count (unlike any individual
+                  // row, which never can by construction).
+                  pct={Math.min(100, barPct(remainderCount, maxRegion))}
+                  value={formatCountKa(remainderCount)}
+                  tone="muted"
+                />
+              ) : null}
             </div>
           </Card>
         </div>

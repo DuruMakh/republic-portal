@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa, isoToTbilisiLocal, percentages } from "@/lib/community";
@@ -26,17 +27,19 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-bold text-ink">გამოკითხვა</h1>
-        <Pill {...contentPill(poll.status)} />
-        <span className="text-sm font-semibold text-muted-fg">
-          სულ {formatCountKa(poll.total_votes)} ხმა
-        </span>
-        {poll.ends_at ? (
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-[2rem] font-bold text-ink">გამოკითხვა</h1>
+          <Pill {...contentPill(poll.status)} />
           <span className="text-sm font-semibold text-muted-fg">
-            ბოლო ვადა: {formatEventTimeKa(poll.ends_at, null)}
+            სულ {formatCountKa(poll.total_votes)} ხმა
           </span>
-        ) : null}
+          {poll.ends_at ? (
+            <span className="text-sm font-semibold text-muted-fg">
+              ბოლო ვადა: {formatEventTimeKa(poll.ends_at, null)}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {poll.status === "draft" ? (
@@ -60,11 +63,8 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
                     {formatCountKa(o.votes)} · {pcts[i] ?? 0}%
                   </span>
                 </div>
-                <div className="overflow-hidden rounded-md bg-surface">
-                  <div
-                    className="h-2.5 rounded-md bg-brand"
-                    style={{ width: `${pcts[i] ?? 0}%` }}
-                  />
+                <div className="h-2.5 bg-surface">
+                  <div className="h-2.5 bg-brand" style={{ width: `${pcts[i] ?? 0}%` }} />
                 </div>
               </div>
             ))}
@@ -73,7 +73,7 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
       )}
 
       <div className="mt-8">
-        <h2 className="mb-2 text-sm font-semibold text-muted-fg">მოქმედებები</h2>
+        <SectionRule label="მოქმედებები" className="mb-4" />
         <PollActions id={poll.id} status={poll.status} />
       </div>
     </div>

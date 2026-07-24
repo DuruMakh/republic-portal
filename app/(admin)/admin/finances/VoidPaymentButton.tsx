@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { adminControlClasses } from "@/components/Field";
 import type { VoidResult } from "./types";
 
 export function VoidPaymentButton({
@@ -47,7 +48,7 @@ export function VoidPaymentButton({
           value={reason}
           maxLength={500}
           onChange={(e) => setReason(e.target.value)}
-          className="rounded-lg border border-line bg-surface px-2 py-1 text-xs font-normal"
+          className={adminControlClasses}
         />
       </label>
       <Button

@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import { StatCard } from "@/components/StatCard";
 import { barPct, hasAnyRole } from "@/lib/admin";
 import { pageParamSchema } from "@/lib/admin-schemas";
@@ -63,19 +64,19 @@ export default async function AdminFinancesPage({
 
   return (
     <main>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-ink">ფინანსები</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ფინანსები</h1>
         <p className="mt-2 text-sm text-muted-fg">
           გადახდების აღრიცხვა, ბალკ შესატყვისება და შემოსავლის სტატისტიკა.
         </p>
       </div>
 
       <div className="flex flex-col gap-6">
-        <Card header={<h3 className="text-base font-bold text-ink">ერთეული აღრიცხვა</h3>}>
+        <Card title="ერთეული აღრიცხვა">
           <RecordPayment lookup={lookupMemberAction} record={recordPaymentAction} />
         </Card>
 
-        <Card header={<h3 className="text-base font-bold text-ink">ბალკ შესატყვისება</h3>}>
+        <Card title="ბალკ შესატყვისება">
           <BulkMatch preview={previewBulkAction} confirm={confirmBulkAction} />
         </Card>
 
@@ -94,13 +95,7 @@ export default async function AdminFinancesPage({
           <StatCard value={`${avgGel.toFixed(2)} ₾`} label="საშ. შენატანი" sub="ერთ წევრზე თვეში" />
         </div>
 
-        <Card
-          header={
-            <h3 className="text-base font-bold text-ink">
-              განმეორებადი შენატანები დონეების მიხედვით
-            </h3>
-          }
-        >
+        <Card title="განმეორებადი შენატანები დონეების მიხედვით">
           <div className="flex flex-col gap-3">
             {tierRows.map((t) => (
               <div key={t.tier}>
@@ -112,9 +107,9 @@ export default async function AdminFinancesPage({
                     {formatCountKa(t.count)} გამომწერი
                   </span>
                 </div>
-                <div className="mt-1 h-2.5 overflow-hidden rounded-md bg-surface">
+                <div className="mt-1 h-2.5 overflow-hidden bg-surface">
                   <div
-                    className="h-full rounded-md bg-brand"
+                    className="h-full bg-brand"
                     style={{ width: `${barPct(t.count, maxTier)}%` }}
                   />
                 </div>
@@ -123,19 +118,17 @@ export default async function AdminFinancesPage({
           </div>
         </Card>
 
-        <Card
-          header={
-            <>
-              <h3 className="text-base font-bold text-ink">ტრანზაქციები</h3>
-              <span className="text-xs font-semibold text-muted-fg">
+        <Card>
+          <SectionRule
+            label="ტრანზაქციები"
+            action={
+              <span className="text-[0.72rem] text-muted-fg">
                 ნაჩვენებია {transactions.length} / {formatCountKa(txCount ?? 0)}
               </span>
-            </>
-          }
-          padded={false}
-        >
+            }
+          />
           {transactions.length === 0 ? (
-            <p className="p-6 text-sm text-muted-fg">გადახდები ჯერ არ არის აღრიცხული.</p>
+            <p className="pt-6 text-sm text-muted-fg">გადახდები ჯერ არ არის აღრიცხული.</p>
           ) : (
             <DataTable
               bodyTestId="admin-tx-body"
@@ -190,7 +183,7 @@ export default async function AdminFinancesPage({
           )}
         </Card>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-hairline pt-4">
           {txPage > 1 ? (
             <ButtonLink href={`/admin/finances?txPage=${txPage - 1}`} variant="ghost" size="sm">
               ← წინა

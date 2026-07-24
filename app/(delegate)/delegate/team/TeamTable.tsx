@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
-import { inputClasses } from "@/components/Field";
+import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import {
   formatDateKa,
   TEAM_STATUS_LABELS,
@@ -28,13 +29,13 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
   }, [members, query, status]);
 
   return (
-    <Card
-      header={
-        <>
-          <h3 className="text-base font-bold text-ink">წევრების სია</h3>
+    <Card>
+      <SectionRule
+        label="წევრების სია"
+        action={
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className={`${inputClasses} border-line`}
+              className={adminControlClasses}
               style={{ width: 220 }}
               placeholder="ძებნა სახელით ან გვარით…"
               aria-label="ძებნა სახელით ან გვარით"
@@ -42,7 +43,7 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
               onChange={(e) => setQuery(e.target.value)}
             />
             <select
-              className={`${inputClasses} border-line`}
+              className={adminControlClasses}
               aria-label="სტატუსის ფილტრი"
               value={status}
               onChange={(e) => setStatus(e.target.value as StatusFilter)}
@@ -55,17 +56,15 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
               <option value="profile_completed">{TEAM_STATUS_LABELS.profile_completed}</option>
             </select>
           </div>
-        </>
-      }
-      padded={false}
-    >
+        }
+      />
       {members.length === 0 ? (
-        <div className="p-6 text-sm" data-testid="team-empty">
+        <div className="pt-6 text-sm" data-testid="team-empty">
           <p className="font-semibold text-ink">ჯერ არავინ დარეგისტრირებულა შენი ბმულით</p>
           <p className="mt-1 text-muted-fg">გააზიარე ბმული და გუნდი აქ გამოჩნდება.</p>
         </div>
       ) : filtered.length === 0 ? (
-        <p className="p-6 text-sm text-muted-fg" data-testid="team-no-results">
+        <p className="pt-6 text-sm text-muted-fg" data-testid="team-no-results">
           ვერაფერი მოიძებნა ამ ფილტრით.
         </p>
       ) : (

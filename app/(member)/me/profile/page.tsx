@@ -1,25 +1,41 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ballotButtonClasses } from "@/components/Ballot";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
+import { IndexRow } from "@/components/IndexRow";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import {
   cabinetRole,
   DELEGACY_REJECTED_NOTE,
   DELEGACY_STATUS_LABELS,
   deriveDelegacyPhase,
-  initialsKa,
+  formatPhoneKa,
   memberSinceKa,
   TEAM_STATUS_LABELS,
   type TeamMemberStatus,
 } from "@/lib/cabinet";
+import { formatCountKa } from "@/lib/format";
+import { rankDelegates } from "@/lib/ranking";
+import { fetchPublicDelegates } from "@/lib/supabase/public";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { ProfileForm } from "./ProfileForm";
 import { RegisteredProfileForm } from "./RegisteredProfileForm";
 
 export const metadata: Metadata = { title: "ჩემი პროფილი — ქართული რესპუბლიკა" };
+
+// Reused byte-exact from components/LeaderRow.tsx (itself spliced from
+// app/(public)/page.tsx's SUPPORTER_LABEL, Task 11) — the my-delegate rail
+// card shows the same rank/region/supporters shape as the public registry.
+const SUPPORTER_LABEL = "მხარდამჭერი";
+// Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html's
+// member-cabinet poll teaser (S4); verified against the Georgian (Mkhedruli,
+// U+10A0-U+10FF) Unicode block before commit — see the georgian-quote-
+// transcription-hazard note. New usage (spec §5.1, Appendix B: pollLabel).
+const POLL_TEASER_EYEBROW = "დღის კითხვა";
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
@@ -44,44 +60,47 @@ export default async function ProfilePage() {
   if (!state.completed) {
     return (
       <main>
-        <div className="mb-8">
-          <Eyebrow>პირადი კაბინეტი</Eyebrow>
-          <h1 className="mt-1 text-2xl font-bold text-ink">ჩემი პროფილი</h1>
-          <p className="mt-2 text-sm text-muted-fg">მართე შენი პერსონალური მონაცემები.</p>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-[340px_1fr] lg:items-start">
-          <Card>
-            <div className="text-center">
-              <div
-                className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-xl font-bold text-brand"
-                aria-hidden
-              >
-                {initialsKa(state.firstName, state.lastName)}
+        <h1 className="font-serif text-[2rem] font-bold text-ink">
+          {state.firstName} {state.lastName}
+        </h1>
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+          <div>
+            <SectionRule label="პირადი მონაცემები" />
+            <div>
+              <div className="flex justify-between border-b border-hairline py-2.5">
+                <span className="text-[0.85rem] text-muted-fg">ტელეფონი</span>
+                <span className="font-serif text-[0.92rem] font-bold text-ink">
+                  {formatPhoneKa(user?.phone)}
+                </span>
               </div>
-              <h2 className="text-lg font-bold text-ink">
-                {state.firstName} {state.lastName}
-              </h2>
-            </div>
-            <dl className="mt-5 flex flex-col gap-2.5 border-t border-line pt-4 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-fg">რეგიონი</dt>
-                <dd className="font-semibold text-ink" data-testid="summary-region">
+              <div className="flex justify-between border-b border-hairline py-2.5">
+                <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
+                <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
+                  {state.personalIdMasked}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-hairline py-2.5">
+                <span className="text-[0.85rem] text-muted-fg">რეგიონი</span>
+                <span
+                  className="font-serif text-[0.92rem] font-bold text-ink"
+                  data-testid="summary-region"
+                >
                   {regionName}
-                </dd>
+                </span>
               </div>
-            </dl>
-          </Card>
-          <div className="flex flex-col gap-6">
-            <RegisteredProfileForm
-              initial={{ firstName: state.firstName, lastName: state.lastName }}
-              phone={user?.phone ?? null}
-              personalIdMasked={state.personalIdMasked}
-            />
-            <Card>
-              <p className="text-xs font-bold uppercase tracking-widest text-brand">
-                შემდეგი ნაბიჯი
-              </p>
-              <h3 className="mt-1 text-lg font-bold text-ink">გახდი წევრი</h3>
+            </div>
+            <div className="mt-8">
+              <RegisteredProfileForm
+                initial={{ firstName: state.firstName, lastName: state.lastName }}
+                phone={user?.phone ?? null}
+                personalIdMasked={state.personalIdMasked}
+              />
+            </div>
+          </div>
+          <div>
+            <Card variant="callout">
+              <Eyebrow>შემდეგი ნაბიჯი</Eyebrow>
+              <h3 className="mt-1 font-serif text-lg font-bold text-ink">გახდი წევრი</h3>
               <p className="mt-1 text-sm text-muted-fg">
                 წევრობა ხსნის ხმის მიცემას გამოკითხვებში, დელეგატის არჩევას და წევრებისთვის
                 განკუთვნილ სიახლეებს.
@@ -103,83 +122,94 @@ export default async function ProfilePage() {
   // TeamMemberStatus, so narrow explicitly before indexing TEAM_STATUS_LABELS (strict mode).
   const teamStatus: TeamMemberStatus =
     state.status === "active_member" ? "active_member" : "profile_completed";
+  // An APPROVED delegate wins cabinetRole() (R2 §3.1); this page has no explicit
+  // redirect for that case (unchanged), so it keeps its pre-existing behavior of
+  // simply not rendering the member-only delegate rail — same gate the old
+  // summary-card delegate row used.
+  const isMemberRole = cabinetRole(state) === "member";
+
+  // DECLARED reads (Global Constraints, spec §5.1): the my-delegate card needs
+  // rank/region/supporters, which cabinet_state alone doesn't carry (only the
+  // delegate's name) -- fetchPublicDelegates()+rankDelegates deliver it, the
+  // same pipeline the homepage/leaderboard already use. The poll teaser is a
+  // one-row existence check against the same view /me/polls itself reads.
+  const [publicDelegates, pollsResult] = await Promise.all([
+    fetchPublicDelegates(),
+    supabase.from("member_polls").select("question,status").eq("status", "open").limit(1),
+  ]);
+  const myDelegateRanked =
+    isMemberRole && state.chosenDelegate
+      ? (rankDelegates(publicDelegates).find((d) => d.id === state.chosenDelegate?.id) ?? null)
+      : null;
+  // Decorative-only, like the delegate dashboard's team-RSVP card: a transient
+  // failure here just hides the teaser rather than taking down the whole
+  // profile page over a poll-of-the-day blurb.
+  const teaserPoll = pollsResult.data?.[0] ?? null;
 
   return (
     <main>
-      <div className="mb-8">
-        <Eyebrow>პირადი კაბინეტი</Eyebrow>
-        <h1 className="mt-1 text-2xl font-bold text-ink">ჩემი პროფილი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          მართე შენი პერსონალური მონაცემები და წევრობის სტატუსი.
+      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b-2 border-ink pb-3">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">
+          {state.firstName} {state.lastName}
+        </h1>
+        <p className="flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-fg">
+          <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
+          {state.referenceCode ? <span>· {state.referenceCode}</span> : null}
+          {since ? <span>· წევრი {since}</span> : null}
         </p>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr] lg:items-start">
-        <Card>
-          <div className="text-center">
-            <div
-              className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-xl font-bold text-brand"
-              aria-hidden
-            >
-              {initialsKa(state.firstName, state.lastName)}
+
+      <div className="mt-8 grid gap-10 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+        <div>
+          <SectionRule label="პირადი მონაცემები" />
+          <div>
+            <div className="flex justify-between border-b border-hairline py-2.5">
+              <span className="text-[0.85rem] text-muted-fg">ტელეფონი</span>
+              <span className="font-serif text-[0.92rem] font-bold text-ink">
+                {formatPhoneKa(user?.phone)}
+              </span>
             </div>
-            <h2 className="text-lg font-bold text-ink">
-              {state.firstName} {state.lastName}
-            </h2>
-            <div className="mt-2">
-              <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
+            <div className="flex justify-between border-b border-hairline py-2.5">
+              <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
+              <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
+                {state.personalIdMasked}
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-hairline py-2.5">
+              <span className="text-[0.85rem] text-muted-fg">რეგიონი</span>
+              <span
+                className="font-serif text-[0.92rem] font-bold text-ink"
+                data-testid="summary-region"
+              >
+                {regionName}
+              </span>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-hairline py-2.5">
+              <span className="text-[0.85rem] text-muted-fg">სამუშაო ადგილი / სტატუსი</span>
+              <span className="font-serif text-[0.92rem] font-bold text-ink text-right">
+                {state.employment}
+              </span>
             </div>
           </div>
-          <dl className="mt-5 flex flex-col gap-2.5 border-t border-line pt-4 text-sm">
-            {since ? (
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-fg">წევრი</dt>
-                <dd className="font-semibold text-ink">{since}</dd>
-              </div>
-            ) : null}
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-fg">რეგიონი</dt>
-              <dd className="font-semibold text-ink" data-testid="summary-region">
-                {regionName}
-              </dd>
-            </div>
-            {cabinetRole(state) === "member" ? (
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-fg">დელეგატი</dt>
-                <dd className="font-semibold text-ink" data-testid="summary-delegate">
-                  {state.chosenDelegate
-                    ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-                    : "ცენტრალური მოძრაობა"}
-                </dd>
-              </div>
-            ) : null}
-          </dl>
-          {cabinetRole(state) === "member" ? (
-            <Link
-              href="/me/delegate"
-              className="mt-4 inline-block text-sm font-semibold text-brand hover:underline"
-            >
-              დელეგატის შეცვლა →
-            </Link>
-          ) : null}
-        </Card>
-        <div className="flex flex-col gap-6">
-          <ProfileForm
-            initial={{
-              firstName: state.firstName,
-              lastName: state.lastName,
-              regionId: state.regionId,
-              cityId: state.cityId,
-              employment: state.employment,
-            }}
-            phone={user?.phone ?? null}
-            regions={regions ?? []}
-          />
+
+          <div className="mt-8">
+            <ProfileForm
+              initial={{
+                firstName: state.firstName,
+                lastName: state.lastName,
+                regionId: state.regionId,
+                cityId: state.cityId,
+                employment: state.employment,
+              }}
+              phone={user?.phone ?? null}
+              regions={regions ?? []}
+            />
+          </div>
+
           {delegacyPhase === "eligible" ? (
-            <Card>
-              <p className="text-xs font-bold uppercase tracking-widest text-brand">
-                შემდეგი საფეხური
-              </p>
-              <h3 className="mt-1 text-lg font-bold text-ink">გახდი დელეგატი</h3>
+            <Card variant="callout">
+              <Eyebrow>შემდეგი საფეხური</Eyebrow>
+              <h3 className="mt-1 font-serif text-lg font-bold text-ink">გახდი დელეგატი</h3>
               <p className="mt-1 text-sm text-muted-fg">
                 წარადგინე კანდიდატურა და გახდი მოძრაობის რეგიონული ხმა — საჯარო პროფილით და საკუთარი
                 გუნდით.
@@ -189,20 +219,88 @@ export default async function ProfilePage() {
               </div>
             </Card>
           ) : delegacyPhase === "pending" ? (
-            <Card>
+            <Card variant="callout">
               <div className="flex items-center gap-3">
                 <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
-                <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა გაგზავნილია</h3>
+                <h3 className="font-serif text-lg font-bold text-ink">
+                  დელეგატობის მოთხოვნა გაგზავნილია
+                </h3>
               </div>
               <p className="mt-2 text-sm text-muted-fg">შედეგს აქვე ნახავ.</p>
             </Card>
           ) : delegacyPhase === "rejected" ? (
-            <Card>
+            <Card variant="callout">
               <div className="flex items-center gap-3">
                 <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
-                <h3 className="text-lg font-bold text-ink">დელეგატობის მოთხოვნა</h3>
+                <h3 className="font-serif text-lg font-bold text-ink">დელეგატობის მოთხოვნა</h3>
               </div>
               <p className="mt-2 text-sm text-muted-fg">{DELEGACY_REJECTED_NOTE}</p>
+            </Card>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-6">
+          {isMemberRole ? (
+            <Card variant="callout">
+              <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-muted-fg">
+                ჩემი დელეგატი
+              </div>
+              {myDelegateRanked ? (
+                <div className="mt-2">
+                  <IndexRow
+                    rank={myDelegateRanked.rank}
+                    name={`${myDelegateRanked.first_name} ${myDelegateRanked.last_name}`}
+                    meta={myDelegateRanked.region_name_ka ?? "—"}
+                    figure={formatCountKa(myDelegateRanked.active_supporters)}
+                    figureLabel={SUPPORTER_LABEL}
+                    href={`/delegates/${myDelegateRanked.slug}`}
+                  />
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <p
+                    className="font-serif text-lg font-bold text-ink"
+                    data-testid="current-delegate"
+                  >
+                    {state.chosenDelegate
+                      ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
+                      : "ცენტრალური მოძრაობა"}
+                  </p>
+                  {state.chosenDelegate ? (
+                    <p
+                      className="mt-1 text-[0.78rem] text-muted-fg"
+                      data-testid="delegate-unavailable"
+                    >
+                      დელეგატი ამჟამად მიუწვდომელია
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[0.78rem] text-muted-fg">
+                      შენ პირდაპირ ცენტრალურ მოძრაობას უჭერ მხარს.
+                    </p>
+                  )}
+                </div>
+              )}
+              <Link
+                href="/me/delegate"
+                className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+              >
+                დელეგატის შეცვლა →
+              </Link>
+            </Card>
+          ) : null}
+
+          {teaserPoll ? (
+            <Card variant="callout">
+              <Eyebrow>{POLL_TEASER_EYEBROW}</Eyebrow>
+              <p className="mt-2 font-serif text-[1.02rem] font-semibold leading-snug text-ink">
+                {teaserPoll.question}
+              </p>
+              <Link
+                href="/me/polls"
+                className={`mt-3 inline-flex items-center justify-center ${ballotButtonClasses("solid")}`}
+              >
+                სრულად →
+              </Link>
             </Card>
           ) : null}
         </div>

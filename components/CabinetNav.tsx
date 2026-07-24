@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Badge } from "@/components/Badge";
 import type { CabinetNavItem } from "@/lib/cabinet";
 import { createClient } from "@/lib/supabase/client";
 
@@ -26,7 +27,7 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
   return (
     <nav
       aria-label="კაბინეტის ნავიგაცია"
-      className="mb-8 flex flex-wrap items-center gap-1 border-b border-line pb-2"
+      className="mb-8 flex gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold"
     >
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -35,19 +36,16 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-              active ? "bg-brand/10 text-brand" : "text-muted-fg hover:text-ink"
+            className={`no-underline inline-flex items-center gap-1.5 ${
+              active ? "text-brand border-b-2 border-brand pb-1" : "text-ink hover:text-brand"
             }`}
           >
             {item.label}
+            {item.count ? <Badge>{item.count}</Badge> : null}
           </Link>
         );
       })}
-      <button
-        type="button"
-        onClick={signOut}
-        className="ms-auto rounded-lg px-3 py-1.5 text-sm font-semibold text-muted-fg hover:text-brand"
-      >
+      <button type="button" onClick={signOut} className="ms-auto text-ink hover:text-brand">
         გასვლა
       </button>
     </nav>

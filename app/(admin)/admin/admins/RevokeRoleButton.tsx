@@ -40,7 +40,7 @@ export function RevokeRoleButton({
             type="button"
             onClick={onRevoke}
             disabled={busy}
-            className="rounded px-1.5 text-xs font-bold text-danger hover:underline"
+            className="px-1.5 text-xs font-bold text-danger hover:underline"
           >
             მოხსნა
           </button>
@@ -48,7 +48,7 @@ export function RevokeRoleButton({
             type="button"
             onClick={() => setConfirming(false)}
             disabled={busy}
-            className="rounded px-1.5 text-xs text-muted-fg hover:underline"
+            className="px-1.5 text-xs text-muted-fg hover:underline"
           >
             არა
           </button>
@@ -59,7 +59,7 @@ export function RevokeRoleButton({
           onClick={() => setConfirming(true)}
           aria-label="როლის მოხსნა"
           title="როლის მოხსნა"
-          className="rounded px-1 text-xs font-bold text-muted-fg hover:text-danger"
+          className="px-1 text-xs font-bold text-muted-fg hover:text-danger"
         >
           ✕
         </button>

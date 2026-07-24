@@ -17,25 +17,25 @@ describe("Button", () => {
   it("renders primary variant with brand styling by default", () => {
     render(<Button>გაგრძელება</Button>);
     const btn = screen.getByRole("button", { name: "გაგრძელება" });
-    expect(btn.className).toContain("bg-brand");
+    expect(btn.className).toContain("bg-ink");
+    expect(btn.className).toContain("hover:bg-brand");
   });
   it("renders danger variant", () => {
     render(<Button variant="danger">წაშლა</Button>);
-    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("bg-danger");
+    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("border-brand");
+    expect(screen.getByRole("button", { name: "წაშლა" }).className).toContain("text-brand");
   });
   it("renders dark variant", () => {
     render(<Button variant="dark">რეიტინგი</Button>);
-    expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-navy");
+    expect(screen.getByRole("button", { name: "რეიტინგი" }).className).toContain("bg-ink");
   });
   it("keeps md size classes by default (back-compat)", () => {
     render(<Button>გაგრძელება</Button>);
-    expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain(
-      "px-5 py-2.5 text-sm",
-    );
+    expect(screen.getByRole("button", { name: "გაგრძელება" }).className).toContain("h-10 px-5");
   });
   it("renders lg size", () => {
     render(<Button size="lg">რეგისტრაცია</Button>);
-    expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("px-6");
+    expect(screen.getByRole("button", { name: "რეგისტრაცია" }).className).toContain("h-[46px]");
   });
 });
 
@@ -49,6 +49,7 @@ describe("Card", () => {
     expect(screen.getByText("სათაური")).toBeInTheDocument();
     const section = screen.getByText("შიგთავსი").closest("section");
     expect(section?.className).toContain("p-6");
+    expect(section?.className).toContain("bg-paper-bright");
     expect(section?.className).not.toContain("overflow-hidden");
     expect(screen.getByText("შიგთავსი").parentElement?.tagName).toBe("SECTION");
   });
@@ -72,6 +73,15 @@ describe("Card", () => {
     expect(wrapper?.className).not.toContain("p-6");
     expect(wrapper?.className).toContain("p-0");
   });
+  it("variant callout renders the full ink border instead of the hairline", () => {
+    render(
+      <Card variant="callout">
+        <p>რჩევა</p>
+      </Card>,
+    );
+    const section = screen.getByText("რჩევა").closest("section");
+    expect(section?.className).toContain("border-ink");
+  });
 });
 
 describe("Eyebrow", () => {
@@ -88,6 +98,10 @@ describe("Badge", () => {
     render(<Badge>12 დელეგატი</Badge>);
     expect(screen.getByText("12 დელეგატი").className).toContain("rounded-full");
   });
+  it("tone warn renders bg-warn (admin verify nav badge, Task 18) instead of the default brand", () => {
+    render(<Badge tone="warn">3</Badge>);
+    expect(screen.getByText("3").className).toContain("bg-warn");
+  });
 });
 
 describe("Pill", () => {
@@ -102,6 +116,7 @@ describe("Pill", () => {
     // was the retired "პროფილი შევსებულია"; every other member-status display
     // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
     expect(screen.getByText("წევრი")).toBeInTheDocument();
+    expect(screen.getByText("წევრი").className).toContain("text-ink");
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
@@ -132,6 +147,7 @@ describe("StatCard", () => {
     render(<StatCard label="აქტიური წევრი" value={1700} />);
     expect(screen.getByText("1700")).toBeInTheDocument();
     expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    expect(screen.getByText("1700").className).toContain("font-serif");
   });
   it("supports brand accent and sub text", () => {
     render(<StatCard label="აქტიური მხარდამჭერი" value={294} accent="brand" sub="ღია რეიტინგში" />);
@@ -151,6 +167,18 @@ describe("Field", () => {
     const input = screen.getByLabelText("ქალაქი");
     expect(input.getAttribute("id")).toBe("city-input");
   });
+  it("input class contains border-b and bg-transparent and does not contain rounded", () => {
+    render(<Field label="ტელეფონი" name="phone" />);
+    const input = screen.getByLabelText("ტელეფონი");
+    expect(input.className).toContain("border-b");
+    expect(input.className).toContain("bg-transparent");
+    expect(input.className).not.toContain("rounded");
+  });
+  it("label class contains tracking-[.08em]", () => {
+    render(<Field label="ტელეფონი" name="phone" />);
+    const label = screen.getByText("ტელეფონი");
+    expect(label.className).toContain("tracking-[.08em]");
+  });
 });
 
 describe("Stepper", () => {
@@ -158,6 +186,8 @@ describe("Stepper", () => {
     render(<Stepper steps={["პროფილი", "საწევრო"]} current={1} />);
     expect(screen.getByText("პროფილი")).toBeInTheDocument();
     expect(screen.getByText("საწევრო")).toBeInTheDocument();
-    expect(screen.getByText("1").getAttribute("aria-current")).toBe("step");
+    // Roman-numeral marker furniture (spec §3.1) replaces the old plain "1" —
+    // aria-current still lands on the current step's marker element.
+    expect(screen.getByText(/^I\./).getAttribute("aria-current")).toBe("step");
   });
 });

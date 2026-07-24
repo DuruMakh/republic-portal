@@ -17,21 +17,33 @@ const mk = (rank: number): RankedDelegate => ({
 });
 
 describe("LeaderRow", () => {
-  it("shows a gold medal for rank 1", () => {
+  it("rank 1 renders `1.` in text-brand, with no gold-gradient classes and no medal emoji", () => {
     render(<LeaderRow delegate={mk(1)} />);
-    expect(screen.getByText("🥇")).toBeInTheDocument();
+    const rank = screen.getByTestId("rank-1");
+    expect(rank).toHaveTextContent("1.");
+    expect(rank).toHaveClass("text-brand");
+    expect(rank.className).not.toMatch(/gradient/);
+    expect(rank.className).not.toMatch(/gold/);
+    expect(screen.queryByText("🥇")).not.toBeInTheDocument();
   });
-  it("shows a silver medal for rank 2", () => {
+  it("rank 2 renders `2.` in text-muted-fg, no silver-gradient classes or medal emoji", () => {
     render(<LeaderRow delegate={mk(2)} />);
-    expect(screen.getByText("🥈")).toBeInTheDocument();
+    const rank = screen.getByTestId("rank-2");
+    expect(rank).toHaveTextContent("2.");
+    expect(rank).toHaveClass("text-muted-fg");
+    expect(rank.className).not.toMatch(/gradient/);
+    expect(screen.queryByText("🥈")).not.toBeInTheDocument();
   });
-  it("shows a bronze medal for rank 3", () => {
+  it("rank 3 renders `3.`, no bronze-gradient classes or medal emoji", () => {
     render(<LeaderRow delegate={mk(3)} />);
-    expect(screen.getByText("🥉")).toBeInTheDocument();
+    const rank = screen.getByTestId("rank-3");
+    expect(rank).toHaveTextContent("3.");
+    expect(rank.className).not.toMatch(/gradient/);
+    expect(screen.queryByText("🥉")).not.toBeInTheDocument();
   });
-  it("shows the plain rank number from rank 4 on", () => {
+  it("shows the plain rank number from rank 4 on, via its rank-{n} testid", () => {
     render(<LeaderRow delegate={mk(4)} />);
-    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.getByTestId("rank-4")).toHaveTextContent("4.");
   });
   it("links to the delegate page and shows name, region, count", () => {
     render(<LeaderRow delegate={mk(2)} />);

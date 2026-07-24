@@ -301,3 +301,33 @@ Release 2 of progressive registration (spec 2026-07-22, v0.8.0). Decisions:
   (constraint-name dispatch); /login surfaces lookup failures instead of bouncing
   members to /join; header CTA is „დარეგისტრირდი“ („გახდი წევრი“ now means only
   the in-cabinet membership journey).
+
+## ADR-020 (2026-07-23): Kronika (D3) redesign — the newspaper identity
+
+Full visual/UX redesign around the owner's Kronika (D3) mock (spec
+`docs/superpowers/specs/2026-07-23-kronika-redesign-design.md`, target v0.9.0).
+Decisions:
+
+- **Kronika D3 is the look-and-layout contract.** Bundle at
+  `prototype/kronika-d3/`: the standalone mock, the decoded template (the
+  byte-splice authority for all Georgian copy), and the brand assets.
+  `prototype/index.html` is superseded (kept for history). Shipped v0.8.0
+  behavior, flows, labels and data rules win over mock fiction everywhere;
+  every substitution is ledgered in the spec (§4.1, §5.6).
+- **Brand assets are canonical; the one red is `#9F1D35`** (pixel-sampled,
+  identical across all red logo files). It replaces brand `#C8102E` AND danger
+  `#B3261E`; navy/gold/info-blue are retired; warm ink `#1A1611` + paper
+  `#F7F2E9` become the materials; rules replace shadows; serif takes names,
+  dates and numerals.
+- **Scope: all 46 pages including admin; one release (v0.9.0); reskin &
+  recompose** — component contracts frozen, zero DB changes, routes/RLS/zod/
+  formatters untouched; system-first build with an early styleguide+homepage
+  owner checkpoint on a Vercel preview.
+- **Header CTA becomes „შემოგვიერთდი“** (owner choice, mock voice),
+  amending ADR-019's „დარეგისტრირდი“ line; the transparency nav label
+  becomes „ფინანსები“; leaderboard medals give way to the
+  numbered-index look; nav count badges (open polls / pending verifications)
+  and the homepage news teaser are the only behavior-adjacent additions.
+- **Marketing copy is the mock's voice, byte-spliced; functional copy stays
+  shipped wording.** The manifesto's fixed-20₾ clause is corrected to the real
+  5/10/20₾ tiers via an owner-reviewed replacement clause (spec §4.1).

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ArticleActions } from "../ArticleActions";
@@ -22,19 +23,21 @@ export default async function EditNewsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-bold text-ink">სიახლის რედაქტირება</h1>
-        <Pill {...contentPill(article.status)} />
-        {article.slug && article.status === "published" ? (
-          <a
-            href={`/news/${article.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-brand hover:underline"
-          >
-            ნახე საიტზე ↗
-          </a>
-        ) : null}
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-[2rem] font-bold text-ink">სიახლის რედაქტირება</h1>
+          <Pill {...contentPill(article.status)} />
+          {article.slug && article.status === "published" ? (
+            <a
+              href={`/news/${article.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-brand hover:underline"
+            >
+              ნახე საიტზე ↗
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <NewsForm
@@ -48,11 +51,11 @@ export default async function EditNewsPage({ params }: { params: Promise<{ id: s
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="mb-2 text-sm font-semibold text-muted-fg">ყდის სურათი</h2>
+          <SectionRule label="ყდის სურათი" className="mb-4" />
           <CoverUpload newsId={article.id} imageUrl={article.image_url} />
         </div>
         <div>
-          <h2 className="mb-2 text-sm font-semibold text-muted-fg">მოქმედებები</h2>
+          <SectionRule label="მოქმედებები" className="mb-4" />
           <ArticleActions
             id={article.id}
             status={article.status}

@@ -4,24 +4,24 @@ export type ButtonVariant = "primary" | "ghost" | "danger" | "dark" | "ghost-inv
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors disabled:opacity-50";
+  "inline-flex items-center justify-center font-bold no-underline transition-colors disabled:pointer-events-none disabled:opacity-50";
 
-const sizes: Record<ButtonSize, string> = {
-  sm: "px-3 py-2 text-xs",
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-6 py-3 text-base",
+const variants: Record<ButtonVariant, string> = {
+  primary: "border border-ink bg-ink text-paper hover:border-brand hover:bg-brand",
+  dark: "border border-ink bg-ink text-paper hover:border-brand hover:bg-brand",
+  ghost: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
+  "ghost-inverse": "border border-paper bg-transparent text-paper hover:bg-paper hover:text-ink",
+  danger: "border border-brand bg-transparent text-brand hover:bg-brand hover:text-paper",
 };
 
-const styles: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-dark",
-  ghost: "bg-transparent text-ink border border-line hover:bg-surface",
-  danger: "bg-danger text-white hover:opacity-90",
-  dark: "bg-navy text-white hover:bg-navy-dark",
-  "ghost-inverse": "bg-transparent text-white border border-white/30 hover:bg-white/10",
+const sizes: Record<ButtonSize, string> = {
+  sm: "h-[34px] px-4 text-[0.76rem]",
+  md: "h-10 px-5 text-[0.86rem]",
+  lg: "h-[46px] px-8 text-[0.92rem]",
 };
 
 export function buttonClasses(variant: ButtonVariant, size: ButtonSize = "md", extra = ""): string {
-  return `${base} ${sizes[size]} ${styles[variant]} ${extra}`.trim();
+  return `${base} ${sizes[size]} ${variants[variant]} ${extra}`.trim();
 }
 
 export function Button({

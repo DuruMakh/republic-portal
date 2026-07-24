@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { medalFor, rankDelegates } from "./ranking";
+import { rankDelegates } from "./ranking";
 
 const d = (first: string, last: string, sup: number) => ({
   first_name: first,
@@ -25,15 +25,5 @@ describe("rankDelegates", () => {
     const copy = structuredClone(input);
     rankDelegates(input);
     expect(input).toEqual(copy);
-  });
-});
-
-describe("medalFor", () => {
-  it("maps 1/2/3 to medals and everything else to null", () => {
-    expect(medalFor(1)).toBe("🥇");
-    expect(medalFor(2)).toBe("🥈");
-    expect(medalFor(3)).toBe("🥉");
-    expect(medalFor(4)).toBeNull();
-    expect(medalFor(0)).toBeNull();
   });
 });

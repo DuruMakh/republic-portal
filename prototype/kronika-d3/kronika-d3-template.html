@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>ქართული რესპუბლიკა — ქრონიკა (D3)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+<style>/* cyrillic-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("ee0f0a5f-5304-4032-bf86-48d952a4ca5c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("6abfa9e0-92c7-44f7-8982-770bae0854da") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("519a43a4-301d-451f-84ad-1ae9afb435ca") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* math */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("bb5ea57b-32f5-4119-9e8c-67c2a1ec453f") format('woff2');
+  unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+}
+/* symbols */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("671bfb4b-461b-4ae2-8fc9-0da3f4201c65") format('woff2');
+  unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F7FF, U+1F800-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FA89, U+1FA8F-1FAC6, U+1FACE-1FADC, U+1FADF-1FAE9, U+1FAF0-1FAF8, U+1FB00-1FBFF;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("f6a4b6c5-832a-4724-b7cd-7ddbad65c187") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("0c7b9d85-889c-4930-9a59-5df4d9183933") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("ee0f0a5f-5304-4032-bf86-48d952a4ca5c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("6abfa9e0-92c7-44f7-8982-770bae0854da") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("519a43a4-301d-451f-84ad-1ae9afb435ca") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* math */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("bb5ea57b-32f5-4119-9e8c-67c2a1ec453f") format('woff2');
+  unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+}
+/* symbols */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("671bfb4b-461b-4ae2-8fc9-0da3f4201c65") format('woff2');
+  unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F7FF, U+1F800-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FA89, U+1FA8F-1FAC6, U+1FACE-1FADC, U+1FADF-1FAE9, U+1FAF0-1FAF8, U+1FB00-1FBFF;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("f6a4b6c5-832a-4724-b7cd-7ddbad65c187") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("0c7b9d85-889c-4930-9a59-5df4d9183933") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("ee0f0a5f-5304-4032-bf86-48d952a4ca5c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("6abfa9e0-92c7-44f7-8982-770bae0854da") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("519a43a4-301d-451f-84ad-1ae9afb435ca") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* math */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("bb5ea57b-32f5-4119-9e8c-67c2a1ec453f") format('woff2');
+  unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+}
+/* symbols */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("671bfb4b-461b-4ae2-8fc9-0da3f4201c65") format('woff2');
+  unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F7FF, U+1F800-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FA89, U+1FA8F-1FAC6, U+1FACE-1FADC, U+1FADF-1FAE9, U+1FAF0-1FAF8, U+1FB00-1FBFF;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("f6a4b6c5-832a-4724-b7cd-7ddbad65c187") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("0c7b9d85-889c-4930-9a59-5df4d9183933") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("ee0f0a5f-5304-4032-bf86-48d952a4ca5c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("6abfa9e0-92c7-44f7-8982-770bae0854da") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("519a43a4-301d-451f-84ad-1ae9afb435ca") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* math */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("bb5ea57b-32f5-4119-9e8c-67c2a1ec453f") format('woff2');
+  unicode-range: U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-208E, U+2090-209C, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF;
+}
+/* symbols */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("671bfb4b-461b-4ae2-8fc9-0da3f4201c65") format('woff2');
+  unicode-range: U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AD, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F7FF, U+1F800-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FA89, U+1FA8F-1FAC6, U+1FACE-1FADC, U+1FADF-1FAE9, U+1FAF0-1FAF8, U+1FB00-1FBFF;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("f6a4b6c5-832a-4724-b7cd-7ddbad65c187") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Sans Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("0c7b9d85-889c-4930-9a59-5df4d9183933") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("b2e16bef-4c7d-4466-bb75-b57c1264968f") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d94fc99e-f07d-46ea-8eb7-40856bf7bad7") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("44ec435e-29ff-469d-9cc9-69a400741fbf") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("b2e16bef-4c7d-4466-bb75-b57c1264968f") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d94fc99e-f07d-46ea-8eb7-40856bf7bad7") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("44ec435e-29ff-469d-9cc9-69a400741fbf") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("b2e16bef-4c7d-4466-bb75-b57c1264968f") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d94fc99e-f07d-46ea-8eb7-40856bf7bad7") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("44ec435e-29ff-469d-9cc9-69a400741fbf") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* georgian */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("b2e16bef-4c7d-4466-bb75-b57c1264968f") format('woff2');
+  unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d94fc99e-f07d-46ea-8eb7-40856bf7bad7") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Noto Serif Georgian';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("44ec435e-29ff-469d-9cc9-69a400741fbf") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>
+html,body{margin:0;padding:0}
+body{font-family:'Noto Sans Georgian','Sylfaen',system-ui,sans-serif;background:#E5DFD2;color:#1A1611;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:#A6192E;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:#7A1222}
+::selection{background:#1A1611;color:#F7F2E9}
+input::placeholder{color:#A79D8D}
+:focus{outline:none}
+:focus-visible{outline:2px solid #A6192E;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+
+</head>
+<body>
+
+
+
+<!-- ═══ S1 HOME ═══ -->
+<div id="s1" style="max-width:1420px;margin:0 auto;padding:40px 24px 0">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">S1</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">PUBLIC HOMEPAGE (FRONT PAGE) — DESKTOP 1280</span></div>
+</div>
+<section data-screen-label="D3 — მთავარი (Desktop)" style="max-width:1420px;margin:0 auto 56px;padding:0 24px">
+<div style="max-width:1280px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+  <!-- masthead -->
+  <header style="padding:26px 40px 0;text-align:center">
+    <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#6E6659;letter-spacing:.06em;border-bottom:1px solid #1A1611;padding-bottom:8px">
+      <span>ორშაბათი, 14 ივლისი 2026</span>
+      <span>გამოცემა № 27 · თბილისი</span>
+      <span>ქარ / ENG</span>
+    </div>
+    <h1 style="margin:22px 0 6px;font-family:'Noto Serif Georgian',Georgia,serif;font-size:3.3rem;font-weight:700;letter-spacing:.01em;line-height:1">ქართული რესპუბლიკა</h1>
+    <div style="font-size:.74rem;letter-spacing:.28em;color:#6E6659;text-transform:uppercase">სამოქალაქო პლატფორმა — ღია ჩანაწერი</div>
+    <div style="border-top:2px solid #1A1611;border-bottom:1px solid #1A1611;height:3px;margin-top:14px"></div>
+    <nav style="display:flex;justify-content:center;gap:34px;padding:10px 0;font-size:.8rem;font-weight:600;border-bottom:1px solid #1A1611;align-items:center">
+      <span style="color:#A6192E;cursor:pointer">მთავარი</span>
+      <span style="cursor:pointer" style-hover="color:#A6192E">დელეგატები</span>
+      <span style="cursor:pointer" style-hover="color:#A6192E">რეიტინგი</span>
+      <span style="cursor:pointer" style-hover="color:#A6192E">გამოკითხვები</span>
+      <span style="cursor:pointer" style-hover="color:#A6192E">ფინანსები</span>
+      <button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:32px;padding:0 16px" style-hover="background:#A6192E;border-color:#A6192E">შემოგვიერთდი</button>
+    </nav>
+  </header>
+  <!-- front page -->
+  <div style="display:grid;grid-template-columns:1fr 348px;gap:0;padding:30px 40px 44px">
+    <!-- lead -->
+    <div style="padding-right:32px;border-right:1px solid #C9BFAC">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#A6192E">მანიფესტი</div>
+      <h2 style="margin:10px 0 0;font-family:'Noto Serif Georgian',serif;font-size:2.7rem;font-weight:700;line-height:1.16;letter-spacing:-.005em;text-wrap:balance">ავაშენოთ ქართული რესპუბლიკა ერთად</h2>
+      <p style="margin:14px 0 0;font-family:'Noto Serif Georgian',serif;font-size:1.12rem;line-height:1.6;color:#3E362B">გამჭვირვალე სამოქალაქო მოძრაობა — ვერიფიცირებული დელეგატები, ღია რეიტინგი და საჯარო ფინანსები. შენს ხელში.</p>
+      <div style="display:flex;gap:14px;margin:16px 0 0;font-size:.72rem;color:#6E6659;border-top:1px solid #C9BFAC;border-bottom:1px solid #C9BFAC;padding:8px 0">
+        <span>მოძრაობის რედაქცია</span><span>·</span><span>3 წუთი კითხვა</span><span>·</span><span style="color:#A6192E;font-weight:600">№ 27</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px">
+        <p style="margin:0;font-size:.92rem;line-height:1.75;text-align:justify"><span style="float:left;font-family:'Noto Serif Georgian',serif;font-size:3.4rem;line-height:.78;font-weight:700;padding:6px 10px 0 0;color:#A6192E">რ</span>ესპუბლიკა არ შენდება ერთი მოედნიდან — ის იწერება ათასობით ხელმოწერით, ყოველ მხარეში, ყოველდღე. ჩვენი პლატფორმა თითოეულ წევრს აძლევს დადასტურებულ ხმას: პირადი ნომრით, SMS კოდით, საკუთარი დელეგატის არჩევით.</p>
+        <p style="margin:0;font-size:.92rem;line-height:1.75;text-align:justify">დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობა ფიქსირებულია — 20₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება. <a href="#s1">გააგრძელე კითხვა →</a></p>
+      </div>
+      <!-- image placeholder -->
+      <div style="margin-top:26px">
+        <div style="height:236px;border:1px solid #C9BFAC;background:repeating-linear-gradient(45deg,#EFE8DA,#EFE8DA 10px,#E9E1D1 10px,#E9E1D1 20px);display:grid;place-items:center"><span style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.72rem;color:#6E6659;background:#F7F2E9;border:1px solid #C9BFAC;padding:4px 10px">ფოტო: რეგიონული შეხვედრა — ჩაანაცვლეთ რეალური კადრით</span></div>
+        <div style="font-size:.72rem;color:#6E6659;margin-top:6px;border-bottom:1px solid #C9BFAC;padding-bottom:8px">შეხვედრა ზუგდიდში, ივნისი 2026. ფოტო: მოძრაობის არქივი</div>
+      </div>
+      <!-- roles as classifieds -->
+      <div style="margin-top:22px">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#1A1611;border-bottom:2px solid #1A1611;padding-bottom:6px">როგორ შემოგვიერთდები</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:0">
+          <div style="padding:16px 18px 18px 0;border-right:1px solid #C9BFAC">
+            <div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.1rem">მხარდამჭერი</div>
+            <div style="font-size:.78rem;color:#6E6659;margin-top:4px;line-height:1.6">სწრაფი რეგისტრაცია, გადახდის გარეშე.</div>
+            <a href="#s1" style="display:inline-block;margin-top:10px;font-size:.8rem;font-weight:600">ჩაეწერე →</a>
+          </div>
+          <div style="padding:16px 18px;border-right:1px solid #C9BFAC">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.1rem">წევრი</span><span style="font-size:.7rem;font-weight:700;color:#A6192E">20₾/თვე</span></div>
+            <div style="font-size:.78rem;color:#6E6659;margin-top:4px;line-height:1.6">სრული წევრობა და შიდა გამოკითხვები.</div>
+            <a href="#s1" style="display:inline-block;margin-top:10px;font-size:.8rem;font-weight:600">გახდი წევრი →</a>
+          </div>
+          <div style="padding:16px 0 18px 18px">
+            <div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.1rem">დელეგატი</div>
+            <div style="font-size:.78rem;color:#6E6659;margin-top:4px;line-height:1.6">წარმოადგინე მხარე · საჭიროებს დადასტურებას.</div>
+            <a href="#s1" style="display:inline-block;margin-top:10px;font-size:.8rem;font-weight:600">წარადგინე თავი →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- right rail -->
+    <div style="padding-left:28px;display:flex;flex-direction:column;gap:22px">
+      <div>
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.18em;border-bottom:2px solid #1A1611;padding-bottom:6px">რეესტრი — დღეს</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.82rem">დამტკიცებული დელეგატი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:1.3rem">12</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.82rem">წევრი და მხარდამჭერი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:1.3rem">1,862</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.82rem">მხარე</span><b style="font-family:'Noto Serif Georgian',serif;font-size:1.3rem">11</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.82rem">თვიური შემოსავალი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:1.3rem">21,460₾</b></div>
+        <div style="font-size:.7rem;color:#6E6659;margin-top:8px">წყარო: საჯარო დავთარი · 14.07.2026, 09:24</div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:6px"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em">რეიტინგი — ხუთეული</span><a href="#s2" style="font-size:.72rem">სრულად →</a></div>
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid #C9BFAC"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#A6192E;width:18px">1</span><span style="flex:1"><b style="font-size:.88rem;font-family:'Noto Serif Georgian',serif">გიორგი მაისურაძე</b><span style="display:block;font-size:.7rem;color:#6E6659;letter-spacing:.04em">თბილისი</span></span><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">342</b></div>
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid #C9BFAC"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659;width:18px">2</span><span style="flex:1"><b style="font-size:.88rem;font-family:'Noto Serif Georgian',serif">თამარ ქავთარაძე</b><span style="display:block;font-size:.7rem;color:#6E6659;letter-spacing:.04em">აჭარა</span></span><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">287</b></div>
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid #C9BFAC"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659;width:18px">3</span><span style="flex:1"><b style="font-size:.88rem;font-family:'Noto Serif Georgian',serif">ლევან ჩხეიძე</b><span style="display:block;font-size:.7rem;color:#6E6659;letter-spacing:.04em">იმერეთი</span></span><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">256</b></div>
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid #C9BFAC"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659;width:18px">4</span><span style="flex:1"><b style="font-size:.88rem;font-family:'Noto Serif Georgian',serif">ნინო გელაშვილი</b><span style="display:block;font-size:.7rem;color:#6E6659;letter-spacing:.04em">კახეთი</span></span><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">198</b></div>
+        <div style="display:flex;gap:12px;align-items:baseline;padding:10px 0"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659;width:18px">5</span><span style="flex:1"><b style="font-size:.88rem;font-family:'Noto Serif Georgian',serif">დავით კობახიძე</b><span style="display:block;font-size:.7rem;color:#6E6659;letter-spacing:.04em">ქვემო ქართლი</span></span><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">176</b></div>
+      </div>
+      <div style="border:1px solid #1A1611;background:#FFFDF8;padding:18px 20px">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#A6192E">დღის კითხვა</div>
+        <p style="margin:10px 0 0;font-family:'Noto Serif Georgian',serif;font-size:1.02rem;font-weight:600;line-height:1.5">უნდა ჩატარდეს თუ არა ღია პრაიმერიზი რეგიონულ დელეგატებზე?</p>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+          <div style="display:grid;grid-template-columns:86px 1fr 40px;gap:10px;align-items:center;font-size:.78rem"><span>დიახ</span><span style="height:9px;background:#EFE8DA;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:71%;background:#A6192E"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">71%</b></div>
+          <div style="display:grid;grid-template-columns:86px 1fr 40px;gap:10px;align-items:center;font-size:.78rem"><span>არა</span><span style="height:9px;background:#EFE8DA;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:14%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">14%</b></div>
+          <div style="display:grid;grid-template-columns:86px 1fr 40px;gap:10px;align-items:center;font-size:.78rem"><span>თავს ვიკავებ</span><span style="height:9px;background:#EFE8DA;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:15%;background:#6E6659"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">15%</b></div>
+        </div>
+        <div style="font-size:.68rem;color:#6E6659;margin-top:10px;border-top:1px solid #C9BFAC;padding-top:8px">ღიაა წევრებისთვის · იხურება 20 ივლისს</div>
+      </div>
+    </div>
+  </div>
+  <footer style="border-top:2px solid #1A1611;padding:14px 40px;display:flex;justify-content:space-between;font-size:.72rem;color:#6E6659">
+    <span>© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი</span>
+    <span style="display:flex;gap:18px"><span>წესები</span><span>კონფიდენციალურობა</span><span>არქივი</span></span>
+  </footer>
+</div>
+</section>
+
+<!-- ═══ S2 DIRECTORY ═══ -->
+<div id="s2" style="max-width:1420px;margin:0 auto;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">S2</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">DELEGATE INDEX — DESKTOP 1280</span></div>
+</div>
+<section data-screen-label="D3 — დელეგატები (Desktop)" style="max-width:1420px;margin:0 auto 56px;padding:0 24px">
+<div style="max-width:1280px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+  <header style="padding:18px 40px 0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:10px">
+      <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.3rem">ქართული რესპუბლიკა</span>
+      <nav style="display:flex;gap:26px;font-size:.78rem;font-weight:600;align-items:center">
+        <span style="cursor:pointer" style-hover="color:#A6192E">მთავარი</span>
+        <span style="color:#A6192E;cursor:pointer">დელეგატები</span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">რეიტინგი</span>
+        <button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.74rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:30px;padding:0 14px" style-hover="background:#A6192E;border-color:#A6192E">შემოგვიერთდი</button>
+      </nav>
+    </div>
+  </header>
+  <div style="padding:30px 40px 48px">
+    <div style="text-align:center;border-bottom:1px solid #1A1611;padding-bottom:18px">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.22em;color:#A6192E">საჯარო რეესტრი · ტომი II</div>
+      <h1 style="margin:10px 0 0;font-family:'Noto Serif Georgian',serif;font-size:2.5rem;font-weight:700">ჩვენი დელეგატები</h1>
+      <div style="font-size:.8rem;color:#6E6659;margin-top:8px">თორმეტი დამტკიცებული წარმომადგენელი · თერთმეტი მხარე · განახლებულია ყოველდღე</div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;margin:18px 0 4px;flex-wrap:wrap">
+      <input placeholder="ძებნა სახელით…" style="font-family:inherit;font-size:.84rem;height:36px;border:none;border-bottom:1px solid #1A1611;background:transparent;padding:0 4px;width:240px;color:#1A1611" style-focus="border-bottom:2px solid #A6192E">
+      <select style="font-family:inherit;font-size:.84rem;height:36px;border:none;border-bottom:1px solid #1A1611;background:transparent;color:#1A1611;min-width:150px"><option>ყველა მხარე</option><option>თბილისი</option><option>აჭარა</option><option>იმერეთი</option></select>
+    </div>
+    <!-- two-column index with rule -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:18px">
+      <div style="padding-right:32px;border-right:1px solid #C9BFAC">
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#A6192E;width:26px">1.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">გიორგი მაისურაძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">თბილისი — დამტკიცებული · იან 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">342</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">2.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">თამარ ქავთარაძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">აჭარა — დამტკიცებული · იან 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">287</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">3.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">ლევან ჩხეიძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">იმერეთი — დამტკიცებული · თებ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">256</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">4.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">ნინო გელაშვილი</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">კახეთი — დამტკიცებული · თებ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">198</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">5.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">დავით კობახიძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">ქვემო ქართლი — დამტკიცებული · თებ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">176</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+      </div>
+      <div style="padding-left:32px">
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">6.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">მარიამ წიქარიშვილი</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">სამეგრელო-ზემო სვანეთი · მარ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">154</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">7.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">ზურაბ ბერიძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">სამცხე-ჯავახეთი — დამტკიცებული · მარ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">121</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">8.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">ეკა მელაძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">გურია — დამტკიცებული · მარ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">98</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #C9BFAC;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">9.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">ირაკლი ფხაკაძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">მცხეთა-მთიანეთი — დამტკიცებული · მარ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">83</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+        <div style="display:flex;gap:14px;padding:14px 0;align-items:baseline">
+          <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;color:#6E6659;width:26px">10.</span>
+          <span style="flex:1"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.15rem;cursor:pointer" style-hover="color:#A6192E">სოფიო ლომიძე</span><span style="display:block;font-size:.74rem;color:#6E6659;letter-spacing:.06em;margin-top:2px">შიდა ქართლი — დამტკიცებული · აპრ 2026</span></span>
+          <span style="text-align:right"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.1rem">67</b><span style="display:block;font-size:.68rem;color:#6E6659">მხარდამჭერი</span></span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.74rem;color:#6E6659;border-top:2px solid #1A1611;margin-top:10px;padding-top:12px">ნაჩვენებია 10 / 12 · <a href="#s2">სრული სია →</a></div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ S3 REGISTRATION ═══ -->
+<div id="s3" style="max-width:1420px;margin:0 auto;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">S3</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">REGISTRATION — STEP 2 OF 3 (DOCUMENT FORM) — DESKTOP 1280</span></div>
+</div>
+<section data-screen-label="D3 — რეგისტრაცია (Desktop)" style="max-width:1420px;margin:0 auto 56px;padding:0 24px">
+<div style="max-width:1280px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+  <header style="padding:18px 40px 0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:10px">
+      <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.3rem">ქართული რესპუბლიკა</span>
+      <span style="font-size:.76rem;color:#6E6659">გაქვს ანგარიში? <a href="#s3">შესვლა</a></span>
+    </div>
+  </header>
+  <div style="max-width:760px;margin:0 auto;padding:40px 40px 64px">
+    <div style="text-align:center">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.22em;color:#A6192E">წევრის რეგისტრაცია · ფორმა B</div>
+      <h1 style="margin:12px 0 0;font-family:'Noto Serif Georgian',serif;font-size:2.3rem;font-weight:700">პროფილი</h1>
+      <div style="display:flex;justify-content:center;gap:22px;margin-top:14px;font-size:.76rem;color:#6E6659">
+        <span style="color:#188038;font-weight:600">✓ I. კონტაქტი</span>
+        <span style="color:#A6192E;font-weight:700;border-bottom:2px solid #A6192E;padding-bottom:2px">II. პროფილი</span>
+        <span>III. შენატანი</span>
+      </div>
+    </div>
+    <div style="background:#FFFDF8;border:1px solid #C9BFAC;margin-top:26px;padding:36px 44px 40px;box-shadow:0 1px 0 #C9BFAC">
+      <div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;border-bottom:2px solid #1A1611;padding-bottom:8px">§1. პირადი მონაცემები</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px">
+        <div><label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6E6659;margin-bottom:4px">პირადი ნომერი</label><input value="01015012345" style="font-family:'Noto Serif Georgian',serif;font-size:1.02rem;height:38px;border:none;border-bottom:1px solid #1A1611;background:transparent;padding:0 2px;width:100%;box-sizing:border-box;color:#1A1611" style-focus="border-bottom:2px solid #A6192E"></div>
+        <div><label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6E6659;margin-bottom:4px">დაბადების თარიღი</label><input value="14.03.1992" style="font-family:'Noto Serif Georgian',serif;font-size:1.02rem;height:38px;border:none;border-bottom:1px solid #1A1611;background:transparent;padding:0 2px;width:100%;box-sizing:border-box;color:#1A1611" style-focus="border-bottom:2px solid #A6192E"></div>
+      </div>
+      <div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;border-bottom:2px solid #1A1611;padding-bottom:8px;margin-top:34px">§2. რეგისტრაციის მისამართი</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px">
+        <div><label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6E6659;margin-bottom:4px">მხარე</label><select style="font-family:inherit;font-size:.92rem;height:38px;border:none;border-bottom:1px solid #1A1611;background:transparent;width:100%;color:#1A1611"><option>თბილისი</option><option>აჭარა</option><option>იმერეთი</option><option>კახეთი</option></select></div>
+        <div><label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6E6659;margin-bottom:4px">მუნიციპალიტეტი</label><select style="font-family:inherit;font-size:.92rem;height:38px;border:none;border-bottom:1px solid #1A1611;background:transparent;width:100%;color:#1A1611"><option>თბილისი</option></select></div>
+      </div>
+      <div style="margin-top:18px"><label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6E6659;margin-bottom:4px">ზუსტი მისამართი</label><input placeholder="ქუჩა, ნომერი" style="font-family:'Noto Serif Georgian',serif;font-size:1.02rem;height:38px;border:none;border-bottom:1px solid #1A1611;background:transparent;padding:0 2px;width:100%;box-sizing:border-box;color:#1A1611" style-focus="border-bottom:2px solid #A6192E"></div>
+      <label style="display:flex;align-items:center;gap:10px;margin-top:16px;font-size:.84rem;cursor:pointer"><input type="checkbox" style="width:15px;height:15px;accent-color:#A6192E">ვარ ემიგრანტი</label>
+      <div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem;border-bottom:2px solid #1A1611;padding-bottom:8px;margin-top:34px">§3. დელეგატის არჩევა</div>
+      <p style="margin:12px 0 0;font-size:.8rem;color:#6E6659;line-height:1.65">შენი მხარის დამტკიცებული დელეგატები. არჩევანი ძალაშია მყისიერად და ნებისმიერ დროს იცვლება.</p>
+      <div style="margin-top:12px">
+        <label style="display:flex;align-items:baseline;gap:12px;padding:12px 4px;border-bottom:1px solid #C9BFAC;cursor:pointer">
+          <input type="radio" name="d3deleg" checked="checked" style="accent-color:#A6192E">
+          <span style="flex:1"><b style="font-family:'Noto Serif Georgian',serif;font-size:1rem">გიორგი მაისურაძე</b><span style="display:block;font-size:.72rem;color:#6E6659;margin-top:2px">თბილისი · 342 მხარდამჭერი · რეიტინგში №1</span></span>
+          <span style="font-size:.7rem;color:#A6192E;font-weight:700">არჩეული ✓</span>
+        </label>
+        <label style="display:flex;align-items:baseline;gap:12px;padding:12px 4px;border-bottom:1px solid #C9BFAC;cursor:pointer" style-hover="background:#F7F2E9">
+          <input type="radio" name="d3deleg" style="accent-color:#A6192E">
+          <span style="flex:1"><b style="font-family:'Noto Serif Georgian',serif;font-size:1rem">ანა ჯაფარიძე</b><span style="display:block;font-size:.72rem;color:#6E6659;margin-top:2px">თბილისი · 39 მხარდამჭერი · რეიტინგში №12</span></span>
+        </label>
+        <label style="display:flex;align-items:baseline;gap:12px;padding:12px 4px;cursor:pointer" style-hover="background:#F7F2E9">
+          <input type="radio" name="d3deleg" style="accent-color:#A6192E">
+          <span style="flex:1"><b style="font-family:'Noto Serif Georgian',serif;font-size:1rem">ცენტრალური მოძრაობა</b><span style="display:block;font-size:.72rem;color:#6E6659;margin-top:2px">დელეგატის გარეშე — მოგვიანებით აირჩევ</span></span>
+        </label>
+      </div>
+      <div style="border-top:1px solid #1A1611;margin-top:30px;padding-top:18px">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:.84rem;cursor:pointer;line-height:1.6"><input type="checkbox" checked="checked" style="width:15px;height:15px;accent-color:#A6192E;margin-top:3px">ხელმოწერით ვადასტურებ, რომ ვეთანხმები დელეგატის <a href="#s3">წესებსა და პირობებს</a></label>
+        <div style="display:flex;gap:14px;margin-top:22px;align-items:center">
+          <a href="#s3" style="font-size:.84rem;color:#6E6659">← უკან</a>
+          <button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.92rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:46px;padding:0 34px;margin-left:auto" style-hover="background:#A6192E;border-color:#A6192E">გაგრძელება — III. შენატანი →</button>
+        </div>
+        <div style="text-align:right;font-size:.7rem;color:#6E6659;margin-top:10px">ინახება ავტომატურად · ჩანაწერი M-დრაფტი</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ S4 MEMBER ═══ -->
+<div id="s4" style="max-width:1420px;margin:0 auto;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">S4</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">MEMBER CABINET (PERSONAL LEDGER) — DESKTOP 1280</span></div>
+</div>
+<section data-screen-label="D3 — წევრის კაბინეტი (Desktop)" style="max-width:1420px;margin:0 auto 56px;padding:0 24px">
+<div style="max-width:1280px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+  <header style="padding:18px 40px 0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:10px">
+      <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.3rem">ქართული რესპუბლიკა <span style="font-family:'Noto Sans Georgian',sans-serif;font-size:.72rem;font-weight:600;color:#A6192E;letter-spacing:.14em;margin-left:8px">პირადი კაბინეტი</span></span>
+      <nav style="display:flex;gap:24px;font-size:.78rem;font-weight:600;align-items:baseline">
+        <span style="color:#A6192E;border-bottom:2px solid #A6192E;padding-bottom:4px;cursor:pointer">პროფილი</span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">ჩემი დელეგატი</span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">შენატანები</span>
+        <span style="cursor:pointer;display:inline-flex;gap:6px;align-items:center" style-hover="color:#A6192E">გამოკითხვები<span style="font-size:.62rem;font-weight:700;background:#A6192E;color:#fff;padding:1px 6px;border-radius:8px">1</span></span>
+        <span style="color:#6E6659;cursor:pointer">← საჯარო</span>
+      </nav>
+    </div>
+  </header>
+  <div style="padding:32px 40px 52px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <h1 style="margin:0;font-family:'Noto Serif Georgian',serif;font-size:2.1rem;font-weight:700">ნინო ბერიძე</h1>
+      <span style="font-size:.76rem;color:#6E6659">აქტიური წევრი · ჩანაწერი M-0547 · წევრობა 12 თებერვლიდან, 2026</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:36px;margin-top:24px;align-items:start">
+      <div>
+        <!-- personal -->
+        <div style="border-top:2px solid #1A1611">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#6E6659">პირადი მონაცემები</span><a href="#s4" style="font-size:.76rem">რედაქტირება</a></div>
+          <div style="display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.84rem;color:#6E6659">ტელეფონი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.92rem">+995 5** ** 43 21</b></div>
+          <div style="display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.84rem;color:#6E6659">პირადი ნომერი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.92rem">01015•••••45</b></div>
+          <div style="display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.84rem;color:#6E6659">მისამართი</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.92rem;text-align:right">თბილისი, ჭავჭავაძის გამზ. 24</b></div>
+          <div style="display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid #C9BFAC"><span style="font-size:.84rem;color:#6E6659">დასაქმება</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.92rem;text-align:right">შპს „ალიონი" — დიზაინერი</b></div>
+        </div>
+        <!-- contributions ledger -->
+        <div style="border-top:2px solid #1A1611;margin-top:30px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#6E6659">შენატანების დავთარი</span><span style="font-size:.72rem;color:#188038;font-weight:600">საწევრო აქტიურია · 20₾/თვე + შეწირულობა 10₾</span></div>
+          <div style="display:grid;grid-template-columns:110px 1fr 110px 90px;padding:9px 0;border-bottom:2px solid #1A1611;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:#6E6659"><span>თარიღი</span><span>ტიპი</span><span>სტატუსი</span><span style="text-align:right">თანხა</span></div>
+          <div style="display:grid;grid-template-columns:110px 1fr 110px 90px;padding:10px 0;border-bottom:1px solid #C9BFAC;font-size:.86rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">01.07.26</span><span>საწევრო — ივლისი</span><span style="font-size:.72rem;color:#188038;font-weight:600">წარმატებული</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20.00₾</b></div>
+          <div style="display:grid;grid-template-columns:110px 1fr 110px 90px;padding:10px 0;border-bottom:1px solid #C9BFAC;font-size:.86rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">01.07.26</span><span>შეწირულობა</span><span style="font-size:.72rem;color:#188038;font-weight:600">წარმატებული</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">10.00₾</b></div>
+          <div style="display:grid;grid-template-columns:110px 1fr 110px 90px;padding:10px 0;border-bottom:1px solid #C9BFAC;font-size:.86rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">01.06.26</span><span>საწევრო — ივნისი</span><span style="font-size:.72rem;color:#188038;font-weight:600">წარმატებული</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20.00₾</b></div>
+          <div style="display:grid;grid-template-columns:110px 1fr 110px 90px;padding:10px 0;font-size:.86rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">01.05.26</span><span>საწევრო — მაისი</span><span style="font-size:.72rem;color:#188038;font-weight:600">წარმატებული</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20.00₾</b></div>
+          <div style="display:flex;justify-content:space-between;border-top:2px solid #1A1611;padding-top:10px;margin-top:2px;font-size:.76rem;color:#6E6659"><span>სულ 2026 წელს</span><b style="font-family:'Noto Serif Georgian',serif;color:#1A1611">170.00₾</b></div>
+        </div>
+      </div>
+      <!-- right rail -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <div style="border:1px solid #1A1611;background:#FFFDF8;padding:20px 22px">
+          <div style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#6E6659">ჩემი დელეგატი</div>
+          <div style="margin-top:12px;display:flex;gap:14px;align-items:baseline">
+            <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.9rem;color:#A6192E">№1</span>
+            <span><b style="font-family:'Noto Serif Georgian',serif;font-size:1.15rem">გიორგი მაისურაძე</b><span style="display:block;font-size:.74rem;color:#6E6659;margin-top:2px">თბილისი · 342 მხარდამჭერი</span></span>
+          </div>
+          <p style="margin:12px 0 0;font-size:.78rem;color:#6E6659;line-height:1.65;border-top:1px solid #C9BFAC;padding-top:10px">დელეგატის შეცვლა ნებისმიერ დროს შეგიძლია — ძალაში შედის მყისიერად.</p>
+          <a href="#s4" style="display:inline-block;margin-top:8px;font-size:.8rem;font-weight:600">დელეგატის შეცვლა →</a>
+        </div>
+        <div style="border:1px solid #1A1611;background:#FFFDF8;padding:20px 22px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#A6192E">დღის კითხვა</span><span style="font-size:.68rem;color:#6E6659">იხურება 20.07</span></div>
+          <p style="margin:10px 0 0;font-family:'Noto Serif Georgian',serif;font-size:1.02rem;font-weight:600;line-height:1.5">უნდა ჩატარდეს თუ არა ღია პრაიმერიზი რეგიონულ დელეგატებზე?</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+            <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.86rem;color:#1A1611;background:transparent;border:1px solid #1A1611;height:40px;text-align:left;padding:0 14px" style-hover="background:#1A1611;color:#F7F2E9">დიახ</button>
+            <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.86rem;color:#1A1611;background:transparent;border:1px solid #1A1611;height:40px;text-align:left;padding:0 14px" style-hover="background:#1A1611;color:#F7F2E9">არა</button>
+            <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.86rem;color:#6E6659;background:transparent;border:1px solid #C9BFAC;height:40px;text-align:left;padding:0 14px" style-hover="border-color:#1A1611;color:#1A1611">თავს ვიკავებ</button>
+          </div>
+          <div style="font-size:.68rem;color:#6E6659;margin-top:10px">ხმა ანონიმურია · 1,214 წევრს უკვე მიცემული აქვს</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ S5 ADMIN ═══ -->
+<div id="s5" style="max-width:1420px;margin:0 auto;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">S5</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">ADMIN OVERVIEW (THE DESK) — DESKTOP 1280</span></div>
+</div>
+<section data-screen-label="D3 — ადმინი (Desktop)" style="max-width:1420px;margin:0 auto 56px;padding:0 24px">
+<div style="max-width:1280px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+  <header style="padding:18px 40px 0;background:#FFFDF8">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:10px">
+      <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.3rem">ქართული რესპუბლიკა <span style="font-family:'Noto Sans Georgian',sans-serif;font-size:.72rem;font-weight:600;color:#A6192E;letter-spacing:.14em;margin-left:8px">ადმინისტრირება</span></span>
+      <nav style="display:flex;gap:22px;font-size:.78rem;font-weight:600;align-items:baseline">
+        <span style="color:#A6192E;border-bottom:2px solid #A6192E;padding-bottom:4px;cursor:pointer">მიმოხილვა</span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">წევრები</span>
+        <span style="cursor:pointer;display:inline-flex;gap:6px;align-items:center" style-hover="color:#A6192E">ვერიფიკაცია<span style="font-size:.62rem;font-weight:700;background:#B45309;color:#fff;padding:1px 6px;border-radius:8px">3</span></span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">ტრანსფერი</span>
+        <span style="cursor:pointer" style-hover="color:#A6192E">ფინანსები</span>
+      </nav>
+    </div>
+  </header>
+  <div style="padding:30px 40px 48px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <h1 style="margin:0;font-family:'Noto Serif Georgian',serif;font-size:2rem;font-weight:700">დღის მიმოხილვა</h1>
+      <span style="font-size:.76rem;color:#6E6659">ორშაბათი, 14 ივლისი 2026 · 09:24 · რედაქტორი: დ. კაპანაძე</span>
+    </div>
+    <!-- KPI figures row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid #1A1611;border-bottom:1px solid #1A1611;margin-top:18px">
+      <div style="padding:16px 18px 16px 0;border-right:1px solid #C9BFAC"><div style="font-size:.72rem;color:#6E6659">წევრი და მხარდამჭერი</div><div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:4px">1,862</div><div style="font-size:.7rem;color:#188038;margin-top:2px">▲ +48 ამ კვირაში</div></div>
+      <div style="padding:16px 18px;border-right:1px solid #C9BFAC"><div style="font-size:.72rem;color:#6E6659">აქტიური წევრი</div><div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:4px">1,602</div><div style="font-size:.7rem;color:#6E6659;margin-top:2px">86% ბაზიდან</div></div>
+      <div style="padding:16px 18px;border-right:1px solid #C9BFAC"><div style="font-size:.72rem;color:#B45309">ვერიფიკაციის რიგი</div><div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:4px;color:#B45309">3</div><div style="font-size:.7rem;color:#6E6659;margin-top:2px">უძველესი: 28 ივნისი</div></div>
+      <div style="padding:16px 0 16px 18px"><div style="font-size:.72rem;color:#6E6659">სავარაუდო MRR</div><div style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:4px">21,460₾</div><div style="font-size:.7rem;color:#188038;margin-top:2px">▲ +3.2% თვიურად</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:36px;margin-top:26px;align-items:start">
+      <!-- region chart -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#6E6659">წევრები მხარეების მიხედვით</span><span style="font-size:.7rem;color:#6E6659">სულ: 1,862</span></div>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>თბილისი</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:100%;background:#A6192E"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">381</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>აჭარა</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:75%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">287</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>იმერეთი</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:70%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">268</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>კახეთი</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:54%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">206</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>ქვემო ქართლი</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:48%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">181</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>სამეგრელო-ზ. სვანეთი</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:40%;background:#1A1611"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">154</b></div>
+          <div style="display:grid;grid-template-columns:158px 1fr 50px;gap:12px;align-items:center;font-size:.82rem"><span>დანარჩენი 5 მხარე</span><span style="height:11px;border-bottom:1px solid #C9BFAC;position:relative"><span style="position:absolute;left:0;top:1px;bottom:1px;width:33%;background:#6E6659"></span></span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">385</b></div>
+        </div>
+        <div style="font-size:.68rem;color:#6E6659;margin-top:12px;border-top:1px solid #C9BFAC;padding-top:8px">წყარო: საჯარო დავთარი · წითელი — უდიდესი მხარე · 14.07.2026</div>
+        <!-- tx -->
+        <div style="margin-top:26px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#6E6659">ბოლო ტრანზაქციები</span><a href="#s5" style="font-size:.72rem">ყველა →</a></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 120px 70px;padding:9px 0;border-bottom:2px solid #1A1611;margin-top:8px;font-size:.66rem;font-weight:700;letter-spacing:.1em;color:#6E6659"><span>თარიღი</span><span>წევრი</span><span>ტიპი</span><span style="text-align:right">თანხა</span></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 120px 70px;padding:9px 0;border-bottom:1px solid #C9BFAC;font-size:.84rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">09.07</span><span>ნინო ბერიძე</span><span style="font-size:.74rem;color:#6E6659">საწევრო</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20₾</b></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 120px 70px;padding:9px 0;border-bottom:1px solid #C9BFAC;font-size:.84rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">09.07</span><span>ლუკა წერეთელი</span><span style="font-size:.74rem;color:#6E6659">შეწირულობა</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">50₾</b></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 120px 70px;padding:9px 0;font-size:.84rem;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif">08.07</span><span>სანდრო ხარაზი</span><span style="font-size:.74rem;color:#6E6659">საწევრო</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20₾</b></div>
+        </div>
+      </div>
+      <!-- verification manuscripts -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:.7rem;font-weight:700;letter-spacing:.18em;color:#B45309">ვერიფიკაციის რიგი — განსახილველი</span><a href="#s5" style="font-size:.72rem">სრულად →</a></div>
+        <div style="border:1px solid #C9BFAC;background:#FFFDF8;margin-top:12px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.05rem">ბექა ღოღობერიძე</b><span style="font-size:.7rem;color:#6E6659">28 ივნ</span></div>
+          <div style="font-size:.74rem;color:#6E6659;margin-top:2px">იმერეთი · დელეგატობის კანდიდატი · 12 მხარდამჭერი</div>
+          <div style="display:flex;gap:10px;margin-top:12px"><button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:34px;padding:0 16px" style-hover="background:#188038;border-color:#188038">დადასტურება</button><button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;color:#6E6659;background:transparent;border:1px solid #C9BFAC;height:34px;padding:0 14px" style-hover="border-color:#A6192E;color:#A6192E">უარყოფა</button></div>
+        </div>
+        <div style="border:1px solid #C9BFAC;background:#FFFDF8;margin-top:10px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.05rem">ქეთევან სვანიძე</b><span style="font-size:.7rem;color:#6E6659">2 ივლ</span></div>
+          <div style="font-size:.74rem;color:#6E6659;margin-top:2px">კახეთი · დელეგატობის კანდიდატი · 8 მხარდამჭერი</div>
+          <div style="display:flex;gap:10px;margin-top:12px"><button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:34px;padding:0 16px" style-hover="background:#188038;border-color:#188038">დადასტურება</button><button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;color:#6E6659;background:transparent;border:1px solid #C9BFAC;height:34px;padding:0 14px" style-hover="border-color:#A6192E;color:#A6192E">უარყოფა</button></div>
+        </div>
+        <div style="border:1px solid #C9BFAC;background:#FFFDF8;margin-top:10px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:'Noto Serif Georgian',serif;font-size:1.05rem">ალექსანდრე თავაძე</b><span style="font-size:.7rem;color:#6E6659">6 ივლ</span></div>
+          <div style="font-size:.74rem;color:#6E6659;margin-top:2px">ქვემო ქართლი · დელეგატობის კანდიდატი · 5 მხარდამჭერი</div>
+          <div style="display:flex;gap:10px;margin-top:12px"><button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:34px;padding:0 16px" style-hover="background:#188038;border-color:#188038">დადასტურება</button><button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.76rem;color:#6E6659;background:transparent;border:1px solid #C9BFAC;height:34px;padding:0 14px" style-hover="border-color:#A6192E;color:#A6192E">უარყოფა</button></div>
+        </div>
+        <div style="font-size:.7rem;color:#6E6659;margin-top:10px">დადასტურება ააქტიურებს რეფერალურ ბმულს და საჯარო პროფილს.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ MOBILE ═══ -->
+<div id="mobile" style="max-width:1420px;margin:0 auto;padding:0 24px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 2px 10px"><span style="font-weight:700;font-size:.7rem;letter-spacing:.12em;color:#A6192E">M</span><span style="font-weight:600;font-size:.7rem;letter-spacing:.1em;color:#6E6659">MOBILE 390 — FRONT PAGE + MEMBER LEDGER · single-column broadsheet, compact masthead, sections stay rule-separated</span></div>
+</div>
+<section data-screen-label="D3 — Mobile" style="max-width:1420px;margin:0 auto 72px;padding:0 24px;display:flex;gap:32px;flex-wrap:wrap">
+  <!-- phone 1 front page -->
+  <div style="width:390px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+    <header style="padding:14px 18px 0;text-align:center">
+      <div style="display:flex;justify-content:space-between;font-size:.62rem;color:#6E6659;border-bottom:1px solid #1A1611;padding-bottom:6px"><span>14 ივლისი 2026</span><span>№ 27</span><span>ქარ/ENG</span></div>
+      <div style="font-family:'Noto Serif Georgian',serif;font-size:1.6rem;font-weight:700;margin-top:12px;line-height:1">ქართული რესპუბლიკა</div>
+      <div style="font-size:.6rem;letter-spacing:.26em;color:#6E6659;margin-top:4px">სამოქალაქო პლატფორმა</div>
+      <div style="border-top:2px solid #1A1611;border-bottom:1px solid #1A1611;height:3px;margin-top:10px"></div>
+    </header>
+    <div style="padding:20px 18px 28px">
+      <div style="font-size:.64rem;font-weight:700;letter-spacing:.18em;color:#A6192E">მანიფესტი</div>
+      <h2 style="margin:8px 0 0;font-family:'Noto Serif Georgian',serif;font-size:1.75rem;font-weight:700;line-height:1.2">ავაშენოთ ქართული რესპუბლიკა ერთად</h2>
+      <p style="margin:10px 0 0;font-family:'Noto Serif Georgian',serif;font-size:.95rem;line-height:1.6;color:#3E362B">გამჭვირვალე მოძრაობა — ვერიფიცირებული დელეგატები, ღია რეიტინგი, საჯარო ფინანსები.</p>
+      <div style="font-size:.66rem;color:#6E6659;border-top:1px solid #C9BFAC;border-bottom:1px solid #C9BFAC;padding:6px 0;margin-top:10px">მოძრაობის რედაქცია · 3 წუთი კითხვა</div>
+      <button style="cursor:pointer;font-family:inherit;font-weight:700;font-size:.88rem;color:#F7F2E9;background:#1A1611;border:1px solid #1A1611;height:46px;width:100%;margin-top:16px" style-hover="background:#A6192E;border-color:#A6192E">შემოგვიერთდი — ჩაეწერე ჩანაწერში</button>
+      <div style="margin-top:20px">
+        <div style="font-size:.64rem;font-weight:700;letter-spacing:.18em;border-bottom:2px solid #1A1611;padding-bottom:5px">რეესტრი — დღეს</div>
+        <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #C9BFAC;font-size:.8rem"><span>დამტკიცებული დელეგატი</span><b style="font-family:'Noto Serif Georgian',serif">12</b></div>
+        <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #C9BFAC;font-size:.8rem"><span>წევრი და მხარდამჭერი</span><b style="font-family:'Noto Serif Georgian',serif">1,862</b></div>
+        <div style="display:flex;justify-content:space-between;padding:9px 0;font-size:.8rem"><span>თვიური შემოსავალი</span><b style="font-family:'Noto Serif Georgian',serif">21,460₾</b></div>
+      </div>
+      <div style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;border-bottom:2px solid #1A1611;padding-bottom:5px"><span style="font-size:.64rem;font-weight:700;letter-spacing:.18em">რეიტინგი — სამეული</span><a href="#mobile" style="font-size:.64rem">სრულად →</a></div>
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #C9BFAC;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#A6192E">1</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.9rem;flex:1">გიორგი მაისურაძე</b><b style="font-family:'Noto Serif Georgian',serif">342</b></div>
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #C9BFAC;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659">2</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.9rem;flex:1">თამარ ქავთარაძე</b><b style="font-family:'Noto Serif Georgian',serif">287</b></div>
+        <div style="display:flex;gap:10px;padding:9px 0;align-items:baseline"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;color:#6E6659">3</span><b style="font-family:'Noto Serif Georgian',serif;font-size:.9rem;flex:1">ლევან ჩხეიძე</b><b style="font-family:'Noto Serif Georgian',serif">256</b></div>
+      </div>
+    </div>
+  </div>
+  <!-- phone 2 member -->
+  <div style="width:390px;border:1px solid #B5AB98;background:#F7F2E9;overflow:hidden">
+    <header style="padding:14px 18px 0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1A1611;padding-bottom:8px">
+        <span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.05rem">ქართული რესპუბლიკა</span>
+        <span style="font-size:.62rem;color:#A6192E;font-weight:700;letter-spacing:.12em">კაბინეტი</span>
+      </div>
+      <div style="display:flex;gap:16px;font-size:.72rem;font-weight:600;padding:8px 0;border-bottom:1px solid #C9BFAC;overflow:hidden">
+        <span style="color:#A6192E;border-bottom:2px solid #A6192E;padding-bottom:4px;white-space:nowrap">პროფილი</span>
+        <span style="white-space:nowrap;color:#6E6659">დელეგატი</span>
+        <span style="white-space:nowrap;color:#6E6659">შენატანები</span>
+        <span style="white-space:nowrap;color:#6E6659;display:inline-flex;gap:4px">კითხვები<span style="font-size:.56rem;font-weight:700;background:#A6192E;color:#fff;padding:0 5px;border-radius:7px">1</span></span>
+      </div>
+    </header>
+    <div style="padding:18px 18px 28px">
+      <h2 style="margin:0;font-family:'Noto Serif Georgian',serif;font-size:1.5rem;font-weight:700">ნინო ბერიძე</h2>
+      <div style="font-size:.68rem;color:#6E6659;margin-top:4px">აქტიური წევრი · M-0547 · 12.02.2026-დან</div>
+      <div style="border-top:2px solid #1A1611;margin-top:14px">
+        <div style="font-size:.64rem;font-weight:700;letter-spacing:.18em;color:#6E6659;padding:8px 0 2px">პირადი მონაცემები</div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #C9BFAC;font-size:.8rem"><span style="color:#6E6659">ტელეფონი</span><b style="font-family:'Noto Serif Georgian',serif">+995 5** ** 43 21</b></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #C9BFAC;font-size:.8rem"><span style="color:#6E6659">მისამართი</span><b style="font-family:'Noto Serif Georgian',serif">თბილისი, ჭავჭ. 24</b></div>
+      </div>
+      <div style="border:1px solid #1A1611;background:#FFFDF8;margin-top:16px;padding:14px 16px">
+        <div style="font-size:.64rem;font-weight:700;letter-spacing:.18em;color:#6E6659">ჩემი დელეგატი</div>
+        <div style="display:flex;gap:10px;align-items:baseline;margin-top:8px"><span style="font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:1.3rem;color:#A6192E">№1</span><span style="flex:1"><b style="font-family:'Noto Serif Georgian',serif;font-size:.95rem">გიორგი მაისურაძე</b><span style="display:block;font-size:.66rem;color:#6E6659">თბილისი · 342 მხარდამჭერი</span></span></div>
+        <a href="#mobile" style="display:inline-block;font-size:.72rem;margin-top:8px">შეცვლა →</a>
+      </div>
+      <div style="border-top:2px solid #1A1611;margin-top:18px">
+        <div style="display:flex;justify-content:space-between;padding:8px 0 2px"><span style="font-size:.64rem;font-weight:700;letter-spacing:.18em;color:#6E6659">დავთარი</span><span style="font-size:.62rem;color:#188038;font-weight:600">აქტიური · 30₾/თვე</span></div>
+        <div style="display:grid;grid-template-columns:70px 1fr 60px;padding:8px 0;border-bottom:1px solid #C9BFAC;font-size:.78rem"><span style="font-family:'Noto Serif Georgian',serif">01.07</span><span>საწევრო — ივლისი</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20₾</b></div>
+        <div style="display:grid;grid-template-columns:70px 1fr 60px;padding:8px 0;border-bottom:1px solid #C9BFAC;font-size:.78rem"><span style="font-family:'Noto Serif Georgian',serif">01.07</span><span>შეწირულობა</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">10₾</b></div>
+        <div style="display:grid;grid-template-columns:70px 1fr 60px;padding:8px 0;font-size:.78rem"><span style="font-family:'Noto Serif Georgian',serif">01.06</span><span>საწევრო — ივნისი</span><b style="font-family:'Noto Serif Georgian',serif;text-align:right">20₾</b></div>
+      </div>
+      <div style="border:1px solid #1A1611;background:#FFFDF8;margin-top:16px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between"><span style="font-size:.64rem;font-weight:700;letter-spacing:.18em;color:#A6192E">დღის კითხვა</span><span style="font-size:.62rem;color:#6E6659">იხურება 20.07</span></div>
+        <p style="margin:8px 0 0;font-family:'Noto Serif Georgian',serif;font-size:.9rem;font-weight:600;line-height:1.45">უნდა ჩატარდეს თუ არა ღია პრაიმერიზი?</p>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.78rem;color:#1A1611;background:transparent;border:1px solid #1A1611;height:38px;flex:1" style-hover="background:#1A1611;color:#F7F2E9">დიახ</button>
+          <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.78rem;color:#1A1611;background:transparent;border:1px solid #1A1611;height:38px;flex:1" style-hover="background:#1A1611;color:#F7F2E9">არა</button>
+          <button style="cursor:pointer;font-family:inherit;font-weight:600;font-size:.78rem;color:#6E6659;background:transparent;border:1px solid #C9BFAC;height:38px;flex:1">ვიკავებ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- notes -->
+  <div style="flex:1;min-width:260px;max-width:340px;font-size:.8rem;color:#6E6659;line-height:1.7;padding-top:8px">
+    <b style="color:#1A1611;font-size:.84rem">Mobile behavior — D3</b>
+    <ul style="margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:8px">
+      <li>Masthead compresses to a two-line nameplate; the double rule survives as the identity anchor.</li>
+      <li>Front page becomes a single editorial column: manifesto → registry figures → ranking.</li>
+      <li>Cabinet tabs render as an underlined section row, like newspaper section tabs.</li>
+      <li>The ledger keeps its printed-table form — dates in serif, amounts right-aligned.</li>
+      <li>Poll answers become equal-width ballot buttons; no floating action buttons anywhere.</li>
+    </ul>
+  </div>
+</section>
+
+<div style="max-width:1420px;margin:0 auto;padding:0 24px 64px">
+  <div style="border-top:1px solid #B5AB98;padding-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:.72rem;color:#6E6659">
+    <span>D3 ქრონიკა — Civic Editorial · Geo Republic Design Lab</span>
+    <span><a href="D2 Alioni.dc.html" style="font-weight:700">← D2 ალიონი</a> · <a href="D4 Davtari.dc.html" style="font-weight:700">D4 დავთარი →</a></span>
+  </div>
+</div>
+
+
+
+</body></html>

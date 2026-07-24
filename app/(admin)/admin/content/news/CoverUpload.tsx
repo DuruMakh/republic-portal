@@ -36,11 +36,7 @@ export function CoverUpload({ newsId, imageUrl }: { newsId: string; imageUrl: st
     <div className="flex flex-col gap-3">
       {imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
-        <img
-          src={imageUrl}
-          alt=""
-          className="h-28 w-44 rounded-lg border border-line object-cover"
-        />
+        <img src={imageUrl} alt="" className="h-28 w-44 border border-hairline object-cover" />
       ) : (
         <p className="text-sm text-muted-fg">ყდა არ არის ატვირთული.</p>
       )}

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
@@ -32,6 +31,12 @@ export async function generateMetadata({
   };
 }
 
+// Reused byte-exact from components/Pill.tsx's STATUS_CONFIG.approved label -- spliced by
+// scripts/task12-inject, never hand-retyped (georgian-quote-transcription-hazard note). The
+// public profile kicker is region · status ONLY -- no approved-since date (declared
+// micro-correction vs spec §4.3: PublicDelegate never carries an approval timestamp).
+const APPROVED_STATUS = "დამტკიცებული";
+
 export default async function DelegatePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ranked = rankDelegates(await fetchPublicDelegates());
@@ -43,35 +48,34 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <Link href="/leaderboard" className="text-sm font-semibold text-brand hover:underline">
           ← უკან რეიტინგზე
         </Link>
-        <Pill status="approved" />
       </div>
-      <Card>
-        <div className="flex items-center gap-5">
-          {delegate.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- remote host list not configured until real photos exist (Phase 4)
-            <img
-              src={delegate.photo_url}
-              alt={name}
-              className="h-20 w-20 rounded-full border border-line object-cover"
-            />
-          ) : (
-            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-brand/10 text-2xl font-extrabold text-brand">
-              {initials}
-            </span>
-          )}
-          <div>
-            <Eyebrow>{delegate.region_name_ka}</Eyebrow>
-            <h1 className="mt-1 font-serif text-3xl font-bold text-ink">{name}</h1>
-          </div>
+      <div className="flex items-center gap-5 border-b border-ink pb-6">
+        {delegate.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- remote host list not configured until real photos exist (Phase 4)
+          <img
+            src={delegate.photo_url}
+            alt={name}
+            className="h-20 w-20 rounded-full border border-hairline object-cover"
+          />
+        ) : (
+          <span className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-brand/10 text-2xl font-extrabold text-brand">
+            {initials}
+          </span>
+        )}
+        <div>
+          <Eyebrow>
+            {delegate.region_name_ka} · {APPROVED_STATUS}
+          </Eyebrow>
+          <h1 className="mt-1 font-serif text-3xl font-bold text-ink">{name}</h1>
         </div>
-        <p className="mt-5 text-muted-fg">
-          {delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო")}
-        </p>
-      </Card>
+      </div>
+      <p className="mt-5 text-muted-fg">
+        {delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო")}
+      </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard
           label="აქტიური მხარდამჭერი"

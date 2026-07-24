@@ -4,10 +4,14 @@ test("home renders in Georgian with a single register CTA", async ({ page }) => 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "ქართული რესპუბლიკა" })).toBeVisible();
   // one-door registration: the hero CTA is „დარეგისტრირდი"; the old „გახდი დელეგატი" is gone
-  await expect(page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" })).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
   // the header keeps its own CTA (app/(public)/layout.tsx); the ladder's third counter
-  await expect(page.getByRole("banner").getByRole("link", { name: "დარეგისტრირდი" })).toBeVisible();
+  await expect(
+    page.getByRole("banner").getByRole("link", { name: "შემოგვიერთდი", exact: true }),
+  ).toBeVisible();
   await expect(page.getByTestId("stat-registered-total")).toBeVisible();
 });
 

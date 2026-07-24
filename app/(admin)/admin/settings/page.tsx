@@ -22,13 +22,13 @@ export default async function AdminSettingsPage() {
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">პარამეტრები</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">პარამეტრები</h1>
         <p className="mt-2 text-sm text-muted-fg">აქტიური წევრის წესის მართვა.</p>
       </div>
-      <Card header={<h3 className="text-base font-bold text-ink">აქტიური წევრის წესი</h3>}>
+      <Card title="აქტიური წევრის წესი">
         <SettingsForm initialGraceDays={graceDays} save={updateGraceDaysAction} />
-        <p className="mt-4 border-t border-line pt-3 text-xs text-muted-fg">
+        <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted-fg">
           ბოლო ცვლილება: {formatDateTimeKa(setting.updated_at)}
           {setting.updated_by_first_name
             ? ` · ${setting.updated_by_first_name} ${setting.updated_by_last_name}`

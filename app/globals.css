@@ -1,23 +1,62 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #c8102e;
-  --color-brand-dark: #a30d26;
-  --color-ink: #12141c;
-  --color-muted-fg: #5b616e;
-  --color-surface: #f6f7f9;
-  --color-line: #e4e7ec;
-  --color-navy: #0e1a2b;
-  --color-navy-dark: #16283f;
-  --color-gold: #c9a24b;
+  --color-brand: #9f1d35;
+  --color-brand-dark: #7c1629;
+  --color-ink: #1a1611;
+  --color-prose: #3e362b;
+  --color-muted-fg: #6e6659;
+  --color-paper: #f7f2e9;
+  --color-paper-bright: #fffdf8;
+  --color-stone: #e5dfd2;
+  --color-surface: #efe8da;
+  --color-line: #c9bfac;
+  --color-hairline: #c9bfac;
+  --color-frame: #b5ab98;
   --color-ok: #188038;
+  --color-ok-deep: #146c2e;
   --color-warn: #b45309;
-  --color-danger: #b3261e;
-  --color-info: #1a73e8;
+  --color-warn-deep: #96450a;
+  --color-danger: #9f1d35;
   --font-sans: var(--font-noto-sans-georgian), "Sylfaen", "Segoe UI", system-ui, sans-serif;
   --font-serif: var(--font-noto-serif-georgian), "Sylfaen", Georgia, serif;
 }
 
-body {
-  @apply bg-white text-ink font-sans antialiased;
+@layer base {
+  body {
+    @apply bg-stone text-ink font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  a {
+    @apply text-brand underline decoration-1 underline-offset-[3px];
+  }
+  a:hover {
+    @apply text-brand-dark;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #a79d8d;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

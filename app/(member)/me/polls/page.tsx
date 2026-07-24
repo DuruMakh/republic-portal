@@ -36,12 +36,14 @@ export default async function MemberPollsPage() {
 
   return (
     <main>
-      <h1 className="text-2xl font-bold text-ink">შიდა გამოკითხვები</h1>
-      <p className="mt-1 text-sm text-muted-fg">
-        მიიღე მონაწილეობა მოძრაობის შიდა გადაწყვეტილებებში.
-      </p>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">შიდა გამოკითხვები</h1>
+        <p className="mt-2 text-sm text-muted-fg">
+          მიიღე მონაწილეობა მოძრაობის შიდა გადაწყვეტილებებში.
+        </p>
+      </div>
 
-      <div className="mt-6 flex max-w-3xl flex-col gap-5">
+      <div className="flex max-w-3xl flex-col gap-5">
         {polls.length === 0 ? (
           <p className="text-muted-fg">გამოკითხვები მალე გამოჩნდება.</p>
         ) : (

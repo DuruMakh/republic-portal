@@ -104,7 +104,7 @@ export function RecordPayment({
                 key={c.id}
                 type="button"
                 onClick={() => setMember(c)}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-3 py-2 text-left text-sm hover:border-brand"
+                className="flex flex-wrap items-center justify-between gap-2 border border-hairline px-3 py-2 text-left text-sm hover:border-brand"
               >
                 <span className="font-semibold text-ink">
                   {c.name}
@@ -121,7 +121,7 @@ export function RecordPayment({
       ) : null}
 
       {member ? (
-        <div className="rounded-xl border border-line bg-surface/50 p-4">
+        <div className="border border-hairline bg-surface/50 p-4">
           <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
             {member.name} <span className="font-mono text-xs">{member.referenceCode}</span>
             <span className="font-normal text-muted-fg">{member.regionNameKa ?? "—"}</span>
@@ -138,7 +138,7 @@ export function RecordPayment({
                 max="10000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal"
+                className={adminControlClasses}
               />
             </label>
             <label className="flex w-44 flex-col gap-1 text-sm font-semibold text-ink">
@@ -148,7 +148,7 @@ export function RecordPayment({
                 value={paidAt}
                 max={todayTbilisiIso()}
                 onChange={(e) => setPaidAt(e.target.value)}
-                className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal"
+                className={adminControlClasses}
               />
             </label>
             <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
@@ -158,7 +158,7 @@ export function RecordPayment({
                 value={bankReference}
                 maxLength={64}
                 onChange={(e) => setBankReference(e.target.value)}
-                className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal"
+                className={adminControlClasses}
               />
             </label>
             <p className="pb-2 text-sm font-bold text-ink">

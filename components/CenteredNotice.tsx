@@ -12,7 +12,7 @@ export function CenteredNotice({
   decoration?: ReactNode;
 }) {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-24 text-center">
+    <main className="mx-auto max-w-lg border-y-2 border-ink py-10 text-center">
       {decoration}
       <h1 className="font-serif text-4xl font-bold text-ink">{title}</h1>
       {description ? <p className="mx-auto mt-4 max-w-md text-muted-fg">{description}</p> : null}

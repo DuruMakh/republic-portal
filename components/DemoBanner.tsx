@@ -3,7 +3,7 @@ import { isProductionEnv } from "@/lib/env";
 export function DemoBanner() {
   if (isProductionEnv()) return null;
   return (
-    <div className="bg-gold/15 px-4 py-1.5 text-center text-xs font-semibold text-ink">
+    <div className="border-b border-ink bg-ink px-4 py-1.5 text-center text-[0.76rem] text-paper">
       სადემონსტრაციო გარემო — მონაცემები ფიქტიურია
     </div>
   );

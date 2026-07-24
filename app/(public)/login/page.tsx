@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
 import { deriveDestination } from "@/lib/cabinet";
@@ -55,7 +54,8 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-24">
-      <Card title="შესვლა">
+      <h1 className="font-serif text-3xl font-bold text-ink">შესვლა</h1>
+      <div className="mt-8 bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
         {phase === "phone" ? (
           <div className="flex flex-col gap-4">
             <Field
@@ -85,7 +85,7 @@ export default function LoginPage() {
             ) : null}
           </div>
         )}
-      </Card>
+      </div>
     </main>
   );
 }

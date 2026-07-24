@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { ContentBody } from "@/components/ContentBody";
 import { adminControlClasses } from "@/components/Field";
 import { VISIBILITY_LABELS_KA } from "@/lib/admin";
@@ -93,16 +94,15 @@ export function NewsForm({ article }: { article: EditableArticle | null }) {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold text-muted-fg">გადახედვა</p>
-        <div data-testid="news-preview" className="rounded-xl border border-line p-5">
+      <Card title="გადახედვა">
+        <div data-testid="news-preview">
           {body.trim() === "" ? (
             <p className="text-sm text-muted-fg">ტექსტი ჯერ ცარიელია.</p>
           ) : (
             <ContentBody body={body} />
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

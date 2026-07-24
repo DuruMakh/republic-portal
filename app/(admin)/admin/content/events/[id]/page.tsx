@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { isoToTbilisiLocal } from "@/lib/community";
@@ -23,22 +24,24 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-bold text-ink">ღონისძიების რედაქტირება</h1>
-        <Pill {...contentPill(event.status)} />
-        <span className="text-sm font-semibold text-muted-fg">
-          მოდის: {formatCountKa(event.going_count)}
-        </span>
-        {event.slug && event.status !== "draft" ? (
-          <a
-            href={`/events/${event.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-brand hover:underline"
-          >
-            ნახე საიტზე ↗
-          </a>
-        ) : null}
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიების რედაქტირება</h1>
+          <Pill {...contentPill(event.status)} />
+          <span className="text-sm font-semibold text-muted-fg">
+            მოდის: {formatCountKa(event.going_count)}
+          </span>
+          {event.slug && event.status !== "draft" ? (
+            <a
+              href={`/events/${event.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-brand hover:underline"
+            >
+              ნახე საიტზე ↗
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <EventForm
@@ -53,7 +56,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       />
 
       <div className="mt-8">
-        <h2 className="mb-2 text-sm font-semibold text-muted-fg">მოქმედებები</h2>
+        <SectionRule label="მოქმედებები" className="mb-4" />
         <EventActions
           id={event.id}
           status={event.status}

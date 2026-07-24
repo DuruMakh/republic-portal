@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ButtonLink } from "@/components/ButtonLink";
+import { ballotButtonClasses } from "@/components/Ballot";
 import { ContentBody } from "@/components/ContentBody";
 import { Eyebrow } from "@/components/Eyebrow";
 import { excerpt } from "@/lib/content-render";
@@ -38,6 +38,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const event = await fetchPublicEventBySlug(slug);
   if (!event) notFound();
+
   // eslint-disable-next-line react-hooks/purity -- Server Component rendered per ISR regeneration (revalidate=60), not client-memoized; same now() read as splitEvents in the sibling /events list page
   const isPast = new Date(eventEndIso(event)).getTime() < Date.now();
 
@@ -47,12 +48,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         ← ღონისძიებები
       </Link>
       <article className="mt-6">
-        <Eyebrow>{formatEventTimeKa(event.starts_at, event.ends_at)}</Eyebrow>
-        <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{event.title}</h1>
-        <p className="mt-2 font-semibold text-muted-fg">{event.location}</p>
+        <div className="border-b border-ink pb-4">
+          <Eyebrow>{formatEventTimeKa(event.starts_at, event.ends_at)}</Eyebrow>
+          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{event.title}</h1>
+          <p className="mt-2 font-semibold text-muted-fg">{event.location}</p>
+        </div>
 
         {event.status === "cancelled" ? (
-          <p className="mt-6 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 font-semibold text-danger">
+          <p className="mt-6 border border-ink bg-paper-bright px-4 py-3 font-semibold text-brand">
             ღონისძიება გაუქმებულია
           </p>
         ) : null}
@@ -60,8 +63,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <ContentBody body={event.description} className="mt-6" />
 
         {event.status === "published" && !isPast ? (
-          <div className="mt-8">
-            <ButtonLink href="/me/events">დასწრების აღნიშვნა კაბინეტში</ButtonLink>
+          <div className="mt-8 flex gap-2">
+            <Link href="/me/events" className={ballotButtonClasses("solid")}>
+              დასწრების აღნიშვნა კაბინეტში
+            </Link>
           </div>
         ) : null}
         {event.status === "published" && isPast ? (

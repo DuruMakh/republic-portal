@@ -49,10 +49,10 @@ test.describe("home", () => {
 
   test("the single register CTA lands on the one-door /join form", async ({ page }) => {
     await page.goto("/");
-    // One door now: the hero CTA is „დარეგისტრირდი" (app/(public)/page.tsx); the old
-    // two-door „გახდი დელეგატი" is gone. Scope to <main> — the header keeps its own
-    // „დარეგისტრირდი" link outside <main> (app/(public)/layout.tsx).
-    const cta = page.getByRole("main").getByRole("link", { name: "დარეგისტრირდი" });
+    // One door now: the ladder's first column CTA is „რეგისტრაცია →“ (app/(public)/page.tsx);
+    // the old two-door „გახდი დელეგატი“ is gone. Scope to <main> — the header keeps its own
+    // „შემოგვიერთდი“ link outside <main> (app/(public)/layout.tsx).
+    const cta = page.getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true });
     await expect(cta).toBeVisible();
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
     await cta.click();
@@ -83,12 +83,13 @@ test.describe("delegate directory", () => {
 });
 
 test.describe("leaderboard", () => {
-  test("ranks 12 delegates with a gold medal on top", async ({ page }) => {
+  test("ranks 12 delegates with plain numbering, no medals", async ({ page }) => {
     await page.goto("/leaderboard");
-    await expect(page.getByTestId("leader-row")).toHaveCount(12);
-    const first = page.getByTestId("leader-row").first();
-    await expect(first).toContainText("🥇");
-    await expect(first).toContainText("გიორგი მაისურაძე");
+    const rows = page.getByTestId("leader-row");
+    await expect(rows).toHaveCount(12);
+    await expect(rows.first().getByTestId("rank-1")).toBeVisible();
+    await expect(page.getByText("🥇")).toHaveCount(0);
+    await expect(rows.first()).toContainText("გიორგი მაისურაძე");
     await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0);
   });
 });

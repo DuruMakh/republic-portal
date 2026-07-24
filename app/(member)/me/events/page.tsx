@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
+import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa, rsvpOpen, splitEvents } from "@/lib/community";
@@ -27,10 +28,12 @@ export default async function MemberEventsPage() {
 
   return (
     <main>
-      <h1 className="text-2xl font-bold text-ink">ღონისძიებები</h1>
-      <p className="mt-1 text-sm text-muted-fg">აღნიშნე დასწრება — გუნდი შენზეა დამოკიდებული.</p>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიებები</h1>
+        <p className="mt-2 text-sm text-muted-fg">აღნიშნე დასწრება — გუნდი შენზეა დამოკიდებული.</p>
+      </div>
 
-      <div className="mt-6 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {upcoming.length === 0 ? (
           <p className="text-muted-fg">მომავალი ღონისძიებები მალე გამოცხადდება.</p>
         ) : (
@@ -41,7 +44,7 @@ export default async function MemberEventsPage() {
                   <p className="text-sm font-semibold text-muted-fg">
                     {formatEventTimeKa(e.starts_at, e.ends_at)} · {e.location}
                   </p>
-                  <h3 className="mt-1 text-lg font-bold text-ink">{e.title}</h3>
+                  <h3 className="mt-1 font-serif text-lg font-bold text-ink">{e.title}</h3>
                   <p className="mt-1 text-sm text-muted-fg">
                     სულ მოდის {formatCountKa(goingByEvent.get(e.id) ?? 0)} მონაწილე
                   </p>
@@ -62,17 +65,17 @@ export default async function MemberEventsPage() {
 
       {past.length > 0 ? (
         <>
-          <h2 className="mt-10 text-lg font-bold text-ink">გასული</h2>
+          <SectionRule label="გასული" className="mt-12" />
           <div className="mt-3 flex flex-col gap-2">
             {past.map((e) => (
               <div
                 key={e.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-hairline bg-surface px-4 py-2.5 text-sm"
               >
                 <span className="font-semibold text-muted-fg">
                   {formatEventTimeKa(e.starts_at, e.ends_at)}
                 </span>
-                <span className="font-semibold text-ink">{e.title}</span>
+                <span className="font-serif font-semibold text-ink">{e.title}</span>
                 {myStatusByEvent.get(e.id) === "going" ? (
                   <span className="text-xs font-semibold text-ok">დაესწარი ✓</span>
                 ) : null}

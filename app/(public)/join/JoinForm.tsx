@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ZodIssue } from "zod";
 import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
@@ -195,16 +194,13 @@ export default function JoinForm() {
 
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
-      <Eyebrow>რეგისტრაცია</Eyebrow>
+      <Eyebrow>წევრის რეგისტრაცია</Eyebrow>
       <h1 className="mt-1 font-serif text-3xl font-bold text-ink">შემოგვიერთდი ერთ წუთში</h1>
       <p className="mt-3 text-muted-fg">მხოლოდ ძირითადი მონაცემები — დანარჩენს კაბინეტში ნახავ.</p>
       <div className="mt-8">
-        <Card>
+        <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
           {notice ? (
-            <p
-              className="mb-4 rounded-lg bg-info/10 p-3 text-sm text-info"
-              data-testid="join-notice"
-            >
+            <p className="mb-4 rounded-lg bg-ink/5 p-3 text-sm text-ink" data-testid="join-notice">
               {notice}
             </p>
           ) : null}
@@ -212,6 +208,9 @@ export default function JoinForm() {
             <OtpVerification phone={phone} onVerified={afterVerify} />
           ) : (
             <div className="flex flex-col gap-4">
+              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">
+                §1. პირადი მონაცემები
+              </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label="სახელი"
@@ -243,6 +242,9 @@ export default function JoinForm() {
                 />
                 <p className="text-xs text-muted-fg">11 ნიშნა</p>
               </div>
+              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">
+                §2. ტელეფონის ნომერი
+              </h2>
               <div className="flex flex-col gap-1.5">
                 <Field
                   label="ტელეფონის ნომერი"
@@ -270,7 +272,7 @@ export default function JoinForm() {
               </Button>
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </main>
   );

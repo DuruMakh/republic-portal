@@ -59,8 +59,8 @@ export default async function AdminTransferPage({
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">ადმინისტრაციული ტრანსფერი</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ადმინისტრაციული ტრანსფერი</h1>
         <p className="mt-2 text-sm text-muted-fg">
           ცენტრალურ მოძრაობაზე მიბმული (ობოლი) წევრები გადაანაწილე შესაბამისი მხარის დამტკიცებულ
           დელეგატებზე.
@@ -81,7 +81,7 @@ export default async function AdminTransferPage({
         {total === 0 ? (
           <Card>
             <div className="p-4 text-center">
-              <p className="text-2xl">✅</p>
+              <p className="text-2xl text-ok">✓</p>
               <h3 className="mt-2 text-base font-bold text-ink">ყველა წევრი გადანაწილებულია</h3>
               <p className="mt-1 text-sm text-muted-fg">
                 ცენტრალურ მოძრაობაზე მიბმული ობოლი წევრები აღარ დარჩა.
@@ -120,7 +120,7 @@ export default async function AdminTransferPage({
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4">
         {page > 1 ? (
           <ButtonLink href={`/admin/transfer?page=${page - 1}`} variant="ghost" size="sm">
             ← წინა

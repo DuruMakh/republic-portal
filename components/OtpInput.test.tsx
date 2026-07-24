@@ -63,4 +63,12 @@ describe("OtpInput", () => {
     fireEvent.keyDown(screen.getByTestId("otp-1"), { key: "Backspace" });
     expect(screen.getByTestId("otp-0")).toHaveFocus();
   });
+  it("cells contain font-serif and border-b", () => {
+    render(<OtpInput value="" onChange={() => undefined} />);
+    for (let i = 0; i < 6; i++) {
+      const cell = screen.getByTestId(`otp-${i}`);
+      expect(cell.className).toContain("font-serif");
+      expect(cell.className).toContain("border-b");
+    }
+  });
 });

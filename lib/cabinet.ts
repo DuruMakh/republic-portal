@@ -42,6 +42,7 @@ export function deriveDelegacyPhase(state: CabinetStatePresent): DelegacyPhase |
 export interface CabinetNavItem {
   href: string;
   label: string;
+  count?: number;
 }
 
 export function cabinetNavItems(

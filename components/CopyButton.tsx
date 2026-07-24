@@ -26,7 +26,7 @@ export function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <Button size="sm" onClick={copy}>
+    <Button variant="ghost" size="sm" onClick={copy}>
       {copied ? "დაკოპირდა ✓" : "კოპირება"}
     </Button>
   );

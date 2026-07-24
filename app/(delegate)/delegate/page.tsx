@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
@@ -64,10 +63,11 @@ export default async function DelegateDashboardPage() {
 
   return (
     <main>
-      <div className="mb-8">
-        <Eyebrow>დელეგატის კაბინეტი</Eyebrow>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-ink">გამარჯობა, {state.firstName}</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-[2rem] font-bold text-ink">
+            გამარჯობა, {state.firstName}
+          </h1>
           <Pill status={panel.status} />
         </div>
         <p className="mt-2 text-sm text-muted-fg">

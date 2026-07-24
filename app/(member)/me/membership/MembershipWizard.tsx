@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field, inputClasses } from "@/components/Field";
@@ -236,7 +235,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   if (phase === "profile") {
     phaseContent = (
       <>
-        <h2 className="text-xl font-bold text-ink">იურიდიული პროფილი</h2>
+        <h2 className="font-serif font-bold border-b-2 border-ink pb-2">იურიდიული პროფილი</h2>
         <p className="mb-5 mt-1 text-sm text-muted-fg">
           ეს მონაცემები საჭიროა წევრობის იურიდიული ვერიფიკაციისთვის. ინახება უსაფრთხოდ.
         </p>
@@ -334,7 +333,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   } else {
     phaseContent = (
       <>
-        <h2 className="text-xl font-bold text-ink">საწევრო შენატანი</h2>
+        <h2 className="font-serif font-bold border-b-2 border-ink pb-2">საწევრო შენატანი</h2>
         <p className="mb-5 mt-1 text-sm text-muted-fg">
           აირჩიე ყოველთვიური საწევრო. შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
         </p>
@@ -363,7 +362,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       <div className="mb-6 flex justify-center">
         <Stepper steps={["პროფილი", "საწევრო"]} current={phase === "profile" ? 1 : 2} />
       </div>
-      <Card>{phaseContent}</Card>
+      <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
+        {phaseContent}
+      </div>
     </main>
   );
 }

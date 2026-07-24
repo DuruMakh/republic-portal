@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
-import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
@@ -22,29 +21,32 @@ export default async function MembershipDonePage() {
       <div className="mb-6">
         <Eyebrow>წევრობის გაფორმება</Eyebrow>
       </div>
-      <Card>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-ink">რეგისტრაცია დასრულებულია ✓</h2>
-          <div className="mt-2">
-            <Pill status="profile_completed" />
-          </div>
+      <div className="mx-auto max-w-lg border-y-2 border-ink py-10 text-center">
+        <h1 className="font-serif text-4xl font-bold text-ink">რეგისტრაცია დასრულებულია ✓</h1>
+        {state.referenceCode ? (
+          <p className="mt-4 font-serif text-3xl font-bold tracking-[.08em]">
+            {state.referenceCode}
+          </p>
+        ) : null}
+        <div className="mt-4">
+          <Pill status="profile_completed" />
         </div>
-        <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
-        <p className="mt-4 text-sm text-muted-fg">
-          დელეგატი:{" "}
-          <strong className="text-ink" data-testid="chosen-delegate">
-            {state.chosenDelegate
-              ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-              : "ცენტრალური მოძრაობა"}
-          </strong>
-        </p>
-        <p className="mt-2 text-sm text-muted-fg">
-          აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
-        </p>
-        <div className="mt-6 flex flex-col gap-2">
-          <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
-        </div>
-      </Card>
+      </div>
+      <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
+      <p className="mt-4 text-sm text-muted-fg">
+        დელეგატი:{" "}
+        <strong className="text-ink" data-testid="chosen-delegate">
+          {state.chosenDelegate
+            ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
+            : "ცენტრალური მოძრაობა"}
+        </strong>
+      </p>
+      <p className="mt-2 text-sm text-muted-fg">
+        აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
+      </p>
+      <div className="mt-6 flex flex-col gap-2">
+        <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
+      </div>
     </main>
   );
 }

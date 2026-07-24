@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
-import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
-import { initialsKa, isApprovedDelegate } from "@/lib/cabinet";
+import { isApprovedDelegate } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { DelegateChange } from "./DelegateChange";
@@ -38,85 +37,61 @@ export default async function MyDelegatePage() {
 
   return (
     <main>
-      <div className="mb-8">
-        <Eyebrow>პირადი კაბინეტი</Eyebrow>
-        <h1 className="mt-1 text-2xl font-bold text-ink">ჩემი დელეგატი</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">ჩემი დელეგატი</h1>
         <p className="mt-2 text-sm text-muted-fg">
           დელეგატი შენს ხმას წარადგენს მოძრაობაში. არჩევანი ყოველთვის შენზეა.
         </p>
       </div>
 
-      <div className="mb-6 flex items-start gap-3 rounded-xl border border-brand/20 bg-brand/5 p-4">
-        <span className="text-xl" aria-hidden>
-          🔄
-        </span>
-        <div>
-          <p className="text-sm font-bold text-ink">
-            შენ შეგიძლია ნებისმიერ დროს, შეზღუდვის გარეშე შეცვალო დელეგატი.
-          </p>
-          <p className="mt-1 text-sm text-muted-fg">
-            არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე.
-          </p>
-        </div>
+      <div className="mb-6">
+        <p className="text-sm font-bold text-ink">
+          შენ შეგიძლია ნებისმიერ დროს, შეზღუდვის გარეშე შეცვალო დელეგატი.
+        </p>
+        <p className="mt-1 text-sm text-muted-fg">
+          არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <Card title="მიმდინარე დელეგატი">
           {state.chosenDelegate ? (
             <div>
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 font-bold text-brand"
-                  aria-hidden
-                >
-                  {initialsKa(state.chosenDelegate.firstName, state.chosenDelegate.lastName)}
-                </div>
-                <div>
-                  <h3 className="font-bold text-ink" data-testid="current-delegate">
-                    {state.chosenDelegate.firstName} {state.chosenDelegate.lastName}
-                  </h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    {current ? (
-                      <>
-                        <Pill status="approved" />
-                        {current.region_name_ka ? (
-                          <span className="text-sm text-muted-fg">{current.region_name_ka}</span>
-                        ) : null}
-                      </>
-                    ) : (
-                      // bound delegate is no longer approved/public — don't fake an „approved" pill
-                      <span className="text-sm text-muted-fg" data-testid="delegate-unavailable">
-                        დელეგატი ამჟამად მიუწვდომელია
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <h3 className="font-serif text-lg font-bold text-ink" data-testid="current-delegate">
+                {state.chosenDelegate.firstName} {state.chosenDelegate.lastName}
+              </h3>
+              <div className="mt-1.5 flex items-center gap-2">
+                {current ? (
+                  <>
+                    <Pill status="approved" />
+                    {current.region_name_ka ? (
+                      <span className="text-sm text-muted-fg">{current.region_name_ka}</span>
+                    ) : null}
+                  </>
+                ) : (
+                  // bound delegate is no longer approved/public — don't fake an „approved“ pill
+                  <span className="text-sm text-muted-fg" data-testid="delegate-unavailable">
+                    დელეგატი ამჟამად მიუწვდომელია
+                  </span>
+                )}
               </div>
               {current ? (
-                <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-sm">
+                <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-sm">
                   <span className="text-muted-fg">აქტიური მხარდამჭერი</span>
-                  <strong className="text-lg text-ink">
+                  <strong className="font-serif text-lg text-ink">
                     {formatCountKa(current.active_supporters)}
                   </strong>
                 </div>
               ) : null}
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 font-bold text-brand"
-                aria-hidden
-              >
-                ცმ
-              </div>
-              <div>
-                <h3 className="font-bold text-ink" data-testid="current-delegate">
-                  ცენტრალური მოძრაობა
-                </h3>
-                <p className="mt-1 text-sm text-muted-fg">
-                  შენ პირდაპირ ცენტრალურ მოძრაობას უჭერ მხარს.
-                </p>
-              </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-ink" data-testid="current-delegate">
+                ცენტრალური მოძრაობა
+              </h3>
+              <p className="mt-1 text-sm text-muted-fg">
+                შენ პირდაპირ ცენტრალურ მოძრაობას უჭერ მხარს.
+              </p>
             </div>
           )}
         </Card>
