@@ -23,9 +23,9 @@ export function ContentNav() {
             key={s.href}
             href={s.href}
             aria-current={active ? "page" : undefined}
-            className={
+            className={`no-underline ${
               active ? "text-brand border-b-2 border-brand pb-1" : "text-ink hover:text-brand"
-            }
+            }`}
           >
             {s.label}
           </Link>

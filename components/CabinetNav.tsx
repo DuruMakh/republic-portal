@@ -36,7 +36,7 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`inline-flex items-center gap-1.5 ${
+            className={`no-underline inline-flex items-center gap-1.5 ${
               active ? "text-brand border-b-2 border-brand pb-1" : "text-ink hover:text-brand"
             }`}
           >

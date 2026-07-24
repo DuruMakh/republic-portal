@@ -10,7 +10,7 @@ const ROMAN_NUMERAL_TABLE: ReadonlyArray<readonly [number, string]> = [
  * Roman-numeral step furniture by position (spec §3.1) — decorative only.
  * The caller's step label strings are never touched; this only prefixes them.
  */
-function toRomanNumeral(n: number): string {
+export function toRomanNumeral(n: number): string {
   let remaining = n;
   let roman = "";
   for (const [value, symbol] of ROMAN_NUMERAL_TABLE) {
