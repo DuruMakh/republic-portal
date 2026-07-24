@@ -18,18 +18,146 @@ import type { Expectation, ProbeOutcome, SurfaceKind, Verdict } from "./types";
 const DENIED_BY_PRIVILEGE = "42501";
 
 /**
+ * Why this file has to read `outcome.errorMessage` at all, which is unusual
+ * for a rule that otherwise only cares about SQLSTATEs:
+ *
+ * Every `raise exception` in every migration under supabase/migrations/ is
+ * bare — none carries a `USING ERRCODE = ...` clause (verified: grepping the
+ * whole migrations directory for "errcode" returns zero hits). Postgres's
+ * default SQLSTATE for a bare RAISE EXCEPTION is P0001, so all ~340 raises in
+ * this schema — role gates and business-rule/validation failures alike —
+ * arrive as the exact same code. The only thing that distinguishes "the
+ * caller was turned away" from "the caller got in and then something else
+ * stopped them" is the literal message text, so judge() has no choice but to
+ * read it. Two token allowlists below do that reading — matched by exact
+ * string, never a substring sweep, and every entry earned its place by being
+ * read, in context, in the migration that raises it (see
+ * lib/security/verdict.tokens-drift.test.ts, which re-derives the same
+ * tokens from the live migration text so this pair of lists can't silently
+ * go stale).
+ *
+ * REFUSAL_TOKENS: raised as part of the unconditional identity/standing gate
+ * every RPC envelope runs before doing anything else (ADR-014) — auth first,
+ * then (where relevant) role or standing. A match proves the caller never
+ * got in. Confirmed for every occurrence of every token below, not assumed:
+ * `not_authenticated` (68 occurrences) is always the literal first statement
+ * in the function body; `missing_role` (39, including admin_export_members'
+ * second, narrower super_admin-only check) is always the next statement with
+ * nothing but `not_authenticated` before it; `not_a_delegate`/`not_approved`
+ * (delegate_panel, delegate_team, delegate_team_rsvps) and `not_a_member`
+ * (member_change_delegate, request_delegacy) are always caller-standing
+ * checks — never about some other row's state — that run before any
+ * business logic touches the function's actual payload, even where they
+ * aren't literally the second statement.
+ *
+ * POST_GATE_TOKENS: every other literal, single-word exception token in the
+ * schema — argument validation (invalid_amount, invalid_target, ...) and
+ * business-rule refusals (last_super_admin, delegacy_exists, poll_closed,
+ * ...). Reaching one of these is only possible after the leading gate above
+ * has already let the caller through, so for a deny expectation it is proof
+ * of the opposite of a refusal — a finding, per the brief's own
+ * (previously unenforced) observation that "a validation error proves the
+ * caller got past the grant."
+ *
+ * Deliberately left out of both lists, and out of the drift guard's
+ * required-classification set: `not_completed` and `profile_incomplete`
+ * mean a caller-standing gate in some functions (member_rsvp,
+ * member_cast_vote: "is this caller even registered") and an unrelated
+ * target/payload validation in others (admin_record_payment: "is the
+ * TARGET member's profile complete") — the identical token text carries two
+ * different meanings depending on which function raised it, which a
+ * message-only match can never disambiguate. Guessing either way risks a
+ * false clear or a false finding, so both stay unclassified and any deny-side
+ * probe returning them defers to needs-live-proof, same as an unrecognised
+ * token. `terms_required` is dead (its only call site, funnel_save_profile,
+ * was dropped in 20260721120000_progressive_registration.sql).
+ * `delegate_requires_completed_member` belongs to a trigger
+ * (enforce_delegate_completed), not an RPC with a caller to refuse or admit.
+ * `audit_log is append-only` / `server-managed profile columns cannot be
+ * changed by client roles` are full-sentence trigger messages, not tokens.
+ */
+const RAISE_EXCEPTION_SQLSTATE = "P0001";
+
+/**
+ * Exported (not just module-local) so verdict.tokens-drift.test.ts can check
+ * these exact sets against the live migration text instead of a hand-copied
+ * shadow of them — a drift guard that compared two independently-maintained
+ * lists would only prove they agree with EACH OTHER, not with the schema.
+ */
+export const REFUSAL_TOKENS = new Set([
+  "not_authenticated",
+  "missing_role",
+  "not_a_delegate",
+  "not_approved",
+  "not_a_member",
+]);
+
+export const POST_GATE_TOKENS = new Set([
+  "invalid_target",
+  "invalid_status",
+  "invalid_name",
+  "invalid_title",
+  "invalid_delegate",
+  "invalid_body",
+  "duplicate_personal_id",
+  "invalid_slug",
+  "invalid_role",
+  "invalid_tier",
+  "invalid_personal_id",
+  "invalid_event_dates",
+  "invalid_employment",
+  "delegacy_exists",
+  "rsvp_closed",
+  "invalid_setting",
+  "invalid_location",
+  "last_super_admin",
+  "invalid_visibility",
+  "invalid_rows",
+  "invalid_options",
+  "invalid_image",
+  "invalid_date",
+  "invalid_city",
+  "invalid_birth_date",
+  "invalid_amount",
+  "duplicate_reference",
+  "already_completed",
+  "poll_closed",
+  "invalid_reason",
+  "invalid_question",
+  "invalid_option",
+  "invalid_note",
+  "duplicate",
+  "already_voted",
+  "already_voided",
+]);
+
+/**
  * Surfaces you CALL, as opposed to surfaces you READ. The distinction decides
  * what "no error, no rows" means, and it is the difference between finding a
  * privilege-escalation hole and filing it as inconclusive.
  */
 const INVOCATION_KINDS = new Set<SurfaceKind>(["function", "action", "endpoint"]);
 
+function classifyToken(outcome: ProbeOutcome): "refusal" | "post-gate" | null {
+  if (outcome.errorCode !== RAISE_EXCEPTION_SQLSTATE || outcome.errorMessage === null) return null;
+  if (REFUSAL_TOKENS.has(outcome.errorMessage)) return "refusal";
+  if (POST_GATE_TOKENS.has(outcome.errorMessage)) return "post-gate";
+  return null;
+}
+
 export function judge(expectation: Expectation, outcome: ProbeOutcome, kind: SurfaceKind): Verdict {
   const { errorCode, rowCount } = outcome;
+  const token = classifyToken(outcome);
 
   if (expectation === "deny") {
     if (errorCode !== null) {
-      return errorCode === DENIED_BY_PRIVILEGE ? "clear" : "needs-live-proof";
+      if (errorCode === DENIED_BY_PRIVILEGE || token === "refusal") return "clear";
+      // A post-gate token on a deny-expectation probe is positive proof the
+      // caller got PAST the gate — the brief said as much in prose ("a
+      // validation error proves the caller got past the grant") and then
+      // filed it as inconclusive anyway. It is a finding, not a maybe.
+      if (token === "post-gate") return "finding";
+      return "needs-live-proof";
     }
     // No error means the grant exists and the caller got through.
     //
@@ -47,8 +175,15 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome, kind: Sur
   }
 
   if (errorCode === null) return "clear";
-  // Only a privilege denial is a real over-restriction finding. A missing
-  // function or argument mismatch is a defect in the probe's argument table
-  // (Task 7) and must never be reported to the owner as a security finding.
-  return errorCode === DENIED_BY_PRIVILEGE ? "finding" : "needs-live-proof";
+  // Only a privilege denial is a real over-restriction finding — 42501, or
+  // (since this schema enforces every role/standing gate at the application
+  // level rather than through a per-role GRANT) a refusal token arriving as
+  // P0001. A post-gate token proves nothing about permissions either way: the
+  // caller DID get past the gate, exactly as an allow expectation predicts —
+  // it just means this probe's specific arguments didn't validate for this
+  // actor, which is a fact about the probe's argument table (Task 7), not
+  // about who may reach the surface. A missing function or argument mismatch
+  // is the same kind of probe defect and must never be reported to the owner
+  // as a security finding.
+  return errorCode === DENIED_BY_PRIVILEGE || token === "refusal" ? "finding" : "needs-live-proof";
 }

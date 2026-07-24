@@ -68,6 +68,94 @@ describe.each(READ_KINDS)("judge — reads (%s)", (kind) => {
   });
 });
 
+// This schema never sets an ERRCODE, so every `raise exception` — role gates
+// and business-rule/validation failures alike — arrives as P0001. judge()
+// disambiguates them by reading the message against two allowlists
+// (REFUSAL_TOKENS, POST_GATE_TOKENS — see verdict.ts's file-level comment for
+// how each token earned its place, and verdict.tokens-drift.test.ts for the
+// guard that keeps them honest against the live migrations). "view" is used
+// throughout below since this classification is kind-independent — it lives
+// entirely in the errorCode/errorMessage branch, before kind is ever
+// consulted.
+describe("judge — P0001 token classification (this schema's bare raise exception)", () => {
+  it("clears a deny expectation when P0001 carries a refusal token", () => {
+    // Two different tokens, to prove this isn't hardcoded to one string.
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "view"),
+    ).toBe("clear");
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "not_authenticated" }), "view"),
+    ).toBe("clear");
+  });
+
+  it("flags a deny expectation as a finding when P0001 carries a post-gate token", () => {
+    // The brief said this in prose ("a validation error proves the caller
+    // got past the grant") and then filed it as needs-live-proof anyway —
+    // this is the fix. Two tokens: a plain argument-validation one and a
+    // business-rule one, to prove the allowlist isn't just "invalid_*".
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "invalid_target" }), "view"),
+    ).toBe("finding");
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "last_super_admin" }), "view"),
+    ).toBe("finding");
+  });
+
+  it("leaves a deny expectation unresolved when P0001 carries an unrecognised token", () => {
+    // Never guess in either direction — an unclassified message (a typo, a
+    // token from a function this list hasn't caught up with) must not be
+    // read as proof of anything.
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "some_future_token" }), "view"),
+    ).toBe("needs-live-proof");
+  });
+
+  it("flags an allow expectation as a finding when P0001 carries a refusal token", () => {
+    // Symmetric to 42501: this schema enforces every admin role/standing
+    // check at the application level (a bare raise, not a per-role GRANT),
+    // so P0001+refusal is the dominant way an allow-expected actor would
+    // actually be turned away — without this, that whole class of
+    // over-restriction bug would sit in needs-live-proof forever, since
+    // 42501 essentially never fires for these functions (every client role
+    // holds EXECUTE; the finer-grained role check happens in the body).
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "view"),
+    ).toBe("finding");
+  });
+
+  it("leaves an allow expectation unresolved when P0001 carries a post-gate token", () => {
+    // The caller DID get past the gate here — exactly what "allow" predicts
+    // — so this proves nothing about permissions either way. It only means
+    // this probe's specific arguments didn't validate for this actor, which
+    // is the probe's argument table's problem (Task 7), not a security
+    // finding. Must not be silently waved through as "clear" either.
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "invalid_target" }), "view"),
+    ).toBe("needs-live-proof");
+  });
+
+  it("leaves an allow expectation unresolved when P0001 carries an unrecognised token", () => {
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "some_future_token" }), "view"),
+    ).toBe("needs-live-proof");
+  });
+
+  it("requires the SQLSTATE to actually be P0001 — a matching message under a different code is not a token match", () => {
+    // Guards the classifier's own gate: "missing_role" as plain text under
+    // some other SQLSTATE (a coincidence, or a different error path
+    // entirely) must not be read as this schema's role-gate token.
+    expect(
+      judge("deny", outcome({ errorCode: "22023", errorMessage: "missing_role" }), "view"),
+    ).toBe("needs-live-proof");
+  });
+
+  it("does not crash and stays unresolved when P0001 carries no message at all", () => {
+    expect(judge("deny", outcome({ errorCode: "P0001", errorMessage: null }), "view")).toBe(
+      "needs-live-proof",
+    );
+  });
+});
+
 describe("judge — invocations (function, action, endpoint)", () => {
   // The critical case. Most definer functions return nothing: they DO something.
   // A successful unauthorized call and a correctly-blocked one both come back
