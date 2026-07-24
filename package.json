@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "seed:staging": "node --env-file=.env.local scripts/seed-staging.mjs",
-    "security:actors": "node --env-file=.env.local scripts/security/actors.mjs --verify"
+    "security:actors": "node --env-file=.env.local scripts/security/actors.mjs --verify",
+    "security:introspect": "node --env-file=.env.local scripts/security/introspect.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.0",
