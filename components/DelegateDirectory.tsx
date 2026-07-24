@@ -59,13 +59,13 @@ export function DelegateDirectory({
         </select>
       </div>
       {filtered.length > 0 ? (
-        <div className="grid lg:grid-cols-2 lg:gap-x-16">
-          <div className="lg:border-r lg:border-hairline lg:pr-8">
+        <div className="grid min-w-0 lg:grid-cols-2 lg:gap-x-16">
+          <div className="min-w-0 lg:border-r lg:border-hairline lg:pr-8">
             {leftColumn.map((d) => (
               <DelegateCard key={d.id} delegate={d} />
             ))}
           </div>
-          <div>
+          <div className="min-w-0">
             {rightColumn.map((d) => (
               <DelegateCard key={d.id} delegate={d} />
             ))}

@@ -39,7 +39,14 @@ export function DelegateCard({ delegate }: { delegate: RankedDelegate }) {
             {ACTIVE_SUPPORTER_LABEL}
           </span>
         </span>
-        <Pill status="approved" />
+        {/* Approved-status pill is redundant below `sm`: this directory only ever lists
+            approved delegates (pending/rejected are filtered server-side), and at the
+            360px floor the pill's unbreakable label was the row's overflow driver —
+            see e2e/responsive.spec.ts. `lg:` two-column split needs the room back;
+            `sm:` and up already have it, matching LeaderRow's narrower row (no pill). */}
+        <span className="hidden shrink-0 sm:inline-flex">
+          <Pill status="approved" />
+        </span>
       </span>
     </Link>
   );
