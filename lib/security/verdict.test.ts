@@ -110,7 +110,7 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     ).toBe("needs-live-proof");
   });
 
-  it("flags an allow expectation as a finding when P0001 carries a refusal token", () => {
+  it("flags an allow expectation as a finding when P0001 carries a genuine permission-refusal token", () => {
     // Symmetric to 42501: this schema enforces every admin role/standing
     // check at the application level (a bare raise, not a per-role GRANT),
     // so P0001+refusal is the dominant way an allow-expected actor would
@@ -118,9 +118,43 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     // over-restriction bug would sit in needs-live-proof forever, since
     // 42501 essentially never fires for these functions (every client role
     // holds EXECUTE; the finer-grained role check happens in the body).
+    // Three of the four genuine-permission tokens (not just missing_role),
+    // to prove this isn't hardcoded to one string — not_authenticated is
+    // deliberately excluded from this set; see the next two tests.
     expect(
       judge("allow", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "view"),
     ).toBe("finding");
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "not_a_delegate" }), "view"),
+    ).toBe("finding");
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "not_a_member" }), "view"),
+    ).toBe("finding");
+  });
+
+  it("does NOT flag an allow expectation when P0001 carries not_authenticated — infrastructure, not a permission verdict", () => {
+    // The one REFUSAL_TOKENS member that is not an authorization verdict:
+    // "no session was presented" more plausibly means a stale entry in
+    // Task 1's on-disk session cache than a real app bug, and unlike the
+    // other four refusal tokens, treating it as a finding here would turn
+    // one bad cached JWT into a false "over-restriction" finding across
+    // every surface for that actor at once. This is the path that was
+    // previously untested — allow + missing_role was pinned above, but
+    // allow + not_authenticated never was, which is how the asymmetry
+    // shipped unnoticed the first time.
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "not_authenticated" }), "view"),
+    ).toBe("needs-live-proof");
+  });
+
+  it("still clears a deny expectation on not_authenticated — the asymmetry is allow-side only", () => {
+    // Restated explicitly (already covered above by the two-token deny
+    // test) so the deny/allow split for this one token reads as a pinned
+    // contract, not an implication a reader has to derive by cross-
+    // referencing two other tests.
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "not_authenticated" }), "view"),
+    ).toBe("clear");
   });
 
   it("leaves an allow expectation unresolved when P0001 carries a post-gate token", () => {

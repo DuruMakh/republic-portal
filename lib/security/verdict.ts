@@ -48,16 +48,28 @@ const DENIED_BY_PRIVILEGE = "42501";
  * (member_change_delegate, request_delegacy) are always caller-standing
  * checks — never about some other row's state — that run before any
  * business logic touches the function's actual payload, even where they
- * aren't literally the second statement.
+ * aren't literally the second statement. On the deny side all five are
+ * equally conclusive (any of them proves the actor didn't get in). On the
+ * allow side they are NOT interchangeable — `not_authenticated` is carved
+ * out; see NO_SESSION_TOKEN below judge() for why.
  *
  * POST_GATE_TOKENS: every other literal, single-word exception token in the
  * schema — argument validation (invalid_amount, invalid_target, ...) and
  * business-rule refusals (last_super_admin, delegacy_exists, poll_closed,
- * ...). Reaching one of these is only possible after the leading gate above
- * has already let the caller through, so for a deny expectation it is proof
- * of the opposite of a refusal — a finding, per the brief's own
- * (previously unenforced) observation that "a validation error proves the
- * caller got past the grant."
+ * ...). For every RPC that raises one, reaching it is only possible after
+ * that RPC's own leading gate has already let the caller through, so for a
+ * deny expectation it is proof of the opposite of a refusal — a finding, per
+ * the brief's own (previously unenforced) observation that "a validation
+ * error proves the caller got past the grant." Two of these — `invalid_name`,
+ * `invalid_employment` — are ALSO raised by protect_profile_columns()
+ * (20260716140000_cabinet_hardening.sql, latest body
+ * 20260721120000_progressive_registration.sql:54), a column-protection
+ * TRIGGER with no leading gate of its own (it fires on any client-role
+ * UPDATE of profiles, unconditionally on `current_user`, never on
+ * `auth.uid()`) — the same reason `delegate_requires_completed_member` is
+ * excluded below rather than classified. The classification is unaffected
+ * either way: both tokens are validation, not an identity/standing refusal,
+ * whichever context raises them.
  *
  * Deliberately left out of both lists, and out of the drift guard's
  * required-classification set: `not_completed` and `profile_incomplete`
@@ -138,6 +150,25 @@ export const POST_GATE_TOKENS = new Set([
  */
 const INVOCATION_KINDS = new Set<SurfaceKind>(["function", "action", "endpoint"]);
 
+/**
+ * The one REFUSAL_TOKENS entry that is not an authorization verdict.
+ * `missing_role`, `not_a_delegate`, `not_approved` and `not_a_member` all
+ * mean "this actor was identified and found to lack permission or
+ * standing" — a real over-restriction finding when allow was expected.
+ * `not_authenticated` means no session was presented at all, which is an
+ * infrastructure condition, not a verdict about the actor: Task 1 shipped an
+ * on-disk session cache (scripts/security/session-cache.mjs) so a probe's
+ * JWT now persists across runs and CAN go stale. One stale cached token
+ * would otherwise turn every allow-expected probe for that one actor, across
+ * all ~154 surfaces, into a confident "over-restriction" finding at once —
+ * a whole actor's column of the census, wrong, and loudly. On the deny side
+ * this distinction doesn't matter (presenting no session at all still
+ * proves the actor didn't get in, which is all "clear" needs), so
+ * `not_authenticated` stays a full REFUSAL_TOKENS member there — it is
+ * carved out on the allow side only, in judge() below.
+ */
+const NO_SESSION_TOKEN = "not_authenticated";
+
 function classifyToken(outcome: ProbeOutcome): "refusal" | "post-gate" | null {
   if (outcome.errorCode !== RAISE_EXCEPTION_SQLSTATE || outcome.errorMessage === null) return null;
   if (REFUSAL_TOKENS.has(outcome.errorMessage)) return "refusal";
@@ -178,12 +209,18 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome, kind: Sur
   // Only a privilege denial is a real over-restriction finding — 42501, or
   // (since this schema enforces every role/standing gate at the application
   // level rather than through a per-role GRANT) a refusal token arriving as
-  // P0001. A post-gate token proves nothing about permissions either way: the
-  // caller DID get past the gate, exactly as an allow expectation predicts —
-  // it just means this probe's specific arguments didn't validate for this
-  // actor, which is a fact about the probe's argument table (Task 7), not
-  // about who may reach the surface. A missing function or argument mismatch
-  // is the same kind of probe defect and must never be reported to the owner
-  // as a security finding.
-  return errorCode === DENIED_BY_PRIVILEGE || token === "refusal" ? "finding" : "needs-live-proof";
+  // P0001. But not_authenticated specifically is excluded even though it is
+  // a REFUSAL_TOKENS member: it means no session was presented, which is an
+  // infrastructure condition (a stale entry in Task 1's on-disk session
+  // cache), not an authorization verdict about this actor — see
+  // NO_SESSION_TOKEN above for why asserting a finding here would be
+  // dangerous. A post-gate token proves nothing about permissions either
+  // way: the caller DID get past the gate, exactly as an allow expectation
+  // predicts — it just means this probe's specific arguments didn't
+  // validate for this actor, which is a fact about the probe's argument
+  // table (Task 7), not about who may reach the surface. A missing function
+  // or argument mismatch is the same kind of probe defect and must never be
+  // reported to the owner as a security finding.
+  const isPermissionRefusal = token === "refusal" && outcome.errorMessage !== NO_SESSION_TOKEN;
+  return errorCode === DENIED_BY_PRIVILEGE || isPermissionRefusal ? "finding" : "needs-live-proof";
 }
