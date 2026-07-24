@@ -22,7 +22,9 @@ export default function TermsPage() {
       <p className="mb-6 rounded-lg bg-warn/10 p-3 text-sm font-semibold text-warn">
         სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
       </p>
-      <DelegateTerms />
+      <div className="border-y-2 border-ink py-8">
+        <DelegateTerms />
+      </div>
     </main>
   );
 }
