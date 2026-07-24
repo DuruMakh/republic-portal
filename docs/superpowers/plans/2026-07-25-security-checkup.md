@@ -37,12 +37,17 @@
 | `scripts/security/manifest.json` | The committed 154-row surface inventory. Data, not code. |
 | `scripts/security/introspect.mjs` | Regenerates the manifest from the live database and fails loudly on drift. |
 | `scripts/security/actors.mjs` | Provisions the 12 actor fixtures and mints one cached session each. |
+| `scripts/security/arguments.mjs` | Per-function valid arguments and the per-probe disposable-target `setup()` that keeps mutating probes isolated. |
 | `scripts/security/probe.mjs` | The matrix runner: every applicable (surface, actor) pair, recording rather than throwing. |
 | `docs/security/threat-model.md` | Pass 1 artifact. |
 | `docs/security/coverage.md` | Pass 2 artifact — the human-readable coverage table. |
 | `docs/security/ledger.json` | Machine-readable probe results, regenerated per run. |
 | `docs/security/findings.md` | Passes 3–4 artifact: confirmed findings and recorded disproofs. |
+| `docs/security/residue.json` | Every row the probes minted or mutated, appended live by the runner. |
+| `docs/security/residue.md` | What survived the reseed and why it could not be removed. |
 | `docs/security/report.md` | The owner-facing plain-language report. |
+
+**Census coverage adds up to all 154 surfaces, with no orphans:** Task 6 takes 58 (24 views, 16 tables, 10 policies, 8 triggers), Task 7 takes 58 (52 definer functions, 6 helpers), Task 8 takes 38 (35 actions, 1 endpoint, 2 buckets). Any future edit to the task boundaries must preserve this sum — spec §7 makes a verdict for every surface an exit criterion.
 
 ---
 
@@ -265,7 +270,7 @@ git commit -m "feat(security): 12-actor fixture provisioning and session minting
 **Interfaces:**
 
 - Consumes: nothing — pure, no imports outside the repo's own types.
-- Produces: `judge(expectation: Expectation, outcome: ProbeOutcome): Verdict`; `defaultExpectation(surface: Surface, actor: ActorId): Expectation`; `isRuleDerived(surface: Surface, actor: ActorId): boolean`. Task 4's runner calls `judge`; Task 3's manifest builder calls `defaultExpectation`.
+- Produces: `judge(expectation: Expectation, outcome: ProbeOutcome, kind: SurfaceKind): Verdict`; `defaultExpectation(surface: Surface, actor: ActorId): Expectation`; `isRuleDerived(surface: Surface, actor: ActorId): boolean`. Task 4's judging step calls `judge` — it must pass the surface's `kind`, looked up from the manifest by `surfaceId`, because the same outcome means different things for a read and a call. Task 3's manifest builder calls `defaultExpectation`.
 
 **Design notes for the implementer:**
 
@@ -335,48 +340,80 @@ const outcome = (o: Partial<ProbeOutcome> = {}): ProbeOutcome => ({
   ...o,
 });
 
-describe("judge", () => {
+describe("judge — reads (view, table)", () => {
   it("clears a denial that returns 42501", () => {
-    expect(judge("deny", outcome({ errorCode: "42501" }))).toBe("clear");
+    expect(judge("deny", outcome({ errorCode: "42501" }), "view")).toBe("clear");
   });
 
   it("clears a denial that returns 42883", () => {
-    expect(judge("deny", outcome({ errorCode: "42883" }))).toBe("clear");
+    expect(judge("deny", outcome({ errorCode: "42883" }), "view")).toBe("clear");
   });
 
   it("clears a denial that returns PGRST202", () => {
-    expect(judge("deny", outcome({ errorCode: "PGRST202" }))).toBe("clear");
+    expect(judge("deny", outcome({ errorCode: "PGRST202" }), "view")).toBe("clear");
   });
 
   it("flags a leak when a denial returns rows", () => {
-    expect(judge("deny", outcome({ rowCount: 3 }))).toBe("finding");
+    expect(judge("deny", outcome({ rowCount: 3 }), "view")).toBe("finding");
   });
 
-  it("does NOT clear a denial that merely returned zero rows", () => {
-    expect(judge("deny", outcome({ rowCount: 0 }))).toBe("needs-live-proof");
+  it("does NOT clear a read denial that merely returned zero rows", () => {
+    expect(judge("deny", outcome({ rowCount: 0 }), "view")).toBe("needs-live-proof");
   });
 
   it("does NOT treat a validation error as a denial", () => {
-    expect(judge("deny", outcome({ errorCode: "22023", errorMessage: "invalid_tier" }))).toBe(
+    expect(judge("deny", outcome({ errorCode: "22023", errorMessage: "invalid_tier" }), "view")).toBe(
       "needs-live-proof",
     );
   });
 
   it("clears an allow that succeeds", () => {
-    expect(judge("allow", outcome({ rowCount: 5 }))).toBe("clear");
+    expect(judge("allow", outcome({ rowCount: 5 }), "view")).toBe("clear");
   });
 
   it("flags an allow that is denied", () => {
-    expect(judge("allow", outcome({ errorCode: "42501" }))).toBe("finding");
+    expect(judge("allow", outcome({ errorCode: "42501" }), "view")).toBe("finding");
   });
 
   it("defers an allow that errors unexpectedly", () => {
-    expect(judge("allow", outcome({ errorCode: "22023" }))).toBe("needs-live-proof");
+    expect(judge("allow", outcome({ errorCode: "22023" }), "view")).toBe("needs-live-proof");
   });
 
   it("does NOT call a missing-function error a finding — that is a probe defect", () => {
-    expect(judge("allow", outcome({ errorCode: "PGRST202" }))).toBe("needs-live-proof");
-    expect(judge("allow", outcome({ errorCode: "42883" }))).toBe("needs-live-proof");
+    expect(judge("allow", outcome({ errorCode: "PGRST202" }), "view")).toBe("needs-live-proof");
+    expect(judge("allow", outcome({ errorCode: "42883" }), "view")).toBe("needs-live-proof");
+  });
+});
+
+describe("judge — invocations (function, action, endpoint)", () => {
+  // The critical case. Most definer functions return nothing: they DO something.
+  // A successful unauthorized call and a correctly-blocked one both come back
+  // with no error and no rows, so the read rule above would file the single most
+  // dangerous class of hole as merely inconclusive. For an invocation, the
+  // absence of an error IS the proof that the caller got through.
+  it("flags a denied function that executed without error, even returning nothing", () => {
+    expect(judge("deny", outcome({ rowCount: 0 }), "function")).toBe("finding");
+  });
+
+  it("flags a denied action that executed without error", () => {
+    expect(judge("deny", outcome({ rowCount: 0 }), "action")).toBe("finding");
+  });
+
+  it("flags a denied endpoint that responded without error", () => {
+    expect(judge("deny", outcome({ rowCount: 0 }), "endpoint")).toBe("finding");
+  });
+
+  it("still clears a function that was properly refused", () => {
+    expect(judge("deny", outcome({ errorCode: "42501" }), "function")).toBe("clear");
+  });
+
+  it("still defers a function whose arguments were wrong", () => {
+    expect(judge("deny", outcome({ errorCode: "PGRST202" }), "function")).toBe("clear");
+    expect(judge("allow", outcome({ errorCode: "PGRST202" }), "function")).toBe("needs-live-proof");
+  });
+
+  it("clears an allowed function that executed", () => {
+    expect(judge("allow", outcome({ rowCount: 0 }), "function")).toBe("clear");
   });
 });
 ```
@@ -393,7 +430,7 @@ Expected: FAIL — `Failed to resolve import "./verdict"`.
 
 ```typescript
 // lib/security/verdict.ts
-import type { Expectation, ProbeOutcome, Verdict } from "./types";
+import type { Expectation, ProbeOutcome, SurfaceKind, Verdict } from "./types";
 
 /**
  * Codes that mean "the caller was turned away". 42501 is a true authorization
@@ -404,7 +441,18 @@ import type { Expectation, ProbeOutcome, Verdict } from "./types";
 const DENIED_BY_PRIVILEGE = "42501";
 const NOT_FOUND_CODES = new Set(["42883", "PGRST202"]);
 
-export function judge(expectation: Expectation, outcome: ProbeOutcome): Verdict {
+/**
+ * Surfaces you CALL, as opposed to surfaces you READ. The distinction decides
+ * what "no error, no rows" means, and it is the difference between finding a
+ * privilege-escalation hole and filing it as inconclusive.
+ */
+const INVOCATION_KINDS = new Set<SurfaceKind>(["function", "action", "endpoint"]);
+
+export function judge(
+  expectation: Expectation,
+  outcome: ProbeOutcome,
+  kind: SurfaceKind,
+): Verdict {
   const { errorCode, rowCount } = outcome;
 
   if (expectation === "deny") {
@@ -413,9 +461,18 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome): Verdict 
         ? "clear"
         : "needs-live-proof";
     }
-    // No error: the grant exists. Rows returned is an outright leak; zero rows
-    // proves nothing on its own, because the filter may simply have matched no
-    // data for this actor. Pass 4 settles it with data that should match.
+    // No error means the grant exists and the caller got through.
+    //
+    // For an INVOCATION that is the whole story: most definer functions return
+    // nothing — they record a payment, approve a delegate, close a poll. If the
+    // call completed, the actor performed the act. Waiting for a returned row
+    // before calling that a finding would bury the most dangerous class of hole
+    // in the inconclusive pile.
+    //
+    // For a READ, zero rows is genuinely ambiguous: the filter may simply have
+    // matched nothing for this actor's data. Pass 4 settles it by giving the
+    // actor data that should match (Task 6, Step 2).
+    if (INVOCATION_KINDS.has(kind)) return "finding";
     return rowCount > 0 ? "finding" : "needs-live-proof";
   }
 
@@ -433,7 +490,7 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome): Verdict 
 npx vitest run lib/security/verdict.test.ts
 ```
 
-Expected: PASS, 10 tests.
+Expected: PASS, 16 tests across both describes.
 
 - [ ] **Step 6: Write the failing expectation-rule tests**
 
@@ -572,7 +629,7 @@ Expected: PASS, 7 tests.
 npm run typecheck && npm test
 ```
 
-Expected: typecheck clean; the full unit suite green with 17 new tests added to the existing count.
+Expected: typecheck clean; the full unit suite green with 23 new tests added to the existing count.
 
 - [ ] **Step 11: Commit**
 
@@ -922,7 +979,7 @@ git commit -m "docs(security): Pass 1 threat model"
 
 ---
 
-### Task 6: Pass 2a — census of read surfaces (views and tables)
+### Task 6: Pass 2a — census of read surfaces and the depth layer behind them
 
 **Files:**
 
@@ -932,11 +989,13 @@ git commit -m "docs(security): Pass 1 threat model"
 **Interfaces:**
 
 - Consumes: the ledger and manifest from Tasks 3–4.
-- Produces: a verdict for all 24 views and 16 tables × 12 actors = 480 ledger rows, and the first section of `coverage.md`.
+- Produces: verdicts for **58** surfaces — 24 views, 16 tables, 10 row-level policies, 8 triggers — and the first section of `coverage.md`.
+
+**Why the policies and triggers live here.** A row-level policy and a trigger are not doors you can knock on directly; they are the depth *behind* a table, and the only way to exercise them is through the table they guard. Auditing them in their own task would mean building the same fixtures twice. They are in scope and they matter — the trigger set includes the one preventing a person from editing their own status and the one making a delegate-without-a-membership impossible — so each gets its own row in the coverage table with its own verdict, reached through the table it protects.
 
 - [ ] **Step 1: Replace rule-derived expectations with explicit ones for every view and table**
 
-For each of the 40 read surfaces, read the migration that creates it and state, per actor, whether access should be allowed or denied. Write these into the manifest's `overrides`. This is the slowest step in the task and the most valuable: it forces a stated intent for every surface, and `ruleDerived` drops to `false` for all 480 rows.
+For each of the 40 **directly readable** surfaces (24 views + 16 tables — the policies and triggers are exercised in Steps 4 and 5, not queried directly), read the migration that creates it and state, per actor, whether access should be allowed or denied. Write these into the manifest's `overrides`. This is the slowest step in the task and the most valuable: it forces a stated intent for every surface, and `ruleDerived` drops to `false` for all 480 of these rows.
 
 - [ ] **Step 2: Give each probe data that should match**
 
@@ -950,35 +1009,46 @@ npm run security:census
 
 Expected: zero `needs-live-proof` rows remaining among view and table surfaces. Any that remain are either a missing fixture (fix the fixture) or a genuinely ambiguous surface (escalate to Task 9).
 
-- [ ] **Step 4: Write the coverage table section**
+- [ ] **Step 4: Exercise each of the 10 row-level policies through its table**
 
-One row per surface: id, kind, the twelve verdicts, and a note column. Any `finding` row gets a one-line description of what leaked.
+For each policy, read its `USING`/`WITH CHECK` clause in the migration, then construct the probe that would slip past it if the clause were wrong: the actor it is meant to exclude, attempting the operation it is meant to gate, against a row it is meant not to reach. A policy whose table is already sealed by revoked grants still gets its own probe — grants and policies are independent defences, and the audit's job is to know which one is actually holding.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Exercise each of the 8 triggers by attempting the write it forbids**
+
+For each trigger, attempt the mutation it exists to reject, as an actor who could plausibly attempt it. The protected-columns trigger and the delegate-requires-membership invariant are the two that matter most; both should reject, and a rejection is `clear`. A trigger that permits its forbidden write is a finding regardless of what the grants above it did — a defence that never fires is indistinguishable from one that is absent, and the grant in front of it may be relaxed by some future change.
+
+- [ ] **Step 6: Write the coverage table section**
+
+One row per surface: id, kind, the twelve verdicts, and a note column. Any `finding` row gets a one-line description of what leaked. All 58 surfaces appear.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 npm run format
 git add scripts/security/ docs/security/
-git commit -m "audit(security): Pass 2a census — 24 views and 16 tables across 12 actors"
+git commit -m "audit(security): Pass 2a census — 58 read surfaces, policies and triggers"
 ```
 
 ---
 
-### Task 7: Pass 2b — census of the security-definer functions
+### Task 7: Pass 2b — census of the database functions
 
 **Files:**
 
 - Modify: `scripts/security/probe.mjs`, `scripts/security/manifest.json`
+- Create: `scripts/security/arguments.mjs`
 - Modify: `docs/security/coverage.md`
 
 **Interfaces:**
 
 - Consumes: Task 6's manifest with explicit read expectations.
-- Produces: verdicts for all 52 definer functions × 12 actors = 624 ledger rows.
+- Produces: verdicts for **58** functions — the 52 `security definer` gatekeepers plus the 6 plain helper functions — across 12 actors.
+
+**Why the 6 helpers are in scope.** They are not doors, so they are easy to skip: they answer questions like "does this person hold this admin role?" But every gatekeeper that asks one inherits its answer. A helper that answers wrongly compromises every function built on top of it, and no amount of auditing the doors would reveal it. Each is probed directly where callable, and where it is not directly callable its behaviour is established through a gatekeeper that depends on it — recorded in the coverage table either way.
 
 **Design notes:** This is the largest and most important task in the census. Each function needs **real arguments**, because an argument-mismatch error masquerades as inaccessibility. Build an argument table: function name → a valid argument object for a caller who *should* succeed. Then every actor calls it with those same valid arguments, so the only variable is who is calling.
 
-Mutating functions must be called against **disposable fixture data**, never the seeded roster, and the runner must record what it mutated so Task 13's reseed can verify cleanup.
+**Isolation is mandatory, and it is not optional bookkeeping.** These probes call functions that really do things: approve a delegate, record a payment, close a poll, delete news. The actors who are *supposed* to succeed will succeed, which means every probe changes the state the next probe runs against. Without isolation the results are order-dependent and a re-run will not reproduce them — which would destroy the audit's central claim, since a finding that cannot be reproduced is not a finding (Global Constraints). See Step 2 for the required scheme.
 
 - [ ] **Step 1: Build the argument table**
 
@@ -992,13 +1062,34 @@ export const ARGS = {
 };
 ```
 
-Every one of the 52 needs an entry. A function with no valid-caller arguments discoverable from the migration is escalated to Task 9 rather than guessed at.
+Every one of the 58 needs an entry. A function with no valid-caller arguments discoverable from the migration is escalated to Task 9 rather than guessed at.
 
-- [ ] **Step 2: Create the disposable fixture set**
+- [ ] **Step 2: Build the per-probe isolation scheme**
 
-Members, memberships, delegates and content rows created solely for mutation probes, all tagged `security-audit-2026-07`, provisioned by extending Task 1's `provisionActors`.
+**One disposable target per (function, actor) pair — never a shared one.** For each mutating function, write a `setup()` that mints the row(s) that call will act on, tagged `security-audit-2026-07`, and returns their ids for the argument builder. The matrix loop calls `setup()` immediately before each probe, so all 12 actors attack an identical fresh target and the twelfth result is comparable to the first.
 
-- [ ] **Step 3: State explicit expectations for all 52 × 12**
+```javascript
+// scripts/security/arguments.mjs — setup runs per (function, actor) pair.
+export const FIXTURES = {
+  admin_approve_delegate: {
+    setup: async (db) => ({ p_delegate_id: await mintDisposableDelegate(db, "pending") }),
+  },
+  admin_close_poll: {
+    setup: async (db) => ({ p_poll_id: await mintDisposablePoll(db, "open") }),
+  },
+  member_change_tier: {
+    setup: async () => ({ p_tier: "10" }), // no target row; the caller IS the target
+  },
+};
+```
+
+Read-only functions need no `setup` and may share state freely — mark them explicitly so the runner skips the minting cost.
+
+**Do not attempt transaction rollback.** These are `security definer` functions invoked over PostgREST; each call is its own transaction and the client cannot wrap them. Fresh-target-per-probe is the isolation mechanism available, and it is sufficient.
+
+**Record what each probe touched.** The runner appends every minted id to `docs/security/residue.json`. Task 13 uses it to distinguish what the reseed removed from what the append-only audit log has made permanent.
+
+- [ ] **Step 3: State explicit expectations for all 58 × 12**
 
 As in Task 6 Step 1, read each function's migration body and state intent per actor. Pay particular attention to the four admin roles — the whole purpose of RBAC is that `A10` can approve a delegate and `A11` cannot, and this is where a mistake would be invisible in normal use.
 
@@ -1017,7 +1108,7 @@ For every function that mutates admin-visible state, confirm an `audit_log` row 
 ```bash
 npm run format
 git add scripts/security/ docs/security/
-git commit -m "audit(security): Pass 2b census — 52 definer functions across 12 actors"
+git commit -m "audit(security): Pass 2b census — 58 database functions across 12 actors"
 ```
 
 ---
@@ -1256,13 +1347,22 @@ node --env-file=.env.local scripts/verify-schema.mjs
 
 Expected: schema probe green.
 
-- [ ] **Step 3: Reseed staging clean and sweep the audit fixtures**
+- [ ] **Step 3: Reseed staging and document the residue that cannot be removed**
 
 ```bash
 npm run seed:staging
 ```
 
-Then confirm every user tagged `security-audit-2026-07` is gone, and the documented counts return exactly: 1636 active / 134 completed / 132 registered, 12 approved delegates. Per spec §8 this is an exit criterion, not a nicety.
+**Do not promise a clean sweep — it is not achievable, by design.** `audit_log` is append-only and its actor foreign key is plain, so **any account that successfully performed an audited admin action can never be deleted**. That is exactly the population this audit creates: every actor that reached an admin path, including any non-admin that reached one because of a hole we were hunting for. There is precedent — a cancelled probe event already accrues on every existing `verify-schema` run and resists deletion.
+
+So the exit criterion is: **the seeded population returns to its documented counts, and everything left over is named.** Concretely:
+
+1. Reseed, then confirm the roster counts: 1636 active / 134 completed / 132 registered, 12 approved delegates.
+2. Read `docs/security/residue.json` (Task 7 Step 2) and delete every disposable row the seed did not already remove.
+3. For each row that resists deletion, record it in `docs/security/residue.md` with the reason — audit-log reference, foreign key, or append-only constraint.
+4. Confirm no `security-audit-2026-07` account holds an open membership or appears in any public count. **Permanent presence in the audit log is acceptable; presence in the movement's figures is not.**
+
+If the residue turns out to distort a public figure, that is itself a finding — the seed's own self-checks should have caught it, and their not doing so is worth a line in the report.
 
 - [ ] **Step 4: Re-run the full census as a regression check**
 
@@ -1304,4 +1404,11 @@ Run `/qa` on the Vercel preview. Deliver the sign-off package: the report, the c
 4. **Task 4's matrix loop referenced `ACTOR_IDS` and `clients`, neither of which existed.** `ACTOR_IDS` is now exported from `actors.mjs`; the client map is built once before the loop, with a note on why minting inside the loop would hit the OTP throttle.
 5. **Task 3 used a `SUPABASE_DB_URL` variable this repo does not have.** Replaced with the established pooler idiom, plus an explicit prohibition on adding an `exec_sql` RPC to work around it.
 
-**Known soft spots, deliberately left to the implementer:** Task 4 Step 5's ledger-size judgement, Task 8's replay strategy, and the `+995509001xxx` phone block's availability. Each is marked with what to check and what to record, rather than guessed at here.
+**Defects found in the owner-requested review of the committed plan, and fixed (2026-07-25):**
+
+6. **The plan covered only 130 of the 154 surfaces it promised.** The three census tasks split views/tables, definer functions, and app doors — silently orphaning the 10 row-level policies, 8 triggers, and 6 helper functions, so the plan could not satisfy its own spec §7. The helpers were the dangerous omission: they are not doors, so they fit no task boundary, yet every gatekeeper that consults one inherits its answer. Policies and triggers folded into Task 6 (they are only reachable through the tables they guard); helpers folded into Task 7. A sum check is now recorded under File Structure so a future edit cannot re-orphan them.
+7. **A successful break-in would have been filed as inconclusive.** `judge` decided leaks partly by whether rows came back, but most definer functions return nothing — they *act*. A successful unauthorized call and a correctly-blocked one both produced "no error, no rows", so the single most dangerous class of finding would have been demoted to `needs-live-proof` and buried among hundreds of similar rows. `judge` now takes the surface `kind`: for anything you *call*, the absence of an error is itself the proof the caller got through. Six regression tests added.
+8. **Task 13 promised a clean-up that is impossible by design.** `audit_log` is append-only with a plain actor foreign key, so any account that reached an admin path can never be deleted — precisely the population this audit creates, and there is existing precedent in the `verify-schema` probe residue. The exit criterion is now "seeded counts restored, and every survivor named with its reason", with a new `residue.json`/`residue.md` trail.
+9. **Mutating probes would have contaminated each other.** Calling 58 functions as 12 actors means the authorized ones really do approve delegates and close polls, so each probe ran against state the previous probe had changed — making results order-dependent and non-reproducible, which would void the audit's central claim. Task 7 Step 2 now mandates a fresh disposable target per (function, actor) pair, and records why transaction rollback is not available over PostgREST.
+
+**Known soft spots, deliberately left to the implementer:** Task 4 Step 5's ledger-size judgement, Task 8's replay strategy, the `+995509001xxx` phone block's availability, and whether minting twelve sessions concurrently trips a project-wide SMS ceiling (only the per-phone cap is documented; fall back to sequential minting with backoff if it does). Each is marked with what to check and what to record, rather than guessed at here.
