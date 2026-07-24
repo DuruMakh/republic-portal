@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
+import { SectionRule } from "@/components/SectionRule";
 import { hasAnyRole } from "@/lib/admin";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { updateDelegateProfileAction } from "./actions";
@@ -29,8 +30,8 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">
           {delegate.first_name} {delegate.last_name}
         </h1>
         <p className="mt-1 text-sm text-muted-fg">
@@ -47,7 +48,8 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
           ) : null}
         </p>
       </div>
-      <Card header={<h3 className="text-base font-bold text-ink">ბიო და ფოტო</h3>}>
+      <Card>
+        <SectionRule label="ბიო და ფოტო" className="mb-4" />
         <DelegateProfileForm
           delegateId={delegate.id}
           initialBio={delegate.bio ?? ""}

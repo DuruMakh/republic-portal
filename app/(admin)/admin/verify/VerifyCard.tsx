@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
-import { formatDateKa, formatPhoneKa, initialsKa } from "@/lib/cabinet";
+import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { RevealPersonalId } from "../members/RevealPersonalId";
 import type { ApproveResult, RevealResult, VerifyActionResult } from "./actions";
 
@@ -19,6 +19,12 @@ export interface QueueApplicant {
   verifiedAt: string | null; // decision stamp (spec §3.4 — rejected tab)
   verifiedByName: string | null;
 }
+
+// Card's own callout skin (border-ink + bg-paper-bright, spec §2.1), reproduced
+// directly rather than through the Card component: Card has no data-testid or
+// className passthrough, and `verify-card-<id>` is a load-bearing e2e anchor
+// (e2e/admin-approval.spec.ts) that must stay on this component's own root element.
+const calloutSkin = "border border-ink bg-paper-bright p-6";
 
 export function VerifyCard({
   applicant,
@@ -61,10 +67,7 @@ export function VerifyCard({
 
   if (done?.kind === "approved") {
     return (
-      <div
-        className="rounded-xl border border-line bg-white p-5"
-        data-testid={`verify-card-${applicant.id}`}
-      >
+      <div className={calloutSkin} data-testid={`verify-card-${applicant.id}`}>
         <p className="text-sm font-semibold text-ok">
           დელეგატი დამტკიცდა ✓ · რეფერალური ბმული აქტიურია
         </p>
@@ -81,71 +84,60 @@ export function VerifyCard({
   }
   if (done?.kind === "rejected") {
     return (
-      <div
-        className="rounded-xl border border-line bg-white p-5"
-        data-testid={`verify-card-${applicant.id}`}
-      >
+      <div className={calloutSkin} data-testid={`verify-card-${applicant.id}`}>
         <p className="text-sm font-semibold text-danger">განაცხადი უარყოფილია.</p>
       </div>
     );
   }
 
   return (
-    <div
-      className="rounded-xl border border-line bg-white p-5"
-      data-testid={`verify-card-${applicant.id}`}
-    >
+    <div className={calloutSkin} data-testid={`verify-card-${applicant.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-[260px] flex-1 items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-sm font-bold text-ink">
-            {initialsKa(applicant.firstName, applicant.lastName)}
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-ink">
-                {applicant.firstName} {applicant.lastName}
-              </h3>
-              <Pill
-                status={mode === "pending" ? "pending" : "rejected"}
-                label={mode === "pending" ? "მოლოდინში" : "უარყოფილი"}
-              />
-            </div>
-            <p className="text-sm font-semibold text-muted-fg">{applicant.regionNameKa ?? "—"}</p>
-            {mode === "rejected" && applicant.verifiedAt ? (
-              // the decision stamp (spec §3.4): when and by whom
-              <p className="mt-1 text-xs font-semibold text-muted-fg">
-                უარყოფილია {formatDateKa(applicant.verifiedAt)}
-                {applicant.verifiedByName ? ` · ${applicant.verifiedByName}` : null}
-              </p>
-            ) : null}
-            <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <div>
-                <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                  პირადი ნომერი
-                </dt>
-                <dd>
-                  <RevealPersonalId memberId={applicant.id} reveal={reveal} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                  ტელეფონი
-                </dt>
-                <dd className="font-semibold">{formatPhoneKa(applicant.phone)}</dd>
-              </div>
-              <div>
-                <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                  რეგისტრაცია
-                </dt>
-                <dd className="font-semibold">{formatDateKa(applicant.createdAt)}</dd>
-              </div>
-            </dl>
-            {applicant.reviewNote ? (
-              <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-sm text-muted-fg">
-                შიდა შენიშვნა: {applicant.reviewNote}
-              </p>
-            ) : null}
+        <div className="min-w-[260px] flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-serif text-base font-bold text-ink">
+              {applicant.firstName} {applicant.lastName}
+            </h3>
+            <Pill
+              status={mode === "pending" ? "pending" : "rejected"}
+              label={mode === "pending" ? "მოლოდინში" : "უარყოფილი"}
+            />
           </div>
+          <p className="text-sm font-semibold text-muted-fg">{applicant.regionNameKa ?? "—"}</p>
+          {mode === "rejected" && applicant.verifiedAt ? (
+            // the decision stamp (spec §3.4): when and by whom
+            <p className="mt-1 text-xs font-semibold text-muted-fg">
+              უარყოფილია {formatDateKa(applicant.verifiedAt)}
+              {applicant.verifiedByName ? ` · ${applicant.verifiedByName}` : null}
+            </p>
+          ) : null}
+          <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <div>
+              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
+                პირადი ნომერი
+              </dt>
+              <dd>
+                <RevealPersonalId memberId={applicant.id} reveal={reveal} />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
+                ტელეფონი
+              </dt>
+              <dd className="font-semibold">{formatPhoneKa(applicant.phone)}</dd>
+            </div>
+            <div>
+              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
+                რეგისტრაცია
+              </dt>
+              <dd className="font-semibold">{formatDateKa(applicant.createdAt)}</dd>
+            </div>
+          </dl>
+          {applicant.reviewNote ? (
+            <p className="mt-3 bg-surface px-3 py-2 text-sm text-muted-fg">
+              შიდა შენიშვნა: {applicant.reviewNote}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-none items-center gap-2">
           {mode === "pending" && !rejecting ? (

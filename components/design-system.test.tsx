@@ -98,6 +98,10 @@ describe("Badge", () => {
     render(<Badge>12 დელეგატი</Badge>);
     expect(screen.getByText("12 დელეგატი").className).toContain("rounded-full");
   });
+  it("tone warn renders bg-warn (admin verify nav badge, Task 18) instead of the default brand", () => {
+    render(<Badge tone="warn">3</Badge>);
+    expect(screen.getByText("3").className).toContain("bg-warn");
+  });
 });
 
 describe("Pill", () => {

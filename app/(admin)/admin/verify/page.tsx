@@ -41,8 +41,8 @@ export default async function AdminVerifyPage({
 
   return (
     <main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">დელეგატების ვერიფიკაცია</h1>
+      <div className="mb-8 border-b-2 border-ink pb-4">
+        <h1 className="font-serif text-[2rem] font-bold text-ink">დელეგატების ვერიფიკაცია</h1>
         <p className="mt-2 text-sm text-muted-fg">
           დადასტურება ააქტიურებს დელეგატის რეფერალურ ბმულს და აქცევს პროფილს საჯაროდ ხილვადს
           რეიტინგსა და პორტალზე.
@@ -128,8 +128,7 @@ export default async function AdminVerifyPage({
       ) : rows.length === 0 ? (
         <Card>
           <div className="p-4 text-center">
-            <p className="text-2xl">🗂️</p>
-            <h3 className="mt-2 text-base font-bold text-ink">
+            <h3 className="text-base font-bold text-ink">
               {tab === "pending"
                 ? "ვერიფიკაციის მოლოდინში დელეგატები არ არის"
                 : "უარყოფილი განაცხადები არ არის"}

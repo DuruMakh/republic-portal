@@ -15,9 +15,8 @@ describe("AdminNav (spec §3.1)", () => {
     { href: "/admin", label: "მიმოხილვა" },
     { href: "/admin/members", label: "წევრები" },
   ];
-  it("renders the eyebrow, tabs, active marker and sign-out", () => {
+  it("renders the tabs, active marker and sign-out (register tag moved to the Masthead tag, Task 18)", () => {
     render(<AdminNav tabs={tabs} />);
-    expect(screen.getByText("ადმინისტრირება")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "მიმოხილვა" })).toHaveAttribute("href", "/admin");
     expect(screen.getByRole("link", { name: "წევრები" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "გასვლა" })).toBeInTheDocument();
@@ -47,5 +46,17 @@ describe("AdminNav (spec §3.1)", () => {
     const { container } = render(<AdminNav tabs={tabsWithCount} />);
     const link = container.querySelector('a[href="/admin"]');
     expect(link).toHaveTextContent("4");
+  });
+
+  it("the verify tab's badge gets the amber warn tone (D10); other counted tabs stay brand", () => {
+    const tabsWithCounts = [
+      { href: "/admin", label: "მიმოხილვა", count: 2 },
+      { href: "/admin/verify", label: "ვერიფიკაცია", count: 3 },
+    ];
+    const { container } = render(<AdminNav tabs={tabsWithCounts} />);
+    const overviewBadge = container.querySelector('a[href="/admin"] span');
+    const verifyBadge = container.querySelector('a[href="/admin/verify"] span');
+    expect(overviewBadge?.className).toContain("bg-brand");
+    expect(verifyBadge?.className).toContain("bg-warn");
   });
 });
