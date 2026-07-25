@@ -10413,7 +10413,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10425,7 +10425,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10437,7 +10437,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10449,7 +10449,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10461,7 +10461,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10473,7 +10473,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10485,7 +10485,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10497,7 +10497,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:become_member_save_profile",
@@ -10509,7 +10509,7 @@
       "errorMessage": "already_completed",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:cabinet_state",
@@ -11023,7 +11023,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 62
+      "rowCount": 86
     },
     "verdict": "clear"
   },
@@ -13173,7 +13173,7 @@
       "errorMessage": "delegacy_exists",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:request_delegacy",
@@ -13185,7 +13185,7 @@
       "errorMessage": "delegacy_exists",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:request_delegacy",
@@ -13197,7 +13197,7 @@
       "errorMessage": "delegacy_exists",
       "rowCount": 0
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:request_delegacy",
@@ -15871,7 +15871,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15883,7 +15883,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15895,7 +15895,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 4
+      "rowCount": 5
     },
     "verdict": "clear"
   },
@@ -15907,7 +15907,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15919,7 +15919,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 4
+      "rowCount": 5
     },
     "verdict": "clear"
   },
@@ -15931,7 +15931,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15943,7 +15943,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15955,7 +15955,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15967,7 +15967,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -15979,7 +15979,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16747,7 +16747,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16771,7 +16771,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16795,7 +16795,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16807,7 +16807,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16819,7 +16819,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16831,7 +16831,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },
@@ -16843,7 +16843,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 3
+      "rowCount": 4
     },
     "verdict": "clear"
   },

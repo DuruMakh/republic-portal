@@ -222,5 +222,21 @@ export function judge(expectation: Expectation, outcome: ProbeOutcome, kind: Sur
   // or argument mismatch is the same kind of probe defect and must never be
   // reported to the owner as a security finding.
   const isPermissionRefusal = token === "refusal" && outcome.errorMessage !== NO_SESSION_TOKEN;
-  return errorCode === DENIED_BY_PRIVILEGE || isPermissionRefusal ? "finding" : "needs-live-proof";
+  if (errorCode === DENIED_BY_PRIVILEGE || isPermissionRefusal) return "finding";
+
+  // A post-gate token on the ALLOW side settles the question this census asks.
+  // `allow` predicts exactly one thing — this actor gets PAST the gate — and a
+  // post-gate token is proof that they did: the role/standing check admitted
+  // them, and a business rule, an argument, or a duplicate stopped them
+  // afterwards. That is a fact about the probe's arguments or the row's state,
+  // never about who may reach the surface, so the authorization verdict is
+  // clear. (The comment above reasoned this out correctly from the start; the
+  // code deferred anyway, leaving 67 of Task 7's 74 unresolved function cells
+  // stuck on one shared, non-security cause.)
+  //
+  // The deny side is deliberately untouched: there the same token proves the
+  // caller got in when they should not have, which is a finding.
+  if (token === "post-gate") return "clear";
+
+  return "needs-live-proof";
 }

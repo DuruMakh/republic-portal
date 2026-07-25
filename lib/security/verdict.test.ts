@@ -157,15 +157,29 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     ).toBe("clear");
   });
 
-  it("leaves an allow expectation unresolved when P0001 carries a post-gate token", () => {
-    // The caller DID get past the gate here — exactly what "allow" predicts
-    // — so this proves nothing about permissions either way. It only means
-    // this probe's specific arguments didn't validate for this actor, which
-    // is the probe's argument table's problem (Task 7), not a security
-    // finding. Must not be silently waved through as "clear" either.
+  it("CLEARS an allow expectation when P0001 carries a post-gate token", () => {
+    // Changed 2026-07-26, deliberately. This test previously asserted
+    // needs-live-proof, on the reasoning that a post-gate token "proves
+    // nothing about permissions either way". The first half of that was
+    // right and the conclusion was wrong: the caller DID get past the gate,
+    // which is precisely and only what `allow` predicts, so the
+    // authorization question this census asks IS answered. What stopped
+    // them afterwards — an argument, a business rule, a duplicate row — is
+    // a fact about the probe's arguments or the row's state, not about who
+    // may reach the surface.
+    //
+    // Deferring instead left 67 of Task 7's 74 unresolved function cells
+    // stuck on one shared, non-security cause, which no amount of live
+    // proof could ever settle into a security verdict.
+    //
+    // The deny side is untouched and still calls this a finding — see the
+    // "flags a deny expectation as a finding when P0001 carries a post-gate
+    // token" test above. That asymmetry is the whole point: the same
+    // evidence means "working as intended" when the actor was supposed to
+    // get in, and "they got in when they shouldn't have" when they weren't.
     expect(
       judge("allow", outcome({ errorCode: "P0001", errorMessage: "invalid_target" }), "view"),
-    ).toBe("needs-live-proof");
+    ).toBe("clear");
   });
 
   it("leaves an allow expectation unresolved when P0001 carries an unrecognised token", () => {
@@ -223,5 +237,50 @@ describe("judge — invocations (function, action, endpoint)", () => {
 
   it("clears an allowed function that executed", () => {
     expect(judge("allow", outcome({ rowCount: 0 }), "function")).toBe("clear");
+  });
+});
+
+describe("judge — allowed caller stopped by a business rule, not by permissions", () => {
+  // An `allow` expectation predicts exactly one thing: this actor gets PAST
+  // the gate. A post-gate token is proof that they did — the role/standing
+  // check admitted them and something downstream (an argument, a business
+  // rule, a duplicate) stopped them instead. That is a fact about the probe's
+  // arguments or the row's state, never about who may reach the surface, so
+  // the authorization question the census asks is answered: clear.
+  //
+  // Deferring these instead left 67 cells unresolved in Task 7's function
+  // census for one shared, non-security reason. The deny side is untouched:
+  // there a post-gate token still proves the caller got in when they should
+  // not have, which is a finding.
+  it("clears an allowed caller who was admitted then hit a business rule", () => {
+    expect(
+      judge(
+        "allow",
+        outcome({ errorCode: "P0001", errorMessage: "already_completed" }),
+        "function",
+      ),
+    ).toBe("clear");
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "invalid_target" }), "function"),
+    ).toBe("clear");
+  });
+
+  it("still flags an allowed caller refused on permissions", () => {
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "function"),
+    ).toBe("finding");
+    expect(judge("allow", outcome({ errorCode: "42501" }), "function")).toBe("finding");
+  });
+
+  it("still treats a post-gate token on the deny side as a finding", () => {
+    expect(
+      judge("deny", outcome({ errorCode: "P0001", errorMessage: "already_completed" }), "function"),
+    ).toBe("finding");
+  });
+
+  it("still defers an unrecognised token on the allow side", () => {
+    expect(
+      judge("allow", outcome({ errorCode: "P0001", errorMessage: "brand_new_token" }), "function"),
+    ).toBe("needs-live-proof");
   });
 });
