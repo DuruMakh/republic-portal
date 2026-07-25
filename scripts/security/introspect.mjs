@@ -273,6 +273,30 @@ if (write) {
     layer: "db",
   }));
   const manifest = [...dbSurfaces, ...APP_LAYER_SURFACES].sort(byId);
+
+  // --write rebuilds every surface as a bare {id, kind, name, layer}, which
+  // DISCARDS the per-actor `overrides` and `note` fields that Tasks 6 and 7
+  // spend their entire effort establishing — the census's stated intent, read
+  // from live object definitions one surface at a time. Losing them silently
+  // would not fail anything: the census would simply re-run green against
+  // naming-convention defaults, which is precisely the false all-clear this
+  // phase exists to prevent. So refuse, and make the operator say what they
+  // want. --force still regenerates (it is the correct move if the schema
+  // itself changed), but only as a deliberate act with the count in view.
+  if (existsSync(MANIFEST_URL)) {
+    const existing = JSON.parse(readFileSync(MANIFEST_URL, "utf8"));
+    const enriched = existing.filter((s) => s.overrides !== undefined || s.note !== undefined);
+    if (enriched.length > 0 && !process.argv.includes("--force")) {
+      const overrideCells = enriched.reduce((n, s) => n + Object.keys(s.overrides ?? {}).length, 0);
+      throw new Error(
+        `REFUSING to overwrite ${fileURLToPath(MANIFEST_URL)}.\n` +
+          `  It carries curated census data: ${enriched.length} surfaces, ${overrideCells} per-actor expectations.\n` +
+          `  --write rebuilds bare surfaces and would discard all of it silently.\n` +
+          `  If the live schema really changed, re-run with --force and diff the result before committing.`,
+      );
+    }
+  }
+
   writeFileSync(MANIFEST_URL, JSON.stringify(manifest, null, 2) + "\n");
 
   const definerCount = liveObjects.filter(
