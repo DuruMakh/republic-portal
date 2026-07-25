@@ -1,0 +1,914 @@
+[
+  {
+    "id": "action:approveDelegateAction",
+    "kind": "action",
+    "name": "approveDelegateAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:cancelEventAction",
+    "kind": "action",
+    "name": "cancelEventAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:changeDelegateAction",
+    "kind": "action",
+    "name": "changeDelegateAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:changeTierAction",
+    "kind": "action",
+    "name": "changeTierAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:closePollAction",
+    "kind": "action",
+    "name": "closePollAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:completeMembershipAction",
+    "kind": "action",
+    "name": "completeMembershipAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:confirmBulkAction",
+    "kind": "action",
+    "name": "confirmBulkAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:deleteEventAction",
+    "kind": "action",
+    "name": "deleteEventAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:deleteNewsAction",
+    "kind": "action",
+    "name": "deleteNewsAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:deletePollAction",
+    "kind": "action",
+    "name": "deletePollAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:findAdminCandidateAction",
+    "kind": "action",
+    "name": "findAdminCandidateAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:grantRoleAction",
+    "kind": "action",
+    "name": "grantRoleAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:lookupMemberAction",
+    "kind": "action",
+    "name": "lookupMemberAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:openPollAction",
+    "kind": "action",
+    "name": "openPollAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:previewBulkAction",
+    "kind": "action",
+    "name": "previewBulkAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:publishEventAction",
+    "kind": "action",
+    "name": "publishEventAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:publishNewsAction",
+    "kind": "action",
+    "name": "publishNewsAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:reassignMemberAction",
+    "kind": "action",
+    "name": "reassignMemberAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:recordPaymentAction",
+    "kind": "action",
+    "name": "recordPaymentAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:registerAction",
+    "kind": "action",
+    "name": "registerAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:rejectDelegateAction",
+    "kind": "action",
+    "name": "rejectDelegateAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:requestDelegacyAction",
+    "kind": "action",
+    "name": "requestDelegacyAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:revealApplicantIdAction",
+    "kind": "action",
+    "name": "revealApplicantIdAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:revealPersonalIdAction",
+    "kind": "action",
+    "name": "revealPersonalIdAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:revokeRoleAction",
+    "kind": "action",
+    "name": "revokeRoleAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:rsvpAction",
+    "kind": "action",
+    "name": "rsvpAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:saveEventAction",
+    "kind": "action",
+    "name": "saveEventAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:saveMembershipProfileAction",
+    "kind": "action",
+    "name": "saveMembershipProfileAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:saveNewsAction",
+    "kind": "action",
+    "name": "saveNewsAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:savePollAction",
+    "kind": "action",
+    "name": "savePollAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:setNewsCoverAction",
+    "kind": "action",
+    "name": "setNewsCoverAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:unpublishNewsAction",
+    "kind": "action",
+    "name": "unpublishNewsAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:updateDelegateProfileAction",
+    "kind": "action",
+    "name": "updateDelegateProfileAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:updateGraceDaysAction",
+    "kind": "action",
+    "name": "updateGraceDaysAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:updateProfileAction",
+    "kind": "action",
+    "name": "updateProfileAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:updateRegisteredNameAction",
+    "kind": "action",
+    "name": "updateRegisteredNameAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:voidPaymentAction",
+    "kind": "action",
+    "name": "voidPaymentAction",
+    "layer": "app"
+  },
+  {
+    "id": "action:voteAction",
+    "kind": "action",
+    "name": "voteAction",
+    "layer": "app"
+  },
+  {
+    "id": "bucket:delegate-photos",
+    "kind": "bucket",
+    "name": "delegate-photos",
+    "layer": "app"
+  },
+  {
+    "id": "bucket:news-images",
+    "kind": "bucket",
+    "name": "news-images",
+    "layer": "app"
+  },
+  {
+    "id": "endpoint:GET /api/dev/otp",
+    "kind": "endpoint",
+    "name": "GET /api/dev/otp",
+    "layer": "app"
+  },
+  {
+    "id": "function:active_coverage",
+    "kind": "function",
+    "name": "active_coverage",
+    "layer": "db"
+  },
+  {
+    "id": "function:active_grace_days",
+    "kind": "function",
+    "name": "active_grace_days",
+    "layer": "db"
+  },
+  {
+    "id": "function:active_sweep",
+    "kind": "function",
+    "name": "active_sweep",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_approve_delegate",
+    "kind": "function",
+    "name": "admin_approve_delegate",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_cancel_event",
+    "kind": "function",
+    "name": "admin_cancel_event",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_close_poll",
+    "kind": "function",
+    "name": "admin_close_poll",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_delete_event",
+    "kind": "function",
+    "name": "admin_delete_event",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_delete_news",
+    "kind": "function",
+    "name": "admin_delete_news",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_delete_poll",
+    "kind": "function",
+    "name": "admin_delete_poll",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_export_members",
+    "kind": "function",
+    "name": "admin_export_members",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_grant_role",
+    "kind": "function",
+    "name": "admin_grant_role",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_open_poll",
+    "kind": "function",
+    "name": "admin_open_poll",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_publish_event",
+    "kind": "function",
+    "name": "admin_publish_event",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_publish_news",
+    "kind": "function",
+    "name": "admin_publish_news",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_reassign_member",
+    "kind": "function",
+    "name": "admin_reassign_member",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_record_payment",
+    "kind": "function",
+    "name": "admin_record_payment",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_record_payments_bulk",
+    "kind": "function",
+    "name": "admin_record_payments_bulk",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_reject_delegate",
+    "kind": "function",
+    "name": "admin_reject_delegate",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_reveal_applicant_personal_id",
+    "kind": "function",
+    "name": "admin_reveal_applicant_personal_id",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_reveal_personal_id",
+    "kind": "function",
+    "name": "admin_reveal_personal_id",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_revoke_role",
+    "kind": "function",
+    "name": "admin_revoke_role",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_save_event",
+    "kind": "function",
+    "name": "admin_save_event",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_save_news",
+    "kind": "function",
+    "name": "admin_save_news",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_save_poll",
+    "kind": "function",
+    "name": "admin_save_poll",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_set_news_image",
+    "kind": "function",
+    "name": "admin_set_news_image",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_unpublish_news",
+    "kind": "function",
+    "name": "admin_unpublish_news",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_update_delegate_profile",
+    "kind": "function",
+    "name": "admin_update_delegate_profile",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_update_setting",
+    "kind": "function",
+    "name": "admin_update_setting",
+    "layer": "db"
+  },
+  {
+    "id": "function:admin_void_payment",
+    "kind": "function",
+    "name": "admin_void_payment",
+    "layer": "db"
+  },
+  {
+    "id": "function:audit_log_immutable",
+    "kind": "function",
+    "name": "audit_log_immutable",
+    "layer": "db"
+  },
+  {
+    "id": "function:become_member_complete",
+    "kind": "function",
+    "name": "become_member_complete",
+    "layer": "db"
+  },
+  {
+    "id": "function:become_member_save_profile",
+    "kind": "function",
+    "name": "become_member_save_profile",
+    "layer": "db"
+  },
+  {
+    "id": "function:cabinet_state",
+    "kind": "function",
+    "name": "cabinet_state",
+    "layer": "db"
+  },
+  {
+    "id": "function:delegate_panel",
+    "kind": "function",
+    "name": "delegate_panel",
+    "layer": "db"
+  },
+  {
+    "id": "function:delegate_team",
+    "kind": "function",
+    "name": "delegate_team",
+    "layer": "db"
+  },
+  {
+    "id": "function:delegate_team_rsvps",
+    "kind": "function",
+    "name": "delegate_team_rsvps",
+    "layer": "db"
+  },
+  {
+    "id": "function:enforce_delegate_completed",
+    "kind": "function",
+    "name": "enforce_delegate_completed",
+    "layer": "db"
+  },
+  {
+    "id": "function:gen_funnel_code",
+    "kind": "function",
+    "name": "gen_funnel_code",
+    "layer": "db"
+  },
+  {
+    "id": "function:has_admin_role",
+    "kind": "function",
+    "name": "has_admin_role",
+    "layer": "db"
+  },
+  {
+    "id": "function:has_any_admin_role",
+    "kind": "function",
+    "name": "has_any_admin_role",
+    "layer": "db"
+  },
+  {
+    "id": "function:is_completed_member",
+    "kind": "function",
+    "name": "is_completed_member",
+    "layer": "db"
+  },
+  {
+    "id": "function:is_registered",
+    "kind": "function",
+    "name": "is_registered",
+    "layer": "db"
+  },
+  {
+    "id": "function:member_cast_vote",
+    "kind": "function",
+    "name": "member_cast_vote",
+    "layer": "db"
+  },
+  {
+    "id": "function:member_change_delegate",
+    "kind": "function",
+    "name": "member_change_delegate",
+    "layer": "db"
+  },
+  {
+    "id": "function:member_change_tier",
+    "kind": "function",
+    "name": "member_change_tier",
+    "layer": "db"
+  },
+  {
+    "id": "function:member_rsvp",
+    "kind": "function",
+    "name": "member_rsvp",
+    "layer": "db"
+  },
+  {
+    "id": "function:protect_profile_columns",
+    "kind": "function",
+    "name": "protect_profile_columns",
+    "layer": "db"
+  },
+  {
+    "id": "function:recompute_all_active",
+    "kind": "function",
+    "name": "recompute_all_active",
+    "layer": "db"
+  },
+  {
+    "id": "function:recompute_member_active",
+    "kind": "function",
+    "name": "recompute_member_active",
+    "layer": "db"
+  },
+  {
+    "id": "function:register",
+    "kind": "function",
+    "name": "register",
+    "layer": "db"
+  },
+  {
+    "id": "function:request_delegacy",
+    "kind": "function",
+    "name": "request_delegacy",
+    "layer": "db"
+  },
+  {
+    "id": "function:send_sms_hook",
+    "kind": "function",
+    "name": "send_sms_hook",
+    "layer": "db"
+  },
+  {
+    "id": "function:set_updated_at",
+    "kind": "function",
+    "name": "set_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "function:tbilisi_today",
+    "kind": "function",
+    "name": "tbilisi_today",
+    "layer": "db"
+  },
+  {
+    "id": "policy:cities readable by all",
+    "kind": "policy",
+    "name": "cities readable by all",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own admin roles readable",
+    "kind": "policy",
+    "name": "own admin roles readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own memberships readable",
+    "kind": "policy",
+    "name": "own memberships readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own payments readable",
+    "kind": "policy",
+    "name": "own payments readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own profile readable",
+    "kind": "policy",
+    "name": "own profile readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own profile updatable",
+    "kind": "policy",
+    "name": "own profile updatable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own rsvps readable",
+    "kind": "policy",
+    "name": "own rsvps readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:own votes readable",
+    "kind": "policy",
+    "name": "own votes readable",
+    "layer": "db"
+  },
+  {
+    "id": "policy:regions readable by all",
+    "kind": "policy",
+    "name": "regions readable by all",
+    "layer": "db"
+  },
+  {
+    "id": "table:admin_roles",
+    "kind": "table",
+    "name": "admin_roles",
+    "layer": "db"
+  },
+  {
+    "id": "table:app_settings",
+    "kind": "table",
+    "name": "app_settings",
+    "layer": "db"
+  },
+  {
+    "id": "table:audit_log",
+    "kind": "table",
+    "name": "audit_log",
+    "layer": "db"
+  },
+  {
+    "id": "table:cities",
+    "kind": "table",
+    "name": "cities",
+    "layer": "db"
+  },
+  {
+    "id": "table:delegates",
+    "kind": "table",
+    "name": "delegates",
+    "layer": "db"
+  },
+  {
+    "id": "table:dev_otp_inbox",
+    "kind": "table",
+    "name": "dev_otp_inbox",
+    "layer": "db"
+  },
+  {
+    "id": "table:event_rsvps",
+    "kind": "table",
+    "name": "event_rsvps",
+    "layer": "db"
+  },
+  {
+    "id": "table:events",
+    "kind": "table",
+    "name": "events",
+    "layer": "db"
+  },
+  {
+    "id": "table:memberships",
+    "kind": "table",
+    "name": "memberships",
+    "layer": "db"
+  },
+  {
+    "id": "table:news",
+    "kind": "table",
+    "name": "news",
+    "layer": "db"
+  },
+  {
+    "id": "table:payments",
+    "kind": "table",
+    "name": "payments",
+    "layer": "db"
+  },
+  {
+    "id": "table:poll_options",
+    "kind": "table",
+    "name": "poll_options",
+    "layer": "db"
+  },
+  {
+    "id": "table:poll_votes",
+    "kind": "table",
+    "name": "poll_votes",
+    "layer": "db"
+  },
+  {
+    "id": "table:polls",
+    "kind": "table",
+    "name": "polls",
+    "layer": "db"
+  },
+  {
+    "id": "table:profiles",
+    "kind": "table",
+    "name": "profiles",
+    "layer": "db"
+  },
+  {
+    "id": "table:regions",
+    "kind": "table",
+    "name": "regions",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:audit_log_no_update",
+    "kind": "trigger",
+    "name": "audit_log_no_update",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:delegates_require_completed",
+    "kind": "trigger",
+    "name": "delegates_require_completed",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:event_rsvps_updated_at",
+    "kind": "trigger",
+    "name": "event_rsvps_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:events_updated_at",
+    "kind": "trigger",
+    "name": "events_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:news_updated_at",
+    "kind": "trigger",
+    "name": "news_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:polls_updated_at",
+    "kind": "trigger",
+    "name": "polls_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:profiles_protect_columns",
+    "kind": "trigger",
+    "name": "profiles_protect_columns",
+    "layer": "db"
+  },
+  {
+    "id": "trigger:profiles_updated_at",
+    "kind": "trigger",
+    "name": "profiles_updated_at",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_admins",
+    "kind": "view",
+    "name": "admin_admins",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_audit",
+    "kind": "view",
+    "name": "admin_audit",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_delegate_queue",
+    "kind": "view",
+    "name": "admin_delegate_queue",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_events",
+    "kind": "view",
+    "name": "admin_events",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_finance_stats",
+    "kind": "view",
+    "name": "admin_finance_stats",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_members",
+    "kind": "view",
+    "name": "admin_members",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_news",
+    "kind": "view",
+    "name": "admin_news",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_overview",
+    "kind": "view",
+    "name": "admin_overview",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_payments",
+    "kind": "view",
+    "name": "admin_payments",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_poll_options",
+    "kind": "view",
+    "name": "admin_poll_options",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_polls",
+    "kind": "view",
+    "name": "admin_polls",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_region_stats",
+    "kind": "view",
+    "name": "admin_region_stats",
+    "layer": "db"
+  },
+  {
+    "id": "view:admin_settings",
+    "kind": "view",
+    "name": "admin_settings",
+    "layer": "db"
+  },
+  {
+    "id": "view:member_event_going_counts",
+    "kind": "view",
+    "name": "member_event_going_counts",
+    "layer": "db"
+  },
+  {
+    "id": "view:member_news",
+    "kind": "view",
+    "name": "member_news",
+    "layer": "db"
+  },
+  {
+    "id": "view:member_poll_options",
+    "kind": "view",
+    "name": "member_poll_options",
+    "layer": "db"
+  },
+  {
+    "id": "view:member_polls",
+    "kind": "view",
+    "name": "member_polls",
+    "layer": "db"
+  },
+  {
+    "id": "view:poll_option_counts",
+    "kind": "view",
+    "name": "poll_option_counts",
+    "layer": "db"
+  },
+  {
+    "id": "view:public_delegates",
+    "kind": "view",
+    "name": "public_delegates",
+    "layer": "db"
+  },
+  {
+    "id": "view:public_events",
+    "kind": "view",
+    "name": "public_events",
+    "layer": "db"
+  },
+  {
+    "id": "view:public_news",
+    "kind": "view",
+    "name": "public_news",
+    "layer": "db"
+  },
+  {
+    "id": "view:public_stats",
+    "kind": "view",
+    "name": "public_stats",
+    "layer": "db"
+  },
+  {
+    "id": "view:transparency_regions",
+    "kind": "view",
+    "name": "transparency_regions",
+    "layer": "db"
+  },
+  {
+    "id": "view:transparency_stats",
+    "kind": "view",
+    "name": "transparency_stats",
+    "layer": "db"
+  }
+]

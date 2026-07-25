@@ -23,18 +23,20 @@
 
 Counts are distinct live objects, de-duplicated across migrations (a function recreated in a later migration counts once).
 
+> **Correction (2026-07-25, Task 3):** the table below was originally populated by grepping migrations, which the task itself warned would double-count re-creations. Task 3 ran the equivalent catalog query (`pg_proc`/`pg_class`/`pg_policy`/`pg_trigger`, scoped to the `public` schema) directly against the live staging database via `supabase db query` and replaced every DB-derived row with the true count. Two real errors were caught: **security-definer functions were 52, really 48** (the gap is exactly the old `funnel_start`/`funnel_save_profile`/`funnel_complete`/`funnel_state` quartet, dropped in `20260721120000_progressive_registration.sql` and superseded by `register`/`become_member_*` — grepping `create function` still finds them even though they no longer exist) and **policies were 10, really 9** (`"approved delegates are public"` was dropped in `20260713175043_public_read_model.sql`, replaced by the `public_delegates` view plus a straight grant revocation, and never re-created as a policy). Server actions were undercounted, not over: **35, really 38** — three admin poll actions (`openPollAction`/`closePollAction`/`deletePollAction`) are built through a shared `makeStatusAction` factory and are real, callable Server Actions invisible to a literal `export async function` grep. Views, tables, triggers, the endpoint and the buckets all confirmed exactly as originally stated. Full evidence trail: `.superpowers/sdd/task-3-report.md`.
+
 | Surface | Count | Why it is in scope |
 |---|---|---|
-| `security definer` database functions | 52 | Every privileged write and most privileged reads pass through one. Primary attack surface. |
+| `security definer` database functions | 48 | Every privileged write and most privileged reads pass through one. Primary attack surface. |
 | Other database functions and helpers | 6 | Predicate helpers the gatekeepers depend on; a wrong helper compromises every caller. |
 | Filtered views | 24 | Each decides what a given actor may see. Self-gating: the filter *is* the authorization. |
-| Row-level security policies | 10 | Last line of defence when a gatekeeper is wrong. |
+| Row-level security policies | 9 | Last line of defence when a gatekeeper is wrong. |
 | Database triggers | 8 | Includes the protected-columns trigger and the delegate/membership invariant. |
 | Tables | 16 | Where personal IDs, phones, payments, votes and the append-only audit log sit. |
-| Server actions | 35 (in 16 files) | The application's own doors into all of the above. |
+| Server actions | 38 (in 16 files) | The application's own doors into all of the above. |
 | Public HTTP endpoints | 1 | The dev OTP route. Attacked here as a target; closing it belongs to launch hardening. |
 | Storage buckets | 2 | Delegate photos, news images. Public-read, RPC-mediated write. |
-| **Total** | **154** | Every one receives a verdict. Nothing is sampled. |
+| **Total** | **152** | Every one receives a verdict. Nothing is sampled. |
 
 ### 2.1 The twelve actor positions
 
@@ -79,7 +81,7 @@ Expand §2.2 into the working threat model: for each threat, the actor, the asse
 
 ### Pass 2 — The census
 
-All 154 surfaces, one at a time. For each: state what it is *supposed* to permit, then determine what it *actually* permits, from each applicable actor position in §2.1.
+All 152 surfaces, one at a time. For each: state what it is *supposed* to permit, then determine what it *actually* permits, from each applicable actor position in §2.1.
 
 Output is a coverage table — one row per surface, each carrying an interim verdict of `clear`, `finding`, or `needs-live-proof`. `needs-live-proof` is a temporary state only: Pass 4 resolves every such row to `clear` or `finding`, so no surface ends the phase unresolved (§7). The value of this pass is the completeness claim: afterwards the owner can be told exactly what was examined, and nothing was skipped for looking uninteresting.
 
@@ -128,14 +130,14 @@ Assigned against the threat list, not against technical novelty.
 ## 6. Deliverables
 
 1. **The report** — plain language, ranked by damage. Each finding reads: an actor in position X can do Y, which means Z for the movement, and here is the evidence it is real. Readable without reading code, per the owner's standing constraint.
-2. **The coverage table** — all 154 surfaces with verdicts, so "everything was checked" is auditable rather than asserted.
+2. **The coverage table** — all 152 surfaces with verdicts, so "everything was checked" is auditable rather than asserted.
 3. **v0.10.0** — the release closing every confirmed hole.
 
 ## 7. Verification and exit criteria
 
 The phase is done when all of the following hold:
 
-- Every one of the 154 surfaces carries a verdict.
+- Every one of the 152 surfaces carries a verdict.
 - Every confirmed finding has a reproducing test that failed before the fix and passes after.
 - Every discarded finding has its disproof recorded.
 - Full unit and e2e suites pass; the schema probe reports zero drift.

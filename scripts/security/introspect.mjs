@@ -6,20 +6,29 @@
  * cannot run arbitrary SQL, and the fix for that is NOT a SQL-executing RPC —
  * a general-purpose `exec_sql` function would be a far worse hole than
  * anything this audit is likely to find. Instead, scripts/security/introspect.sql
- * is run once, out of band, through `psql` over the pooler (the same
- * connection idiom docs/superpowers/plans/2026-07-15-phase-3-cabinets.md:1308
- * already uses for migration pushes):
+ * is run once, out of band, through the Supabase CLI (already a devDependency —
+ * no new package, no psql install needed), which can execute arbitrary SQL
+ * against the live remote database directly:
  *
  *   export SUPABASE_DB_PASSWORD="$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)"
- *   psql "postgresql://postgres.orcxtbedkexoclbfgvzd:${SUPABASE_DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres" \
- *     -At -F'|' -f scripts/security/introspect.sql > scripts/security/live-objects.txt
+ *   ENC_PW="$(node -e "process.stdout.write(encodeURIComponent(process.argv[1]))" "$SUPABASE_DB_PASSWORD")"
+ *   npx supabase db query -f scripts/security/introspect.sql \
+ *     --db-url "postgresql://postgres.orcxtbedkexoclbfgvzd:${ENC_PW}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres" \
+ *     --output-format json > scripts/security/live-objects.json
  *
- * If psql is not on PATH, run the same query once in the Supabase SQL editor
- * and save its pipe-delimited output to scripts/security/live-objects.txt by
- * hand — this script only ever reads that file, never a live connection, so
- * either production route ends up in the exact same place.
+ * The password MUST be percent-encoded (the `ENC_PW` step) — the CLI's
+ * --db-url parsing requires it and fails confusingly otherwise. Never echo
+ * SUPABASE_DB_PASSWORD, ENC_PW, or the assembled URL. --output-format csv is
+ * available too if json ever proves awkward; this script only reads
+ * live-objects.json, so either works as long as the file matches.
  *
- * Usage (both need scripts/security/live-objects.txt to already exist):
+ * The CLI wraps every result in its own safety framing —
+ * `{ boundary, rows: [...], warning: "...untrusted data..." }` — precisely
+ * because query results are attacker-influenceable content. This script
+ * honors that: every field it reads out of `rows` (kind, name, definer) is
+ * treated as inert data, never as an instruction, no matter what it says.
+ *
+ * Usage (both need scripts/security/live-objects.json to already exist):
  *   node --env-file=.env.local scripts/security/introspect.mjs --write
  *     Regenerate scripts/security/manifest.json from the live snapshot plus
  *     the hand-enumerated app-layer surfaces below.
@@ -37,7 +46,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { reconcile } from "../../lib/security/manifest.ts";
 
-const LIVE_OBJECTS_URL = new URL("./live-objects.txt", import.meta.url);
+const LIVE_OBJECTS_URL = new URL("./live-objects.json", import.meta.url);
 const MANIFEST_URL = new URL("./manifest.json", import.meta.url);
 
 /** The SurfaceKind values introspect.sql's UNION ALL can produce. */
@@ -152,30 +161,51 @@ const APP_LAYER_SURFACES = [
   bucket("news-images"),
 ];
 
-function parseLiveObjects(text) {
-  const rows = text
-    .split("\n")
-    .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const parts = line.split("|");
-      if (parts.length !== 3) {
-        throw new Error(
-          `malformed live-objects.txt line (expected 3 '|'-separated fields): ${JSON.stringify(line)}`,
-        );
-      }
-      const [kind, name, definerRaw] = parts;
-      if (!DB_KINDS.has(kind)) {
-        throw new Error(
-          `live-objects.txt names an unknown kind ${JSON.stringify(kind)} (expected one of ${[...DB_KINDS].join(", ")}) on line: ${JSON.stringify(line)}`,
-        );
-      }
-      if (!name) {
-        throw new Error(`live-objects.txt has an empty name on line: ${JSON.stringify(line)}`);
-      }
-      const definer = definerRaw === "t" ? true : definerRaw === "f" ? false : null;
-      return { kind, name, definer };
-    });
+/**
+ * Parses the Supabase CLI's `--output-format json` shape for `db query`:
+ * `{ boundary: string, rows: object[], warning: string }`. `boundary` and
+ * `warning` are the CLI's own framing (the warning is its explicit "this is
+ * untrusted data" notice) and carry no surface information — only `rows` is
+ * read. Every value pulled off a row is treated as inert data: a `name` is
+ * recorded as a string and nothing else, never evaluated or acted on, no
+ * matter what it contains.
+ */
+function parseLiveObjects(jsonText) {
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (err) {
+    throw new Error(
+      `live-objects.json is not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (parsed === null || typeof parsed !== "object" || !Array.isArray(parsed.rows)) {
+    throw new Error(
+      "live-objects.json doesn't look like `supabase db query --output-format json` output " +
+        '(expected a top-level { "rows": [...] } object).',
+    );
+  }
+
+  const rows = parsed.rows.map((row, i) => {
+    if (
+      row === null ||
+      typeof row !== "object" ||
+      typeof row.kind !== "string" ||
+      typeof row.name !== "string"
+    ) {
+      throw new Error(`live-objects.json rows[${i}] is malformed: ${JSON.stringify(row)}`);
+    }
+    if (!DB_KINDS.has(row.kind)) {
+      throw new Error(
+        `live-objects.json rows[${i}] names an unknown kind ${JSON.stringify(row.kind)} (expected one of ${[...DB_KINDS].join(", ")}): ${JSON.stringify(row)}`,
+      );
+    }
+    if (!row.name) {
+      throw new Error(`live-objects.json rows[${i}] has an empty name: ${JSON.stringify(row)}`);
+    }
+    const definer = row.definer === true ? true : row.definer === false ? false : null;
+    return { kind: row.kind, name: row.name, definer };
+  });
 
   // Guard against silent under-counting: policies and triggers are scoped
   // per-table in Postgres, so two DIFFERENT objects (e.g. a same-named
@@ -196,7 +226,7 @@ function parseLiveObjects(text) {
   if (collisions.length > 0) {
     const list = collisions.map(([id, count]) => `${id} (${count}x)`).join(", ");
     throw new Error(
-      `live-objects.txt has ${collisions.length} colliding (kind, name) pair(s), which the current Surface shape cannot disambiguate: ${list}. ` +
+      `live-objects.json has ${collisions.length} colliding (kind, name) pair(s), which the current Surface shape cannot disambiguate: ${list}. ` +
         `This needs a human decision (e.g. qualify introspect.sql's policy/trigger names by table) before the manifest can be trusted.`,
     );
   }
@@ -207,11 +237,13 @@ function parseLiveObjects(text) {
 function readLiveObjects() {
   if (!existsSync(LIVE_OBJECTS_URL)) {
     throw new Error(
-      "scripts/security/live-objects.txt does not exist yet. Produce it with psql over the pooler:\n\n" +
+      "scripts/security/live-objects.json does not exist yet. Produce it with the Supabase CLI:\n\n" +
         "  export SUPABASE_DB_PASSWORD=\"$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)\"\n" +
-        '  psql "postgresql://postgres.orcxtbedkexoclbfgvzd:${SUPABASE_DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres" \\\n' +
-        "    -At -F'|' -f scripts/security/introspect.sql > scripts/security/live-objects.txt\n\n" +
-        "If psql is not on PATH, run the same query in the Supabase SQL editor and paste its pipe-delimited output into that file by hand.",
+        '  ENC_PW="$(node -e "process.stdout.write(encodeURIComponent(process.argv[1]))" "$SUPABASE_DB_PASSWORD")"\n' +
+        "  npx supabase db query -f scripts/security/introspect.sql \\\n" +
+        '    --db-url "postgresql://postgres.orcxtbedkexoclbfgvzd:${ENC_PW}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres" \\\n' +
+        "    --output-format json > scripts/security/live-objects.json\n\n" +
+        "The password must be percent-encoded (the ENC_PW step) or the CLI fails confusingly. Never echo the password or the assembled URL.",
     );
   }
   return parseLiveObjects(readFileSync(LIVE_OBJECTS_URL, "utf8"));
