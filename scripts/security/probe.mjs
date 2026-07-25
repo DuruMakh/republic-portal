@@ -60,6 +60,27 @@
  * ## Two `function` surfaces are deliberately not invoked with {}
  * See MUTATING_ZERO_ARG_FUNCTIONS below for exactly which two and why.
  *
+ * ## `outcome.errorCode` carries three load-bearing sentinel values
+ * `verdict` alone conflates three different reasons a row can land on
+ * `needs-live-proof`: a kind this task doesn't probe at all yet, one of the
+ * two mutating functions this task deliberately didn't invoke, and a
+ * surface that WAS genuinely probed but came back inconclusive (mostly a
+ * PGRST202 argument mismatch, to be resolved by Task 7's real arguments).
+ * Tasks 6, 8 and 9 need to tell these apart, and `verdict` alone cannot --
+ * the only field that does is `outcome.errorCode`:
+ *   - "SKIP"          -- kind not probed this task (policy / trigger /
+ *                         action / endpoint / bucket -- see
+ *                         NOT_YET_PROBED_KINDS below)
+ *   - "SKIP-MUTATING" -- one of the two functions in
+ *                         MUTATING_ZERO_ARG_FUNCTIONS below, deliberately
+ *                         not invoked
+ *   - anything else (a real Postgres/PostgREST code, or null) -- a probe
+ *                         that actually ran
+ * These two strings are a stable contract other tasks may key on, not an
+ * incidental debug label -- filtering on `verdict === "needs-live-proof"`
+ * without also branching on `outcome.errorCode` silently treats all three
+ * populations as one.
+ *
  * Run: node --env-file=.env.local scripts/security/probe.mjs
  * (also wired as: npm run security:census)
  */
@@ -83,9 +104,7 @@ const NOT_YET_PROBED_KINDS = new Set(["policy", "trigger", "action", "endpoint",
 /**
  * Exactly two of the manifest's 54 `function` surfaces are BOTH callable
  * with `{}` (every parameter optional or absent) AND perform a live write
- * when they run. Every OTHER zero/all-default-arg function in this schema
- * is either a pure read or locked to service_role -- confirmed below, not
- * assumed:
+ * when they run:
  *
  *   - request_delegacy() -- `grant execute on function request_delegacy()
  *     to authenticated` (supabase/migrations/20260722140000_r2_review_fixes.sql:142).
@@ -107,42 +126,91 @@ const NOT_YET_PROBED_KINDS = new Set(["policy", "trigger", "action", "endpoint",
  * comment -- they are explicitly outside this audit's AUDIT_TAG sweep) --
  * mutating them is not this task's fixture to spend.
  *
- * Contrast with every other zero/all-default-arg function in the schema,
- * which IS safe to invoke for real and IS invoked for real below:
- *   - active_grace_days(), active_coverage(uuid), active_sweep(),
- *     recompute_member_active(uuid), recompute_all_active() -- every one of
- *     these is `revoke execute ... from public, anon, authenticated; grant
- *     ... to service_role` (supabase/migrations/20260717150000_admin_crm.sql:
- *     77, 94, 117, 137, 165 -- the active_sweep grant even carries the
- *     literal comment "-- probes exercise it"). None of the twelve actors
- *     hold service_role, so Postgres refuses all of these at the GRANT
- *     layer before the body ever runs -- 42501, zero mutation risk, and
- *     still real evidence about who can/can't reach them either way.
- *   - cabinet_state(), delegate_panel(), delegate_team(),
- *     delegate_team_rsvps(), is_registered(), is_completed_member(),
- *     tbilisi_today() -- confirmed pure reads by reading every body (no
- *     insert/update/delete in any of them), granted to authenticated,
- *     gated by the usual not_authenticated / not_a_delegate / not_approved
- *     chain. Being called for real is the entire point of probing these --
- *     e.g. whether A1 (anonymous) can reach cabinet_state() at all is
- *     exactly the kind of finding this audit exists to catch.
- *   - send_sms_hook(event jsonb) -- takes a required argument (PGRST202
- *     either way) AND is granted only to supabase_auth_admin, no client
- *     role at all (initial_schema.sql:137-138).
+ * The other SIXTEEN zero/all-default-arg functions in the schema ARE
+ * invoked for real below (nothing else is excluded) -- but "invoked for
+ * real and it came back an error" does not mean the same thing for all
+ * sixteen. There are three distinct groups here, confirmed by reading each
+ * one, not assumed by pattern-matching the first result:
  *
- * These two are therefore excluded from real invocation and recorded with a
- * DISTINCT outcome (errorCode "SKIP-MUTATING") -- never folded into the
- * generic NOT_YET_PROBED_KINDS skip, because these ARE function-kind
- * surfaces this task owns; they are deferred specifically because Task 7
- * already exists to probe every function with deliberate, controlled
- * arguments ("Tasks 6-7 supply real arguments per function" -- brief), and
- * that task can budget fixture cleanup the way Task 1's driveStandings()
- * does. Blind {} invocation here would contaminate exactly the fixture
- * state every other script in this audit goes out of its way to keep clean
- * and RPC-driven -- actors.mjs's own header comment: "never by hand-writing
- * rows with the service role". Task 4 must not be the one script in the
- * family that skips that discipline in the opposite direction (an
- * accidental REAL write instead of an accidental service-role write).
+ *   GROUP A -- revoked from every client role, sealed at the DB layer (6):
+ *   active_grace_days(), active_coverage(uuid), recompute_member_active(uuid),
+ *   recompute_all_active(), active_sweep() are all `revoke execute ... from
+ *   public, anon, authenticated` (supabase/migrations/20260717150000_admin_crm.sql
+ *   -- line 77 active_grace_days, line 94 active_coverage, line 117
+ *   recompute_member_active, line 137 recompute_all_active, line 165
+ *   active_sweep). Only two of those five carry an explicit re-grant --
+ *   recompute_all_active to service_role (line 139: "the seed script
+ *   (service role) runs the full recompute after inserting payments") and
+ *   active_sweep to service_role (line 166: "-- probes exercise it");
+ *   active_grace_days, active_coverage and recompute_member_active carry NO
+ *   grant to anything at all, relying on being called only from inside
+ *   other SECURITY DEFINER bodies (active_sweep and recompute_all_active
+ *   both call active_coverage and active_grace_days internally), same
+ *   pattern as tbilisi_today() below. Either way none of the twelve actors
+ *   hold service_role, so Postgres refuses all five at the GRANT layer
+ *   before the body ever runs. tbilisi_today() is sealed the identical way
+ *   -- `revoke execute on function tbilisi_today() from public, anon,
+ *   authenticated` (20260718100000_admin_crm_hardening.sql:31), no grant to
+ *   anything, called only internally -- and is grouped here, NOT with
+ *   Group B below despite also being a simple read: live result is real
+ *   42501 for all twelve actors including the four admins, confirmed
+ *   against the ledger, not the not_authenticated-gated pattern Group B
+ *   uses. Six functions, six real 42501s, zero mutation risk.
+ *
+ *   GROUP B -- granted to authenticated, gated inside the body, confirmed
+ *   pure reads (6): cabinet_state(), delegate_panel(), delegate_team(),
+ *   delegate_team_rsvps(), is_registered(), is_completed_member() -- each
+ *   read by body (no insert/update/delete anywhere in any of them), gated
+ *   by the usual not_authenticated / not_a_delegate / not_approved chain.
+ *   Being called for real is the entire point of probing these -- e.g.
+ *   whether A1 (anonymous) can reach cabinet_state() at all is exactly the
+ *   kind of finding this audit exists to catch.
+ *
+ *   GROUP C -- DB-level reachable, API-gateway-level filtered, NOT the same
+ *   kind of safe as A or B (4): audit_log_immutable(), set_updated_at(),
+ *   enforce_delegate_completed(), protect_profile_columns() all `returns
+ *   trigger`, and NOTHING in any migration revokes their EXECUTE grant --
+ *   confirmed by grepping every migration for each of the four names next
+ *   to "grant"/"revoke": zero hits. Postgres grants EXECUTE on every
+ *   newly-created function to PUBLIC by default (unlike tables, which get
+ *   no such default), so `anon` and `authenticated` DO hold real, unrevoked,
+ *   database-level permission to call all four of these right now. All 48
+ *   cells (4 functions x 12 actors) came back PGRST202, confirmed against
+ *   the live ledger, no exceptions -- but that is PostgREST filtering
+ *   trigger-returning functions out of its RPC-callable schema cache, an
+ *   API-GATEWAY behaviour, not a database control. Group A is refused by
+ *   Postgres itself before the body ever runs; Group C is never even
+ *   reached by PostgREST's routing, and the GRANT underneath would allow it
+ *   if it were. This is not filed away as "safe" -- two of these four,
+ *   audit_log_immutable (enforces the append-only audit log) and
+ *   protect_profile_columns (enforces that status/personal_id/phone/id are
+ *   server-managed), are precisely the functions this schema relies on to
+ *   enforce its two strongest controls, and this task's own result only
+ *   establishes that PostgREST's function-type filtering is the CURRENT
+ *   backstop for all four -- not that the backstop is by design, or that it
+ *   would hold if this app ever gained a second API surface onto the same
+ *   database. Recorded as a candidate finding for Pass 4 (Task 10), tracked
+ *   there, not resolved here.
+ *
+ * send_sms_hook(event jsonb) is the one non-zero-arg function worth naming
+ * for contrast: it takes a required argument (PGRST202 regardless of who
+ * calls it) AND is granted only to supabase_auth_admin, no client role at
+ * all (initial_schema.sql:137-138) -- doubly inert, unlike Group C.
+ *
+ * The two mutating functions above are therefore excluded from real
+ * invocation and recorded with a DISTINCT outcome (errorCode
+ * "SKIP-MUTATING") -- never folded into the generic NOT_YET_PROBED_KINDS
+ * skip, because these ARE function-kind surfaces this task owns; they are
+ * deferred specifically because Task 7 already exists to probe every
+ * function with deliberate, controlled arguments ("Tasks 6-7 supply real
+ * arguments per function" -- brief), and that task can budget fixture
+ * cleanup the way Task 1's driveStandings() does. Blind {} invocation here
+ * would contaminate exactly the fixture state every other script in this
+ * audit goes out of its way to keep clean and RPC-driven -- actors.mjs's
+ * own header comment: "never by hand-writing rows with the service role".
+ * Task 4 must not be the one script in the family that skips that
+ * discipline in the opposite direction (an accidental REAL write instead of
+ * an accidental service-role write).
  */
 const MUTATING_ZERO_ARG_FUNCTIONS = new Set(["request_delegacy", "member_change_delegate"]);
 

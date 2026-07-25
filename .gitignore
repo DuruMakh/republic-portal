@@ -11,3 +11,11 @@ public/sw.js
 supabase/.temp/
 .vercel/
 .superpowers/
+
+# Task 4 (security probe runner): the pre-judgement checkpoint file. Real
+# job is inside a single run (self-check re-reads it to prove judge() is
+# reproducible from disk) -- byte-identical to ledger.json's own `outcome`
+# across all 1824 rows minus the `verdict` field, so tracking it in git is
+# pure duplication. ledger.json (the actual LedgerRow[] Tasks 6-9 consume)
+# stays tracked -- its git history IS the audit's evidence trail.
+docs/security/ledger-raw.json
