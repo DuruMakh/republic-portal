@@ -36,10 +36,13 @@ and on the deny side a zero-row read resolves to `needs-live-proof` by design,
 because an empty result proves nothing on its own. So a row policy that
 silently stopped filtering would still be graded `clear`.
 
-That gap is closed by **named row-scope assertions** (§3): 544 of them, each
-stating an expected row set per actor and checking it live. A surface is only
-as clear as both records together. Where a note below says "zero rows every
-time", that is an assertion result, not an inference.
+That gap is closed by **named row-scope assertions** (§3): 658 of them, each
+stating an expected row set per actor and checking it live — 657 holding, and
+one recorded as _unproven_ rather than passing because the data contains no
+negative case for it (§3.6). **A surface is only as clear as both records
+together**, so "no breach" is a claim about the grid _and_ the assertions, never
+the grid alone. Where a note below says "zero rows every time", that is an
+assertion result, not an inference.
 
 **Why a permitted statement is not automatically a hole.** Nine of the sixteen
 tables and eleven of the twenty-four views are readable at the grant layer by
@@ -130,8 +133,14 @@ surfaces — Tasks 7 and 8.)
 
 ## 3. Row-scope assertions
 
-544 assertions, all holding. Full results in `docs/security/row-scope.json`;
-they re-run with every `npm run security:census`.
+658 assertions: **657 holding, 1 recorded as unproven** (§3.6). Full results in
+`docs/security/row-scope.json`; they re-run with every
+`npm run security:census`.
+
+Every assertion that accepts an error as a pass is pinned to SQLSTATE `42501`.
+Grading on "any error" would let a renamed column or a throttled connection
+pass silently as a defence — the same shape, and the same direction, as the
+`select *` probe defect this pass had to fix.
 
 ### 3.1 Ownership — can any actor read a row that is not their own?
 
@@ -151,13 +160,32 @@ The `admin_roles` line is the check the brief singles out: because every
 authenticated caller may run that select, a broken policy would have been
 graded `clear` by the grid. It is not broken, and this is how that is known.
 
+### 3.1a The three tables held by RLS alone — do they return nothing?
+
+`audit_log`, `dev_otp_inbox` and `app_settings` are the same blind spot as
+`admin_roles`, without an owner column to check: each has RLS enabled, **zero
+policies**, and full default privileges for both client roles, so the whole
+security content is "no client sees any row" — and that is precisely what the
+grid does not consult. Add one permissive policy to `dev_otp_inbox` and the
+684-cell census re-runs entirely green while live sign-in codes leave the
+database. 36 assertions, each read unfiltered by each of the twelve:
+
+| Table           | Result                                                           |
+| --------------- | ------------------------------------------------------------------ |
+| `audit_log`     | **0 rows for all twelve**, A9 included. (R8)                        |
+| `dev_otp_inbox` | **0 rows for all twelve** — no client role reads a sign-in code. (R2) |
+| `app_settings`  | **0 rows for all twelve.** (R10)                                    |
+
+`delegates` is deliberately absent: its SELECT grant *is* revoked, so the grid
+already carries a real `42501` for all twelve and there is no blind spot.
+
 ### 3.2 The personal-ID lockdown
 
 `select id, personal_id, birth_date from profiles`, all twelve.
 A2–A12: **refused `42501`** — those two columns are outside the
-`authenticated` grant. A1: statement permitted (anon's default-privilege
-SELECT still covers all 17 columns) but **zero rows**. No actor obtained a
-personal ID or birth date. (Threat R1/R12.)
+`authenticated` grant. A1: statement permitted (anon holds table-level SELECT
+on all 17 columns) but **zero rows**. No actor obtained a personal ID or birth
+date. (Threat R1/R12.)
 
 ### 3.3 Self-gating view visibility
 
@@ -181,6 +209,43 @@ created them.
   `20260721120000_progressive_registration.sql:606`. A3 seeing rows there is
   correct. Grading it against the older community-migration text would have
   produced a false finding; this is why the assertions read live definitions.
+
+### 3.3a The six world-readable views — what actually comes back?
+
+`public_news`, `public_events`, `public_delegates`, `public_stats`,
+`transparency_stats` and `transparency_regions` are granted to `anon` by
+design and return rows to all twelve, so their **column list** and their
+**WHERE clause** are the entire defence — and a verdict expresses neither.
+`public_delegates` is the sharpest case: it exists so that `delegates`
+(referral codes, the whole verification trail) can stay revoked from every
+client role, and only the columns it happens to select keep that promise.
+
+**Columns (72 assertions).** No row returned by any of the six, to any of the
+twelve, carries `personal_id`, `birth_date`, `phone`, `referral_code`,
+`tc_accepted_at`, `verified_at`, `verified_by`, `review_note`,
+`pending_delegate_id` or `signup_ref_code`. Clean everywhere.
+
+**Filters (6 assertions).** Each view's row count as `anon` against a
+service-role `COUNT` of the rows that should pass — counts only, no row
+content read on either side:
+
+| View                   | Result                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| `public_news`          | 4 shown of 6 — **2 withheld**; the published+public filter is doing work.             |
+| `public_delegates`     | 13 shown of 19 — **6 withheld**; pending and rejected applicants stay off the wire.   |
+| `public_events`        | 6 shown of 6 — **0 withheld. Unproven**, see §3.6.                                    |
+| `public_stats`         | All three figures match ground truth exactly.                                        |
+| `transparency_stats`   | Both figures match; 133 profiles at status `registered` are the excluded population. |
+| `transparency_regions` | 11 rows for 11 regions; same 133-profile negative case.                              |
+
+The ground truth for the three aggregate views is read from the **live** view
+definitions, not the migrations, and they differ: the community migration
+counts `status <> 'draft'`, but `draft` is no longer a `member_status` label
+at all (live enum: `registered`, `profile_completed`, `active_member`) and the
+R2 migration re-created all three. Today `public_stats.registered_total`
+counts every profile while `transparency_stats.registered_members` counts
+`status <> 'registered'`. This is the second time in this pass that grading
+against migration text would have manufactured a false finding.
 
 ### 3.4 Escalation writes
 
@@ -213,22 +278,47 @@ The service role is used here deliberately and only here. It is never a probe
 actor: the question these four ask is "does this defence work", not "who can
 reach it", and the answer to the second question is already in the table above.
 
+### 3.6 The one assertion that is not a result
+
+`public_events.filter` **matched, and is still recorded as unproven.** The
+view shows 6 events, and 6 is exactly the number that should pass
+`status in ('published', 'cancelled')` — because every event in the database
+is published or cancelled. With no negative case in the data, a count match is
+also precisely what a _missing_ filter would produce, so the assertion
+distinguishes nothing. It carries `unproven: true` in `row-scope.json`, the
+census runner prints it separately from the failures, and it is excluded from
+the "holding" claim. Closing it needs a draft event as a fixture — a later
+pass's to create, not something to paper over here.
+
+The three sibling filters do have negative cases and are genuine results:
+`public_news` withholds 2 of 6, `public_delegates` withholds 6 of 19, and the
+two `registered` exclusions have 133 profiles to exclude.
+
 ---
 
 ## 4. Observations that are not findings
 
-Nothing in Pass 2a's 684 cells is a breach. Four things are worth the owner's
-attention anyway, and none of them is new to the audit — three sharpen
-`threat-model.md` §5, one is about the instrument.
+**Nothing in Pass 2a's 684 cells is a breach — and that sentence carries a
+qualifier that must travel with it.** The 684 cells measure whether each
+actor's statement was permitted or refused. What came back is a separate
+record: the 658 assertions in §3 and `docs/security/row-scope.json`. "No
+breach" is the conjunction of the two, not a property of the grid alone, and
+one of the 658 is recorded as *unproven* rather than holding (§3.6).
+
+Five things are worth the owner's attention anyway. None is new to the audit
+— four sharpen `threat-model.md` §5, one is about the instrument.
 
 **4.1 `protect_profile_columns` currently never runs.** It is the rule making
-`status`, `personal_id`, `phone`, `id` and `created_at` server-managed. For
-`authenticated` the column grant refuses first (`status` is not among the five
-UPDATE-granted columns), and for `anon` the row policy matches nothing — so
-across all twelve actors the trigger is never reached. It does work when
-reached, proven with this exact statement (run once, by hand, rolled back —
-it needs a direct database connection, which the census runner deliberately
-does not have):
+**ten** columns server-managed — `status`, `personal_id`, `phone`, `id`,
+`created_at`, `signup_ref_code`, `membership_tier`, `reference_code`,
+`registration_completed_at` and `pending_delegate_id` (read from the live
+`prosrc`, 2026-07-25; the migration text names five, the body has grown since).
+For `authenticated` the column grant refuses first — none of the ten is among
+the five UPDATE-granted cabinet columns — and for `anon` the row policy
+matches nothing, so across all twelve actors the trigger is never reached. It
+does work when reached, proven with this exact statement (run once, by hand,
+rolled back — it needs a direct database connection, which the census runner
+deliberately does not have):
 
 ```sql
 do $$ declare v_uid uuid; v_msg text; v_state text; v_rows int;
@@ -254,20 +344,55 @@ roles`. The closing `raise` aborts the transaction, so nothing was committed.
 This closes the `protect_profile_columns` half of threat-model §5.4 candidate
 3 — the trigger is functional, not merely present.
 
-**4.2 `anon` still holds SELECT and UPDATE on `profiles.personal_id` and
-`birth_date`.** The Phase-3 personal-ID lockdown
-(`20260717150000_admin_crm.sql:929`) revokes and re-grants for
-`authenticated` only; `anon` keeps Supabase's default privileges on all 17
-columns. Inert today — the row policy returns anon nothing, verified in §3.2
-— but the column-level defence the migration was written to create does not
-exist for the anonymous role at all. Hardening item, not a breach.
+**4.2 The personal-ID lockdown was never applied to `anon` at all — and
+`birth_date` has one layer where `personal_id` has two.** The Phase-3 lockdown
+(`20260717150000_admin_crm.sql:929`) revokes and re-grants for `authenticated`
+only. `anon` therefore still holds **table-level `SELECT`, `INSERT`,
+`UPDATE`, `DELETE` and `TRUNCATE` on `profiles` — all seventeen columns**, not
+two. Consequences, stated exactly:
 
-**4.3 Three tables the migrations describe as having "no client grants" do
+- Reads are inert: the `own profile readable` policy needs `auth.uid() = id`,
+  and `auth.uid()` is null for an anonymous caller. Verified for all twelve in
+  §3.2 — nothing came back.
+- Writes are where the asymmetry bites. Against an anonymous write,
+  **`personal_id` has two layers** — the RLS predicate, and then
+  `protect_profile_columns`, which lists it. **`birth_date` has one**: it is
+  not in the trigger's ten-column list, so the row policy is the only thing
+  standing. Nothing left the database and nothing was changed; reaching a
+  non-null `auth.uid()` as `anon` needs the JWT signing secret, which is
+  outside this model (threat-model §6).
+
+This stays an observation rather than a finding for that reason — but it is
+**a defect in a hardening migration, not an accepted platform default**: the
+revoke named one role where the intent plainly covered both. Fix-wave item
+(Task 12), and the fix should re-check the trigger's column list against the
+columns the grant leaves reachable.
+
+**4.3 Four tables the migrations describe as having "no client grants" do
 have them.** `admin_roles`, `audit_log` and `dev_otp_inbox` carry the comment
 "no client grants (server-side only)"; live, `anon` and `authenticated` hold
-the full default privilege set on each. All three return zero rows to all
-twelve actors (§3.1, and the table above), so the stated intent is achieved —
-by RLS, not by the grant the comment describes. Same shape for `app_settings`.
+the full default privilege set on each, and `app_settings` has the same shape.
+All four return zero rows to all twelve actors (§3.1, §3.1a), so the stated
+intent is achieved — by RLS, not by the grant the comment describes.
+
+**4.3a Nine of the thirteen admin views still carry `anon` SELECT.**
+`admin_overview`, `admin_region_stats`, `admin_members`,
+`admin_delegate_queue`, `admin_payments`, `admin_finance_stats`,
+`admin_admins`, `admin_audit` and `admin_settings` — every admin view created
+before the community migration — are readable by `anon` at the grant layer.
+The only thing refusing A1 is `revoke execute on function has_admin_role /
+has_any_admin_role from public, anon`: the view runs the gate function as the
+caller, so anon dies on the function, not on the view. Verified for all nine
+(§3.3, and the per-row notes in §2 — the live error is `42501 permission
+denied for function has_any_admin_role`, never "for view").
+
+This is the same incomplete-revoke shape as 4.2, and the **four admin views
+that *were* revoked** — `admin_news`, `admin_events`, `admin_polls`,
+`admin_poll_options`, all created in the community migration with
+`revoke all … from anon, authenticated` — are the evidence that the revoke was
+meant to apply to all thirteen. A future admin view that does not call a gate
+function, or a re-grant of EXECUTE to `anon`, would open the nine at once.
+Fix-wave item.
 
 **4.4 The expectations in this section are not protected from
 `security:introspect --write`.** That command regenerates
@@ -289,8 +414,14 @@ is safe. Flagged for Pass 3.
   *invoke* them directly is a `function`-kind question and belongs to Task 7.
   Task 4's result (PGRST202 for all 48 cells) is an API-gateway behaviour, not
   a database control, and should not be filed as a defence.
-- **Making the grant layer match the stated intent** (4.2, 4.3) — a fix-wave
-  item for Task 12, not an edit this pass may make.
+- **A draft event, so `public_events`' filter has a negative case** (§3.6) —
+  the one assertion here that distinguishes nothing. A fixture gap, not a
+  result.
+- **Making the grant layer match the stated intent** (4.2, 4.3, 4.3a) — a
+  fix-wave item for Task 12, not an edit this pass may make. Three separate
+  incomplete revokes with the same shape: `profiles` (named `authenticated`,
+  not `anon`), the four "server-side only" tables (no revoke at all), and the
+  nine pre-community admin views (revoked only in the four created later).
 
 ---
 

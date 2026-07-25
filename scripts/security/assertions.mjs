@@ -27,7 +27,13 @@
  * reported in docs/security/coverage.md, and NEVER folded into a verdict —
  * two different questions, two different records.
  *
- * ## Three families
+ * Every family below that accepts an error as a pass is pinned to SQLSTATE
+ * 42501 (see DENIED_BY_PRIVILEGE). Grading on "any error" would let a renamed
+ * column, a typo'd filter or a throttled connection pass silently as a
+ * defence — the same shape, and the same direction, as the `select *` probe
+ * defect this pass had to fix.
+ *
+ * ## Six families
  *
  *   ownership  — for every table whose policy scopes reads to the caller,
  *                read it UNFILTERED as each actor and check that every row
@@ -36,6 +42,20 @@
  *                one actor read another actor's admin row would be graded
  *                clear — you own detecting that"); it costs nothing to run it
  *                for the other five own-row tables too, so it does.
+ *
+ *   sealed     — the same blind spot on the three tables that have no owner
+ *                column because no client is meant to see ANY row: audit_log,
+ *                dev_otp_inbox, app_settings. RLS on, zero policies, full
+ *                default privileges. See SEALED_BY_RLS.
+ *
+ *   personalId — the two profiles columns outside the authenticated grant.
+ *
+ *   public     — the six world-readable views, where the COLUMN LIST and the
+ *                WHERE clause are the entire defence and a verdict expresses
+ *                neither. Two checks: no private column ever appears, and each
+ *                filter withholds what it should (counts only, both sides).
+ *                A filter with nothing to withhold in today's data is recorded
+ *                `unproven` rather than passing — see publicFilterAssertions.
  *
  *   visibility — the self-gating views. Each admin_ view carries its own
  *                `has_any_admin_role(...)` predicate and each member_ view an
@@ -58,7 +78,7 @@
  *                structural reading. All three aim at A3 (an audit-owned
  *                fixture) so a landed write is both obvious and disposable.
  *
- * ## The two service-role control checks at the end
+ * ## The control checks at the end
  *
  * `audit_log_immutable` and `enforce_delegate_completed` are triggers no
  * client role can currently reach — RLS and the absence of an INSERT policy
@@ -72,6 +92,15 @@
  * Both attempts are content-neutral or self-cleaning: the audit_log update
  * writes the value the row already holds, and the delegates insert is deleted
  * again if it ever succeeds (which would itself be the finding).
+ *
+ * Two more use the audit's own team-member fixture rather than the service
+ * role, because the path being tested is a CLIENT path: set_updated_at fires
+ * on the one own-row update a client may make, and protect_profile_columns is
+ * shown to be unreachable even from the row's own owner (the column grant
+ * refuses first). `protect_profile_columns` is nonetheless functional — proven
+ * once by hand with a rolled-back SET LOCAL ROLE anon, quoted in
+ * docs/security/coverage.md §4.1; it needs a direct database connection, which
+ * this runner deliberately does not have.
  */
 import { db } from "./db.mjs";
 import { actorClient, auditTeamMember } from "./actors.mjs";
@@ -127,13 +156,50 @@ const OWNERSHIP = {
   poll_votes: { column: "member_id", select: "poll_id,option_id,member_id" },
 };
 
-const row = (assertion, actor, expected, observed, ok) => ({
+/**
+ * Tables whose entire security content is "returns nothing to any client".
+ *
+ * All four have RLS enabled, ZERO policies, and full default privileges for
+ * both `anon` and `authenticated` — so the statement runs, the row rule
+ * matches nothing, and the census grades `allow` + `clear` without ever
+ * consulting the row count. That is the same blind spot the admin_roles
+ * assertion exists to close, and it applies here with more force: on
+ * admin_roles a broken policy leaks one role row, on dev_otp_inbox it leaks
+ * live sign-in codes in clear text. Adding a single permissive policy to any
+ * of these would leave the 684-cell census entirely green.
+ */
+const SEALED_BY_RLS = {
+  audit_log: "id,created_at,action",
+  dev_otp_inbox: "id,created_at",
+  app_settings: "key,updated_at",
+  // delegates is deliberately absent: its SELECT grant IS revoked, so the
+  // grid already carries a real 42501 refusal for all twelve and there is no
+  // blind spot to close.
+};
+
+/**
+ * The one error code that means "a real privilege check turned this caller
+ * away" — the same constant lib/security/verdict.ts grades on.
+ *
+ * Every assertion below that accepts an error as a pass pins it to this code.
+ * Grading on `!!error` would let a renamed column, a typo'd table or a
+ * malformed filter pass silently as a defence — structurally the same defect
+ * as the `select *` probe this pass had to fix, and in the same direction:
+ * quiet, and reassuring.
+ */
+const DENIED_BY_PRIVILEGE = "42501";
+
+const row = (assertion, actor, expected, observed, ok, extra = {}) => ({
   assertion,
   actor,
   expected,
   observed,
   ok,
+  ...extra,
 });
+
+/** True only for a genuine privilege refusal — never for any other error. */
+const isRefusal = (error) => error?.code === DENIED_BY_PRIVILEGE;
 
 async function ownershipAssertions(clients, actorIds) {
   const out = [];
@@ -147,9 +213,9 @@ async function ownershipAssertions(clients, actorIds) {
             row(
               `${table}.cross-actor`,
               actor,
-              "no row belonging to another user",
-              `refused ${error.code}`,
-              true,
+              `no row belonging to another user (a refusal must be ${DENIED_BY_PRIVILEGE})`,
+              `refused ${error.code}: ${error.message}`,
+              isRefusal(error),
             ),
           );
           return;
@@ -160,9 +226,48 @@ async function ownershipAssertions(clients, actorIds) {
           row(
             `${table}.cross-actor`,
             actor,
-            "no row belonging to another user",
+            `no row belonging to another user (a refusal must be ${DENIED_BY_PRIVILEGE})`,
             `${rows.length} row(s), ${foreign.length} belonging to someone else`,
             foreign.length === 0,
+          ),
+        );
+      }),
+    );
+  }
+  return out;
+}
+
+/**
+ * The three RLS-only tables: every actor must come away with nothing. Unlike
+ * the ownership family there is no owner column to check — no client is
+ * supposed to see ANY row — so the assertion is simply zero.
+ */
+async function sealedAssertions(clients) {
+  const out = [];
+  for (const [table, select] of Object.entries(SEALED_BY_RLS)) {
+    await Promise.all(
+      ACTORS_ALL.map(async (actor) => {
+        const { data, error } = await clients[actor].from(table).select(select).limit(200);
+        if (error) {
+          out.push(
+            row(
+              `${table}.sealed`,
+              actor,
+              `zero rows (a refusal must be ${DENIED_BY_PRIVILEGE})`,
+              `refused ${error.code}: ${error.message}`,
+              isRefusal(error),
+            ),
+          );
+          return;
+        }
+        const n = data?.length ?? 0;
+        out.push(
+          row(
+            `${table}.sealed`,
+            actor,
+            `zero rows (a refusal must be ${DENIED_BY_PRIVILEGE})`,
+            `${n} row(s)`,
+            n === 0,
           ),
         );
       }),
@@ -182,16 +287,16 @@ async function personalIdAssertions(clients) {
         return row(
           "profiles.personal-id-lockdown",
           actor,
-          "refused, or zero rows",
-          `refused ${error.code}`,
-          true,
+          `refused ${DENIED_BY_PRIVILEGE}, or zero rows`,
+          `refused ${error.code}: ${error.message}`,
+          isRefusal(error),
         );
       }
       const n = data?.length ?? 0;
       return row(
         "profiles.personal-id-lockdown",
         actor,
-        "refused, or zero rows",
+        `refused ${DENIED_BY_PRIVILEGE}, or zero rows`,
         `${n} row(s) carrying personal_id/birth_date`,
         n === 0,
       );
@@ -255,14 +360,240 @@ async function escalationAssertions(clients, actorIds) {
           row(
             name,
             actor,
-            "refused; no row created",
-            error ? `refused ${error.code}` : `${data?.length ?? 0} row(s) CREATED`,
-            !!error && !wrote,
+            `refused ${DENIED_BY_PRIVILEGE}; no row created`,
+            error
+              ? `refused ${error.code}: ${error.message}`
+              : `${data?.length ?? 0} row(s) CREATED`,
+            isRefusal(error) && !wrote,
           ),
         );
       }),
     );
   }
+  return out;
+}
+
+/**
+ * Columns that must never appear in a world-readable view. Six views are
+ * granted to `anon` by design and return rows to all twelve actors, so their
+ * COLUMN LIST and their WHERE clause are the entire defence — and neither is
+ * something a verdict can express. `public_delegates` is the sharpest case:
+ * it exists precisely so that `delegates` (which carries referral_code and the
+ * whole verification trail) can stay revoked from every client role, and the
+ * only thing keeping that promise is which columns the view happens to select.
+ */
+const NEVER_PUBLIC = [
+  "personal_id",
+  "birth_date",
+  "phone",
+  "referral_code",
+  "tc_accepted_at",
+  "verified_at",
+  "verified_by",
+  "review_note",
+  "pending_delegate_id",
+  "signup_ref_code",
+];
+
+const PUBLIC_VIEWS = [
+  "public_news",
+  "public_events",
+  "public_delegates",
+  "public_stats",
+  "transparency_stats",
+  "transparency_regions",
+];
+
+/** No world-readable view may hand any actor one of the NEVER_PUBLIC columns. */
+async function publicColumnAssertions(clients) {
+  const out = [];
+  for (const view of PUBLIC_VIEWS) {
+    await Promise.all(
+      ACTORS_ALL.map(async (actor) => {
+        const { data, error } = await clients[actor].from(view).select("*").limit(5);
+        if (error) {
+          out.push(
+            row(
+              `${view}.no-private-columns`,
+              actor,
+              `none of: ${NEVER_PUBLIC.join(", ")}`,
+              `UNEXPECTEDLY refused ${error.code}: ${error.message}`,
+              false,
+            ),
+          );
+          return;
+        }
+        const keys = new Set((data ?? []).flatMap((r) => Object.keys(r)));
+        const leaked = NEVER_PUBLIC.filter((c) => keys.has(c));
+        out.push(
+          row(
+            `${view}.no-private-columns`,
+            actor,
+            `none of: ${NEVER_PUBLIC.join(", ")}`,
+            leaked.length
+              ? `LEAKED ${leaked.join(", ")}`
+              : `${keys.size} public column(s), none private`,
+            leaked.length === 0,
+          ),
+        );
+      }),
+    );
+  }
+  return out;
+}
+
+/**
+ * Do the world-readable views' WHERE clauses actually filter?
+ *
+ * Each view's row count as `anon` is compared against a service-role COUNT of
+ * the rows that are supposed to pass. Counts only — no row content is read on
+ * either side.
+ *
+ * A count match alone is weak evidence when everything in the table passes the
+ * filter: if every event is published, "the view returns all of them" is what
+ * a MISSING filter would also produce. Those cases are recorded with
+ * `unproven: true` rather than counted as holding, because the data has no
+ * negative case to catch a regression — a fixture gap for a later pass, not a
+ * result.
+ */
+async function publicFilterAssertions(clients) {
+  const anon = clients.A1;
+  const out = [];
+
+  const viewCount = async (view) => {
+    const { count, error } = await anon.from(view).select("*", { count: "exact", head: true });
+    if (error) throw new Error(`public filter assertion could not count ${view}: ${error.message}`);
+    return count ?? 0;
+  };
+  const tableCount = async (table, apply = (q) => q) => {
+    const { count, error } = await apply(
+      db.from(table).select("*", { count: "exact", head: true }),
+    );
+    if (error)
+      throw new Error(`public filter assertion could not count ${table}: ${error.message}`);
+    return count ?? 0;
+  };
+
+  const filtered = [
+    {
+      view: "public_news",
+      filter: "status = 'published' and visibility = 'public'",
+      table: "news",
+      apply: (q) => q.eq("status", "published").eq("visibility", "public"),
+    },
+    {
+      view: "public_events",
+      filter: "status in ('published', 'cancelled')",
+      table: "events",
+      apply: (q) => q.in("status", ["published", "cancelled"]),
+    },
+    {
+      view: "public_delegates",
+      filter: "status = 'approved'",
+      table: "delegates",
+      apply: (q) => q.eq("status", "approved"),
+    },
+  ];
+
+  for (const { view, filter, table, apply } of filtered) {
+    const shown = await viewCount(view);
+    const shouldShow = await tableCount(table, apply);
+    const total = await tableCount(table);
+    const withheld = total - shouldShow;
+    const matches = shown === shouldShow;
+    out.push(
+      row(
+        `${view}.filter`,
+        "anon (A1)",
+        `exactly the ${table} rows matching ${filter}`,
+        `${shown} shown, ${shouldShow} should be, ${withheld} withheld of ${total}`,
+        matches,
+        withheld === 0
+          ? {
+              unproven: true,
+              why: `every ${table} row passes this filter today, so a count match is also what a MISSING filter would produce — no negative case in the data`,
+            }
+          : {},
+      ),
+    );
+  }
+
+  // The two aggregate views have no rows to filter — their figures ARE the
+  // claim, so each figure is compared to ground truth.
+  //
+  // The ground-truth predicates below are read from the LIVE view definitions
+  // (pg_get_viewdef), not from the migrations, and they differ: the community
+  // migration counts `status <> 'draft'`, but `draft` is no longer a
+  // member_status label at all (live enum: registered, profile_completed,
+  // active_member) and the R2 migration re-created all three views. Today
+  // public_stats.registered_total counts EVERY profile while
+  // transparency_stats.registered_members counts `status <> 'registered'`.
+  // Grading either against the migration text would have produced a false
+  // finding — the same trap member_event_going_counts set earlier in this pass.
+  const activeMembers = await tableCount("profiles", (q) => q.eq("status", "active_member"));
+  const allProfiles = await tableCount("profiles");
+  const pastRegistered = await tableCount("profiles", (q) => q.neq("status", "registered"));
+  const stillRegistered = allProfiles - pastRegistered;
+  const approvedDelegates = await tableCount("delegates", (q) => q.eq("status", "approved"));
+
+  const { data: statsRows, error: statsError } = await anon.from("public_stats").select("*");
+  if (statsError) throw new Error(`could not read public_stats: ${statsError.message}`);
+  const stats = statsRows?.[0] ?? {};
+  const statsOk =
+    stats.active_members === activeMembers &&
+    stats.approved_delegates === approvedDelegates &&
+    stats.registered_total === allProfiles;
+  out.push(
+    row(
+      "public_stats.figures",
+      "anon (A1)",
+      `active=${activeMembers}, approved_delegates=${approvedDelegates}, registered_total=${allProfiles}`,
+      `active=${stats.active_members}, approved_delegates=${stats.approved_delegates}, registered_total=${stats.registered_total}`,
+      statsOk,
+    ),
+  );
+
+  const { data: transRows, error: transError } = await anon.from("transparency_stats").select("*");
+  if (transError) throw new Error(`could not read transparency_stats: ${transError.message}`);
+  const trans = transRows?.[0] ?? {};
+  const transOk =
+    trans.registered_members === pastRegistered && trans.approved_delegates === approvedDelegates;
+  out.push(
+    row(
+      "transparency_stats.figures",
+      "anon (A1)",
+      `registered_members=${pastRegistered} (status <> 'registered'), approved_delegates=${approvedDelegates}`,
+      `registered_members=${trans.registered_members}, approved_delegates=${trans.approved_delegates}`,
+      transOk,
+      stillRegistered === 0
+        ? {
+            unproven: true,
+            why: "no profile is still at status 'registered', so the exclusion this figure applies has no negative case to catch a regression",
+          }
+        : {},
+    ),
+  );
+
+  // transparency_regions: one row per region, and `registered` must exclude
+  // profiles still at status 'registered'. That population is the negative case.
+  const regionCount = await tableCount("regions");
+  const regionRows = await viewCount("transparency_regions");
+  out.push(
+    row(
+      "transparency_regions.filter",
+      "anon (A1)",
+      `${regionCount} region row(s), 'registered' excluding profiles at status 'registered'`,
+      `${regionRows} row(s); ${stillRegistered} profile(s) at status 'registered' available as a negative case`,
+      regionRows === regionCount,
+      stillRegistered === 0
+        ? {
+            unproven: true,
+            why: "no profile is still at status 'registered', so the exclusion has no negative case to catch a regression",
+          }
+        : {},
+    ),
+  );
+
   return out;
 }
 
@@ -388,16 +719,35 @@ async function delegateTriggerAssertion(actorIds) {
   ];
 }
 
+/**
+ * Groups run SEQUENTIALLY, not under one Promise.all.
+ *
+ * They were parallel until the public-view families were added, at which point
+ * the suite fired ~500 requests at once and PostgREST started returning
+ * errors with an EMPTY message — a transport failure, not a verdict. That is
+ * the worst possible failure mode for this file: every family here treats an
+ * error as evidence, so a throttled connection would have been indistinguish-
+ * able from a defence refusing. (The `isRefusal` pin added alongside this
+ * turns such a failure into a loud assertion FAILURE rather than a silent
+ * pass, but not generating it in the first place is better still.) The
+ * twelve-actor fan-out inside each family stays parallel; the census is not a
+ * hot path and correctness beats the few seconds.
+ */
 export async function runRowScopeAssertions({ clients, actorIds, fixtures }) {
-  const groups = await Promise.all([
-    ownershipAssertions(clients, actorIds),
-    personalIdAssertions(clients),
-    visibilityAssertions(clients),
-    escalationAssertions(clients, actorIds),
-    updatedAtAssertion(),
-    protectedColumnAssertion(),
-    auditLogTriggerAssertion(fixtures),
-    delegateTriggerAssertion(actorIds),
-  ]);
-  return groups.flat();
+  const families = [
+    () => ownershipAssertions(clients, actorIds),
+    () => sealedAssertions(clients),
+    () => personalIdAssertions(clients),
+    () => visibilityAssertions(clients),
+    () => publicColumnAssertions(clients),
+    () => publicFilterAssertions(clients),
+    () => escalationAssertions(clients, actorIds),
+    () => updatedAtAssertion(),
+    () => protectedColumnAssertion(),
+    () => auditLogTriggerAssertion(fixtures),
+    () => delegateTriggerAssertion(actorIds),
+  ];
+  const out = [];
+  for (const family of families) out.push(...(await family()));
+  return out;
 }

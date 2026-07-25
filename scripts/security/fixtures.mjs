@@ -114,12 +114,44 @@ async function ensureParticipation(actor, label, { eventId, pollId, optionId }) 
 }
 
 /**
+ * The two profile rows the write probes aim at, with the values they CURRENTLY
+ * hold.
+ *
+ * This used to be a pair of constants in probe.mjs mirroring actors.mjs's
+ * fixture strings. They were correct, but a mirror is not a guarantee: change
+ * FIXTURE_EMPLOYMENT or a fixture's first name in actors.mjs and the write
+ * probes would quietly start carrying a DIFFERENT value than the row holds —
+ * turning "a landed write changes no content" from a property into a
+ * coincidence, on exactly the two probes whose whole safety argument is that
+ * property. Read-then-replay makes it true by construction.
+ *
+ * Deliberately not logged anywhere: these are real column values, and the
+ * probe only ever needs to hand them straight back to the database.
+ */
+async function discoverProfileTargets(actors) {
+  const out = {};
+  for (const key of ["A3", "A8"]) {
+    const { data, error } = await db
+      .from("profiles")
+      .select("id, first_name, employment")
+      .eq("id", actors[key].userId)
+      .single();
+    if (error) {
+      throw new Error(`fixture discovery failed for ${key}'s profile row: ${error.message}`);
+    }
+    out[key] = { id: data.id, firstName: data.first_name, employment: data.employment };
+  }
+  return out;
+}
+
+/**
  * Returns the discovered ids/values the depth probes need, after making sure
  * A5 and A7 each own one RSVP and one vote.
  */
 export async function ensureDepthFixtures(actors) {
   const found = await discover();
+  const profileTargets = await discoverProfileTargets(actors);
   const a5 = await ensureParticipation(actors.A5, "A5", found);
   const a7 = await ensureParticipation(actors.A7, "A7", found);
-  return { ...found, participation: { A5: a5, A7: a7 } };
+  return { ...found, profileTargets, participation: { A5: a5, A7: a7 } };
 }

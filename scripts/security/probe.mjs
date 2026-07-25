@@ -319,11 +319,14 @@ const foreign = (ctx, primary, fallback) => ctx.ids[ctx.actor === primary ? fall
  * staging admin, and no actor is ever handed its own row -- so RLS matching
  * zero rows is the expected result for all twelve, with nothing to
  * accidentally self-update.
+ *
+ * The values come from fixtures.mjs's read-then-replay discovery, NOT from
+ * constants mirroring actors.mjs: see discoverProfileTargets() there for why
+ * a mirror would make the content-neutrality guarantee a coincidence rather
+ * than a property.
  */
 function writeTarget(ctx) {
-  return ctx.actor === "A3"
-    ? { id: ctx.ids.A8, firstName: "აუდიტი", employment: "უსაფრთხოების აუდიტის ფიქსტურა" }
-    : { id: ctx.ids.A3, firstName: "აუდიტი", employment: null };
+  return ctx.fixtures.profileTargets[ctx.actor === "A3" ? "A8" : "A3"];
 }
 
 const DEPTH_PROBES = {
@@ -832,11 +835,19 @@ writeFileSync(ROW_SCOPE_URL, JSON.stringify(allRowScope, null, 2) + "\n");
 console.log(`Wrote ${fileURLToPath(ROW_SCOPE_URL)}`);
 
 const failed = allRowScope.filter((r) => !r.ok);
+const unproven = allRowScope.filter((r) => r.ok && r.unproven);
 console.log(
-  `  ${allRowScope.length - failed.length}/${allRowScope.length} row-scope assertions hold.`,
+  `  ${allRowScope.length - failed.length}/${allRowScope.length} row-scope assertions hold` +
+    (unproven.length ? `, of which ${unproven.length} are UNPROVEN (see below)` : "") +
+    ".",
 );
 for (const f of failed) {
   console.error(
     `  ROW-SCOPE FAIL ${f.assertion} / ${f.actor}: expected ${f.expected}, got ${f.observed}`,
   );
+}
+// An assertion whose expectation matched but whose data contains no negative
+// case is not a result. Printed separately so it cannot be read as one.
+for (const u of unproven) {
+  console.warn(`  ROW-SCOPE UNPROVEN ${u.assertion}: ${u.why}`);
 }
