@@ -1041,7 +1041,7 @@ npm run security:census
 
 Expected: zero `needs-live-proof` rows remaining among view and table surfaces. Any that remain are either a missing fixture (fix the fixture) or a genuinely ambiguous surface (escalate to Task 9).
 
-- [ ] **Step 4: Exercise each of the 10 row-level policies through its table**
+- [ ] **Step 4: Exercise each of the 9 row-level policies through its table**
 
 For each policy, read its `USING`/`WITH CHECK` clause in the migration, then construct the probe that would slip past it if the clause were wrong: the actor it is meant to exclude, attempting the operation it is meant to gate, against a row it is meant not to reach. A policy whose table is already sealed by revoked grants still gets its own probe — grants and policies are independent defences, and the audit's job is to know which one is actually holding.
 
