@@ -57,23 +57,28 @@
  * across the entire audit. Making the import list itself omit `db` means
  * that mistake cannot happen by accident here, not merely "is discouraged".
  *
- * ## Two `function` surfaces are deliberately not invoked with {}
- * See MUTATING_ZERO_ARG_FUNCTIONS below for exactly which two and why.
+ * ## Function surfaces are invoked with REAL arguments (Task 7)
+ * scripts/security/arguments.mjs holds one valid argument object per function
+ * plus a per-(function, actor) setup/teardown, so every actor attacks an
+ * identical fresh target. Exactly one group is not invoked at all -- see
+ * `skipFor` there, and the note where MUTATING_ZERO_ARG_FUNCTIONS used to be
+ * defined below.
  *
  * ## `outcome.errorCode` carries three load-bearing sentinel values
  * `verdict` alone conflates three different reasons a row can land on
  * `needs-live-proof`: a kind this task doesn't probe at all yet, one of the
- * two mutating functions this task deliberately didn't invoke, and a
- * surface that WAS genuinely probed but came back inconclusive (mostly a
- * PGRST202 argument mismatch, to be resolved by Task 7's real arguments).
+ * pairs deliberately not invoked, and a surface that WAS genuinely probed
+ * but came back inconclusive (after Task 7: the four trigger-returning
+ * functions, which PostgREST will not route at all).
  * Tasks 6, 8 and 9 need to tell these apart, and `verdict` alone cannot --
  * the only field that does is `outcome.errorCode`:
  *   - "SKIP"          -- kind not probed this task (policy / trigger /
  *                         action / endpoint / bucket -- see
  *                         NOT_YET_PROBED_KINDS below)
- *   - "SKIP-MUTATING" -- one of the two functions in
- *                         MUTATING_ZERO_ARG_FUNCTIONS below, deliberately
- *                         not invoked
+ *   - "SKIP-MUTATING" -- a (function, actor) pair arguments.mjs declines to
+ *                         invoke because the call writes on the CALLER and
+ *                         that caller is a canonical staging admin
+ *                         (`skipFor`; today: request_delegacy x A9-A12)
  *   - anything else (a real Postgres/PostgREST code, or null) -- a probe
  *                         that actually ran
  * These two strings are a stable contract other tasks may key on, not an
@@ -280,7 +285,9 @@ const READ_COLUMNS = {
  * GROUP C (the four `returns trigger` functions) -- Task 4 filed these as a
  * candidate finding on the reasoning that only PostgREST's schema-cache
  * filtering, "an API-GATEWAY behaviour, not a database control", stands
- * between an unrevoked PUBLIC EXECUTE grant and a caller. Task 7 settled it
+ * between an unrevoked EXECUTE grant and a caller -- one held by `anon` and
+ * `authenticated` EXPLICITLY, not merely inherited from PUBLIC, so the
+ * hygiene revoke must name all three roles. Task 7 settled it
  * and the candidate finding is DISPROVED: `select public.set_updated_at()`
  * run directly against the database as the `postgres` superuser -- no
  * PostgREST, every privilege in hand -- fails with `trigger functions can
@@ -582,6 +589,17 @@ async function probe(client, surface, ctx) {
         // the self-check near the bottom of this file for why that matters
         // and how it's proven, not just asserted in a comment.
         const { data, error } = await client.rpc(surface.name, spec.args(fixture, ctx));
+        // A call that SUCCEEDED may have minted rows nothing pre-minted -- a
+        // news row from admin_save_news(p_id => null), an event_rsvps row from
+        // member_rsvp. `after` records those, so residue.json describes what
+        // the census actually did rather than only what it staged.
+        if (!error && spec.after) {
+          try {
+            spec.after(fixture, ctx, data);
+          } catch (err) {
+            console.error(`  RESIDUE RECORD FAILED ${surface.id} / ${ctx.actor}: ${String(err)}`);
+          }
+        }
         return {
           errorCode: error?.code ?? null,
           errorMessage: error?.message ?? null,
@@ -955,20 +973,64 @@ for (const u of unproven) {
   console.warn(`  ROW-SCOPE UNPROVEN ${u.assertion}: ${u.why}`);
 }
 
-// Task 7, Step 2: every id this run minted. Task 13 uses it to tell what the
-// end-of-phase reseed removed apart from what the append-only audit_log made
-// permanent — the two are different questions and only this file distinguishes
-// them. Written last so it covers the assertion pass as well as the matrix.
+// Task 7, Step 2: what this run minted, APPENDED to what earlier runs minted.
+// Task 13 uses this to tell what the end-of-phase reseed removed apart from
+// what the append-only audit_log made permanent -- two different questions,
+// and only this file distinguishes them.
+//
+// Appended, not overwritten. The census is re-run freely (three times during
+// Task 7 alone) and each run mints a fresh set of targets; a file that held
+// only the last run would under-report by exactly the runs before it, and
+// silently, because it would still look complete. `sweepByTag` below covers
+// the part itemisation cannot reach.
+const previous = existsSync(RESIDUE_URL) ? JSON.parse(readFileSync(RESIDUE_URL, "utf8")) : null;
+const priorRuns = Array.isArray(previous?.runs)
+  ? previous.runs
+  : previous?.minted // the single-run shape this file carried before 2026-07-26
+    ? [
+        {
+          runAt: previous.runAt,
+          auditLogBaselineId: previous.auditLogBaselineId,
+          minted: previous.minted,
+        },
+      ]
+    : [];
+
 const residue = {
-  runAt: new Date().toISOString(),
   tag: "security-audit-2026-07",
-  auditLogBaselineId: auditBaselineId,
   note:
-    "Rows minted by scripts/security/arguments.mjs during the Pass 2b census. Entries whose " +
+    "Rows minted during the Pass 2b function census, by run. TWO sources feed each run's list: " +
+    "rows scripts/security/arguments.mjs minted as a probe target (setup), and rows the RPC " +
+    "ITSELF minted when the call succeeded (the spec's `after` hook) -- admin_save_news with " +
+    "p_id null, member_rsvp's event_rsvps row, member_cast_vote's poll_votes row. Entries whose " +
     "note says 'removed by teardown' were already gone before the run ended; everything else is " +
-    "live residue for the reseed to sweep. audit_log rows written by successful probes are NOT " +
-    "listed: audit_log is append-only by trigger and they are permanent by design.",
-  minted: MINTED,
+    "live residue. audit_log rows are deliberately NOT listed: audit_log is append-only by " +
+    "trigger, they are permanent by design, and telling them apart from sweepable residue is the " +
+    "whole reason this file exists.",
+  // What Task 13 must sweep by TAG or MARKER, because no id list can cover it.
+  sweepByTag: [
+    "Runs before 2026-07-26 are not itemised: this file was overwritten per run until that date, " +
+      "so its earliest surviving entry is not the earliest row minted. Everything from those runs " +
+      "still carries one of the markers below.",
+    "auth.users + profiles: user_metadata.audit_tag = 'security-audit-2026-07' -- the A2-A8 " +
+      "actors, the team-member fixture, and the twelve disposable victims +9955090020001..0012.",
+    "news / events / polls: title (or question) contains 'SECAUDIT'. Covers both rows minted as " +
+      "targets and rows admin_save_news/_event/_poll created themselves.",
+    "poll_options: label 'SECAUDIT-A' / 'SECAUDIT-B', plus every option of a SECAUDIT poll.",
+    "event_rsvps / poll_votes: any row whose member_id is an audit-tagged account. Minted by " +
+      "member_rsvp and member_cast_vote SUCCEEDING, never by a setup, and mostly hanging off " +
+      "SECAUDIT parents the reseed removes anyway.",
+    "delegates / memberships / payments / admin_roles: any row keyed to an audit-tagged account. " +
+      "All of these are torn down per probe, so a survivor means a teardown failed and is worth " +
+      "looking at rather than sweeping silently.",
+  ],
+  runs: [
+    ...priorRuns,
+    { runAt: new Date().toISOString(), auditLogBaselineId: auditBaselineId, minted: MINTED },
+  ],
 };
 writeFileSync(RESIDUE_URL, JSON.stringify(residue, null, 2) + "\n");
-console.log(`Wrote ${fileURLToPath(RESIDUE_URL)} (${MINTED.length} minted rows)`);
+console.log(
+  `Wrote ${fileURLToPath(RESIDUE_URL)} (${MINTED.length} minted this run, ` +
+    `${residue.runs.length} run(s) on record)`,
+);

@@ -74,7 +74,20 @@ import { db } from "./db.mjs";
 /** Same tag actors.mjs stamps on every audit-created account. */
 export const AUDIT_TAG = "security-audit-2026-07";
 
-/** Everything this run minted, drained by probe.mjs into docs/security/residue.json. */
+/**
+ * Everything this run minted, drained by probe.mjs into
+ * docs/security/residue.json.
+ *
+ * TWO sources feed it, and the second is easy to forget: rows `setup()` mints
+ * BEFORE a call, and rows the CALL ITSELF mints when it succeeds. The second
+ * kind is invisible to setup/teardown — `admin_save_news(p_id => null)` creates
+ * a news row that nothing here pre-minted, `member_rsvp` creates an
+ * event_rsvps row, `member_cast_vote` a poll_votes row. They are captured by
+ * each spec's `after(fixture, ctx, data)` hook, which the runner calls only on
+ * a call that returned no error. Without it this file would claim to be "every
+ * id this run minted" while systematically missing everything the census
+ * actually succeeded at doing, which is the half Task 13 most needs.
+ */
 export const MINTED = [];
 
 function record(kind, id, surface, actor, note) {
@@ -468,12 +481,30 @@ export const FUNCTION_SPECS = {
       eventId: await mintEvent("published", "function:member_rsvp", c.actor),
     }),
     args: (fx) => ({ p_event_id: fx.eventId, p_going: true }),
+    // The call itself mints an event_rsvps row keyed (event_id, member_id).
+    // It returns void, so the "id" is that pair rather than a value in `data`.
+    after: (fx, c) =>
+      record(
+        "event_rsvps",
+        `${fx.eventId}/${c.actors[c.actor].userId}`,
+        "function:member_rsvp",
+        c.actor,
+        "minted by the RPC itself (status=going)",
+      ),
   },
   member_cast_vote: {
     // A fresh poll per (function, actor) is what makes every actor's vote a
     // FIRST vote; a shared poll would hand the twelfth actor `already_voted`.
     setup: async (c) => mintPoll("open", "function:member_cast_vote", c.actor),
     args: (fx) => ({ p_poll_id: fx.pollId, p_option_id: fx.optionId }),
+    after: (fx, c) =>
+      record(
+        "poll_votes",
+        `${fx.pollId}/${c.actors[c.actor].userId}`,
+        "function:member_cast_vote",
+        c.actor,
+        "minted by the RPC itself",
+      ),
   },
   become_member_complete: {
     setup: async (c) => {
@@ -590,6 +621,14 @@ export const FUNCTION_SPECS = {
       return { victim: v, to: c.actors.A7.userId };
     },
     args: (fx) => ({ p_member_id: fx.victim.userId, p_delegate_id: fx.to }),
+    after: (fx, c) =>
+      record(
+        "memberships",
+        `member:${fx.victim.userId}`,
+        "function:admin_reassign_member",
+        c.actor,
+        "minted by the RPC itself (reassigned), reset by teardown",
+      ),
     teardown: async (fx, c) => {
       await resetMembership(fx.victim, null, "function:admin_reassign_member", c.actor);
     },
@@ -661,6 +700,14 @@ export const FUNCTION_SPECS = {
       p_paid_at: c.pool.today,
       p_bank_reference: `SECAUDIT-${rand()}`,
     }),
+    after: (fx, c) =>
+      record(
+        "payments",
+        `member:${fx.victim.userId}`,
+        "function:admin_record_payment",
+        c.actor,
+        "minted by the RPC itself, removed by teardown",
+      ),
     teardown: (fx) => resetPayments(fx.victim),
   },
   admin_record_payments_bulk: {
@@ -672,6 +719,14 @@ export const FUNCTION_SPECS = {
     args: (fx, c) => ({
       p_rows: [{ referenceCode: fx.victim.referenceCode, amountGel: 7, paidAt: c.pool.today }],
     }),
+    after: (fx, c) =>
+      record(
+        "payments",
+        `member:${fx.victim.userId}`,
+        "function:admin_record_payments_bulk",
+        c.actor,
+        "minted by the RPC itself, removed by teardown",
+      ),
     teardown: (fx) => resetPayments(fx.victim),
   },
   admin_void_payment: {
@@ -720,6 +775,8 @@ export const FUNCTION_SPECS = {
       p_visibility: "public",
     }),
     noTarget: true, // p_id null: the call itself mints the row, nothing to pre-mint
+    after: (_fx, c, data) =>
+      record("news", data, "function:admin_save_news", c.actor, "minted by the RPC itself (draft)"),
   },
   admin_publish_news: {
     setup: async (c) => ({ id: await mintNews("draft", "function:admin_publish_news", c.actor) }),
@@ -756,6 +813,14 @@ export const FUNCTION_SPECS = {
       p_ends_at: new Date(Date.now() + 31 * 24 * 3600 * 1000).toISOString(),
     }),
     noTarget: true, // p_id null: the call itself mints the row
+    after: (_fx, c, data) =>
+      record(
+        "events",
+        data,
+        "function:admin_save_event",
+        c.actor,
+        "minted by the RPC itself (draft)",
+      ),
   },
   admin_publish_event: {
     setup: async (c) => ({ id: await mintEvent("draft", "function:admin_publish_event", c.actor) }),
@@ -779,6 +844,14 @@ export const FUNCTION_SPECS = {
       p_ends_at: null,
     }),
     noTarget: true, // p_id null: the call itself mints the row
+    after: (_fx, c, data) =>
+      record(
+        "polls",
+        data,
+        "function:admin_save_poll",
+        c.actor,
+        "minted by the RPC itself (draft, plus its two poll_options)",
+      ),
   },
   admin_open_poll: {
     setup: async (c) => mintPoll("draft", "function:admin_open_poll", c.actor),

@@ -765,16 +765,65 @@ export async function auditLogHighWaterMark() {
  * OTHER action, or wrote it under the wrong actor_id, fails here rather than
  * passing on a count.
  */
+/**
+ * Actions a function writes BESIDES the one AUDIT_ACTIONS names for it — read
+ * off the live bodies, not guessed.
+ *
+ * There is exactly one: `admin_record_payments_bulk` writes a
+ * `payment.record` row PER BATCH ROW as well as its own `payment.bulk_record`
+ * summary. That collides with `admin_record_payment`'s only action, and the
+ * collision is not cosmetic: matching on `(action, actor_id)` alone, an
+ * `admin_record_payment` that had stopped writing its audit row entirely would
+ * still have "passed" on a row the BULK function wrote — the one shape of
+ * failure this whole family exists to catch, invisible to it.
+ */
+const ALSO_WRITES = { admin_record_payments_bulk: ["payment.record"] };
+
+/**
+ * How to tell two functions' rows apart when they share an action string.
+ * Both bulk actions stamp `details.batchId`; the single-payment path never
+ * does (verified against both live bodies).
+ */
+const DISCRIMINATOR = {
+  admin_record_payment: (r) => r.details?.batchId === undefined,
+  admin_record_payments_bulk: (r) => r.details?.batchId !== undefined,
+};
+
 async function auditLogInvariantAssertions(baselineId, ledgerRows, surfaceById, actorIds) {
   const { data, error } = await db
     .from("audit_log")
-    .select("id, actor_id, action")
+    .select("id, actor_id, action, details")
     .gt("id", baselineId)
     .order("id");
   if (error) throw new Error(`audit_log slice read failed: ${error.message}`);
   const written = data ?? [];
 
   const out = [];
+
+  // Guard the guard: any action string one function writes as a side effect of
+  // another's name MUST carry a discriminator, or this family silently grades
+  // one function on another's evidence. Checked here rather than asserted in a
+  // comment, so a future function that starts writing a shared action fails
+  // loudly instead of quietly weakening the invariant.
+  for (const [owner, action] of Object.entries(AUDIT_ACTIONS)) {
+    const alsoWrittenBy = Object.entries(ALSO_WRITES)
+      .filter(([other, actions]) => other !== owner && actions.includes(action))
+      .map(([other]) => other);
+    if (alsoWrittenBy.length === 0) continue;
+    const guarded = Boolean(DISCRIMINATOR[owner]) && alsoWrittenBy.every((o) => DISCRIMINATOR[o]);
+    out.push(
+      row(
+        "audit-log-invariant.no-shared-action-without-discriminator",
+        owner,
+        `'${action}' is also written by ${alsoWrittenBy.join(", ")}; both sides need a discriminator`,
+        guarded
+          ? "discriminated on details.batchId"
+          : "NO DISCRIMINATOR — rows are interchangeable",
+        guarded,
+      ),
+    );
+  }
+
   for (const cell of ledgerRows) {
     const surface = surfaceById.get(cell.surfaceId);
     if (!surface || surface.kind !== "function") continue;
@@ -783,12 +832,16 @@ async function auditLogInvariantAssertions(baselineId, ledgerRows, surfaceById, 
     if (cell.outcome.errorCode !== null) continue; // the call never completed
 
     const uid = actorIds[cell.actor];
-    const hit = written.find((r) => r.action === action && r.actor_id === uid);
+    const discriminate = DISCRIMINATOR[surface.name] ?? (() => true);
+    const hit = written.find((r) => r.action === action && r.actor_id === uid && discriminate(r));
     out.push(
       row(
         `${surface.id}.writes-audit-log`,
         cell.actor,
-        `a completed call leaves audit_log(action='${action}', actor_id=caller)`,
+        `a completed call leaves audit_log(action='${action}', actor_id=caller)` +
+          (DISCRIMINATOR[surface.name]
+            ? ", not another function's row carrying the same action"
+            : ""),
         hit ? `audit_log #${hit.id}` : "NO MATCHING audit_log ROW",
         Boolean(hit),
       ),
@@ -817,8 +870,13 @@ async function auditLogInvariantAssertions(baselineId, ledgerRows, surfaceById, 
 
 /**
  * THE FOUR `returns trigger` FUNCTIONS. Task 4 left these as a candidate
- * finding: nothing revokes their default EXECUTE-to-PUBLIC grant (live proacl
- * shows `=X/postgres` on all four), so on paper `anon` holds real, unrevoked,
+ * finding: nothing revokes EXECUTE on any of them. The live proacl on all four
+ * is `=X/postgres | postgres=X/postgres | anon=X/postgres | authenticated=X/postgres | service_role=X/postgres`
+ * -- the leading `=X/postgres` is the PUBLIC default, and `anon` and
+ * `authenticated` each hold an EXPLICIT grant on top of it, so the eventual
+ * hygiene fix has to name all three (`revoke ... from public, anon,
+ * authenticated`); a PUBLIC-only revoke would change nothing for a client.
+ * On paper, then, `anon` holds real, unrevoked,
  * database-level permission to call them, and only PostgREST's schema-cache
  * filtering — "a gateway behaviour, not a database control" — was standing in
  * the way.

@@ -94,6 +94,97 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     ).toEqual([]);
   });
 
+  // -------------------------------------------------------------------------
+  // The ORDER invariant, not just the classification one.
+  //
+  // judge()'s allow side now resolves `allow` + a post-gate token to `clear`,
+  // on the reasoning that a post-gate token is proof the caller got PAST the
+  // gate. That reasoning is only sound while the schema keeps post-gate tokens
+  // strictly behind gates — and nothing above enforces it. The three tests
+  // above only assert that every live token is classified SOMEWHERE; a future
+  // migration that used, say, `invalid_role` as a role gate ("if not
+  // has_admin_role(...) then raise exception 'invalid_role'") would keep every
+  // one of them green while making judge() clear a caller who never got in.
+  //
+  // So this pins the invariant itself: in every function the schema defines,
+  // every POST_GATE_TOKENS raise must be PRECEDED by a REFUSAL_TOKENS raise.
+  // Checked against the last definition of each function (migrations are
+  // applied in filename order and `create or replace` means last one wins,
+  // which is exactly how Postgres resolves it) — the same
+  // read-the-real-thing discipline as extractExceptionTokens() above.
+  //
+  // Verified once, out of band, that this file agrees with the database it is
+  // standing in for: the token sequence extracted here matches `pg_proc.prosrc`
+  // for all 54 live functions with zero mismatches (2026-07-26), and the live
+  // catalog produces the same single exemption listed below.
+  const GATELESS_BY_DESIGN = new Map([
+    // A column-protection TRIGGER, not an RPC with a caller to admit or
+    // refuse. It fires on any client-role UPDATE of profiles, gating on
+    // `current_user` rather than `auth.uid()`, so it has no identity gate to
+    // put in front of its two validation raises — and needs none: PostgREST
+    // will not route a trigger-returning function at all, and Postgres
+    // refuses one outside a trigger context regardless of grant. verdict.ts's
+    // POST_GATE_TOKENS comment already carves out this exact pair.
+    ["protect_profile_columns", ["invalid_name", "invalid_employment"]],
+  ]);
+
+  /** Last definition of each function across the migrations, in apply order. */
+  function latestFunctionBodies(): Map<string, string> {
+    const bodies = new Map<string, string>();
+    for (const file of readdirSync(MIGRATIONS_DIR).sort()) {
+      if (!file.endsWith(".sql")) continue;
+      const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
+      const header = /create (?:or replace )?function\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\(/g;
+      for (const match of sql.matchAll(header)) {
+        const name = match[1];
+        if (name === undefined || match.index === undefined) continue;
+        const open = sql.indexOf("$$", match.index);
+        if (open < 0) continue;
+        const close = sql.indexOf("$$", open + 2);
+        if (close < 0) continue;
+        bodies.set(name, sql.slice(open + 2, close));
+      }
+    }
+    return bodies;
+  }
+
+  it("raises no post-gate token at or before a function's own gate", () => {
+    const offenders: string[] = [];
+    for (const [name, body] of latestFunctionBodies()) {
+      const raises = [...body.matchAll(/raise exception '([a-z][a-z0-9_]*)'/g)].map((m) => ({
+        token: m[1] as string,
+        at: m.index as number,
+      }));
+      const gateAt = raises.find((r) => REFUSAL_TOKENS.has(r.token))?.at;
+      const exempt = new Set(GATELESS_BY_DESIGN.get(name) ?? []);
+      const early = raises.filter(
+        (r) =>
+          POST_GATE_TOKENS.has(r.token) &&
+          !exempt.has(r.token) &&
+          (gateAt === undefined || r.at <= gateAt),
+      );
+      for (const bad of new Set(early.map((e) => e.token))) {
+        offenders.push(
+          `${name} raises post-gate '${bad}' ` +
+            (gateAt === undefined ? "with no refusal-token gate at all" : "at or before its gate"),
+        );
+      }
+    }
+    expect(
+      offenders,
+      "judge() clears `allow` + a post-gate token because such a token proves the caller " +
+        "got past the gate. These raises break that: " +
+        offenders.join("; "),
+    ).toEqual([]);
+  });
+
+  it("finds exactly the function count this order invariant was written against", () => {
+    // Tripwire, same role as the token-count one below: a new function is
+    // welcome, but it should be a deliberate arrival, not a silent one.
+    expect(latestFunctionBodies().size).toBe(58); // 54 live + 4 dropped funnel_*
+    expect(GATELESS_BY_DESIGN.size).toBe(1);
+  });
+
   it("finds exactly the token counts this test suite was written against", () => {
     // Not load-bearing on its own (the two tests above are what actually
     // guard against drift) — a tripwire so a change big enough to move

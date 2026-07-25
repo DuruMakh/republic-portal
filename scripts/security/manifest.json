@@ -873,7 +873,7 @@
       "A11": "deny",
       "A12": "deny"
     },
-    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
+    "note": "Returns trigger. Live proacl is `=X/postgres | postgres=X/postgres | anon=X/postgres | authenticated=X/postgres | service_role=X/postgres`: the leading =X/postgres is the PUBLIC default, and anon and authenticated each hold an EXPLICIT EXECUTE on top of it, so a revoke aimed at PUBLIC alone would not remove either. On paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:become_member_complete",
@@ -1020,7 +1020,7 @@
       "A11": "deny",
       "A12": "deny"
     },
-    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
+    "note": "Returns trigger. Live proacl is `=X/postgres | postgres=X/postgres | anon=X/postgres | authenticated=X/postgres | service_role=X/postgres`: the leading =X/postgres is the PUBLIC default, and anon and authenticated each hold an EXPLICIT EXECUTE on top of it, so a revoke aimed at PUBLIC alone would not remove either. On paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:gen_funnel_code",
@@ -1230,7 +1230,7 @@
       "A11": "deny",
       "A12": "deny"
     },
-    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
+    "note": "Returns trigger. Live proacl is `=X/postgres | postgres=X/postgres | anon=X/postgres | authenticated=X/postgres | service_role=X/postgres`: the leading =X/postgres is the PUBLIC default, and anon and authenticated each hold an EXPLICIT EXECUTE on top of it, so a revoke aimed at PUBLIC alone would not remove either. On paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:recompute_all_active",
@@ -1356,7 +1356,7 @@
       "A11": "deny",
       "A12": "deny"
     },
-    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
+    "note": "Returns trigger. Live proacl is `=X/postgres | postgres=X/postgres | anon=X/postgres | authenticated=X/postgres | service_role=X/postgres`: the leading =X/postgres is the PUBLIC default, and anon and authenticated each hold an EXPLICIT EXECUTE on top of it, so a revoke aimed at PUBLIC alone would not remove either. On paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:tbilisi_today",
