@@ -102,6 +102,25 @@ const AUDIT_TAG = "security-audit-2026-07";
  */
 const TEAM_MEMBER_PHONE = "509001009";
 
+/**
+ * Set by provisionActorsOnce() below; read through auditTeamMember(). Task 6
+ * needs this fixture as a WRITE target it is allowed to spend: it is the only
+ * completed-member account in the whole audit that is not one of the twelve
+ * probe positions, so a mutation aimed at it can never contaminate an actor's
+ * declared standing, and it is audit-tagged (unlike A9-A12, the canonical
+ * staging admins, which this audit must not mutate at all). It stays OUT of
+ * ACTORS/ACTOR_IDS — the probe matrix must keep iterating over exactly twelve.
+ */
+let _teamMember = null;
+
+/** The auxiliary team-member fixture, available after provisionActors() resolves. */
+export function auditTeamMember() {
+  if (!_teamMember) {
+    throw new Error("auditTeamMember() called before provisionActors() resolved");
+  }
+  return _teamMember;
+}
+
 async function findUserByPhone(phone) {
   for (let page = 1; ; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
@@ -422,6 +441,7 @@ async function provisionActorsOnce(fresh) {
     userId: teamMemberUser.id,
     accessToken: await mintSession(TEAM_MEMBER_PHONE, { fresh, pending }),
   };
+  _teamMember = teamMember;
 
   mergeCacheEntries(pending);
   console.log(

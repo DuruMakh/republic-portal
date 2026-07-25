@@ -573,342 +573,1197 @@
     "id": "policy:cities readable by all",
     "kind": "policy",
     "name": "cities readable by all",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (true)` (20260712212409_initial_schema.sql:155). Same as regions: probed positively; row-scope assertion requires >=1 row for all twelve.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own admin roles readable",
     "kind": "policy",
     "name": "own admin roles readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (auth.uid() = user_id)` (20260717150000_admin_crm.sql:936). The clause it must not let slip: another user's admin row. Probe: `select user_id, role from admin_roles where user_id = <A9's id>` (A9 itself probes A10's) — the row it is meant not to reach. Statement is permitted for all twelve (grant layer); zero rows is the defence, asserted by name.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own memberships readable",
     "kind": "policy",
     "name": "own memberships readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (auth.uid() = member_id)` (20260712212409_initial_schema.sql:158). Probe: `select * from memberships where member_id = <A5's id>` (A5 probes A4's) — a real, existing membership row belonging to another actor. Permitted statement; zero rows is the defence.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own payments readable",
     "kind": "policy",
     "name": "own payments readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (auth.uid() = member_id)` (20260712212409_initial_schema.sql:159). Probe: the 10 granted columns of payments filtered to <A5's id> (A5 probes A6's) — both actors have real payment rows created by the audit's own admin_record_payment calls. Permitted statement; zero rows is the defence.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own profile readable",
     "kind": "policy",
     "name": "own profile readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (auth.uid() = id)` (20260712212409_initial_schema.sql:156). Probe: the 14 granted columns of profiles filtered to <A5's id> (A5 probes A4's). Permitted statement; zero rows is the defence.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own profile updatable",
     "kind": "policy",
     "name": "own profile updatable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for update using (auth.uid() = id)` (20260712212409_initial_schema.sql:157) — the only write policy in the schema. Probe: `update profiles set employment = <the target's own current value> where id = <A3's id>` (A3 probes A8's), returning ids, so a policy that let the write through would report rows. Every actor may run the statement (anon holds default-privilege UPDATE on all 17 columns; authenticated holds the 5 cabinet columns from 20260715213000_cabinets.sql:10); zero rows AFFECTED is the defence. The payload is each target's existing value, so even a landed write changes no content — the row count alone reveals the breach.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own rsvps readable",
     "kind": "policy",
     "name": "own rsvps readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select to authenticated using (member_id = auth.uid())` (20260719150000_community.sql:130). A1 cannot reach the table at all (42501). Probe for the rest: `select event_id, member_id, status from event_rsvps where member_id = <A5's id>` (A5 probes A7's) — both have real RSVP rows created for this pass through member_rsvp(), so an empty result is a filtered result, not an empty table.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:own votes readable",
     "kind": "policy",
     "name": "own votes readable",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select to authenticated using (member_id = auth.uid())` (20260719150000_community.sql:134). A1 cannot reach the table (42501). Probe: `select poll_id, option_id, member_id from poll_votes where member_id = <A5's id>` (A5 probes A7's) — both have real votes cast for this pass through member_cast_vote(), so this is a live test of ballot secrecy against a populated table.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "policy:regions readable by all",
     "kind": "policy",
     "name": "regions readable by all",
-    "layer": "db"
+    "layer": "db",
+    "note": "`for select using (true)` (20260712212409_initial_schema.sql:154). Deliberately unconditional. Probe: a plain select on regions from every actor — the policy is doing its job when rows COME BACK, so this is the one policy probed positively (row-scope assertion requires >=1 row for all twelve).",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:admin_roles",
     "kind": "table",
     "name": "admin_roles",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:938 `grant select on admin_roles to authenticated` + policy \"own admin roles readable\" `using (auth.uid() = user_id)` (:936). Every authenticated caller may RUN the select — the migration's own comment says the admin nav reads only the caller's rows. A1 is also `allow` here, against the migration's stated \"no client grants\": live introspection shows anon holding Supabase's default-privilege SELECT on all 4 columns; RLS returns it nothing. The row-level question (can one actor read ANOTHER actor's admin row?) is not expressible as an allow/deny expectation and is asserted by name — see docs/security/row-scope.json, assertion `admin_roles.cross-actor`.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:app_settings",
     "kind": "table",
     "name": "app_settings",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql creates it with RLS on and no client policy; the intent is server-side-only. Live: anon and authenticated both hold default-privilege SELECT, so the statement RUNS and returns zero rows to all twelve actors (RLS is the layer holding). A permitted statement affecting zero rows is not a hole; recorded as `allow` with the grant-layer divergence noted in the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:audit_log",
     "kind": "table",
     "name": "audit_log",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260712212409_initial_schema.sql:169 comment: \"admin_roles, audit_log, dev_otp_inbox: no client grants (server-side only)\". Live: anon and authenticated hold default-privilege SELECT on all 7 columns; RLS (zero policies) returns nothing to all twelve actors. `allow` = the statement runs; the audit log itself stays unreadable. Grant-layer divergence noted in the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:cities",
     "kind": "table",
     "name": "cities",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260712212409_initial_schema.sql:166 + policy \"cities readable by all\" `using (true)`. DELIBERATELY world-readable reference data, same rationale as regions.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:delegates",
     "kind": "table",
     "name": "delegates",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260713175043_public_read_model.sql:51 `revoke select on delegates from anon, authenticated` — public reads go only through public_delegates, precisely so tc_accepted_at/verified_at/verified_by/referral_code stay off the wire. No actor may run the select; live 42501 for all twelve.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "table:dev_otp_inbox",
     "kind": "table",
     "name": "dev_otp_inbox",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260712212409_initial_schema.sql:139-140 grants insert only to supabase_auth_admin; comment says no client grants. Live: anon and authenticated hold default-privilege SELECT; RLS (zero policies) returns nothing. The OTP inbox is the audit's own session-minting channel via the SERVICE role, never via a client role. Grant-layer divergence noted in the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:event_rsvps",
     "kind": "table",
     "name": "event_rsvps",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126 `revoke all ... from anon, authenticated`, then :132 `grant select (event_id, member_id, status) on event_rsvps to authenticated` + policy \"own rsvps readable\" `to authenticated using (member_id = auth.uid())`. A1 (anon) holds nothing — 42501. Authenticated actors may run the three-column select; the policy scopes it to their own RSVPs. Probed with exactly those three columns, not `*` (a `*` probe would report 42501 and mistake a probe defect for a defence).",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:events",
     "kind": "table",
     "name": "events",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126, no re-grant. Reads go through public_events / member_event_going_counts / admin_events. 42501 for all twelve.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "table:memberships",
     "kind": "table",
     "name": "memberships",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260712212409_initial_schema.sql:168 `grant select on memberships, payments to authenticated` + policy \"own memberships readable\" `using (auth.uid() = member_id)`. Every actor may run the select; the policy scopes the result to the caller's own membership rows.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:news",
     "kind": "table",
     "name": "news",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126 `revoke all on news, events, event_rsvps, polls, poll_options, poll_votes from anon, authenticated`, with no re-grant for news. Reads go through public_news / member_news / admin_news. 42501 for all twelve.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "table:payments",
     "kind": "table",
     "name": "payments",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260718100000_admin_crm_hardening.sql:403-406 revokes select from authenticated and re-grants exactly 10 columns (recorded_by / voided_by / void_reason are admin-internal). Policy \"own payments readable\" `using (auth.uid() = member_id)` scopes the result. Every actor may run the 10-column select; anon gets zero rows. Same anon default-privilege divergence as profiles (anon holds all 13 columns).",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:poll_options",
     "kind": "table",
     "name": "poll_options",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126, no re-grant. Reads go through member_poll_options / admin_poll_options. 42501 for all twelve.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "table:poll_votes",
     "kind": "table",
     "name": "poll_votes",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126 `revoke all ...`, then :136 `grant select (poll_id, option_id, member_id) on poll_votes to authenticated` + policy \"own votes readable\" `to authenticated using (member_id = auth.uid())`. A1 is refused (42501). Authenticated actors may run the three-column select; the policy scopes it to their own vote. Ballot secrecy therefore rests on RLS, and is asserted by name — see row-scope assertion `poll_votes.cross-actor`.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:polls",
     "kind": "table",
     "name": "polls",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:126, no re-grant. Reads go through member_polls / admin_polls. 42501 for all twelve.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "table:profiles",
     "kind": "table",
     "name": "profiles",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:929-932 revokes the blanket select from authenticated and re-grants exactly 14 columns (personal_id and birth_date deliberately excluded — the Phase-3 personal-ID lockdown). Policy \"own profile readable\" `using (auth.uid() = id)` scopes the result to the caller's own row. Every actor may RUN the 14-column select; anon gets zero rows because auth.uid() is null. NOTE (live, 2026-07-25): anon still holds Supabase's default-privilege SELECT on ALL 17 columns including personal_id/birth_date — the migration's revoke named `authenticated` only. Inert (RLS returns no rows to anon) but recorded as a grant-layer divergence from stated intent; see the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "table:regions",
     "kind": "table",
     "name": "regions",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260712212409_initial_schema.sql:166 `grant select on regions, cities, delegates to anon, authenticated` + policy \"regions readable by all\" `using (true)`. DELIBERATELY world-readable reference data (the 12 region rows the registration form needs before a caller has any identity). Reading it is the designed behaviour, not a leak.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "trigger:audit_log_no_update",
     "kind": "trigger",
     "name": "audit_log_no_update",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before delete or update on audit_log ... audit_log_immutable()`, whose whole body is `raise exception 'audit_log is append-only'` (20260712212409_initial_schema.sql:82-87). Probe: `update audit_log set action = 'security_probe'` unfiltered. Live: anon and authenticated hold default-privilege UPDATE on all 7 columns, so the statement RUNS — and RLS (audit_log has zero policies) makes zero rows visible, so the trigger never fires. RLS is the layer actually holding; the append-only trigger is second-line. That the trigger does fire when a row IS reachable is proven separately, service-role, inside a rolled-back transaction — see the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "trigger:delegates_require_completed",
     "kind": "trigger",
     "name": "delegates_require_completed",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before insert or update of id on delegates ... enforce_delegate_completed()`, which raises `delegate_requires_completed_member` unless the target id is a profile with registration_completed_at set (20260722120000_r2_ladder_and_numbers.sql:9-23). Probe: insert a delegates row for A4 (a completed member, so the trigger itself would PASS) — isolating the layer behind it. Live: delegates has zero RLS policies, so the insert is refused 42501 by RLS for all twelve. That the trigger fires on a non-completed target is proven separately, service-role, inside a rolled-back transaction — see the report.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:event_rsvps_updated_at",
     "kind": "trigger",
     "name": "event_rsvps_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on event_rsvps ... set_updated_at()` (20260712212409_initial_schema.sql:90). Housekeeping, not an authorization control — but its table must still be unwritable by clients. Probe: `update event_rsvps set status = 'going'`. 20260719150000_community.sql:126 revokes all on event_rsvps and re-grants SELECT only (:132) — no UPDATE for any client role, so the statement is refused 42501 for all twelve and the trigger is unreachable from any client role. The revoked grant is the layer holding.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:events_updated_at",
     "kind": "trigger",
     "name": "events_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on events ... set_updated_at()` (20260712212409_initial_schema.sql:90). Housekeeping, not an authorization control — but its table must still be unwritable by clients. Probe: `update events set title = 'security_probe'`. 20260719150000_community.sql:126 revokes all on events with no re-grant, so the statement is refused 42501 for all twelve and the trigger is unreachable from any client role. The revoked grant is the layer holding.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:news_updated_at",
     "kind": "trigger",
     "name": "news_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on news ... set_updated_at()` (20260712212409_initial_schema.sql:90). Housekeeping, not an authorization control — but its table must still be unwritable by clients. Probe: `update news set title = 'security_probe'`. 20260719150000_community.sql:126 revokes all on news with no re-grant, so the statement is refused 42501 for all twelve and the trigger is unreachable from any client role. The revoked grant is the layer holding.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:polls_updated_at",
     "kind": "trigger",
     "name": "polls_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on polls ... set_updated_at()` (20260712212409_initial_schema.sql:90). Housekeeping, not an authorization control — but its table must still be unwritable by clients. Probe: `update polls set question = 'security_probe'`. 20260719150000_community.sql:126 revokes all on polls with no re-grant, so the statement is refused 42501 for all twelve and the trigger is unreachable from any client role. The revoked grant is the layer holding.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:profiles_protect_columns",
     "kind": "trigger",
     "name": "profiles_protect_columns",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on profiles ... protect_profile_columns()`, which raises when a client role changes status/personal_id/phone/id/created_at (20260713175043_public_read_model.sql:56-66, body last replaced 20260721120000_progressive_registration.sql:54). Probe: `update profiles set status = 'active_member' where id = <A3's id>` (A3 targets A8's). A2-A12 are refused 42501 at the COLUMN-privilege layer — `status` is not among the 5 columns 20260715213000_cabinets.sql:10 grants UPDATE on — so the trigger never fires for them. A1 (anon) still holds default-privilege UPDATE on all 17 columns, so its statement runs and RLS (`auth.uid() = id`, null for anon) affects zero rows. Net: this trigger is unreachable from every client role today; the column grant holds for authenticated and RLS holds for anon. Recorded as a defence-in-depth finding in the report, not a breach.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    }
   },
   {
     "id": "trigger:profiles_updated_at",
     "kind": "trigger",
     "name": "profiles_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "note": "`before update on profiles ... set_updated_at()` (20260712212409_initial_schema.sql:95). This is the ONE trigger a client role can actually reach, via the 5-column own-row cabinet update. Probe: `update profiles set first_name = <the target's own current value> where id = <A3's id>` (A3 targets A8's) — a cross-actor write, so every actor's statement is permitted but affects zero rows. That the trigger fires and advances updated_at on the owner path is proven separately by the audit's own team-member fixture updating its own row — see the report.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_admins",
     "kind": "view",
     "name": "admin_admins",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_audit",
     "kind": "view",
     "name": "admin_audit",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_delegate_queue",
     "kind": "view",
     "name": "admin_delegate_queue",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_events",
     "kind": "view",
     "name": "admin_events",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) holds no privilege at all — live 42501 \"permission denied for view admin_events\". Every authenticated actor may run the select; `where has_any_admin_role('super_admin','editor')` scopes the result to super_admin + editor. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_finance_stats",
     "kind": "view",
     "name": "admin_finance_stats",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_members",
     "kind": "view",
     "name": "admin_members",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_news",
     "kind": "view",
     "name": "admin_news",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) holds no privilege at all — live 42501 \"permission denied for view admin_news\". Every authenticated actor may run the select; `where has_any_admin_role('super_admin','editor')` scopes the result to super_admin + editor. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_overview",
     "kind": "view",
     "name": "admin_overview",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_payments",
     "kind": "view",
     "name": "admin_payments",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_poll_options",
     "kind": "view",
     "name": "admin_poll_options",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) holds no privilege at all — live 42501 \"permission denied for view admin_poll_options\". Every authenticated actor may run the select; `where has_any_admin_role('super_admin','editor')` scopes the result to super_admin + editor. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_polls",
     "kind": "view",
     "name": "admin_polls",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) holds no privilege at all — live 42501 \"permission denied for view admin_polls\". Every authenticated actor may run the select; `where has_any_admin_role('super_admin','editor')` scopes the result to super_admin + editor. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_region_stats",
     "kind": "view",
     "name": "admin_region_stats",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:admin_settings",
     "kind": "view",
     "name": "admin_settings",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260717150000_admin_crm.sql:336 grants select to authenticated, so every signed-in actor may RUN the select; the view's own `where has_any_admin_role(...)`/`has_admin_role(...)` predicate is what scopes the RESULT to the role family (spec §4.2: \"non-admins get ZERO rows\"). A1 (anon) is refused outright — not by the view grant (Supabase's default privileges left anon holding SELECT on this legacy-era view) but by `revoke execute on function has_admin_role(text)/has_any_admin_role(text[]) from public, anon` (same file, lines 15 and 25): live error is 42501 \"permission denied for function has_any_admin_role\". Row scope asserted separately — see docs/security/row-scope.json.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:member_event_going_counts",
     "kind": "view",
     "name": "member_event_going_counts",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) is refused outright (live 42501 \"permission denied for view member_event_going_counts\"). Every authenticated actor may run the select. The gate is `where e.status in (published,cancelled) and is_registered()` — NOT is_completed_member(): the view was re-created in 20260721120000_progressive_registration.sql:606 and the predicate changed, so a merely-registered caller (A3) legitimately sees per-event going counts while a caller with no profile row (A2) sees none. Derived from the LIVE view definition (pg_get_viewdef, 2026-07-25); grading it against the community-migration text would have manufactured a false finding against A3.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:member_news",
     "kind": "view",
     "name": "member_news",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) is refused outright (live 42501 \"permission denied for view member_news\") — and is_completed_member() is itself revoked from anon (:152). Every authenticated actor may run the select; `where status='published' and is_completed_member()` scopes the result, so a signed-in caller who has not completed registration (A2, A3) gets zero rows. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:member_poll_options",
     "kind": "view",
     "name": "member_poll_options",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) is refused outright (live 42501 \"permission denied for view member_poll_options\") — and is_completed_member() is itself revoked from anon (:152). Every authenticated actor may run the select; `where p.status in ('open','closed') and is_completed_member()` scopes the result, so a signed-in caller who has not completed registration (A2, A3) gets zero rows. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:member_polls",
     "kind": "view",
     "name": "member_polls",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) is refused outright (live 42501 \"permission denied for view member_polls\") — and is_completed_member() is itself revoked from anon (:152). Every authenticated actor may run the select; `where status in ('open','closed') and is_completed_member()` scopes the result, so a signed-in caller who has not completed registration (A2, A3) gets zero rows. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:poll_option_counts",
     "kind": "view",
     "name": "poll_option_counts",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:252 `revoke all ... from anon, authenticated` then :259 `grant select ... to authenticated`. A1 (anon) is refused outright (live 42501 \"permission denied for view poll_option_counts\") — and is_completed_member() is itself revoked from anon (:152). Every authenticated actor may run the select; `where ... is_completed_member() and (poll closed or caller already voted)` scopes the result, so a signed-in caller who has not completed registration (A2, A3) gets zero rows. Row scope asserted separately.",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:public_delegates",
     "kind": "view",
     "name": "public_delegates",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260713175043_public_read_model.sql:45 `grant select on public_delegates, public_stats to anon, authenticated`. Definer-style view over delegates+profiles, filtered to status='approved'. Every actor may run the select.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:public_events",
     "kind": "view",
     "name": "public_events",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:257 (same revoke-then-grant). Filtered to status in ('published','cancelled').",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:public_news",
     "kind": "view",
     "name": "public_news",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:257 `grant select on public_news, public_events, transparency_stats, transparency_regions to anon, authenticated`, after an explicit `revoke all` on line 252. Filtered to status='published' and visibility='public'.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:public_stats",
     "kind": "view",
     "name": "public_stats",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260713175043_public_read_model.sql:45. Aggregate counts only, no per-person rows. Every actor may run the select.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:transparency_regions",
     "kind": "view",
     "name": "transparency_regions",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:257. Per-region aggregate counts, deliberately world-readable.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   },
   {
     "id": "view:transparency_stats",
     "kind": "view",
     "name": "transparency_stats",
-    "layer": "db"
+    "layer": "db",
+    "note": "20260719150000_community.sql:257. Aggregates only (total_gel, registered_members, approved_delegates) — deliberately world-readable transparency figures.",
+    "overrides": {
+      "A1": "allow",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    }
   }
 ]

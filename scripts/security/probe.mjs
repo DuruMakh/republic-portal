@@ -88,18 +88,58 @@ import { dirname } from "node:path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ACTOR_IDS, provisionActors, actorClient } from "./actors.mjs";
+import { ensureDepthFixtures } from "./fixtures.mjs";
+import { runRowScopeAssertions } from "./assertions.mjs";
 import { judge, REFUSAL_TOKENS, POST_GATE_TOKENS } from "../../lib/security/verdict.ts";
 import { defaultExpectation, isRuleDerived } from "../../lib/security/expectations.ts";
 
 const MANIFEST_URL = new URL("./manifest.json", import.meta.url);
 const LEDGER_RAW_URL = new URL("../../docs/security/ledger-raw.json", import.meta.url);
 const LEDGER_URL = new URL("../../docs/security/ledger.json", import.meta.url);
+const ROW_SCOPE_URL = new URL("../../docs/security/row-scope.json", import.meta.url);
 
-// SurfaceKinds this task does not probe at all -- Tasks 6 (policy, trigger)
-// and 8 (action, endpoint, bucket) own them. Recorded with a distinct,
-// clearly-marked outcome (errorCode "SKIP") so nobody downstream mistakes
-// an unprobed surface for a cleared one.
-const NOT_YET_PROBED_KINDS = new Set(["policy", "trigger", "action", "endpoint", "bucket"]);
+// SurfaceKinds this runner does not probe at all -- Task 8 owns them. Recorded
+// with a distinct, clearly-marked outcome (errorCode "SKIP") so nobody
+// downstream mistakes an unprobed surface for a cleared one. `policy` and
+// `trigger` left this set in Task 6: they are now probed for real, through
+// the table each one guards (see DEPTH_PROBES below).
+const NOT_YET_PROBED_KINDS = new Set(["action", "endpoint", "bucket"]);
+
+/**
+ * Task 6: the column list a read probe must ask for, per surface.
+ *
+ * `select *` is the wrong probe against a table whose SELECT grant is
+ * COLUMN-level, and it fails in the dangerous direction: PostgREST asks for
+ * every column, Postgres refuses the ones outside the grant, and the ledger
+ * records 42501 -- which reads as "the defence held" when what actually
+ * happened is that the probe asked a question no attacker would ask. Four
+ * surfaces in this schema are column-granted, and all four looked sealed to
+ * every authenticated actor under `select *` in the Task 4 baseline:
+ *
+ *   profiles      20260717150000_admin_crm.sql:930 -- 14 columns; personal_id
+ *                 and birth_date deliberately excluded (the Phase-3
+ *                 personal-ID lockdown). Live catalog confirms exactly 14.
+ *   payments      20260718100000_admin_crm_hardening.sql:404 -- 10 columns;
+ *                 recorded_by / voided_by / void_reason are admin-internal.
+ *   event_rsvps   20260719150000_community.sql:132 -- 3 columns.
+ *   poll_votes    20260719150000_community.sql:136 -- 3 columns.
+ *
+ * Asking for exactly the granted set is what an attacker with the anon key
+ * and the OpenAPI schema would do, so it is what the census must do. The
+ * columns OUTSIDE each grant are not thereby untested -- see the
+ * `profiles.personal-id-lockdown` row-scope assertion, which probes them
+ * explicitly and expects a refusal.
+ */
+const READ_COLUMNS = {
+  "table:profiles":
+    "id,first_name,last_name,phone,region_id,city_id,employment,status,signup_ref_code," +
+    "membership_tier,reference_code,registration_completed_at,created_at,updated_at",
+  "table:payments":
+    "id,member_id,amount_gel,paid_at,bank_reference,source,tier_gel_at_payment," +
+    "months_covered,created_at,voided_at",
+  "table:event_rsvps": "event_id,member_id,status",
+  "table:poll_votes": "poll_id,option_id,member_id",
+};
 
 /**
  * Exactly two of the manifest's 54 `function` surfaces are BOTH callable
@@ -214,10 +254,249 @@ const NOT_YET_PROBED_KINDS = new Set(["policy", "trigger", "action", "endpoint",
  */
 const MUTATING_ZERO_ARG_FUNCTIONS = new Set(["request_delegacy", "member_change_delegate"]);
 
-async function probe(client, surface) {
+/**
+ * Task 6: the depth layer -- 9 row-level policies and 8 triggers.
+ *
+ * Neither is a door you can knock on. A policy is a predicate Postgres splices
+ * into a statement against the table it guards; a trigger is code that runs
+ * inside a write to that table. The only way to exercise either is to issue
+ * the statement it governs, so every entry below names a real statement
+ * against a real row, from every one of the twelve actors.
+ *
+ * Three rules shaped this table, and each one is there because the obvious
+ * alternative proves nothing:
+ *
+ *   AIM AT THE ROW THE CLAUSE MUST NOT REACH. "own profile readable" is
+ *   `using (auth.uid() = id)`. Probing it with an unfiltered select would
+ *   return the caller's own row and look fine whether or not the clause
+ *   works. So each read probe filters to ANOTHER actor's id -- the exact row
+ *   the predicate exists to withhold -- and the ledger's rowCount for that
+ *   cell is therefore a count of rows that must not exist. A9 and A5 probe a
+ *   different actor than everyone else for the surfaces where they ARE the
+ *   usual target, so no actor is ever handed its own row and graded on it.
+ *
+ *   MAKE EVERY WRITE PROBE CONTENT-NEUTRAL. Five entries here are UPDATEs or
+ *   an INSERT. Each writes the value the target row ALREADY holds (discovered
+ *   service-role in fixtures.mjs immediately beforehand), so a write that
+ *   somehow lands changes no content -- the returned row count still reveals
+ *   the breach, which is the only thing the probe needs. The one exception is
+ *   the delegates insert, which cannot be content-neutral because it creates
+ *   a row; it is aimed at A4 (an audit-owned fixture) and a landed insert is
+ *   itself the finding, cleaned up by hand.
+ *
+ *   ISOLATE THE LAYER UNDER TEST. delegates_require_completed refuses inserts
+ *   whose target is not a completed member. Probing it with a NON-completed
+ *   target would prove the trigger fires but tell us nothing about what sits
+ *   behind it, and the trigger's own exception (`delegate_requires_completed_
+ *   member`, a bare P0001 like every raise in this schema) is deliberately
+ *   unclassified in lib/security/verdict.ts, so it would land on
+ *   needs-live-proof. The probe therefore uses a COMPLETED target (A4): the
+ *   trigger passes, and whatever refuses the insert next is the layer this
+ *   cell is measuring. The trigger's own behaviour is proven separately, by
+ *   name, in assertions.mjs -- which is the right place for it, because "does
+ *   this defence fire" and "which defence is currently holding" are two
+ *   different questions and only the second one is a per-actor verdict.
+ *
+ * `rowScope` states what the returned/affected row count must be for the
+ * defence to be holding: "none" for every probe aimed at forbidden data,
+ * "some" for the two deliberately-unconditional reference-data policies,
+ * where the policy is doing its job precisely when rows DO come back. It is
+ * evaluated in the main loop and written to docs/security/row-scope.json --
+ * NOT folded into the verdict, because judge() cannot express "the statement
+ * was permitted AND returned nothing, and that is correct": on the deny side
+ * a zero-row read is `needs-live-proof` by design, and on the allow side row
+ * count is not consulted at all. That gap is exactly why these assertions are
+ * recorded by name.
+ */
+const A_FEW = 200;
+
+/** The forbidden-row owner for this actor: `primary`, unless the actor IS primary. */
+const foreign = (ctx, primary, fallback) => ctx.ids[ctx.actor === primary ? fallback : primary];
+
+/**
+ * The profile row a write probe aims at: A3 for everyone, A8 for A3 itself.
+ * Both are audit-owned fixtures (actors.mjs ACTORS), never a canonical
+ * staging admin, and no actor is ever handed its own row -- so RLS matching
+ * zero rows is the expected result for all twelve, with nothing to
+ * accidentally self-update.
+ */
+function writeTarget(ctx) {
+  return ctx.actor === "A3"
+    ? { id: ctx.ids.A8, firstName: "აუდიტი", employment: "უსაფრთხოების აუდიტის ფიქსტურა" }
+    : { id: ctx.ids.A3, firstName: "აუდიტი", employment: null };
+}
+
+const DEPTH_PROBES = {
+  // --- policies -----------------------------------------------------------
+  "policy:regions readable by all": {
+    rowScope: "some",
+    run: (client) => client.from("regions").select("id,name_ka").limit(A_FEW),
+  },
+  "policy:cities readable by all": {
+    rowScope: "some",
+    run: (client) => client.from("cities").select("id,name_ka,region_id").limit(A_FEW),
+  },
+  "policy:own admin roles readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("admin_roles")
+        .select("user_id,role")
+        .eq("user_id", foreign(ctx, "A9", "A10")),
+  },
+  "policy:own memberships readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("memberships")
+        .select("*")
+        .eq("member_id", foreign(ctx, "A5", "A4")),
+  },
+  "policy:own payments readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("payments")
+        .select(READ_COLUMNS["table:payments"])
+        .eq("member_id", foreign(ctx, "A5", "A6")),
+  },
+  "policy:own profile readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("profiles")
+        .select(READ_COLUMNS["table:profiles"])
+        .eq("id", foreign(ctx, "A5", "A4")),
+  },
+  "policy:own profile updatable": {
+    rowScope: "none",
+    run: (client, ctx) => {
+      const target = writeTarget(ctx);
+      return client
+        .from("profiles")
+        .update({ employment: target.employment })
+        .eq("id", target.id)
+        .select("id");
+    },
+  },
+  "policy:own rsvps readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("event_rsvps")
+        .select(READ_COLUMNS["table:event_rsvps"])
+        .eq("member_id", foreign(ctx, "A5", "A7")),
+  },
+  "policy:own votes readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("poll_votes")
+        .select(READ_COLUMNS["table:poll_votes"])
+        .eq("member_id", foreign(ctx, "A5", "A7")),
+  },
+
+  // --- triggers -----------------------------------------------------------
+  "trigger:audit_log_no_update": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("audit_log")
+        .update({ action: ctx.fixtures.auditAction })
+        .eq("id", ctx.fixtures.auditId)
+        .select("id"),
+  },
+  "trigger:delegates_require_completed": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("delegates")
+        .insert({
+          id: ctx.ids.A4,
+          referral_code: `SECAUDIT-${ctx.actor}`,
+          tc_accepted_at: new Date().toISOString(),
+        })
+        .select("id"),
+  },
+  "trigger:event_rsvps_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("event_rsvps")
+        .update({ status: "going" })
+        .eq("member_id", foreign(ctx, "A5", "A7"))
+        .select("event_id"),
+  },
+  "trigger:events_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("events")
+        .update({ title: ctx.fixtures.eventTitle })
+        .eq("id", ctx.fixtures.eventId)
+        .select("id"),
+  },
+  "trigger:news_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("news")
+        .update({ title: ctx.fixtures.newsTitle })
+        .eq("id", ctx.fixtures.newsId)
+        .select("id"),
+  },
+  "trigger:polls_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("polls")
+        .update({ question: ctx.fixtures.pollQuestion })
+        .eq("id", ctx.fixtures.pollId)
+        .select("id"),
+  },
+  "trigger:profiles_protect_columns": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("profiles")
+        .update({ status: "active_member" })
+        .eq("id", writeTarget(ctx).id)
+        .select("id"),
+  },
+  "trigger:profiles_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) => {
+      const target = writeTarget(ctx);
+      return client
+        .from("profiles")
+        .update({ first_name: target.firstName })
+        .eq("id", target.id)
+        .select("id");
+    },
+  },
+};
+
+async function probe(client, surface, ctx) {
   try {
     if (surface.kind === "view" || surface.kind === "table") {
-      const { data, error } = await client.from(surface.name).select("*").limit(5);
+      const columns = READ_COLUMNS[surface.id] ?? "*";
+      const { data, error } = await client.from(surface.name).select(columns).limit(5);
+      return {
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+        rowCount: data?.length ?? 0,
+      };
+    }
+    if (surface.kind === "policy" || surface.kind === "trigger") {
+      const depth = DEPTH_PROBES[surface.id];
+      if (!depth) {
+        return {
+          errorCode: "SKIP",
+          errorMessage: `no depth probe defined for ${surface.id}`,
+          rowCount: 0,
+        };
+      }
+      const { data, error } = await depth.run(client, ctx);
       return {
         errorCode: error?.code ?? null,
         errorMessage: error?.message ?? null,
@@ -434,7 +713,7 @@ function printSummary(ledgerRows, manifest) {
   );
   console.log(`  needs-live-proof  ${byVerdict["needs-live-proof"]}`);
   console.log(
-    `    ${notYetProbed} not probed by this task yet (policy/trigger/action/endpoint/bucket -- Tasks 6 & 8)`,
+    `    ${notYetProbed} not probed by this runner yet (action/endpoint/bucket -- Task 8)`,
   );
   console.log(
     `    ${mutatingDeferred} the 2 mutating zero-arg functions x 12 actors, deliberately not invoked (Task 7)`,
@@ -468,12 +747,26 @@ const actors = await provisionActors();
 const clients = Object.fromEntries(
   ACTOR_IDS.map((id) => [id, actorClient(actors[id].accessToken)]),
 );
+
+// Task 6, Step 2: the depth probes need real rows to aim at, and the two
+// own-row community policies need actors who actually own an RSVP and a vote.
+console.log("Ensuring depth fixtures (RPC-driven, audit-tagged)...");
+const fixtures = await ensureDepthFixtures(actors);
+console.log(
+  `  event ${fixtures.eventId}, poll ${fixtures.pollId}, option ${fixtures.optionId}, ` +
+    `news ${fixtures.newsId}, audit_log ${fixtures.auditId}; ` +
+    `A5 vote ${fixtures.participation.A5.vote}, A7 vote ${fixtures.participation.A7.vote}`,
+);
+
+const actorIds = Object.fromEntries(ACTOR_IDS.map((id) => [id, actors[id].userId]));
+
 console.log(
   "Actors ready. Probing the matrix (one round per surface, all 12 actors in parallel per round)...",
 );
 
 const startedAt = Date.now();
 const rawRows = [];
+const rowScopeRows = [];
 for (const [i, surface] of manifest.entries()) {
   const cells = await Promise.all(
     ACTOR_IDS.map(async (actor) => ({
@@ -481,10 +774,31 @@ for (const [i, surface] of manifest.entries()) {
       actor,
       expectation: defaultExpectation(surface, actor),
       ruleDerived: isRuleDerived(surface, actor),
-      outcome: await probe(clients[actor], surface),
+      outcome: await probe(clients[actor], surface, { actor, ids: actorIds, fixtures }),
     })),
   );
   rawRows.push(...cells);
+
+  // Row-scope: the half of the depth question judge() structurally cannot
+  // answer (see DEPTH_PROBES). Recorded alongside the verdict, never folded
+  // into it.
+  const depth = DEPTH_PROBES[surface.id];
+  if (depth) {
+    for (const cell of cells) {
+      const n = cell.outcome.rowCount;
+      const refused = cell.outcome.errorCode !== null;
+      const ok = depth.rowScope === "some" ? !refused && n > 0 : refused || n === 0;
+      rowScopeRows.push({
+        assertion: `${surface.id} :: rows-${depth.rowScope}`,
+        actor: cell.actor,
+        expected:
+          depth.rowScope === "some" ? ">= 1 row" : "0 rows (refused, or permitted-and-empty)",
+        observed: refused ? `refused ${cell.outcome.errorCode}` : `${n} row(s)`,
+        ok,
+      });
+    }
+  }
+
   if ((i + 1) % 20 === 0 || i === manifest.length - 1) {
     console.log(`  ...${i + 1}/${manifest.length} surfaces probed`);
   }
@@ -507,3 +821,22 @@ console.log(`Wrote ${fileURLToPath(LEDGER_URL)}`);
 
 runSelfCheck(rawRows, ledgerRows, surfaceById);
 printSummary(ledgerRows, manifest);
+
+// Task 6: the named assertions. Everything the twelve-verdict grid cannot
+// carry -- "the statement was permitted and returned nothing, and that is
+// correct" -- lands here instead, one named row per check per actor.
+console.log("\nRunning named row-scope assertions...");
+const named = await runRowScopeAssertions({ actors, clients, actorIds, fixtures });
+const allRowScope = [...rowScopeRows, ...named];
+writeFileSync(ROW_SCOPE_URL, JSON.stringify(allRowScope, null, 2) + "\n");
+console.log(`Wrote ${fileURLToPath(ROW_SCOPE_URL)}`);
+
+const failed = allRowScope.filter((r) => !r.ok);
+console.log(
+  `  ${allRowScope.length - failed.length}/${allRowScope.length} row-scope assertions hold.`,
+);
+for (const f of failed) {
+  console.error(
+    `  ROW-SCOPE FAIL ${f.assertion} / ${f.actor}: expected ${f.expected}, got ${f.observed}`,
+  );
+}
