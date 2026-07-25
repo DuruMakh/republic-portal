@@ -89,7 +89,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ACTOR_IDS, provisionActors, actorClient } from "./actors.mjs";
 import { ensureDepthFixtures } from "./fixtures.mjs";
-import { runRowScopeAssertions } from "./assertions.mjs";
+import { runRowScopeAssertions, auditLogHighWaterMark } from "./assertions.mjs";
+import { FUNCTION_SPECS, MINTED, provisionFixturePool } from "./arguments.mjs";
 import { judge, REFUSAL_TOKENS, POST_GATE_TOKENS } from "../../lib/security/verdict.ts";
 import { defaultExpectation, isRuleDerived } from "../../lib/security/expectations.ts";
 
@@ -97,6 +98,7 @@ const MANIFEST_URL = new URL("./manifest.json", import.meta.url);
 const LEDGER_RAW_URL = new URL("../../docs/security/ledger-raw.json", import.meta.url);
 const LEDGER_URL = new URL("../../docs/security/ledger.json", import.meta.url);
 const ROW_SCOPE_URL = new URL("../../docs/security/row-scope.json", import.meta.url);
+const RESIDUE_URL = new URL("../../docs/security/residue.json", import.meta.url);
 
 // SurfaceKinds this runner does not probe at all -- Task 8 owns them. Recorded
 // with a distinct, clearly-marked outcome (errorCode "SKIP") so nobody
@@ -142,6 +144,14 @@ const READ_COLUMNS = {
 };
 
 /**
+ * TASK 4's analysis of the 54 `function` surfaces. Retained in full because
+ * its Group A / B / C census is still the live picture and Task 7 re-verified
+ * every claim in it against the catalog -- but the two-function EXCLUSION it
+ * justifies is SUPERSEDED: Task 7 supplies real arguments and per-probe
+ * isolation (scripts/security/arguments.mjs), so both of these are now invoked
+ * for real. See the note where MUTATING_ZERO_ARG_FUNCTIONS used to be defined,
+ * immediately below this comment, and Group C's resolution there too.
+ *
  * Exactly two of the manifest's 54 `function` surfaces are BOTH callable
  * with `{}` (every parameter optional or absent) AND perform a live write
  * when they run:
@@ -252,7 +262,39 @@ const READ_COLUMNS = {
  * discipline in the opposite direction (an accidental REAL write instead of
  * an accidental service-role write).
  */
-const MUTATING_ZERO_ARG_FUNCTIONS = new Set(["request_delegacy", "member_change_delegate"]);
+/**
+ * TASK 7 RESOLUTION of everything the comment above deferred.
+ *
+ * `member_change_delegate` -- invoked for real by all twelve, with the
+ * delegate each caller ALREADY holds, which takes the body's own documented
+ * "same target: no-op, no history row minted" branch. Nothing changes, not
+ * even for A9-A12.
+ *
+ * `request_delegacy` -- invoked for real by A1-A8, with the created
+ * `delegates` row removed immediately by teardown where the caller had none
+ * before. A9-A12 (the canonical staging admins) are the audit's single
+ * abstention and keep the "SKIP-MUTATING" sentinel; see FUNCTION_SPECS's
+ * `skipFor` in arguments.mjs for why a reversible-in-principle mutation of a
+ * seeded admin was still not worth a failed teardown.
+ *
+ * GROUP C (the four `returns trigger` functions) -- Task 4 filed these as a
+ * candidate finding on the reasoning that only PostgREST's schema-cache
+ * filtering, "an API-GATEWAY behaviour, not a database control", stands
+ * between an unrevoked PUBLIC EXECUTE grant and a caller. Task 7 settled it
+ * and the candidate finding is DISPROVED: `select public.set_updated_at()`
+ * run directly against the database as the `postgres` superuser -- no
+ * PostgREST, every privilege in hand -- fails with `trigger functions can
+ * only be called as triggers`. The call handler refuses a trigger-returning
+ * function in any non-trigger context regardless of role or grant, so the
+ * EXECUTE grant is unusable rather than merely unrouted, and the backstop is
+ * PostgreSQL's, not the gateway's. Both routes PostgREST offers (POST and GET
+ * /rpc/<name>) were re-probed for all twelve actors and answer PGRST202.
+ *
+ * The set itself is gone rather than emptied: an empty exclusion list that
+ * nothing reads is a trap for the next reader, who would reasonably assume
+ * some code still consults it. The one remaining abstention lives in
+ * arguments.mjs as `skipFor`, next to the function it applies to.
+ */
 
 /**
  * Task 6: the depth layer -- 9 row-level policies and 8 triggers.
@@ -507,27 +549,57 @@ async function probe(client, surface, ctx) {
       };
     }
     if (surface.kind === "function") {
-      if (MUTATING_ZERO_ARG_FUNCTIONS.has(surface.name)) {
+      // Task 7: real arguments from the argument table, and a disposable
+      // target minted per (function, actor) pair so all twelve attack an
+      // identical fresh row. `{}` (Task 4's call) is why 504 of these 648
+      // cells were PGRST202 -- a probe defect that reads exactly like
+      // inaccessibility.
+      const spec = FUNCTION_SPECS[surface.name];
+      if (!spec) {
         return {
-          errorCode: "SKIP-MUTATING",
+          errorCode: "SKIP",
           errorMessage:
-            `${surface.name} takes only optional/defaulted arguments and performs a live write when ` +
-            "invoked; deliberately not called with {} here to avoid mutating real actor/admin fixture " +
-            "state (see MUTATING_ZERO_ARG_FUNCTIONS in this file). Deferred to Task 7's controlled, " +
-            "real-argument pass.",
+            `no entry for ${surface.name} in scripts/security/arguments.mjs -- every one of the 54 ` +
+            "function surfaces needs one; a missing entry is a gap in the census, not a result.",
           rowCount: 0,
         };
       }
-      // NOTE: errorMessage below is PostgREST's raw `error.message`, passed
-      // through with zero transformation -- no wrap, prefix, or trim. See
-      // the self-check near the bottom of this file for why that matters
-      // and how it's proven, not just asserted in a comment.
-      const { data, error } = await client.rpc(surface.name, {});
-      return {
-        errorCode: error?.code ?? null,
-        errorMessage: error?.message ?? null,
-        rowCount: Array.isArray(data) ? data.length : data == null ? 0 : 1,
-      };
+      if (spec.skipFor?.includes(ctx.actor)) {
+        return {
+          errorCode: "SKIP-MUTATING",
+          errorMessage:
+            `${surface.name} performs a live write on the CALLER, and ${ctx.actor} is one of the four ` +
+            "canonical staging admins this audit must not mutate (see skipFor in arguments.mjs). " +
+            "Deliberately not invoked; escalated rather than guessed.",
+          rowCount: 0,
+        };
+      }
+
+      const fixture = spec.setup ? await spec.setup(ctx) : {};
+      try {
+        // NOTE: errorMessage below is PostgREST's raw `error.message`, passed
+        // through with zero transformation -- no wrap, prefix, or trim. See
+        // the self-check near the bottom of this file for why that matters
+        // and how it's proven, not just asserted in a comment.
+        const { data, error } = await client.rpc(surface.name, spec.args(fixture, ctx));
+        return {
+          errorCode: error?.code ?? null,
+          errorMessage: error?.message ?? null,
+          rowCount: Array.isArray(data) ? data.length : data == null ? 0 : 1,
+        };
+      } finally {
+        // Teardown runs whatever the probe returned -- including when it
+        // succeeded, which is exactly the case that would otherwise change an
+        // actor's standing under the next probe. Its own failure is reported
+        // but never allowed to overwrite the cell's outcome.
+        if (spec.teardown) {
+          try {
+            await spec.teardown(fixture, ctx);
+          } catch (err) {
+            console.error(`  TEARDOWN FAILED ${surface.id} / ${ctx.actor}: ${String(err)}`);
+          }
+        }
+      }
     }
     return {
       errorCode: "SKIP",
@@ -719,11 +791,13 @@ function printSummary(ledgerRows, manifest) {
     `    ${notYetProbed} not probed by this runner yet (action/endpoint/bucket -- Task 8)`,
   );
   console.log(
-    `    ${mutatingDeferred} the 2 mutating zero-arg functions x 12 actors, deliberately not invoked (Task 7)`,
+    `    ${mutatingDeferred} deliberately not invoked (request_delegacy x A9-A12, the canonical ` +
+      "staging admins -- see skipFor in arguments.mjs)",
   );
   console.log(
-    `    ${genuineInconclusive} genuinely probed (view/table/function) and inconclusive for now ` +
-      "(mostly PGRST202 argument mismatches -- expected; Task 7 supplies real arguments)",
+    `    ${genuineInconclusive} genuinely probed (view/table/function) and inconclusive: the four ` +
+      "trigger-returning functions (PGRST202 -- not routable, see the Group C note above) plus " +
+      "cells whose refusal token verdict.ts leaves deliberately unclassified",
   );
 
   console.log("\n  By kind:");
@@ -763,6 +837,21 @@ console.log(
 
 const actorIds = Object.fromEntries(ACTOR_IDS.map((id) => [id, actors[id].userId]));
 
+// Task 7, Step 2: twelve disposable victims -- one bound to each actor slot,
+// so a per-(function, actor) fresh target costs a row, not an identity, and so
+// the twelve parallel probes of a mutating function never contend.
+console.log("Provisioning the disposable fixture pool (12 victims, audit-tagged)...");
+const pool = await provisionFixturePool();
+console.log(
+  `  victims ${Object.keys(pool.victims).length}, region ${pool.geo.regionId}/city ${pool.geo.cityId}, ` +
+    `tbilisi_today ${pool.today}, active_grace_days ${pool.graceDays}`,
+);
+
+// Task 7, Step 5: the audit-log invariant is graded against what the matrix
+// actually did, so the high-water mark has to be read BEFORE it runs.
+const auditBaselineId = await auditLogHighWaterMark();
+console.log(`audit_log high-water mark before probing: #${auditBaselineId}`);
+
 console.log(
   "Actors ready. Probing the matrix (one round per surface, all 12 actors in parallel per round)...",
 );
@@ -777,7 +866,13 @@ for (const [i, surface] of manifest.entries()) {
       actor,
       expectation: defaultExpectation(surface, actor),
       ruleDerived: isRuleDerived(surface, actor),
-      outcome: await probe(clients[actor], surface, { actor, ids: actorIds, fixtures }),
+      outcome: await probe(clients[actor], surface, {
+        actor,
+        ids: actorIds,
+        fixtures,
+        actors,
+        pool,
+      }),
     })),
   );
   rawRows.push(...cells);
@@ -829,7 +924,15 @@ printSummary(ledgerRows, manifest);
 // carry -- "the statement was permitted and returned nothing, and that is
 // correct" -- lands here instead, one named row per check per actor.
 console.log("\nRunning named row-scope assertions...");
-const named = await runRowScopeAssertions({ actors, clients, actorIds, fixtures });
+const named = await runRowScopeAssertions({
+  actors,
+  clients,
+  actorIds,
+  fixtures,
+  auditBaselineId,
+  ledgerRows,
+  surfaceById,
+});
 const allRowScope = [...rowScopeRows, ...named];
 writeFileSync(ROW_SCOPE_URL, JSON.stringify(allRowScope, null, 2) + "\n");
 console.log(`Wrote ${fileURLToPath(ROW_SCOPE_URL)}`);
@@ -851,3 +954,21 @@ for (const f of failed) {
 for (const u of unproven) {
   console.warn(`  ROW-SCOPE UNPROVEN ${u.assertion}: ${u.why}`);
 }
+
+// Task 7, Step 2: every id this run minted. Task 13 uses it to tell what the
+// end-of-phase reseed removed apart from what the append-only audit_log made
+// permanent — the two are different questions and only this file distinguishes
+// them. Written last so it covers the assertion pass as well as the matrix.
+const residue = {
+  runAt: new Date().toISOString(),
+  tag: "security-audit-2026-07",
+  auditLogBaselineId: auditBaselineId,
+  note:
+    "Rows minted by scripts/security/arguments.mjs during the Pass 2b census. Entries whose " +
+    "note says 'removed by teardown' were already gone before the run ended; everything else is " +
+    "live residue for the reseed to sweep. audit_log rows written by successful probes are NOT " +
+    "listed: audit_log is append-only by trigger and they are permanent by design.",
+  minted: MINTED,
+};
+writeFileSync(RESIDUE_URL, JSON.stringify(residue, null, 2) + "\n");
+console.log(`Wrote ${fileURLToPath(RESIDUE_URL)} (${MINTED.length} minted rows)`);

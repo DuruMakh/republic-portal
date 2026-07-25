@@ -249,325 +249,1135 @@
     "id": "function:active_coverage",
     "kind": "function",
     "name": "active_coverage",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:active_grace_days",
     "kind": "function",
     "name": "active_grace_days",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:active_sweep",
     "kind": "function",
     "name": "active_sweep",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:admin_approve_delegate",
     "kind": "function",
     "name": "admin_approve_delegate",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'verifier') -> missing_role. Allow A9+A10; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh pending delegate per (function, actor), removed by teardown."
   },
   {
     "id": "function:admin_cancel_event",
     "kind": "function",
     "name": "admin_cancel_event",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh PUBLISHED event per pair."
   },
   {
     "id": "function:admin_close_poll",
     "kind": "function",
     "name": "admin_close_poll",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh OPEN poll per pair."
   },
   {
     "id": "function:admin_delete_event",
     "kind": "function",
     "name": "admin_delete_event",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh never-published draft per pair."
   },
   {
     "id": "function:admin_delete_news",
     "kind": "function",
     "name": "admin_delete_news",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh never-published draft per pair (published articles are unpublished, never deleted)."
   },
   {
     "id": "function:admin_delete_poll",
     "kind": "function",
     "name": "admin_delete_poll",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh draft poll per pair."
   },
   {
     "id": "function:admin_export_members",
     "kind": "function",
     "name": "admin_export_members",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'finance') -> missing_role. Allow A9+A11; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). This cell probes p_include_ids=FALSE. The `true` variant is a SECOND, narrower super_admin-only check raising the SAME missing_role token AFTER finance has already been admitted, so probing it here would make judge() assert a finding against a correctly-allowed A11 on the most sensitive call in the schema. It is graded for all twelve by assertion function:admin_export_members.include-ids-super-admin-only instead."
   },
   {
     "id": "function:admin_grant_role",
     "kind": "function",
     "name": "admin_grant_role",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_admin_role('super_admin') -> missing_role. Allow A9; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Single-role check, no has_any fallback. The granted role is a real admin account on staging, revoked by teardown the instant the probe returns."
   },
   {
     "id": "function:admin_open_poll",
     "kind": "function",
     "name": "admin_open_poll",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh draft poll WITH two options per pair (the body refuses fewer than two)."
   },
   {
     "id": "function:admin_publish_event",
     "kind": "function",
     "name": "admin_publish_event",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh draft per pair."
   },
   {
     "id": "function:admin_publish_news",
     "kind": "function",
     "name": "admin_publish_news",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh draft per pair."
   },
   {
     "id": "function:admin_reassign_member",
     "kind": "function",
     "name": "admin_reassign_member",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'verifier') -> missing_role. Allow A9+A10; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Verifier's, NOT finance's. Fresh victim holding one open membership at central movement per pair; destination delegate is A7."
   },
   {
     "id": "function:admin_record_payment",
     "kind": "function",
     "name": "admin_record_payment",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'finance') -> missing_role. Allow A9+A11; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh payment-free victim per pair."
   },
   {
     "id": "function:admin_record_payments_bulk",
     "kind": "function",
     "name": "admin_record_payments_bulk",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'finance') -> missing_role. Allow A9+A11; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). One-row batch against a fresh payment-free victim; the amount differs from admin_record_payment's so the in-DB duplicate backstop cannot fire."
   },
   {
     "id": "function:admin_reject_delegate",
     "kind": "function",
     "name": "admin_reject_delegate",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'verifier') -> missing_role. Allow A9+A10; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh pending delegate per pair."
   },
   {
     "id": "function:admin_reveal_applicant_personal_id",
     "kind": "function",
     "name": "admin_reveal_applicant_personal_id",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'verifier') -> missing_role. Allow A9+A10; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Target is a synthetic audit victim, never a real member -- the return value IS a personal ID."
   },
   {
     "id": "function:admin_reveal_personal_id",
     "kind": "function",
     "name": "admin_reveal_personal_id",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_admin_role('super_admin') -> missing_role. Allow A9; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). super_admin-ONLY: it does NOT share verifier's grant on admin_reveal_applicant_personal_id despite the shared name prefix, so A10 must be refused here."
   },
   {
     "id": "function:admin_revoke_role",
     "kind": "function",
     "name": "admin_revoke_role",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_admin_role('super_admin') -> missing_role. Allow A9; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Setup pre-grants 'editor' to the victim so the probe exercises the real delete path rather than the v_deleted=0 early return."
   },
   {
     "id": "function:admin_save_event",
     "kind": "function",
     "name": "admin_save_event",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role)."
   },
   {
     "id": "function:admin_save_news",
     "kind": "function",
     "name": "admin_save_news",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role)."
   },
   {
     "id": "function:admin_save_poll",
     "kind": "function",
     "name": "admin_save_poll",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role)."
   },
   {
     "id": "function:admin_set_news_image",
     "kind": "function",
     "name": "admin_set_news_image",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). The URL is pinned by regex to this platform's storage origin and the upload action's uuid-epoch filename shape."
   },
   {
     "id": "function:admin_unpublish_news",
     "kind": "function",
     "name": "admin_unpublish_news",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'editor') -> missing_role. Allow A9+A12; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh PUBLISHED row per pair."
   },
   {
     "id": "function:admin_update_delegate_profile",
     "kind": "function",
     "name": "admin_update_delegate_profile",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'verifier') -> missing_role. Allow A9+A10; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh APPROVED delegate per pair (the body refuses any other status)."
   },
   {
     "id": "function:admin_update_setting",
     "kind": "function",
     "name": "admin_update_setting",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_admin_role('super_admin') -> missing_role. Allow A9; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). The probe writes active_grace_days back to the value it already holds -- the body calls recompute_all_active(), so any other value would re-grade the entire roster's standing."
   },
   {
     "id": "function:admin_void_payment",
     "kind": "function",
     "name": "admin_void_payment",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then has_any_admin_role('super_admin', 'finance') -> missing_role. Allow A9+A11; every other actor is refused at the gate (A1 at the GRANT layer with 42501, A2-A8 and the non-matching admins with missing_role). Fresh unvoided payment per pair (a re-void would raise already_voided)."
   },
   {
     "id": "function:audit_log_immutable",
     "kind": "function",
     "name": "audit_log_immutable",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:become_member_complete",
     "kind": "function",
     "name": "become_member_complete",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated only. A4-A12 hit the early `return cabinet_state()` for an already-completed profile -- admitted, no error, no mutation. A2/A3 reach profile_incomplete, which verdict.ts leaves unclassified for the same ambiguity reason as not_completed."
   },
   {
     "id": "function:become_member_save_profile",
     "kind": "function",
     "name": "become_member_save_profile",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated only. A3 is the sole caller that can reach the write; its five funnel columns are read before the probe and restored after, so neither A3's standing nor become_member_complete's A3 cell depends on probe order. A4-A12 reach already_completed and A2 profile_incomplete -- both leave the cell at needs-live-proof, which is verdict.ts declining to grade a business-rule refusal as an access verdict."
   },
   {
     "id": "function:cabinet_state",
     "kind": "function",
     "name": "cabinet_state",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated only. A2 (no profiles row) is ADMITTED and gets {exists:false} -- an admitted caller, not a refused one, which is why its expectation is allow. A1: 42501."
   },
   {
     "id": "function:delegate_panel",
     "kind": "function",
     "name": "delegate_panel",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then a delegates row must exist -> not_a_delegate. Status is NOT checked here (unlike delegate_team), so pending A6 and rejected A8 are admitted alongside approved A7."
   },
   {
     "id": "function:delegate_team",
     "kind": "function",
     "name": "delegate_team",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "allow",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Gate: not_authenticated, then not_a_delegate, then status='approved' -> not_approved. Only A7. A6/A8 are refused at the approved check -- the point of the 20260716120000 hardening migration: pending and rejected delegates get no team PII."
   },
   {
     "id": "function:delegate_team_rsvps",
     "kind": "function",
     "name": "delegate_team_rsvps",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "allow",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Same three-step gate as delegate_team, mirrored deliberately in the body's own comment. Only A7."
   },
   {
     "id": "function:enforce_delegate_completed",
     "kind": "function",
     "name": "enforce_delegate_completed",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:gen_funnel_code",
     "kind": "function",
     "name": "gen_funnel_code",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Plain helper (security invoker). Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:has_admin_role",
     "kind": "function",
     "name": "has_admin_role",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "No gate in the body at all -- a bare `select exists(... where user_id = auth.uid() and role = p_role)`. Every authenticated caller may ask, and only ever about ITSELF. A1 holds no grant (42501). Consulted by 26 of the 48 gatekeepers, so its ANSWERS are graded separately against admin_roles ground truth: assertion function:has_admin_role.answers-truthfully."
   },
   {
     "id": "function:has_any_admin_role",
     "kind": "function",
     "name": "has_any_admin_role",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Same shape as has_admin_role, VARIADIC text[]; PostgREST accepts {p_roles: [...]}. Answers graded by assertion, not just reachability."
   },
   {
     "id": "function:is_completed_member",
     "kind": "function",
     "name": "is_completed_member",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Bare `select exists(... id = auth.uid() and registration_completed_at is not null)`; no gate, self-scoped. A1: 42501. Answers graded by assertion."
   },
   {
     "id": "function:is_registered",
     "kind": "function",
     "name": "is_registered",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Bare `select exists(... id = auth.uid())`; no gate, self-scoped. A1: 42501. Answers graded by assertion."
   },
   {
     "id": "function:member_cast_vote",
     "kind": "function",
     "name": "member_cast_vote",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then registration_completed_at not null -> not_completed (stricter than member_rsvp's is_registered, so A3 is deny here -- the two member RPCs really do differ). Fresh open poll and options per (function, actor), which is what makes every actor's vote a FIRST vote instead of handing the twelfth already_voted."
   },
   {
     "id": "function:member_change_delegate",
     "kind": "function",
     "name": "member_change_delegate",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "deny",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then not_completed, then APPROVED delegates are refused with not_a_member (spec 3.1: approved delegates hold no membership) -- so A7 is deny while pending A6 and rejected A8 are allow. The probe passes the delegate each caller already holds, taking the body's documented 'same target: no-op, no history row minted' branch, which is what makes A9-A12 safe to probe for real."
   },
   {
     "id": "function:member_change_tier",
     "kind": "function",
     "name": "member_change_tier",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then completed-or-active -> not_completed. A2/A3 are refused there. `not_completed` is deliberately unclassified in verdict.ts (it means a caller-standing gate here but a TARGET-state validation in admin_record_payment), so those two cells stay needs-live-proof by design, not by defect. The probe passes each caller's CURRENT tier, so an admitted call changes nothing."
   },
   {
     "id": "function:member_rsvp",
     "kind": "function",
     "name": "member_rsvp",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then is_registered() -> not_completed. Note is_REGISTERED, not completed: A3 is admitted here even though member_cast_vote refuses it. Only A2 (no profiles row) is denied. Fresh published future event per (function, actor)."
   },
   {
     "id": "function:protect_profile_columns",
     "kind": "function",
     "name": "protect_profile_columns",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:recompute_all_active",
     "kind": "function",
     "name": "recompute_all_active",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:recompute_member_active",
     "kind": "function",
     "name": "recompute_member_active",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:register",
     "kind": "function",
     "name": "register",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated only -- every authenticated caller is admitted. For A3-A12 the body returns cabinet_state()||{created:false} on sight of an existing profiles row (pure read, no mutation). For A2 it really creates the profile, so teardown removes it again: leaving it would silently promote A2 out of its declared 'signed in, no profile' standing and corrupt every later A2 cell."
   },
   {
     "id": "function:request_delegacy",
     "kind": "function",
     "name": "request_delegacy",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Gate: not_authenticated, then registration_completed_at not null -> not_a_member. A2/A3 are refused there (deny, and the refusal token clears them). A4/A5 create a real delegates row, removed by teardown. A6/A7/A8 already hold one and hit delegacy_exists -- a post-gate business refusal, so those cells cannot clear (verdict.ts routes allow+post-gate to needs-live-proof); the gate itself is proven by A2/A3. A9-A12 are NOT invoked: the call writes on the CALLER and they are the canonical staging admins."
   },
   {
     "id": "function:send_sms_hook",
     "kind": "function",
     "name": "send_sms_hook",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Granted to supabase_auth_admin only among non-superuser roles. Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501."
   },
   {
     "id": "function:set_updated_at",
     "kind": "function",
     "name": "set_updated_at",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Returns trigger. Live proacl still carries the default EXECUTE-to-PUBLIC grant (=X/postgres), so on paper anon may call it -- but PostgREST excludes trigger-returning functions from its schema cache (PGRST202 on both POST and GET /rpc), and the PL/pgSQL call handler refuses one in any non-trigger context regardless of role: `select public.set_updated_at()` run as the postgres superuser fails with 'trigger functions can only be called as triggers'. Deny x12. The cell itself cannot resolve past needs-live-proof because PGRST202 is never proof of a privilege decision (verdict.ts); the question is settled by name instead -- assertion function:<name>.no-rpc-route."
   },
   {
     "id": "function:tbilisi_today",
     "kind": "function",
     "name": "tbilisi_today",
-    "layer": "db"
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Plain helper (security invoker). Live proacl carries no anon and no authenticated entry, so Postgres refuses all twelve at the GRANT layer before the body runs; deny x12, expect 42501. Confirmed rather than assumed: all twelve, including the four admins."
   },
   {
     "id": "policy:cities readable by all",

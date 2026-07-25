@@ -1,0 +1,2920 @@
+{
+  "runAt": "2026-07-25T19:56:17.712Z",
+  "tag": "security-audit-2026-07",
+  "auditLogBaselineId": 1601,
+  "note": "Rows minted by scripts/security/arguments.mjs during the Pass 2b census. Entries whose note says 'removed by teardown' were already gone before the run ended; everything else is live residue for the reseed to sweep. audit_log rows written by successful probes are NOT listed: audit_log is append-only by trigger and they are permanent by design.",
+  "minted": [
+    {
+      "kind": "profiles",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "pool",
+      "actor": "A1",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:27.134Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "pool",
+      "actor": "A2",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:27.609Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "pool",
+      "actor": "A3",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:28.117Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "pool",
+      "actor": "A4",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:28.585Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "pool",
+      "actor": "A5",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:29.044Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "pool",
+      "actor": "A6",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:29.515Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "pool",
+      "actor": "A7",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:29.973Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "pool",
+      "actor": "A8",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:30.442Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "pool",
+      "actor": "A9",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:30.964Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "pool",
+      "actor": "A10",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:31.459Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "pool",
+      "actor": "A11",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:31.943Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "pool",
+      "actor": "A12",
+      "note": "disposable victim profile",
+      "at": "2026-07-25T19:55:32.390Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A1",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.472Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A7",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.516Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A8",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.517Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A11",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.519Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A4",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.532Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A9",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.533Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A2",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.535Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A10",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.544Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A3",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.546Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A6",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.547Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A5",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.548Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_approve_delegate",
+      "actor": "A12",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:33.551Z"
+    },
+    {
+      "kind": "events",
+      "id": "6aab7520-7c67-4613-aab3-97d14a158ceb",
+      "surface": "function:admin_cancel_event",
+      "actor": "A3",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.936Z"
+    },
+    {
+      "kind": "events",
+      "id": "80c80053-bfab-4490-999b-dadbb9737467",
+      "surface": "function:admin_cancel_event",
+      "actor": "A1",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.943Z"
+    },
+    {
+      "kind": "events",
+      "id": "91e59eaf-3d1c-419b-9daf-6ac403dbbbc9",
+      "surface": "function:admin_cancel_event",
+      "actor": "A4",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.945Z"
+    },
+    {
+      "kind": "events",
+      "id": "91915b98-d526-4b5f-ada3-555e2986e6e7",
+      "surface": "function:admin_cancel_event",
+      "actor": "A5",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.947Z"
+    },
+    {
+      "kind": "events",
+      "id": "752167cf-057b-47d0-b310-0e27acb38716",
+      "surface": "function:admin_cancel_event",
+      "actor": "A8",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.949Z"
+    },
+    {
+      "kind": "events",
+      "id": "dd565083-284f-48a2-883a-1f82a354421b",
+      "surface": "function:admin_cancel_event",
+      "actor": "A7",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.950Z"
+    },
+    {
+      "kind": "events",
+      "id": "5917ac53-562e-4daf-89da-836566b2cc9c",
+      "surface": "function:admin_cancel_event",
+      "actor": "A2",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.951Z"
+    },
+    {
+      "kind": "events",
+      "id": "6b45c21a-222b-4bf6-8451-2d26bd96b805",
+      "surface": "function:admin_cancel_event",
+      "actor": "A6",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.960Z"
+    },
+    {
+      "kind": "events",
+      "id": "a872d39a-7252-4c66-9807-5e56d025e966",
+      "surface": "function:admin_cancel_event",
+      "actor": "A9",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.962Z"
+    },
+    {
+      "kind": "events",
+      "id": "7799533b-b94f-4d1e-b7c3-01e3fa25d258",
+      "surface": "function:admin_cancel_event",
+      "actor": "A11",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.964Z"
+    },
+    {
+      "kind": "events",
+      "id": "e56eee76-ec60-4c88-9b43-4872eda77a12",
+      "surface": "function:admin_cancel_event",
+      "actor": "A12",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.966Z"
+    },
+    {
+      "kind": "events",
+      "id": "5a18f829-b177-46ba-86cf-dad3741f4718",
+      "surface": "function:admin_cancel_event",
+      "actor": "A10",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:33.967Z"
+    },
+    {
+      "kind": "polls",
+      "id": "c93bf9f2-4d8f-40a2-8117-5e9a8310ee79",
+      "surface": "function:admin_close_poll",
+      "actor": "A2",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.287Z"
+    },
+    {
+      "kind": "polls",
+      "id": "46f65096-5d8a-4333-b351-2b16d9bb1083",
+      "surface": "function:admin_close_poll",
+      "actor": "A1",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.291Z"
+    },
+    {
+      "kind": "polls",
+      "id": "8b481a31-83ce-4083-a5b3-394d33da6691",
+      "surface": "function:admin_close_poll",
+      "actor": "A5",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.302Z"
+    },
+    {
+      "kind": "polls",
+      "id": "8964b318-ca23-45df-b33b-fde0fb353a3e",
+      "surface": "function:admin_close_poll",
+      "actor": "A3",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.305Z"
+    },
+    {
+      "kind": "polls",
+      "id": "95f983da-9836-47ef-b19d-bff6a5cf86c4",
+      "surface": "function:admin_close_poll",
+      "actor": "A10",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.306Z"
+    },
+    {
+      "kind": "polls",
+      "id": "d603df10-2485-4fc3-a6ec-883924fa2460",
+      "surface": "function:admin_close_poll",
+      "actor": "A7",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.308Z"
+    },
+    {
+      "kind": "polls",
+      "id": "bab2d3e1-bb34-4746-9781-70852065b65d",
+      "surface": "function:admin_close_poll",
+      "actor": "A9",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.313Z"
+    },
+    {
+      "kind": "polls",
+      "id": "73bfff85-518d-4086-89fa-81880ed10090",
+      "surface": "function:admin_close_poll",
+      "actor": "A4",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.320Z"
+    },
+    {
+      "kind": "polls",
+      "id": "bcac5ef0-91c0-4460-9e0b-8d1b9c1e9871",
+      "surface": "function:admin_close_poll",
+      "actor": "A6",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.323Z"
+    },
+    {
+      "kind": "polls",
+      "id": "be27372a-5476-491c-ac53-25abf4d16ce7",
+      "surface": "function:admin_close_poll",
+      "actor": "A11",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.329Z"
+    },
+    {
+      "kind": "polls",
+      "id": "58bb838b-b403-41ee-8783-651bb6ee61a6",
+      "surface": "function:admin_close_poll",
+      "actor": "A8",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.335Z"
+    },
+    {
+      "kind": "polls",
+      "id": "ada74039-4fd2-40ac-bde8-8598b3c53ac0",
+      "surface": "function:admin_close_poll",
+      "actor": "A12",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:34.337Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6473e6c2-3d35-4a90-9d7c-e792fd389bd8",
+      "surface": "function:admin_close_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.398Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "a562f93a-0e27-40b3-a542-d709e91b171f",
+      "surface": "function:admin_close_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.398Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "c85b9d4f-6bb1-4470-a392-c156e19f620a",
+      "surface": "function:admin_close_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.417Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "5895e885-45b6-4711-9199-aa0fb2a06f21",
+      "surface": "function:admin_close_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.417Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "47cdbfaa-5fe3-4c56-a890-2f20408b08ff",
+      "surface": "function:admin_close_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.422Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "53dc4d6d-c95f-4f39-b5a8-379374f8a04e",
+      "surface": "function:admin_close_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.422Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9717b831-1a73-40b8-9fbe-f5af4f3a4b27",
+      "surface": "function:admin_close_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.426Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "7609482d-0c8a-4830-b918-f506fdc3ceec",
+      "surface": "function:admin_close_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.426Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "16a547a8-aeee-4a1e-a30b-c1d3d393b869",
+      "surface": "function:admin_close_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.435Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6fabc893-60c2-4e9d-bfd8-3c881efc0d27",
+      "surface": "function:admin_close_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.435Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6e46b66c-6822-4473-abff-09bfaa538ec2",
+      "surface": "function:admin_close_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.437Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9f516e8b-6c21-43e1-9635-5e89d3494570",
+      "surface": "function:admin_close_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.437Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "d4eada70-6b1e-4070-b672-812314772099",
+      "surface": "function:admin_close_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.439Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "0bc07684-bdc1-4760-b87d-d25d1675c1bc",
+      "surface": "function:admin_close_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.439Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "505ab397-5ce3-402c-8d39-593a7658149c",
+      "surface": "function:admin_close_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.443Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6913b3f2-a8d8-4ffa-959b-6bae654b0022",
+      "surface": "function:admin_close_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.443Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "3a6591f2-db58-4843-b053-78b3f1c4d3b4",
+      "surface": "function:admin_close_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.451Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "45865a04-f58a-4687-96a0-1f5a0adb2b8e",
+      "surface": "function:admin_close_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.451Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "67dc274a-958b-4419-a91f-51527b4493e1",
+      "surface": "function:admin_close_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.547Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "06d2973f-7d1f-4c06-a26d-fba7133b60c4",
+      "surface": "function:admin_close_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.547Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ed1552fa-5c7d-43b3-bc38-4dcb290c07bf",
+      "surface": "function:admin_close_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.549Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6fb7a053-d21f-4034-a88c-a1cedfc9ee5d",
+      "surface": "function:admin_close_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.549Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "f142b5cb-b72f-4ff2-8bb9-87d617e3ab6c",
+      "surface": "function:admin_close_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.551Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "0f1f9511-94e7-4bf3-8be6-06826c77211d",
+      "surface": "function:admin_close_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:34.551Z"
+    },
+    {
+      "kind": "events",
+      "id": "44f30c52-a93e-4742-8d12-35faff1e98c1",
+      "surface": "function:admin_delete_event",
+      "actor": "A1",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.791Z"
+    },
+    {
+      "kind": "events",
+      "id": "48ff0fcd-2d44-4d23-bc84-bd1009b0326a",
+      "surface": "function:admin_delete_event",
+      "actor": "A3",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.809Z"
+    },
+    {
+      "kind": "events",
+      "id": "fe96d225-29d7-40ff-895b-94d1e29cd945",
+      "surface": "function:admin_delete_event",
+      "actor": "A2",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.811Z"
+    },
+    {
+      "kind": "events",
+      "id": "4a0f7af3-08ed-4ec5-b656-b8d59708c2be",
+      "surface": "function:admin_delete_event",
+      "actor": "A4",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.814Z"
+    },
+    {
+      "kind": "events",
+      "id": "256b2ce2-9da6-4cb0-96f1-ec519bda6bd0",
+      "surface": "function:admin_delete_event",
+      "actor": "A5",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.821Z"
+    },
+    {
+      "kind": "events",
+      "id": "5795cf33-29c8-4fe5-a767-1f4f1cd085a9",
+      "surface": "function:admin_delete_event",
+      "actor": "A6",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.825Z"
+    },
+    {
+      "kind": "events",
+      "id": "d546be24-3064-4ac4-a0a2-01a2ee4435ce",
+      "surface": "function:admin_delete_event",
+      "actor": "A8",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.827Z"
+    },
+    {
+      "kind": "events",
+      "id": "d4201493-5d3a-4e8c-b59d-6647c0a09f44",
+      "surface": "function:admin_delete_event",
+      "actor": "A7",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.829Z"
+    },
+    {
+      "kind": "events",
+      "id": "dce7828f-0280-4a62-a3a5-35c55a49927f",
+      "surface": "function:admin_delete_event",
+      "actor": "A11",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.831Z"
+    },
+    {
+      "kind": "events",
+      "id": "84ebb954-ec95-4757-a12f-0fe7f1e3741c",
+      "surface": "function:admin_delete_event",
+      "actor": "A10",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.837Z"
+    },
+    {
+      "kind": "events",
+      "id": "496f7aee-3767-4013-9da5-f9e74f35ca67",
+      "surface": "function:admin_delete_event",
+      "actor": "A9",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.839Z"
+    },
+    {
+      "kind": "events",
+      "id": "85369ee5-4e20-431b-ad3a-3d5f169f7d3b",
+      "surface": "function:admin_delete_event",
+      "actor": "A12",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:34.844Z"
+    },
+    {
+      "kind": "news",
+      "id": "676362f2-c01e-4eec-9c48-19a7703e5058",
+      "surface": "function:admin_delete_news",
+      "actor": "A3",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.123Z"
+    },
+    {
+      "kind": "news",
+      "id": "0a129347-943e-4b26-b5b3-712c002bab94",
+      "surface": "function:admin_delete_news",
+      "actor": "A5",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.125Z"
+    },
+    {
+      "kind": "news",
+      "id": "422a76c3-c16b-438d-89a3-45474f90f976",
+      "surface": "function:admin_delete_news",
+      "actor": "A1",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.126Z"
+    },
+    {
+      "kind": "news",
+      "id": "3a38dca3-9d48-4eac-8d32-f729a7a69543",
+      "surface": "function:admin_delete_news",
+      "actor": "A2",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.131Z"
+    },
+    {
+      "kind": "news",
+      "id": "437805fb-3204-46d1-8f53-e15143982e85",
+      "surface": "function:admin_delete_news",
+      "actor": "A8",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.142Z"
+    },
+    {
+      "kind": "news",
+      "id": "30387a02-d153-4367-b5d1-48842d1e3fd6",
+      "surface": "function:admin_delete_news",
+      "actor": "A11",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.144Z"
+    },
+    {
+      "kind": "news",
+      "id": "559a031f-ca64-468d-9eb2-679f1a982dc9",
+      "surface": "function:admin_delete_news",
+      "actor": "A4",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.146Z"
+    },
+    {
+      "kind": "news",
+      "id": "21261a14-134c-426a-ba0b-d8555f8a3eea",
+      "surface": "function:admin_delete_news",
+      "actor": "A9",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.147Z"
+    },
+    {
+      "kind": "news",
+      "id": "2b9f331c-c1d4-4987-91e2-016613f2b64f",
+      "surface": "function:admin_delete_news",
+      "actor": "A7",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.149Z"
+    },
+    {
+      "kind": "news",
+      "id": "418d5332-a20e-42d1-a4da-31d933c6e67a",
+      "surface": "function:admin_delete_news",
+      "actor": "A10",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.161Z"
+    },
+    {
+      "kind": "news",
+      "id": "4bcb99e3-84e3-4455-91b0-3ee5d8697df3",
+      "surface": "function:admin_delete_news",
+      "actor": "A12",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.163Z"
+    },
+    {
+      "kind": "news",
+      "id": "87495247-e699-4dc8-b6bb-c6dbf4d26bf8",
+      "surface": "function:admin_delete_news",
+      "actor": "A6",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:35.164Z"
+    },
+    {
+      "kind": "polls",
+      "id": "ea410b75-f746-43ef-a419-904fe0e38e66",
+      "surface": "function:admin_delete_poll",
+      "actor": "A2",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.414Z"
+    },
+    {
+      "kind": "polls",
+      "id": "c361c667-4f46-47cb-b2af-2e1e2a080115",
+      "surface": "function:admin_delete_poll",
+      "actor": "A3",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.417Z"
+    },
+    {
+      "kind": "polls",
+      "id": "bdf0b06c-7795-4e02-bb29-cc765d9923f3",
+      "surface": "function:admin_delete_poll",
+      "actor": "A5",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.418Z"
+    },
+    {
+      "kind": "polls",
+      "id": "d55058b2-9379-422d-883b-a74f66318e3d",
+      "surface": "function:admin_delete_poll",
+      "actor": "A1",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.419Z"
+    },
+    {
+      "kind": "polls",
+      "id": "d9b52a22-5b00-4e5a-b978-54877fd376b1",
+      "surface": "function:admin_delete_poll",
+      "actor": "A4",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.427Z"
+    },
+    {
+      "kind": "polls",
+      "id": "3d69b0bd-aefe-418b-81d3-7690a47a059a",
+      "surface": "function:admin_delete_poll",
+      "actor": "A9",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.444Z"
+    },
+    {
+      "kind": "polls",
+      "id": "b9a6601e-823a-4a50-8de5-1a79c5a48ac8",
+      "surface": "function:admin_delete_poll",
+      "actor": "A10",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.450Z"
+    },
+    {
+      "kind": "polls",
+      "id": "e78c06bb-b8bd-42be-b8d0-37f5bd90a800",
+      "surface": "function:admin_delete_poll",
+      "actor": "A8",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.457Z"
+    },
+    {
+      "kind": "polls",
+      "id": "c2f1d587-8a90-4fb9-8a9b-075e43dff5f6",
+      "surface": "function:admin_delete_poll",
+      "actor": "A7",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.458Z"
+    },
+    {
+      "kind": "polls",
+      "id": "4bdfc828-c771-439c-be73-79206701d2cf",
+      "surface": "function:admin_delete_poll",
+      "actor": "A11",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.460Z"
+    },
+    {
+      "kind": "polls",
+      "id": "18b0f9f3-010e-4fa8-8f8b-43d061998467",
+      "surface": "function:admin_delete_poll",
+      "actor": "A12",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.464Z"
+    },
+    {
+      "kind": "polls",
+      "id": "c6b3035f-1fb5-43cb-9653-7215fd12f5ca",
+      "surface": "function:admin_delete_poll",
+      "actor": "A6",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:35.466Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "2b166556-b034-4459-be70-e05514287720",
+      "surface": "function:admin_delete_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.532Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "c20a27c1-f271-4c3a-8e47-fc2016e5027f",
+      "surface": "function:admin_delete_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.532Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "27c7c320-733a-4cc2-8880-964fba52e3c4",
+      "surface": "function:admin_delete_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.541Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "7e27cb04-7db9-4c04-9540-5238840da448",
+      "surface": "function:admin_delete_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.541Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "c6a2284b-0982-4e7d-b56a-e28db5c59411",
+      "surface": "function:admin_delete_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.542Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "3209f334-6449-48a2-8d3f-a7ac4a51799e",
+      "surface": "function:admin_delete_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.542Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "82026b16-7414-4e63-a32a-ae6dcd3b5e27",
+      "surface": "function:admin_delete_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.581Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9952363f-f919-49e7-a996-6e5d0568eb83",
+      "surface": "function:admin_delete_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.581Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "42d3bab5-f934-40b3-a7f7-661fb0f17d60",
+      "surface": "function:admin_delete_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.582Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "0ba193af-c311-4c0f-abfd-6594a73de69d",
+      "surface": "function:admin_delete_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.582Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "23130047-da21-44be-9a48-2d046d655525",
+      "surface": "function:admin_delete_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.587Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "25f1c94e-3077-4e23-b65f-15918c18aae4",
+      "surface": "function:admin_delete_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.587Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "68fc5a16-0afd-4da3-b15f-6aa901ed4ef3",
+      "surface": "function:admin_delete_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.590Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "00aef23c-25f5-43bb-9472-62e75df262e5",
+      "surface": "function:admin_delete_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.590Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "d6bf5d3d-9300-4eb0-89ba-483c5a0a76bf",
+      "surface": "function:admin_delete_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.605Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "109d55fe-b1ad-4d00-93ac-5a52873da94b",
+      "surface": "function:admin_delete_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.605Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "5580bf2c-3464-41e1-b1b0-d6fe87fec13d",
+      "surface": "function:admin_delete_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.689Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "0db14819-ebf1-408e-9e0a-442bd896cfdc",
+      "surface": "function:admin_delete_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.689Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "307b5844-1c1e-4f9d-aee3-de2df9fefc64",
+      "surface": "function:admin_delete_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.691Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ea280e08-bddc-44b2-9e9a-0bb739e7fdb3",
+      "surface": "function:admin_delete_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.691Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "42007cec-cf08-4449-b003-d3d7258c0cca",
+      "surface": "function:admin_delete_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.693Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ff7e9dbf-ce23-42af-8f43-86e4eb672d14",
+      "surface": "function:admin_delete_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.693Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "d1339656-41c1-49a5-ae1f-38e63c445119",
+      "surface": "function:admin_delete_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.699Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ea39a05c-5c5d-4290-8022-e0c3c1fb9961",
+      "surface": "function:admin_delete_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:35.699Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_grant_role",
+      "actor": "A1",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.246Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_grant_role",
+      "actor": "A2",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.255Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_grant_role",
+      "actor": "A5",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.265Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_grant_role",
+      "actor": "A11",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.289Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_grant_role",
+      "actor": "A12",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.293Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_grant_role",
+      "actor": "A6",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.296Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_grant_role",
+      "actor": "A8",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.298Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_grant_role",
+      "actor": "A3",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.300Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_grant_role",
+      "actor": "A9",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.302Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_grant_role",
+      "actor": "A4",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.307Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_grant_role",
+      "actor": "A10",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.315Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_grant_role",
+      "actor": "A7",
+      "note": "revoked by teardown",
+      "at": "2026-07-25T19:55:36.321Z"
+    },
+    {
+      "kind": "polls",
+      "id": "d905492d-223e-4d13-bc43-a5a119489af1",
+      "surface": "function:admin_open_poll",
+      "actor": "A1",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.553Z"
+    },
+    {
+      "kind": "polls",
+      "id": "a15b11ef-1e6f-4eb6-bcf1-54084978cf24",
+      "surface": "function:admin_open_poll",
+      "actor": "A2",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.577Z"
+    },
+    {
+      "kind": "polls",
+      "id": "72d63cd5-0f00-4bac-b22d-b5fe9466cf1e",
+      "surface": "function:admin_open_poll",
+      "actor": "A3",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.579Z"
+    },
+    {
+      "kind": "polls",
+      "id": "910e873a-241e-454a-bfbb-c70dc77a1ae1",
+      "surface": "function:admin_open_poll",
+      "actor": "A6",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.587Z"
+    },
+    {
+      "kind": "polls",
+      "id": "1b0a0ee8-3da3-4a3f-ad44-90e45f729899",
+      "surface": "function:admin_open_poll",
+      "actor": "A7",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.588Z"
+    },
+    {
+      "kind": "polls",
+      "id": "3d778ae2-6123-493a-8eaf-09bcafde3996",
+      "surface": "function:admin_open_poll",
+      "actor": "A8",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.590Z"
+    },
+    {
+      "kind": "polls",
+      "id": "1c0d0180-a2e2-4e92-9b48-2f14a4cd4e38",
+      "surface": "function:admin_open_poll",
+      "actor": "A4",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.593Z"
+    },
+    {
+      "kind": "polls",
+      "id": "a80d921a-4be0-413e-b67c-dc690ba23d17",
+      "surface": "function:admin_open_poll",
+      "actor": "A9",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.597Z"
+    },
+    {
+      "kind": "polls",
+      "id": "3b52ae55-991f-4bfb-aff0-d4498893cab7",
+      "surface": "function:admin_open_poll",
+      "actor": "A5",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.599Z"
+    },
+    {
+      "kind": "polls",
+      "id": "604b4391-cdc4-4c4e-ac26-6d2595a7faf4",
+      "surface": "function:admin_open_poll",
+      "actor": "A10",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.601Z"
+    },
+    {
+      "kind": "polls",
+      "id": "b16e9f44-13bb-4e78-8f14-f83b9493f6c4",
+      "surface": "function:admin_open_poll",
+      "actor": "A11",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.604Z"
+    },
+    {
+      "kind": "polls",
+      "id": "185915a4-a7fe-45e3-969e-96ecfb1e46e4",
+      "surface": "function:admin_open_poll",
+      "actor": "A12",
+      "note": "poll status=draft",
+      "at": "2026-07-25T19:55:36.608Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "56774ae6-4f62-443c-b24d-d705585e74a9",
+      "surface": "function:admin_open_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.672Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "3fe03e14-5585-4f55-9add-6c4b9f60ca0e",
+      "surface": "function:admin_open_poll",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.672Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "5e9592e4-eb48-4082-bd1e-6562e19c8a58",
+      "surface": "function:admin_open_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.697Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "31490830-a8ee-4fa2-9b39-f42e64d14a20",
+      "surface": "function:admin_open_poll",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.697Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "639051dd-07fd-49ae-9f37-c5e4dea42993",
+      "surface": "function:admin_open_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.702Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "572ee2f1-fea6-4bef-bba0-a40390e9d1a6",
+      "surface": "function:admin_open_poll",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.702Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ed6e195c-e876-48cd-b8c3-365079b730c5",
+      "surface": "function:admin_open_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.732Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "1734e9ee-89e1-4b36-837c-b8a21d177b36",
+      "surface": "function:admin_open_poll",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.732Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6ce31cc1-3b12-4147-968d-a37e1f30e54b",
+      "surface": "function:admin_open_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.734Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "692e8c51-7a37-4266-bc3f-3fb288364a56",
+      "surface": "function:admin_open_poll",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.734Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "09817767-d5fd-423b-9505-6a7e54b26f01",
+      "surface": "function:admin_open_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.737Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "12ae207f-6920-4fb4-90a1-97b53f4bdbad",
+      "surface": "function:admin_open_poll",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.737Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "1799d732-e970-4214-8271-59b57b273b57",
+      "surface": "function:admin_open_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.739Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "3152ab6e-6d0b-469e-84e5-a612cad9b2b8",
+      "surface": "function:admin_open_poll",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.739Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "d128dc13-c3cf-4fbf-84a0-081af8d1d1e8",
+      "surface": "function:admin_open_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.740Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "bd29ee6b-5409-4ea5-96f8-7309874ce242",
+      "surface": "function:admin_open_poll",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.740Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "a20a03c0-3dc9-4766-938f-aa4237285833",
+      "surface": "function:admin_open_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.743Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "e2a2245a-9ed9-4892-b52d-0f3118782646",
+      "surface": "function:admin_open_poll",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.743Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9b660888-864a-4f4c-a90c-717d5524b726",
+      "surface": "function:admin_open_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.746Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6c74f0e3-808b-4b53-bebd-c2decd1e6821",
+      "surface": "function:admin_open_poll",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.746Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "f464ac49-e6c4-48b5-a02b-b4bee528419d",
+      "surface": "function:admin_open_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.748Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "add7ee22-9e04-418f-9ae9-56a7e949848e",
+      "surface": "function:admin_open_poll",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.748Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "09ee54d5-3d0e-407d-a0ab-b932175a2fa3",
+      "surface": "function:admin_open_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.750Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "13aff60b-2aee-47fc-91a1-64f01446897e",
+      "surface": "function:admin_open_poll",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:36.750Z"
+    },
+    {
+      "kind": "events",
+      "id": "67f9f343-6d08-4157-a121-9507dee07fcb",
+      "surface": "function:admin_publish_event",
+      "actor": "A2",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:36.989Z"
+    },
+    {
+      "kind": "events",
+      "id": "f8b904c6-fd0b-4c0d-8638-f9d84464c514",
+      "surface": "function:admin_publish_event",
+      "actor": "A1",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:36.991Z"
+    },
+    {
+      "kind": "events",
+      "id": "dc2d88fb-c606-46a2-9478-053129ae621b",
+      "surface": "function:admin_publish_event",
+      "actor": "A3",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:36.994Z"
+    },
+    {
+      "kind": "events",
+      "id": "859597ca-87b7-4858-bd24-f33d359e8b3e",
+      "surface": "function:admin_publish_event",
+      "actor": "A4",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.009Z"
+    },
+    {
+      "kind": "events",
+      "id": "073befee-414e-47ce-a475-b861863719f4",
+      "surface": "function:admin_publish_event",
+      "actor": "A5",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.011Z"
+    },
+    {
+      "kind": "events",
+      "id": "0a1f34fa-8da7-4037-ba32-68983c88bf29",
+      "surface": "function:admin_publish_event",
+      "actor": "A7",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.016Z"
+    },
+    {
+      "kind": "events",
+      "id": "4f8389d0-abe4-4e7d-9b4a-dd8a80b4db59",
+      "surface": "function:admin_publish_event",
+      "actor": "A6",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.017Z"
+    },
+    {
+      "kind": "events",
+      "id": "da81920d-780d-47d6-a7b6-bc39f30287e0",
+      "surface": "function:admin_publish_event",
+      "actor": "A8",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.018Z"
+    },
+    {
+      "kind": "events",
+      "id": "50a6c06c-a5f4-483a-8811-9edb77d8ba7b",
+      "surface": "function:admin_publish_event",
+      "actor": "A10",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.044Z"
+    },
+    {
+      "kind": "events",
+      "id": "38ac85e9-791a-41cc-8f9a-fb76ebd643d3",
+      "surface": "function:admin_publish_event",
+      "actor": "A11",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.054Z"
+    },
+    {
+      "kind": "events",
+      "id": "4b8dea6d-483e-403a-9ab5-b11a22b7c53f",
+      "surface": "function:admin_publish_event",
+      "actor": "A9",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.056Z"
+    },
+    {
+      "kind": "events",
+      "id": "50993c7d-dfb6-4ead-9a40-e679ab00fde9",
+      "surface": "function:admin_publish_event",
+      "actor": "A12",
+      "note": "event status=draft",
+      "at": "2026-07-25T19:55:37.058Z"
+    },
+    {
+      "kind": "news",
+      "id": "9dc7cc15-7553-43e9-a61c-675b37d823b2",
+      "surface": "function:admin_publish_news",
+      "actor": "A5",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.332Z"
+    },
+    {
+      "kind": "news",
+      "id": "035cf80e-b0f1-4dfc-bdc2-2a3530c9dbd4",
+      "surface": "function:admin_publish_news",
+      "actor": "A3",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.334Z"
+    },
+    {
+      "kind": "news",
+      "id": "5b3a598a-4b33-41f4-8296-9b5a464477a8",
+      "surface": "function:admin_publish_news",
+      "actor": "A1",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.335Z"
+    },
+    {
+      "kind": "news",
+      "id": "0b7e7e6c-8a91-438c-adce-46f9b5837f08",
+      "surface": "function:admin_publish_news",
+      "actor": "A7",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.336Z"
+    },
+    {
+      "kind": "news",
+      "id": "ff2acaa9-f76d-4178-9c12-15031ab2ea95",
+      "surface": "function:admin_publish_news",
+      "actor": "A2",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.339Z"
+    },
+    {
+      "kind": "news",
+      "id": "f034bcf6-b4ce-4e11-b5db-1c045d2b86d8",
+      "surface": "function:admin_publish_news",
+      "actor": "A8",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.340Z"
+    },
+    {
+      "kind": "news",
+      "id": "33e2e6cf-064a-4401-85db-b2f396c778d3",
+      "surface": "function:admin_publish_news",
+      "actor": "A11",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.345Z"
+    },
+    {
+      "kind": "news",
+      "id": "9c72a770-d7f7-4af7-b99b-454e28ffa80a",
+      "surface": "function:admin_publish_news",
+      "actor": "A10",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.346Z"
+    },
+    {
+      "kind": "news",
+      "id": "b4cbc379-774d-4bce-a6b8-ff850a01fd47",
+      "surface": "function:admin_publish_news",
+      "actor": "A6",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.347Z"
+    },
+    {
+      "kind": "news",
+      "id": "9d5d0c68-7af5-48fe-a000-74a71295d6a0",
+      "surface": "function:admin_publish_news",
+      "actor": "A12",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.349Z"
+    },
+    {
+      "kind": "news",
+      "id": "632ed953-d1db-4466-b338-e3bb423ef266",
+      "surface": "function:admin_publish_news",
+      "actor": "A4",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.350Z"
+    },
+    {
+      "kind": "news",
+      "id": "e965df3d-e987-431f-847a-97e0030de94e",
+      "surface": "function:admin_publish_news",
+      "actor": "A9",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:37.353Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19816",
+      "surface": "function:admin_reassign_member",
+      "actor": "A11",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.889Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19817",
+      "surface": "function:admin_reassign_member",
+      "actor": "A3",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.893Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19818",
+      "surface": "function:admin_reassign_member",
+      "actor": "A2",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.898Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19821",
+      "surface": "function:admin_reassign_member",
+      "actor": "A6",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.916Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19819",
+      "surface": "function:admin_reassign_member",
+      "actor": "A8",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.917Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19822",
+      "surface": "function:admin_reassign_member",
+      "actor": "A7",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.920Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19820",
+      "surface": "function:admin_reassign_member",
+      "actor": "A12",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.921Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19824",
+      "surface": "function:admin_reassign_member",
+      "actor": "A1",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.922Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19823",
+      "surface": "function:admin_reassign_member",
+      "actor": "A4",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.923Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19825",
+      "surface": "function:admin_reassign_member",
+      "actor": "A5",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.925Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19826",
+      "surface": "function:admin_reassign_member",
+      "actor": "A10",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.949Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19827",
+      "surface": "function:admin_reassign_member",
+      "actor": "A9",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:37.961Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19830",
+      "surface": "function:admin_reassign_member",
+      "actor": "A11",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.228Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19831",
+      "surface": "function:admin_reassign_member",
+      "actor": "A3",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.240Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19832",
+      "surface": "function:admin_reassign_member",
+      "actor": "A2",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.258Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19833",
+      "surface": "function:admin_reassign_member",
+      "actor": "A8",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.311Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19835",
+      "surface": "function:admin_reassign_member",
+      "actor": "A4",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.314Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19834",
+      "surface": "function:admin_reassign_member",
+      "actor": "A12",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.315Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19837",
+      "surface": "function:admin_reassign_member",
+      "actor": "A1",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.320Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19836",
+      "surface": "function:admin_reassign_member",
+      "actor": "A6",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.322Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19838",
+      "surface": "function:admin_reassign_member",
+      "actor": "A7",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.324Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19839",
+      "surface": "function:admin_reassign_member",
+      "actor": "A5",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.325Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19840",
+      "surface": "function:admin_reassign_member",
+      "actor": "A10",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.339Z"
+    },
+    {
+      "kind": "memberships",
+      "id": "19841",
+      "surface": "function:admin_reassign_member",
+      "actor": "A9",
+      "note": "open membership",
+      "at": "2026-07-25T19:55:38.345Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A2",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.421Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A4",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.471Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A11",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.490Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A3",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.538Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A8",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.549Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A6",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.556Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A1",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.600Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A7",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.609Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A5",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.627Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A10",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.670Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A12",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.763Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_reject_delegate",
+      "actor": "A9",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:40.804Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A1",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.749Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A2",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.750Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A3",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.751Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A11",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.752Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A4",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.752Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A12",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.752Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A7",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.753Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A9",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.754Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A8",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.756Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A5",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.757Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A6",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.760Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_reveal_applicant_personal_id",
+      "actor": "A10",
+      "note": "status=pending",
+      "at": "2026-07-25T19:55:41.761Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_revoke_role",
+      "actor": "A5",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.739Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_revoke_role",
+      "actor": "A1",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.749Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_revoke_role",
+      "actor": "A2",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.758Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_revoke_role",
+      "actor": "A9",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.793Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_revoke_role",
+      "actor": "A7",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.802Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_revoke_role",
+      "actor": "A3",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.928Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_revoke_role",
+      "actor": "A11",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.934Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_revoke_role",
+      "actor": "A6",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.936Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_revoke_role",
+      "actor": "A4",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.946Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_revoke_role",
+      "actor": "A8",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.949Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_revoke_role",
+      "actor": "A10",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.958Z"
+    },
+    {
+      "kind": "admin_roles",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_revoke_role",
+      "actor": "A12",
+      "note": "role=editor, target of revoke",
+      "at": "2026-07-25T19:55:43.967Z"
+    },
+    {
+      "kind": "news",
+      "id": "f33ab9c0-bdc5-4c7e-bad3-cc43b2237954",
+      "surface": "function:admin_set_news_image",
+      "actor": "A2",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.847Z"
+    },
+    {
+      "kind": "news",
+      "id": "eeceb1aa-9832-440e-94e6-804dfa2c605e",
+      "surface": "function:admin_set_news_image",
+      "actor": "A1",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.850Z"
+    },
+    {
+      "kind": "news",
+      "id": "432f892e-1493-4c76-8f4d-1a1555c48974",
+      "surface": "function:admin_set_news_image",
+      "actor": "A11",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.856Z"
+    },
+    {
+      "kind": "news",
+      "id": "82dc294c-5bdd-4c7c-8941-10933b966d6e",
+      "surface": "function:admin_set_news_image",
+      "actor": "A9",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.858Z"
+    },
+    {
+      "kind": "news",
+      "id": "2b931fd8-aa19-46f6-8669-811a2870ab12",
+      "surface": "function:admin_set_news_image",
+      "actor": "A4",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.860Z"
+    },
+    {
+      "kind": "news",
+      "id": "57a2dc41-7e85-46ed-8552-5fcc0a0daed8",
+      "surface": "function:admin_set_news_image",
+      "actor": "A8",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.863Z"
+    },
+    {
+      "kind": "news",
+      "id": "73015fd5-f701-4132-90b4-e9b4558cfd8d",
+      "surface": "function:admin_set_news_image",
+      "actor": "A5",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.865Z"
+    },
+    {
+      "kind": "news",
+      "id": "e9e34045-0297-4b1b-9b9d-8776d37df355",
+      "surface": "function:admin_set_news_image",
+      "actor": "A10",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.870Z"
+    },
+    {
+      "kind": "news",
+      "id": "c10af2ec-fddb-4632-aae2-3970a7ff76c2",
+      "surface": "function:admin_set_news_image",
+      "actor": "A3",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.872Z"
+    },
+    {
+      "kind": "news",
+      "id": "a7a905e3-373a-4b2a-8b7d-52795f3d9c88",
+      "surface": "function:admin_set_news_image",
+      "actor": "A6",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.874Z"
+    },
+    {
+      "kind": "news",
+      "id": "1ae42fa2-3cef-4a70-a674-b1ae7f350d5c",
+      "surface": "function:admin_set_news_image",
+      "actor": "A7",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.876Z"
+    },
+    {
+      "kind": "news",
+      "id": "5766f0c8-8d48-4dbf-b125-c1b3649cb667",
+      "surface": "function:admin_set_news_image",
+      "actor": "A12",
+      "note": "news status=draft",
+      "at": "2026-07-25T19:55:44.880Z"
+    },
+    {
+      "kind": "news",
+      "id": "0946e2e6-4653-4444-a699-c20d719735e2",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A1",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.121Z"
+    },
+    {
+      "kind": "news",
+      "id": "941de097-44b1-4ed5-aeef-abc48c3f7989",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A2",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.160Z"
+    },
+    {
+      "kind": "news",
+      "id": "fb332533-4659-406f-b1f1-b73763511f4b",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A3",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.162Z"
+    },
+    {
+      "kind": "news",
+      "id": "e3c6c00c-36e4-47f3-aaa1-96af0dfea4dd",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A6",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.166Z"
+    },
+    {
+      "kind": "news",
+      "id": "6c662a73-11c2-4c05-80fa-43fadce35fec",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A7",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.168Z"
+    },
+    {
+      "kind": "news",
+      "id": "eb0b35c5-b6d9-4c04-8462-90ecd316cba1",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A11",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.174Z"
+    },
+    {
+      "kind": "news",
+      "id": "8c579888-97fc-4221-8d4b-e4cc27439cce",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A8",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.176Z"
+    },
+    {
+      "kind": "news",
+      "id": "78e3f2c0-0bd7-4bc3-9e10-00495d63ad49",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A10",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.178Z"
+    },
+    {
+      "kind": "news",
+      "id": "ba01c165-ae1b-4236-b5e3-91cf837cf24e",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A5",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.180Z"
+    },
+    {
+      "kind": "news",
+      "id": "269f3409-d557-4d10-bb1c-441feb816487",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A4",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.182Z"
+    },
+    {
+      "kind": "news",
+      "id": "30519c20-0a58-4eb8-b2a5-b2d0e0c0cebe",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A12",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.185Z"
+    },
+    {
+      "kind": "news",
+      "id": "55cde399-fd06-40a0-89d2-aba7c0ccc048",
+      "surface": "function:admin_unpublish_news",
+      "actor": "A9",
+      "note": "news status=published",
+      "at": "2026-07-25T19:55:45.191Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "03281718-46d5-45f6-b1fe-dd701dae4213",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A2",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.576Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "129de37d-28bd-4505-b146-28ed47b23608",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A1",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.577Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "715cd0e4-8bda-4d00-821a-18db7e96fc90",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A4",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.594Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "3afa1610-09bb-4f6f-87fd-5e89efa8eaa9",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A9",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.602Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "d17599ac-7f66-497f-8ea6-8b389401ad3a",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A7",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.613Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "0139417e-79c7-4c16-86d8-abd3dc28b0cd",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A3",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.614Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "1a215db1-2d2a-4c44-9c5c-3134ebdaf059",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A10",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.627Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "719e8505-e816-4255-8478-4335669ac78d",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A11",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.628Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "20ead210-3e4b-49a8-af39-71c1dfac1b17",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A5",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.631Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "5ec4351f-447a-4520-b2df-bbf34359a0b6",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A8",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.632Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "e53f5f3d-e56c-49f5-a280-b6722a88d0d9",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A12",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.634Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "70ed75f4-0f14-4e6e-84f5-75554f4dea56",
+      "surface": "function:admin_update_delegate_profile",
+      "actor": "A6",
+      "note": "status=approved",
+      "at": "2026-07-25T19:55:45.636Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15488",
+      "surface": "function:admin_void_payment",
+      "actor": "A2",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.484Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15486",
+      "surface": "function:admin_void_payment",
+      "actor": "A3",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.490Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15487",
+      "surface": "function:admin_void_payment",
+      "actor": "A5",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.492Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15491",
+      "surface": "function:admin_void_payment",
+      "actor": "A9",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.497Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15490",
+      "surface": "function:admin_void_payment",
+      "actor": "A1",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.498Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15489",
+      "surface": "function:admin_void_payment",
+      "actor": "A7",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.501Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15492",
+      "surface": "function:admin_void_payment",
+      "actor": "A11",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.503Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15493",
+      "surface": "function:admin_void_payment",
+      "actor": "A10",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.505Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15494",
+      "surface": "function:admin_void_payment",
+      "actor": "A4",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.515Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15495",
+      "surface": "function:admin_void_payment",
+      "actor": "A6",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.516Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15497",
+      "surface": "function:admin_void_payment",
+      "actor": "A12",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.518Z"
+    },
+    {
+      "kind": "payments",
+      "id": "15496",
+      "surface": "function:admin_void_payment",
+      "actor": "A8",
+      "note": "unvoided payment, target of void",
+      "at": "2026-07-25T19:55:46.519Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "85bfd9c0-db50-40f2-b6d5-309554300e30",
+      "surface": "function:become_member_save_profile",
+      "actor": "A3",
+      "note": "funnel columns restored",
+      "at": "2026-07-25T19:55:47.751Z"
+    },
+    {
+      "kind": "polls",
+      "id": "14bb07b0-9d56-45ed-976c-515387f024ed",
+      "surface": "function:member_cast_vote",
+      "actor": "A1",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.620Z"
+    },
+    {
+      "kind": "polls",
+      "id": "7710b93f-364c-4b40-be15-d492c506d150",
+      "surface": "function:member_cast_vote",
+      "actor": "A4",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.642Z"
+    },
+    {
+      "kind": "polls",
+      "id": "f9d035d1-97d9-4857-81e3-8a7199c15333",
+      "surface": "function:member_cast_vote",
+      "actor": "A2",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.643Z"
+    },
+    {
+      "kind": "polls",
+      "id": "be6dd8f9-762a-430b-93e7-adbaa210fe30",
+      "surface": "function:member_cast_vote",
+      "actor": "A3",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.644Z"
+    },
+    {
+      "kind": "polls",
+      "id": "528e5a08-cf91-4983-ac31-2c07a0bfab5c",
+      "surface": "function:member_cast_vote",
+      "actor": "A5",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.664Z"
+    },
+    {
+      "kind": "polls",
+      "id": "4535e030-9201-4d17-abe6-68a1cf17b093",
+      "surface": "function:member_cast_vote",
+      "actor": "A9",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.665Z"
+    },
+    {
+      "kind": "polls",
+      "id": "e8fa0c01-0ef3-4bec-9899-366918475336",
+      "surface": "function:member_cast_vote",
+      "actor": "A8",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.666Z"
+    },
+    {
+      "kind": "polls",
+      "id": "696e16a3-6750-4f9f-bb07-e0814db172ca",
+      "surface": "function:member_cast_vote",
+      "actor": "A7",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.670Z"
+    },
+    {
+      "kind": "polls",
+      "id": "9609b188-c61d-454f-942a-12243a183ec5",
+      "surface": "function:member_cast_vote",
+      "actor": "A6",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.673Z"
+    },
+    {
+      "kind": "polls",
+      "id": "1a5a3d26-11e2-4cf5-9a48-06fd6d5cdce6",
+      "surface": "function:member_cast_vote",
+      "actor": "A11",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.675Z"
+    },
+    {
+      "kind": "polls",
+      "id": "d72a6e6c-9ccd-458a-b786-4e2601c92169",
+      "surface": "function:member_cast_vote",
+      "actor": "A10",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.692Z"
+    },
+    {
+      "kind": "polls",
+      "id": "b5b9e175-ef11-46f1-bd2e-83effe5a5ef1",
+      "surface": "function:member_cast_vote",
+      "actor": "A12",
+      "note": "poll status=open",
+      "at": "2026-07-25T19:55:49.694Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "dadacce9-b113-4e19-a258-628f65535f07",
+      "surface": "function:member_cast_vote",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.735Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "57397e21-1c91-4355-870b-ef50530edb98",
+      "surface": "function:member_cast_vote",
+      "actor": "A1",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.735Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "b25dfa59-7a44-4e69-8087-a8df634ccb76",
+      "surface": "function:member_cast_vote",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.751Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "202854dd-9d49-44e9-a5b3-15985c8f0dd7",
+      "surface": "function:member_cast_vote",
+      "actor": "A4",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.751Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "75d0ee51-a2a9-4c39-8e30-830102b7be70",
+      "surface": "function:member_cast_vote",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.754Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ac6d2464-206c-4baf-ad26-44676174347d",
+      "surface": "function:member_cast_vote",
+      "actor": "A3",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.754Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "5771b549-c413-433f-bcfb-2eb07805b5ed",
+      "surface": "function:member_cast_vote",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.765Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "886f5afd-79ca-4987-93de-c2d26e2dc5fd",
+      "surface": "function:member_cast_vote",
+      "actor": "A2",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.765Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "7cff746a-88f6-40a6-9595-1c47f10e5d25",
+      "surface": "function:member_cast_vote",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.788Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9821cc1d-f6a9-405f-b036-510b7475c382",
+      "surface": "function:member_cast_vote",
+      "actor": "A9",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.788Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "94d5ba0a-06d5-491d-a3e0-883003b80def",
+      "surface": "function:member_cast_vote",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.796Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "af31813d-6fb1-4ace-8473-7e6574ac2730",
+      "surface": "function:member_cast_vote",
+      "actor": "A5",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.796Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "cd366a0a-1d18-4a81-8479-8b212f860c85",
+      "surface": "function:member_cast_vote",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.800Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "9df09116-610a-4e51-a5e7-eb1debb5a211",
+      "surface": "function:member_cast_vote",
+      "actor": "A7",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.800Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "fdac7c98-9344-42f4-aaaa-3ca6cdad6a98",
+      "surface": "function:member_cast_vote",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.802Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "ad95eeb7-73b5-4e0c-9929-f62140c50113",
+      "surface": "function:member_cast_vote",
+      "actor": "A8",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.802Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "6e1ea7d5-d64f-4bc2-8098-593af2e385ee",
+      "surface": "function:member_cast_vote",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.820Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "aec40199-f121-40e9-a437-e9b654a29e3d",
+      "surface": "function:member_cast_vote",
+      "actor": "A6",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.820Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "bbce3070-0834-4cae-bb90-89ef346c83f9",
+      "surface": "function:member_cast_vote",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.822Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "e3ea61ae-42de-403c-8988-50cbebab3529",
+      "surface": "function:member_cast_vote",
+      "actor": "A10",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.822Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "2d768957-417a-43b3-8138-2c34d26fa3de",
+      "surface": "function:member_cast_vote",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.825Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "542cf841-e121-4648-8c78-91d8c6316a48",
+      "surface": "function:member_cast_vote",
+      "actor": "A12",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.825Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "fdf0fba3-b60c-4bde-83e9-03f97036e735",
+      "surface": "function:member_cast_vote",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.827Z"
+    },
+    {
+      "kind": "poll_options",
+      "id": "82f47ce2-3ee0-4c8a-b03e-f6f8cd8aa0ea",
+      "surface": "function:member_cast_vote",
+      "actor": "A11",
+      "note": "option",
+      "at": "2026-07-25T19:55:49.827Z"
+    },
+    {
+      "kind": "events",
+      "id": "b0c12bf9-f24c-44dc-8c78-c71a3d5dffa7",
+      "surface": "function:member_rsvp",
+      "actor": "A4",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.727Z"
+    },
+    {
+      "kind": "events",
+      "id": "482dab12-af06-4ab7-88e2-8a4f877363b2",
+      "surface": "function:member_rsvp",
+      "actor": "A1",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.730Z"
+    },
+    {
+      "kind": "events",
+      "id": "069fbe05-4c3e-45bb-837f-82a358971e29",
+      "surface": "function:member_rsvp",
+      "actor": "A2",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.733Z"
+    },
+    {
+      "kind": "events",
+      "id": "53aa977a-1c48-4c08-8c08-721168556431",
+      "surface": "function:member_rsvp",
+      "actor": "A3",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.736Z"
+    },
+    {
+      "kind": "events",
+      "id": "b533d118-c41c-4194-9637-544d6acc293e",
+      "surface": "function:member_rsvp",
+      "actor": "A5",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.738Z"
+    },
+    {
+      "kind": "events",
+      "id": "0b0904c0-818e-460e-b65c-f05126a9df0f",
+      "surface": "function:member_rsvp",
+      "actor": "A7",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.741Z"
+    },
+    {
+      "kind": "events",
+      "id": "df340411-c618-4a84-a7d6-6c9f35523f56",
+      "surface": "function:member_rsvp",
+      "actor": "A8",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.746Z"
+    },
+    {
+      "kind": "events",
+      "id": "f2a7cdb9-7e20-4c21-9b3d-5976c66dbe29",
+      "surface": "function:member_rsvp",
+      "actor": "A9",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.747Z"
+    },
+    {
+      "kind": "events",
+      "id": "256e9ba7-9def-4b20-af9b-b74d467b551c",
+      "surface": "function:member_rsvp",
+      "actor": "A10",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.748Z"
+    },
+    {
+      "kind": "events",
+      "id": "3bcc9fa3-9ca6-4709-8fcb-ad102a5ac992",
+      "surface": "function:member_rsvp",
+      "actor": "A11",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.749Z"
+    },
+    {
+      "kind": "events",
+      "id": "1ea57b0b-d009-4ea5-b98a-c2fc1cfe87bf",
+      "surface": "function:member_rsvp",
+      "actor": "A12",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.755Z"
+    },
+    {
+      "kind": "events",
+      "id": "b64524d4-a5dc-45be-a560-a201cbeed02f",
+      "surface": "function:member_rsvp",
+      "actor": "A6",
+      "note": "event status=published",
+      "at": "2026-07-25T19:55:50.764Z"
+    },
+    {
+      "kind": "profiles",
+      "id": "6abb2d04-4bdc-4c9f-b3de-fa76a8fe3ef8",
+      "surface": "function:register",
+      "actor": "A2",
+      "note": "created by probe, removed by teardown",
+      "at": "2026-07-25T19:55:51.910Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "6c38cbfb-4499-450a-95be-cedc5cade80c",
+      "surface": "function:request_delegacy",
+      "actor": "A4",
+      "note": "created by probe, removed by teardown",
+      "at": "2026-07-25T19:55:52.444Z"
+    },
+    {
+      "kind": "delegates",
+      "id": "ecf79295-c2c9-488e-a688-527b4531047d",
+      "surface": "function:request_delegacy",
+      "actor": "A5",
+      "note": "created by probe, removed by teardown",
+      "at": "2026-07-25T19:55:52.460Z"
+    }
+  ]
+}

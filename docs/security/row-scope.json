@@ -1436,48 +1436,6 @@
   },
   {
     "assertion": "admin_roles.cross-actor",
-    "actor": "A7",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
-    "actor": "A3",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
-    "actor": "A5",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
-    "actor": "A8",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
-    "actor": "A2",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
-    "actor": "A4",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "admin_roles.cross-actor",
     "actor": "A9",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
@@ -1492,7 +1450,14 @@
   },
   {
     "assertion": "admin_roles.cross-actor",
-    "actor": "A6",
+    "actor": "A4",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A3",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
     "ok": true
@@ -1506,16 +1471,44 @@
   },
   {
     "assertion": "admin_roles.cross-actor",
-    "actor": "A11",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "profiles.cross-actor",
     "actor": "A2",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A7",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A8",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A6",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A5",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "admin_roles.cross-actor",
+    "actor": "A11",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
@@ -1527,7 +1520,21 @@
   },
   {
     "assertion": "profiles.cross-actor",
+    "actor": "A2",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "profiles.cross-actor",
     "actor": "A3",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "1 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "profiles.cross-actor",
+    "actor": "A7",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1548,7 +1555,7 @@
   },
   {
     "assertion": "profiles.cross-actor",
-    "actor": "A7",
+    "actor": "A4",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1569,20 +1576,6 @@
   },
   {
     "assertion": "profiles.cross-actor",
-    "actor": "A11",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "profiles.cross-actor",
-    "actor": "A4",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "profiles.cross-actor",
     "actor": "A6",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
@@ -1591,6 +1584,13 @@
   {
     "assertion": "profiles.cross-actor",
     "actor": "A8",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "1 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "profiles.cross-actor",
+    "actor": "A11",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1604,14 +1604,21 @@
   },
   {
     "assertion": "memberships.cross-actor",
-    "actor": "A3",
+    "actor": "A8",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
     "assertion": "memberships.cross-actor",
-    "actor": "A9",
+    "actor": "A5",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "1 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "memberships.cross-actor",
+    "actor": "A4",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1625,6 +1632,27 @@
   },
   {
     "assertion": "memberships.cross-actor",
+    "actor": "A9",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "1 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "memberships.cross-actor",
+    "actor": "A2",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "memberships.cross-actor",
+    "actor": "A3",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "memberships.cross-actor",
     "actor": "A11",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
@@ -1632,7 +1660,7 @@
   },
   {
     "assertion": "memberships.cross-actor",
-    "actor": "A5",
+    "actor": "A7",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1647,34 +1675,6 @@
   {
     "assertion": "memberships.cross-actor",
     "actor": "A10",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "memberships.cross-actor",
-    "actor": "A7",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "memberships.cross-actor",
-    "actor": "A2",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "memberships.cross-actor",
-    "actor": "A8",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "memberships.cross-actor",
-    "actor": "A4",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
@@ -1688,35 +1688,7 @@
   },
   {
     "assertion": "payments.cross-actor",
-    "actor": "A11",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
     "actor": "A9",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
-    "actor": "A2",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
-    "actor": "A10",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
-    "actor": "A3",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
     "ok": true
@@ -1730,7 +1702,28 @@
   },
   {
     "assertion": "payments.cross-actor",
+    "actor": "A2",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "payments.cross-actor",
     "actor": "A4",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "payments.cross-actor",
+    "actor": "A11",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "payments.cross-actor",
+    "actor": "A10",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
     "ok": true
@@ -1740,20 +1733,6 @@
     "actor": "A12",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
-    "actor": "A6",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "payments.cross-actor",
-    "actor": "A8",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
@@ -1764,59 +1743,24 @@
     "ok": true
   },
   {
-    "assertion": "event_rsvps.cross-actor",
+    "assertion": "payments.cross-actor",
     "actor": "A8",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "event_rsvps.cross-actor",
+    "assertion": "payments.cross-actor",
     "actor": "A3",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A2",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A4",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
+    "assertion": "payments.cross-actor",
     "actor": "A6",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A11",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A10",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A12",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "1 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
@@ -1828,86 +1772,79 @@
   },
   {
     "assertion": "event_rsvps.cross-actor",
-    "actor": "A7",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
-    "actor": "A5",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "event_rsvps.cross-actor",
     "actor": "A9",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "poll_votes.cross-actor",
+    "assertion": "event_rsvps.cross-actor",
     "actor": "A2",
     "expected": "no row belonging to another user (a refusal must be 42501)",
     "observed": "0 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "poll_votes.cross-actor",
-    "actor": "A11",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "poll_votes.cross-actor",
-    "actor": "A8",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "poll_votes.cross-actor",
-    "actor": "A12",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "poll_votes.cross-actor",
+    "assertion": "event_rsvps.cross-actor",
     "actor": "A4",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "poll_votes.cross-actor",
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A7",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "4 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "event_rsvps.cross-actor",
     "actor": "A10",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "poll_votes.cross-actor",
-    "actor": "A5",
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A11",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
-    "assertion": "poll_votes.cross-actor",
-    "actor": "A9",
-    "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
-    "ok": true
-  },
-  {
-    "assertion": "poll_votes.cross-actor",
+    "assertion": "event_rsvps.cross-actor",
     "actor": "A3",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A5",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "4 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A8",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A12",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "event_rsvps.cross-actor",
+    "actor": "A6",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
@@ -1919,28 +1856,91 @@
   },
   {
     "assertion": "poll_votes.cross-actor",
+    "actor": "A10",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A2",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A11",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A12",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A9",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A8",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
     "actor": "A7",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "1 row(s), 0 belonging to someone else",
+    "observed": "5 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A3",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "0 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A5",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "5 row(s), 0 belonging to someone else",
+    "ok": true
+  },
+  {
+    "assertion": "poll_votes.cross-actor",
+    "actor": "A4",
+    "expected": "no row belonging to another user (a refusal must be 42501)",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
     "assertion": "poll_votes.cross-actor",
     "actor": "A6",
     "expected": "no row belonging to another user (a refusal must be 42501)",
-    "observed": "0 row(s), 0 belonging to someone else",
+    "observed": "3 row(s), 0 belonging to someone else",
     "ok": true
   },
   {
     "assertion": "audit_log.sealed",
-    "actor": "A1",
+    "actor": "A2",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "audit_log.sealed",
-    "actor": "A2",
+    "actor": "A1",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -1954,13 +1954,6 @@
   },
   {
     "assertion": "audit_log.sealed",
-    "actor": "A8",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "audit_log.sealed",
     "actor": "A9",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
@@ -1968,28 +1961,7 @@
   },
   {
     "assertion": "audit_log.sealed",
-    "actor": "A10",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "audit_log.sealed",
-    "actor": "A11",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "audit_log.sealed",
-    "actor": "A4",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "audit_log.sealed",
-    "actor": "A5",
+    "actor": "A7",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2003,6 +1975,34 @@
   },
   {
     "assertion": "audit_log.sealed",
+    "actor": "A10",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "audit_log.sealed",
+    "actor": "A8",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "audit_log.sealed",
+    "actor": "A5",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "audit_log.sealed",
+    "actor": "A4",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "audit_log.sealed",
     "actor": "A6",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
@@ -2010,76 +2010,6 @@
   },
   {
     "assertion": "audit_log.sealed",
-    "actor": "A7",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A3",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A1",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A5",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A7",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A10",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A8",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A9",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A6",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
-    "actor": "A4",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "dev_otp_inbox.sealed",
     "actor": "A11",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
@@ -2094,21 +2024,77 @@
   },
   {
     "assertion": "dev_otp_inbox.sealed",
-    "actor": "A12",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "app_settings.sealed",
-    "actor": "A2",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "app_settings.sealed",
     "actor": "A1",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A4",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A3",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A9",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A8",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A7",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A10",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A11",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A5",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A6",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "dev_otp_inbox.sealed",
+    "actor": "A12",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2122,7 +2108,14 @@
   },
   {
     "assertion": "app_settings.sealed",
-    "actor": "A9",
+    "actor": "A1",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "app_settings.sealed",
+    "actor": "A2",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2136,14 +2129,7 @@
   },
   {
     "assertion": "app_settings.sealed",
-    "actor": "A4",
-    "expected": "zero rows (a refusal must be 42501)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "app_settings.sealed",
-    "actor": "A12",
+    "actor": "A9",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2151,6 +2137,13 @@
   {
     "assertion": "app_settings.sealed",
     "actor": "A10",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "app_settings.sealed",
+    "actor": "A4",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2179,6 +2172,13 @@
   {
     "assertion": "app_settings.sealed",
     "actor": "A6",
+    "expected": "zero rows (a refusal must be 42501)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "app_settings.sealed",
+    "actor": "A12",
     "expected": "zero rows (a refusal must be 42501)",
     "observed": "0 row(s)",
     "ok": true
@@ -2276,49 +2276,7 @@
   },
   {
     "assertion": "admin_admins.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
     "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
-    "actor": "A1",
-    "expected": "0 rows (or refused)",
-    "observed": "refused 42501",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
-    "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
-    "actor": "A6",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_admins.visibility",
-    "actor": "A8",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2332,7 +2290,14 @@
   },
   {
     "assertion": "admin_admins.visibility",
-    "actor": "A12",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_admins.visibility",
+    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2342,6 +2307,20 @@
     "actor": "A11",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_admins.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_admins.visibility",
+    "actor": "A1",
+    "expected": "0 rows (or refused)",
+    "observed": "refused 42501",
     "ok": true
   },
   {
@@ -2352,29 +2331,22 @@
     "ok": true
   },
   {
-    "assertion": "admin_audit.visibility",
-    "actor": "A4",
+    "assertion": "admin_admins.visibility",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
-    "assertion": "admin_audit.visibility",
-    "actor": "A5",
+    "assertion": "admin_admins.visibility",
+    "actor": "A12",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
-    "assertion": "admin_audit.visibility",
-    "actor": "A1",
-    "expected": "0 rows (or refused)",
-    "observed": "refused 42501",
-    "ok": true
-  },
-  {
-    "assertion": "admin_audit.visibility",
-    "actor": "A3",
+    "assertion": "admin_admins.visibility",
+    "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2388,7 +2360,21 @@
   },
   {
     "assertion": "admin_audit.visibility",
-    "actor": "A8",
+    "actor": "A1",
+    "expected": "0 rows (or refused)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "admin_audit.visibility",
+    "actor": "A4",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_audit.visibility",
+    "actor": "A5",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2409,6 +2395,20 @@
   },
   {
     "assertion": "admin_audit.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_audit.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_audit.visibility",
     "actor": "A11",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
@@ -2416,7 +2416,7 @@
   },
   {
     "assertion": "admin_audit.visibility",
-    "actor": "A12",
+    "actor": "A8",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2430,7 +2430,35 @@
   },
   {
     "assertion": "admin_audit.visibility",
-    "actor": "A10",
+    "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A1",
+    "expected": "0 rows (or refused)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A11",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2444,7 +2472,14 @@
   },
   {
     "assertion": "admin_settings.visibility",
-    "actor": "A2",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A5",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2465,7 +2500,14 @@
   },
   {
     "assertion": "admin_settings.visibility",
-    "actor": "A5",
+    "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_settings.visibility",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2478,73 +2520,10 @@
     "ok": true
   },
   {
-    "assertion": "admin_settings.visibility",
-    "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_settings.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_settings.visibility",
-    "actor": "A11",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_settings.visibility",
-    "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_settings.visibility",
-    "actor": "A12",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_settings.visibility",
+    "assertion": "admin_delegate_queue.visibility",
     "actor": "A1",
     "expected": "0 rows (or refused)",
     "observed": "refused 42501",
-    "ok": true
-  },
-  {
-    "assertion": "admin_delegate_queue.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_delegate_queue.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_delegate_queue.visibility",
-    "actor": "A5",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_delegate_queue.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -2556,14 +2535,14 @@
   },
   {
     "assertion": "admin_delegate_queue.visibility",
-    "actor": "A1",
+    "actor": "A3",
     "expected": "0 rows (or refused)",
-    "observed": "refused 42501",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "admin_delegate_queue.visibility",
-    "actor": "A12",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2577,7 +2556,7 @@
   },
   {
     "assertion": "admin_delegate_queue.visibility",
-    "actor": "A6",
+    "actor": "A12",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2604,21 +2583,21 @@
     "ok": true
   },
   {
-    "assertion": "admin_payments.visibility",
-    "actor": "A3",
+    "assertion": "admin_delegate_queue.visibility",
+    "actor": "A5",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
-    "assertion": "admin_payments.visibility",
-    "actor": "A2",
+    "assertion": "admin_delegate_queue.visibility",
+    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
-    "assertion": "admin_payments.visibility",
+    "assertion": "admin_delegate_queue.visibility",
     "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
@@ -2633,28 +2612,14 @@
   },
   {
     "assertion": "admin_payments.visibility",
+    "actor": "A2",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
     "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_payments.visibility",
-    "actor": "A12",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_payments.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_payments.visibility",
-    "actor": "A8",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2668,9 +2633,44 @@
   },
   {
     "assertion": "admin_payments.visibility",
+    "actor": "A4",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
     "actor": "A11",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
+    "actor": "A6",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_payments.visibility",
+    "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -2683,34 +2683,6 @@
   {
     "assertion": "admin_payments.visibility",
     "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
-    "actor": "A6",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
-    "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
-    "actor": "A5",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2731,7 +2703,35 @@
   },
   {
     "assertion": "admin_finance_stats.visibility",
-    "actor": "A10",
+    "actor": "A7",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A5",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2739,6 +2739,20 @@
   {
     "assertion": "admin_finance_stats.visibility",
     "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_finance_stats.visibility",
+    "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2752,20 +2766,6 @@
   },
   {
     "assertion": "admin_finance_stats.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_finance_stats.visibility",
     "actor": "A11",
     "expected": ">= 1 row",
     "observed": "1 row(s)",
@@ -2773,9 +2773,23 @@
   },
   {
     "assertion": "admin_overview.visibility",
+    "actor": "A2",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_overview.visibility",
     "actor": "A1",
     "expected": "0 rows (or refused)",
     "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "admin_overview.visibility",
+    "actor": "A4",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -2794,35 +2808,7 @@
   },
   {
     "assertion": "admin_overview.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_overview.visibility",
-    "actor": "A12",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_overview.visibility",
     "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_overview.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_overview.visibility",
-    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2836,9 +2822,16 @@
   },
   {
     "assertion": "admin_overview.visibility",
-    "actor": "A10",
-    "expected": ">= 1 row",
-    "observed": "1 row(s)",
+    "actor": "A7",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_overview.visibility",
+    "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -2856,17 +2849,10 @@
     "ok": true
   },
   {
-    "assertion": "admin_region_stats.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_region_stats.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
+    "assertion": "admin_overview.visibility",
+    "actor": "A10",
+    "expected": ">= 1 row",
+    "observed": "1 row(s)",
     "ok": true
   },
   {
@@ -2878,7 +2864,35 @@
   },
   {
     "assertion": "admin_region_stats.visibility",
+    "actor": "A2",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_region_stats.visibility",
     "actor": "A4",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_region_stats.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_region_stats.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_region_stats.visibility",
+    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2899,16 +2913,9 @@
   },
   {
     "assertion": "admin_region_stats.visibility",
-    "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_region_stats.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
+    "actor": "A10",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
@@ -2933,10 +2940,10 @@
     "ok": true
   },
   {
-    "assertion": "admin_region_stats.visibility",
-    "actor": "A10",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
+    "assertion": "admin_members.visibility",
+    "actor": "A6",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -2948,35 +2955,7 @@
   },
   {
     "assertion": "admin_members.visibility",
-    "actor": "A4",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_members.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_members.visibility",
-    "actor": "A6",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_members.visibility",
-    "actor": "A11",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_members.visibility",
-    "actor": "A7",
+    "actor": "A5",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -2990,21 +2969,14 @@
   },
   {
     "assertion": "admin_members.visibility",
-    "actor": "A10",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_members.visibility",
-    "actor": "A8",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "admin_members.visibility",
-    "actor": "A5",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3018,7 +2990,49 @@
   },
   {
     "assertion": "admin_members.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_members.visibility",
+    "actor": "A7",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_members.visibility",
+    "actor": "A10",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_members.visibility",
     "actor": "A12",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_members.visibility",
+    "actor": "A11",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_news.visibility",
+    "actor": "A1",
+    "expected": "0 rows (or refused)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "admin_news.visibility",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3032,42 +3046,7 @@
   },
   {
     "assertion": "admin_news.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_news.visibility",
-    "actor": "A1",
-    "expected": "0 rows (or refused)",
-    "observed": "refused 42501",
-    "ok": true
-  },
-  {
-    "assertion": "admin_news.visibility",
-    "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_news.visibility",
-    "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_news.visibility",
-    "actor": "A11",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_news.visibility",
-    "actor": "A6",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3081,14 +3060,35 @@
   },
   {
     "assertion": "admin_news.visibility",
-    "actor": "A2",
+    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "admin_news.visibility",
-    "actor": "A4",
+    "actor": "A11",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_news.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_news.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_news.visibility",
+    "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3123,7 +3123,7 @@
   },
   {
     "assertion": "admin_events.visibility",
-    "actor": "A4",
+    "actor": "A7",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3144,21 +3144,21 @@
   },
   {
     "assertion": "admin_events.visibility",
-    "actor": "A10",
+    "actor": "A8",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "admin_events.visibility",
-    "actor": "A7",
+    "actor": "A4",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
   },
   {
     "assertion": "admin_events.visibility",
-    "actor": "A11",
+    "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3172,7 +3172,14 @@
   },
   {
     "assertion": "admin_events.visibility",
-    "actor": "A6",
+    "actor": "A11",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_events.visibility",
+    "actor": "A10",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3182,13 +3189,6 @@
     "actor": "A12",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_events.visibility",
-    "actor": "A8",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -3200,42 +3200,7 @@
   },
   {
     "assertion": "admin_polls.visibility",
-    "actor": "A6",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A11",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A7",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A9",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A5",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3243,13 +3208,6 @@
   {
     "assertion": "admin_polls.visibility",
     "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_polls.visibility",
-    "actor": "A8",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3263,7 +3221,42 @@
   },
   {
     "assertion": "admin_polls.visibility",
-    "actor": "A2",
+    "actor": "A11",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_polls.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_polls.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_polls.visibility",
+    "actor": "A5",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_polls.visibility",
+    "actor": "A7",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_polls.visibility",
+    "actor": "A6",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3272,21 +3265,14 @@
     "assertion": "admin_polls.visibility",
     "actor": "A12",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
-    "assertion": "admin_poll_options.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_poll_options.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
+    "assertion": "admin_polls.visibility",
+    "actor": "A9",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
@@ -3298,14 +3284,7 @@
   },
   {
     "assertion": "admin_poll_options.visibility",
-    "actor": "A6",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_poll_options.visibility",
-    "actor": "A8",
+    "actor": "A3",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3319,28 +3298,14 @@
   },
   {
     "assertion": "admin_poll_options.visibility",
-    "actor": "A11",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_poll_options.visibility",
-    "actor": "A9",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_poll_options.visibility",
-    "actor": "A10",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "admin_poll_options.visibility",
     "actor": "A7",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
+    "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
     "ok": true
@@ -3354,9 +3319,65 @@
   },
   {
     "assertion": "admin_poll_options.visibility",
+    "actor": "A8",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
+    "actor": "A10",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
+    "actor": "A9",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
+    "actor": "A11",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
     "actor": "A12",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "admin_poll_options.visibility",
+    "actor": "A6",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_news.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_news.visibility",
+    "actor": "A4",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_news.visibility",
+    "actor": "A2",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
     "ok": true
   },
   {
@@ -3375,13 +3396,6 @@
   },
   {
     "assertion": "member_news.visibility",
-    "actor": "A4",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_news.visibility",
     "actor": "A5",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
@@ -3389,9 +3403,16 @@
   },
   {
     "assertion": "member_news.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
+    "actor": "A6",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_news.visibility",
+    "actor": "A10",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
@@ -3417,28 +3438,7 @@
   },
   {
     "assertion": "member_news.visibility",
-    "actor": "A6",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_news.visibility",
-    "actor": "A2",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_news.visibility",
     "actor": "A12",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_news.visibility",
-    "actor": "A10",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3452,86 +3452,86 @@
   },
   {
     "assertion": "member_polls.visibility",
+    "actor": "A7",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
     "actor": "A2",
     "expected": "0 rows (or refused)",
     "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A8",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A7",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A11",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
     "ok": true
   },
   {
     "assertion": "member_polls.visibility",
     "actor": "A9",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A4",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A12",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_polls.visibility",
-    "actor": "A6",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "member_polls.visibility",
     "actor": "A5",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A4",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A11",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A8",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A12",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "member_polls.visibility",
     "actor": "A10",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_polls.visibility",
+    "actor": "A6",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A1",
-    "expected": "0 rows (or refused)",
-    "observed": "refused 42501",
+    "actor": "A4",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
@@ -3550,7 +3550,7 @@
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A10",
+    "actor": "A8",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3564,7 +3564,7 @@
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A12",
+    "actor": "A6",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3578,9 +3578,9 @@
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A4",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
+    "actor": "A1",
+    "expected": "0 rows (or refused)",
+    "observed": "refused 42501",
     "ok": true
   },
   {
@@ -3592,14 +3592,14 @@
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A6",
+    "actor": "A10",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "member_poll_options.visibility",
-    "actor": "A8",
+    "actor": "A12",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3627,23 +3627,16 @@
   },
   {
     "assertion": "poll_option_counts.visibility",
-    "actor": "A5",
+    "actor": "A3",
+    "expected": "0 rows (or refused)",
+    "observed": "0 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "poll_option_counts.visibility",
+    "actor": "A4",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "poll_option_counts.visibility",
-    "actor": "A10",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "poll_option_counts.visibility",
-    "actor": "A6",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
     "ok": true
   },
   {
@@ -3655,44 +3648,51 @@
   },
   {
     "assertion": "poll_option_counts.visibility",
-    "actor": "A3",
-    "expected": "0 rows (or refused)",
-    "observed": "0 row(s)",
+    "actor": "A8",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "poll_option_counts.visibility",
-    "actor": "A11",
+    "actor": "A10",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "poll_option_counts.visibility",
-    "actor": "A12",
-    "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "poll_option_counts.visibility",
     "actor": "A9",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "poll_option_counts.visibility",
-    "actor": "A4",
+    "actor": "A11",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
     "assertion": "poll_option_counts.visibility",
-    "actor": "A8",
+    "actor": "A12",
     "expected": ">= 1 row",
-    "observed": "3 row(s)",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "poll_option_counts.visibility",
+    "actor": "A6",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "poll_option_counts.visibility",
+    "actor": "A5",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
     "ok": true
   },
   {
@@ -3704,21 +3704,7 @@
   },
   {
     "assertion": "member_event_going_counts.visibility",
-    "actor": "A9",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
-    "actor": "A8",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
-    "actor": "A3",
+    "actor": "A10",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3732,21 +3718,7 @@
   },
   {
     "assertion": "member_event_going_counts.visibility",
-    "actor": "A7",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
-    "actor": "A11",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
-    "actor": "A6",
+    "actor": "A4",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3760,21 +3732,49 @@
   },
   {
     "assertion": "member_event_going_counts.visibility",
-    "actor": "A10",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
-    "actor": "A4",
-    "expected": ">= 1 row",
-    "observed": "5 row(s)",
-    "ok": true
-  },
-  {
-    "assertion": "member_event_going_counts.visibility",
     "actor": "A5",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A7",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A8",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A9",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A11",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A3",
+    "expected": ">= 1 row",
+    "observed": "5 row(s)",
+    "ok": true
+  },
+  {
+    "assertion": "member_event_going_counts.visibility",
+    "actor": "A6",
     "expected": ">= 1 row",
     "observed": "5 row(s)",
     "ok": true
@@ -3795,7 +3795,21 @@
   },
   {
     "assertion": "public_news.no-private-columns",
-    "actor": "A6",
+    "actor": "A3",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "6 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_news.no-private-columns",
+    "actor": "A4",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "6 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_news.no-private-columns",
+    "actor": "A11",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "6 public column(s), none private",
     "ok": true
@@ -3803,6 +3817,27 @@
   {
     "assertion": "public_news.no-private-columns",
     "actor": "A5",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "6 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_news.no-private-columns",
+    "actor": "A9",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "6 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_news.no-private-columns",
+    "actor": "A10",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "6 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_news.no-private-columns",
+    "actor": "A7",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "6 public column(s), none private",
     "ok": true
@@ -3823,42 +3858,7 @@
   },
   {
     "assertion": "public_news.no-private-columns",
-    "actor": "A10",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "6 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_news.no-private-columns",
-    "actor": "A11",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "6 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_news.no-private-columns",
-    "actor": "A7",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "6 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_news.no-private-columns",
-    "actor": "A4",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "6 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_news.no-private-columns",
-    "actor": "A3",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "6 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_news.no-private-columns",
-    "actor": "A9",
+    "actor": "A6",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "6 public column(s), none private",
     "ok": true
@@ -3872,28 +3872,14 @@
   },
   {
     "assertion": "public_events.no-private-columns",
+    "actor": "A3",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_events.no-private-columns",
     "actor": "A1",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_events.no-private-columns",
-    "actor": "A7",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_events.no-private-columns",
-    "actor": "A6",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_events.no-private-columns",
-    "actor": "A8",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "9 public column(s), none private",
     "ok": true
@@ -3914,21 +3900,7 @@
   },
   {
     "assertion": "public_events.no-private-columns",
-    "actor": "A10",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_events.no-private-columns",
-    "actor": "A11",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_events.no-private-columns",
-    "actor": "A3",
+    "actor": "A7",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "9 public column(s), none private",
     "ok": true
@@ -3942,7 +3914,35 @@
   },
   {
     "assertion": "public_events.no-private-columns",
+    "actor": "A8",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_events.no-private-columns",
+    "actor": "A11",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_events.no-private-columns",
     "actor": "A12",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_events.no-private-columns",
+    "actor": "A6",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_events.no-private-columns",
+    "actor": "A10",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "9 public column(s), none private",
     "ok": true
@@ -3956,6 +3956,20 @@
   },
   {
     "assertion": "public_delegates.no-private-columns",
+    "actor": "A8",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_delegates.no-private-columns",
+    "actor": "A7",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_delegates.no-private-columns",
     "actor": "A5",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "9 public column(s), none private",
@@ -3970,7 +3984,7 @@
   },
   {
     "assertion": "public_delegates.no-private-columns",
-    "actor": "A11",
+    "actor": "A4",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "9 public column(s), none private",
     "ok": true
@@ -3991,98 +4005,35 @@
   },
   {
     "assertion": "public_delegates.no-private-columns",
-    "actor": "A6",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_delegates.no-private-columns",
-    "actor": "A7",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_delegates.no-private-columns",
-    "actor": "A1",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_delegates.no-private-columns",
-    "actor": "A4",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_delegates.no-private-columns",
-    "actor": "A10",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_delegates.no-private-columns",
-    "actor": "A8",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "9 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
-    "actor": "A1",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
-    "actor": "A8",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
-    "actor": "A10",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
-    "actor": "A12",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
-    "actor": "A5",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "public_stats.no-private-columns",
     "actor": "A11",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
+    "observed": "9 public column(s), none private",
     "ok": true
   },
   {
-    "assertion": "public_stats.no-private-columns",
+    "assertion": "public_delegates.no-private-columns",
+    "actor": "A10",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_delegates.no-private-columns",
     "actor": "A6",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
+    "observed": "9 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_delegates.no-private-columns",
+    "actor": "A1",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "9 public column(s), none private",
     "ok": true
   },
   {
     "assertion": "public_stats.no-private-columns",
-    "actor": "A7",
+    "actor": "A4",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4096,7 +4047,49 @@
   },
   {
     "assertion": "public_stats.no-private-columns",
+    "actor": "A5",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
     "actor": "A3",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A7",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A1",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A6",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A8",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A10",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4110,14 +4103,14 @@
   },
   {
     "assertion": "public_stats.no-private-columns",
-    "actor": "A4",
+    "actor": "A11",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
   },
   {
-    "assertion": "transparency_stats.no-private-columns",
-    "actor": "A1",
+    "assertion": "public_stats.no-private-columns",
+    "actor": "A12",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4131,42 +4124,7 @@
   },
   {
     "assertion": "transparency_stats.no-private-columns",
-    "actor": "A9",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_stats.no-private-columns",
-    "actor": "A5",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_stats.no-private-columns",
-    "actor": "A11",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_stats.no-private-columns",
-    "actor": "A7",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_stats.no-private-columns",
     "actor": "A3",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "3 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_stats.no-private-columns",
-    "actor": "A12",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4180,7 +4138,42 @@
   },
   {
     "assertion": "transparency_stats.no-private-columns",
+    "actor": "A10",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
+    "actor": "A5",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
+    "actor": "A1",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
+    "actor": "A11",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
     "actor": "A8",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
+    "actor": "A12",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4194,7 +4187,14 @@
   },
   {
     "assertion": "transparency_stats.no-private-columns",
-    "actor": "A10",
+    "actor": "A9",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "3 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_stats.no-private-columns",
+    "actor": "A7",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "3 public column(s), none private",
     "ok": true
@@ -4215,21 +4215,7 @@
   },
   {
     "assertion": "transparency_regions.no-private-columns",
-    "actor": "A5",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "4 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_regions.no-private-columns",
-    "actor": "A3",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "4 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_regions.no-private-columns",
-    "actor": "A4",
+    "actor": "A9",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "4 public column(s), none private",
     "ok": true
@@ -4243,7 +4229,14 @@
   },
   {
     "assertion": "transparency_regions.no-private-columns",
-    "actor": "A11",
+    "actor": "A8",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "4 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_regions.no-private-columns",
+    "actor": "A4",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "4 public column(s), none private",
     "ok": true
@@ -4257,21 +4250,14 @@
   },
   {
     "assertion": "transparency_regions.no-private-columns",
-    "actor": "A7",
+    "actor": "A3",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "4 public column(s), none private",
     "ok": true
   },
   {
     "assertion": "transparency_regions.no-private-columns",
-    "actor": "A8",
-    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
-    "observed": "4 public column(s), none private",
-    "ok": true
-  },
-  {
-    "assertion": "transparency_regions.no-private-columns",
-    "actor": "A9",
+    "actor": "A5",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "4 public column(s), none private",
     "ok": true
@@ -4279,6 +4265,20 @@
   {
     "assertion": "transparency_regions.no-private-columns",
     "actor": "A6",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "4 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_regions.no-private-columns",
+    "actor": "A7",
+    "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
+    "observed": "4 public column(s), none private",
+    "ok": true
+  },
+  {
+    "assertion": "transparency_regions.no-private-columns",
+    "actor": "A11",
     "expected": "none of: personal_id, birth_date, phone, referral_code, tc_accepted_at, verified_at, verified_by, review_note, pending_delegate_id, signup_ref_code",
     "observed": "4 public column(s), none private",
     "ok": true
@@ -4287,17 +4287,15 @@
     "assertion": "public_news.filter",
     "actor": "anon (A1)",
     "expected": "exactly the news rows matching status = 'published' and visibility = 'public'",
-    "observed": "4 shown, 4 should be, 2 withheld of 6",
+    "observed": "40 shown, 40 should be, 110 withheld of 150",
     "ok": true
   },
   {
     "assertion": "public_events.filter",
     "actor": "anon (A1)",
     "expected": "exactly the events rows matching status in ('published', 'cancelled')",
-    "observed": "6 shown, 6 should be, 0 withheld of 6",
-    "ok": true,
-    "unproven": true,
-    "why": "every events row passes this filter today, so a count match is also what a MISSING filter would produce — no negative case in the data"
+    "observed": "84 shown, 84 should be, 66 withheld of 150",
+    "ok": true
   },
   {
     "assertion": "public_delegates.filter",
@@ -4309,15 +4307,15 @@
   {
     "assertion": "public_stats.figures",
     "actor": "anon (A1)",
-    "expected": "active=1640, approved_delegates=13, registered_total=1915",
-    "observed": "active=1640, approved_delegates=13, registered_total=1915",
+    "expected": "active=1640, approved_delegates=13, registered_total=1927",
+    "observed": "active=1640, approved_delegates=13, registered_total=1927",
     "ok": true
   },
   {
     "assertion": "transparency_stats.figures",
     "actor": "anon (A1)",
-    "expected": "registered_members=1782 (status <> 'registered'), approved_delegates=13",
-    "observed": "registered_members=1782, approved_delegates=13",
+    "expected": "registered_members=1794 (status <> 'registered'), approved_delegates=13",
+    "observed": "registered_members=1794, approved_delegates=13",
     "ok": true
   },
   {
@@ -4329,28 +4327,14 @@
   },
   {
     "assertion": "escalation.admin_roles-insert",
+    "actor": "A3",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.admin_roles-insert",
     "actor": "A2",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.admin_roles-insert",
-    "actor": "A7",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.admin_roles-insert",
-    "actor": "A4",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.admin_roles-insert",
-    "actor": "A6",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
     "ok": true
@@ -4364,14 +4348,7 @@
   },
   {
     "assertion": "escalation.admin_roles-insert",
-    "actor": "A3",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.admin_roles-insert",
-    "actor": "A8",
+    "actor": "A6",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
     "ok": true
@@ -4385,7 +4362,28 @@
   },
   {
     "assertion": "escalation.admin_roles-insert",
+    "actor": "A4",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.admin_roles-insert",
+    "actor": "A7",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.admin_roles-insert",
     "actor": "A5",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.admin_roles-insert",
+    "actor": "A8",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"admin_roles\"",
     "ok": true
@@ -4413,20 +4411,6 @@
   },
   {
     "assertion": "escalation.payments-insert",
-    "actor": "A1",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
-    "actor": "A3",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
     "actor": "A5",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
@@ -4441,35 +4425,7 @@
   },
   {
     "assertion": "escalation.payments-insert",
-    "actor": "A12",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
-    "actor": "A11",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
-    "actor": "A6",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
-    "actor": "A10",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.payments-insert",
-    "actor": "A9",
+    "actor": "A1",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
     "ok": true
@@ -4483,7 +4439,49 @@
   },
   {
     "assertion": "escalation.payments-insert",
+    "actor": "A6",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
+    "actor": "A12",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
+    "actor": "A9",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
     "actor": "A8",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
+    "actor": "A11",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
+    "actor": "A10",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.payments-insert",
+    "actor": "A3",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"payments\"",
     "ok": true
@@ -4504,21 +4502,7 @@
   },
   {
     "assertion": "escalation.memberships-insert",
-    "actor": "A1",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.memberships-insert",
-    "actor": "A4",
-    "expected": "refused 42501; no row created",
-    "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
-    "ok": true
-  },
-  {
-    "assertion": "escalation.memberships-insert",
-    "actor": "A5",
+    "actor": "A10",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
@@ -4532,7 +4516,7 @@
   },
   {
     "assertion": "escalation.memberships-insert",
-    "actor": "A6",
+    "actor": "A4",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
@@ -4546,7 +4530,7 @@
   },
   {
     "assertion": "escalation.memberships-insert",
-    "actor": "A8",
+    "actor": "A7",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
@@ -4560,14 +4544,21 @@
   },
   {
     "assertion": "escalation.memberships-insert",
-    "actor": "A7",
+    "actor": "A8",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
   },
   {
     "assertion": "escalation.memberships-insert",
-    "actor": "A10",
+    "actor": "A5",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.memberships-insert",
+    "actor": "A1",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
@@ -4575,6 +4566,13 @@
   {
     "assertion": "escalation.memberships-insert",
     "actor": "A12",
+    "expected": "refused 42501; no row created",
+    "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
+    "ok": true
+  },
+  {
+    "assertion": "escalation.memberships-insert",
+    "actor": "A6",
     "expected": "refused 42501; no row created",
     "observed": "refused 42501: new row violates row-level security policy for table \"memberships\"",
     "ok": true
@@ -4605,6 +4603,1378 @@
     "actor": "service role (control check, not a probe actor)",
     "expected": "raises 'delegate_requires_completed_member'",
     "observed": "P0001: delegate_requires_completed_member",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_approve_delegate.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='delegate.approve', actor_id=caller)",
+    "observed": "audit_log #1602",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_approve_delegate.writes-audit-log",
+    "actor": "A10",
+    "expected": "a completed call leaves audit_log(action='delegate.approve', actor_id=caller)",
+    "observed": "audit_log #1603",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_cancel_event.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='event.cancel', actor_id=caller)",
+    "observed": "audit_log #1604",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_cancel_event.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='event.cancel', actor_id=caller)",
+    "observed": "audit_log #1605",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_close_poll.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='poll.close', actor_id=caller)",
+    "observed": "audit_log #1606",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_close_poll.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='poll.close', actor_id=caller)",
+    "observed": "audit_log #1607",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_event.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='event.delete', actor_id=caller)",
+    "observed": "audit_log #1609",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_event.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='event.delete', actor_id=caller)",
+    "observed": "audit_log #1608",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_news.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='news.delete', actor_id=caller)",
+    "observed": "audit_log #1610",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_news.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='news.delete', actor_id=caller)",
+    "observed": "audit_log #1611",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_poll.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='poll.delete', actor_id=caller)",
+    "observed": "audit_log #1612",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_delete_poll.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='poll.delete', actor_id=caller)",
+    "observed": "audit_log #1613",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='member.export', actor_id=caller)",
+    "observed": "audit_log #1614",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.writes-audit-log",
+    "actor": "A11",
+    "expected": "a completed call leaves audit_log(action='member.export', actor_id=caller)",
+    "observed": "audit_log #1615",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_grant_role.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='admin.grant_role', actor_id=caller)",
+    "observed": "audit_log #1616",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_open_poll.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='poll.open', actor_id=caller)",
+    "observed": "audit_log #1617",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_open_poll.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='poll.open', actor_id=caller)",
+    "observed": "audit_log #1618",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_publish_event.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='event.publish', actor_id=caller)",
+    "observed": "audit_log #1619",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_publish_event.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='event.publish', actor_id=caller)",
+    "observed": "audit_log #1620",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_publish_news.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='news.publish', actor_id=caller)",
+    "observed": "audit_log #1621",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_publish_news.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='news.publish', actor_id=caller)",
+    "observed": "audit_log #1622",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reassign_member.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='member.reassign', actor_id=caller)",
+    "observed": "audit_log #1624",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reassign_member.writes-audit-log",
+    "actor": "A10",
+    "expected": "a completed call leaves audit_log(action='member.reassign', actor_id=caller)",
+    "observed": "audit_log #1623",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_record_payment.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='payment.record', actor_id=caller)",
+    "observed": "audit_log #1625",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_record_payment.writes-audit-log",
+    "actor": "A11",
+    "expected": "a completed call leaves audit_log(action='payment.record', actor_id=caller)",
+    "observed": "audit_log #1626",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_record_payments_bulk.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='payment.bulk_record', actor_id=caller)",
+    "observed": "audit_log #1628",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_record_payments_bulk.writes-audit-log",
+    "actor": "A11",
+    "expected": "a completed call leaves audit_log(action='payment.bulk_record', actor_id=caller)",
+    "observed": "audit_log #1630",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reject_delegate.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='delegate.reject', actor_id=caller)",
+    "observed": "audit_log #1632",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reject_delegate.writes-audit-log",
+    "actor": "A10",
+    "expected": "a completed call leaves audit_log(action='delegate.reject', actor_id=caller)",
+    "observed": "audit_log #1631",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reveal_applicant_personal_id.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='delegate.reveal_personal_id', actor_id=caller)",
+    "observed": "audit_log #1634",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reveal_applicant_personal_id.writes-audit-log",
+    "actor": "A10",
+    "expected": "a completed call leaves audit_log(action='delegate.reveal_personal_id', actor_id=caller)",
+    "observed": "audit_log #1633",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_reveal_personal_id.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='member.reveal_personal_id', actor_id=caller)",
+    "observed": "audit_log #1635",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_revoke_role.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='admin.revoke_role', actor_id=caller)",
+    "observed": "audit_log #1636",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_event.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='event.save', actor_id=caller)",
+    "observed": "audit_log #1637",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_event.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='event.save', actor_id=caller)",
+    "observed": "audit_log #1638",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_news.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='news.save', actor_id=caller)",
+    "observed": "audit_log #1640",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_news.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='news.save', actor_id=caller)",
+    "observed": "audit_log #1639",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_poll.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='poll.save', actor_id=caller)",
+    "observed": "audit_log #1642",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_save_poll.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='poll.save', actor_id=caller)",
+    "observed": "audit_log #1641",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_set_news_image.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='news.set_image', actor_id=caller)",
+    "observed": "audit_log #1643",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_set_news_image.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='news.set_image', actor_id=caller)",
+    "observed": "audit_log #1644",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_unpublish_news.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='news.unpublish', actor_id=caller)",
+    "observed": "audit_log #1646",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_unpublish_news.writes-audit-log",
+    "actor": "A12",
+    "expected": "a completed call leaves audit_log(action='news.unpublish', actor_id=caller)",
+    "observed": "audit_log #1645",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_update_delegate_profile.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='delegate.update_profile', actor_id=caller)",
+    "observed": "audit_log #1647",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_update_delegate_profile.writes-audit-log",
+    "actor": "A10",
+    "expected": "a completed call leaves audit_log(action='delegate.update_profile', actor_id=caller)",
+    "observed": "audit_log #1648",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_update_setting.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='settings.update', actor_id=caller)",
+    "observed": "audit_log #1649",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_void_payment.writes-audit-log",
+    "actor": "A9",
+    "expected": "a completed call leaves audit_log(action='payment.void', actor_id=caller)",
+    "observed": "audit_log #1650",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_void_payment.writes-audit-log",
+    "actor": "A11",
+    "expected": "a completed call leaves audit_log(action='payment.void', actor_id=caller)",
+    "observed": "audit_log #1651",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A5",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A4",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A11",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A9",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A6",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A3",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A7",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A8",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A2",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A1",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A10",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A12",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:audit_log_immutable.no-rpc-route",
+    "actor": "A1 (GET route)",
+    "expected": "GET /rpc — not routable either (404 PGRST202)",
+    "observed": "404 {\"code\":\"PGRST202\",\"details\":\"Searched f",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A4",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A5",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A3",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A2",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A7",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A8",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A12",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A11",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A9",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A10",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A1",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A6",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:enforce_delegate_completed.no-rpc-route",
+    "actor": "A1 (GET route)",
+    "expected": "GET /rpc — not routable either (404 PGRST202)",
+    "observed": "404 {\"code\":\"PGRST202\",\"details\":\"Searched f",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A1",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A4",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A11",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A5",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A6",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A7",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A9",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A2",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A10",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A3",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A8",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A12",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:protect_profile_columns.no-rpc-route",
+    "actor": "A1 (GET route)",
+    "expected": "GET /rpc — not routable either (404 PGRST202)",
+    "observed": "404 {\"code\":\"PGRST202\",\"details\":\"Searched f",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A3",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A2",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A4",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A1",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A9",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A11",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A7",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A5",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A8",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A10",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A12",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A6",
+    "expected": "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+    "observed": "PGRST202",
+    "ok": true
+  },
+  {
+    "assertion": "function:set_updated_at.no-rpc-route",
+    "actor": "A1 (GET route)",
+    "expected": "GET /rpc — not routable either (404 PGRST202)",
+    "observed": "404 {\"code\":\"PGRST202\",\"details\":\"Searched f",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A4/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A2/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A7/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A5/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A10/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A1/super_admin",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A3/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A6/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A9/super_admin",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A12/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A8/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A11/super_admin",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A4/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A2/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A7/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A10/verifier",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A5/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A9/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A8/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A1/verifier",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A11/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A3/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A6/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A12/verifier",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A4/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A2/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A10/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A7/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A5/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A9/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A8/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A3/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A11/finance",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A6/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A12/finance",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A1/finance",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A4/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A2/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A10/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A7/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A5/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A9/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A8/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A3/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A6/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A12/editor",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A1/editor",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A4",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A2",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A7",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A10",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A5",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A9",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_admin_role.answers-truthfully",
+    "actor": "A11/editor",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A8",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A3",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A6",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A12",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A1",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A4",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A2",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A7",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A10",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A5",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A9",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:has_any_admin_role.answers-truthfully",
+    "actor": "A11",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A8",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A3",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A6",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A12",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A1",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A2",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A4",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A7",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A10",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A5",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A9",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_registered.answers-truthfully",
+    "actor": "A11",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A8",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A3",
+    "expected": "false",
+    "observed": "false",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A12",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A6",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A1",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "refused 42501",
+    "ok": true
+  },
+  {
+    "assertion": "function:is_completed_member.answers-truthfully",
+    "actor": "A11",
+    "expected": "true",
+    "observed": "true",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A4",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A3",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A2",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A1",
+    "expected": "refused 42501 (no grant to anon)",
+    "observed": "42501: permission denied for function admin_export_members",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A6",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A12",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A7",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A10",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A8",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A5",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A11",
+    "expected": "refused missing_role",
+    "observed": "P0001: missing_role",
+    "ok": true
+  },
+  {
+    "assertion": "function:admin_export_members.include-ids-super-admin-only",
+    "actor": "A9",
+    "expected": "super_admin: permitted",
+    "observed": "permitted",
     "ok": true
   }
 ]

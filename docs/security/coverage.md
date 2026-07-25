@@ -11,8 +11,9 @@ row-scope assertions: `row-scope.json` · expectations and their derivation:
 the `overrides` and `note` fields of `scripts/security/manifest.json` ·
 threats: `threat-model.md`.
 
-Later passes append their own sections: Pass 2b (functions, Task 7), Pass 2c
-(server actions, the dev-OTP endpoint, storage buckets — Task 8).
+Later passes append their own sections: **Pass 2b (the 54 database functions,
+Task 7 — appended below, §7–§15)**, Pass 2c (server actions, the dev-OTP
+endpoint, storage buckets — Task 8).
 
 ---
 
@@ -414,6 +415,12 @@ is safe. Flagged for Pass 3.
   *invoke* them directly is a `function`-kind question and belongs to Task 7.
   Task 4's result (PGRST202 for all 48 cells) is an API-gateway behaviour, not
   a database control, and should not be filed as a defence.
+  **SETTLED BY PASS 2b — see §10 below: the candidate finding is disproved.**
+  The backstop is not the gateway at all; PostgreSQL's own call handler refuses
+  a `returns trigger` function in any non-trigger context, for any role, grant
+  or no grant (`select public.set_updated_at()` as the `postgres` superuser →
+  `trigger functions can only be called as triggers`). Revoking the grant
+  remains correct hygiene for Task 12, but nothing is exploitable.
 - **A draft event, so `public_events`' filter has a negative case** (§3.6) —
   the one assertion here that distinguishes nothing. A fixture gap, not a
   result.
@@ -439,3 +446,355 @@ that own them:
 Nothing else was written. Every other depth probe either was refused or used
 a payload equal to the target row's existing value, so no content changed
 anywhere in the database as a result of this pass.
+
+---
+
+# Pass 2b (Task 7) — the 54 database functions
+
+**54 surfaces × 12 actor positions = 648 graded cells.** 48 `security definer`
+gatekeepers plus the 6 plain (security-invoker) helpers, every expectation read
+from the **live** catalog on 2026-07-25 — `pg_get_function_identity_arguments`
+for the signature, `prosrc` for the gate, `proacl` for the grant — never from
+the first migration that mentions a function. No cell in this section is
+rule-derived; all 648 carry a stated `overrides` entry and a `note` in
+`scripts/security/manifest.json`.
+
+**Result: 574 clear, 0 findings, 74 needs-live-proof.** The whole matrix
+(1,824 cells across all eight surface kinds) now holds **zero findings**. Two
+independent full runs produced **identical verdicts in all 1,824 cells** —
+which is the point of the isolation scheme below, since a finding that cannot
+be reproduced is not a finding.
+
+The 38 "findings" the previous ledger carried on this kind were every one of
+them a fail-closed placeholder: `defaultExpectation()` returns `deny` for any
+function it cannot classify by name, so `cabinet_state`, `is_registered`,
+`is_completed_member`, `delegate_panel`, `delegate_team` and
+`delegate_team_rsvps` succeeding for the actors they are *supposed* to serve
+was recorded as a breach. None survived contact with a stated expectation.
+
+## 7. What made this pass different: arguments and isolation
+
+**Arguments.** Task 4 called every function with `{}`, and 504 of these 648
+cells came back `PGRST202`. That is not a security result — `judge()`
+deliberately refuses to let a not-found code clear a deny expectation, because
+a malformed probe would otherwise launder itself into a false all-clear on
+exactly the surfaces the audit exists to check. The fix is
+`scripts/security/arguments.mjs`: one valid argument object per function, built
+for a caller who *should* succeed, then used unchanged by all twelve actors, so
+the only variable across a row of the grid is who is calling. All 504 resolved.
+
+**Isolation.** These functions really do things — approve a delegate, record a
+payment, close a poll, delete news — and the actors who are supposed to succeed
+do succeed, so every probe changes the state the next one runs against.
+Transaction rollback is not available (each RPC is its own transaction over
+PostgREST and the client cannot wrap it), so freshness is the mechanism:
+
+- **Twelve disposable victim members, one bound to each actor slot.** A9's
+  probes only ever touch victim 9, A10's only victim 10. The twelve actors are
+  probed in parallel and never contend for a row.
+- **`setup()` re-mints the exact row the call will act on, immediately before
+  each individual (function, actor) probe** — a pending delegate, a draft poll,
+  an unvoided payment. All twelve therefore attack an identical *fresh* target
+  and the twelfth result is comparable to the first.
+- **`teardown()` runs immediately after**, and only ever removes rows this task
+  minted seconds earlier. It never touches `audit_log`, which is append-only.
+- Where the **caller is the target** and no fresh caller can be minted, the
+  probe is made *content-neutral* instead: `member_change_tier` passes the tier
+  the caller already holds; `member_change_delegate` passes the delegate they
+  already have, which takes the body's own documented "same target: no-op, no
+  history row minted" branch. This is what makes A9–A12 safe to probe for real
+  on the member RPCs.
+
+Verified afterwards, live: **all twelve actors are in exactly their pre-run
+standing**, and all twelve victims are back to baseline — no `delegates` row,
+no `admin_roles` row, no payments, one open membership. The two probes that
+genuinely mutate their caller (`register` for A2, `become_member_save_profile`
+for A3) are read-then-restore, so neither A2's "signed in, no profile" standing
+nor A3's "registered" standing depends on probe order.
+
+## 8. The table
+
+`C` = clear · `F` = finding · `?` = needs-live-proof. **Bold** = the
+expectation for that cell is `allow`; plain = `deny`.
+
+| function | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | A9 | A10 | A11 | A12 | expectation |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | --- |
+| `active_coverage` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `active_grace_days` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `active_sweep` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `admin_approve_delegate` | C | C | C | C | C | C | C | C | **C** | **C** | C | C | allow A9,A10 |
+| `admin_cancel_event` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_close_poll` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_delete_event` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_delete_news` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_delete_poll` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_export_members` | C | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
+| `admin_grant_role` | C | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
+| `admin_open_poll` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_publish_event` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_publish_news` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_reassign_member` | C | C | C | C | C | C | C | C | **C** | **C** | C | C | allow A9,A10 |
+| `admin_record_payment` | C | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
+| `admin_record_payments_bulk` | C | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
+| `admin_reject_delegate` | C | C | C | C | C | C | C | C | **C** | **C** | C | C | allow A9,A10 |
+| `admin_reveal_applicant_personal_id` | C | C | C | C | C | C | C | C | **C** | **C** | C | C | allow A9,A10 |
+| `admin_reveal_personal_id` | C | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
+| `admin_revoke_role` | C | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
+| `admin_save_event` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_save_news` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_save_poll` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_set_news_image` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_unpublish_news` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
+| `admin_update_delegate_profile` | C | C | C | C | C | C | C | C | **C** | **C** | C | C | allow A9,A10 |
+| `admin_update_setting` | C | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
+| `admin_void_payment` | C | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
+| `audit_log_immutable` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
+| `become_member_complete` | C | **?** | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `become_member_save_profile` | C | **?** | **C** | **?** | **?** | **?** | **?** | **?** | **?** | **?** | **?** | **?** | allow A2–A12 |
+| `cabinet_state` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `delegate_panel` | C | C | C | C | C | **C** | **C** | **C** | C | C | C | C | allow A6,A7,A8 |
+| `delegate_team` | C | C | C | C | C | C | **C** | C | C | C | C | C | allow A7 |
+| `delegate_team_rsvps` | C | C | C | C | C | C | **C** | C | C | C | C | C | allow A7 |
+| `enforce_delegate_completed` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
+| `gen_funnel_code` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `has_admin_role` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `has_any_admin_role` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `is_completed_member` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `is_registered` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `member_cast_vote` | C | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `member_change_delegate` | C | ? | ? | **C** | **C** | **C** | C | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A8,A9,A10,A11,A12 |
+| `member_change_tier` | C | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `member_rsvp` | C | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `protect_profile_columns` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
+| `recompute_all_active` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `recompute_member_active` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `register` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `request_delegacy` | C | C | C | **C** | **C** | **?** | **?** | **?** | **?** | **?** | **?** | **?** | allow A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `send_sms_hook` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `set_updated_at` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
+| `tbilisi_today` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+
+### 8.1 What the grid shows about RBAC
+
+The whole purpose of four separate admin roles is that A10 can approve a
+delegate and A11 cannot. Every one of those separations was probed with the
+same fresh, valid target, so a hole would have shown as a completed call:
+
+| the boundary | probed as | result |
+| --- | --- | --- |
+| verifier cannot read a member's personal ID | A10 → `admin_reveal_personal_id` | `missing_role` |
+| verifier cannot record or void a payment | A10 → the four finance functions | `missing_role` |
+| finance cannot approve or reject a delegate | A11 → the five verifier functions | `missing_role` |
+| finance cannot touch news, events or polls | A11 → the thirteen editor functions | `missing_role` |
+| editor cannot record a payment or export members | A12 → the four finance functions | `missing_role` |
+| editor cannot grant itself a role | A12 → `admin_grant_role` | `missing_role` |
+| no admin below super_admin may grant/revoke roles or change settings | A10, A11, A12 → the four super_admin-only functions | `missing_role` |
+| a pending or rejected delegate gets no team PII | A6, A8 → `delegate_team`, `delegate_team_rsvps` | `not_approved` |
+| an approved delegate holds no membership | A7 → `member_change_delegate` | `not_a_member` |
+| anonymous reaches no `authenticated`-granted function | A1 → all 46 of them | `42501` |
+
+`admin_reveal_personal_id` deserves a line of its own: it is `super_admin`-ONLY
+(a single `has_admin_role` check, no `has_any_admin_role` fallback), and it does
+**not** share verifier's grant on `admin_reveal_applicant_personal_id` despite
+the shared `admin_reveal_` prefix. A10 is refused by it and admitted by the
+other. Both were probed; both behaved.
+
+## 9. The audit-log invariant
+
+A function that mutates admin-visible state without leaving an `audit_log` row
+is a finding regardless of its access control — the platform's whole
+accountability story is that every admin act is attributable afterwards.
+
+Graded against what the census **actually did**, not by re-invoking anything:
+the `audit_log` high-water mark is read before the matrix, and every `admin_*`
+cell that came back with no error must have a matching row in the slice after
+it, carrying that function's own action string **and naming the calling actor
+as `actor_id`**.
+
+**48 assertions, all holding** — all 26 audit-writing admin functions, once per
+actor that completed the call (22 × 2 role-holders + 4 super_admin-only × 1).
+Recorded by name in `docs/security/row-scope.json` as
+`function:<name>.writes-audit-log`, each carrying the `audit_log` id it matched.
+A wrong action string or a row attributed to the wrong actor fails here rather
+than passing on a count.
+
+## 10. The four `returns trigger` functions — settled
+
+Task 4 (§5.4 candidate 3) and Pass 2a both left this open: nothing revokes the
+default `EXECUTE`-to-`PUBLIC` grant on `audit_log_immutable`,
+`enforce_delegate_completed`, `protect_profile_columns` and `set_updated_at` —
+live `proacl` still shows `=X/postgres` on all four, so on paper `anon` holds
+real, unrevoked, database-level permission to call them — and the only thing
+observed standing in the way was PostgREST filtering trigger-returning
+functions out of its schema cache, *an API-gateway behaviour, not a database
+control*. Pass 2a proved the four **fire correctly when reached**; what was
+unsettled was whether a client can reach them at all.
+
+**It is not a gateway behaviour. The candidate finding is disproved.**
+
+1. **No PostgREST route reaches them.** Both routes the gateway offers were
+   probed: `POST /rpc/<name>` for all four functions from all twelve actors
+   (48 attempts), and `GET /rpc/<name>` anonymously (4 attempts). Every one
+   answers `404 PGRST202`. Recorded as `function:<name>.no-rpc-route`
+   (13 rows each: 12 actors + the GET route).
+2. **No route reaches them, full stop — because PostgreSQL itself refuses.**
+   Run directly against the database on a pooler connection as the `postgres`
+   superuser, with no gateway involved and every privilege in hand:
+
+   ```
+   select public.set_updated_at();
+   ERROR:  trigger functions can only be called as triggers
+   ```
+
+   Identical for `audit_log_immutable`. That is the PL/pgSQL call handler
+   refusing a `returns trigger` function in **any** non-trigger context, for
+   **any** role, grant or no grant. The `EXECUTE`-to-`PUBLIC` grant is
+   therefore *unusable*, not merely *unrouted*, and the backstop is
+   PostgreSQL's type system rather than PostgREST's schema cache.
+
+**Verdict: not exploitable, and not dependent on the gateway.** Revoking the
+grant would still be correct hygiene — it removes a misleading `proacl` entry
+and would matter if a future migration ever changed one of these to return
+something other than `trigger` — but it is a tidiness item for Task 12, not a
+hole. The four surfaces' 48 ledger cells nevertheless remain `?`: see §12.
+
+## 11. The six plain helpers — answers, not just reachability
+
+The helpers are not doors, which is exactly why they are easy to skip. But
+`has_admin_role` is consulted by 26 of the 48 gatekeepers, and if it ever
+answered `true` for the wrong caller every one of them would open at once —
+and each door would simply report "allowed", exactly as its `allow` expectation
+predicts. Probing the doors could never reveal it.
+
+So the four callable helpers are graded against **ground truth read
+service-side**, per actor:
+
+| assertion | rows | result |
+| --- | --- | --- |
+| `has_admin_role.answers-truthfully` | 48 (12 actors × 4 roles) | every answer matches `admin_roles`; A1 refused `42501` |
+| `has_any_admin_role.answers-truthfully` | 12 | matches "holds any of the four roles" |
+| `is_registered.answers-truthfully` | 12 | matches "a `profiles` row exists for `auth.uid()`" |
+| `is_completed_member.answers-truthfully` | 12 | matches `registration_completed_at is not null` |
+
+No helper over-reports. A10 (verifier) gets `false` for `super_admin`; A5
+(plain member) gets `false` for all four; A9 gets `true` only for `super_admin`.
+
+The other two plain helpers are not callable by any client: `gen_funnel_code`
+and `tbilisi_today` carry no `anon`/`authenticated` grant (**`tbilisi_today` was
+confirmed rather than assumed: real `42501` for all twelve, including all four
+admins**), and their behaviour is established through the gatekeepers that
+depend on them — `gen_funnel_code` through `become_member_complete` and
+`request_delegacy` minting well-formed codes, `tbilisi_today` through
+`admin_record_payment`'s date gate accepting today and the seeded
+`active_grace_days` round-tripping through `admin_update_setting`.
+
+## 12. `admin_export_members` — the two argument variants
+
+The roster export is the most sensitive call in the schema, and its
+`p_include_ids` flag is not an ordinary parameter: it is a **second, narrower
+gate inside the same body**, super_admin-only (spec decision #6), raising the
+**same `missing_role` token** as the primary gate — but *after* finance has
+already been admitted.
+
+That makes it un-gradable as a single cell. A11's surface expectation is
+correctly `allow`; `missing_role` is a REFUSAL token; so `judge()` would assert
+an over-restriction **finding against correct, spec'd behaviour**, on the
+roster-plus-personal-IDs probe of all things. Both variants are therefore
+probed, in the two places that can each express what they mean:
+
+- **`p_include_ids: false`** is the census cell — A9 and A11 permitted, the
+  other ten refused.
+- **`p_include_ids: true`** is graded by name for all twelve, as
+  `function:admin_export_members.include-ids-super-admin-only`: **A9 permitted;
+  A1 refused `42501`; A2–A8 and A10–A12 refused `missing_role`** — including
+  A11, the finance role that is admitted at the primary gate. Personal IDs are
+  super_admin-only in practice, not just on paper.
+
+Both probes pass `p_search: "SECAUDIT"`, which narrows the result set to this
+task's own synthetic victims: the same code path, without pulling the live
+roster's phones and names into the runner's memory.
+
+## 13. The 74 cells that stay `needs-live-proof`
+
+None is an argument defect — every one was invoked with valid arguments against
+a fresh target. They fall into three groups, and all three are properties of
+the *grading rule*, not gaps in the probe.
+
+**(a) 48 cells — the four trigger functions × 12 actors.** `PGRST202`.
+`judge()` routes any not-found code to `needs-live-proof` on both sides, on the
+stated grounds that a not-found "can only mean OUR call was malformed". For a
+zero-argument function called with no arguments that premise does not hold, but
+`judge()` receives only `(expectation, outcome, kind)` and cannot tell the two
+apart. Settled by named assertion instead (§10); escalated to Pass 3 as a
+`verdict.ts` precision item, not as a security question.
+
+**(b) 19 cells — the caller was admitted and then correctly refused by a
+business rule.** `become_member_save_profile` × A4–A12 (`already_completed`) and
+× A2 (`profile_incomplete`); `become_member_complete` × A2, A3
+(`profile_incomplete`); `request_delegacy` × A6, A7, A8 (`delegacy_exists`), and
+× A9–A12 (not invoked, see (c)). Each of these functions gates on
+`not_authenticated` alone, so the actor's expectation is honestly `allow` — and
+`judge()` routes `allow` + a post-gate token to `needs-live-proof` by design,
+because a validation error says nothing about who may reach the surface. Forcing
+these to `deny` would produce nine false findings on `become_member_save_profile`
+alone. The gates themselves are proven by the actors who *are* refused at them.
+
+**(c) 7 cells — deliberately unclassified refusal tokens, plus one
+abstention.** `not_completed` on `member_change_tier` ×A2,A3,
+`member_change_delegate` ×A2,A3, `member_cast_vote` ×A2,A3 and `member_rsvp`
+×A2 is a **caller-standing** gate in those four functions — the actor did not
+get in — but `verdict.ts` leaves the token unclassified because the identical
+text means a *target*-state validation in `admin_record_payment`. The refusal is
+real; the classifier declines to grade it. Separately, `request_delegacy` ×
+A9–A12 is the audit's single abstention: it writes on the **caller**, and A9–A12
+are the canonical staging admins this audit must not mutate. Recorded with the
+documented `SKIP-MUTATING` sentinel rather than guessed.
+
+## 14. Escalated to Pass 3
+
+1. **`verdict.ts` cannot express "admitted, then correctly refused by a business
+   rule."** It is the single root cause of 67 of the 74 unresolved cells, and it
+   is the same defect the brief flagged on `admin_export_members`. Two concrete,
+   low-risk precision fixes, both for Task 9/12 rather than this pass (which owns
+   no file in `lib/security/`): pass the surface name into `judge()` so a token
+   can be classified per function (`not_completed` is a standing gate in the four
+   member RPCs and a target validation in `admin_record_payment`); and reclassify
+   `already_completed` — it is raised on the CALLER's own standing, immediately
+   after the profile lookup and before any payload is touched, which is
+   `verdict.ts`'s own stated criterion for `REFUSAL_TOKENS` membership, not
+   `POST_GATE_TOKENS`.
+2. **`PGRST202` on a zero-argument function is not an argument mismatch.** A
+   surface that PostgREST structurally will not route is a different fact from a
+   probe that got the signature wrong, and only the ledger can currently tell
+   them apart (by the surface's `note`).
+3. **`request_delegacy` × A9–A12** — the one uninvoked group. Resolvable in a
+   throwaway environment where mutating a seeded admin costs nothing.
+4. **Revoke `EXECUTE` from `PUBLIC` on the four trigger functions** (§10) —
+   hygiene, not a hole, now that the refusal is known to be PostgreSQL's own.
+
+## 15. Fixtures and residue
+
+Every id this pass minted is in `docs/security/residue.json` (364 rows on a
+warm run; 375 on the first, the difference being the twelve `auth.users`
+created once). Task 13 uses it to separate what the reseed removed from what
+the append-only `audit_log` made permanent.
+
+- **12 disposable victim members** (`auth.users` + `profiles`, phones
+  `+9955090020001..0012`, tagged `security-audit-2026-07`) — created once,
+  reused and reset across runs so repeated audits do not accumulate identities.
+- **Per-(function, actor) targets**, minted fresh and — where the probe would
+  otherwise change standing — removed again: 50 `delegates` rows, 48 `events`,
+  48 `polls` + 96 `poll_options`, 48 `news`, 24 `memberships`, 24 `admin_roles`,
+  12 `payments`.
+- **`admin_roles` residue is zero by construction.** A granted role is a real
+  admin account on staging, so `admin_grant_role`'s teardown revokes it the
+  instant the probe returns, whatever the verdict was. Confirmed live after the
+  run: no victim holds a role.
+- **`audit_log` rows written by successful probes are NOT residue and are not
+  listed for removal.** They are permanent by design — that is the invariant
+  §9 exists to check.
+
+The rows that stay are the drafts and disposable content the *successful*
+admin calls left behind (a published news item, a cancelled event, a closed
+poll, and so on). All carry `SECAUDIT` in their title or question and are swept
+by the end-of-phase reseed.

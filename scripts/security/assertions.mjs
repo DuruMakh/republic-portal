@@ -102,8 +102,9 @@
  * docs/security/coverage.md §4.1; it needs a direct database connection, which
  * this runner deliberately does not have.
  */
-import { db } from "./db.mjs";
+import { db, url, anonKey } from "./db.mjs";
 import { actorClient, auditTeamMember } from "./actors.mjs";
+import { AUDIT_ACTIONS } from "./arguments.mjs";
 
 const ACTORS_ALL = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"];
 
@@ -733,7 +734,292 @@ async function delegateTriggerAssertion(actorIds) {
  * twelve-actor fan-out inside each family stays parallel; the census is not a
  * hot path and correctness beats the few seconds.
  */
-export async function runRowScopeAssertions({ clients, actorIds, fixtures }) {
+// ===========================================================================
+// Task 7 families — the four questions a per-actor verdict structurally
+// cannot carry for the 54 database functions.
+// ===========================================================================
+
+/** The highest audit_log id right now. Read BEFORE the matrix runs. */
+export async function auditLogHighWaterMark() {
+  const { data, error } = await db
+    .from("audit_log")
+    .select("id")
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`audit_log high-water mark read failed: ${error.message}`);
+  return data?.id ?? 0;
+}
+
+/**
+ * THE AUDIT-LOG INVARIANT. A function that mutates admin-visible state without
+ * leaving an audit_log row is a finding regardless of its access control —
+ * the platform's whole accountability story (spec §3.7) is that every admin
+ * act is attributable afterwards.
+ *
+ * Checked against what the census ACTUALLY did rather than by re-invoking
+ * anything: every admin_* cell that came back with no error is a completed
+ * admin act, so the matching row must exist, carry the action string that
+ * function writes, and name the calling actor as actor_id. Reading the whole
+ * post-baseline slice once (one query) also means a function that wrote SOME
+ * OTHER action, or wrote it under the wrong actor_id, fails here rather than
+ * passing on a count.
+ */
+async function auditLogInvariantAssertions(baselineId, ledgerRows, surfaceById, actorIds) {
+  const { data, error } = await db
+    .from("audit_log")
+    .select("id, actor_id, action")
+    .gt("id", baselineId)
+    .order("id");
+  if (error) throw new Error(`audit_log slice read failed: ${error.message}`);
+  const written = data ?? [];
+
+  const out = [];
+  for (const cell of ledgerRows) {
+    const surface = surfaceById.get(cell.surfaceId);
+    if (!surface || surface.kind !== "function") continue;
+    const action = AUDIT_ACTIONS[surface.name];
+    if (!action) continue; // not an audit-writing function; nothing to assert
+    if (cell.outcome.errorCode !== null) continue; // the call never completed
+
+    const uid = actorIds[cell.actor];
+    const hit = written.find((r) => r.action === action && r.actor_id === uid);
+    out.push(
+      row(
+        `${surface.id}.writes-audit-log`,
+        cell.actor,
+        `a completed call leaves audit_log(action='${action}', actor_id=caller)`,
+        hit ? `audit_log #${hit.id}` : "NO MATCHING audit_log ROW",
+        Boolean(hit),
+      ),
+    );
+  }
+
+  // A vacuous pass is not a pass: if no admin call succeeded this run there is
+  // nothing to have audited, and that must be visible rather than silent.
+  if (out.length === 0) {
+    out.push(
+      row(
+        "audit-log-invariant",
+        "all",
+        "at least one completed admin call to check",
+        "no admin_* cell completed this run",
+        true,
+        {
+          unproven: true,
+          why: "no admin function completed for any actor, so the invariant was never exercised",
+        },
+      ),
+    );
+  }
+  return out;
+}
+
+/**
+ * THE FOUR `returns trigger` FUNCTIONS. Task 4 left these as a candidate
+ * finding: nothing revokes their default EXECUTE-to-PUBLIC grant (live proacl
+ * shows `=X/postgres` on all four), so on paper `anon` holds real, unrevoked,
+ * database-level permission to call them, and only PostgREST's schema-cache
+ * filtering — "a gateway behaviour, not a database control" — was standing in
+ * the way.
+ *
+ * This family settles the client half: every route PostgREST exposes, from
+ * every actor. The database half cannot be asked from a PostgREST client at
+ * all and was settled separately, by running `select public.set_updated_at()`
+ * on a direct connection as the `postgres` superuser — it fails with `trigger
+ * functions can only be called as triggers`, which is the PL/pgSQL call
+ * handler refusing a trigger-returning function in any non-trigger context,
+ * for any role, grant or no grant. Recorded in .superpowers/sdd/task-7-report.md
+ * with the command and its output.
+ */
+const TRIGGER_FUNCTIONS = [
+  "audit_log_immutable",
+  "enforce_delegate_completed",
+  "protect_profile_columns",
+  "set_updated_at",
+];
+
+async function triggerFunctionAssertions(clients) {
+  const out = [];
+  for (const fn of TRIGGER_FUNCTIONS) {
+    await Promise.all(
+      ACTORS_ALL.map(async (actor) => {
+        const { error } = await clients[actor].rpc(fn, {});
+        out.push(
+          row(
+            `function:${fn}.no-rpc-route`,
+            actor,
+            "POST /rpc — not routable (PGRST202); a trigger function is not an RPC surface",
+            error ? `${error.code}` : "CALL SUCCEEDED",
+            error?.code === "PGRST202",
+          ),
+        );
+      }),
+    );
+    // The other route PostgREST offers. Probed anonymously — the weakest
+    // caller is the one that matters for "can anything reach this".
+    const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+      method: "GET",
+      headers: { apikey: anonKey },
+    });
+    const body = await res.text();
+    out.push(
+      row(
+        `function:${fn}.no-rpc-route`,
+        "A1 (GET route)",
+        "GET /rpc — not routable either (404 PGRST202)",
+        `${res.status} ${body.slice(0, 40)}`,
+        res.status === 404 && body.includes("PGRST202"),
+      ),
+    );
+  }
+  return out;
+}
+
+/**
+ * THE SIX HELPERS' ANSWERS, not just their reachability. `has_admin_role` is
+ * consulted by 26 of the 48 gatekeepers; if it ever answered `true` for the
+ * wrong caller, every one of them would open at once and no amount of probing
+ * the DOORS would show it — each door would simply report "allowed", exactly
+ * as an allow expectation predicts. So the helper is graded against ground
+ * truth read service-side from admin_roles, per actor, per role.
+ */
+async function helperTruthAssertions(clients, actorIds) {
+  const { data, error } = await db.from("admin_roles").select("user_id, role");
+  if (error) throw new Error(`admin_roles ground-truth read failed: ${error.message}`);
+  const held = new Map();
+  for (const r of data ?? []) {
+    if (!held.has(r.user_id)) held.set(r.user_id, new Set());
+    held.get(r.user_id).add(r.role);
+  }
+
+  const { data: profiles, error: profileError } = await db
+    .from("profiles")
+    .select("id, registration_completed_at");
+  if (profileError) throw new Error(`profiles ground-truth read failed: ${profileError.message}`);
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const ROLES = ["super_admin", "verifier", "finance", "editor"];
+  const out = [];
+  await Promise.all(
+    ACTORS_ALL.map(async (actor) => {
+      const uid = actorIds[actor];
+      const mine = held.get(uid) ?? new Set();
+
+      for (const role of ROLES) {
+        const { data: answer, error: callError } = await clients[actor].rpc("has_admin_role", {
+          p_role: role,
+        });
+        const truth = Boolean(uid) && mine.has(role);
+        // A1 holds no EXECUTE grant at all, so a refusal is the right answer
+        // for it and is graded as such rather than as a wrong boolean.
+        const ok = callError ? actor === "A1" && callError.code === "42501" : answer === truth;
+        out.push(
+          row(
+            "function:has_admin_role.answers-truthfully",
+            `${actor}/${role}`,
+            actor === "A1" ? "refused 42501 (no grant to anon)" : `${truth}`,
+            callError ? `refused ${callError.code}` : `${answer}`,
+            ok,
+          ),
+        );
+      }
+
+      const { data: anyAnswer, error: anyError } = await clients[actor].rpc("has_any_admin_role", {
+        p_roles: ROLES,
+      });
+      const anyTruth = mine.size > 0;
+      out.push(
+        row(
+          "function:has_any_admin_role.answers-truthfully",
+          actor,
+          actor === "A1" ? "refused 42501 (no grant to anon)" : `${anyTruth}`,
+          anyError ? `refused ${anyError.code}` : `${anyAnswer}`,
+          anyError ? actor === "A1" && anyError.code === "42501" : anyAnswer === anyTruth,
+        ),
+      );
+
+      const profile = profileById.get(uid);
+      for (const [fn, truth] of [
+        ["is_registered", Boolean(profile)],
+        ["is_completed_member", Boolean(profile?.registration_completed_at)],
+      ]) {
+        const { data: answer, error: callError } = await clients[actor].rpc(fn, {});
+        out.push(
+          row(
+            `function:${fn}.answers-truthfully`,
+            actor,
+            actor === "A1" ? "refused 42501 (no grant to anon)" : `${truth}`,
+            callError ? `refused ${callError.code}` : `${answer}`,
+            callError ? actor === "A1" && callError.code === "42501" : answer === truth,
+          ),
+        );
+      }
+    }),
+  );
+  return out;
+}
+
+/**
+ * `admin_export_members(p_include_ids => true)` — the roster-plus-personal-IDs
+ * export, the single most sensitive call in this schema.
+ *
+ * It cannot be the census cell for that surface. The body admits finance at
+ * its primary gate and then raises the SAME `missing_role` token at a second,
+ * narrower super_admin-only check (spec decision #6). `missing_role` is a
+ * REFUSAL token, so judging A11 (whose surface expectation is correctly
+ * `allow`) against that outcome makes judge() assert a finding on behaviour
+ * that is exactly right. The census cell therefore probes the `false` variant
+ * and the `true` variant is graded here, by name, for all twelve — which is
+ * also the only place the distinction is visible as a distinction.
+ */
+async function exportIncludeIdsAssertions(clients) {
+  const args = {
+    p_search: "SECAUDIT",
+    p_region_id: null,
+    p_status: null,
+    p_include_ids: true,
+  };
+  const out = [];
+  await Promise.all(
+    ACTORS_ALL.map(async (actor) => {
+      const { error } = await clients[actor].rpc("admin_export_members", args);
+      if (actor === "A9") {
+        out.push(
+          row(
+            "function:admin_export_members.include-ids-super-admin-only",
+            actor,
+            "super_admin: permitted",
+            error ? `refused ${error.code}: ${error.message}` : "permitted",
+            !error,
+          ),
+        );
+        return;
+      }
+      const refused =
+        error?.code === "42501" || (error?.code === "P0001" && error.message === "missing_role");
+      out.push(
+        row(
+          "function:admin_export_members.include-ids-super-admin-only",
+          actor,
+          actor === "A1" ? "refused 42501 (no grant to anon)" : "refused missing_role",
+          error ? `${error.code}: ${error.message}` : "PERMITTED — personal IDs exported",
+          refused,
+        ),
+      );
+    }),
+  );
+  return out;
+}
+
+export async function runRowScopeAssertions({
+  clients,
+  actorIds,
+  fixtures,
+  auditBaselineId,
+  ledgerRows,
+  surfaceById,
+}) {
   const families = [
     () => ownershipAssertions(clients, actorIds),
     () => sealedAssertions(clients),
@@ -746,6 +1032,11 @@ export async function runRowScopeAssertions({ clients, actorIds, fixtures }) {
     () => protectedColumnAssertion(),
     () => auditLogTriggerAssertion(fixtures),
     () => delegateTriggerAssertion(actorIds),
+    // Task 7
+    () => auditLogInvariantAssertions(auditBaselineId, ledgerRows, surfaceById, actorIds),
+    () => triggerFunctionAssertions(clients),
+    () => helperTruthAssertions(clients, actorIds),
+    () => exportIncludeIdsAssertions(clients),
   ];
   const out = [];
   for (const family of families) out.push(...(await family()));
