@@ -111,7 +111,7 @@
     "layer": "app",
     "overrides": {
       "A1": "deny",
-      "A2": "allow",
+      "A2": "deny",
       "A3": "allow",
       "A4": "allow",
       "A5": "allow",
@@ -123,7 +123,7 @@
       "A11": "allow",
       "A12": "allow"
     },
-    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the become_member_complete() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A4-A12 hit the early return for an already-completed caller: the gate was passed, but the tier write, the membership insert and the gen_funnel_code loop never ran (Pass 2b §7.2)."
+    "note": "CORRECTED BY TASK 10 (Pass 4, F11): A2 moved allow -> deny. Envelope over the become_member_complete() RPC, and this entry inherits that function's allow-set -- including the correction. The RPC's live body runs a SECOND caller-standing gate right after the auth gate (`if not found then raise 'profile_incomplete'`), and A2 holds a session but no profiles row (verified live 2026-07-26), so the envelope cannot admit A2 either. Allow A3-A12. A4-A12 hit the early return for an already-completed caller: the gate was passed, but the tier write, the membership insert and the gen_funnel_code loop never ran (Pass 2b §7.2)."
   },
   {
     "id": "action:confirmBulkAction",
@@ -573,7 +573,7 @@
     "layer": "app",
     "overrides": {
       "A1": "deny",
-      "A2": "allow",
+      "A2": "deny",
       "A3": "allow",
       "A4": "allow",
       "A5": "allow",
@@ -585,7 +585,7 @@
       "A11": "allow",
       "A12": "allow"
     },
-    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the become_member_save_profile() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A4-A12 are already completed, so they reach the RPC and are stopped by already_completed — a POST-GATE token, which on the allow side is proof the gate admitted them."
+    "note": "CORRECTED BY TASK 10 (Pass 4, F11): A2 moved allow -> deny. Envelope over the become_member_save_profile() RPC, and this entry inherits that function's allow-set -- including the correction. The RPC's live body runs a SECOND caller-standing gate right after the auth gate (`if not found then raise 'profile_incomplete'`), and A2 holds a session but no profiles row (verified live 2026-07-26), so the envelope cannot admit A2 either. Allow A3-A12. A4-A12 are already completed, so they reach the RPC and are stopped by already_completed — a POST-GATE token, which on the allow side is proof the gate admitted them."
   },
   {
     "id": "action:saveNewsAction",
@@ -1497,7 +1497,7 @@
     "layer": "db",
     "overrides": {
       "A1": "deny",
-      "A2": "allow",
+      "A2": "deny",
       "A3": "allow",
       "A4": "allow",
       "A5": "allow",
@@ -1509,7 +1509,7 @@
       "A11": "allow",
       "A12": "allow"
     },
-    "note": "Gate: not_authenticated only. A4-A12 hit the early `return cabinet_state()` for an already-completed profile -- admitted, no error, no mutation. A2/A3 reach profile_incomplete, which verdict.ts leaves unclassified for the same ambiguity reason as not_completed."
+    "note": "CORRECTED BY TASK 10 (Pass 4, F11). The gate is NOT not_authenticated only: the live body runs a SECOND caller-standing gate immediately after it -- `select * into v_profile from public.profiles where id = v_uid; if not found then raise 'profile_incomplete'`. A2 holds a session but no profiles row (verified live 2026-07-26), so A2 is REFUSED by that gate; its expectation is therefore deny, not allow. The token profile_incomplete appears TWICE in this body (live prosrc: x2) -- once as gate 2 above and once as the post-gate field check on birth_date/region_id/city_id/employment -- which is exactly why verdict.ts must leave it unclassified: its meaning depends on position. A3 has a profiles row with all four fields null, so A3 passes gate 2 and is refused by the POST-gate check; A3's allow is correct. A4-A12 hit the early `return cabinet_state()` for an already-completed profile -- admitted, no error, no mutation."
   },
   {
     "id": "function:become_member_save_profile",
@@ -1518,7 +1518,7 @@
     "layer": "db",
     "overrides": {
       "A1": "deny",
-      "A2": "allow",
+      "A2": "deny",
       "A3": "allow",
       "A4": "allow",
       "A5": "allow",
@@ -1530,7 +1530,7 @@
       "A11": "allow",
       "A12": "allow"
     },
-    "note": "Gate: not_authenticated only. A3 is the sole caller that can reach the write; its five funnel columns are read before the probe and restored after, so neither A3's standing nor become_member_complete's A3 cell depends on probe order. A4-A12 reach already_completed and A2 profile_incomplete -- both leave the cell at needs-live-proof, which is verdict.ts declining to grade a business-rule refusal as an access verdict."
+    "note": "CORRECTED BY TASK 10 (Pass 4, F11). The gate is NOT not_authenticated only: the live body runs a SECOND caller-standing gate immediately after it -- `select * into v_profile from public.profiles where id = v_uid; if not found then raise 'profile_incomplete'`. A2 holds a session but no profiles row (verified live 2026-07-26), so A2 is REFUSED by that gate; its expectation is therefore deny, not allow. Unlike become_member_complete this body contains only ONE profile_incomplete site (live prosrc: x1), so A2's token can only be gate 2 -- the reading is unambiguous. A3 is the sole caller that can reach the write; its five funnel columns are read before the probe and restored after, so neither A3's standing nor become_member_complete's A3 cell depends on probe order. A4-A12 reach already_completed, a post-gate refusal."
   },
   {
     "id": "function:cabinet_state",
