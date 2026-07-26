@@ -97,6 +97,25 @@ function runSql(text) {
   }
 }
 
+/**
+ * SQL literal for a UUID — asserted, never trusted.
+ *
+ * These probes are assembled as SQL TEXT, because `supabase db query` takes a
+ * file and offers no bound parameters. Every id spliced into one therefore has
+ * to be proven to be a UUID before it goes in, rather than known to be safe by
+ * remembering where it came from. Nothing here is attacker-influenced today
+ * (the ids are GoTrue's own, minted seconds earlier by this script), so this is
+ * hygiene rather than a live hole — but "safe because of its provenance" is the
+ * assumption that stops holding the first time a probe takes an argument.
+ */
+function uuidLiteral(value) {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (typeof value !== "string" || !uuid.test(value)) {
+    throw new Error("refusing to build SQL from a value that is not a UUID");
+  }
+  return `'${value}'::uuid`;
+}
+
 /** Runs one SQL statement through the CLI and returns its rows. */
 function sql(text) {
   const out = runSql(text);
@@ -597,14 +616,38 @@ console.log("\nL3-2 (cascade) — deleting an auth user still cascades into paym
   // Read off the LIVE body, not the file — the static half of this pair
   // (lib/security/schema-guards.test.ts) can be right about a migration that
   // was never applied. Matches the guard exactly, F14's lesson.
+  //
+  // Three independent booleans were not enough, and the gap is the same one
+  // schema-guards.test.ts carried: "the owner test is present" and "the orphan
+  // test is present" say nothing about their ORDER, and nothing at all about
+  // whether the owner test has its own `return old` sitting in front of the
+  // orphan test — which is precisely the blanket owner exemption the
+  // conjunction exists to avoid, and which would satisfy all three flags. So
+  // the body is also read for the ORDER and for the UNIQUENESS of the escape.
+  // Comments are stripped and whitespace flattened first, so a re-indent or a
+  // reworded comment cannot move these answers.
   const body = sql(`
-    select p.prosrc ~ 'not exists \\(select 1 from public\\.profiles where id = old\\.member_id\\)'
+    with src as (
+      select regexp_replace(
+               regexp_replace(p.prosrc, '--[^\\n]*', ' ', 'g'), '\\s+', ' ', 'g') as s
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'payments_append_only'
+    ), branch as (
+      select s, substring(s from
+               'if tg_op = ''DELETE'' then (.*?) raise exception ''payments are append-only''') as del
+        from src
+    )
+    select (s ~ 'not exists \\(select 1 from public\\.profiles where id = old\\.member_id\\)')
              as has_orphan_rule,
-           p.prosrc ~ 'pg_get_userbyid' as has_owner_test,
-           p.prosrc ~ 'supabase_auth_admin' as keeps_dead_branch
-      from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-     where n.nspname = 'public' and p.proname = 'payments_append_only';
+           (s ~ 'pg_get_userbyid') as has_owner_test,
+           (s ~ 'supabase_auth_admin') as keeps_dead_branch,
+           (s ~ 'pg_get_userbyid.*?not exists \\(select 1 from public\\.profiles where id = old\\.member_id\\).*?return old')
+             as ordered,
+           (del is not null) as has_delete_branch,
+           coalesce((select count(*)::int from regexp_matches(del, '\\yreturn old\\y', 'g')), 0)
+             as delete_branch_escapes
+      from branch;
   `)[0];
   check(
     "the applied trigger body carries the owner+orphan rule and no dead role branch",
@@ -613,6 +656,16 @@ console.log("\nL3-2 (cascade) — deleting an auth user still cascades into paym
       body?.keeps_dead_branch === false,
     `orphan rule=${body?.has_orphan_rule}, owner test=${body?.has_owner_test}, ` +
       `supabase_auth_admin branch still present=${body?.keeps_dead_branch}`,
+  );
+  check(
+    "…in that ORDER (owner test, then orphan test, then the escape), with the escape UNIQUE",
+    body?.has_delete_branch === true && body?.ordered === true && body?.delete_branch_escapes === 1,
+    `ordered=${body?.ordered}, DELETE-branch escapes=${body?.delete_branch_escapes}` +
+      (body?.delete_branch_escapes > 1
+        ? " — a second `return old` is a blanket owner exemption"
+        : body?.delete_branch_escapes === 0
+          ? " — the cascade cannot get through at all"
+          : ""),
   );
 
   const suffix = randomBytes(4).readUInt32BE(0).toString().padStart(9, "0");
@@ -657,7 +710,7 @@ console.log("\nL3-2 (cascade) — deleting an auth user still cascades into paym
       declare v_cascade text := 'ALLOWED';
       begin
         begin
-          delete from public.profiles where id = '${probeId}'::uuid;
+          delete from public.profiles where id = ${uuidLiteral(probeId)};
         exception when others then v_cascade := 'refused: ' || sqlerrm;
         end;
         raise exception 'AUDIT-RESULT >> profiles -> payments cascade: %', v_cascade;

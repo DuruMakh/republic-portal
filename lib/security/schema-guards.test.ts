@@ -357,14 +357,41 @@ describe("L3-2 — payments carries append-only protection", () => {
     );
   });
 
+  it("has exactly ONE way out of the DELETE branch, so the owner test cannot become one", () => {
+    // The ordering guard above proves owner-test → orphan-test → `return old`
+    // occur in that sequence. That is NOT the same as proving the blanket owner
+    // exemption is absent: insert a second `return old` immediately after the
+    // owner test and the ordered trio is still there behind it, so the guard
+    // named for falsifying that exemption would still pass while the exemption
+    // was live. The escape must be UNIQUE, not merely last.
+    const deleteBranch =
+      /if\s+tg_op\s*=\s*'DELETE'\s+then([\s\S]*?)raise\s+exception\s+'payments are append-only'/i.exec(
+        appendOnly,
+      )?.[1] ?? "";
+    expect(deleteBranch.trim(), "no DELETE branch found in payments_append_only").not.toBe("");
+    const escapes = [...deleteBranch.matchAll(/\breturn\s+old\b/gi)];
+    expect(escapes, `the DELETE branch has ${escapes.length} escapes, not 1`).toHaveLength(1);
+  });
+
   it("exempts exactly one role by name, and that role is service_role", () => {
     // supabase_auth_admin was exempted on a false rationale (referential
     // actions run as the referencing table's owner, never the session role)
     // and holds no DELETE on payments at all. service_role stays because
     // seed-staging.mjs wipes payments directly, parents alive (ADR-016).
-    const named = [...appendOnly.matchAll(/current_user\s*(?:=|in)\s*\(?\s*'([a-z_]+)'/gi)].map(
-      (m) => m[1],
-    );
+    //
+    // Every role literal in each `current_user` test is read out, not just the
+    // first. The previous form matched one literal after `=`/`in`, so against
+    // `current_user in ('service_role', 'supabase_auth_admin')` it captured
+    // `service_role` alone and PASSED — blind to the exact dead branch it
+    // exists to retire. Proven RED against that pre-fix body before being
+    // trusted (Task 13 A1). Bounding each capture at `then` also covers
+    // `= any(array[...])` and any other shape a rewrite might reach for; a
+    // `current_user` test with no literal at all (the owner comparison)
+    // contributes nothing, and a shape this cannot read contributes nothing
+    // either, which fails the guard closed.
+    const named = [...appendOnly.matchAll(/current_user\s*(?:=|<>|!=|in)\s*([\s\S]*?)\bthen\b/gi)]
+      .map((m) => m[1] ?? "")
+      .flatMap((test) => [...test.matchAll(/'([a-z_]+)'/g)].map((lit) => lit[1]));
     expect(named).toEqual(["service_role"]);
   });
 });
