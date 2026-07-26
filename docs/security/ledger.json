@@ -16619,7 +16619,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 278
+      "rowCount": 326
     },
     "verdict": "clear"
   },
@@ -19854,11 +19854,11 @@
   {
     "surfaceId": "policy:own payments readable",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -22158,11 +22158,11 @@
   {
     "surfaceId": "table:payments",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
       "rowCount": 0
     },
     "verdict": "clear"

@@ -230,8 +230,8 @@ content read on either side:
 
 | view | result |
 | --- | --- |
-| `public_news` | 151 shown, 151 should be, 444 withheld of 595 |
-| `public_events` | 318 shown, 318 should be, 265 withheld of 583 |
+| `public_news` | 175 shown, 175 should be, 516 withheld of 691 |
+| `public_events` | 370 shown, 370 should be, 309 withheld of 679 |
 | `public_delegates` | 13 shown, 13 should be, 6 withheld of 19 |
 | `public_stats` | active=1640, approved_delegates=13, registered_total=1929 |
 | `transparency_stats` | registered_members=1795, approved_delegates=13 |
@@ -286,7 +286,7 @@ nothing.
 
 The census itself supplied the negative case. Pass 2b and Pass 2c mint **draft**
 events as probe targets, so the table now contains rows the filter must exclude,
-and the live result is `318 shown, 318 should be, 265 withheld of 583`. Every filter
+and the live result is `370 shown, 370 should be, 309 withheld of 679`. Every filter
 assertion in §3.3a now has a negative case and none is recorded as unproven.
 
 ## 4. Observations that are not findings

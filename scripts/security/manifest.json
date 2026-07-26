@@ -2104,9 +2104,9 @@
     "kind": "policy",
     "name": "own payments readable",
     "layer": "db",
-    "note": "`for select using (auth.uid() = member_id)` (20260712212409_initial_schema.sql:159). Probe: the 10 granted columns of payments filtered to <A5's id> (A5 probes A6's) — both actors have real payment rows created by the audit's own admin_record_payment calls. Permitted statement; zero rows is the defence.",
+    "note": "`for select using (auth.uid() = member_id)` (20260712212409_initial_schema.sql:159). Probe: the 10 granted columns of payments filtered to <A5's id> (A5 probes A6's) — both actors have real payment rows created by the audit's own admin_record_payment calls. Permitted statement; zero rows is the defence. UPDATED 2026-07-27 (Task 12b, L3-2's grant half): A1 is now DENY, not allow — the mirror of the table:payments change. For an anonymous caller this policy is no longer reached at all: 20260727120500_revoke_anon_payments_grants.sql removed anon's grant, so the statement is refused at the GRANT (42501) before RLS is consulted. That is the whole point of the fix — this policy was the SOLE layer standing between anon and the money table, exactly the one-predicate-deep shape CF4 ruled unacceptable for profiles. The expectation records the fix and relaxes nothing.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",
@@ -2440,9 +2440,9 @@
     "kind": "table",
     "name": "payments",
     "layer": "db",
-    "note": "20260718100000_admin_crm_hardening.sql:403-406 revokes select from authenticated and re-grants exactly 10 columns (recorded_by / voided_by / void_reason are admin-internal). Policy \"own payments readable\" `using (auth.uid() = member_id)` scopes the result. Every actor may run the 10-column select; anon gets zero rows. Same anon default-privilege divergence as profiles (anon holds all 13 columns).",
+    "note": "20260718100000_admin_crm_hardening.sql:403-406 revokes select from authenticated and re-grants exactly 10 columns (recorded_by / voided_by / void_reason are admin-internal). Policy \"own payments readable\" `using (auth.uid() = member_id)` scopes the result. Every actor may run the 10-column select; anon gets zero rows. Same anon default-privilege divergence as profiles (anon holds all 13 columns). UPDATED 2026-07-27 (Task 12b, L3-2's grant half): A1 is now DENY, not allow. 20260727120500_revoke_anon_payments_grants.sql revoked every anon grant on payments -- the identical treatment CF4 gave profiles, and for the identical reason: anon's table-wide SELECT was defended by one predicate (auth.uid() = member_id, inert only because anon's uid is null) on the table holding every money figure. An anonymous statement no longer runs and is emptied by RLS; it is refused at the GRANT with 42501, one layer earlier. This expectation change RECORDS the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. Nothing anonymous reads this table -- the public money figure comes from transparency_stats, an owner-executed view.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",
