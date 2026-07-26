@@ -1323,7 +1323,7 @@
   {
     "surfaceId": "action:completeMembershipAction",
     "actor": "A2",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
       "errorCode": "P0001",
@@ -7765,7 +7765,7 @@
   {
     "surfaceId": "action:saveMembershipProfileAction",
     "actor": "A2",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
       "errorCode": "P0001",
@@ -11102,6 +11102,150 @@
       }
     },
     "verdict": "clear"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A1",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A2",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A3",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A4",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A5",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A6",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A7",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A8",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A9",
+    "expectation": "allow",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A10",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A11",
+    "expectation": "allow",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "endpoint:GET /admin/members/export",
+    "actor": "A12",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "endpoint probed in a later task",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
@@ -15690,7 +15834,7 @@
   {
     "surfaceId": "function:become_member_complete",
     "actor": "A2",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
       "errorCode": "P0001",
@@ -15834,7 +15978,7 @@
   {
     "surfaceId": "function:become_member_save_profile",
     "actor": "A2",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
       "errorCode": "P0001",
@@ -16475,7 +16619,7 @@
     "outcome": {
       "errorCode": null,
       "errorMessage": null,
-      "rowCount": 182
+      "rowCount": 278
     },
     "verdict": "clear"
   },
@@ -17978,6 +18122,150 @@
       "rowCount": 0
     },
     "verdict": "clear"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A1",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A2",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A3",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A4",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A5",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A6",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A7",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A8",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A9",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A10",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A11",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
+  },
+  {
+    "surfaceId": "function:payments_append_only",
+    "actor": "A12",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "SKIP",
+      "errorMessage": "no entry for payments_append_only in scripts/security/arguments.mjs -- every one of the 54 function surfaces needs one; a missing entry is a gap in the census, not a result.",
+      "rowCount": 0
+    },
+    "verdict": "needs-live-proof"
   },
   {
     "surfaceId": "function:protect_profile_columns",
@@ -19710,11 +19998,11 @@
   {
     "surfaceId": "policy:own profile readable",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table profiles",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -19854,11 +20142,11 @@
   {
     "surfaceId": "policy:own profile updatable",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table profiles",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -22446,11 +22734,11 @@
   {
     "surfaceId": "table:profiles",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table profiles",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -23447,6 +23735,150 @@
     "outcome": {
       "errorCode": "42501",
       "errorMessage": "permission denied for table news",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A1",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A2",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A3",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A4",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A5",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A6",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A7",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A8",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A9",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A10",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A11",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
+      "rowCount": 0
+    },
+    "verdict": "clear"
+  },
+  {
+    "surfaceId": "trigger:payments_no_rewrite",
+    "actor": "A12",
+    "expectation": "deny",
+    "ruleDerived": false,
+    "outcome": {
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table payments",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -23598,11 +24030,11 @@
   {
     "surfaceId": "trigger:profiles_protect_columns",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table profiles",
       "rowCount": 0
     },
     "verdict": "clear"
@@ -23742,11 +24174,11 @@
   {
     "surfaceId": "trigger:profiles_updated_at",
     "actor": "A1",
-    "expectation": "allow",
+    "expectation": "deny",
     "ruleDerived": false,
     "outcome": {
-      "errorCode": null,
-      "errorMessage": null,
+      "errorCode": "42501",
+      "errorMessage": "permission denied for table profiles",
       "rowCount": 0
     },
     "verdict": "clear"

@@ -182,6 +182,8 @@ const NOTES = {
     "Setting `status` is refused 42501 for A2–A12 at the COLUMN-privilege layer (only 5 cabinet columns are UPDATE-granted), so the trigger is never reached; A1's statement is permitted but RLS matches no row. Proven separately to fire when reached — see §4.",
   "trigger:profiles_updated_at":
     "The one client-reachable trigger. Cross-actor UPDATE permitted for all twelve and affects zero rows; on the owner path it fires and advances `updated_at`.",
+  "trigger:payments_no_rewrite":
+    "Added by the check-up's own fix wave (L3-2). UPDATE refused 42501 for all twelve — the same migration revoked the write grants, so the grant is the layer this cell measures. That the trigger itself refuses a non-void rewrite and a delete, while still passing the void transition, is proven separately inside an aborted transaction — see §4.",
 };
 
 const missingNotes = pass2aSurfaces.filter((s) => !NOTES[s.id]);

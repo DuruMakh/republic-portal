@@ -49,4 +49,29 @@ select 'trigger', t.tgname, null
   join pg_class c on c.oid = t.tgrelid
   join pg_namespace n on n.oid = c.relnamespace
  where not t.tgisinternal and n.nspname = 'public'
+union all
+-- CONSTRAINTS. Added 2026-07-26 (Task 12) to close the method gap Pass 4
+-- carried out: the audit enumerated functions, views, tables, policies and
+-- triggers and NEVER LOOKED AT pg_constraint, and finding F15 -- confidently
+-- reasoned from grants -> policies -> triggers, every premise live-verified --
+-- died on a composite FOREIGN KEY nobody had read (`profiles_city_in_region`:
+-- (city_id, region_id) REFERENCES cities(id, region_id)). Table constraints are
+-- a FOURTH enforcement layer, invisible to every lens that ran; `profiles`
+-- alone carries nine. An expectation resting on one of them is currently
+-- resting on something no pass can see.
+--
+-- Only CHECK ('c'), FOREIGN KEY ('f'), UNIQUE ('u') and EXCLUDE ('x') are
+-- listed. Primary keys are deliberately included via 'p' as well -- the
+-- one-vote-per-member rule IS a primary key (ADR-017) -- so "the constraint
+-- that enforces this" is answerable from the manifest. NOT NULL is not a
+-- pg_constraint row in any supported version and is not enumerated here.
+--
+-- The name is qualified with its table because constraint names are unique per
+-- table, not per schema: two tables may each carry a `..._pkey`, and an
+-- unqualified name would collide in the manifest's (kind, name) identity.
+select 'constraint', c.relname || '.' || con.conname, null
+  from pg_constraint con
+  join pg_class c on c.oid = con.conrelid
+  join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and con.contype in ('c', 'f', 'u', 'x', 'p')
 order by 1, 2;

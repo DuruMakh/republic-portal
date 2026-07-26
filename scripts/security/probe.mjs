@@ -1,8 +1,8 @@
 /**
  * Task 4: the probe runner and ledger.
  *
- * For every surface in scripts/security/manifest.json (152) crossed with
- * every actor in ACTOR_IDS (12) -- 1,824 cells -- attempt access exactly the
+ * For every surface in scripts/security/manifest.json (153) crossed with
+ * every actor in ACTOR_IDS (12) -- 1,836 cells -- attempt access exactly the
  * way an attacker's own client would (straight to PostgREST, the app's UI
  * never involved, using the JWT actors.mjs minted), record what happened,
  * and judge it against that actor's expected access. This is a MATRIX, not
@@ -526,6 +526,22 @@ const DEPTH_PROBES = {
         .select("id");
     },
   },
+  // Added with the trigger itself (Task 12, finding L3-2). The mirror of
+  // trigger:audit_log_no_update, and the difference is the point: that one's
+  // UPDATE statement RUNS and is emptied by RLS, because audit_log still
+  // carries the default write grants. This one is refused at the GRANT, since
+  // the same migration revoked them from anon and authenticated -- so the cell
+  // measures the layer in front, and the trigger behind it is proven
+  // separately, inside an aborted transaction, by verify-security-fixes.mjs.
+  "trigger:payments_no_rewrite": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("payments")
+        .update({ void_reason: "security probe" })
+        .eq("member_id", writeTarget(ctx).id)
+        .select("id"),
+  },
 };
 
 async function probe(client, surface, ctx) {
@@ -923,6 +939,49 @@ const elapsedMs = Date.now() - startedAt;
 console.log(
   `Probed ${rawRows.length} cells (${manifest.length} surfaces x ${ACTOR_IDS.length} actors) in ${(elapsedMs / 1000).toFixed(1)}s.`,
 );
+
+// ---------------------------------------------------------------------------
+// Carry over the app layer (Task 12 instrument fix)
+// ---------------------------------------------------------------------------
+// This runner cannot probe an action, an endpoint or a bucket -- a Server
+// Action does not exist until Next has compiled it -- so it writes every
+// app-layer cell as errorCode "SKIP" and app-probe.mjs substitutes them later.
+// Until now that meant running the DATABASE census SILENTLY DISCARDED a third
+// of the matrix: 492 measured app cells reverted to SKIP on disk, and the only
+// way back was a full build + `npm run security:census:app`. Anyone re-running
+// the census to check a schema change (which is exactly what Task 12 does)
+// destroyed evidence they had no reason to touch.
+//
+// So: any app-layer cell this run did not probe takes its previous outcome
+// from the ledger, unchanged, and the carry-over is COUNTED and PRINTED rather
+// than assumed. Nothing else is carried: database cells were all probed
+// afresh, and a carried row can only ever be one this runner wrote "SKIP" for.
+{
+  const APP_KINDS = new Set(["action", "endpoint", "bucket"]);
+  let previous = [];
+  if (existsSync(LEDGER_RAW_URL)) {
+    previous = JSON.parse(readFileSync(LEDGER_RAW_URL, "utf8"));
+  } else if (existsSync(LEDGER_URL)) {
+    previous = JSON.parse(readFileSync(LEDGER_URL, "utf8"));
+  }
+  const byCell = new Map(previous.map((r) => [`${r.surfaceId}|${r.actor}`, r.outcome]));
+  let carried = 0;
+  let unprobed = 0;
+  for (const row of rawRows) {
+    if (!APP_KINDS.has(surfaceById.get(row.surfaceId)?.kind)) continue;
+    const prior = byCell.get(`${row.surfaceId}|${row.actor}`);
+    if (prior && prior.errorCode !== "SKIP") {
+      row.outcome = prior;
+      carried++;
+    } else {
+      unprobed++;
+    }
+  }
+  console.log(
+    `App layer: ${carried} cell(s) carried over from the last app census, ` +
+      `${unprobed} never probed by any runner (run \`npm run security:census:app\` to close them).`,
+  );
+}
 
 mkdirSync(dirname(fileURLToPath(LEDGER_RAW_URL)), { recursive: true });
 writeFileSync(LEDGER_RAW_URL, JSON.stringify(rawRows, null, 2) + "\n");

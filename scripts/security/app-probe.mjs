@@ -1,10 +1,21 @@
 /**
  * Task 8 / Pass 2c: the app-layer census runner.
  *
- * The 41 `layer: "app"` surfaces -- 38 Server Actions, 1 HTTP endpoint, 2
- * Storage buckets -- x 12 actors = 492 cells, the last third of the 1,824-cell
- * matrix. Tasks 6 and 7 covered the 1,332 database cells; every one of these 492
+ * The 42 `layer: "app"` surfaces -- 38 Server Actions, 2 HTTP endpoints, 2
+ * Storage buckets -- x 12 actors = 504 cells, the last third of the 1,836-cell
+ * matrix. Tasks 6 and 7 covered the 1,332 database cells; every one of these
  * has sat at `needs-live-proof` / `errorCode: "SKIP"` since Task 4.
+ *
+ * 492 -> 504 in Task 12: `endpoint:GET /admin/members/export` was added to the
+ * manifest (finding F6 -- the app layer had been enumerated from `"use server"`
+ * exports plus a HAND-LISTED endpoint set of size one, so the roster-export
+ * route handler was never a surface at all). NOTHING IN THIS FILE PROBES IT
+ * YET: its twelve cells stay `SKIP` and are reported as unsubstituted, which is
+ * the honest state -- the surface is now in the inventory and openly unprobed,
+ * where before it was silently absent. Writing the probe is a real task, not a
+ * line of code: it needs a cookie-authenticated GET per actor and a CSV-shaped
+ * success check, and a probe written but never run would grade twelve cells on
+ * a guess.
  *
  * ## Why this is a separate runner from probe.mjs
  * probe.mjs talks to PostgREST and needs nothing but credentials. This one needs
@@ -53,7 +64,7 @@ const ROW_SCOPE_APP_URL = new URL("../../docs/security/row-scope-app.json", impo
 const RESIDUE_URL = new URL("../../docs/security/residue.json", import.meta.url);
 
 const APP_KINDS = new Set(["action", "endpoint", "bucket"]);
-const EXPECTED_APP_CELLS = 492;
+const EXPECTED_APP_CELLS = 504;
 
 const baseFlag = process.argv.indexOf("--base");
 const BASE = baseFlag >= 0 ? process.argv[baseFlag + 1] : "http://localhost:3210";

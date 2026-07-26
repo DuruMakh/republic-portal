@@ -52,6 +52,22 @@ const MANIFEST_URL = new URL("./manifest.json", import.meta.url);
 /** The SurfaceKind values introspect.sql's UNION ALL can produce. */
 const DB_KINDS = new Set(["function", "view", "table", "policy", "trigger"]);
 
+/**
+ * Kinds introspect.sql reports for VISIBILITY but that are not authorization
+ * surfaces — they take no per-actor expectation and are never probed, so they
+ * are excluded from the manifest and from reconcile()'s drift comparison.
+ *
+ * `constraint` was added 2026-07-26 (Task 12) to close the method gap Pass 4
+ * carried out: the audit enumerated functions, views, tables, policies and
+ * triggers and never once looked at pg_constraint. Finding F15 — every premise
+ * live-verified — was REFUTED by a composite foreign key nobody had read
+ * (profiles_city_in_region). Table constraints are a fourth enforcement layer
+ * that no lens could see, and other expectations may rest on the same blind
+ * spot. Listing them does not make them surfaces; it makes them READABLE, so
+ * the next reasoning chain about what stops a write can consult them.
+ */
+const INFORMATIONAL_KINDS = new Set(["constraint"]);
+
 function surfaceId(kind, name) {
   return `${kind}:${name}`;
 }
@@ -195,9 +211,9 @@ function parseLiveObjects(jsonText) {
     ) {
       throw new Error(`live-objects.json rows[${i}] is malformed: ${JSON.stringify(row)}`);
     }
-    if (!DB_KINDS.has(row.kind)) {
+    if (!DB_KINDS.has(row.kind) && !INFORMATIONAL_KINDS.has(row.kind)) {
       throw new Error(
-        `live-objects.json rows[${i}] names an unknown kind ${JSON.stringify(row.kind)} (expected one of ${[...DB_KINDS].join(", ")}): ${JSON.stringify(row)}`,
+        `live-objects.json rows[${i}] names an unknown kind ${JSON.stringify(row.kind)} (expected one of ${[...DB_KINDS, ...INFORMATIONAL_KINDS].join(", ")}): ${JSON.stringify(row)}`,
       );
     }
     if (!row.name) {
@@ -263,7 +279,23 @@ function byId(a, b) {
 }
 
 const write = process.argv.includes("--write");
-const liveObjects = readLiveObjects();
+const allLiveObjects = readLiveObjects();
+// Informational rows are reported, never reconciled and never made surfaces.
+const liveObjects = allLiveObjects.filter((o) => DB_KINDS.has(o.kind));
+const informational = allLiveObjects.filter((o) => INFORMATIONAL_KINDS.has(o.kind));
+
+if (informational.length > 0) {
+  const byTable = new Map();
+  for (const o of informational) {
+    const table = o.name.split(".")[0];
+    byTable.set(table, (byTable.get(table) ?? 0) + 1);
+  }
+  const busiest = [...byTable.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  console.log(
+    `informational (not surfaces): ${informational.length} constraint(s) across ${byTable.size} table(s)` +
+      ` — busiest ${busiest.map(([t, n]) => `${t}:${n}`).join(", ")}`,
+  );
+}
 
 if (write) {
   const dbSurfaces = liveObjects.map((o) => ({

@@ -840,6 +840,27 @@
     "note": "Deny x12 on WRITE. Created public => true at 20260719150000_community.sql:827, same design note as delegate-photos: \"public read; writes only via the service-role upload action paired with admin_set_news_image\". No storage.objects policy exists, so no client role including A12 (editor) may upload directly; the editor route is setNewsCoverAction, which uploads with the service role after hasAnyRole([\"editor\",\"super_admin\"]) and removes the object again if the RPC then refuses. Public read asserted separately as the control; list and delete probed as named assertions."
   },
   {
+    "id": "endpoint:GET /admin/members/export",
+    "kind": "endpoint",
+    "name": "GET /admin/members/export",
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "The roster export route handler (app/(admin)/admin/members/export/route.ts). ADDED 2026-07-26 (Task 12) after finding F6: the app layer was enumerated from 'use server' exports plus a HAND-LISTED endpoint set of size one, so this second route handler was never in the manifest at all and the audit's coverage claim was 152 surfaces when the truth was 153. It streams the whole roster - names, PHONE, region, city, delegate, status, tier, reference code - and with ?includeIds=1 PERSONAL ID NUMBERS, which makes it the most sensitive HTTP surface in the app. Cell question: can this actor obtain the roster? Allow A9 (super_admin) and A11 (finance), deny the other ten. Gate: getAdminRoles() then hasAnyRole(['finance','super_admin']) -> 403 at line 26; a SEPARATE super_admin-only gate for includeIds at line 32; then admin_export_members re-checks both in the database. The endpoint was verified sound by reading it and live against production (anonymous GET -> 403, ?includeIds=1 -> 403), so F6 is a hole in the COVERAGE CLAIM, not in the platform. The include-ids variant is graded by the same assertion that grades the RPC's, function:admin_export_members.include-ids-super-admin-only, for the same reason: the narrower gate raises the same refusal after finance has already been admitted."
+  },
+  {
     "id": "endpoint:GET /api/dev/otp",
     "kind": "endpoint",
     "name": "GET /api/dev/otp",
@@ -1827,6 +1848,27 @@
     "note": "Gate: not_authenticated, then is_registered() -> not_completed. Note is_REGISTERED, not completed: A3 is admitted here even though member_cast_vote refuses it. Only A2 (no profiles row) is denied. Fresh published future event per (function, actor)."
   },
   {
+    "id": "function:payments_append_only",
+    "kind": "function",
+    "name": "payments_append_only",
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Returns trigger. Created by the security check-up's own fix wave (20260726122000_payments_append_only.sql, finding L3-2), so it is the FIFTH function in this schema with the shape RF6 settled: born with the PUBLIC default EXECUTE plus explicit EXECUTE for anon and authenticated, and unreachable anyway because the PL/pgSQL call handler refuses a trigger-returning function in any non-trigger context regardless of role -- 'trigger functions can only be called as triggers', reproduced by RF6 as the postgres superuser on all four of its siblings. Deny x12. The cell resolves to needs-live-proof for the same reason theirs do: PostgREST filters trigger-returning functions out of its schema cache and PGRST202 is never proof of a privilege decision (verdict.ts). RESIDUAL, stated rather than left implicit: nothing revokes that EXECUTE grant, and a 'revoke from public' would not remove anon's and authenticated's explicit ones -- it needs 'revoke ... from public, anon, authenticated'. Hygiene only, since the type system forecloses the call."
+  },
+  {
     "id": "function:protect_profile_columns",
     "kind": "function",
     "name": "protect_profile_columns",
@@ -2083,9 +2125,9 @@
     "kind": "policy",
     "name": "own profile readable",
     "layer": "db",
-    "note": "`for select using (auth.uid() = id)` (20260712212409_initial_schema.sql:156). Probe: the 14 granted columns of profiles filtered to <A5's id> (A5 probes A4's). Permitted statement; zero rows is the defence.",
+    "note": "`for select using (auth.uid() = id)` (20260712212409_initial_schema.sql:156). Probe: the 14 granted columns of profiles filtered to <A5's id> (A5 probes A4's). Permitted statement; zero rows is the defence. UPDATED 2026-07-26 (Task 12, finding CF4/LB-6): A1 is now DENY, not allow. 20260726120500_revoke_anon_profiles_grants.sql revoked every anon grant on profiles, so an anonymous statement no longer runs and is emptied by RLS -- it is refused at the GRANT with 42501, one layer earlier. This expectation change records the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. ADR-021 adopted this revoke instead of column encryption.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",
@@ -2104,9 +2146,9 @@
     "kind": "policy",
     "name": "own profile updatable",
     "layer": "db",
-    "note": "`for update using (auth.uid() = id)` (20260712212409_initial_schema.sql:157) — the only write policy in the schema. Probe: `update profiles set employment = <the target's own current value> where id = <A3's id>` (A3 probes A8's), returning ids, so a policy that let the write through would report rows. Every actor may run the statement (anon holds default-privilege UPDATE on all 17 columns; authenticated holds the 5 cabinet columns from 20260715213000_cabinets.sql:10); zero rows AFFECTED is the defence. The payload is each target's existing value, so even a landed write changes no content — the row count alone reveals the breach.",
+    "note": "`for update using (auth.uid() = id)` (20260712212409_initial_schema.sql:157) — the only write policy in the schema. Probe: `update profiles set employment = <the target's own current value> where id = <A3's id>` (A3 probes A8's), returning ids, so a policy that let the write through would report rows. Every actor may run the statement (anon holds default-privilege UPDATE on all 17 columns; authenticated holds the 5 cabinet columns from 20260715213000_cabinets.sql:10); zero rows AFFECTED is the defence. The payload is each target's existing value, so even a landed write changes no content — the row count alone reveals the breach. UPDATED 2026-07-26 (Task 12, finding CF4/LB-6): A1 is now DENY, not allow. 20260726120500_revoke_anon_profiles_grants.sql revoked every anon grant on profiles, so an anonymous statement no longer runs and is emptied by RLS -- it is refused at the GRANT with 42501, one layer earlier. This expectation change records the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. ADR-021 adopted this revoke instead of column encryption.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",
@@ -2482,9 +2524,9 @@
     "kind": "table",
     "name": "profiles",
     "layer": "db",
-    "note": "20260717150000_admin_crm.sql:929-932 revokes the blanket select from authenticated and re-grants exactly 14 columns (personal_id and birth_date deliberately excluded — the Phase-3 personal-ID lockdown). Policy \"own profile readable\" `using (auth.uid() = id)` scopes the result to the caller's own row. Every actor may RUN the 14-column select; anon gets zero rows because auth.uid() is null. NOTE (live, 2026-07-25): anon still holds Supabase's default-privilege SELECT on ALL 17 columns including personal_id/birth_date — the migration's revoke named `authenticated` only. Inert (RLS returns no rows to anon) but recorded as a grant-layer divergence from stated intent; see the report.",
+    "note": "20260717150000_admin_crm.sql:929-932 revokes the blanket select from authenticated and re-grants exactly 14 columns (personal_id and birth_date deliberately excluded — the Phase-3 personal-ID lockdown). Policy \"own profile readable\" `using (auth.uid() = id)` scopes the result to the caller's own row. Every actor may RUN the 14-column select; anon gets zero rows because auth.uid() is null. NOTE (live, 2026-07-25): anon still holds Supabase's default-privilege SELECT on ALL 17 columns including personal_id/birth_date — the migration's revoke named `authenticated` only. Inert (RLS returns no rows to anon) but recorded as a grant-layer divergence from stated intent; see the report. UPDATED 2026-07-26 (Task 12, finding CF4/LB-6): A1 is now DENY, not allow. 20260726120500_revoke_anon_profiles_grants.sql revoked every anon grant on profiles, so an anonymous statement no longer runs and is emptied by RLS -- it is refused at the GRANT with 42501, one layer earlier. This expectation change records the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. ADR-021 adopted this revoke instead of column encryption.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",
@@ -2625,6 +2667,27 @@
     }
   },
   {
+    "id": "trigger:payments_no_rewrite",
+    "kind": "trigger",
+    "name": "payments_no_rewrite",
+    "layer": "db",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "'before update or delete on payments ... payments_append_only()' (20260726122000, finding L3-2): the second layer the money table lacked, in audit_log_immutable's shape. Probe: a cross-actor UPDATE of a payments row. Deny x12 -- unlike trigger:audit_log_no_update, whose statement RUNS and is emptied by RLS, this one is refused at the GRANT (42501), because the same migration revoked insert/update/delete/truncate from anon and authenticated. So the grant is the layer this cell measures; that the trigger fires when a caller gets past it is proven separately, inside an aborted transaction, by scripts/verify-security-fixes.mjs (update and delete both refused 'payments are append-only', the void transition still allowed)."
+  },
+  {
     "id": "trigger:polls_updated_at",
     "kind": "trigger",
     "name": "polls_updated_at",
@@ -2650,9 +2713,9 @@
     "kind": "trigger",
     "name": "profiles_protect_columns",
     "layer": "db",
-    "note": "`before update on profiles ... protect_profile_columns()`, which raises when a client role changes status/personal_id/phone/id/created_at (20260713175043_public_read_model.sql:56-66, body last replaced 20260721120000_progressive_registration.sql:54). Probe: `update profiles set status = 'active_member' where id = <A3's id>` (A3 targets A8's). A2-A12 are refused 42501 at the COLUMN-privilege layer — `status` is not among the 5 columns 20260715213000_cabinets.sql:10 grants UPDATE on — so the trigger never fires for them. A1 (anon) still holds default-privilege UPDATE on all 17 columns, so its statement runs and RLS (`auth.uid() = id`, null for anon) affects zero rows. Net: this trigger is unreachable from every client role today; the column grant holds for authenticated and RLS holds for anon. Recorded as a defence-in-depth finding in the report, not a breach.",
+    "note": "`before update on profiles ... protect_profile_columns()`, which raises when a client role changes status/personal_id/phone/id/created_at (20260713175043_public_read_model.sql:56-66, body last replaced 20260721120000_progressive_registration.sql:54). Probe: `update profiles set status = 'active_member' where id = <A3's id>` (A3 targets A8's). A2-A12 are refused 42501 at the COLUMN-privilege layer — `status` is not among the 5 columns 20260715213000_cabinets.sql:10 grants UPDATE on — so the trigger never fires for them. A1 (anon) still holds default-privilege UPDATE on all 17 columns, so its statement runs and RLS (`auth.uid() = id`, null for anon) affects zero rows. Net: this trigger is unreachable from every client role today; the column grant holds for authenticated and RLS holds for anon. Recorded as a defence-in-depth finding in the report, not a breach. UPDATED 2026-07-26 (Task 12, finding CF4/LB-6): A1 is now DENY, not allow. 20260726120500_revoke_anon_profiles_grants.sql revoked every anon grant on profiles, so an anonymous statement no longer runs and is emptied by RLS -- it is refused at the GRANT with 42501, one layer earlier. This expectation change records the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. ADR-021 adopted this revoke instead of column encryption.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "deny",
       "A3": "deny",
       "A4": "deny",
@@ -2671,9 +2734,9 @@
     "kind": "trigger",
     "name": "profiles_updated_at",
     "layer": "db",
-    "note": "`before update on profiles ... set_updated_at()` (20260712212409_initial_schema.sql:95). This is the ONE trigger a client role can actually reach, via the 5-column own-row cabinet update. Probe: `update profiles set first_name = <the target's own current value> where id = <A3's id>` (A3 targets A8's) — a cross-actor write, so every actor's statement is permitted but affects zero rows. That the trigger fires and advances updated_at on the owner path is proven separately by the audit's own team-member fixture updating its own row — see the report.",
+    "note": "`before update on profiles ... set_updated_at()` (20260712212409_initial_schema.sql:95). This is the ONE trigger a client role can actually reach, via the 5-column own-row cabinet update. Probe: `update profiles set first_name = <the target's own current value> where id = <A3's id>` (A3 targets A8's) — a cross-actor write, so every actor's statement is permitted but affects zero rows. That the trigger fires and advances updated_at on the owner path is proven separately by the audit's own team-member fixture updating its own row — see the report. UPDATED 2026-07-26 (Task 12, finding CF4/LB-6): A1 is now DENY, not allow. 20260726120500_revoke_anon_profiles_grants.sql revoked every anon grant on profiles, so an anonymous statement no longer runs and is emptied by RLS -- it is refused at the GRANT with 42501, one layer earlier. This expectation change records the fix, it does not relax a check: the old `allow` described a permitted-but-empty statement, and grading the new refusal against it read as over-restriction. ADR-021 adopted this revoke instead of column encryption.",
     "overrides": {
-      "A1": "allow",
+      "A1": "deny",
       "A2": "allow",
       "A3": "allow",
       "A4": "allow",

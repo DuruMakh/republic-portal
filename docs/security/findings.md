@@ -80,7 +80,15 @@ production, sends a real SMS to the target — noisy and costly). The only compl
 the endpoint, which spec section 9 assigns to launch hardening.
 
 #### F3 — email sign-up is enabled and auto-confirmed
-*Threat R7. Read live from the hosted project's `/auth/v1/settings`.*
+*Threat R2 (T9/D4) — **corrected**. Read live from the hosted project's `/auth/v1/settings`.*
+
+> **Citation corrected 2026-07-26 (Task 12).** This finding was filed under **R7 — D3 · Mass
+> destruction of the membership record**, which is the wrong threat: nothing here destroys a
+> record. It is account **manufacture** — R2's second half, "(D4) what it makes possible" — and it
+> belongs beside F2, which was already filed there. The misfiling mattered: read under R7, F3 looks
+> like a resilience note about data loss; read under R2/D4 it is the enabler standing behind the
+> deferred personal-ID squatting finding (F13/LB-1), which is exactly the role ADR-021 assigns it
+> now that the dev-OTP door is understood as a testing-configuration artifact.
 
 `"external":{"email":true,...}`, `"disable_signup":false`, `"mailer_autoconfirm":true`, no captcha
 — while `"phone_autoconfirm":false`. So phone is gated by OTP and **email is not gated at all**.
@@ -392,6 +400,16 @@ column before the trigger is even reached).
 
 Live `region_city_mismatch` was 0 before and 0 after. Residual noted as **F15-R** above.
 
+**Method gap closed 2026-07-26 (Task 12).** `pg_constraint` had never been introspected — the audit
+enumerated functions, views, tables, policies and triggers, and the fourth layer was invisible to
+every lens that ran. `scripts/security/introspect.sql` now lists CHECK, FOREIGN KEY, UNIQUE,
+EXCLUDE and PRIMARY KEY constraints, table-qualified (constraint names are unique per table, not per
+schema). First live run: **79 constraints across 16 tables** — `profiles` 13, `events` 10, `news` 9,
+`delegates` 6, `payments` 6. They are reported as *informational*, not as surfaces: a constraint
+takes no per-actor expectation and is never probed, so it is excluded from the manifest and from
+`reconcile()`'s drift check. Listing them does not make them surfaces; it makes them **readable**,
+so the next chain of reasoning about what stops a write can consult them instead of dying on one.
+
 #### RF6 — CF3 disproved, more strongly than expected
 Four trigger functions carry EXECUTE for PUBLIC **plus explicit `anon` and `authenticated`
 grants**. They are unreachable not because PostgREST filters them, but because **Postgres itself
@@ -500,6 +518,12 @@ counted in the severity tally.*
   super_admin gate for `includeIds`, then `admin_export_members` re-checks in the DB). So this is a
   hole in the **coverage claim**, not in the platform. Enumerate route handlers from the filesystem,
   never by hand. Coverage total should go 152 to 153 surfaces (1,824 to 1,836 cells).
+  **Done 2026-07-26 (Task 12):** the surface is in the manifest. Its twelve cells are `SKIP` — no
+  runner probes it yet, which is the honest state: in the inventory and openly unprobed, where
+  before it was silently absent. Note the final total is **155 surfaces / 1,860 cells**, not
+  153/1,836: the same wave's L3-2 fix mints two real database objects of its own
+  (`function:payments_append_only`, `trigger:payments_no_rewrite`), and the manifest is required to
+  match the live catalog exactly — `npm run security:introspect` reports 0 added, 0 removed.
 - **F7 — the gate-order guard is near-vacuous.** Its anchor resolves to `not_authenticated` in 38 of
   40 functions, so it only proves post-gate tokens follow the *auth* check — trivially true — and
   proves nothing about the role/standing gate, which is what `judge()` actually relies on. The

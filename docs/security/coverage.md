@@ -1,13 +1,13 @@
 # Security audit — coverage table
 
-**The whole matrix: 152 surfaces × 12 actor positions =
-1,824 graded cells — 1,690 clear, 0 findings,
-134 needs-live-proof.** Four passes, each appended below:
+**The whole matrix: 155 surfaces × 12 actor positions =
+1,860 graded cells — 1,702 clear, 0 findings,
+158 needs-live-proof.** Four passes, each appended below:
 Pass 2a (read surfaces and the depth layer, Task 6), Pass 2b (the 54 database
 functions, Task 7), Pass 2c (server actions, the dev-OTP endpoint, storage
 buckets — Task 8), Pass 4 (live proof, Task 10). Every cell now carries a real
 verdict; none is unprobed, and after Pass 4 none is unexplained — the
-134 `needs-live-proof` cells are settled by hand in
+158 `needs-live-proof` cells are settled by hand in
 `docs/security/findings.md`, which is the finding register for the phase.
 
 > **This document is GENERATED — `node scripts/security/coverage.mjs`
@@ -31,7 +31,7 @@ expectations and their derivation: the `overrides` and `note` fields of
 
 # Pass 2a (Task 6) — read surfaces and the depth layer
 
-57 surfaces × 12 actor positions = **684 graded cells**, every one of
+58 surfaces × 12 actor positions = **696 graded cells**, every one of
 them against a stated expectation read from the migration that creates the
 surface and confirmed against the live catalog. No cell in this section is
 rule-derived.
@@ -54,7 +54,7 @@ and on the deny side a zero-row read resolves to `needs-live-proof` by design,
 because an empty result proves nothing on its own. So a row policy that
 silently stopped filtering would still be graded `clear`.
 
-That gap is closed by **named row-scope assertions** (§3): 658 of them, each
+That gap is closed by **named row-scope assertions** (§3): 670 of them, each
 stating an expected row set per actor and checking it live, all holding. **A surface is only as clear as both records
 together**, so "no breach" is a claim about the grid _and_ the assertions, never
 the grid alone. Where a note below says "zero rows every time", that is an
@@ -134,16 +134,17 @@ so by name: knowing which defence is actually holding is the point.
 | `event_rsvps_updated_at` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | UPDATE refused 42501 for all twelve — event_rsvps carries SELECT-only column grants. Housekeeping trigger, unreachable from any client role. |
 | `events_updated_at` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | UPDATE refused 42501 for all twelve (`revoke all`, no re-grant). Housekeeping trigger, unreachable from any client role. |
 | `news_updated_at` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | UPDATE refused 42501 for all twelve. Housekeeping trigger, unreachable from any client role. |
+| `payments_no_rewrite` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | Added by the check-up's own fix wave (L3-2). UPDATE refused 42501 for all twelve — the same migration revoked the write grants, so the grant is the layer this cell measures. That the trigger itself refuses a non-void rewrite and a delete, while still passing the void transition, is proven separately inside an aborted transaction — see §4. |
 | `polls_updated_at` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | UPDATE refused 42501 for all twelve. Housekeeping trigger, unreachable from any client role. |
 | `profiles_protect_columns` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | Setting `status` is refused 42501 for A2–A12 at the COLUMN-privilege layer (only 5 cabinet columns are UPDATE-granted), so the trigger is never reached; A1's statement is permitted but RLS matches no row. Proven separately to fire when reached — see §4. |
 | `profiles_updated_at` | trigger | C | C | C | C | C | C | C | C | C | C | C | C | The one client-reachable trigger. Cross-actor UPDATE permitted for all twelve and affects zero rows; on the owner path it fires and advances `updated_at`. |
 
-**Totals for this section: 684 clear, 0 findings,
+**Totals for this section: 696 clear, 0 findings,
 0 needs-live-proof, 0 rule-derived.**
 
 ## 3. Row-scope assertions
 
-658 assertions, **all holding**. Full results in
+670 assertions, **all holding**. Full results in
 `docs/security/row-scope.json`; they re-run with every
 `npm run security:census`.
 
@@ -229,12 +230,12 @@ content read on either side:
 
 | view | result |
 | --- | --- |
-| `public_news` | 100 shown, 100 should be, 290 withheld of 390 |
-| `public_events` | 214 shown, 214 should be, 176 withheld of 390 |
+| `public_news` | 151 shown, 151 should be, 444 withheld of 595 |
+| `public_events` | 318 shown, 318 should be, 265 withheld of 583 |
 | `public_delegates` | 13 shown, 13 should be, 6 withheld of 19 |
-| `public_stats` | active=1640, approved_delegates=13, registered_total=1927 |
-| `transparency_stats` | registered_members=1794, approved_delegates=13 |
-| `transparency_regions` | 11 row(s); 133 profile(s) at status 'registered' available as a negative case |
+| `public_stats` | active=1640, approved_delegates=13, registered_total=1929 |
+| `transparency_stats` | registered_members=1795, approved_delegates=13 |
+| `transparency_regions` | 11 row(s); 134 profile(s) at status 'registered' available as a negative case |
 
 The ground truth for the three aggregate views is read from the **live** view
 definitions, not the migrations, and they differ: the community migration
@@ -285,15 +286,15 @@ nothing.
 
 The census itself supplied the negative case. Pass 2b and Pass 2c mint **draft**
 events as probe targets, so the table now contains rows the filter must exclude,
-and the live result is `214 shown, 214 should be, 176 withheld of 390`. Every filter
+and the live result is `318 shown, 318 should be, 265 withheld of 583`. Every filter
 assertion in §3.3a now has a negative case and none is recorded as unproven.
 
 ## 4. Observations that are not findings
 
-**Nothing in Pass 2a's 684 cells is a breach — and that sentence carries a
+**Nothing in Pass 2a's 696 cells is a breach — and that sentence carries a
 qualifier that must travel with it.** These cells measure whether each
 actor's statement was permitted or refused. What came back is a separate
-record: the 658 assertions in §3. "No breach" is the conjunction of the two,
+record: the 670 assertions in §3. "No breach" is the conjunction of the two,
 not a property of the grid alone.
 
 Four things are worth the owner's attention anyway. All four sharpen
@@ -391,8 +392,8 @@ regenerates `scripts/security/manifest.json` from the live catalog and would
 have silently discarded every `overrides` block and its derivation. It now
 refuses when the existing manifest carries curated census data and makes the
 operator say so explicitly (`scripts/security/introspect.mjs`). The manifest
-today carries **152 surfaces with curated expectations,
-1824 per-actor cells** — the whole census.
+today carries **155 surfaces with curated expectations,
+1860 per-actor cells** — the whole census.
 
 ## 5. Escalated to Pass 3
 
@@ -429,17 +430,17 @@ anywhere in the database as a result of this pass.
 
 ---
 
-# Pass 2b (Task 7) — the 54 database functions
+# Pass 2b (Task 7) — the 55 database functions
 
-**54 surfaces × 12 actor positions = 648 graded cells.** 48 `security definer`
+**55 surfaces × 12 actor positions = 660 graded cells.** 48 `security definer`
 gatekeepers plus the 6 security-invoker functions, every expectation read from
 the **live** catalog — `pg_get_function_identity_arguments` for the signature,
 `prosrc` for the gate, `proacl` for the grant — never from the first migration
 that mentions a function. No cell in this section is rule-derived
-(0 of 648); all 648 carry a stated `overrides` entry and a `note` in
+(0 of 660); all 660 carry a stated `overrides` entry and a `note` in
 `scripts/security/manifest.json`.
 
-**Result: 586 clear, 0 findings, 62 needs-live-proof.** Repeated full runs produce
+**Result: 586 clear, 0 findings, 74 needs-live-proof.** Repeated full runs produce
 **identical verdicts in every cell** — the point of the isolation scheme in §7,
 since a finding that cannot be reproduced is not a finding.
 
@@ -452,7 +453,7 @@ was recorded as a breach. None survived contact with a stated expectation.
 
 ## 7. What made this pass different: arguments and isolation
 
-**Arguments.** Task 4 called every function with `{}`, and 504 of these 648
+**Arguments.** Task 4 called every function with `{}`, and 504 of these 660
 cells came back `PGRST202`. That is not a security result — `judge()`
 deliberately refuses to let a not-found code clear a deny expectation, because
 a malformed probe would otherwise launder itself into a false all-clear on
@@ -531,8 +532,8 @@ so is part of reporting them honestly:
 ## 8. The table
 
 `C` = clear · `F` = finding · `?` = needs-live-proof. **Bold** = the
-expectation for that cell is `allow` (186 of 648); plain = `deny`
-(462).
+expectation for that cell is `allow` (184 of 660); plain = `deny`
+(476).
 
 | function | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | A9 | A10 | A11 | A12 | expectation |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | --- |
@@ -566,8 +567,8 @@ expectation for that cell is `allow` (186 of 648); plain = `deny`
 | `admin_update_setting` | C | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
 | `admin_void_payment` | C | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
 | `audit_log_immutable` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
-| `become_member_complete` | C | **?** | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
-| `become_member_save_profile` | C | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `become_member_complete` | C | ? | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `become_member_save_profile` | C | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `cabinet_state` | C | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
 | `delegate_panel` | C | C | C | C | C | **C** | **C** | **C** | C | C | C | C | allow A6,A7,A8 |
 | `delegate_team` | C | C | C | C | C | C | **C** | C | C | C | C | C | allow A7 |
@@ -582,6 +583,7 @@ expectation for that cell is `allow` (186 of 648); plain = `deny`
 | `member_change_delegate` | C | ? | ? | **C** | **C** | **C** | C | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A8,A9,A10,A11,A12 |
 | `member_change_tier` | C | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `member_rsvp` | C | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
+| `payments_append_only` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
 | `protect_profile_columns` | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | deny ×12 |
 | `recompute_all_active` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
 | `recompute_member_active` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
@@ -610,7 +612,7 @@ which were each re-derived from the live `prosrc` gate.
 | no admin below super_admin may grant/revoke roles or change settings | A10, A11, A12 → the 4 super_admin-only functions | `missing_role` |
 | a pending or rejected delegate gets no team PII | A6, A8 → `delegate_team`, `delegate_team_rsvps` | `not_approved` |
 | an approved delegate holds no membership | A7 → `member_change_delegate` | `not_a_member` |
-| anonymous reaches nothing it does not hold | A1 → all 54 functions | `42501` on 50; the other 4 are the trigger functions PostgREST will not route (§10) |
+| anonymous reaches nothing it does not hold | A1 → all 55 functions | `42501` on 50; the other 4 are the trigger functions PostgREST will not route (§10) |
 
 `admin_reveal_personal_id` deserves a line of its own: it is `super_admin`-ONLY
 (a single `has_admin_role` check, no `has_any_admin_role` fallback), and it does
@@ -756,7 +758,7 @@ Both probes pass `p_search: "SECAUDIT"`, which narrows the result set to this
 task's own synthetic victims: the same code path, without pulling the live
 roster's phones and names into the runner's memory.
 
-## 13. The 62 cells that stay `needs-live-proof`
+## 13. The 74 cells that stay `needs-live-proof`
 
 None is an argument defect — every one was invoked with valid arguments against
 a fresh target. They fall into three groups.
@@ -845,11 +847,11 @@ minted by the RPC **itself** rather than staged by `setup()`:
 
 # Pass 2c (Task 8) — server actions, the dev-OTP endpoint, storage buckets
 
-**41 surfaces × 12 actor positions = 492 graded cells** — 38 Server
+**42 surfaces × 12 actor positions = 504 graded cells** — 38 Server
 Actions, 1 HTTP endpoint, 2 Storage buckets. Every expectation is stated in
-`scripts/security/manifest.json`; 0 of 492 cells are rule-derived.
+`scripts/security/manifest.json`; 0 of 504 cells are rule-derived.
 
-**Result: 420 clear, 0 findings, 72 needs-live-proof.** Two independent full
+**Result: 420 clear, 0 findings, 84 needs-live-proof.** Two independent full
 runs produced **identical verdicts in every cell**.
 
 ## 16. Reaching a Server Action at all
@@ -916,7 +918,7 @@ the UI can never construct**, and it is the point of the pass.
 ## 17. The table
 
 `C` = clear · `F` = finding · `?` = needs-live-proof. **Bold** = the
-expectation for that cell is `allow` (151 of 492).
+expectation for that cell is `allow` (151 of 504).
 
 | action | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | A9 | A10 | A11 | A12 | expectation |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | --- |
@@ -925,7 +927,7 @@ expectation for that cell is `allow` (151 of 492).
 | `changeDelegateAction` | ? | ? | ? | **C** | **C** | **C** | C | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A8,A9,A10,A11,A12 |
 | `changeTierAction` | ? | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `closePollAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
-| `completeMembershipAction` | ? | **?** | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `completeMembershipAction` | ? | ? | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `confirmBulkAction` | ? | C | C | C | C | C | C | C | **C** | C | **C** | C | allow A9,A11 |
 | `deleteEventAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
 | `deleteNewsAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
@@ -947,7 +949,7 @@ expectation for that cell is `allow` (151 of 492).
 | `revokeRoleAction` | ? | C | C | C | C | C | C | C | **C** | C | C | C | allow A9 |
 | `rsvpAction` | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `saveEventAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
-| `saveMembershipProfileAction` | ? | **?** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A2–A12 |
+| `saveMembershipProfileAction` | ? | ? | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | **C** | allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 |
 | `saveNewsAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
 | `savePollAction` | ? | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
 | `setNewsCoverAction` | C | C | C | C | C | C | C | C | **C** | C | C | **C** | allow A9,A12 |
@@ -963,6 +965,7 @@ expectation for that cell is `allow` (151 of 492).
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | --- |
 | `delegate-photos` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
 | `news-images` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
+| `GET /admin/members/export` | ? | ? | ? | ? | ? | ? | ? | ? | **?** | ? | **?** | ? | allow A9,A11 |
 | `GET /api/dev/otp` | C | C | C | C | C | C | C | C | C | C | C | C | deny ×12 |
 
 ### 17.1 RBAC separation, live through the app layer
@@ -1057,7 +1060,7 @@ Two things make this a result rather than an absence:
 No client write ever landed, so there is no attacker-shaped residue in either
 bucket.
 
-## 20. The 72 cells that stay `needs-live-proof` — three groups, none a defect
+## 20. The 84 cells that stay `needs-live-proof` — three groups, none a defect
 
 **(a) 58 cells — the app collapses a real refusal into
 `GENERIC_FUNNEL_ERROR`.** Two structural causes:
@@ -1141,20 +1144,20 @@ own additions:
   the phones are outside every real block, so no real sign-in could collide.
 - **No OTP was sent by a probe.** All twelve sessions come from the disk cache.
 
-**1152 of 1155 named assertions across all three passes hold.** The 3 that do not are the 3 endpoint findings in §18 — they are written as assertions precisely so that a failure is the finding, rather than something a reader has to notice in prose.
+**1164 of 1167 named assertions across all three passes hold.** The 3 that do not are the 3 endpoint findings in §18 — they are written as assertions precisely so that a failure is the finding, rather than something a reader has to notice in prose.
 
 ---
 
 # Pass 4 (Task 10) — live proof
 
-The three passes above leave **134 cells at `needs-live-proof`**. That verdict is not a
+The three passes above leave **158 cells at `needs-live-proof`**. That verdict is not a
 result; it is the census declining to grade. Pass 4 settles every one of them by
 hand and records the outcome in **`docs/security/findings.md`**, which is the
 finding register for the whole phase — confirmed findings with severity, *and*
 the disproofs, which spec §3 makes deliverables in their own right.
 
 **The counts in this document do not move**, and that is the point: no cell
-changed verdict, and no new finding came out of the 134. What changed is that
+changed verdict, and no new finding came out of the 158. What changed is that
 each now has a stated basis:
 
 | # | group | settled by |
