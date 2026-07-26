@@ -191,8 +191,10 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // these counts gets a human's attention even if every token still
     // happens to land in a valid bucket.
     const live = extractExceptionTokens();
-    expect(live.size).toBe(45);
-    expect(REFUSAL_TOKENS.size).toBe(5);
+    // 45 -> 46 and 5 -> 6 when the security check-up's fix wave added
+    // `phone_required` to register() (F3).
+    expect(live.size).toBe(46);
+    expect(REFUSAL_TOKENS.size).toBe(6);
     expect(POST_GATE_TOKENS.size).toBe(36);
     expect(DELIBERATELY_UNCLASSIFIED.size).toBe(4);
   });

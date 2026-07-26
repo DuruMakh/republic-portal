@@ -102,6 +102,13 @@ export const REFUSAL_TOKENS = new Set([
   "not_a_delegate",
   "not_approved",
   "not_a_member",
+  // Security check-up F3 (20260726121000_register_phone_guard.sql): register()
+  // refuses a session whose auth record carries no phone. One occurrence, in
+  // register(), and it is a CALLER-STANDING check — "does the person calling
+  // hold a phone-verified identity" — never a statement about the payload or
+  // about another row. It runs before the personal-ID duplicate check, so it
+  // admits nobody to anything.
+  "phone_required",
 ]);
 
 export const POST_GATE_TOKENS = new Set([

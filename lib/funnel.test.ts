@@ -177,3 +177,19 @@ describe("mapFunnelError — Phase 6 R2 tokens", () => {
     );
   });
 });
+
+describe("mapFunnelError — the security check-up's phone_required (F3)", () => {
+  // register() now refuses a session that carries no verified phone. Email
+  // sign-up is enabled and auto-confirmed on the project, so such a session is
+  // free to obtain — and without a message of its own, the person holding one
+  // would see only GENERIC_FUNNEL_ERROR and have no idea what to do.
+  it("maps phone_required to its own Georgian sentence", () => {
+    expect(mapFunnelError("P0001: phone_required")).toBe(
+      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    );
+  });
+
+  it("does not collide with not_authenticated, which means something different", () => {
+    expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
+  });
+});
