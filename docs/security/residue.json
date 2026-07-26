@@ -15511,6 +15511,90 @@
           "at": "2026-07-25T21:12:25.642Z"
         }
       ]
+    },
+    {
+      "runAt": "2026-07-26T07:34:46.501Z",
+      "source": "scripts/security/app-probe.mjs (Pass 2c)",
+      "minted": [
+        {
+          "kind": "storage.object",
+          "id": "news-images/79e8cc1d-c5ed-43d8-a5d4-77e3ac4ed5c7-1785051197298.png",
+          "surface": "action:setNewsCoverAction",
+          "actor": "A9",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:33:18.406Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "news-images/298ec99e-378e-4cd9-88f9-902d3e85187f-1785051201422.png",
+          "surface": "action:setNewsCoverAction",
+          "actor": "A12",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:33:22.755Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "delegate-photos/3afa1610-09bb-4f6f-87fd-5e89efa8eaa9-1785051225050.png",
+          "surface": "action:updateDelegateProfileAction",
+          "actor": "A9",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:33:46.465Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "delegate-photos/1a215db1-2d2a-4c44-9c5c-3134ebdaf059-1785050555075.png",
+          "surface": "action:updateDelegateProfileAction",
+          "actor": "A10",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:33:49.129Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "delegate-photos/1a215db1-2d2a-4c44-9c5c-3134ebdaf059-1785051227928.png",
+          "surface": "action:updateDelegateProfileAction",
+          "actor": "A10",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:33:49.129Z"
+        }
+      ]
+    },
+    {
+      "runAt": "2026-07-26T07:42:46.390Z",
+      "source": "scripts/security/app-probe.mjs (Pass 2c)",
+      "minted": [
+        {
+          "kind": "storage.object",
+          "id": "news-images/254dbd97-e129-48bc-a602-04d114356338-1785051700081.png",
+          "surface": "action:setNewsCoverAction",
+          "actor": "A9",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:41:41.232Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "news-images/a57c4bbb-dbbb-408f-9daa-b0346e430cec-1785051704680.png",
+          "surface": "action:setNewsCoverAction",
+          "actor": "A12",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:41:45.963Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "delegate-photos/3afa1610-09bb-4f6f-87fd-5e89efa8eaa9-1785051725079.png",
+          "surface": "action:updateDelegateProfileAction",
+          "actor": "A9",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:42:06.304Z"
+        },
+        {
+          "kind": "storage.object",
+          "id": "delegate-photos/1a215db1-2d2a-4c44-9c5c-3134ebdaf059-1785051727662.png",
+          "surface": "action:updateDelegateProfileAction",
+          "actor": "A10",
+          "note": "uploaded by the action itself (service role, after its role check); removed immediately",
+          "at": "2026-07-26T07:42:08.829Z"
+        }
+      ]
     }
   ]
 }

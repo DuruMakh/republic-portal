@@ -171,7 +171,7 @@
     "assertion": "endpoint:dev-otp.serves-code-when-no-profile",
     "actor": "A1",
     "expected": "200 {\"otp\":\"424242\"} — the control: proves case A withheld rather than merely failed",
-    "observed": "200 {\"otp\":\"424242\"} (412ms)",
+    "observed": "200 {\"otp\":\"424242\"} (374ms)",
     "ok": true
   },
   {
@@ -186,7 +186,7 @@
     "assertion": "endpoint:dev-otp.timing-oracle",
     "actor": "A1",
     "expected": "no measurable timing difference between a phone that has an account and one that does not (< 250ms) — this oracle SURVIVES unifying the two response bodies",
-    "observed": "has-account median 393ms (252/400/393), no-account median 6568ms (6707/6568/6538), gap 6175ms",
+    "observed": "has-account median 309ms (245/330/309), no-account median 6634ms (6634/6729/6552), gap 6325ms",
     "ok": false,
     "finding": "D5/R2 — account-existence oracle (response timing, independent of the body)"
   },
@@ -714,6 +714,1392 @@
     "actor": "A12",
     "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
     "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:cancelEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "8/8 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeTierAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "9/9 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:closePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:completeMembershipAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deletePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:findAdminCandidateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:lookupMemberAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:openPollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:previewBulkAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:registerAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:rejectDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:requestDelegacyAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "5/5 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealApplicantIdAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealPersonalIdAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revokeRoleAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:rsvpAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "10/10 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveMembershipProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:savePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:unpublishNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateRegisteredNameAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:voidPaymentAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:voteAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "9/9 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A12",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:cancelEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 8",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeTierAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
+    "ok": true
+  },
+  {
+    "assertion": "action:closePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:completeMembershipAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deletePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:openPollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A10",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A10",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:registerAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 11",
+    "ok": true
+  },
+  {
+    "assertion": "action:rejectDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:requestDelegacyAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealApplicantIdAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealPersonalIdAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:revokeRoleAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:rsvpAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 10",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveMembershipProfileAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:savePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:unpublishNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:voidPaymentAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:voteAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
     "ok": true
   }
 ]

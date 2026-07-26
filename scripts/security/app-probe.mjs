@@ -221,7 +221,8 @@ if (actionModule) {
       console.log(`  ...${i + 1}/${actionSurfaces.length} actions probed`);
     }
   }
-  assertions.push(...(await run.finalAssertions()));
+  assertions.push(...actionModule.probeValidityAssertions(run.validity));
+  assertions.push(...actionModule.genericRefusalAssertions(run.validity));
 } else {
   console.log("\n(scripts/security/app-actions.mjs not present -- the 456 action cells are left");
   console.log(" at their previous value and reported as unsubstituted below)");

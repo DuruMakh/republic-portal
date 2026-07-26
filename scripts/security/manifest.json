@@ -3,229 +3,799 @@
     "id": "action:approveDelegateAction",
     "kind": "action",
     "name": "approveDelegateAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A10. Envelope over the admin_approve_delegate() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Reads the self-gating admin_delegate_queue view BEFORE the RPC and bails on its error — the same shape as publishNewsAction, and the reason its denied cells are needs-live-proof rather than clear. Settled by the state assertion on delegates.status/slug/verified_at."
   },
   {
     "id": "action:cancelEventAction",
     "kind": "action",
     "name": "cancelEventAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_cancel_event() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Reads admin_events but IGNORES the error, so a denied caller reaches the RPC and gets missing_role."
   },
   {
     "id": "action:changeDelegateAction",
     "kind": "action",
     "name": "changeDelegateAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "deny",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A4,A5,A6,A8,A9,A10,A11,A12. Envelope over the member_change_delegate() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A7 is deliberately outside the allow-set: an approved delegate holds no membership, so member_change_delegate answers not_a_member. Probed with the delegate each caller already has, taking the RPC's documented same-target no-op branch."
   },
   {
     "id": "action:changeTierAction",
     "kind": "action",
     "name": "changeTierAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the member_change_tier() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Probed with the tier each caller already holds — the UPDATE still executes, so this is content-neutral, not row-neutral (the same disclosure Pass 2b made in §7.1)."
   },
   {
     "id": "action:closePollAction",
     "kind": "action",
     "name": "closePollAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_close_poll() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_close_poll."
   },
   {
     "id": "action:completeMembershipAction",
     "kind": "action",
     "name": "completeMembershipAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the become_member_complete() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A4-A12 hit the early return for an already-completed caller: the gate was passed, but the tier write, the membership insert and the gen_funnel_code loop never ran (Pass 2b §7.2)."
   },
   {
     "id": "action:confirmBulkAction",
     "kind": "action",
     "name": "confirmBulkAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A11. Envelope over the admin_record_payments_bulk() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. The all-or-nothing batch path; setup clears the victim's payments first."
   },
   {
     "id": "action:deleteEventAction",
     "kind": "action",
     "name": "deleteEventAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_delete_event() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_delete_event with no pre-read."
   },
   {
     "id": "action:deleteNewsAction",
     "kind": "action",
     "name": "deleteNewsAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_delete_news() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_delete_news with no pre-read."
   },
   {
     "id": "action:deletePollAction",
     "kind": "action",
     "name": "deletePollAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_delete_poll() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_delete_poll."
   },
   {
     "id": "action:findAdminCandidateAction",
     "kind": "action",
     "name": "findAdminCandidateAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9. No RPC — the gate is entirely app-side. APP-SIDE GATE, no RPC: hasAnyRole(super_admin) at admins/actions.ts:32, before any query. Read-only. Probed against the audit's auxiliary team-member fixture, whose phone is a real Georgian shape — the disposable victims' phones are deliberately longer than a real number and would fail this action's own zod refine BEFORE the role gate, making the probe prove nothing."
   },
   {
     "id": "action:grantRoleAction",
     "kind": "action",
     "name": "grantRoleAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9. Envelope over the admin_grant_role() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A granted role is a real admin account on staging, revoked by teardown the instant the probe returns."
   },
   {
     "id": "action:lookupMemberAction",
     "kind": "action",
     "name": "lookupMemberAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A11. No RPC — the gate is entirely app-side. APP-SIDE GATE, no RPC: hasAnyRole(finance, super_admin) at finances/actions.ts:33-36. Read-only. Search narrowed to SECAUDIT so the probe exercises the same code path without pulling the live roster's names and phones into the runner's memory."
   },
   {
     "id": "action:openPollAction",
     "kind": "action",
     "name": "openPollAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_open_poll() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_open_poll."
   },
   {
     "id": "action:previewBulkAction",
     "kind": "action",
     "name": "previewBulkAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A11. No RPC — the gate is entirely app-side. APP-SIDE GATE: hasAnyRole(finance, super_admin) at finances/actions.ts:92-95. Read-only preview — it reads admin_members and admin_payments but records nothing."
   },
   {
     "id": "action:publishEventAction",
     "kind": "action",
     "name": "publishEventAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_publish_event() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Reads the self-gating admin_events view BEFORE the RPC and bails on its error. A denied actor gets zero rows, .single() raises PGRST116, and the action maps that unknown message to the generic error — a real refusal collapsed into an unclassifiable string. Recorded needs-live-proof and settled by the denied-actor-changes-nothing state assertion on events.status/slug."
   },
   {
     "id": "action:publishNewsAction",
     "kind": "action",
     "name": "publishNewsAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_publish_news() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Same read-first-and-bail shape as publishEventAction — see that note. Settled by the state assertion on news.status/slug."
   },
   {
     "id": "action:reassignMemberAction",
     "kind": "action",
     "name": "reassignMemberAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A10. Envelope over the admin_reassign_member() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Verifier family, not finance (ADR-013). Setup resets the victim to exactly one open central membership; teardown resets it again."
   },
   {
     "id": "action:recordPaymentAction",
     "kind": "action",
     "name": "recordPaymentAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A11. Envelope over the admin_record_payment() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Setup clears the victim's payments so every actor records against an identical fresh member."
   },
   {
     "id": "action:registerAction",
     "kind": "action",
     "name": "registerAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the register() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A1 (anonymous) holds no EXECUTE on register() and is refused at the GRANT layer with 42501; the action collapses that into the generic message — see the APP-GENERIC note in coverage.md."
   },
   {
     "id": "action:rejectDelegateAction",
     "kind": "action",
     "name": "rejectDelegateAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A10. Envelope over the admin_reject_delegate() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Straight to admin_reject_delegate after an explicit non-string guard — server actions are POST-reachable, so a non-string payload must degrade to the Georgian generic rather than zod's English default."
   },
   {
     "id": "action:requestDelegacyAction",
     "kind": "action",
     "name": "requestDelegacyAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the request_delegacy() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Writes on the CALLER. A9-A12 keep Pass 2b's SKIP-MUTATING abstention: creating a delegates row for a canonical staging admin is reversible in principle, but a teardown that fails over the network leaves a super_admin sitting in the delegate queue."
   },
   {
     "id": "action:revealApplicantIdAction",
     "kind": "action",
     "name": "revealApplicantIdAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A10. Envelope over the admin_reveal_applicant_personal_id() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. verifier/super_admin, applicant scope only. Target is a synthetic victim; the RPC audits every reveal."
   },
   {
     "id": "action:revealPersonalIdAction",
     "kind": "action",
     "name": "revealPersonalIdAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9. Envelope over the admin_reveal_personal_id() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. super_admin-ONLY, and it does NOT share verifier's grant on the applicant reveal despite the shared admin_reveal_ prefix. The target is a SYNTHETIC victim whose personal_id this audit minted — never a real member."
   },
   {
     "id": "action:revokeRoleAction",
     "kind": "action",
     "name": "revokeRoleAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9. Envelope over the admin_revoke_role() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Setup mints the role the call is meant to remove, so every actor faces one."
   },
   {
     "id": "action:rsvpAction",
     "kind": "action",
     "name": "rsvpAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the member_rsvp() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Gate is is_registered(), not is_completed_member() — A3 is legitimately in the allow-set."
   },
   {
     "id": "action:saveEventAction",
     "kind": "action",
     "name": "saveEventAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_save_event() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. p_id null: the call mints its own events row, recorded as residue."
   },
   {
     "id": "action:saveMembershipProfileAction",
     "kind": "action",
     "name": "saveMembershipProfileAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the become_member_save_profile() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A4-A12 are already completed, so they reach the RPC and are stopped by already_completed — a POST-GATE token, which on the allow side is proof the gate admitted them."
   },
   {
     "id": "action:saveNewsAction",
     "kind": "action",
     "name": "saveNewsAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_save_news() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. p_id null: the call mints its own news row, recorded as residue."
   },
   {
     "id": "action:savePollAction",
     "kind": "action",
     "name": "savePollAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_save_poll() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. p_id null: the call mints its own polls row plus two poll_options."
   },
   {
     "id": "action:setNewsCoverAction",
     "kind": "action",
     "name": "setNewsCoverAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_set_news_image() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. APP-SIDE GATE FIRST: hasAnyRole(editor, super_admin) at news/actions.ts:114-117, before createAdminClient() at line 137 — the service-role client is never constructed for a caller lacking the role, so the refusal is missing_role raised by the app, not by the database. The RPC re-checks, and a failed RPC removes the just-uploaded object. Probed with a real 1x1 PNG so the true path (client-declared MIME -> PHOTO_TYPES -> service-role upload) is exercised; the uploaded object is removed service-side the moment the probe returns."
   },
   {
     "id": "action:unpublishNewsAction",
     "kind": "action",
     "name": "unpublishNewsAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "allow"
+    },
+    "note": "Allow A9,A12. Envelope over the admin_unpublish_news() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Reads admin_news but ignores the error, so a denied caller reaches the RPC and gets missing_role."
   },
   {
     "id": "action:updateDelegateProfileAction",
     "kind": "action",
     "name": "updateDelegateProfileAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A10. Envelope over the admin_update_delegate_profile() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. APP-SIDE GATE FIRST: hasAnyRole(verifier, super_admin) at verify/[id]/actions.ts:25-28, before createAdminClient() at line 51 — and it also refuses a non-approved target BEFORE the upload, so a rejected applicant can never park a file in the public bucket. Probed with a real 1x1 PNG; the uploaded object is removed service-side immediately."
   },
   {
     "id": "action:updateGraceDaysAction",
     "kind": "action",
     "name": "updateGraceDaysAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Allow A9. Envelope over the admin_update_setting() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Written back to the value it already holds: the RPC body runs recompute_all_active() across the whole roster, so a changed value would re-grade every member's standing."
   },
   {
     "id": "action:updateProfileAction",
     "kind": "action",
     "name": "updateProfileAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. No RPC — the gate is entirely app-side. The one action with NO RPC: a plain column-scoped UPDATE on the caller's own profiles row through their cookie-bound client, with an explicit getUser() check that answers not_authenticated for A1. Column grant + own-row RLS + protect_profile_columns are the whole defence, each proven live in Pass 2a. Probed content-neutrally (the caller's own five cabinet columns written straight back); A3 has nulls where the schema demands numbers, so it is read-then-restored."
   },
   {
     "id": "action:updateRegisteredNameAction",
     "kind": "action",
     "name": "updateRegisteredNameAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "allow",
+      "A3": "allow",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12. No RPC — the gate is entirely app-side. Same scoped-path pattern as updateProfileAction, narrowed to first_name/last_name. Each caller writes back the name it already has."
   },
   {
     "id": "action:voidPaymentAction",
     "kind": "action",
     "name": "voidPaymentAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "allow",
+      "A10": "deny",
+      "A11": "allow",
+      "A12": "deny"
+    },
+    "note": "Allow A9,A11. Envelope over the admin_void_payment() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. Setup mints an unvoided payment per (action, actor) as the void target."
   },
   {
     "id": "action:voteAction",
     "kind": "action",
     "name": "voteAction",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "allow",
+      "A5": "allow",
+      "A6": "allow",
+      "A7": "allow",
+      "A8": "allow",
+      "A9": "allow",
+      "A10": "allow",
+      "A11": "allow",
+      "A12": "allow"
+    },
+    "note": "Allow A4,A5,A6,A7,A8,A9,A10,A11,A12. Envelope over the member_cast_vote() RPC, whose gate Pass 2b probed live against a fresh target; the action's allow-set is that function's, narrowed by any app-side precheck. A fresh poll is minted per (action, actor) so every caller's vote is a FIRST vote; a shared poll would hand the twelfth actor already_voted."
   },
   {
     "id": "bucket:delegate-photos",
