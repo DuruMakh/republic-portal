@@ -426,8 +426,11 @@ console.log("\nL3-2 — payments append-only protection");
      order by 1;
   `);
   check(
+    // pg_get_triggerdef normalises the event list, and it does NOT preserve the
+    // order written in the migration — "BEFORE UPDATE OR DELETE" comes back as
+    // "BEFORE DELETE OR UPDATE". Match either.
     "payments carries a before-update-or-delete trigger, as audit_log does",
-    trigger.some((t) => /before update or delete/i.test(t.def)),
+    trigger.some((t) => /before (update or delete|delete or update)/i.test(t.def)),
     trigger.length === 0 ? "no trigger at all" : trigger.map((t) => t.tgname).join(", "),
   );
 

@@ -181,7 +181,12 @@ describe("verdict.ts token classification vs. the live migrations", () => {
   it("finds exactly the function count this order invariant was written against", () => {
     // Tripwire, same role as the token-count one below: a new function is
     // welcome, but it should be a deliberate arrival, not a silent one.
-    expect(latestFunctionBodies().size).toBe(58); // 54 live + 4 dropped funnel_*
+    // 54 live + 4 dropped funnel_*; 59 since the security check-up's fix wave
+    // added payments_append_only() (L3-2). It needs no GATELESS_BY_DESIGN
+    // exemption, unlike protect_profile_columns: it raises a full SENTENCE
+    // ("payments are append-only", audit_log_immutable's idiom), never a token,
+    // so it carries nothing the gate-order invariant could find misplaced.
+    expect(latestFunctionBodies().size).toBe(59);
     expect(GATELESS_BY_DESIGN.size).toBe(1);
   });
 
