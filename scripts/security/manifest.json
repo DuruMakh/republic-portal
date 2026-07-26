@@ -231,19 +231,64 @@
     "id": "bucket:delegate-photos",
     "kind": "bucket",
     "name": "delegate-photos",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Deny x12 on WRITE. Created public => true at 20260717150000_admin_crm.sql:1014 with the stated design \"Public-read bucket; NO client write policies — uploads go exclusively through the server action (service role) paired with admin_update_delegate_profile\". No storage.objects policy is created by any migration, so no client role — A12/A10 included, whose legitimate route is updateDelegateProfileAction uploading with the SERVICE role after re-checking hasAnyRole — may put an object here. Public READ is by design and is asserted separately (it is also the control that makes a write refusal a statement about the policy rather than about an unreachable bucket). list and delete are probed as named assertions for the same policy set."
   },
   {
     "id": "bucket:news-images",
     "kind": "bucket",
     "name": "news-images",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Deny x12 on WRITE. Created public => true at 20260719150000_community.sql:827, same design note as delegate-photos: \"public read; writes only via the service-role upload action paired with admin_set_news_image\". No storage.objects policy exists, so no client role including A12 (editor) may upload directly; the editor route is setNewsCoverAction, which uploads with the service role after hasAnyRole([\"editor\",\"super_admin\"]) and removes the object again if the RPC then refuses. Public read asserted separately as the control; list and delete probed as named assertions."
   },
   {
     "id": "endpoint:GET /api/dev/otp",
     "kind": "endpoint",
     "name": "GET /api/dev/otp",
-    "layer": "app"
+    "layer": "app",
+    "overrides": {
+      "A1": "deny",
+      "A2": "deny",
+      "A3": "deny",
+      "A4": "deny",
+      "A5": "deny",
+      "A6": "deny",
+      "A7": "deny",
+      "A8": "deny",
+      "A9": "deny",
+      "A10": "deny",
+      "A11": "deny",
+      "A12": "deny"
+    },
+    "note": "Cell question: can this actor obtain a LIVE sign-in code for an account that already exists? Deny x12. The endpoint itself carries no authentication at all — it is a dev helper, gated only on NEXT_PUBLIC_APP_ENV in (development, preview) at route.ts:5-8 — so \"every actor reaches it\" is by design and is not the cell. The gate that IS the cell is route.ts:34-44: any phone with a profiles row is answered 404 {\"error\":\"not found\"} and the pending code is withheld (the R1 hardening, spec §4.4 decision #6). Probed against a phone that has BOTH a profiles row and a fresh dev_otp_inbox row, so a 404 proves withholding rather than absence; the no-profile control (a code IS served) is asserted by name. Three properties this verdict cannot carry — the response-body oracle, the timing oracle that survives fixing it, and the unauthenticated service-role DELETE at lines 17-20 — are recorded in docs/security/row-scope-app.json instead."
   },
   {
     "id": "function:active_coverage",

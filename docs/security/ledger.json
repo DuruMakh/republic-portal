@@ -5475,433 +5475,709 @@
     "surfaceId": "bucket:delegate-photos",
     "actor": "A1",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A1-1785049744281.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A2",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A2-1785049744825.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A3",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A3-1785049745405.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A4",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A4-1785049745983.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A5",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A5-1785049746473.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A6",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A6-1785049747012.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A7",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A7-1785049747493.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A8",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A8-1785049748164.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A9",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A9-1785049748705.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A10",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A10-1785049749214.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A11",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A11-1785049749807.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:delegate-photos",
     "actor": "A12",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "delegate-photos",
+        "path": "secaudit-A12-1785049750394.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A1",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A1-1785049751981.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A2",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A2-1785049752457.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A3",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A3-1785049752966.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A4",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A4-1785049753435.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A5",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A5-1785049753946.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A6",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A6-1785049754469.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A7",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A7-1785049755276.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A8",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A8-1785049755859.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A9",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A9-1785049756375.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A10",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A10-1785049756874.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A11",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A11-1785049757390.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "bucket:news-images",
     "actor": "A12",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "bucket probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "storage refused the write: new row violates row-level security policy (HTTP 403)",
+      "rowCount": 0,
+      "raw": {
+        "verb": "upload",
+        "bucket": "news-images",
+        "path": "secaudit-A12-1785049757977.txt",
+        "status": "403",
+        "message": "new row violates row-level security policy"
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A1",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 477
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A2",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 418
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A3",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 393
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A4",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 432
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A5",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 390
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A6",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 405
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A7",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 410
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A8",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 390
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A9",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 580
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A10",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 402
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A11",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 426
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "endpoint:GET /api/dev/otp",
     "actor": "A12",
     "expectation": "deny",
-    "ruleDerived": true,
+    "ruleDerived": false,
     "outcome": {
-      "errorCode": "SKIP",
-      "errorMessage": "endpoint probed in a later task",
-      "rowCount": 0
+      "errorCode": "42501",
+      "errorMessage": "dev-OTP endpoint withheld the code: a profiles row exists for this phone (route.ts:42-44)",
+      "rowCount": 0,
+      "raw": {
+        "case": "A: profile + live code",
+        "status": 404,
+        "body": {
+          "error": "not found"
+        },
+        "text": "{\"error\":\"not found\"}",
+        "elapsedMs": 444
+      }
     },
-    "verdict": "needs-live-proof"
+    "verdict": "clear"
   },
   {
     "surfaceId": "function:active_coverage",
