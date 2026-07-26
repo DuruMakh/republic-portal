@@ -320,6 +320,19 @@ describe("L3-2 — payments carries append-only protection", () => {
     expect([...columns.authenticated]).toEqual(["select"]);
   });
 
+  it("grants anon nothing at all — not even the table-wide SELECT it was born with", () => {
+    // The CF4 shape, on the money table. anon held table-wide SELECT by
+    // Supabase default privileges, defended by the single policy "own payments
+    // readable" (auth.uid() = member_id) — inert only because anon's uid is
+    // null. One predicate deep, which CF4 ruled unacceptable for profiles.
+    // Nothing anonymous reads payments: the public money figure comes from
+    // transparency_stats, an owner-executed view.
+    const held = effectivePrivileges("payments");
+    expect([...held.anon].sort()).toEqual([]);
+    const columns = effectiveColumnPrivileges("payments");
+    expect([...columns.anon].sort()).toEqual([]);
+  });
+
   // The trigger must not stand in front of the ON DELETE CASCADE that
   // threat-model.md:197 records as deliberate (ADR-015). A cascade is performed
   // with the privileges of the REFERENCING table's owner, never the session

@@ -1,0 +1,32 @@
+-- Security check-up fix wave, amendment (Task 12b) — L3-2's grant half, finished.
+--
+-- 20260726122000 revoked INSERT/UPDATE/DELETE/TRUNCATE on payments from anon
+-- and authenticated and deliberately left SELECT alone, on the ground that
+-- members read their own billing rows. That is true of `authenticated`, which
+-- holds a ten-column scoped SELECT (20260718100000:404). It was never true of
+-- `anon`, which held TABLE-WIDE SELECT — including recorded_by, voided_by and
+-- void_reason, the three columns that migration calls admin-internal because a
+-- void reason can name a fraud suspicion.
+--
+-- Recorded as a decision rather than left as a silent asymmetry: it is the
+-- IDENTICAL shape fix CF4 (20260726120500) ruled unacceptable one table over.
+-- anon's table-wide SELECT was defended by exactly one predicate — the policy
+-- `own payments readable` (auth.uid() = member_id) — inert only because an
+-- anonymous caller's uid is null. One layer deep, on the table that carries
+-- every money figure the platform publishes, where authenticated gets two.
+--
+-- Verified before writing it, the same way CF4 was: NOTHING anonymous reads
+-- this table. Every anonymous path in lib/supabase/public.ts goes through a
+-- view (public_delegates, public_stats, public_news, public_events,
+-- transparency_stats, transparency_regions) or `regions`; the one that touches
+-- payments at all is transparency_stats, whose total_gel sums them — and the
+-- transparency views are OWNER-EXECUTED (definer-style, no security_invoker,
+-- 20260713175043:2), so they read payments with the owner's rights and not the
+-- caller's. Revoking anon's grant cannot reach them. The live harness asserts
+-- exactly that, so an over-broad revoke here fails loudly instead of quietly
+-- blanking the public transparency page.
+--
+-- `revoke all`, not `revoke select`, and for CF4's reason: anon needs NOTHING
+-- here, so parity with authenticated would still be more than nothing. It also
+-- takes the REFERENCES and TRIGGER rights the Supabase default handed out.
+revoke all on payments from anon;

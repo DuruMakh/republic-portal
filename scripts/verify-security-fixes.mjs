@@ -454,6 +454,48 @@ console.log("\nL3-2 — payments append-only protection");
       : stillWritable.map((g) => `${g.role}: ${g.writes.join("/")}`).join("; "),
   );
 
+  // The SELECT half, which the first pass of this fix left alone. anon was born
+  // with table-wide SELECT on payments (Supabase default privileges) and kept
+  // it, defended by the single policy "own payments readable"
+  // (auth.uid() = member_id) — inert only because anon's uid is null. That is
+  // the identical one-predicate-deep shape CF4 ruled unacceptable for profiles,
+  // on the table that holds every money figure. Nothing anonymous reads it:
+  // every anonymous path in lib/supabase/public.ts goes through a view, and the
+  // public money figure is transparency_stats.total_gel, owner-executed.
+  const anonPayments = sql(`
+    select coalesce(array_agg(distinct lower(privilege_type) order by lower(privilege_type)), '{}')
+             as privs
+      from information_schema.table_privileges
+     where table_schema = 'public' and table_name = 'payments' and grantee = 'anon';
+  `)[0];
+  check(
+    "anon holds NO privilege on payments — not even the SELECT it was born with",
+    (anonPayments?.privs ?? []).length === 0,
+    (anonPayments?.privs ?? []).length === 0 ? "0 grants" : (anonPayments?.privs ?? []).join(", "),
+  );
+  const { error: anonReadErr } = await anon.from("payments").select("amount_gel").limit(1);
+  check(
+    "an anonymous SELECT of payments is refused at the GRANT (42501)",
+    anonReadErr?.code === "42501",
+    anonReadErr
+      ? `${anonReadErr.code}: ${anonReadErr.message}`
+      : "no error — the statement ran and only the RLS predicate withheld the rows",
+  );
+  // Guards against over-breadth, CF4's lesson: the published money figure must
+  // survive, and it does because the view is owner-executed rather than reading
+  // payments with the caller's rights.
+  const { data: transparency, error: transparencyErr } = await anon
+    .from("transparency_stats")
+    .select("total_gel")
+    .single();
+  check(
+    "…and the public transparency figure still reads for an anonymous visitor",
+    !transparencyErr && transparency?.total_gel !== undefined,
+    transparencyErr
+      ? `${transparencyErr.code}: ${transparencyErr.message} — THE REVOKE IS TOO BROAD`
+      : "transparency_stats.total_gel still served",
+  );
+
   // The behavioural half, run entirely inside one aborted transaction so the
   // experiment leaves nothing behind: the DO block raises at the end, which
   // carries the measurements out in the message AND rolls the whole thing back.
