@@ -210,7 +210,8 @@ const pass2aTable = pass2aSurfaces
 // than a hand-split number.
 const PASS_2B_FAMILIES =
   /\.(writes-audit-log|no-rpc-route|answers-truthfully|include-ids-super-admin-only)$|^audit-log-invariant\./;
-const p2bAssertions = rowScope.filter((r) => PASS_2B_FAMILIES.test(r.assertion));
+// Only the REMAINDER is ever reported, so only the remainder is computed: the
+// matching half had no reader and was the repo's one standing lint warning.
 const p2aAssertions = rowScope.filter((r) => !PASS_2B_FAMILIES.test(r.assertion));
 const p2aUnproven = p2aAssertions.filter((r) => r.ok && r.unproven);
 const eventsFilter = rowScope.find((r) => r.assertion === "public_events.filter");
