@@ -28267,6 +28267,3268 @@
           "at": "2026-07-26T20:36:25.083Z"
         }
       ]
+    },
+    {
+      "runAt": "2026-07-26T21:17:12.711Z",
+      "auditLogBaselineId": 2327,
+      "minted": [
+        {
+          "kind": "auth.user",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "pool",
+          "actor": "A1",
+          "note": "disposable victim for A1",
+          "at": "2026-07-26T21:16:31.360Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "pool",
+          "actor": "A1",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:31.455Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "pool",
+          "actor": "A2",
+          "note": "disposable victim for A2",
+          "at": "2026-07-26T21:16:34.460Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "pool",
+          "actor": "A2",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:34.552Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "pool",
+          "actor": "A3",
+          "note": "disposable victim for A3",
+          "at": "2026-07-26T21:16:35.275Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "pool",
+          "actor": "A3",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:35.369Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "pool",
+          "actor": "A4",
+          "note": "disposable victim for A4",
+          "at": "2026-07-26T21:16:36.048Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "pool",
+          "actor": "A4",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:36.141Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "pool",
+          "actor": "A5",
+          "note": "disposable victim for A5",
+          "at": "2026-07-26T21:16:36.867Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "pool",
+          "actor": "A5",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:36.961Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "pool",
+          "actor": "A6",
+          "note": "disposable victim for A6",
+          "at": "2026-07-26T21:16:37.684Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "pool",
+          "actor": "A6",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:37.774Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "pool",
+          "actor": "A7",
+          "note": "disposable victim for A7",
+          "at": "2026-07-26T21:16:38.474Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "pool",
+          "actor": "A7",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:38.566Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "pool",
+          "actor": "A8",
+          "note": "disposable victim for A8",
+          "at": "2026-07-26T21:16:39.291Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "pool",
+          "actor": "A8",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:39.383Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "pool",
+          "actor": "A9",
+          "note": "disposable victim for A9",
+          "at": "2026-07-26T21:16:40.106Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "pool",
+          "actor": "A9",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:40.193Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "pool",
+          "actor": "A10",
+          "note": "disposable victim for A10",
+          "at": "2026-07-26T21:16:40.918Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "pool",
+          "actor": "A10",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:41.010Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "pool",
+          "actor": "A11",
+          "note": "disposable victim for A11",
+          "at": "2026-07-26T21:16:41.739Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "pool",
+          "actor": "A11",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:41.829Z"
+        },
+        {
+          "kind": "auth.user",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "pool",
+          "actor": "A12",
+          "note": "disposable victim for A12",
+          "at": "2026-07-26T21:16:42.530Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "pool",
+          "actor": "A12",
+          "note": "disposable victim profile",
+          "at": "2026-07-26T21:16:42.624Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A8",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.462Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A6",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.468Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A2",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.472Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A1",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.477Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A5",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.478Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A7",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.480Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A10",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.481Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A3",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.482Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A12",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.483Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A4",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.485Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A11",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.491Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_approve_delegate",
+          "actor": "A9",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:43.494Z"
+        },
+        {
+          "kind": "events",
+          "id": "36f95d04-3f38-4aa9-939f-3582f6f42ccf",
+          "surface": "function:admin_cancel_event",
+          "actor": "A1",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.805Z"
+        },
+        {
+          "kind": "events",
+          "id": "3db870b2-2c89-41f6-9e1f-fb410728fe95",
+          "surface": "function:admin_cancel_event",
+          "actor": "A7",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.806Z"
+        },
+        {
+          "kind": "events",
+          "id": "f2e4e9b3-31cd-4baa-b24e-9c2fd2d2dd31",
+          "surface": "function:admin_cancel_event",
+          "actor": "A6",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.807Z"
+        },
+        {
+          "kind": "events",
+          "id": "89beeaf2-38c4-4d10-9cf6-c70882501a3f",
+          "surface": "function:admin_cancel_event",
+          "actor": "A8",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.809Z"
+        },
+        {
+          "kind": "events",
+          "id": "fc185f45-6d91-4d26-8b18-034f5f6628f9",
+          "surface": "function:admin_cancel_event",
+          "actor": "A4",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.811Z"
+        },
+        {
+          "kind": "events",
+          "id": "5b6e088a-eeb1-4cfd-8f70-e6c527d23139",
+          "surface": "function:admin_cancel_event",
+          "actor": "A10",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.812Z"
+        },
+        {
+          "kind": "events",
+          "id": "6445b1e3-eede-4759-8e42-30f2d014f13e",
+          "surface": "function:admin_cancel_event",
+          "actor": "A5",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.813Z"
+        },
+        {
+          "kind": "events",
+          "id": "03a1983b-f401-4cab-8324-f00f23966b89",
+          "surface": "function:admin_cancel_event",
+          "actor": "A2",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.815Z"
+        },
+        {
+          "kind": "events",
+          "id": "82fddf7b-3f08-4059-809d-181e4161e4cc",
+          "surface": "function:admin_cancel_event",
+          "actor": "A11",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.816Z"
+        },
+        {
+          "kind": "events",
+          "id": "737a32a8-b142-4172-b18b-258e14df6338",
+          "surface": "function:admin_cancel_event",
+          "actor": "A3",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.817Z"
+        },
+        {
+          "kind": "events",
+          "id": "0053b682-265b-4a95-88be-e77343cfadc6",
+          "surface": "function:admin_cancel_event",
+          "actor": "A9",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.818Z"
+        },
+        {
+          "kind": "events",
+          "id": "759d6ae1-8a9c-4c08-b1bf-5a62b59041ea",
+          "surface": "function:admin_cancel_event",
+          "actor": "A12",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:43.821Z"
+        },
+        {
+          "kind": "polls",
+          "id": "4e5d87b7-8f0a-445a-9cd5-848623f9cae2",
+          "surface": "function:admin_close_poll",
+          "actor": "A1",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.026Z"
+        },
+        {
+          "kind": "polls",
+          "id": "34490ac6-fb5d-451c-a987-ef51e7348be7",
+          "surface": "function:admin_close_poll",
+          "actor": "A2",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.036Z"
+        },
+        {
+          "kind": "polls",
+          "id": "f739bf14-df63-4b12-a0ad-a7ba7af1376b",
+          "surface": "function:admin_close_poll",
+          "actor": "A3",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.038Z"
+        },
+        {
+          "kind": "polls",
+          "id": "2e0355f7-d51a-4c33-b8ec-428c5b9442dc",
+          "surface": "function:admin_close_poll",
+          "actor": "A5",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.041Z"
+        },
+        {
+          "kind": "polls",
+          "id": "0caa44cf-c600-478b-85fa-5c6f74aeb6bb",
+          "surface": "function:admin_close_poll",
+          "actor": "A12",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.043Z"
+        },
+        {
+          "kind": "polls",
+          "id": "69fd3e1f-a7ea-49bb-8fcf-96581988bec2",
+          "surface": "function:admin_close_poll",
+          "actor": "A8",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.045Z"
+        },
+        {
+          "kind": "polls",
+          "id": "d353e247-d0a6-4734-b6cc-2ae46880a619",
+          "surface": "function:admin_close_poll",
+          "actor": "A7",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.047Z"
+        },
+        {
+          "kind": "polls",
+          "id": "270c9602-40f0-4e81-87fd-c4bbfa172a2b",
+          "surface": "function:admin_close_poll",
+          "actor": "A4",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.048Z"
+        },
+        {
+          "kind": "polls",
+          "id": "18d4916e-4170-4a1d-91cb-593d06e44091",
+          "surface": "function:admin_close_poll",
+          "actor": "A6",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.051Z"
+        },
+        {
+          "kind": "polls",
+          "id": "007be6b2-a227-4671-99a9-8c171315131d",
+          "surface": "function:admin_close_poll",
+          "actor": "A10",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.052Z"
+        },
+        {
+          "kind": "polls",
+          "id": "abd4fcf8-f1de-4d9f-9980-69aae539e7aa",
+          "surface": "function:admin_close_poll",
+          "actor": "A9",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.053Z"
+        },
+        {
+          "kind": "polls",
+          "id": "43085219-44fe-4ade-9a3e-3312205496da",
+          "surface": "function:admin_close_poll",
+          "actor": "A11",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:44.054Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "c64bf8d9-2a09-4e52-832b-e3b20755f892",
+          "surface": "function:admin_close_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.119Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "e1616360-ba33-4752-80ac-223ee4320f87",
+          "surface": "function:admin_close_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.119Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "589c790e-c272-42f5-9881-0520f289ca07",
+          "surface": "function:admin_close_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.123Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "50eff933-9371-4950-82b9-57e1dc213f8b",
+          "surface": "function:admin_close_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.123Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f19e16d5-3fb4-4a9f-ac10-5a1ff9c12035",
+          "surface": "function:admin_close_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.126Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "1675ca15-a9b4-467a-8984-95d46d551f3a",
+          "surface": "function:admin_close_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.126Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "c0115b67-362e-499b-8a24-3175db7fa386",
+          "surface": "function:admin_close_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.138Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "dc54a61e-b9d4-4e3c-a4ae-79995147e336",
+          "surface": "function:admin_close_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.138Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "60632bba-79be-4861-b9df-aeb10c64cb27",
+          "surface": "function:admin_close_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.140Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "3d3823a8-ac74-40b3-bb97-3b33fd14196a",
+          "surface": "function:admin_close_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.140Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "47a38f37-f750-40ce-8350-3e8247186e9d",
+          "surface": "function:admin_close_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.147Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "c7a7e405-e5e8-449b-93b3-f0145445bae8",
+          "surface": "function:admin_close_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.147Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "a415ebb3-1f20-4b5d-b080-47e07fa4b4ec",
+          "surface": "function:admin_close_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.148Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "aefdc484-5ad7-4a1d-a502-6f41896c10b1",
+          "surface": "function:admin_close_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.148Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "4d55248a-b5ce-489e-af8b-b778e1bfec59",
+          "surface": "function:admin_close_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.149Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "39b42ff9-c3d3-4ee6-abcb-b4179bcde61d",
+          "surface": "function:admin_close_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.149Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "4555c4ab-c948-43db-b756-e0c9446fe262",
+          "surface": "function:admin_close_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.152Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "cc8d5d1b-2fbf-48ec-a96d-6ab6bb0d5b23",
+          "surface": "function:admin_close_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.152Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "e2974ee9-889b-4611-a5c0-c3edb9ee82f7",
+          "surface": "function:admin_close_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.153Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "47eb593f-6b16-47d6-9f5f-77052a4de428",
+          "surface": "function:admin_close_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.153Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "48b7ebea-4b4c-4937-be65-3546b490d0da",
+          "surface": "function:admin_close_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.154Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "809a1286-d9be-45b6-99bf-82aa7246ac00",
+          "surface": "function:admin_close_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.154Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "464ca3b5-b9c4-463d-b404-66265a11ae29",
+          "surface": "function:admin_close_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.155Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "09e25645-cb86-4216-90ff-888e4c075614",
+          "surface": "function:admin_close_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.155Z"
+        },
+        {
+          "kind": "events",
+          "id": "432f02a9-1b2d-40e3-a263-0606ab241381",
+          "surface": "function:admin_delete_event",
+          "actor": "A2",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.343Z"
+        },
+        {
+          "kind": "events",
+          "id": "cee97a93-0eed-49bb-8a38-0d7e90328ff8",
+          "surface": "function:admin_delete_event",
+          "actor": "A3",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.346Z"
+        },
+        {
+          "kind": "events",
+          "id": "d335ac49-3967-4489-8bb6-404c7ece78ff",
+          "surface": "function:admin_delete_event",
+          "actor": "A4",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.348Z"
+        },
+        {
+          "kind": "events",
+          "id": "749113f7-c29b-45a0-9fa5-46e9488a739b",
+          "surface": "function:admin_delete_event",
+          "actor": "A1",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.353Z"
+        },
+        {
+          "kind": "events",
+          "id": "5018f645-5e82-44e8-9ffa-c0de8c0a45fe",
+          "surface": "function:admin_delete_event",
+          "actor": "A8",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.357Z"
+        },
+        {
+          "kind": "events",
+          "id": "58403469-1d59-4687-8a7d-efb32b8ef2a1",
+          "surface": "function:admin_delete_event",
+          "actor": "A12",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.358Z"
+        },
+        {
+          "kind": "events",
+          "id": "4a96698e-0bfa-4322-9184-c440f8ed7ca8",
+          "surface": "function:admin_delete_event",
+          "actor": "A6",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.359Z"
+        },
+        {
+          "kind": "events",
+          "id": "bdfa91a0-8de0-4b21-b38c-23fbfb3eacac",
+          "surface": "function:admin_delete_event",
+          "actor": "A7",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.360Z"
+        },
+        {
+          "kind": "events",
+          "id": "5f24f75d-ce8c-4265-864d-90e305753ac9",
+          "surface": "function:admin_delete_event",
+          "actor": "A5",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.361Z"
+        },
+        {
+          "kind": "events",
+          "id": "c3744b68-5242-4e56-b663-41e559ded3b5",
+          "surface": "function:admin_delete_event",
+          "actor": "A10",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.362Z"
+        },
+        {
+          "kind": "events",
+          "id": "34ffa953-6ddf-4a71-9363-1aad24a58697",
+          "surface": "function:admin_delete_event",
+          "actor": "A9",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.363Z"
+        },
+        {
+          "kind": "events",
+          "id": "706e213d-db19-465c-87e8-c8e32e2ab749",
+          "surface": "function:admin_delete_event",
+          "actor": "A11",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:44.364Z"
+        },
+        {
+          "kind": "news",
+          "id": "1d8b0f85-fa67-49fe-862b-7f8444d75a6b",
+          "surface": "function:admin_delete_news",
+          "actor": "A2",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.588Z"
+        },
+        {
+          "kind": "news",
+          "id": "6bca2b26-3ebb-4f71-b74c-2b280802ace8",
+          "surface": "function:admin_delete_news",
+          "actor": "A3",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.590Z"
+        },
+        {
+          "kind": "news",
+          "id": "6ec81710-bf1d-4905-993b-a03dcffdc185",
+          "surface": "function:admin_delete_news",
+          "actor": "A4",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.591Z"
+        },
+        {
+          "kind": "news",
+          "id": "6257d4f1-9e80-4063-adfc-fa16d857cfdd",
+          "surface": "function:admin_delete_news",
+          "actor": "A1",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.591Z"
+        },
+        {
+          "kind": "news",
+          "id": "92cfc8ce-d9f8-44fb-8ff2-8fe54a4cd271",
+          "surface": "function:admin_delete_news",
+          "actor": "A9",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.592Z"
+        },
+        {
+          "kind": "news",
+          "id": "dbd694cd-f3f4-42d8-bf3f-adb741bb8e57",
+          "surface": "function:admin_delete_news",
+          "actor": "A12",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.593Z"
+        },
+        {
+          "kind": "news",
+          "id": "aa8908a6-8aaa-4f2c-a3f9-b228aefa896c",
+          "surface": "function:admin_delete_news",
+          "actor": "A11",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.596Z"
+        },
+        {
+          "kind": "news",
+          "id": "e636e7f5-f9e9-4b85-a1f4-fded0f538cda",
+          "surface": "function:admin_delete_news",
+          "actor": "A8",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.597Z"
+        },
+        {
+          "kind": "news",
+          "id": "24ba08b8-390a-43b4-a2f9-6fc5a64ac320",
+          "surface": "function:admin_delete_news",
+          "actor": "A5",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.598Z"
+        },
+        {
+          "kind": "news",
+          "id": "9d574294-92f7-40fe-a708-7e969b90e8be",
+          "surface": "function:admin_delete_news",
+          "actor": "A7",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.599Z"
+        },
+        {
+          "kind": "news",
+          "id": "601fda84-1157-4e59-b644-3304a81516f7",
+          "surface": "function:admin_delete_news",
+          "actor": "A10",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.600Z"
+        },
+        {
+          "kind": "news",
+          "id": "cb466cd7-55c7-4f88-9df6-5bae4f391edc",
+          "surface": "function:admin_delete_news",
+          "actor": "A6",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:44.601Z"
+        },
+        {
+          "kind": "polls",
+          "id": "b328915d-8eda-492d-a83a-4c91e6759213",
+          "surface": "function:admin_delete_poll",
+          "actor": "A1",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.794Z"
+        },
+        {
+          "kind": "polls",
+          "id": "b99316e3-9630-4870-93e1-b9587f0ea00b",
+          "surface": "function:admin_delete_poll",
+          "actor": "A2",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.795Z"
+        },
+        {
+          "kind": "polls",
+          "id": "108ebc6e-6e50-491d-bc86-e766e3632040",
+          "surface": "function:admin_delete_poll",
+          "actor": "A4",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.796Z"
+        },
+        {
+          "kind": "polls",
+          "id": "801381ef-d6ac-4bcc-ad10-a31fe490b9e7",
+          "surface": "function:admin_delete_poll",
+          "actor": "A7",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.797Z"
+        },
+        {
+          "kind": "polls",
+          "id": "62c8e35c-34f3-4a32-ae99-c4c7ee6f0deb",
+          "surface": "function:admin_delete_poll",
+          "actor": "A8",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.799Z"
+        },
+        {
+          "kind": "polls",
+          "id": "4eb79e93-1f69-49df-be6d-8533c959bb2a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A6",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.800Z"
+        },
+        {
+          "kind": "polls",
+          "id": "29f5a791-0587-43be-97e9-6a6c7b17d48a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A5",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.802Z"
+        },
+        {
+          "kind": "polls",
+          "id": "646ec574-de01-413e-866c-ca2916db2da5",
+          "surface": "function:admin_delete_poll",
+          "actor": "A9",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.803Z"
+        },
+        {
+          "kind": "polls",
+          "id": "cb22fc90-0b4f-44fb-af2e-9516508a22e4",
+          "surface": "function:admin_delete_poll",
+          "actor": "A10",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.804Z"
+        },
+        {
+          "kind": "polls",
+          "id": "f82988ab-e575-45b9-bd45-155758f1f1cc",
+          "surface": "function:admin_delete_poll",
+          "actor": "A11",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.805Z"
+        },
+        {
+          "kind": "polls",
+          "id": "ea841ebc-8740-42ee-a486-a3b772160f6c",
+          "surface": "function:admin_delete_poll",
+          "actor": "A12",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.806Z"
+        },
+        {
+          "kind": "polls",
+          "id": "2a1e80f8-d9a5-4593-9463-04a52b5543c4",
+          "surface": "function:admin_delete_poll",
+          "actor": "A3",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:44.807Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "02cf01df-1a1d-47a0-b353-758bc6454cd0",
+          "surface": "function:admin_delete_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.901Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "beb96577-0e4d-495b-bc8f-bcdab7dec57d",
+          "surface": "function:admin_delete_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.901Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "fe03b413-492a-412a-9412-2650b4f45f5a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.902Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "b7073122-89b8-4721-b62b-a320320ea9ed",
+          "surface": "function:admin_delete_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.902Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "094c0f3d-deb0-4d53-a82b-ec19edff7d91",
+          "surface": "function:admin_delete_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.903Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "05201cc9-b69a-4283-9d29-0184162fcb9e",
+          "surface": "function:admin_delete_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.903Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "24d583ae-0e9c-44a1-baa0-2d0c24b2047a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.904Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "d3850382-58fb-4f4f-9a00-c373e480b19b",
+          "surface": "function:admin_delete_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.904Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "48fefd35-f677-4d87-b9e8-62d3f5a61945",
+          "surface": "function:admin_delete_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.905Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "6ee3d282-8642-412f-86f4-7907647f362e",
+          "surface": "function:admin_delete_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.905Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "180012c2-712b-4191-b335-f8082ccc1337",
+          "surface": "function:admin_delete_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.906Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "762693ec-d657-4fa6-b7c2-1768337d5799",
+          "surface": "function:admin_delete_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.906Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "a136e272-a8e3-4a9c-bf39-49ea9f89eedc",
+          "surface": "function:admin_delete_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.907Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "9c85d3b7-e900-4f6d-8d80-abca33dee8de",
+          "surface": "function:admin_delete_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.907Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f893f7d7-d450-4e5c-ab42-11e3247fc12a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.908Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "ca861b6c-7519-4849-834e-e49f2ecc1b5c",
+          "surface": "function:admin_delete_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.908Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "104f756c-891e-4830-80c1-1faffca1c7e3",
+          "surface": "function:admin_delete_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.909Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "91ce15bf-da01-49e7-831d-09566037a857",
+          "surface": "function:admin_delete_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.909Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "7758b383-0ee7-4295-9557-ad46655b5053",
+          "surface": "function:admin_delete_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.910Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "5dd2011c-43ed-4ebf-bdee-61ecbd52423a",
+          "surface": "function:admin_delete_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.910Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "cd838f73-e346-4891-82cd-d5b876de156f",
+          "surface": "function:admin_delete_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.911Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "3e77acb9-5547-45ad-aa1c-fd676ba97d0d",
+          "surface": "function:admin_delete_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.911Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "ba9cd83c-cb74-4f39-93b0-a73fc1f0e0e3",
+          "surface": "function:admin_delete_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.912Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "8164e40e-94af-44af-9533-315e14664c88",
+          "surface": "function:admin_delete_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:44.912Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_grant_role",
+          "actor": "A4",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.350Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_grant_role",
+          "actor": "A7",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.370Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_grant_role",
+          "actor": "A3",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.372Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_grant_role",
+          "actor": "A1",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.373Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_grant_role",
+          "actor": "A9",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.374Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_grant_role",
+          "actor": "A11",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.376Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_grant_role",
+          "actor": "A10",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.376Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_grant_role",
+          "actor": "A5",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.380Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_grant_role",
+          "actor": "A12",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.381Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_grant_role",
+          "actor": "A2",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.381Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_grant_role",
+          "actor": "A8",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.383Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_grant_role",
+          "actor": "A6",
+          "note": "revoked by teardown",
+          "at": "2026-07-26T21:16:45.384Z"
+        },
+        {
+          "kind": "polls",
+          "id": "aba3771d-eb06-44d9-9eb1-7c2fe967fcb9",
+          "surface": "function:admin_open_poll",
+          "actor": "A2",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.563Z"
+        },
+        {
+          "kind": "polls",
+          "id": "7077f225-8503-4d6f-ae07-b92a6fd08484",
+          "surface": "function:admin_open_poll",
+          "actor": "A5",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.572Z"
+        },
+        {
+          "kind": "polls",
+          "id": "f5b1e685-b7e7-4acc-9817-6d176a8afd21",
+          "surface": "function:admin_open_poll",
+          "actor": "A1",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.573Z"
+        },
+        {
+          "kind": "polls",
+          "id": "3c388b68-a5f3-4ece-b147-4cb75cd95203",
+          "surface": "function:admin_open_poll",
+          "actor": "A6",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.574Z"
+        },
+        {
+          "kind": "polls",
+          "id": "9fc1bf89-81dd-4f44-836f-df48145e2762",
+          "surface": "function:admin_open_poll",
+          "actor": "A8",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.575Z"
+        },
+        {
+          "kind": "polls",
+          "id": "829cf162-872a-4e76-9a20-ee602c046d65",
+          "surface": "function:admin_open_poll",
+          "actor": "A12",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.576Z"
+        },
+        {
+          "kind": "polls",
+          "id": "c86ebe30-fb4b-4c1c-b544-2be46272edc1",
+          "surface": "function:admin_open_poll",
+          "actor": "A3",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.577Z"
+        },
+        {
+          "kind": "polls",
+          "id": "8bfd69f2-82c9-4f7c-a223-9ace2a20b4e2",
+          "surface": "function:admin_open_poll",
+          "actor": "A11",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.578Z"
+        },
+        {
+          "kind": "polls",
+          "id": "aa4ad687-f778-46e5-999e-f1cb9e737272",
+          "surface": "function:admin_open_poll",
+          "actor": "A7",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.578Z"
+        },
+        {
+          "kind": "polls",
+          "id": "c56e6ca6-8bef-4ee6-91b7-2a0423276157",
+          "surface": "function:admin_open_poll",
+          "actor": "A4",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.579Z"
+        },
+        {
+          "kind": "polls",
+          "id": "57b31d8e-02d0-4b5c-951d-a815d3d6fb44",
+          "surface": "function:admin_open_poll",
+          "actor": "A9",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.579Z"
+        },
+        {
+          "kind": "polls",
+          "id": "06f2e8bf-4f28-4deb-a448-0eb47d0727bb",
+          "surface": "function:admin_open_poll",
+          "actor": "A10",
+          "note": "poll status=draft",
+          "at": "2026-07-26T21:16:45.579Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "558b8328-ba48-4a78-87d8-2312d5f5d43d",
+          "surface": "function:admin_open_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.650Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "da1e2f6d-b97e-400a-b4fc-a1dab4ada46d",
+          "surface": "function:admin_open_poll",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.650Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "d5affe92-f3a2-4e9d-80b0-764d4de92af0",
+          "surface": "function:admin_open_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.666Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "38babdfd-0a1b-420f-8029-7a96b72b52fd",
+          "surface": "function:admin_open_poll",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.666Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "9c2f05a9-7493-4ec2-9440-e13fe9e1105b",
+          "surface": "function:admin_open_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.667Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "638cd4f9-6f77-49ae-9c4c-1617bfbe31ee",
+          "surface": "function:admin_open_poll",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.667Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "0939f8a7-f30f-47ef-95bb-3e21a8703235",
+          "surface": "function:admin_open_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.676Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "2f6e25d6-a2e5-4968-90d7-bb38d4b2bf4a",
+          "surface": "function:admin_open_poll",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.676Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "0d702fd1-f23d-460c-8caa-911844ba11b2",
+          "surface": "function:admin_open_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.678Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "ff8a909b-5311-434b-9a1e-bee365165c13",
+          "surface": "function:admin_open_poll",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.678Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "5fada7b4-66f8-4a97-b5fc-2cbcc3f35ec9",
+          "surface": "function:admin_open_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.679Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "87da3faa-fb40-406b-a309-b339bb51da14",
+          "surface": "function:admin_open_poll",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.679Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "b0d2776b-f760-47c7-841d-f161700507fc",
+          "surface": "function:admin_open_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.680Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "971bc729-b87a-45fe-8a69-952b1cc74540",
+          "surface": "function:admin_open_poll",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.680Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "aaa6afe9-367c-4e6f-a666-fc88022ef80e",
+          "surface": "function:admin_open_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.681Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "8aecae1f-abfa-4949-99de-75f21ef027fe",
+          "surface": "function:admin_open_poll",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.681Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "12bd8fae-87fd-44a2-9182-14b483445178",
+          "surface": "function:admin_open_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.682Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "404e20f6-470b-44a3-8ae0-57212be6b7d0",
+          "surface": "function:admin_open_poll",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.682Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "95be6a22-2df0-477f-8e77-5fd845eac102",
+          "surface": "function:admin_open_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.683Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "854df7cf-6441-4e6c-86ad-580b212d2254",
+          "surface": "function:admin_open_poll",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.683Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "039cc838-8730-4240-a511-e1503ae169ad",
+          "surface": "function:admin_open_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.684Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "336ea821-6c3d-4f31-942f-510ada5f6538",
+          "surface": "function:admin_open_poll",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.684Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f1d7384a-f559-4fba-9926-d6f3c0be5ee8",
+          "surface": "function:admin_open_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.685Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "56dc7ab4-d0de-43d8-b139-d7c94e351391",
+          "surface": "function:admin_open_poll",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:45.685Z"
+        },
+        {
+          "kind": "events",
+          "id": "6c9c736c-85fe-40cf-a0b8-ae36e04fd44f",
+          "surface": "function:admin_publish_event",
+          "actor": "A1",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.892Z"
+        },
+        {
+          "kind": "events",
+          "id": "4a74a680-c65d-43de-9d88-66c3c6083fa7",
+          "surface": "function:admin_publish_event",
+          "actor": "A4",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.893Z"
+        },
+        {
+          "kind": "events",
+          "id": "6f03e143-02b4-411d-bdcc-02d05f06fbb2",
+          "surface": "function:admin_publish_event",
+          "actor": "A6",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.895Z"
+        },
+        {
+          "kind": "events",
+          "id": "715c5301-8d81-42fc-9046-190555156104",
+          "surface": "function:admin_publish_event",
+          "actor": "A8",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.896Z"
+        },
+        {
+          "kind": "events",
+          "id": "ac7c6189-6b81-4219-8991-8e573198d68d",
+          "surface": "function:admin_publish_event",
+          "actor": "A7",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.897Z"
+        },
+        {
+          "kind": "events",
+          "id": "50daad31-3f45-4546-a5ac-c970a73ecabd",
+          "surface": "function:admin_publish_event",
+          "actor": "A12",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.899Z"
+        },
+        {
+          "kind": "events",
+          "id": "f534ed88-5cc6-4107-ac7e-37fec07da6df",
+          "surface": "function:admin_publish_event",
+          "actor": "A2",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.900Z"
+        },
+        {
+          "kind": "events",
+          "id": "b398dc53-d64d-4d23-91ff-0e06f363f44a",
+          "surface": "function:admin_publish_event",
+          "actor": "A10",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.901Z"
+        },
+        {
+          "kind": "events",
+          "id": "3fdd84ee-bd06-4655-b6b3-7c5335ffd533",
+          "surface": "function:admin_publish_event",
+          "actor": "A5",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.903Z"
+        },
+        {
+          "kind": "events",
+          "id": "783d416f-31f9-4db4-a657-16dcd3a8fdcf",
+          "surface": "function:admin_publish_event",
+          "actor": "A9",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.904Z"
+        },
+        {
+          "kind": "events",
+          "id": "48c63f3f-0da6-46c5-976e-12ddf52dbf7f",
+          "surface": "function:admin_publish_event",
+          "actor": "A3",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.905Z"
+        },
+        {
+          "kind": "events",
+          "id": "aa549667-c3f5-42b3-81d5-249bc022ddbc",
+          "surface": "function:admin_publish_event",
+          "actor": "A11",
+          "note": "event status=draft",
+          "at": "2026-07-26T21:16:45.906Z"
+        },
+        {
+          "kind": "news",
+          "id": "c846d43e-3d17-4bfd-a289-6973f22516cf",
+          "surface": "function:admin_publish_news",
+          "actor": "A1",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.102Z"
+        },
+        {
+          "kind": "news",
+          "id": "46c023e6-a1df-477f-8e10-d7861b8b12f8",
+          "surface": "function:admin_publish_news",
+          "actor": "A3",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.105Z"
+        },
+        {
+          "kind": "news",
+          "id": "cee1247d-15e6-4382-89db-783e7f952edf",
+          "surface": "function:admin_publish_news",
+          "actor": "A2",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.106Z"
+        },
+        {
+          "kind": "news",
+          "id": "78836332-7bd6-4781-bf4b-ec0fbeb4fc9c",
+          "surface": "function:admin_publish_news",
+          "actor": "A6",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.115Z"
+        },
+        {
+          "kind": "news",
+          "id": "e21b7d4c-5e0a-43a8-8aa3-9110699e12f3",
+          "surface": "function:admin_publish_news",
+          "actor": "A11",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.116Z"
+        },
+        {
+          "kind": "news",
+          "id": "466f2fcc-f2f1-4a72-8524-baa750139293",
+          "surface": "function:admin_publish_news",
+          "actor": "A8",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.118Z"
+        },
+        {
+          "kind": "news",
+          "id": "44cc8cae-82f6-496b-b8b0-f6c6c392cd0a",
+          "surface": "function:admin_publish_news",
+          "actor": "A5",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.119Z"
+        },
+        {
+          "kind": "news",
+          "id": "f249db85-0ed0-44fa-baf0-4e4d77d399b9",
+          "surface": "function:admin_publish_news",
+          "actor": "A9",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.120Z"
+        },
+        {
+          "kind": "news",
+          "id": "188b14f3-1dd2-487a-951f-d0852bc1a04b",
+          "surface": "function:admin_publish_news",
+          "actor": "A12",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.122Z"
+        },
+        {
+          "kind": "news",
+          "id": "8020eacf-a888-4435-9a4a-794ee928299e",
+          "surface": "function:admin_publish_news",
+          "actor": "A7",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.124Z"
+        },
+        {
+          "kind": "news",
+          "id": "18e82cdf-06fc-4c3f-8460-ef2b77b52542",
+          "surface": "function:admin_publish_news",
+          "actor": "A4",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.125Z"
+        },
+        {
+          "kind": "news",
+          "id": "e35deb4b-27f5-44af-aaeb-388e583cc427",
+          "surface": "function:admin_publish_news",
+          "actor": "A10",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:46.126Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22057",
+          "surface": "function:admin_reassign_member",
+          "actor": "A2",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.485Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22059",
+          "surface": "function:admin_reassign_member",
+          "actor": "A7",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.489Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22058",
+          "surface": "function:admin_reassign_member",
+          "actor": "A1",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.491Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22060",
+          "surface": "function:admin_reassign_member",
+          "actor": "A6",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.502Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22061",
+          "surface": "function:admin_reassign_member",
+          "actor": "A3",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.509Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22062",
+          "surface": "function:admin_reassign_member",
+          "actor": "A8",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.517Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22064",
+          "surface": "function:admin_reassign_member",
+          "actor": "A9",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.519Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22065",
+          "surface": "function:admin_reassign_member",
+          "actor": "A5",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.523Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22068",
+          "surface": "function:admin_reassign_member",
+          "actor": "A12",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.524Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22067",
+          "surface": "function:admin_reassign_member",
+          "actor": "A4",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.525Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22066",
+          "surface": "function:admin_reassign_member",
+          "actor": "A10",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.526Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22063",
+          "surface": "function:admin_reassign_member",
+          "actor": "A11",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.526Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "member:031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_reassign_member",
+          "actor": "A9",
+          "note": "minted by the RPC itself (reassigned), reset by teardown",
+          "at": "2026-07-26T21:16:46.618Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "member:95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_reassign_member",
+          "actor": "A10",
+          "note": "minted by the RPC itself (reassigned), reset by teardown",
+          "at": "2026-07-26T21:16:46.625Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22071",
+          "surface": "function:admin_reassign_member",
+          "actor": "A2",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.740Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22072",
+          "surface": "function:admin_reassign_member",
+          "actor": "A1",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.742Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22073",
+          "surface": "function:admin_reassign_member",
+          "actor": "A7",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.749Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22074",
+          "surface": "function:admin_reassign_member",
+          "actor": "A6",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.775Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22075",
+          "surface": "function:admin_reassign_member",
+          "actor": "A3",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.781Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22076",
+          "surface": "function:admin_reassign_member",
+          "actor": "A8",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.795Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22077",
+          "surface": "function:admin_reassign_member",
+          "actor": "A4",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.797Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22078",
+          "surface": "function:admin_reassign_member",
+          "actor": "A5",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.804Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22079",
+          "surface": "function:admin_reassign_member",
+          "actor": "A12",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.806Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22080",
+          "surface": "function:admin_reassign_member",
+          "actor": "A11",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.806Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22081",
+          "surface": "function:admin_reassign_member",
+          "actor": "A10",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.809Z"
+        },
+        {
+          "kind": "memberships",
+          "id": "22082",
+          "surface": "function:admin_reassign_member",
+          "actor": "A9",
+          "note": "open membership",
+          "at": "2026-07-26T21:16:46.810Z"
+        },
+        {
+          "kind": "payments",
+          "id": "member:5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_record_payment",
+          "actor": "A11",
+          "note": "minted by the RPC itself, removed by teardown",
+          "at": "2026-07-26T21:16:47.034Z"
+        },
+        {
+          "kind": "payments",
+          "id": "member:031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_record_payment",
+          "actor": "A9",
+          "note": "minted by the RPC itself, removed by teardown",
+          "at": "2026-07-26T21:16:47.040Z"
+        },
+        {
+          "kind": "payments",
+          "id": "member:031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_record_payments_bulk",
+          "actor": "A9",
+          "note": "minted by the RPC itself, removed by teardown",
+          "at": "2026-07-26T21:16:47.552Z"
+        },
+        {
+          "kind": "payments",
+          "id": "member:5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_record_payments_bulk",
+          "actor": "A11",
+          "note": "minted by the RPC itself, removed by teardown",
+          "at": "2026-07-26T21:16:47.556Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A3",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.820Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A1",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.822Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A2",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.834Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A8",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.837Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A5",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.839Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A11",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.841Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A7",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.847Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A9",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.848Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A6",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.849Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A4",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.850Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A12",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.851Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_reject_delegate",
+          "actor": "A10",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:47.852Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A4",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.234Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A2",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.242Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A1",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.243Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A9",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.253Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A7",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.257Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A3",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.258Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A12",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.259Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A11",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.265Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A8",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.266Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A6",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.267Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A10",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.268Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_reveal_applicant_personal_id",
+          "actor": "A5",
+          "note": "status=pending",
+          "at": "2026-07-26T21:16:48.269Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_revoke_role",
+          "actor": "A1",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.746Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_revoke_role",
+          "actor": "A2",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.753Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_revoke_role",
+          "actor": "A10",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.759Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_revoke_role",
+          "actor": "A4",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.767Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_revoke_role",
+          "actor": "A7",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.769Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_revoke_role",
+          "actor": "A6",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.772Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_revoke_role",
+          "actor": "A5",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.776Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_revoke_role",
+          "actor": "A11",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.778Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_revoke_role",
+          "actor": "A12",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.779Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_revoke_role",
+          "actor": "A3",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.780Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_revoke_role",
+          "actor": "A8",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.781Z"
+        },
+        {
+          "kind": "admin_roles",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_revoke_role",
+          "actor": "A9",
+          "note": "role=editor, target of revoke",
+          "at": "2026-07-26T21:16:48.781Z"
+        },
+        {
+          "kind": "events",
+          "id": "f27d452d-84e6-45a4-b8de-fed1f7cb5d05",
+          "surface": "function:admin_save_event",
+          "actor": "A9",
+          "note": "minted by the RPC itself (draft)",
+          "at": "2026-07-26T21:16:49.094Z"
+        },
+        {
+          "kind": "events",
+          "id": "78d6ff1b-ba79-42fd-a7a2-b256abb67080",
+          "surface": "function:admin_save_event",
+          "actor": "A12",
+          "note": "minted by the RPC itself (draft)",
+          "at": "2026-07-26T21:16:49.096Z"
+        },
+        {
+          "kind": "news",
+          "id": "6d6be584-ddce-4824-8b43-0ef4e42e3289",
+          "surface": "function:admin_save_news",
+          "actor": "A9",
+          "note": "minted by the RPC itself (draft)",
+          "at": "2026-07-26T21:16:49.209Z"
+        },
+        {
+          "kind": "news",
+          "id": "10608822-7d82-4e15-b794-604320c2eeb8",
+          "surface": "function:admin_save_news",
+          "actor": "A12",
+          "note": "minted by the RPC itself (draft)",
+          "at": "2026-07-26T21:16:49.213Z"
+        },
+        {
+          "kind": "polls",
+          "id": "7238ff20-ab9c-41e0-b51f-952daa6c1bf4",
+          "surface": "function:admin_save_poll",
+          "actor": "A9",
+          "note": "minted by the RPC itself (draft, plus its two poll_options)",
+          "at": "2026-07-26T21:16:49.329Z"
+        },
+        {
+          "kind": "polls",
+          "id": "35486d8a-a96c-45ad-9801-e5eee627ee20",
+          "surface": "function:admin_save_poll",
+          "actor": "A12",
+          "note": "minted by the RPC itself (draft, plus its two poll_options)",
+          "at": "2026-07-26T21:16:49.332Z"
+        },
+        {
+          "kind": "news",
+          "id": "78f9932b-11fe-4089-9a91-2aee9d21d163",
+          "surface": "function:admin_set_news_image",
+          "actor": "A2",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.418Z"
+        },
+        {
+          "kind": "news",
+          "id": "0a963fe6-117d-40dd-92cd-c9a668e6673b",
+          "surface": "function:admin_set_news_image",
+          "actor": "A6",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.427Z"
+        },
+        {
+          "kind": "news",
+          "id": "a9942b11-157c-4b02-b3ff-b5a0842d67c3",
+          "surface": "function:admin_set_news_image",
+          "actor": "A3",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.431Z"
+        },
+        {
+          "kind": "news",
+          "id": "406d5632-8084-4063-a6af-1b5b18eb8246",
+          "surface": "function:admin_set_news_image",
+          "actor": "A4",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.433Z"
+        },
+        {
+          "kind": "news",
+          "id": "f1e1fa07-3c5a-4fce-8485-aee5c03e9d3a",
+          "surface": "function:admin_set_news_image",
+          "actor": "A1",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.434Z"
+        },
+        {
+          "kind": "news",
+          "id": "35592f55-439c-4798-a8a8-442d23f63444",
+          "surface": "function:admin_set_news_image",
+          "actor": "A8",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.435Z"
+        },
+        {
+          "kind": "news",
+          "id": "8ed495b7-3019-4aa8-a92e-73f551cec987",
+          "surface": "function:admin_set_news_image",
+          "actor": "A12",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.436Z"
+        },
+        {
+          "kind": "news",
+          "id": "d2c84001-937e-4a9d-a89e-9f4f80218295",
+          "surface": "function:admin_set_news_image",
+          "actor": "A7",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.437Z"
+        },
+        {
+          "kind": "news",
+          "id": "7af20e48-4580-4c47-82f7-db769837fc3f",
+          "surface": "function:admin_set_news_image",
+          "actor": "A10",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.438Z"
+        },
+        {
+          "kind": "news",
+          "id": "a178b46f-588a-47fe-83f8-554e5f6f85a1",
+          "surface": "function:admin_set_news_image",
+          "actor": "A11",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.439Z"
+        },
+        {
+          "kind": "news",
+          "id": "33426c23-01bd-4691-8318-312640f4bfe5",
+          "surface": "function:admin_set_news_image",
+          "actor": "A5",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.439Z"
+        },
+        {
+          "kind": "news",
+          "id": "e394c795-09b5-4106-aac7-e1b645cf1c8d",
+          "surface": "function:admin_set_news_image",
+          "actor": "A9",
+          "note": "news status=draft",
+          "at": "2026-07-26T21:16:49.443Z"
+        },
+        {
+          "kind": "news",
+          "id": "1b709f09-c60b-43ea-bcda-a6f0c4e268d7",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A2",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.639Z"
+        },
+        {
+          "kind": "news",
+          "id": "e45d0800-0684-44f8-b10e-e77791d06b12",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A1",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.641Z"
+        },
+        {
+          "kind": "news",
+          "id": "7ca33094-ac1a-447f-a363-764043ad8104",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A4",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.643Z"
+        },
+        {
+          "kind": "news",
+          "id": "ae56a110-ed23-4732-8284-0b7868902b07",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A11",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.651Z"
+        },
+        {
+          "kind": "news",
+          "id": "f7ce81e8-4a9a-4051-94a7-a2372c636052",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A6",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.652Z"
+        },
+        {
+          "kind": "news",
+          "id": "cf2ac47a-2957-4212-981c-9d27d98a5e2f",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A12",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.652Z"
+        },
+        {
+          "kind": "news",
+          "id": "2a08b4af-c3eb-452f-8e36-22998ab906a0",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A9",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.653Z"
+        },
+        {
+          "kind": "news",
+          "id": "388a52a1-e982-494d-afd8-5b020ce94cc2",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A7",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.654Z"
+        },
+        {
+          "kind": "news",
+          "id": "503b56f7-67df-449c-acc6-9d5d509f8dab",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A8",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.655Z"
+        },
+        {
+          "kind": "news",
+          "id": "19244222-863b-4935-8dc3-ace755e98a3f",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A5",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.656Z"
+        },
+        {
+          "kind": "news",
+          "id": "aa0d85d6-041c-4b3a-bace-30d9a82cbd0a",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A3",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.657Z"
+        },
+        {
+          "kind": "news",
+          "id": "48a87630-a786-4bc7-b9dd-6813ab428408",
+          "surface": "function:admin_unpublish_news",
+          "actor": "A10",
+          "note": "news status=published",
+          "at": "2026-07-26T21:16:49.658Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "29a25803-430c-4e97-8524-404802c20dc3",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A1",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.926Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5e6dd556-e4ea-4433-90a9-78b9cfa0becf",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A3",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.931Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "bd518cec-6070-48bf-825c-8a5a1b77277b",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A2",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.932Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "031a4b73-d2e3-42c8-a3ac-75a5360952e4",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A9",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.941Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "74c4041c-d85b-42f3-abf9-fd34ad1479c3",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A7",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.949Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "8f17429f-22ae-489a-ad89-0fa42ae86842",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A5",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.950Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "1833665e-3cdf-41d6-ba41-7d55254ed0ec",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A12",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.953Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3f730810-aba4-4920-96e6-9d12a9157a45",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A8",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.956Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "95034c52-38f8-4395-8559-c94f11e499aa",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A10",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.957Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "5343ceb5-c0ae-44fd-8cec-ca67f6b97a09",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A11",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.958Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "3b015c95-31bd-47d0-b565-b5b18111f4d7",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A6",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.958Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "04527ca9-fc68-499e-92dd-29b728a1d9d7",
+          "surface": "function:admin_update_delegate_profile",
+          "actor": "A4",
+          "note": "status=approved",
+          "at": "2026-07-26T21:16:49.960Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17491",
+          "surface": "function:admin_void_payment",
+          "actor": "A1",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.645Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17490",
+          "surface": "function:admin_void_payment",
+          "actor": "A2",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.646Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17492",
+          "surface": "function:admin_void_payment",
+          "actor": "A7",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.648Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17494",
+          "surface": "function:admin_void_payment",
+          "actor": "A8",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.659Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17495",
+          "surface": "function:admin_void_payment",
+          "actor": "A4",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.661Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17493",
+          "surface": "function:admin_void_payment",
+          "actor": "A3",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.662Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17497",
+          "surface": "function:admin_void_payment",
+          "actor": "A12",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.668Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17496",
+          "surface": "function:admin_void_payment",
+          "actor": "A9",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.669Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17499",
+          "surface": "function:admin_void_payment",
+          "actor": "A6",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.670Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17500",
+          "surface": "function:admin_void_payment",
+          "actor": "A10",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.670Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17498",
+          "surface": "function:admin_void_payment",
+          "actor": "A11",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.671Z"
+        },
+        {
+          "kind": "payments",
+          "id": "17501",
+          "surface": "function:admin_void_payment",
+          "actor": "A5",
+          "note": "unvoided payment, target of void",
+          "at": "2026-07-26T21:16:50.671Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "5d674288-30b5-4458-be5c-bc435010ae05",
+          "surface": "function:become_member_save_profile",
+          "actor": "A3",
+          "note": "funnel columns restored",
+          "at": "2026-07-26T21:16:51.486Z"
+        },
+        {
+          "kind": "polls",
+          "id": "1b3e2902-7fb9-4b69-a4a8-5acea36f9b11",
+          "surface": "function:member_cast_vote",
+          "actor": "A7",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.269Z"
+        },
+        {
+          "kind": "polls",
+          "id": "6ed432fc-bd24-4193-9eab-6ba26f1d3ba9",
+          "surface": "function:member_cast_vote",
+          "actor": "A6",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.271Z"
+        },
+        {
+          "kind": "polls",
+          "id": "612387c5-bab9-42ac-bbdf-a661e2385199",
+          "surface": "function:member_cast_vote",
+          "actor": "A1",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.272Z"
+        },
+        {
+          "kind": "polls",
+          "id": "8b1a11b5-b94e-4edf-9285-227812ef5871",
+          "surface": "function:member_cast_vote",
+          "actor": "A2",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.273Z"
+        },
+        {
+          "kind": "polls",
+          "id": "b06d5e49-da05-43f5-acb5-116271dbc7d8",
+          "surface": "function:member_cast_vote",
+          "actor": "A3",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.278Z"
+        },
+        {
+          "kind": "polls",
+          "id": "4473d389-d685-4899-9aba-a5188360073f",
+          "surface": "function:member_cast_vote",
+          "actor": "A4",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.282Z"
+        },
+        {
+          "kind": "polls",
+          "id": "3c7496f8-4e59-40fb-b82a-b38c8ed647da",
+          "surface": "function:member_cast_vote",
+          "actor": "A10",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.283Z"
+        },
+        {
+          "kind": "polls",
+          "id": "db93c819-ca49-469a-86be-586029009377",
+          "surface": "function:member_cast_vote",
+          "actor": "A5",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.284Z"
+        },
+        {
+          "kind": "polls",
+          "id": "e9fbab6c-96c6-47b8-accf-6ca20803466f",
+          "surface": "function:member_cast_vote",
+          "actor": "A12",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.285Z"
+        },
+        {
+          "kind": "polls",
+          "id": "c3bd81dd-91ee-441e-abc7-d0a5a6869695",
+          "surface": "function:member_cast_vote",
+          "actor": "A8",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.285Z"
+        },
+        {
+          "kind": "polls",
+          "id": "36a3905a-4145-49d1-a92e-de03e6251efb",
+          "surface": "function:member_cast_vote",
+          "actor": "A9",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.286Z"
+        },
+        {
+          "kind": "polls",
+          "id": "d4a5b508-391f-47cd-81c4-460e1b3b8e80",
+          "surface": "function:member_cast_vote",
+          "actor": "A11",
+          "note": "poll status=open",
+          "at": "2026-07-26T21:16:53.287Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "54b550d4-1608-47c0-88ef-6a77ef1cdb2b",
+          "surface": "function:member_cast_vote",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.358Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "baa91d26-4ec1-4cba-b268-6bd7024ce3cd",
+          "surface": "function:member_cast_vote",
+          "actor": "A1",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.358Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "59d1e453-355f-4fcf-aa20-a05fab31b0ca",
+          "surface": "function:member_cast_vote",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.359Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "ae238626-5fb0-4a8a-bfda-af449fd93b7f",
+          "surface": "function:member_cast_vote",
+          "actor": "A7",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.359Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "d8dcdc2d-98ea-4b9f-a262-8b90d3bf5b5f",
+          "surface": "function:member_cast_vote",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.360Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "0223e170-d5a8-49d3-8912-64ce683913f7",
+          "surface": "function:member_cast_vote",
+          "actor": "A2",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.360Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "7578b438-d458-4aca-acba-1a0a26d7c3a3",
+          "surface": "function:member_cast_vote",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.364Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "03f47fa8-edf5-4e97-aae8-e1408c5648b2",
+          "surface": "function:member_cast_vote",
+          "actor": "A6",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.364Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f8b75e4d-cbe0-44bf-8509-8b9193e38615",
+          "surface": "function:member_cast_vote",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.367Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "a097c11b-aa0c-41b6-a0a3-8866c4bc5b3f",
+          "surface": "function:member_cast_vote",
+          "actor": "A3",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.367Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "e42f7fa2-3fa2-41b0-b428-f3f924c2f29a",
+          "surface": "function:member_cast_vote",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.377Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "0cfe7cce-b9d3-4d2c-9a02-5638e43b03b0",
+          "surface": "function:member_cast_vote",
+          "actor": "A8",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.377Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "23b89ec8-d143-44df-bc79-5b824ae06c3c",
+          "surface": "function:member_cast_vote",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.379Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "1a43341f-2e49-4251-960c-00839a24ed37",
+          "surface": "function:member_cast_vote",
+          "actor": "A4",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.379Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "4eeba271-cc2d-4dee-bb1b-c92caeba7269",
+          "surface": "function:member_cast_vote",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.380Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f9a9df4e-6a7b-4cc8-a980-d9d0b860453e",
+          "surface": "function:member_cast_vote",
+          "actor": "A5",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.380Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "0a9978f7-58dc-4be1-ae4d-141ee18f0f9f",
+          "surface": "function:member_cast_vote",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.380Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "cd206451-cd8d-4b3a-b1eb-2e4274379a92",
+          "surface": "function:member_cast_vote",
+          "actor": "A12",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.380Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "f7f4235a-b05f-4203-898b-0249cf3522e8",
+          "surface": "function:member_cast_vote",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.381Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "b1f7026e-8092-42a8-9762-544c46388aec",
+          "surface": "function:member_cast_vote",
+          "actor": "A9",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.381Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "e6b1f03e-c9cf-469e-9484-74b9438bf6e9",
+          "surface": "function:member_cast_vote",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.386Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "b64c172a-4bb5-46ce-bf0a-b9397f0f84bf",
+          "surface": "function:member_cast_vote",
+          "actor": "A10",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.386Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "34c84c84-8514-4325-bd69-da3cfb80a441",
+          "surface": "function:member_cast_vote",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.418Z"
+        },
+        {
+          "kind": "poll_options",
+          "id": "586fffd8-2d95-4ad3-bb65-e3750fa3ffe0",
+          "surface": "function:member_cast_vote",
+          "actor": "A11",
+          "note": "option",
+          "at": "2026-07-26T21:16:53.418Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "1b3e2902-7fb9-4b69-a4a8-5acea36f9b11/6fe6ebea-e432-41f0-9f3e-81856bd2591d",
+          "surface": "function:member_cast_vote",
+          "actor": "A7",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.465Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "6ed432fc-bd24-4193-9eab-6ba26f1d3ba9/c9824f55-54d7-4d7b-96d5-4b8c240f5156",
+          "surface": "function:member_cast_vote",
+          "actor": "A6",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.466Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "4473d389-d685-4899-9aba-a5188360073f/e65d45cb-d27c-4e9d-a1a3-d88f20579e9e",
+          "surface": "function:member_cast_vote",
+          "actor": "A4",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.486Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "c3bd81dd-91ee-441e-abc7-d0a5a6869695/a7792c4b-51e7-46ef-969a-a10fc21df411",
+          "surface": "function:member_cast_vote",
+          "actor": "A8",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.487Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "3c7496f8-4e59-40fb-b82a-b38c8ed647da/6afc6d19-feba-49dc-9c69-998bfa01c5c8",
+          "surface": "function:member_cast_vote",
+          "actor": "A10",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.487Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "db93c819-ca49-469a-86be-586029009377/745094ec-912b-48c2-b1f6-64871c943cca",
+          "surface": "function:member_cast_vote",
+          "actor": "A5",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.490Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "e9fbab6c-96c6-47b8-accf-6ca20803466f/2e8b102b-844c-4f86-bf29-5b334235f872",
+          "surface": "function:member_cast_vote",
+          "actor": "A12",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.493Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "36a3905a-4145-49d1-a92e-de03e6251efb/edb4bc37-241c-4ae2-9e51-33156c559c82",
+          "surface": "function:member_cast_vote",
+          "actor": "A9",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.493Z"
+        },
+        {
+          "kind": "poll_votes",
+          "id": "d4a5b508-391f-47cd-81c4-460e1b3b8e80/8577bd4b-6a9d-4906-a7ae-db5a9190a85c",
+          "surface": "function:member_cast_vote",
+          "actor": "A11",
+          "note": "minted by the RPC itself",
+          "at": "2026-07-26T21:16:53.509Z"
+        },
+        {
+          "kind": "events",
+          "id": "4ab5193b-9ffb-4254-8ff2-e202936b89a6",
+          "surface": "function:member_rsvp",
+          "actor": "A1",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.017Z"
+        },
+        {
+          "kind": "events",
+          "id": "b667c53d-183a-4f51-8e00-4fa382aa9be0",
+          "surface": "function:member_rsvp",
+          "actor": "A9",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.018Z"
+        },
+        {
+          "kind": "events",
+          "id": "fbf01838-5ed7-48c1-828b-04843f52ce27",
+          "surface": "function:member_rsvp",
+          "actor": "A2",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.024Z"
+        },
+        {
+          "kind": "events",
+          "id": "88ee6360-b042-4525-a1c9-64f31d9fea41",
+          "surface": "function:member_rsvp",
+          "actor": "A6",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.027Z"
+        },
+        {
+          "kind": "events",
+          "id": "b40d01fe-ba4e-4f13-8650-57c30265366c",
+          "surface": "function:member_rsvp",
+          "actor": "A3",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.031Z"
+        },
+        {
+          "kind": "events",
+          "id": "7d64078b-8f6d-4e80-861a-90c04f545d57",
+          "surface": "function:member_rsvp",
+          "actor": "A7",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.033Z"
+        },
+        {
+          "kind": "events",
+          "id": "be790ddd-589b-44cb-ba68-ae3e6fa609cc",
+          "surface": "function:member_rsvp",
+          "actor": "A4",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.033Z"
+        },
+        {
+          "kind": "events",
+          "id": "36d5da4a-2b55-4c16-98e7-bbe0acb0862e",
+          "surface": "function:member_rsvp",
+          "actor": "A12",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.034Z"
+        },
+        {
+          "kind": "events",
+          "id": "6c0e95d4-8804-4125-8083-5f773caa55dc",
+          "surface": "function:member_rsvp",
+          "actor": "A11",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.035Z"
+        },
+        {
+          "kind": "events",
+          "id": "ee04668d-8eb7-45ba-b8bf-fe356c77f63f",
+          "surface": "function:member_rsvp",
+          "actor": "A10",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.035Z"
+        },
+        {
+          "kind": "events",
+          "id": "27586e59-1565-4d47-96b6-cf3b1dd1c2cb",
+          "surface": "function:member_rsvp",
+          "actor": "A5",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.036Z"
+        },
+        {
+          "kind": "events",
+          "id": "70a627ff-9a90-4b10-a444-7c66a9bbd496",
+          "surface": "function:member_rsvp",
+          "actor": "A8",
+          "note": "event status=published",
+          "at": "2026-07-26T21:16:54.036Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "b667c53d-183a-4f51-8e00-4fa382aa9be0/edb4bc37-241c-4ae2-9e51-33156c559c82",
+          "surface": "function:member_rsvp",
+          "actor": "A9",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.110Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "88ee6360-b042-4525-a1c9-64f31d9fea41/c9824f55-54d7-4d7b-96d5-4b8c240f5156",
+          "surface": "function:member_rsvp",
+          "actor": "A6",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.118Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "b40d01fe-ba4e-4f13-8650-57c30265366c/5d674288-30b5-4458-be5c-bc435010ae05",
+          "surface": "function:member_rsvp",
+          "actor": "A3",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.156Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "ee04668d-8eb7-45ba-b8bf-fe356c77f63f/6afc6d19-feba-49dc-9c69-998bfa01c5c8",
+          "surface": "function:member_rsvp",
+          "actor": "A10",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.156Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "7d64078b-8f6d-4e80-861a-90c04f545d57/6fe6ebea-e432-41f0-9f3e-81856bd2591d",
+          "surface": "function:member_rsvp",
+          "actor": "A7",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "be790ddd-589b-44cb-ba68-ae3e6fa609cc/e65d45cb-d27c-4e9d-a1a3-d88f20579e9e",
+          "surface": "function:member_rsvp",
+          "actor": "A4",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "36d5da4a-2b55-4c16-98e7-bbe0acb0862e/2e8b102b-844c-4f86-bf29-5b334235f872",
+          "surface": "function:member_rsvp",
+          "actor": "A12",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "70a627ff-9a90-4b10-a444-7c66a9bbd496/a7792c4b-51e7-46ef-969a-a10fc21df411",
+          "surface": "function:member_rsvp",
+          "actor": "A8",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "27586e59-1565-4d47-96b6-cf3b1dd1c2cb/745094ec-912b-48c2-b1f6-64871c943cca",
+          "surface": "function:member_rsvp",
+          "actor": "A5",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "event_rsvps",
+          "id": "6c0e95d4-8804-4125-8083-5f773caa55dc/8577bd4b-6a9d-4906-a7ae-db5a9190a85c",
+          "surface": "function:member_rsvp",
+          "actor": "A11",
+          "note": "minted by the RPC itself (status=going)",
+          "at": "2026-07-26T21:16:54.157Z"
+        },
+        {
+          "kind": "profiles",
+          "id": "3aee3b0b-226b-42ea-9bc2-822157d532a3",
+          "surface": "function:register",
+          "actor": "A2",
+          "note": "created by probe, removed by teardown",
+          "at": "2026-07-26T21:16:54.783Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "e65d45cb-d27c-4e9d-a1a3-d88f20579e9e",
+          "surface": "function:request_delegacy",
+          "actor": "A4",
+          "note": "created by probe, removed by teardown",
+          "at": "2026-07-26T21:16:55.204Z"
+        },
+        {
+          "kind": "delegates",
+          "id": "745094ec-912b-48c2-b1f6-64871c943cca",
+          "surface": "function:request_delegacy",
+          "actor": "A5",
+          "note": "created by probe, removed by teardown",
+          "at": "2026-07-26T21:16:55.291Z"
+        }
+      ]
     }
   ]
 }

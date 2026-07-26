@@ -230,12 +230,12 @@ content read on either side:
 
 | view | result |
 | --- | --- |
-| `public_news` | 175 shown, 175 should be, 516 withheld of 691 |
-| `public_events` | 370 shown, 370 should be, 309 withheld of 679 |
-| `public_delegates` | 13 shown, 13 should be, 6 withheld of 19 |
-| `public_stats` | active=1640, approved_delegates=13, registered_total=1929 |
-| `transparency_stats` | registered_members=1795, approved_delegates=13 |
-| `transparency_regions` | 11 row(s); 134 profile(s) at status 'registered' available as a negative case |
+| `public_news` | 16 shown, 16 should be, 38 withheld of 54 |
+| `public_events` | 32 shown, 32 should be, 22 withheld of 54 |
+| `public_delegates` | 13 shown, 13 should be, 5 withheld of 18 |
+| `public_stats` | active=1640, approved_delegates=13, registered_total=1925 |
+| `transparency_stats` | registered_members=1792, approved_delegates=13 |
+| `transparency_regions` | 11 row(s); 133 profile(s) at status 'registered' available as a negative case |
 
 The ground truth for the three aggregate views is read from the **live** view
 definitions, not the migrations, and they differ: the community migration
@@ -286,7 +286,7 @@ nothing.
 
 The census itself supplied the negative case. Pass 2b and Pass 2c mint **draft**
 events as probe targets, so the table now contains rows the filter must exclude,
-and the live result is `370 shown, 370 should be, 309 withheld of 679`. Every filter
+and the live result is `32 shown, 32 should be, 22 withheld of 54`. Every filter
 assertion in §3.3a now has a negative case and none is recorded as unproven.
 
 ## 4. Observations that are not findings
@@ -825,7 +825,7 @@ standards can be compared.
 across runs**. Task 13 uses it to separate what the reseed removed from what the
 append-only `audit_log` made permanent.
 
-Latest database-census run: 395 rows — 96 `poll_options`, 50 `delegates`, 50 `events`, 50 `polls`, 50 `news`, 26 `memberships`, 24 `admin_roles`, 16 `payments`, 14 `profiles`, 10 `event_rsvps`, 9 `poll_votes`. 31 of those were
+Latest database-census run: 407 rows — 96 `poll_options`, 50 `delegates`, 50 `events`, 50 `polls`, 50 `news`, 26 `memberships`, 24 `admin_roles`, 16 `payments`, 14 `profiles`, 12 `auth.user`, 10 `event_rsvps`, 9 `poll_votes`. 31 of those were
 minted by the RPC **itself** rather than staged by `setup()`:
 `admin_save_news`/`_event`/`_poll` called with `p_id: null` create their own row,
 `member_rsvp` creates an `event_rsvps` row and `member_cast_vote` a
