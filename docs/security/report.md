@@ -1,12 +1,16 @@
 # Security check-up — the report
 
-**Version 0.10.0 · 26 July 2026 · for the owner**
+**Version 0.10.0 · 26 July 2026, revised 27 July 2026 · for the owner**
 
 This is the whole result of the security phase, written to be read without opening a single file of
 code. Anything technical is in the appendix at the end, which you do not need to read.
 
-**Nothing on your live site has changed as a result of this work.** The investigation looked; it did
-not repair. What that means in practice is set out in section 7.
+**Nothing on your live site has changed as a result of this work.** That was true when this report
+was first written, and it is still true — but now for a different reason. The investigation itself
+only looked. Since then, **six of the fourteen findings have been repaired**, and those repairs are
+sitting in this work's own branch, not on your site. Your platform changes when this work is merged
+and deployed, and not a moment before. Section 7 sets out exactly what has been repaired, what has
+not, and which of the two states each thing is in.
 
 ---
 
@@ -576,49 +580,82 @@ The investigation was conducted against the practice database and against your p
 reader. It did not repair anything on your running site, and it did not touch real member data —
 there is none to touch.
 
-### 7.2 The one fix that exists, and the correction that goes with it
+Repairs have since been written (7.2). **They are not on your site either.** Everything below keeps
+those two states apart deliberately, because conflating them is the one mistake this report has
+already had to correct once: *written and tested* is not *deployed*. Your site is built from the
+main line of the project; this work sits on its own branch and has not been merged into it. Until it
+is merged and deployed, your platform behaves exactly as sections 3 and 4 describe it.
 
-One repair has been written, tested and recorded: the phone-number lookup (finding 5). It is
-**committed to this work's own branch and has never reached your site**, because your site is built
-from the main line of the project and this work has not been merged into it.
+### 7.2 What has been repaired, and the correction that goes with it
 
-**You were told this was done. That was true of the code and false of your exposure, and the
-correction is this:** your site has been serving the flawed version the entire time, which we
-confirmed by measuring your live address — it still gives the two different answers the fixed
-version cannot give. The fix reaches you when this work merges, along with everything else.
+**Six of the fourteen findings now have repairs written and tested.** Every one of them is
+**committed to this work's own branch and has never reached your site.**
+
+| # | Finding | What the repair does |
+| --- | --- | --- |
+| 4 | Email sign-up enabled and auto-confirmed | The membership half is closed: no one can become a member without a verified phone number, whatever they signed up with. The email door itself is a project setting and is still open — see 7.5. |
+| 5 | Anonymous phone-number membership oracle | The sign-in-code page no longer answers *"does this number have an account"* — through either of the two channels it was answering through. |
+| 7 | A delegacy request permanently voided admin reassignment | Repaired. The six members already stranded by it can be moved again. |
+| 9 | Anonymous access to ID numbers, birth dates and phone numbers | A stranger now holds no access of any kind to the member table — refused a layer earlier than before. |
+| 10 | Eleven internal screens carried anonymous write permissions | Removed, from all twenty-four screens rather than only the eleven. |
+| 11 | The payments table was defended by one layer | It now has two. A recorded payment cannot be altered or deleted, only added and voided; and a stranger holds no access to the table at all. |
+
+**You were told the phone-number lookup was done. That was true of the code and false of your
+exposure, and the correction is this:** your site has been serving the flawed version the entire
+time, which we confirmed by measuring your live address — it still gives the two different answers
+the fixed version cannot give. That fix, and all five beside it, reach you when this work merges.
 
 The method has changed as a result. The verification for that fix was run against a copy on a
 developer machine, never against the address you actually sign off on. Nothing in the audit's
 machinery ever fetched your running site. From here, every fix is re-tested against the real address
 after merge, and "fixed" stops being allowed to mean "fixed in a file".
 
-### 7.3 What is unfixed
+### 7.3 What is not repaired
 
-**Thirteen of the fourteen confirmed findings are unfixed and untouched.** The fourteenth — the
-phone-number lookup, finding 5 — has a repair written and tested, and that repair is not on your
-site, so it too is live right now. On top of that, the eight defects in the audit's own instruments
-are unrepaired. That is the honest state: **nothing this audit found has been closed on your running
-platform.**
+**Eight of the fourteen confirmed findings have no repair.** They are: the personal-ID squatting
+finding you deferred by name (1); the registration form confirming to a stranger that a given
+government ID number is already on the platform (2); the sign-in-code page still handing a usable
+code to a stranger for a number with no account (3); sessions that never end (6); the revenue figure
+being member-declared (8); and the three lowest — the wide default permissions (12), region and city
+being self-assignable by direct write (13), and the member controlling their own coverage divisor
+(14).
 
-### 7.4 The next step is yours
+Of the eight defects in the audit's own instruments, one was corrected during the investigation
+itself, and one — the roster download page that was never on the list — has been added to the
+inventory in this branch, though its own checks are still unwritten and are honestly marked as such.
+The remaining six are unrepaired.
 
-The process stops here by design. You now decide the scope: which findings to fix in this phase,
-what to do about the seven decisions in section 6, and what to leave for launch hardening.
+**And the sentence that matters most is unchanged:** *nothing this audit found has been closed on
+your running platform.* The six repairs in 7.2 are in a branch, not on your site. They take effect
+on your platform the day this work is merged and deployed — and every one of them is re-tested
+against your real address at that point, not before.
 
-Once you have decided, the work runs as every phase does: one task per finding; a test that performs
-the attack and fails before the repair exists; an independent review of each fix and one across the
-whole set together; the practice database reseeded clean; a preview link for you to sign off on;
-then the release. Nothing merges on a failing check and nothing goes to the main line without your
-sign-off on that link.
+### 7.4 Where this now stands
+
+You set the scope on 26 July, and that work has run: six repairs, each with a test that performs the
+attack and fails before the repair exists, each reviewed on its own and then again across the whole
+set together.
+
+What remains of the process is unchanged and still yours: the practice database reseeded clean, a
+preview link for you to sign off on, then the release. Nothing merges on a failing check and nothing
+goes to the main line without your sign-off on that link. The decisions in section 6 that you have
+not yet taken are still open, and 7.5 is the list that must be raised again before launch.
 
 ### 7.5 The reminder you asked for
 
-Four items are deferred by decision and must be closed **before real people register**: the
-personal-ID squatting finding you deferred by name, the sign-in-code door, the email sign-up door,
-and sessions that never end. Three more sit under them. The list is kept as a standing document
-alongside this report, and nothing may quietly drop off it: if a phase ends without addressing an
-item, it stays on the list. **You asked to be reminded before going live. This is that list, and it
-will be raised again the moment launch is discussed.**
+Four items are deferred by decision and must be closed **before real people register**, and **all
+four are still open**: the personal-ID squatting finding you deferred by name; the sign-in-code
+door, which by your decision retires when the site goes live rather than being repaired; the email
+sign-up door, whose code half is repaired in this branch while the project setting itself remains
+yours to switch off; and sessions that never end.
+
+The three items that sat beneath them — the anonymous write permissions, the anonymous access to the
+member table, and the delegacy-request defect — are repaired in this branch. They stay on the list,
+marked as repaired-but-not-deployed, until this work is merged and deployed.
+
+The list is kept as a standing document alongside this report, and nothing may quietly drop off it:
+if a phase ends without addressing an item, it stays on the list. **You asked to be reminded before
+going live. This is that list, and it will be raised again the moment launch is discussed.**
 
 ---
 
@@ -639,22 +676,26 @@ above.*
 
 ### B. Finding identifiers
 
-| Report | Register ID | Severity | Threat |
-| --- | --- | --- | --- |
-| 1 — personal-ID squatting | F13 | Critical (deferred by owner) | R1 / R15 |
-| 2 — government-ID membership oracle at registration | DL-1 | High | R6 (and R1 retail) |
-| 3 — anonymous caller obtains a usable login code | F2 | Critical | R2 |
-| 4 — email sign-up enabled and auto-confirmed | F3 | Critical | R2's consequence set |
-| 5 — anonymous phone-number membership oracle | F1 | Critical | R2 / R6 |
-| 6 — sign-out is local only; no session expiry | F4 | High | R4 |
-| 7 — delegacy request voids admin reassignment | F14 | Medium | R15 |
-| 8 — revenue figure is member-declared | L3-1 | Medium | R14 |
-| 9 — anonymous column grants on ID / birth date / phone | CF4 | Low | R1 / R12 |
-| 10 — eleven views carry anonymous write grants | F5 | Low | R7 / R9 |
-| 11 — payments defended by one layer | L3-2 | Low | R14 |
-| 12 — wide default grants, row rules alone holding | CF1 | Low | R7 / R8 |
-| 13 — region/city self-assignable by direct write | F15-R | Low | R15 / R22 |
-| 14 — member controls the coverage divisor | L3-3 | Low | R14 |
+**Status** below is one of three, and the middle one is not the last one: *open* (no repair exists),
+*repaired in branch* (written and tested, **committed and not deployed** — your platform is
+unaffected until this work merges), and *deferred by owner*.
+
+| Report | Register ID | Severity | Threat | Status |
+| --- | --- | --- | --- | --- |
+| 1 — personal-ID squatting | F13 | Critical (deferred by owner) | R1 / R15 | Deferred by owner (LB-1) |
+| 2 — government-ID membership oracle at registration | DL-1 | High | R6 (and R1 retail) | Open |
+| 3 — anonymous caller obtains a usable login code | F2 | Critical | R2 | Open — retires at launch per ADR-021 (LB-2) |
+| 4 — email sign-up enabled and auto-confirmed | F3 | Critical | R2's consequence set | Code half repaired in branch; provider setting open (LB-3) |
+| 5 — anonymous phone-number membership oracle | F1 | Critical | R2 / R6 | Repaired in branch |
+| 6 — sign-out is local only; no session expiry | F4 | High | R4 | Open (LB-4) |
+| 7 — delegacy request voids admin reassignment | F14 | Medium | R15 | Repaired in branch (LB-7) |
+| 8 — revenue figure is member-declared | L3-1 | Medium | R14 | Open |
+| 9 — anonymous column grants on ID / birth date / phone | CF4 | Low | R1 / R12 | Repaired in branch (LB-6) |
+| 10 — eleven views carry anonymous write grants | F5 | Low | R7 / R9 | Repaired in branch (LB-5) |
+| 11 — payments defended by one layer | L3-2 | Low | R14 | Repaired in branch |
+| 12 — wide default grants, row rules alone holding | CF1 | Low | R7 / R8 | Open |
+| 13 — region/city self-assignable by direct write | F15-R | Low | R15 / R22 | Open |
+| 14 — member controls the coverage divisor | L3-3 | Low | R14 | Open |
 
 Instrument defects (section 5): F11, F6, F7, F8, F9, F10, F12, CF2. Withdrawn entirely: **F15** —
 refuted by a composite foreign key, and removed rather than softened.
