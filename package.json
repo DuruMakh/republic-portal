@@ -22,7 +22,8 @@
     "security:introspect": "node --env-file=.env.local scripts/security/introspect.mjs",
     "security:census": "node --env-file=.env.local scripts/security/probe.mjs",
     "security:census:app": "node --env-file=.env.local scripts/security/app-probe.mjs",
-    "security:coverage": "node scripts/security/coverage.mjs"
+    "security:coverage": "node scripts/security/coverage.mjs",
+    "security:verify-fixes": "node --env-file=.env.local scripts/verify-security-fixes.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.0",
