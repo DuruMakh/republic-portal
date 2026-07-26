@@ -352,6 +352,58 @@ console.log("\nF14 / LB-7 — the two delegate-binding guards");
   console.log(
     `       (${stranded[0]?.n ?? "?"} completed members currently hold a non-approved delegates row)`,
   );
+
+  // The behavioural half, through the REAL gate: a super_admin's identity is
+  // reproduced the way PostgREST reproduces it (request.jwt.claims + `set local
+  // role authenticated`), so the role check, RLS and every trigger apply
+  // exactly as on a live request. The whole thing is one aborted transaction.
+  const reassignProbe = sqlProbe(`
+    do $probe$
+    declare
+      v_admin uuid;
+      v_member uuid;
+      v_target uuid;
+      v_status text;
+      v_result text := 'ALLOWED';
+    begin
+      select ar.user_id into v_admin from public.admin_roles ar where ar.role = 'super_admin' limit 1;
+      -- a member who requested delegacy and was never approved, still holding
+      -- an open membership: the exact state F14 describes
+      select d.id, d.status into v_member, v_status
+        from public.delegates d
+        join public.profiles pr on pr.id = d.id
+        join public.memberships m on m.member_id = d.id and m.ended_at is null
+       where d.status <> 'approved' and pr.registration_completed_at is not null
+       limit 1;
+      select d.id into v_target from public.delegates d
+       where d.status = 'approved' and d.id <> coalesce(v_member, d.id)
+         and d.id is distinct from (select m.delegate_id from public.memberships m
+                                     where m.member_id = v_member and m.ended_at is null)
+       limit 1;
+      if v_admin is null or v_member is null or v_target is null then
+        raise exception 'AUDIT-RESULT >> SKIPPED (no admin/member/target fixture available)';
+      end if;
+
+      perform set_config('request.jwt.claims',
+                         json_build_object('sub', v_admin, 'role', 'authenticated')::text, true);
+      execute 'set local role authenticated';
+      begin
+        perform public.admin_reassign_member(v_member, v_target);
+      exception when others then v_result := 'refused: ' || sqlerrm;
+      end;
+      execute 'reset role';
+
+      raise exception 'AUDIT-RESULT >> reassigning a %-status requester: %', v_status, v_result;
+    end $probe$;
+  `);
+  console.log(`       probe: ${reassignProbe}`);
+  check(
+    "a verifier CAN reassign a member whose delegacy request was never approved",
+    /ALLOWED/.test(reassignProbe),
+    reassignProbe.includes("invalid_target")
+      ? "refused invalid_target — the member's own binding is permanently outside admin control"
+      : "",
+  );
 }
 
 // ---------------------------------------------------------------------------
