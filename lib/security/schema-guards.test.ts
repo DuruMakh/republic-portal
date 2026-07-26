@@ -319,4 +319,39 @@ describe("L3-2 — payments carries append-only protection", () => {
     const columns = effectiveColumnPrivileges("payments");
     expect([...columns.authenticated]).toEqual(["select"]);
   });
+
+  // The trigger must not stand in front of the ON DELETE CASCADE that
+  // threat-model.md:197 records as deliberate (ADR-015). A cascade is performed
+  // with the privileges of the REFERENCING table's owner, never the session
+  // role, so a role-name exemption cannot reach it.
+  const appendOnly = lastFunctionBody("payments_append_only");
+
+  it("lets a DELETE through when the parent profile is already gone (i.e. inside a cascade)", () => {
+    expect(appendOnly).toMatch(
+      /not\s+exists\s*\(\s*select\s+1\s+from\s+public\.profiles\s+where\s+id\s*=\s*old\.member_id\s*\)/i,
+    );
+  });
+
+  it("never lets the owner test alone be an escape — it must be followed by the orphan test", () => {
+    // The owner test is NOT a blanket owner exemption, and this is the guard
+    // that keeps it from decaying into one: an exemption for whoever owns the
+    // table would exempt every SECURITY DEFINER function in the schema,
+    // present and future. Reaching `return old` must pass the orphan test
+    // too, in that order — the owner test is what makes the orphan answer
+    // truthful (RLS does not apply to the owner), so it has to come first.
+    expect(appendOnly).toMatch(
+      /pg_get_userbyid[\s\S]{0,400}?not\s+exists\s*\(\s*select\s+1\s+from\s+public\.profiles\s+where\s+id\s*=\s*old\.member_id\s*\)[\s\S]{0,200}?return\s+old/i,
+    );
+  });
+
+  it("exempts exactly one role by name, and that role is service_role", () => {
+    // supabase_auth_admin was exempted on a false rationale (referential
+    // actions run as the referencing table's owner, never the session role)
+    // and holds no DELETE on payments at all. service_role stays because
+    // seed-staging.mjs wipes payments directly, parents alive (ADR-016).
+    const named = [...appendOnly.matchAll(/current_user\s*(?:=|in)\s*\(?\s*'([a-z_]+)'/gi)].map(
+      (m) => m[1],
+    );
+    expect(named).toEqual(["service_role"]);
+  });
 });

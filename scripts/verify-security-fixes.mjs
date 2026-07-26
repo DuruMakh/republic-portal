@@ -507,6 +507,163 @@ console.log("\nL3-2 — payments append-only protection");
   );
 }
 
+// ---------------------------------------------------------------------------
+// L3-2 (cascade) — the path the trigger's own comment names, and never tested
+// ---------------------------------------------------------------------------
+// The append-only trigger exempts service_role and supabase_auth_admin on the
+// stated ground that deleting an auth user cascades auth.users -> profiles ->
+// payments AS supabase_auth_admin. That ground is false: PostgreSQL performs a
+// referential action with the privileges of the REFERENCING table's owner, not
+// the session role, so inside the cascade current_user is `postgres` and the
+// exemption never applies. Two live facts pin it, both measured on this
+// database: payments is owned by `postgres`, and
+// has_table_privilege('supabase_auth_admin','public.payments','DELETE') is
+// FALSE — that role cannot reach this trigger by any route EXCEPT the cascade,
+// so the branch naming it is dead in both directions.
+//
+// The consequence is not theoretical. e2e/admin-helpers.ts:102 deletes phase-4
+// users whose payments cascade (and only console.warn()s, so CI stays green
+// while leaving an undeletable member behind every run);
+// scripts/sweep-staging-e2e.mjs:74 sets a failing exit code on exactly those
+// users; scripts/seed-staging.mjs:199 THROWS, at step 0, before the payments
+// wipe at :231. docs/security/threat-model.md:197 records these cascades as
+// deliberate (ADR-015).
+//
+// It has to run through the GoTrue admin API rather than a DO block, because
+// that is the only way to be the role the real deletion runs as: `postgres`
+// holds no membership in supabase_auth_admin (measured — `permission denied to
+// set role`), so the F14 trick of impersonating the caller in SQL is not
+// available here. The fixture is therefore created for real and torn down for
+// real: an audit-tagged account in the sweepable +99555 phone band with a 999…
+// personal ID, never a seeded roster member and never one of A9–A12, carrying
+// one genuine payment — the whole point is a payments row that must cascade.
+console.log("\nL3-2 (cascade) — deleting an auth user still cascades into payments");
+{
+  const reachable = sql(`
+    select has_table_privilege('supabase_auth_admin','public.payments','DELETE') as del,
+           (select r.rolname from pg_roles r
+              join pg_class c on c.relowner = r.oid
+             where c.relname = 'payments' and c.relnamespace = 'public'::regnamespace) as owner;
+  `)[0];
+  check(
+    "the cascade cannot be the exempted role: payments is owner-executed and " +
+      "supabase_auth_admin holds no DELETE on it",
+    reachable?.del === false && reachable?.owner === "postgres",
+    `owner=${reachable?.owner}, supabase_auth_admin DELETE on payments=${reachable?.del}`,
+  );
+
+  // Read off the LIVE body, not the file — the static half of this pair
+  // (lib/security/schema-guards.test.ts) can be right about a migration that
+  // was never applied. Matches the guard exactly, F14's lesson.
+  const body = sql(`
+    select p.prosrc ~ 'not exists \\(select 1 from public\\.profiles where id = old\\.member_id\\)'
+             as has_orphan_rule,
+           p.prosrc ~ 'pg_get_userbyid' as has_owner_test,
+           p.prosrc ~ 'supabase_auth_admin' as keeps_dead_branch
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public' and p.proname = 'payments_append_only';
+  `)[0];
+  check(
+    "the applied trigger body carries the owner+orphan rule and no dead role branch",
+    body?.has_orphan_rule === true &&
+      body?.has_owner_test === true &&
+      body?.keeps_dead_branch === false,
+    `orphan rule=${body?.has_orphan_rule}, owner test=${body?.has_owner_test}, ` +
+      `supabase_auth_admin branch still present=${body?.keeps_dead_branch}`,
+  );
+
+  const suffix = randomBytes(4).readUInt32BE(0).toString().padStart(9, "0");
+  const phone = `+99555${suffix.slice(0, 7)}`;
+  const { data: created, error: createErr } = await db.auth.admin.createUser({
+    phone,
+    phone_confirm: true,
+    user_metadata: { audit_tag: "security-audit-2026-07" },
+  });
+  if (createErr) throw new Error(`cascade probe createUser failed: ${createErr.message}`);
+  const probeId = created.user.id;
+  let paymentId = null;
+  try {
+    const { error: profileErr } = await db.from("profiles").insert({
+      id: probeId,
+      first_name: "პრობი",
+      last_name: "კასკადი",
+      phone,
+      personal_id: `999${suffix.slice(0, 8)}`,
+    });
+    if (profileErr) throw new Error(`cascade probe profile insert failed: ${profileErr.message}`);
+    const { data: payment, error: payErr } = await db
+      .from("payments")
+      .insert({
+        member_id: probeId,
+        amount_gel: 10,
+        paid_at: new Date().toISOString().slice(0, 10),
+        bank_reference: `AUDIT-L32-CASCADE-${randomBytes(4).toString("hex")}`,
+        tier_gel_at_payment: 10,
+      })
+      .select("id")
+      .single();
+    if (payErr) throw new Error(`cascade probe payment insert failed: ${payErr.message}`);
+    paymentId = payment.id;
+
+    // A rolled-back rehearsal of the SAME cascade first, purely so the refusal
+    // can be quoted: GoTrue answers a bare 500 with no body, so the live
+    // deleteUser below can report THAT it was refused but never WHY. Deleting
+    // the profiles row directly takes the identical profiles -> payments arc.
+    const rehearsal = sqlProbe(`
+      do $probe$
+      declare v_cascade text := 'ALLOWED';
+      begin
+        begin
+          delete from public.profiles where id = '${probeId}'::uuid;
+        exception when others then v_cascade := 'refused: ' || sqlerrm;
+        end;
+        raise exception 'AUDIT-RESULT >> profiles -> payments cascade: %', v_cascade;
+      end $probe$;
+    `);
+    console.log(`       rehearsal (rolled back): ${rehearsal}`);
+
+    // The attack this is NOT: this is the legitimate cleanup path, and the
+    // check is that the guard does not stand in front of it.
+    const { error: delErr } = await db.auth.admin.deleteUser(probeId);
+    const { data: leftProfile } = await db
+      .from("profiles")
+      .select("id")
+      .eq("id", probeId)
+      .maybeSingle();
+    const { data: leftPayment } = await db
+      .from("payments")
+      .select("id")
+      .eq("id", paymentId)
+      .maybeSingle();
+    if (!leftPayment) paymentId = null;
+    check(
+      "deleting an auth user whose member has payments succeeds (e2e, sweep and reseed all do this)",
+      !delErr && !leftProfile && !leftPayment,
+      delErr
+        ? `deleteUser refused (HTTP ${delErr.status ?? "?"})` +
+            (leftProfile ? " — the member is now undeletable" : "")
+        : leftProfile || leftPayment
+          ? "deleteUser reported success but rows survive"
+          : "profile and payment both cascaded away",
+    );
+  } finally {
+    // Teardown, in the one order that works: the payment first, by the service
+    // role DIRECTLY (which the trigger does exempt, and which seed-staging.mjs
+    // relies on), then the account. Reported loudly if anything survives —
+    // residue from a probe is the failure mode this whole harness avoids.
+    if (paymentId !== null) {
+      const { error } = await db.from("payments").delete().eq("id", paymentId);
+      if (error) console.error(`WARNING: cascade probe payment cleanup failed: ${error.message}`);
+    }
+    const { error } = await db.auth.admin.deleteUser(probeId);
+    // "User not found" is the SUCCESS path: the checked deleteUser above
+    // already took it, which is the whole point of the probe.
+    if (error && !/not\s*found/i.test(error.message ?? ""))
+      console.error(`WARNING: cascade probe cleanup failed: ${error.message}`);
+  }
+}
+
 rmSync(scratch, { recursive: true, force: true });
 console.log(`\n${ok} check(s) OK, ${red} RED.`);
 if (red > 0) process.exit(1);
