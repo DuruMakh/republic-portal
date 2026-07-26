@@ -269,7 +269,16 @@ const gridFor = (kind, label) =>
       }),
   ].join("\n");
 
-const lastDbRun = residue.runs.filter((r) => !r.source).at(-1) ?? residue.runs.at(-1);
+// The latest run that actually MINTED something. `!r.source` alone was enough
+// while every run was a census run, but Pass 4 appends a run whose whole point
+// is that it minted nothing (its probes live inside aborted transactions), and
+// that run would otherwise be reported as "the latest database-census run: 0
+// rows — ." — a true statement about the wrong run, and a false one about the
+// census. A run with no residue is not a census run; skip it.
+const lastDbRun =
+  residue.runs.filter((r) => !r.source && (r.minted ?? []).length > 0).at(-1) ??
+  residue.runs.filter((r) => !r.source).at(-1) ??
+  residue.runs.at(-1);
 const residueKinds = {};
 for (const m of lastDbRun.minted ?? []) residueKinds[m.kind] = (residueKinds[m.kind] ?? 0) + 1;
 const residueList = Object.entries(residueKinds)
@@ -320,10 +329,13 @@ const doc = `# Security audit — coverage table
 
 **The whole matrix: ${manifest.length} surfaces × ${A.length} actor positions =
 ${num(ledger.length)} graded cells — ${num(whole.clear)} clear, ${whole.finding} findings,
-${whole["needs-live-proof"]} needs-live-proof.** Three passes, each appended below:
+${whole["needs-live-proof"]} needs-live-proof.** Four passes, each appended below:
 Pass 2a (read surfaces and the depth layer, Task 6), Pass 2b (the 54 database
 functions, Task 7), Pass 2c (server actions, the dev-OTP endpoint, storage
-buckets — Task 8). Every cell now carries a real verdict; none is unprobed.
+buckets — Task 8), Pass 4 (live proof, Task 10). Every cell now carries a real
+verdict; none is unprobed, and after Pass 4 none is unexplained — the
+${whole["needs-live-proof"]} \`needs-live-proof\` cells are settled by hand in
+\`docs/security/findings.md\`, which is the finding register for the phase.
 
 > **This document is GENERATED — \`node scripts/security/coverage.mjs\`
 > (\`npm run security:coverage\`).** Editing it by hand is pointless; the next run
@@ -1325,6 +1337,40 @@ own additions:
 - **No OTP was sent by a probe.** All twelve sessions come from the disk cache.
 
 ${appRowScopeTotal()}
+---
+
+# Pass 4 (Task 10) — live proof
+
+The three passes above leave **${whole["needs-live-proof"]} cells at \`needs-live-proof\`**. That verdict is not a
+result; it is the census declining to grade. Pass 4 settles every one of them by
+hand and records the outcome in **\`docs/security/findings.md\`**, which is the
+finding register for the whole phase — confirmed findings with severity, *and*
+the disproofs, which spec §3 makes deliverables in their own right.
+
+**The counts in this document do not move**, and that is the point: no cell
+changed verdict, and no new finding came out of the ${whole["needs-live-proof"]}. What changed is that
+each now has a stated basis:
+
+| # | group | settled by |
+|---|---|---|
+| 48 | \`PGRST202\` on the 4 trigger functions | reproduced as \`0A000 trigger functions can only be called as triggers\` — the type system, not the gateway (RF6) |
+| 58 | \`APP-GENERIC\` server-action refusals | the per-cell paired assertions already in \`row-scope-app.json\` — \`probe-is-valid\` (an allowed actor got a non-generic result, so the probe is sound) plus \`denied-actor-changes-nothing\` (the target row is byte-identical) |
+| 14 | \`not_completed\` on the four \`member_*\` RPCs | live \`prosrc\`: raised as the caller-standing gate, before any effect |
+| 6 | \`profile_incomplete\` on the \`become_member_*\` pair | live \`prosrc\`: a SECOND caller-standing gate the manifest had missed — 4 A2 expectations corrected \`allow\` → \`deny\` |
+| 8 | \`SKIP-MUTATING\` on \`request_delegacy\` for A9–A12 | equivalence with A4, which is identical on all three of the function's gate inputs and executed the allow path live. Deliberately **not** executed on the canonical staging admins |
+
+Two structural readings died here, both of which had been argued confidently
+from source: **F15** (region/city pairing unvalidated outside the funnel) is
+**refuted** — a composite foreign key, \`profiles_city_in_region\`, refuses the
+mismatched write with \`23503\`, and no reading of grants, policies or triggers
+would ever have found it. **F11** is confirmed and corrected. **DL-1**
+(\`register()\` as a government-ID oracle) is **confirmed**, and reproduced in
+all three of its branches.
+
+Pass 4 spent **zero OTP sends** and left **zero residue**: every write probe ran
+inside a \`do $$ … $$\` block that ends by raising, so Postgres itself rolls the
+experiment back rather than a teardown that could fail. Method, limitations and
+the after-the-fact residue check are in §6 of \`findings.md\`.
 `;
 
 function appRowScopeTotal() {

@@ -15595,6 +15595,13 @@
           "at": "2026-07-26T07:42:08.829Z"
         }
       ]
+    },
+    {
+      "runAt": "2026-07-26T17:30:00.000Z",
+      "run": "Task 10 / Pass 4 (live proof)",
+      "method": "Every Pass 4 write probe ran inside a single `do $$ ... $$` statement that ends in `raise exception 'AUDIT-RESULT >> ...'`. The raise carries the measurements out in the error message AND aborts the statement, so the whole experiment -- the mismatched region/city PATCH, the register() squat of a synthetic id, the blank-name and over-long-employment writes, the audit_log insert -- is rolled back by Postgres itself rather than by a teardown that could fail. Privilege context was reproduced the way PostgREST reproduces it: set_config('request.jwt.claims', ...) then `set local role authenticated`, so column grants, RLS and BEFORE-UPDATE triggers all applied exactly as they do on a real request.",
+      "verifiedClean": "Re-read after the probes, as postgres, in a separate statement: A5's profiles row region_id/city_id = 1/1 (its original pair); A2 still has NO profiles row; no profiles row holds personal_id 99900000011 or 99900000012; count of profiles named SECAUDIT/Pass4 = 0; profiles-with-region/city-mismatch total = 0.",
+      "minted": []
     }
   ]
 }
