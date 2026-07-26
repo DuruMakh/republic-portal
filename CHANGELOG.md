@@ -50,7 +50,7 @@
   severity in the report describes harm at launch, with real members
 - Nothing about how the platform looks or behaves has changed: no page, flow,
   label, wording or number moved. The repairs are permission and database-rule
-  changes only, carried by 597 automated tests and 44 end-to-end journeys, plus a
+  changes only, carried by 597 automated tests and 52 end-to-end journeys, plus a
   live harness that performs each original attack against the practice database
   and confirms it now fails
 - The practice database was reset to its documented population as part of this
