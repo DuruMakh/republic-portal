@@ -50,7 +50,7 @@ export function ProfileForm({
     let cancelled = false;
     const supabase = createClient();
     void Promise.resolve(
-      supabase.from("cities").select("id, name_ka").eq("region_id", regionId).order("id"),
+      supabase.from("cities").select("id, name_ka").eq("region_id", regionId).order("name_ka"),
     )
       .then(({ data, error }) => {
         if (cancelled) return;
