@@ -118,19 +118,58 @@ export async function passRegistration(
   await expect(page).toHaveURL(/\/me(\/|\?|#|$)/, { timeout: 15_000 });
 }
 
+/** region name_ka → a city that genuinely belongs to it. Ordered by name_ka, matching
+ * the wizard's own `.order("name_ka")`, so this is the city the old positional
+ * `{ index: 1 }` picked whenever it picked correctly. Cached per run. */
+const cityByRegion = new Map<string, { id: number; nameKa: string }>();
+async function firstCityOfRegion(regionLabel: string): Promise<{ id: number; nameKa: string }> {
+  const cached = cityByRegion.get(regionLabel);
+  if (cached) return cached;
+  const admin = serviceClient();
+  const { data: region, error: rErr } = await admin
+    .from("regions")
+    .select("id")
+    .eq("name_ka", regionLabel)
+    .single();
+  if (rErr || !region)
+    throw new Error(`e2e: region "${regionLabel}" lookup failed: ${rErr?.message}`);
+  const { data: city, error: cErr } = await admin
+    .from("cities")
+    .select("id, name_ka")
+    .eq("region_id", region.id)
+    .order("name_ka")
+    .limit(1)
+    .single();
+  if (cErr || !city) throw new Error(`e2e: no city in region "${regionLabel}": ${cErr?.message}`);
+  const found = { id: city.id as number, nameKa: city.name_ka as string };
+  cityByRegion.set(regionLabel, found);
+  return found;
+}
+
 /**
  * Fill the become-a-member wizard's profile phase (spec §4.3) — the profile basics
  * minus personalId (now captured at registration). The wizard renders
  * region/city/employment as LabeledSelects; the delegate binding is separate and left
  * at its default (central) by this helper.
+ *
+ * The city is selected by its own id, never positionally. changeRegion() clears cityId
+ * but the new region's <option>s only arrive after the Supabase round trip in the
+ * wizard's [regionId] effect; until then the select still holds the PREVIOUS region's
+ * options. A positional `{ index: 1 }` matches that stale list immediately and picks a
+ * foreign city, so the save trips the composite FK profiles_city_in_region
+ * (20260713143120) and the wizard never advances to the tier phase. Passing the id
+ * makes Playwright retry until THIS region's options render — and ids are globally
+ * unique, so a stale list can never satisfy the match (a by-label match could: city
+ * names repeat across regions).
  */
 export async function fillMembershipProfile(
   page: Page,
   opts: { regionLabel: string },
 ): Promise<void> {
+  const city = await firstCityOfRegion(opts.regionLabel);
   await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
   await page.getByLabel("მხარე").selectOption({ label: opts.regionLabel });
-  await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 1 });
+  await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption(String(city.id));
   await page.getByLabel("სამუშაო ადგილი / სტატუსი").selectOption({ label: "სტუდენტი" });
 }
 
