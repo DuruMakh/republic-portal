@@ -209,7 +209,7 @@ export default function JoinForm() {
           ) : (
             <div className="flex flex-col gap-4">
               <h2 className="font-serif font-bold border-b-2 border-ink pb-2">
-                §1. პირადი მონაცემები
+                პირადი მონაცემები
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -242,9 +242,6 @@ export default function JoinForm() {
                 />
                 <p className="text-xs text-muted-fg">11 ნიშნა</p>
               </div>
-              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">
-                §2. ტელეფონის ნომერი
-              </h2>
               <div className="flex flex-col gap-1.5">
                 <Field
                   label="ტელეფონის ნომერი"

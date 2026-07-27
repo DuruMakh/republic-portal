@@ -159,3 +159,15 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/me"));
   });
 });
+
+describe("JoinForm — section headings (owner fix #6)", () => {
+  it("no phone section heading — the field's own label names it (owner fix #6)", () => {
+    // render JoinForm exactly as the first existing test in this file does
+    render(<JoinForm />);
+    expect(
+      screen.queryByRole("heading", { name: /ტელეფონის ნომერი/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "პირადი მონაცემები" })).toBeInTheDocument();
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeInTheDocument();
+  });
+});
