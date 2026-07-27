@@ -294,7 +294,6 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           <Button onClick={submitProfile} disabled={busy} size="lg">
             გაგრძელება →
           </Button>
-          <p className="text-center text-xs text-muted-fg">💾 მონაცემები ინახება ავტომატურად</p>
         </div>
       </>
     );
