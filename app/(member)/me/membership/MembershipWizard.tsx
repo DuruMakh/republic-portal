@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Field, inputClasses } from "@/components/Field";
+import { Field } from "@/components/Field";
+import { SelectField } from "@/components/Select";
 import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
 import {
@@ -23,39 +24,6 @@ type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
   return typeof key === "string" && (FIELD_KEYS as readonly string[]).includes(key);
-}
-
-function LabeledSelect({
-  label,
-  id,
-  value,
-  onChange,
-  error,
-  children,
-}: {
-  label: string;
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold text-ink">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${inputClasses} ${error ? "border-danger" : "border-line"} bg-white`}
-      >
-        {children}
-      </select>
-      {error ? <p className="text-xs text-danger">{error}</p> : null}
-    </div>
-  );
 }
 
 // The wizard only ever renders "profile" and "tier" — a completed member never
@@ -249,11 +217,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             error={errors.birthDate}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <LabeledSelect
+            <SelectField
               label="მხარე"
               id="mw-region"
               value={regionId === null ? "" : String(regionId)}
-              onChange={changeRegion}
+              onChange={(e) => changeRegion(e.target.value)}
               error={errors.regionId}
             >
               <option value="" disabled>
@@ -264,12 +232,12 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {r.name_ka}
                 </option>
               ))}
-            </LabeledSelect>
-            <LabeledSelect
+            </SelectField>
+            <SelectField
               label="ქალაქი / მუნიციპალიტეტი"
               id="mw-city"
               value={cityId === null ? "" : String(cityId)}
-              onChange={(v) => setCityId(v ? Number(v) : null)}
+              onChange={(e) => setCityId(e.target.value ? Number(e.target.value) : null)}
               error={errors.cityId}
             >
               <option value="" disabled>
@@ -280,13 +248,13 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {c.name_ka}
                 </option>
               ))}
-            </LabeledSelect>
+            </SelectField>
           </div>
-          <LabeledSelect
+          <SelectField
             label="სამუშაო ადგილი / სტატუსი"
             id="mw-work"
             value={workPreset}
-            onChange={setWorkPreset}
+            onChange={(e) => setWorkPreset(e.target.value)}
             error={errors.employment}
           >
             <option value="" disabled>
@@ -298,7 +266,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               </option>
             ))}
             <option value="__other">სხვა (მიუთითე)</option>
-          </LabeledSelect>
+          </SelectField>
           {workPreset === "__other" ? (
             <Field
               label="მიუთითე შენი საქმიანობა"

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
+import { Select } from "@/components/Select";
 import { ADMIN_ROLE_VALUES, ROLE_DUTIES_KA, ROLE_LABELS_KA, type AdminRole } from "@/lib/admin";
 import type { AdminCandidateResult, AdminRoleActionResult } from "./actions";
 
@@ -82,17 +83,17 @@ export function GrantRoleForm({
           <p className="text-sm font-bold text-ink">{candidate.name}</p>
           <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             როლი
-            <select
+            <Select
+              variant="admin"
               value={role}
               onChange={(e) => setRole(e.target.value as AdminRole)}
-              className={adminControlClasses}
             >
               {ADMIN_ROLE_VALUES.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABELS_KA[r]} — {ROLE_DUTIES_KA[r]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <Button variant="primary" onClick={onGrant} disabled={busy}>
             მინიჭება

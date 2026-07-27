@@ -1,7 +1,7 @@
 "use client";
 
-import { inputClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
+import { Select } from "@/components/Select";
 
 export interface DelegateOption {
   id: string;
@@ -46,9 +46,8 @@ export function DelegateBinding({
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
-          <select
+          <Select
             aria-label="დელეგატი"
-            className={inputClasses}
             value={value ?? "central"}
             onChange={(e) => onChange(e.target.value === "central" ? null : e.target.value)}
           >
@@ -60,7 +59,7 @@ export function DelegateBinding({
                 {d.fullName} · {d.regionNameKa}
               </option>
             ))}
-          </select>
+          </Select>
           <p className="text-[0.74rem] text-muted-fg">
             აჩვენება მხოლოდ არჩეული მხარის დამტკიცებული დელეგატები.
           </p>

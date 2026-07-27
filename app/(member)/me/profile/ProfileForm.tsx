@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Field, inputClasses } from "@/components/Field";
+import { SelectField } from "@/components/Select";
 import { EMPLOYMENT_OTHER, employmentToForm, formatPhoneKa, formToEmployment } from "@/lib/cabinet";
 import { profileUpdateSchema } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
@@ -160,80 +161,65 @@ export function ProfileForm({
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="profile-region" className="text-sm font-semibold text-ink">
-              მხარე
-            </label>
-            <select
-              id="profile-region"
-              className={`${inputClasses} border-line`}
-              value={regionId}
-              onChange={(e) => {
-                touch();
-                setRegionId(Number(e.target.value));
-              }}
-            >
-              {regions.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name_ka}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="profile-city" className="text-sm font-semibold text-ink">
-              ქალაქი / მუნიციპალიტეტი
-            </label>
-            <select
-              id="profile-city"
-              className={`${inputClasses} border-line`}
-              value={cityId}
-              onChange={(e) => {
-                touch();
-                setCityId(Number(e.target.value));
-              }}
-            >
-              {cities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name_ka}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="profile-employment" className="text-sm font-semibold text-ink">
-            სამუშაო ადგილი / სტატუსი
-          </label>
-          <select
-            id="profile-employment"
-            className={`${inputClasses} border-line`}
-            value={employmentChoice}
+          <SelectField
+            label="მხარე"
+            id="profile-region"
+            value={regionId}
             onChange={(e) => {
               touch();
-              setEmploymentChoice(e.target.value);
+              setRegionId(Number(e.target.value));
             }}
           >
-            {EMPLOYMENT_PRESETS.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {regions.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name_ka}
               </option>
             ))}
-            <option value={EMPLOYMENT_OTHER}>სხვა (მიუთითე)</option>
-          </select>
-          {employmentChoice === EMPLOYMENT_OTHER ? (
-            <Field
-              label="მიუთითე საქმიანობა"
-              name="employmentCustom"
-              value={employmentCustom}
-              maxLength={100}
-              onChange={(e) => {
-                touch();
-                setEmploymentCustom(e.target.value);
-              }}
-            />
-          ) : null}
+          </SelectField>
+          <SelectField
+            label="ქალაქი / მუნიციპალიტეტი"
+            id="profile-city"
+            value={cityId}
+            onChange={(e) => {
+              touch();
+              setCityId(Number(e.target.value));
+            }}
+          >
+            {cities.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name_ka}
+              </option>
+            ))}
+          </SelectField>
         </div>
+        <SelectField
+          label="სამუშაო ადგილი / სტატუსი"
+          id="profile-employment"
+          value={employmentChoice}
+          onChange={(e) => {
+            touch();
+            setEmploymentChoice(e.target.value);
+          }}
+        >
+          {EMPLOYMENT_PRESETS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+          <option value={EMPLOYMENT_OTHER}>სხვა (მიუთითე)</option>
+        </SelectField>
+        {employmentChoice === EMPLOYMENT_OTHER ? (
+          <Field
+            label="მიუთითე საქმიანობა"
+            name="employmentCustom"
+            value={employmentCustom}
+            maxLength={100}
+            onChange={(e) => {
+              touch();
+              setEmploymentCustom(e.target.value);
+            }}
+          />
+        ) : null}
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {saved ? (
           <p className="text-sm font-semibold text-ok" data-testid="profile-saved">

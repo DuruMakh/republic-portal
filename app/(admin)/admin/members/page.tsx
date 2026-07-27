@@ -7,6 +7,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { Pill } from "@/components/Pill";
 import { hasAnyRole, isStaff, MEMBER_STATUS_LABELS_KA, sanitizeSearch } from "@/lib/admin";
 import { adminControlClasses } from "@/components/Field";
+import { Select } from "@/components/Select";
 import { formatCountKa } from "@/lib/format";
 import { membersFilterSchema } from "@/lib/admin-schemas";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
@@ -96,10 +97,10 @@ export default async function AdminMembersPage({
           </label>
           <label className="flex min-w-[170px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             რეგიონი
-            <select
+            <Select
+              variant="admin"
               name="regionId"
               defaultValue={filter.regionId ? String(filter.regionId) : ""}
-              className={adminControlClasses}
             >
               <option value="">ყველა მხარე</option>
               {regions.map((r) => (
@@ -107,20 +108,16 @@ export default async function AdminMembersPage({
                   {r.name_ka}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex min-w-[150px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             სტატუსი
-            <select
-              name="status"
-              defaultValue={filter.status ?? ""}
-              className={adminControlClasses}
-            >
+            <Select variant="admin" name="status" defaultValue={filter.status ?? ""}>
               <option value="">ყველა სტატუსი</option>
               <option value="active_member">{MEMBER_STATUS_LABELS_KA.active_member}</option>
               <option value="profile_completed">{MEMBER_STATUS_LABELS_KA.profile_completed}</option>
               <option value="registered">{MEMBER_STATUS_LABELS_KA.registered}</option>
-            </select>
+            </Select>
           </label>
           <Button type="submit" variant="dark">
             ფილტრი

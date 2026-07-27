@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { adminControlClasses } from "@/components/Field";
+import { Select } from "@/components/Select";
 import type { ReassignResult } from "./actions";
 
 export function ReassignRow({
@@ -40,17 +40,18 @@ export function ReassignRow({
       {options.length === 0 ? (
         <span className="text-sm text-muted-fg">ამ მხარეს დამტკიცებული დელეგატი არ ჰყავს</span>
       ) : (
-        <select
+        <Select
+          variant="admin"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className={`${adminControlClasses} min-w-[200px]`}
+          className="min-w-[200px]"
         >
           {options.map((o) => (
             <option key={o.id} value={o.id}>
               {o.name}
             </option>
           ))}
-        </select>
+        </Select>
       )}
       <Button
         variant="primary"
