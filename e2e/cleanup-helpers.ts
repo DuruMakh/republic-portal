@@ -70,6 +70,13 @@ export function cleanupClient(label: string): SupabaseClient | null {
  */
 const E2E_PHONE = /^\+?99555/;
 
+export function assertE2ePhones(label: string, phones: readonly string[]): void {
+  const strays = phones.filter((p) => !E2E_PHONE.test(p));
+  if (strays.length > 0) {
+    throw new Error(`${label} refusing phones outside the 55 e2e block: ${strays.join(", ")}`);
+  }
+}
+
 /**
  * THE per-run user cleanup: resolve `phones` to profiles, detach the memberships
  * pointing AT them, delete the auth users, then fail loudly with everything that
@@ -77,10 +84,7 @@ const E2E_PHONE = /^\+?99555/;
  * range (registration/membership specs) — identical mechanics, different phones.
  */
 export async function cleanupUsersByPhone(label: string, phones: readonly string[]): Promise<void> {
-  const strays = phones.filter((p) => !E2E_PHONE.test(p));
-  if (strays.length > 0) {
-    throw new Error(`${label} refusing phones outside the 55 e2e block: ${strays.join(", ")}`);
-  }
+  assertE2ePhones(label, phones);
   const db = cleanupClient(label);
   if (!db) return;
   // A dropped error here is the quietest leak of the three: no ids means the delete

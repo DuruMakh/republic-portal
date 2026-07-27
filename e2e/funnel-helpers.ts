@@ -2,7 +2,13 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET } from "../lib/funnel";
-import { cleanupClient, cleanupUsersByPhone, failIfAny, SWEEP_HINT } from "./cleanup-helpers";
+import {
+  assertE2ePhones,
+  cleanupClient,
+  cleanupUsersByPhone,
+  failIfAny,
+  SWEEP_HINT,
+} from "./cleanup-helpers";
 import { clickThroughOtpThrottle, loginAs, readFreshInboxOtp, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
@@ -331,9 +337,12 @@ export async function approveOwnDelegate(phoneNational: string): Promise<void> {
 
 export async function cleanupLoginUser(): Promise<void> {
   const LABEL = "login e2e cleanup";
+  const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
+  // Scans auth rather than profiles, but the phone still comes from the
+  // unvalidated E2E_TEST_PHONE — same guard as the profiles-based deletions.
+  assertE2ePhones(LABEL, [loginPhone]);
   const admin = cleanupClient(LABEL);
   if (!admin) return;
-  const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
   const failures: string[] = [];
   for (let page = 1; page <= 50; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });

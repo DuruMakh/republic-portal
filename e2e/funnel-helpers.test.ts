@@ -89,6 +89,35 @@ describe("cleanupLoginUser", () => {
     await expect(cleanupLoginUser()).rejects.toThrow(/service unavailable/);
   });
 
+  // Same hole cleanupUsersByPhone guards against, via a different path: this one
+  // finds its victim by scanning auth rather than by looking up profiles, but the
+  // phone still comes from the unvalidated E2E_TEST_PHONE. LOGIN_PHONE is captured
+  // at module load, so the env has to be stubbed before a fresh import.
+  test("refuses to delete when E2E_TEST_PHONE points outside the 55 e2e block", async () => {
+    vi.stubEnv("E2E_TEST_PHONE", "599123456");
+    vi.resetModules();
+    const fresh = await import("./funnel-helpers");
+    const deleted: string[] = [];
+    createClient.mockReturnValue({
+      auth: {
+        admin: {
+          listUsers: () =>
+            Promise.resolve({
+              data: { users: [{ id: "a-real-person", phone: "995599123456" }] },
+              error: null,
+            }),
+          deleteUser: (id: string) => {
+            deleted.push(id);
+            return Promise.resolve({ error: null });
+          },
+        },
+      },
+    });
+
+    await expect(fresh.cleanupLoginUser()).rejects.toThrow(/refus/i);
+    expect(deleted).toEqual([]);
+  });
+
   test("resolves when no orphan is present", async () => {
     createClient.mockReturnValue({
       auth: {
