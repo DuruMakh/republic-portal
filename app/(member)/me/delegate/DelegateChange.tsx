@@ -106,7 +106,7 @@ export function DelegateChange({
         onChange={(e) => setChoice(e.target.value)}
       >
         <option value={CENTRAL}>
-          {currentDelegateId === null ? "ცენტრალური მოძრაობა (მიმდინარე)" : "ცენტრალური მოძრაობა"}
+          {currentDelegateId === null ? "არ მყავს დელეგატი (მიმდინარე)" : "არ მყავს დელეგატი"}
         </option>
         {options.map((d) => (
           <option key={d.id} value={d.id}>

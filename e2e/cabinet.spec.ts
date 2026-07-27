@@ -48,7 +48,7 @@ test("member cabinet: profile edit, delegate change, tier change, billing, one-w
 
   // delegate change: central → first delegate in the member's region (seeded, approved)
   await page.goto("/me/delegate");
-  await expect(page.getByTestId("current-delegate")).toHaveText("ცენტრალური მოძრაობა");
+  await expect(page.getByTestId("current-delegate")).toHaveText("არ მყავს დელეგატი");
   const picker = page.getByLabel("დელეგატი");
   await picker.selectOption({ index: 1 });
   const chosenLabel = (await picker.locator("option:checked").innerText()).trim();

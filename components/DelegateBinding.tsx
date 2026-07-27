@@ -52,7 +52,7 @@ export function DelegateBinding({
             onChange={(e) => onChange(e.target.value === "central" ? null : e.target.value)}
           >
             <option value="central" className="font-serif">
-              ცენტრალური მოძრაობა
+              არ მყავს დელეგატი
             </option>
             {options.map((d) => (
               <option key={d.id} value={d.id} className="font-serif">

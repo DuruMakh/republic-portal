@@ -87,7 +87,7 @@ export default async function MyDelegatePage() {
           ) : (
             <div>
               <h3 className="font-serif text-lg font-bold text-ink" data-testid="current-delegate">
-                ცენტრალური მოძრაობა
+                არ მყავს დელეგატი
               </h3>
               <p className="mt-1 text-sm text-muted-fg">
                 შენ პირდაპირ ცენტრალურ მოძრაობას უჭერ მხარს.

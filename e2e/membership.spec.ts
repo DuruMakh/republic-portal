@@ -54,7 +54,7 @@ test("full upgrade: register → wizard → member with a reference code and mem
   // done phase, now its own route: a GR- code and the central binding
   await expect(page).toHaveURL(/\/me\/membership\/done/);
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
-  await expect(page.getByTestId("chosen-delegate")).toHaveText("ცენტრალური მოძრაობა");
+  await expect(page.getByTestId("chosen-delegate")).toHaveText("არ მყავს დელეგატი");
   // the done screen's own pill must already read „წევრი" (V17) — it used to fall through
   // to Pill's retired default „პროფილი შევსებულია" since this <Pill> has no label override
   // (exact: the old substring match also passed against e.g. the აქტიური-წევრის copy below it)

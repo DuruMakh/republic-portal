@@ -38,7 +38,7 @@ export default async function MembershipDonePage() {
         <strong className="text-ink" data-testid="chosen-delegate">
           {state.chosenDelegate
             ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-            : "ცენტრალური მოძრაობა"}
+            : "არ მყავს დელეგატი"}
         </strong>
       </p>
       <p className="mt-2 text-sm text-muted-fg">

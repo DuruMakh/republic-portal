@@ -264,7 +264,7 @@ export default async function ProfilePage() {
                   >
                     {state.chosenDelegate
                       ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-                      : "ცენტრალური მოძრაობა"}
+                      : "არ მყავს დელეგატი"}
                   </p>
                   {state.chosenDelegate ? (
                     <p
