@@ -247,7 +247,7 @@ Mechanical, attribute-preserving swap of all 15 sites. Rule: keep every existing
 
 ### Task 3: CabinetNav active state — longest match wins (doc item 7)
 
-Owner screenshot: on the cabinet events page both „მთავარი" and „ღონისძიებები" are red. Cause: `components/CabinetNav.tsx:33` marks `/me` active via `pathname.startsWith("/me/")` on every subpage. `AdminNav.tsx:32-36` already solved this by exact-matching the root; CabinetNav gets the data-driven version (it also serves the delegate chrome, root `/delegate`).
+Owner screenshot: on the cabinet events page both „მთავარი“ and „ღონისძიებები“ are red. Cause: `components/CabinetNav.tsx:33` marks `/me` active via `pathname.startsWith("/me/")` on every subpage. `AdminNav.tsx:32-36` already solved this by exact-matching the root; CabinetNav gets the data-driven version (it also serves the delegate chrome, root `/delegate`).
 
 **Files:**
 - Modify: `components/CabinetNav.tsx:32-34`
@@ -309,7 +309,7 @@ In `beforeEach`, add `pathnameRef.current = "/me/profile";` (keeps all existing 
 - [ ] **Step 4: Implement.** In `CabinetNav.tsx`, above the `return`, compute the winner; inside the map use it:
 
 ```tsx
-  // Longest matching href wins (owner fix list #7): „მთავარი" (/me) is a
+  // Longest matching href wins (owner fix list #7): „მთავარი“ (/me) is a
   // prefix of every cabinet route, so bare prefix-matching kept it lit on
   // every page. Same rule AdminNav hardcodes for /admin, made data-driven —
   // this nav also serves the delegate chrome, whose root is /delegate.
@@ -329,9 +329,9 @@ and replace line 33 with `const active = item.href === activeHref;`
 
 ---
 
-### Task 4: Remove the „§2. ტელეფონის ნომერი" heading on /join (doc item 6)
+### Task 4: Remove the „§2. ტელეფონის ნომერი“ heading on /join (doc item 6)
 
-Owner clarified 2026-07-28: remove the **section heading itself** (`app/(public)/join/JoinForm.tsx:245-247`). The field's own label right under it stays and alone names the input — no `Field` component change, no design-system change. Consequence handled in the same breath: with §2 gone, „§1." would number a lone section, so the first heading (`JoinForm.tsx:211-213`) drops its prefix and reads plain „პირადი მონაცემები" (it now covers the whole short form — name, surname, phone once Task 9 lands). Owner sees both on the preview and can veto the §1 half.
+Owner clarified 2026-07-28: remove the **section heading itself** (`app/(public)/join/JoinForm.tsx:245-247`). The field's own label right under it stays and alone names the input — no `Field` component change, no design-system change. Consequence handled in the same breath: with §2 gone, „§1.“ would number a lone section, so the first heading (`JoinForm.tsx:211-213`) drops its prefix and reads plain „პირადი მონაცემები“ (it now covers the whole short form — name, surname, phone once Task 9 lands). Owner sees both on the preview and can veto the §1 half.
 
 **Files:**
 - Modify: `app/(public)/join/JoinForm.tsx:211-213, 245-247`
@@ -360,7 +360,7 @@ Run: `npx vitest run "app/(public)/join/JoinForm.test.tsx"` — Expected: FAIL (
 
 ---
 
-### Task 5: Remove the „💾 მონაცემები ინახება ავტომატურად" note (doc item 8a)
+### Task 5: Remove the „💾 მონაცემები ინახება ავტომატურად“ note (doc item 8a)
 
 Owner: the note is unnecessary — delete it. Behavior (draft autosave) stays; only the caption goes.
 
@@ -373,9 +373,9 @@ Owner: the note is unnecessary — delete it. Behavior (draft autosave) stays; o
 
 ---
 
-### Task 6: „ცენტრალური მოძრაობა" → „არ მყავს დელეგატი" on member surfaces (doc item 15)
+### Task 6: „ცენტრალური მოძრაობა“ → „არ მყავს დელეგატი“ on member surfaces (doc item 15)
 
-The no-delegate default renders as „ცენტრალური მოძრაობა" everywhere. Owner: member-facing copy should read `არ მყავს დელეგატი` (splice from Global Constraints). **Scope: member-facing only.** Admin table (`app/(admin)/admin/members/page.tsx:185`) and CSV export (`lib/csv.ts:71`) keep the old term — admin vocabulary is doc item 16, deferred with the აქტიური/წევრი wording decision. DB semantics (`delegate_id = null`) untouched.
+The no-delegate default renders as „ცენტრალური მოძრაობა“ everywhere. Owner: member-facing copy should read `არ მყავს დელეგატი` (splice from Global Constraints). **Scope: member-facing only.** Admin table (`app/(admin)/admin/members/page.tsx:185`) and CSV export (`lib/csv.ts:71`) keep the old term — admin vocabulary is doc item 16, deferred with the აქტიური/წევრი wording decision. DB semantics (`delegate_id = null`) untouched.
 
 **Files:**
 - Modify: `components/DelegateBinding.tsx:56` (picker option)
@@ -385,7 +385,7 @@ The no-delegate default renders as „ცენტრალური მოძ�
 - Modify: `app/(member)/me/membership/done/page.tsx:41` (done-page display)
 - Test: `components/DelegateBinding.test.tsx:33`, `app/(member)/me/delegate/DelegateChange.test.tsx:46`
 - Test (e2e, asserted in Task 9's sweep): `e2e/cabinet.spec.ts:51`, `e2e/membership.spec.ts:57`
-- Modify: `DESIGN.md` DelegateBinding row („ცენტრალური მოძრაობა" default row → the new label)
+- Modify: `DESIGN.md` DelegateBinding row („ცენტრალური მოძრაობა“ default row → the new label)
 
 **Interfaces:** none — `value="central"` / `null` semantics unchanged; only display strings.
 
@@ -553,7 +553,7 @@ export function NewsCard({
             className="mt-6 max-h-[420px] w-full border border-hairline object-cover"
 ```
 
-- [ ] **Step 6: Styleguide + DESIGN.md.** Section 15: add two Cards demoing `variant="lead"` and `variant="tile"` (reuse the existing NewsCard demo's props, splice its strings). DESIGN.md NewsCard row: append „variants: `row` (brief, default) · `tile` (grid card, cover top 3:2) · `lead` (full-width opener, cover 2:1, serif 3xl)".
+- [ ] **Step 6: Styleguide + DESIGN.md.** Section 15: add two Cards demoing `variant="lead"` and `variant="tile"` (reuse the existing NewsCard demo's props, splice its strings). DESIGN.md NewsCard row: append „variants: `row` (brief, default) · `tile` (grid card, cover top 3:2) · `lead` (full-width opener, cover 2:1, serif 3xl)“.
 - [ ] **Step 7: Visual check** — `npm run dev`, open `/news` and one article (staging has seeded news), confirm the lead/tile layout and that the article image stops at 420px.
 - [ ] **Step 8: Gates + commit** — `npm test && npm run typecheck && npm run lint`; ka-gate touched files; commit: `feat(news): lead/tile front-page layout + bounded article hero (owner fix #4)`
 
@@ -629,7 +629,7 @@ Expected: totals from Step 2.2, total 74.
 
 ### Task 9: Personal ID moves from /join to the membership wizard (doc item 10)
 
-Owner (2026-07-28): the ID is NOT asked at first registration; it IS asked when a registered person becomes a member. Today it's the opposite half: `register()` requires it, the wizard deliberately skips it. The move is: `/join` = name + surname + phone only; the wizard's „იურიდიული პროფილი" step gains the ID field (only when the profile doesn't already have one — every pre-change account does); `become_member_save_profile()` validates + writes it server-side; `become_member_complete()` refuses to complete without it. `personal_id` stays immutable once set (`protect_profile_columns` untouched — the definer RPC is the only writer).
+Owner (2026-07-28): the ID is NOT asked at first registration; it IS asked when a registered person becomes a member. Today it's the opposite half: `register()` requires it, the wizard deliberately skips it. The move is: `/join` = name + surname + phone only; the wizard's „იურიდიული პროფილი“ step gains the ID field (only when the profile doesn't already have one — every pre-change account does); `become_member_save_profile()` validates + writes it server-side; `become_member_complete()` refuses to complete without it. `personal_id` stays immutable once set (`protect_profile_columns` untouched — the definer RPC is the only writer).
 
 **Security notes (do not skip):**
 - This narrows LB-1's registration door but does NOT close the deferred personal-ID-squatting finding — the same squat is possible at the membership step. LB-1 stays open by owner decision; do not mark it addressed.
@@ -833,7 +833,7 @@ revoke execute on function become_member_save_profile(date, int, int, text, uuid
     }
 ```
 
-  (import `DUPLICATE_PERSONAL_ID_MESSAGE` from `@/lib/funnel`); render at the TOP of the „იურიდიული პროფილი" field stack, strings spliced from JoinForm.tsx:
+  (import `DUPLICATE_PERSONAL_ID_MESSAGE` from `@/lib/funnel`); render at the TOP of the „იურიდიული პროფილი“ field stack, strings spliced from JoinForm.tsx:
 
 ```tsx
           {askPersonalId ? (
@@ -879,7 +879,7 @@ revoke execute on function become_member_save_profile(date, int, int, text, uuid
 - [ ] **Step 1: ADR-022** — append to `DECISIONS.md` (keep its voice; content, not verbatim):
   - Source: owner "What to FIX" doc (2026-07-27), items 1/4/6/7/8a/14/15 + item 10 as clarified 2026-07-28 = this branch; item 16 + remaining decision-items deferred to the next round.
   - Selects stay **native** under a design-system dress (`Select`/`SelectField`); custom listbox only if the preview verdict demands it.
-  - „არ მყავს დელეგატი" replaces „ცენტრალური მოძრაობა" on **member** surfaces only; admin vocabulary waits for item 16's wording decision.
+  - „არ მყავს დელეგატი“ replaces „ცენტრალური მოძრაობა“ on **member** surfaces only; admin vocabulary waits for item 16's wording decision.
   - `cities` completed to the 64 standard municipalities + 10 Tbilisi raions; legacy თბილისი row kept for FK integrity.
   - /join loses its §-numbered section headings (owner, item 6 clarification): the phone heading is deleted outright, field labels carry the naming.
   - **Personal ID at membership, not registration** (owner, item 10): /join = name+surname+phone; the wizard captures the ID, `become_member_complete()` enforces it, immutability unchanged. Recorded consequences: LB-1 (ID squatting) moves doors but stays open and deferred; the restated `register()` carries the ADR-021 null-phone guard so the later migration timestamp cannot revert the security branch's fix.
