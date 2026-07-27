@@ -1,6 +1,13 @@
-// One-time staging hygiene (Phase 3, spec §8): delete accumulated e2e users —
+// Staging hygiene (Phase 3, spec §8): delete accumulated e2e users —
 // 55-block phones / 9-prefixed personal IDs / login-journey auth orphans —
 // keeping the canonical seed and the three owner smoke users. DRY RUN unless --apply.
+//
+// EXIT CODE is the baseline assertion, so this can gate rather than merely report:
+//   dry run  → 1 if ANY accumulated e2e user is found (staging is not at baseline)
+//   --apply  → 1 if any detach or deletion failed (the sweep did not land)
+//   either   → 1 if the canonical seed counts have drifted
+// The per-run throws in e2e/cleanup-helpers.ts only see the phones of the run that
+// is executing; this sees everything, including what a cancelled job left behind.
 import { createClient } from "@supabase/supabase-js";
 
 const APPLY = process.argv.includes("--apply");
@@ -61,6 +68,7 @@ for (let page = 1; page <= 50; page++) {
 
 console.log(`${APPLY ? "DELETING" : "DRY RUN"}: ${doomed.size} users`);
 for (const [id, reason] of doomed) console.log(`  ${id} — ${reason}`);
+const problems = [];
 let failedDeletions = 0;
 if (APPLY) {
   // memberships.delegate_id has no cascade (deliberate — see initial_schema.sql):
@@ -69,7 +77,7 @@ if (APPLY) {
   // via member_id; this only detaches rows pointing AT doomed delegates.
   const doomedIds = [...doomed.keys()];
   const { error: detachErr } = await db.from("memberships").delete().in("delegate_id", doomedIds);
-  if (detachErr) console.error(`membership detach failed: ${detachErr.message}`);
+  if (detachErr) problems.push(`membership detach failed: ${detachErr.message}`);
   for (const [id] of doomed) {
     const { error } = await db.auth.admin.deleteUser(id);
     if (error) {
@@ -79,12 +87,30 @@ if (APPLY) {
   }
 }
 
+const EXPECTED_SEED = { approved_delegates: 12, active_members: 1636 };
+
 const { data: stats, error: e3 } = await db.from("public_stats").select("*").single();
 if (e3) throw e3;
 console.log(
-  `seed check: approved_delegates=${stats.approved_delegates} active_members=${stats.active_members} (expect 12 / 1636)`,
+  `seed check: approved_delegates=${stats.approved_delegates} active_members=${stats.active_members} ` +
+    `(expect ${EXPECTED_SEED.approved_delegates} / ${EXPECTED_SEED.active_members})`,
 );
-if (failedDeletions > 0) {
-  console.error(`${failedDeletions} deletion(s) failed`);
+for (const [stat, want] of Object.entries(EXPECTED_SEED)) {
+  // Number(): public_stats counts are bigint, which PostgREST may serialise as a
+  // JSON string — a strict !== against a literal would then always "drift".
+  if (Number(stats[stat]) !== want)
+    problems.push(`seed drift: ${stat}=${stats[stat]}, expected ${want}`);
+}
+
+if (APPLY) {
+  if (failedDeletions > 0) problems.push(`${failedDeletions} deletion(s) failed`);
+} else if (doomed.size > 0) {
+  // Printing this and exiting 0 is what let accumulation stay invisible: a dry run
+  // that finds leftovers IS the failure signal, not just a report.
+  problems.push(`${doomed.size} accumulated e2e user(s) on staging — re-run with --apply`);
+}
+
+if (problems.length > 0) {
+  for (const p of problems) console.error(p);
   process.exitCode = 1;
 }
