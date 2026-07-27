@@ -392,6 +392,24 @@ export default function StyleguidePage() {
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />
+            <NewsCard
+              variant="lead"
+              href="/styleguide"
+              title="სიახლის ბარათი"
+              publishedAt="19.07.2026"
+              imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+              excerptText="მოკლე შინაარსი ბარათისთვის…"
+              pill={<Pill status="profile_completed" label="წევრებისთვის" />}
+            />
+            <NewsCard
+              variant="tile"
+              href="/styleguide"
+              title="სიახლის ბარათი"
+              publishedAt="19.07.2026"
+              imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+              excerptText="მოკლე შინაარსი ბარათისთვის…"
+              pill={<Pill status="profile_completed" label="წევრებისთვის" />}
+            />
             <ContentNav />
           </div>
         </Card>

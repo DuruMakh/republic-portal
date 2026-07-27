@@ -39,4 +39,33 @@ describe("NewsCard", () => {
     );
     expect(screen.getByText("წევრებისთვის")).toBeInTheDocument();
   });
+
+  it("lead variant renders the cover on top with a 3xl serif headline", () => {
+    const { container } = render(
+      <NewsCard
+        variant="lead"
+        href="/news/testi"
+        title="სატესტო სიახლე"
+        publishedAt="19.07.2026"
+        imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+        excerptText="მოკლე შინაარსი…"
+      />,
+    );
+    expect(screen.getByRole("heading").className).toContain("text-3xl");
+    expect(container.querySelector("img")!.className).toContain("aspect-[2/1]");
+  });
+
+  it("tile variant renders the cover on top at 3:2", () => {
+    const { container } = render(
+      <NewsCard
+        variant="tile"
+        href="/news/testi"
+        title="სატესტო სიახლე"
+        publishedAt="19.07.2026"
+        imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+        excerptText="მოკლე შინაარსი…"
+      />,
+    );
+    expect(container.querySelector("img")!.className).toContain("aspect-[3/2]");
+  });
 });
