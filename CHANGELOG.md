@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.10.0 — The security check-up (2026-07-27)
+
+- A full security review of the platform, and the most important result is what
+  it did NOT find. Across more than 1,800 individual permission checks — every
+  place the software decides whether someone is allowed to do something, tried
+  from twelve different starting positions, from a stranger with no account up to
+  the super-admin — the permission model did not break once. Nobody can promote
+  themselves to a higher position; no member can obtain another member's ID
+  number, date of birth or phone number; a vote cannot be cast twice or altered
+  after the fact; the record of who did what could not be added to, changed or
+  removed, attacked as a stranger, as an ordinary member and as the super-admin
+  alike; and every published figure is worked out fresh each time rather than
+  stored somewhere it could be edited
+- What the review did find sits in one place: the sign-up path, not the vault.
+  Fourteen findings were confirmed, and every serious one is about how somebody
+  gets into the platform in the first place, or about what the sign-up form is
+  willing to tell a stranger who asks. Nothing was found wrong with what happens
+  to people's data once they are inside
+- Six of the fourteen are repaired in this release: the sign-in-code page no
+  longer answers the question "does this phone number have an account"; nobody
+  can become a member without a verified phone number, whatever they signed up
+  with; a stranger now holds no access of any kind to the member table or to the
+  payments table; the anonymous write permissions found on eleven internal
+  screens are removed from all twenty-four, not only the eleven; a recorded
+  payment can no longer be altered or deleted, only added and voided; and the
+  delegacy request that permanently removed an admin's ability to move a member
+  between delegates is fixed, which frees the six members already stranded by it
+- Eight remain open by decision rather than by oversight, and they are named in
+  the report rather than quietly dropped: the personal-ID squatting finding
+  deferred by the owner on 26 July; the registration form confirming to a
+  stranger that a given government ID is already on the platform; the
+  sign-in-code page still handing a working code to a stranger for a number with
+  no account; sessions that never end; the revenue figure being what members say
+  they intend to pay rather than what they have paid; and three low-severity
+  items with no route to real harm today
+- The items that must be closed before real people register are kept in
+  `docs/security/LAUNCH-BLOCKERS.md`, a standing list nothing drops off: if a
+  release ends without addressing an item, it stays on the list. The owner asked
+  to be reminded before the site goes live, and that list is the reminder
+- One correction the owner is owed: they were told the phone-number disclosure
+  was fixed. It was fixed in the code, and the code had never reached the site —
+  so the live site went on serving the flawed version. Every repair here is
+  re-tested against the real address after it is deployed, not before, and
+  "fixed" no longer means "fixed in a file"
+- Impact today, stated plainly and unchanged throughout the report: the public
+  address currently serves the practice database, whose roughly 1,900 people are
+  invented, so real-world harm from every finding is near zero today. Every
+  severity in the report describes harm at launch, with real members
+- Nothing about how the platform looks or behaves has changed: no page, flow,
+  label, wording or number moved. The repairs are permission and database-rule
+  changes only, carried by 597 automated tests and 52 end-to-end journeys, plus a
+  live harness that performs each original attack against the practice database
+  and confirms it now fails
+- The practice database was reset to its documented population as part of this
+  release; what the reset could not remove, and why, is recorded in
+  `docs/security/residue.md`. The whole result, written to be read without
+  opening a single file of code, is `docs/security/report.md`
+
 ## 0.9.0 — The Kronika redesign (2026-07-24)
 
 - Complete visual redesign of the whole platform to the "Kronika" civic-newspaper

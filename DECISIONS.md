@@ -331,3 +331,32 @@ Decisions:
 - **Marketing copy is the mock's voice, byte-spliced; functional copy stays
   shipped wording.** The manifesto's fixed-20₾ clause is corrected to the real
   5/10/20₾ tiers via an owner-reviewed replacement clause (spec §4.1).
+
+## ADR-021 (2026-07-26): Security check-up outcomes — two owner decisions
+
+Taken at the Phase 6 security check-up (spec
+`docs/superpowers/specs/2026-07-25-security-checkup-design.md`, report
+`docs/security/report.md`). Both decisions are the owner's, recorded here because they
+close standing questions rather than because they change code.
+
+- **Personal-ID column encryption: NOT adopted.** This audit is the "Phase 6 /cso audit"
+  that ADR-006 named as the point to revisit column-level encryption for `personal_id`.
+  The owner reviewed the options and declined for now. ADR-006's deferral is therefore
+  **resolved, not still open**: IDs continue to rely on platform at-rest encryption, RLS,
+  the column-grant seal and audited reveals. The cheaper exposure reduction identified in
+  the same review — revoking the `anon` column grants on `personal_id`/`birth_date`/`phone`
+  — is adopted instead and ships in this phase. Revisit only if the threat model changes
+  (seizure/compulsion is the case at-rest encryption does not cover).
+
+- **The dev-OTP account-manufacture finding is a testing-configuration artifact.** Owner's
+  correction, and it is correct: `/api/dev/otp` is gated on `NEXT_PUBLIC_APP_ENV` being
+  `development`/`preview`, and at launch the flag flips to `production` and real SMS
+  delivers codes to the handset — both already on the launch checklist. The finding
+  therefore retires at launch and is not a production design flaw.
+  **What that argument does NOT cover, and what becomes load-bearing instead:** email
+  sign-up is enabled and auto-confirmed on the Supabase project, and `register()` has no
+  null-phone guard — so account manufacture survives the flip, with no phone involved. In
+  production, email sign-up becomes the sole manufacture route and therefore the enabler
+  standing behind the deferred personal-ID squatting finding. The code half (the
+  null-phone guard) ships in this phase; disabling the email provider is a project setting
+  and remains an owner action, tracked in `docs/security/LAUNCH-BLOCKERS.md`.

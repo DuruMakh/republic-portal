@@ -1,0 +1,1095 @@
+/**
+ * Task 4: the probe runner and ledger.
+ *
+ * For every surface in scripts/security/manifest.json (153) crossed with
+ * every actor in ACTOR_IDS (12) -- 1,836 cells -- attempt access exactly the
+ * way an attacker's own client would (straight to PostgREST, the app's UI
+ * never involved, using the JWT actors.mjs minted), record what happened,
+ * and judge it against that actor's expected access. This is a MATRIX, not
+ * a sample: every cell gets a row in the ledger, including the ones this
+ * task cannot yet resolve (`needs-live-proof`) or does not yet attempt
+ * (kinds owned by Tasks 6 and 8).
+ *
+ * ## The runner records; it never throws.
+ * A probe that errors is data, not a failure -- that is the entire point of
+ * an audit like this. The only two conditions that abort the whole run are
+ * a missing manifest and a failed actor mint (provisionActors() itself
+ * throws for that; nothing here adds a third during probing). A third kind
+ * of failure DOES throw, deliberately, after every row is already safely on
+ * disk: the self-check at the bottom of this file. See its own comment for
+ * why that is not a contradiction of "never throws".
+ *
+ * ## Judging happens in this same process, via direct .ts import
+ * lib/security/{verdict,expectations}.ts are TypeScript; this runner is
+ * plain .mjs. scripts/security/introspect.mjs already imports
+ * lib/security/manifest.ts directly and it works on this machine (Node
+ * v24.14.0 strips erasable TypeScript syntax with no flag and no build
+ * step -- confirmed by that script's own successful `npm run
+ * security:introspect` runs, and re-confirmed here: see the self-check
+ * below, which would fail loudly if the imported `judge` were somehow not
+ * the real thing). This runner reuses exactly that pattern for `judge`,
+ * `defaultExpectation` and `isRuleDerived` rather than building the brief's
+ * alternative two-file pipeline (raw ledger + a separate vitest-run
+ * TypeScript judging step) -- the judgement logic still lives in exactly
+ * ONE tested place (lib/security/verdict.ts, exercised by verdict.test.ts
+ * and verdict.tokens-drift.test.ts) either way; direct import just avoids a
+ * second file and a second script for no benefit here, and needs no
+ * --experimental-strip-types flag on this Node version.
+ *
+ * CAVEAT for whoever runs this on a different machine: package.json
+ * declares only `"node": ">=22"`, and unflagged type stripping was NOT
+ * default-on across every 22.x point release (it shipped experimental,
+ * behind --experimental-strip-types, in 22.6; only later did a no-flag
+ * default ship). On an old 22.x point release the two `.ts` imports below
+ * throw immediately at startup with a clear syntax/module error. The fix is
+ * a current Node, not adding the experimental flag back as a workaround --
+ * that would mask the version gap instead of surfacing it. (Also cosmetic:
+ * because package.json has no top-level "type" field, Node prints a
+ * one-line MODULE_TYPELESS_PACKAGE_JSON warning to stderr when it strips
+ * the first `.ts` file. Harmless, same as introspect.mjs already does --
+ * see task-3-report.md -- not worth changing package.json's "type" for.)
+ *
+ * ## Never `db`, never as a probe actor
+ * The service-role client is not even imported into this file -- only
+ * ACTOR_IDS / provisionActors / actorClient come from ./actors.mjs, never
+ * `db`. `db` bypasses every check by design; using it as one of the twelve
+ * "actors" would report every surface as reachable, a false all-clear
+ * across the entire audit. Making the import list itself omit `db` means
+ * that mistake cannot happen by accident here, not merely "is discouraged".
+ *
+ * ## Function surfaces are invoked with REAL arguments (Task 7)
+ * scripts/security/arguments.mjs holds one valid argument object per function
+ * plus a per-(function, actor) setup/teardown, so every actor attacks an
+ * identical fresh target. Exactly one group is not invoked at all -- see
+ * `skipFor` there, and the note where MUTATING_ZERO_ARG_FUNCTIONS used to be
+ * defined below.
+ *
+ * ## `outcome.errorCode` carries three load-bearing sentinel values
+ * `verdict` alone conflates three different reasons a row can land on
+ * `needs-live-proof`: a kind this task doesn't probe at all yet, one of the
+ * pairs deliberately not invoked, and a surface that WAS genuinely probed
+ * but came back inconclusive (after Task 7: the four trigger-returning
+ * functions, which PostgREST will not route at all).
+ * Tasks 6, 8 and 9 need to tell these apart, and `verdict` alone cannot --
+ * the only field that does is `outcome.errorCode`:
+ *   - "SKIP"          -- kind not probed this task (policy / trigger /
+ *                         action / endpoint / bucket -- see
+ *                         NOT_YET_PROBED_KINDS below)
+ *   - "SKIP-MUTATING" -- a (function, actor) pair arguments.mjs declines to
+ *                         invoke because the call writes on the CALLER and
+ *                         that caller is a canonical staging admin
+ *                         (`skipFor`; today: request_delegacy x A9-A12)
+ *   - anything else (a real Postgres/PostgREST code, or null) -- a probe
+ *                         that actually ran
+ * These two strings are a stable contract other tasks may key on, not an
+ * incidental debug label -- filtering on `verdict === "needs-live-proof"`
+ * without also branching on `outcome.errorCode` silently treats all three
+ * populations as one.
+ *
+ * Run: node --env-file=.env.local scripts/security/probe.mjs
+ * (also wired as: npm run security:census)
+ */
+import { dirname } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { ACTOR_IDS, provisionActors, actorClient } from "./actors.mjs";
+import { ensureDepthFixtures } from "./fixtures.mjs";
+import { runRowScopeAssertions, auditLogHighWaterMark } from "./assertions.mjs";
+import { FUNCTION_SPECS, MINTED, provisionFixturePool } from "./arguments.mjs";
+import { judge, REFUSAL_TOKENS, POST_GATE_TOKENS } from "../../lib/security/verdict.ts";
+import { defaultExpectation, isRuleDerived } from "../../lib/security/expectations.ts";
+
+const MANIFEST_URL = new URL("./manifest.json", import.meta.url);
+const LEDGER_RAW_URL = new URL("../../docs/security/ledger-raw.json", import.meta.url);
+const LEDGER_URL = new URL("../../docs/security/ledger.json", import.meta.url);
+const ROW_SCOPE_URL = new URL("../../docs/security/row-scope.json", import.meta.url);
+const RESIDUE_URL = new URL("../../docs/security/residue.json", import.meta.url);
+
+// SurfaceKinds this runner does not probe at all -- Task 8 owns them. Recorded
+// with a distinct, clearly-marked outcome (errorCode "SKIP") so nobody
+// downstream mistakes an unprobed surface for a cleared one. `policy` and
+// `trigger` left this set in Task 6: they are now probed for real, through
+// the table each one guards (see DEPTH_PROBES below).
+const NOT_YET_PROBED_KINDS = new Set(["action", "endpoint", "bucket"]);
+
+/**
+ * Task 6: the column list a read probe must ask for, per surface.
+ *
+ * `select *` is the wrong probe against a table whose SELECT grant is
+ * COLUMN-level, and it fails in the dangerous direction: PostgREST asks for
+ * every column, Postgres refuses the ones outside the grant, and the ledger
+ * records 42501 -- which reads as "the defence held" when what actually
+ * happened is that the probe asked a question no attacker would ask. Four
+ * surfaces in this schema are column-granted, and all four looked sealed to
+ * every authenticated actor under `select *` in the Task 4 baseline:
+ *
+ *   profiles      20260717150000_admin_crm.sql:930 -- 14 columns; personal_id
+ *                 and birth_date deliberately excluded (the Phase-3
+ *                 personal-ID lockdown). Live catalog confirms exactly 14.
+ *   payments      20260718100000_admin_crm_hardening.sql:404 -- 10 columns;
+ *                 recorded_by / voided_by / void_reason are admin-internal.
+ *   event_rsvps   20260719150000_community.sql:132 -- 3 columns.
+ *   poll_votes    20260719150000_community.sql:136 -- 3 columns.
+ *
+ * Asking for exactly the granted set is what an attacker with the anon key
+ * and the OpenAPI schema would do, so it is what the census must do. The
+ * columns OUTSIDE each grant are not thereby untested -- see the
+ * `profiles.personal-id-lockdown` row-scope assertion, which probes them
+ * explicitly and expects a refusal.
+ */
+const READ_COLUMNS = {
+  "table:profiles":
+    "id,first_name,last_name,phone,region_id,city_id,employment,status,signup_ref_code," +
+    "membership_tier,reference_code,registration_completed_at,created_at,updated_at",
+  "table:payments":
+    "id,member_id,amount_gel,paid_at,bank_reference,source,tier_gel_at_payment," +
+    "months_covered,created_at,voided_at",
+  "table:event_rsvps": "event_id,member_id,status",
+  "table:poll_votes": "poll_id,option_id,member_id",
+};
+
+/**
+ * TASK 4's analysis of the 54 `function` surfaces. Retained in full because
+ * its Group A / B / C census is still the live picture and Task 7 re-verified
+ * every claim in it against the catalog -- but the two-function EXCLUSION it
+ * justifies is SUPERSEDED: Task 7 supplies real arguments and per-probe
+ * isolation (scripts/security/arguments.mjs), so both of these are now invoked
+ * for real. See the note where MUTATING_ZERO_ARG_FUNCTIONS used to be defined,
+ * immediately below this comment, and Group C's resolution there too.
+ *
+ * Exactly two of the manifest's 54 `function` surfaces are BOTH callable
+ * with `{}` (every parameter optional or absent) AND perform a live write
+ * when they run:
+ *
+ *   - request_delegacy() -- `grant execute on function request_delegacy()
+ *     to authenticated` (supabase/migrations/20260722140000_r2_review_fixes.sql:142).
+ *     Creates a real `delegates` row (status='pending') for any caller whose
+ *     profile is already profile_completed-or-above and who doesn't have a
+ *     delegates row yet.
+ *   - member_change_delegate(uuid default null) -- `grant execute ... to
+ *     authenticated` (same file, line 194). Closes/reopens `memberships`
+ *     rows for the caller; a no-op only when the (defaulted-null) target
+ *     already equals their current delegate.
+ *
+ * Six of the twelve actors -- A4, A5, A9, A10, A11, A12 -- are
+ * profile_completed-or-above with no delegates row today (A6/A7/A8 already
+ * have one, so for them request_delegacy() would only hit the harmless
+ * `delegacy_exists` post-gate refusal, not a new row). Calling
+ * request_delegacy() for real would therefore CREATE a live delegate
+ * application for each of those six. A9-A12 are the four CANONICAL staging
+ * admins (scripts/seed-staging.mjs owns them, per actors.mjs's own header
+ * comment -- they are explicitly outside this audit's AUDIT_TAG sweep) --
+ * mutating them is not this task's fixture to spend.
+ *
+ * The other SIXTEEN zero/all-default-arg functions in the schema ARE
+ * invoked for real below (nothing else is excluded) -- but "invoked for
+ * real and it came back an error" does not mean the same thing for all
+ * sixteen. There are three distinct groups here, confirmed by reading each
+ * one, not assumed by pattern-matching the first result:
+ *
+ *   GROUP A -- revoked from every client role, sealed at the DB layer (6):
+ *   active_grace_days(), active_coverage(uuid), recompute_member_active(uuid),
+ *   recompute_all_active(), active_sweep() are all `revoke execute ... from
+ *   public, anon, authenticated` (supabase/migrations/20260717150000_admin_crm.sql
+ *   -- line 77 active_grace_days, line 94 active_coverage, line 117
+ *   recompute_member_active, line 137 recompute_all_active, line 165
+ *   active_sweep). Only two of those five carry an explicit re-grant --
+ *   recompute_all_active to service_role (line 139: "the seed script
+ *   (service role) runs the full recompute after inserting payments") and
+ *   active_sweep to service_role (line 166: "-- probes exercise it");
+ *   active_grace_days, active_coverage and recompute_member_active carry NO
+ *   grant to anything at all, relying on being called only from inside
+ *   other SECURITY DEFINER bodies (active_sweep and recompute_all_active
+ *   both call active_coverage and active_grace_days internally), same
+ *   pattern as tbilisi_today() below. Either way none of the twelve actors
+ *   hold service_role, so Postgres refuses all five at the GRANT layer
+ *   before the body ever runs. tbilisi_today() is sealed the identical way
+ *   -- `revoke execute on function tbilisi_today() from public, anon,
+ *   authenticated` (20260718100000_admin_crm_hardening.sql:31), no grant to
+ *   anything, called only internally -- and is grouped here, NOT with
+ *   Group B below despite also being a simple read: live result is real
+ *   42501 for all twelve actors including the four admins, confirmed
+ *   against the ledger, not the not_authenticated-gated pattern Group B
+ *   uses. Six functions, six real 42501s, zero mutation risk.
+ *
+ *   GROUP B -- granted to authenticated, gated inside the body, confirmed
+ *   pure reads (6): cabinet_state(), delegate_panel(), delegate_team(),
+ *   delegate_team_rsvps(), is_registered(), is_completed_member() -- each
+ *   read by body (no insert/update/delete anywhere in any of them), gated
+ *   by the usual not_authenticated / not_a_delegate / not_approved chain.
+ *   Being called for real is the entire point of probing these -- e.g.
+ *   whether A1 (anonymous) can reach cabinet_state() at all is exactly the
+ *   kind of finding this audit exists to catch.
+ *
+ *   GROUP C -- DB-level reachable, API-gateway-level filtered, NOT the same
+ *   kind of safe as A or B (4): audit_log_immutable(), set_updated_at(),
+ *   enforce_delegate_completed(), protect_profile_columns() all `returns
+ *   trigger`, and NOTHING in any migration revokes their EXECUTE grant --
+ *   confirmed by grepping every migration for each of the four names next
+ *   to "grant"/"revoke": zero hits. Postgres grants EXECUTE on every
+ *   newly-created function to PUBLIC by default (unlike tables, which get
+ *   no such default), so `anon` and `authenticated` DO hold real, unrevoked,
+ *   database-level permission to call all four of these right now. All 48
+ *   cells (4 functions x 12 actors) came back PGRST202, confirmed against
+ *   the live ledger, no exceptions -- but that is PostgREST filtering
+ *   trigger-returning functions out of its RPC-callable schema cache, an
+ *   API-GATEWAY behaviour, not a database control. Group A is refused by
+ *   Postgres itself before the body ever runs; Group C is never even
+ *   reached by PostgREST's routing, and the GRANT underneath would allow it
+ *   if it were. This is not filed away as "safe" -- two of these four,
+ *   audit_log_immutable (enforces the append-only audit log) and
+ *   protect_profile_columns (enforces that status/personal_id/phone/id are
+ *   server-managed), are precisely the functions this schema relies on to
+ *   enforce its two strongest controls, and this task's own result only
+ *   establishes that PostgREST's function-type filtering is the CURRENT
+ *   backstop for all four -- not that the backstop is by design, or that it
+ *   would hold if this app ever gained a second API surface onto the same
+ *   database. Recorded as a candidate finding for Pass 4 (Task 10), tracked
+ *   there, not resolved here.
+ *
+ * send_sms_hook(event jsonb) is the one non-zero-arg function worth naming
+ * for contrast: it takes a required argument (PGRST202 regardless of who
+ * calls it) AND is granted only to supabase_auth_admin, no client role at
+ * all (initial_schema.sql:137-138) -- doubly inert, unlike Group C.
+ *
+ * The two mutating functions above are therefore excluded from real
+ * invocation and recorded with a DISTINCT outcome (errorCode
+ * "SKIP-MUTATING") -- never folded into the generic NOT_YET_PROBED_KINDS
+ * skip, because these ARE function-kind surfaces this task owns; they are
+ * deferred specifically because Task 7 already exists to probe every
+ * function with deliberate, controlled arguments ("Tasks 6-7 supply real
+ * arguments per function" -- brief), and that task can budget fixture
+ * cleanup the way Task 1's driveStandings() does. Blind {} invocation here
+ * would contaminate exactly the fixture state every other script in this
+ * audit goes out of its way to keep clean and RPC-driven -- actors.mjs's
+ * own header comment: "never by hand-writing rows with the service role".
+ * Task 4 must not be the one script in the family that skips that
+ * discipline in the opposite direction (an accidental REAL write instead of
+ * an accidental service-role write).
+ */
+/**
+ * TASK 7 RESOLUTION of everything the comment above deferred.
+ *
+ * `member_change_delegate` -- invoked for real by all twelve, with the
+ * delegate each caller ALREADY holds, which takes the body's own documented
+ * "same target: no-op, no history row minted" branch. Nothing changes, not
+ * even for A9-A12.
+ *
+ * `request_delegacy` -- invoked for real by A1-A8, with the created
+ * `delegates` row removed immediately by teardown where the caller had none
+ * before. A9-A12 (the canonical staging admins) are the audit's single
+ * abstention and keep the "SKIP-MUTATING" sentinel; see FUNCTION_SPECS's
+ * `skipFor` in arguments.mjs for why a reversible-in-principle mutation of a
+ * seeded admin was still not worth a failed teardown.
+ *
+ * GROUP C (the four `returns trigger` functions) -- Task 4 filed these as a
+ * candidate finding on the reasoning that only PostgREST's schema-cache
+ * filtering, "an API-GATEWAY behaviour, not a database control", stands
+ * between an unrevoked EXECUTE grant and a caller -- one held by `anon` and
+ * `authenticated` EXPLICITLY, not merely inherited from PUBLIC, so the
+ * hygiene revoke must name all three roles. Task 7 settled it
+ * and the candidate finding is DISPROVED: `select public.set_updated_at()`
+ * run directly against the database as the `postgres` superuser -- no
+ * PostgREST, every privilege in hand -- fails with `trigger functions can
+ * only be called as triggers`. The call handler refuses a trigger-returning
+ * function in any non-trigger context regardless of role or grant, so the
+ * EXECUTE grant is unusable rather than merely unrouted, and the backstop is
+ * PostgreSQL's, not the gateway's. Both routes PostgREST offers (POST and GET
+ * /rpc/<name>) were re-probed for all twelve actors and answer PGRST202.
+ *
+ * The set itself is gone rather than emptied: an empty exclusion list that
+ * nothing reads is a trap for the next reader, who would reasonably assume
+ * some code still consults it. The one remaining abstention lives in
+ * arguments.mjs as `skipFor`, next to the function it applies to.
+ */
+
+/**
+ * Task 6: the depth layer -- 9 row-level policies and 8 triggers.
+ *
+ * Neither is a door you can knock on. A policy is a predicate Postgres splices
+ * into a statement against the table it guards; a trigger is code that runs
+ * inside a write to that table. The only way to exercise either is to issue
+ * the statement it governs, so every entry below names a real statement
+ * against a real row, from every one of the twelve actors.
+ *
+ * Three rules shaped this table, and each one is there because the obvious
+ * alternative proves nothing:
+ *
+ *   AIM AT THE ROW THE CLAUSE MUST NOT REACH. "own profile readable" is
+ *   `using (auth.uid() = id)`. Probing it with an unfiltered select would
+ *   return the caller's own row and look fine whether or not the clause
+ *   works. So each read probe filters to ANOTHER actor's id -- the exact row
+ *   the predicate exists to withhold -- and the ledger's rowCount for that
+ *   cell is therefore a count of rows that must not exist. A9 and A5 probe a
+ *   different actor than everyone else for the surfaces where they ARE the
+ *   usual target, so no actor is ever handed its own row and graded on it.
+ *
+ *   MAKE EVERY WRITE PROBE CONTENT-NEUTRAL. Five entries here are UPDATEs or
+ *   an INSERT. Each writes the value the target row ALREADY holds (discovered
+ *   service-role in fixtures.mjs immediately beforehand), so a write that
+ *   somehow lands changes no content -- the returned row count still reveals
+ *   the breach, which is the only thing the probe needs. The one exception is
+ *   the delegates insert, which cannot be content-neutral because it creates
+ *   a row; it is aimed at A4 (an audit-owned fixture) and a landed insert is
+ *   itself the finding, cleaned up by hand.
+ *
+ *   ISOLATE THE LAYER UNDER TEST. delegates_require_completed refuses inserts
+ *   whose target is not a completed member. Probing it with a NON-completed
+ *   target would prove the trigger fires but tell us nothing about what sits
+ *   behind it, and the trigger's own exception (`delegate_requires_completed_
+ *   member`, a bare P0001 like every raise in this schema) is deliberately
+ *   unclassified in lib/security/verdict.ts, so it would land on
+ *   needs-live-proof. The probe therefore uses a COMPLETED target (A4): the
+ *   trigger passes, and whatever refuses the insert next is the layer this
+ *   cell is measuring. The trigger's own behaviour is proven separately, by
+ *   name, in assertions.mjs -- which is the right place for it, because "does
+ *   this defence fire" and "which defence is currently holding" are two
+ *   different questions and only the second one is a per-actor verdict.
+ *
+ * `rowScope` states what the returned/affected row count must be for the
+ * defence to be holding: "none" for every probe aimed at forbidden data,
+ * "some" for the two deliberately-unconditional reference-data policies,
+ * where the policy is doing its job precisely when rows DO come back. It is
+ * evaluated in the main loop and written to docs/security/row-scope.json --
+ * NOT folded into the verdict, because judge() cannot express "the statement
+ * was permitted AND returned nothing, and that is correct": on the deny side
+ * a zero-row read is `needs-live-proof` by design, and on the allow side row
+ * count is not consulted at all. That gap is exactly why these assertions are
+ * recorded by name.
+ */
+const A_FEW = 200;
+
+/** The forbidden-row owner for this actor: `primary`, unless the actor IS primary. */
+const foreign = (ctx, primary, fallback) => ctx.ids[ctx.actor === primary ? fallback : primary];
+
+/**
+ * The profile row a write probe aims at: A3 for everyone, A8 for A3 itself.
+ * Both are audit-owned fixtures (actors.mjs ACTORS), never a canonical
+ * staging admin, and no actor is ever handed its own row -- so RLS matching
+ * zero rows is the expected result for all twelve, with nothing to
+ * accidentally self-update.
+ *
+ * The values come from fixtures.mjs's read-then-replay discovery, NOT from
+ * constants mirroring actors.mjs: see discoverProfileTargets() there for why
+ * a mirror would make the content-neutrality guarantee a coincidence rather
+ * than a property.
+ */
+function writeTarget(ctx) {
+  return ctx.fixtures.profileTargets[ctx.actor === "A3" ? "A8" : "A3"];
+}
+
+const DEPTH_PROBES = {
+  // --- policies -----------------------------------------------------------
+  "policy:regions readable by all": {
+    rowScope: "some",
+    run: (client) => client.from("regions").select("id,name_ka").limit(A_FEW),
+  },
+  "policy:cities readable by all": {
+    rowScope: "some",
+    run: (client) => client.from("cities").select("id,name_ka,region_id").limit(A_FEW),
+  },
+  "policy:own admin roles readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("admin_roles")
+        .select("user_id,role")
+        .eq("user_id", foreign(ctx, "A9", "A10")),
+  },
+  "policy:own memberships readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("memberships")
+        .select("*")
+        .eq("member_id", foreign(ctx, "A5", "A4")),
+  },
+  "policy:own payments readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("payments")
+        .select(READ_COLUMNS["table:payments"])
+        .eq("member_id", foreign(ctx, "A5", "A6")),
+  },
+  "policy:own profile readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("profiles")
+        .select(READ_COLUMNS["table:profiles"])
+        .eq("id", foreign(ctx, "A5", "A4")),
+  },
+  "policy:own profile updatable": {
+    rowScope: "none",
+    run: (client, ctx) => {
+      const target = writeTarget(ctx);
+      return client
+        .from("profiles")
+        .update({ employment: target.employment })
+        .eq("id", target.id)
+        .select("id");
+    },
+  },
+  "policy:own rsvps readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("event_rsvps")
+        .select(READ_COLUMNS["table:event_rsvps"])
+        .eq("member_id", foreign(ctx, "A5", "A7")),
+  },
+  "policy:own votes readable": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("poll_votes")
+        .select(READ_COLUMNS["table:poll_votes"])
+        .eq("member_id", foreign(ctx, "A5", "A7")),
+  },
+
+  // --- triggers -----------------------------------------------------------
+  "trigger:audit_log_no_update": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("audit_log")
+        .update({ action: ctx.fixtures.auditAction })
+        .eq("id", ctx.fixtures.auditId)
+        .select("id"),
+  },
+  "trigger:delegates_require_completed": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("delegates")
+        .insert({
+          id: ctx.ids.A4,
+          referral_code: `SECAUDIT-${ctx.actor}`,
+          tc_accepted_at: new Date().toISOString(),
+        })
+        .select("id"),
+  },
+  "trigger:event_rsvps_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("event_rsvps")
+        .update({ status: "going" })
+        .eq("member_id", foreign(ctx, "A5", "A7"))
+        .select("event_id"),
+  },
+  "trigger:events_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("events")
+        .update({ title: ctx.fixtures.eventTitle })
+        .eq("id", ctx.fixtures.eventId)
+        .select("id"),
+  },
+  "trigger:news_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("news")
+        .update({ title: ctx.fixtures.newsTitle })
+        .eq("id", ctx.fixtures.newsId)
+        .select("id"),
+  },
+  "trigger:polls_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("polls")
+        .update({ question: ctx.fixtures.pollQuestion })
+        .eq("id", ctx.fixtures.pollId)
+        .select("id"),
+  },
+  "trigger:profiles_protect_columns": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("profiles")
+        .update({ status: "active_member" })
+        .eq("id", writeTarget(ctx).id)
+        .select("id"),
+  },
+  "trigger:profiles_updated_at": {
+    rowScope: "none",
+    run: (client, ctx) => {
+      const target = writeTarget(ctx);
+      return client
+        .from("profiles")
+        .update({ first_name: target.firstName })
+        .eq("id", target.id)
+        .select("id");
+    },
+  },
+  // Added with the trigger itself (Task 12, finding L3-2). The mirror of
+  // trigger:audit_log_no_update, and the difference is the point: that one's
+  // UPDATE statement RUNS and is emptied by RLS, because audit_log still
+  // carries the default write grants. This one is refused at the GRANT, since
+  // the same migration revoked them from anon and authenticated -- so the cell
+  // measures the layer in front, and the trigger behind it is proven
+  // separately, inside an aborted transaction, by verify-security-fixes.mjs.
+  "trigger:payments_no_rewrite": {
+    rowScope: "none",
+    run: (client, ctx) =>
+      client
+        .from("payments")
+        .update({ void_reason: "security probe" })
+        .eq("member_id", writeTarget(ctx).id)
+        .select("id"),
+  },
+};
+
+async function probe(client, surface, ctx) {
+  try {
+    if (surface.kind === "view" || surface.kind === "table") {
+      const columns = READ_COLUMNS[surface.id] ?? "*";
+      const { data, error } = await client.from(surface.name).select(columns).limit(5);
+      return {
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+        rowCount: data?.length ?? 0,
+      };
+    }
+    if (surface.kind === "policy" || surface.kind === "trigger") {
+      const depth = DEPTH_PROBES[surface.id];
+      if (!depth) {
+        return {
+          errorCode: "SKIP",
+          errorMessage: `no depth probe defined for ${surface.id}`,
+          rowCount: 0,
+        };
+      }
+      const { data, error } = await depth.run(client, ctx);
+      return {
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+        rowCount: data?.length ?? 0,
+      };
+    }
+    if (surface.kind === "function") {
+      // Task 7: real arguments from the argument table, and a disposable
+      // target minted per (function, actor) pair so all twelve attack an
+      // identical fresh row. `{}` (Task 4's call) is why 504 of these 648
+      // cells were PGRST202 -- a probe defect that reads exactly like
+      // inaccessibility.
+      const spec = FUNCTION_SPECS[surface.name];
+      if (!spec) {
+        return {
+          errorCode: "SKIP",
+          errorMessage:
+            `no entry for ${surface.name} in scripts/security/arguments.mjs -- every one of the 54 ` +
+            "function surfaces needs one; a missing entry is a gap in the census, not a result.",
+          rowCount: 0,
+        };
+      }
+      if (spec.skipFor?.includes(ctx.actor)) {
+        return {
+          errorCode: "SKIP-MUTATING",
+          errorMessage:
+            `${surface.name} performs a live write on the CALLER, and ${ctx.actor} is one of the four ` +
+            "canonical staging admins this audit must not mutate (see skipFor in arguments.mjs). " +
+            "Deliberately not invoked; escalated rather than guessed.",
+          rowCount: 0,
+        };
+      }
+
+      const fixture = spec.setup ? await spec.setup(ctx) : {};
+      try {
+        // NOTE: errorMessage below is PostgREST's raw `error.message`, passed
+        // through with zero transformation -- no wrap, prefix, or trim. See
+        // the self-check near the bottom of this file for why that matters
+        // and how it's proven, not just asserted in a comment.
+        const { data, error } = await client.rpc(surface.name, spec.args(fixture, ctx));
+        // A call that SUCCEEDED may have minted rows nothing pre-minted -- a
+        // news row from admin_save_news(p_id => null), an event_rsvps row from
+        // member_rsvp. `after` records those, so residue.json describes what
+        // the census actually did rather than only what it staged.
+        if (!error && spec.after) {
+          try {
+            spec.after(fixture, ctx, data);
+          } catch (err) {
+            console.error(`  RESIDUE RECORD FAILED ${surface.id} / ${ctx.actor}: ${String(err)}`);
+          }
+        }
+        return {
+          errorCode: error?.code ?? null,
+          errorMessage: error?.message ?? null,
+          rowCount: Array.isArray(data) ? data.length : data == null ? 0 : 1,
+        };
+      } finally {
+        // Teardown runs whatever the probe returned -- including when it
+        // succeeded, which is exactly the case that would otherwise change an
+        // actor's standing under the next probe. Its own failure is reported
+        // but never allowed to overwrite the cell's outcome.
+        if (spec.teardown) {
+          try {
+            await spec.teardown(fixture, ctx);
+          } catch (err) {
+            console.error(`  TEARDOWN FAILED ${surface.id} / ${ctx.actor}: ${String(err)}`);
+          }
+        }
+      }
+    }
+    return {
+      errorCode: "SKIP",
+      errorMessage: `${surface.kind} probed in a later task`,
+      rowCount: 0,
+    };
+  } catch (err) {
+    return { errorCode: "THROWN", errorMessage: String(err), rowCount: 0 };
+  }
+}
+
+function loadManifest() {
+  if (!existsSync(MANIFEST_URL)) {
+    throw new Error(
+      "scripts/security/manifest.json does not exist yet -- run " +
+        "`node --env-file=.env.local scripts/security/introspect.mjs --write` (Task 3) first. " +
+        "This is one of the runner's two fatal conditions (the other is a failed actor mint).",
+    );
+  }
+  const manifest = JSON.parse(readFileSync(MANIFEST_URL, "utf8"));
+  if (!Array.isArray(manifest) || manifest.length === 0) {
+    throw new Error(
+      "scripts/security/manifest.json exists but is not a non-empty array -- refusing to run.",
+    );
+  }
+  return manifest;
+}
+
+/**
+ * Self-check: prove PostgREST's raw error message reached judge() with zero
+ * mutation, all the way through this file's own JSON write + re-read.
+ *
+ * Why this exists (C3 in the phase progress ledger, .superpowers/sdd/
+ * progress.md): judge()'s P0001 token match is EXACT-STRING
+ * (REFUSAL_TOKENS.has(...) / POST_GATE_TOKENS.has(...) in
+ * lib/security/verdict.ts), never a substring or regex sweep. If this
+ * runner wrapped, prefixed, trimmed, or in any way altered the message on
+ * its way from the Supabase client's `error.message` into the ledger, every
+ * token would silently stop matching and every P0001 row would silently
+ * degrade to needs-live-proof -- a SAFE direction, but a SILENT one, and
+ * nothing downstream would notice on its own. This function turns that
+ * "would silently degrade" risk into a loud, checked assertion instead.
+ *
+ * Two things are checked, and both must hold:
+ *   1. Round-trip fidelity: every row written to ledger-raw.json, read back
+ *      off disk, must have byte-identical outcome.errorMessage to the
+ *      in-memory row that produced it, AND re-running judge() on the
+ *      disk-read row (using the SAME imported judge(), looking `kind` up
+ *      from the manifest by surfaceId -- the exact mechanism Task 6/7/8
+ *      will also have to use, since LedgerRow itself carries no `kind`)
+ *      must reproduce the exact verdict this run already computed in
+ *      memory.
+ *   2. Positive proof, not just absence-of-mutation: at least one LIVE
+ *      P0001 row this run actually produced must carry a message that is a
+ *      byte-exact member of judge()'s own REFUSAL_TOKENS/POST_GATE_TOKENS
+ *      sets. Check 1 alone could pass vacuously on a run where the token
+ *      branch was never exercised at all (e.g. if every P0001 message this
+ *      run happened to be unrecognised); this closes that gap by requiring
+ *      real evidence that the classifier actually fired against real
+ *      PostgREST output, not just structurally-valid fixtures.
+ *
+ * Deliberately throws (unlike probe() itself) if either check fails: by the
+ * time this runs, both ledger files are already safely on disk, so nothing
+ * is lost -- a thrown error here means "the files exist but do not carry
+ * the guarantee the rest of the audit depends on", which must stop the run
+ * loudly, not be swallowed the way a single probe's own error is.
+ */
+function runSelfCheck(rawRows, ledgerRows, surfaceById) {
+  console.log("\nSelf-check: raw-message integrity + judge() determinism...");
+
+  const diskRawRows = JSON.parse(readFileSync(LEDGER_RAW_URL, "utf8"));
+  if (diskRawRows.length !== rawRows.length) {
+    throw new Error(
+      `SELF-CHECK FAILED: wrote ${rawRows.length} raw rows but read back ${diskRawRows.length} -- ` +
+        "the ledger is corrupt. Do not trust ledger.json from this run.",
+    );
+  }
+
+  let messageMismatches = 0;
+  let verdictMismatches = 0;
+  for (let i = 0; i < rawRows.length; i++) {
+    const memRow = rawRows[i];
+    const diskRow = diskRawRows[i];
+
+    if (memRow.outcome.errorMessage !== diskRow.outcome.errorMessage) {
+      messageMismatches++;
+      console.error(
+        `  MESSAGE MUTATED in the write/read round-trip at row ${i} (${memRow.surfaceId} / ${memRow.actor}): ` +
+          `in-memory ${JSON.stringify(memRow.outcome.errorMessage)} vs on-disk ${JSON.stringify(diskRow.outcome.errorMessage)}`,
+      );
+    }
+
+    const surface = surfaceById.get(diskRow.surfaceId);
+    if (!surface) {
+      throw new Error(
+        `SELF-CHECK FAILED: ledger-raw.json row ${i} names unknown surfaceId ${diskRow.surfaceId}`,
+      );
+    }
+    const replayedVerdict = judge(diskRow.expectation, diskRow.outcome, surface.kind);
+    const liveVerdict = ledgerRows[i].verdict;
+    if (replayedVerdict !== liveVerdict) {
+      verdictMismatches++;
+      console.error(
+        `  VERDICT NOT REPRODUCIBLE from the on-disk raw ledger at row ${i} (${diskRow.surfaceId} / ${diskRow.actor}): ` +
+          `live judge()=${liveVerdict}, replayed-from-disk judge()=${replayedVerdict}`,
+      );
+    }
+  }
+
+  const p0001Rows = ledgerRows.filter(
+    (r) => r.outcome.errorCode === "P0001" && r.outcome.errorMessage !== null,
+  );
+  const classifiedP0001Rows = p0001Rows.filter(
+    (r) =>
+      REFUSAL_TOKENS.has(r.outcome.errorMessage) || POST_GATE_TOKENS.has(r.outcome.errorMessage),
+  );
+  const classifiedAndResolved = classifiedP0001Rows.filter((r) => r.verdict !== "needs-live-proof");
+
+  if (messageMismatches > 0 || verdictMismatches > 0) {
+    throw new Error(
+      `SELF-CHECK FAILED: ${messageMismatches} message mismatch(es), ${verdictMismatches} verdict ` +
+        "mismatch(es) -- see the lines above. The raw-message-integrity guarantee is violated; " +
+        "ledger.json from this run cannot be trusted.",
+    );
+  }
+  if (classifiedP0001Rows.length === 0) {
+    throw new Error(
+      "SELF-CHECK FAILED: zero live P0001 rows matched a known REFUSAL_TOKENS/POST_GATE_TOKENS entry -- " +
+        "the token-classification path was never exercised this run, so the round-trip check above proves " +
+        "nothing about whether a real refusal message would survive. Investigate before trusting ledger.json.",
+    );
+  }
+
+  console.log(
+    `  OK: ${rawRows.length}/${rawRows.length} messages survived the write/read round-trip byte-for-byte.`,
+  );
+  console.log(
+    `  OK: ${rawRows.length}/${rawRows.length} verdicts are reproducible from the on-disk raw ledger.`,
+  );
+  console.log(
+    `  OK: ${classifiedP0001Rows.length} live P0001 row(s) matched a known token ` +
+      `(${classifiedAndResolved.length} resolved to clear/finding; the rest are the not_authenticated ` +
+      "carve-out on the allow side, which is correct, not a gap -- see verdict.ts's NO_SESSION_TOKEN).",
+  );
+}
+
+function printSummary(ledgerRows, manifest) {
+  const byVerdict = { clear: 0, finding: 0, "needs-live-proof": 0 };
+  let ruleDerivedFindings = 0;
+  let explicitFindings = 0;
+  let notYetProbed = 0;
+  let mutatingDeferred = 0;
+  let genuineInconclusive = 0;
+
+  const byKind = new Map();
+  for (const s of manifest) {
+    byKind.set(s.kind, { total: 0, clear: 0, finding: 0, "needs-live-proof": 0 });
+  }
+
+  const surfaceById = new Map(manifest.map((s) => [s.id, s]));
+  for (const row of ledgerRows) {
+    byVerdict[row.verdict]++;
+    const kind = surfaceById.get(row.surfaceId).kind;
+    const kindStats = byKind.get(kind);
+    kindStats.total++;
+    kindStats[row.verdict]++;
+
+    if (row.verdict === "finding") {
+      if (row.ruleDerived) ruleDerivedFindings++;
+      else explicitFindings++;
+    }
+    if (row.verdict === "needs-live-proof") {
+      if (NOT_YET_PROBED_KINDS.has(kind)) notYetProbed++;
+      else if (row.outcome.errorCode === "SKIP-MUTATING") mutatingDeferred++;
+      else genuineInconclusive++;
+    }
+  }
+
+  console.log(
+    `\n=== Verdict summary (${ledgerRows.length} rows = ${manifest.length} surfaces x ${ACTOR_IDS.length} actors) ===`,
+  );
+  console.log(`  clear             ${byVerdict.clear}`);
+  console.log(
+    `  finding           ${byVerdict.finding}  (${ruleDerivedFindings} rule-derived placeholder expectation -- ` +
+      `expect false positives until Tasks 6-7 replace the fail-closed default; ${explicitFindings} explicit/role-derived)`,
+  );
+  console.log(`  needs-live-proof  ${byVerdict["needs-live-proof"]}`);
+  console.log(
+    `    ${notYetProbed} not probed by this runner yet (action/endpoint/bucket -- Task 8)`,
+  );
+  console.log(
+    `    ${mutatingDeferred} deliberately not invoked (request_delegacy x A9-A12, the canonical ` +
+      "staging admins -- see skipFor in arguments.mjs)",
+  );
+  console.log(
+    `    ${genuineInconclusive} genuinely probed (view/table/function) and inconclusive: the four ` +
+      "trigger-returning functions (PGRST202 -- not routable, see the Group C note above) plus " +
+      "cells whose refusal token verdict.ts leaves deliberately unclassified",
+  );
+
+  console.log("\n  By kind:");
+  const kindOrder = [...byKind.keys()].sort();
+  for (const kind of kindOrder) {
+    const s = byKind.get(kind);
+    const tag = NOT_YET_PROBED_KINDS.has(kind) ? "  [not probed this task]" : "";
+    console.log(
+      `    ${kind.padEnd(9)} ${String(s.total).padStart(4)} rows -- clear ${s.clear}, finding ${s.finding}, needs-live-proof ${s["needs-live-proof"]}${tag}`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+const manifest = loadManifest();
+const surfaceById = new Map(manifest.map((s) => [s.id, s]));
+console.log(`Loaded ${manifest.length} surfaces from scripts/security/manifest.json.`);
+
+console.log("Provisioning all 12 actors (minted/reused exactly once for this run)...");
+const actors = await provisionActors();
+const clients = Object.fromEntries(
+  ACTOR_IDS.map((id) => [id, actorClient(actors[id].accessToken)]),
+);
+
+// Task 6, Step 2: the depth probes need real rows to aim at, and the two
+// own-row community policies need actors who actually own an RSVP and a vote.
+console.log("Ensuring depth fixtures (RPC-driven, audit-tagged)...");
+const fixtures = await ensureDepthFixtures(actors);
+console.log(
+  `  event ${fixtures.eventId}, poll ${fixtures.pollId}, option ${fixtures.optionId}, ` +
+    `news ${fixtures.newsId}, audit_log ${fixtures.auditId}; ` +
+    `A5 vote ${fixtures.participation.A5.vote}, A7 vote ${fixtures.participation.A7.vote}`,
+);
+
+const actorIds = Object.fromEntries(ACTOR_IDS.map((id) => [id, actors[id].userId]));
+
+// Task 7, Step 2: twelve disposable victims -- one bound to each actor slot,
+// so a per-(function, actor) fresh target costs a row, not an identity, and so
+// the twelve parallel probes of a mutating function never contend.
+console.log("Provisioning the disposable fixture pool (12 victims, audit-tagged)...");
+const pool = await provisionFixturePool();
+console.log(
+  `  victims ${Object.keys(pool.victims).length}, region ${pool.geo.regionId}/city ${pool.geo.cityId}, ` +
+    `tbilisi_today ${pool.today}, active_grace_days ${pool.graceDays}`,
+);
+
+// Task 7, Step 5: the audit-log invariant is graded against what the matrix
+// actually did, so the high-water mark has to be read BEFORE it runs.
+const auditBaselineId = await auditLogHighWaterMark();
+console.log(`audit_log high-water mark before probing: #${auditBaselineId}`);
+
+console.log(
+  "Actors ready. Probing the matrix (one round per surface, all 12 actors in parallel per round)...",
+);
+
+const startedAt = Date.now();
+const rawRows = [];
+const rowScopeRows = [];
+for (const [i, surface] of manifest.entries()) {
+  const cells = await Promise.all(
+    ACTOR_IDS.map(async (actor) => ({
+      surfaceId: surface.id,
+      actor,
+      expectation: defaultExpectation(surface, actor),
+      ruleDerived: isRuleDerived(surface, actor),
+      outcome: await probe(clients[actor], surface, {
+        actor,
+        ids: actorIds,
+        fixtures,
+        actors,
+        pool,
+      }),
+    })),
+  );
+  rawRows.push(...cells);
+
+  // Row-scope: the half of the depth question judge() structurally cannot
+  // answer (see DEPTH_PROBES). Recorded alongside the verdict, never folded
+  // into it.
+  const depth = DEPTH_PROBES[surface.id];
+  if (depth) {
+    for (const cell of cells) {
+      const n = cell.outcome.rowCount;
+      const refused = cell.outcome.errorCode !== null;
+      const ok = depth.rowScope === "some" ? !refused && n > 0 : refused || n === 0;
+      rowScopeRows.push({
+        assertion: `${surface.id} :: rows-${depth.rowScope}`,
+        actor: cell.actor,
+        expected:
+          depth.rowScope === "some" ? ">= 1 row" : "0 rows (refused, or permitted-and-empty)",
+        observed: refused ? `refused ${cell.outcome.errorCode}` : `${n} row(s)`,
+        ok,
+      });
+    }
+  }
+
+  if ((i + 1) % 20 === 0 || i === manifest.length - 1) {
+    console.log(`  ...${i + 1}/${manifest.length} surfaces probed`);
+  }
+}
+const elapsedMs = Date.now() - startedAt;
+console.log(
+  `Probed ${rawRows.length} cells (${manifest.length} surfaces x ${ACTOR_IDS.length} actors) in ${(elapsedMs / 1000).toFixed(1)}s.`,
+);
+
+// ---------------------------------------------------------------------------
+// Carry over the app layer (Task 12 instrument fix)
+// ---------------------------------------------------------------------------
+// This runner cannot probe an action, an endpoint or a bucket -- a Server
+// Action does not exist until Next has compiled it -- so it writes every
+// app-layer cell as errorCode "SKIP" and app-probe.mjs substitutes them later.
+// Until now that meant running the DATABASE census SILENTLY DISCARDED a third
+// of the matrix: 492 measured app cells reverted to SKIP on disk, and the only
+// way back was a full build + `npm run security:census:app`. Anyone re-running
+// the census to check a schema change (which is exactly what Task 12 does)
+// destroyed evidence they had no reason to touch.
+//
+// So: any app-layer cell this run did not probe takes its previous outcome
+// from the ledger, unchanged, and the carry-over is COUNTED and PRINTED rather
+// than assumed. Nothing else is carried: database cells were all probed
+// afresh, and a carried row can only ever be one this runner wrote "SKIP" for.
+{
+  const APP_KINDS = new Set(["action", "endpoint", "bucket"]);
+  let previous = [];
+  if (existsSync(LEDGER_RAW_URL)) {
+    previous = JSON.parse(readFileSync(LEDGER_RAW_URL, "utf8"));
+  } else if (existsSync(LEDGER_URL)) {
+    previous = JSON.parse(readFileSync(LEDGER_URL, "utf8"));
+  }
+  const byCell = new Map(previous.map((r) => [`${r.surfaceId}|${r.actor}`, r.outcome]));
+  let carried = 0;
+  let unprobed = 0;
+  for (const row of rawRows) {
+    if (!APP_KINDS.has(surfaceById.get(row.surfaceId)?.kind)) continue;
+    const prior = byCell.get(`${row.surfaceId}|${row.actor}`);
+    if (prior && prior.errorCode !== "SKIP") {
+      row.outcome = prior;
+      carried++;
+    } else {
+      unprobed++;
+    }
+  }
+  console.log(
+    `App layer: ${carried} cell(s) carried over from the last app census, ` +
+      `${unprobed} never probed by any runner (run \`npm run security:census:app\` to close them).`,
+  );
+}
+
+mkdirSync(dirname(fileURLToPath(LEDGER_RAW_URL)), { recursive: true });
+writeFileSync(LEDGER_RAW_URL, JSON.stringify(rawRows, null, 2) + "\n");
+console.log(`Wrote ${fileURLToPath(LEDGER_RAW_URL)}`);
+
+const ledgerRows = rawRows.map((row) => ({
+  ...row,
+  verdict: judge(row.expectation, row.outcome, surfaceById.get(row.surfaceId).kind),
+}));
+writeFileSync(LEDGER_URL, JSON.stringify(ledgerRows, null, 2) + "\n");
+console.log(`Wrote ${fileURLToPath(LEDGER_URL)}`);
+
+runSelfCheck(rawRows, ledgerRows, surfaceById);
+printSummary(ledgerRows, manifest);
+
+// Task 6: the named assertions. Everything the twelve-verdict grid cannot
+// carry -- "the statement was permitted and returned nothing, and that is
+// correct" -- lands here instead, one named row per check per actor.
+console.log("\nRunning named row-scope assertions...");
+const named = await runRowScopeAssertions({
+  actors,
+  clients,
+  actorIds,
+  fixtures,
+  auditBaselineId,
+  ledgerRows,
+  surfaceById,
+});
+const allRowScope = [...rowScopeRows, ...named];
+writeFileSync(ROW_SCOPE_URL, JSON.stringify(allRowScope, null, 2) + "\n");
+console.log(`Wrote ${fileURLToPath(ROW_SCOPE_URL)}`);
+
+const failed = allRowScope.filter((r) => !r.ok);
+const unproven = allRowScope.filter((r) => r.ok && r.unproven);
+console.log(
+  `  ${allRowScope.length - failed.length}/${allRowScope.length} row-scope assertions hold` +
+    (unproven.length ? `, of which ${unproven.length} are UNPROVEN (see below)` : "") +
+    ".",
+);
+for (const f of failed) {
+  console.error(
+    `  ROW-SCOPE FAIL ${f.assertion} / ${f.actor}: expected ${f.expected}, got ${f.observed}`,
+  );
+}
+// An assertion whose expectation matched but whose data contains no negative
+// case is not a result. Printed separately so it cannot be read as one.
+for (const u of unproven) {
+  console.warn(`  ROW-SCOPE UNPROVEN ${u.assertion}: ${u.why}`);
+}
+
+// Task 7, Step 2: what this run minted, APPENDED to what earlier runs minted.
+// Task 13 uses this to tell what the end-of-phase reseed removed apart from
+// what the append-only audit_log made permanent -- two different questions,
+// and only this file distinguishes them.
+//
+// Appended, not overwritten. The census is re-run freely (three times during
+// Task 7 alone) and each run mints a fresh set of targets; a file that held
+// only the last run would under-report by exactly the runs before it, and
+// silently, because it would still look complete. `sweepByTag` below covers
+// the part itemisation cannot reach.
+const previous = existsSync(RESIDUE_URL) ? JSON.parse(readFileSync(RESIDUE_URL, "utf8")) : null;
+const priorRuns = Array.isArray(previous?.runs)
+  ? previous.runs
+  : previous?.minted // the single-run shape this file carried before 2026-07-26
+    ? [
+        {
+          runAt: previous.runAt,
+          auditLogBaselineId: previous.auditLogBaselineId,
+          minted: previous.minted,
+        },
+      ]
+    : [];
+
+const residue = {
+  tag: "security-audit-2026-07",
+  note:
+    "Rows minted during the Pass 2b function census, by run. TWO sources feed each run's list: " +
+    "rows scripts/security/arguments.mjs minted as a probe target (setup), and rows the RPC " +
+    "ITSELF minted when the call succeeded (the spec's `after` hook) -- admin_save_news with " +
+    "p_id null, member_rsvp's event_rsvps row, member_cast_vote's poll_votes row. Entries whose " +
+    "note says 'removed by teardown' were already gone before the run ended; everything else is " +
+    "live residue. audit_log rows are deliberately NOT listed: audit_log is append-only by " +
+    "trigger, they are permanent by design, and telling them apart from sweepable residue is the " +
+    "whole reason this file exists.",
+  // What Task 13 must sweep by TAG or MARKER, because no id list can cover it.
+  sweepByTag: [
+    "Runs before 2026-07-26 are not itemised: this file was overwritten per run until that date, " +
+      "so its earliest surviving entry is not the earliest row minted. Everything from those runs " +
+      "still carries one of the markers below.",
+    "auth.users + profiles: user_metadata.audit_tag = 'security-audit-2026-07' -- the A2-A8 " +
+      "actors, the team-member fixture, and the twelve disposable victims +9955090020001..0012.",
+    "news / events / polls: title (or question) contains 'SECAUDIT'. Covers both rows minted as " +
+      "targets and rows admin_save_news/_event/_poll created themselves.",
+    "poll_options: label 'SECAUDIT-A' / 'SECAUDIT-B', plus every option of a SECAUDIT poll.",
+    "event_rsvps / poll_votes: any row whose member_id is an audit-tagged account. Minted by " +
+      "member_rsvp and member_cast_vote SUCCEEDING, never by a setup, and mostly hanging off " +
+      "SECAUDIT parents the reseed removes anyway.",
+    "delegates / memberships / payments / admin_roles: any row keyed to an audit-tagged account. " +
+      "All of these are torn down per probe, so a survivor means a teardown failed and is worth " +
+      "looking at rather than sweeping silently.",
+  ],
+  runs: [
+    ...priorRuns,
+    { runAt: new Date().toISOString(), auditLogBaselineId: auditBaselineId, minted: MINTED },
+  ],
+};
+writeFileSync(RESIDUE_URL, JSON.stringify(residue, null, 2) + "\n");
+console.log(
+  `Wrote ${fileURLToPath(RESIDUE_URL)} (${MINTED.length} minted this run, ` +
+    `${residue.runs.length} run(s) on record)`,
+);

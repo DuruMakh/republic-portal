@@ -1,0 +1,31 @@
+-- Security check-up fix wave (Task 12), fix 2 of 5 — finding CF4 / LB-6.
+-- This is the exposure reduction ADR-021 adopted INSTEAD of column-level
+-- encryption for personal_id, so it has to be right.
+--
+-- THE DEFECT IS AN OMISSION IN A HARDENING MIGRATION, not an accepted default.
+-- Phase 3 (ADR-014's rider) narrowed the blanket SELECT on `profiles` to an
+-- explicit column list without personal_id/birth_date — but it named
+-- `authenticated` only. `anon` was left holding the Supabase default: SELECT,
+-- INSERT, UPDATE, DELETE, TRUNCATE and REFERENCES on ALL SEVENTEEN columns,
+-- personal_id, birth_date and phone included. Measured live before this
+-- migration: anon INSERT x17, REFERENCES x17, SELECT x17, UPDATE x17.
+--
+-- Nothing has leaked: an anonymous read returns 200 [] because the "own profile
+-- readable" policy compares auth.uid() = id and anon's uid is null. But that is
+-- ONE predicate, where `authenticated` gets two independent layers (the column
+-- grant in front, the policy behind). For the most sensitive read on the
+-- platform — every member's government ID and date of birth, for a movement
+-- facing a hostile state — one layer is the wrong number. The same asymmetry
+-- applies to writes: protect_profile_columns guards ten columns, birth_date is
+-- not among them, so for `anon` the RLS predicate was the ONLY thing standing
+-- in front of a date of birth.
+--
+-- `anon` needs NOTHING here, which is why this revokes everything rather than
+-- mirroring authenticated's fourteen columns. Verified before writing it: no
+-- anonymous path touches the table. The public site reads views only
+-- (lib/supabase/public.ts: public_delegates, public_stats, public_news,
+-- public_events, transparency_*, regions) and those are owner-executed, so the
+-- caller's own grants play no part in them. register() and cabinet_state() are
+-- SECURITY DEFINER and revoked from anon already. The one route that reads
+-- profiles by phone, app/api/dev/otp/route.ts:35, uses the SERVICE role.
+revoke all on profiles from anon;

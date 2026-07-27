@@ -1,0 +1,2105 @@
+[
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A1",
+    "expected": "the app routes /me to /login for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /login",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A2",
+    "expected": "the app routes /me to /join for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /join",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A3",
+    "expected": "the app routes /me to 200 (renders in place) for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 200",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A4",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A5",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A6",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A7",
+    "expected": "the app routes /me to /delegate for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /delegate",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A8",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A9",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A10",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A11",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "app-session.cookie-resolves-to-this-actor",
+    "actor": "A12",
+    "expected": "the app routes /me to /me/profile for this actor's standing, and the session decodes to this actor's own user id",
+    "observed": "GET /me -> 307 -> /me/profile",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A1",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A2",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A3",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A4",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A5",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A6",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A7",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A8",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A9",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A10",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A11",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.withholds-code-for-existing-profile",
+    "actor": "A12",
+    "expected": "404 {\"error\":\"not found\"} — the code is never served",
+    "observed": "404 {\"error\":\"not found\"}",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.serves-code-when-no-profile",
+    "actor": "A1",
+    "expected": "200 {\"otp\":\"424242\"} — the control: proves case A withheld rather than merely failed",
+    "observed": "200 {\"otp\":\"424242\"} (374ms)",
+    "ok": true
+  },
+  {
+    "assertion": "endpoint:dev-otp.body-oracle",
+    "actor": "A1",
+    "expected": "IDENTICAL bodies for a phone that has an account and one that does not — anything else answers 'does this number have an account?' to any caller",
+    "observed": "has-account: 404 {\"error\":\"not found\"} | no-account: 404 {\"error\":\"no otp\"}",
+    "ok": false,
+    "finding": "D5/R2 — account-existence oracle (response body)"
+  },
+  {
+    "assertion": "endpoint:dev-otp.timing-oracle",
+    "actor": "A1",
+    "expected": "no measurable timing difference between a phone that has an account and one that does not (< 250ms) — this oracle SURVIVES unifying the two response bodies",
+    "observed": "has-account median 309ms (245/330/309), no-account median 6634ms (6634/6729/6552), gap 6325ms",
+    "ok": false,
+    "finding": "D5/R2 — account-existence oracle (response timing, independent of the body)"
+  },
+  {
+    "assertion": "endpoint:dev-otp.no-unauthenticated-service-role-write",
+    "actor": "A1",
+    "expected": "an anonymous GET performs no service-role write — the hour-old row survives (route.ts:17-20 runs a service-role DELETE before any check, including the env gate's)",
+    "observed": "the stale row was DELETED by an unauthenticated GET",
+    "ok": false,
+    "finding": "R2 — unauthenticated caller drives an unbounded service-role DELETE on dev_otp_inbox"
+  },
+  {
+    "assertion": "bucket:delegate-photos.public-read-control",
+    "actor": "A1",
+    "expected": "200 and the exact bytes — public read is by design, and it is what makes the write refusals below a statement about the policy rather than about the bucket",
+    "observed": "200, body matches: true",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A1",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A1",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A1",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A2",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A2",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A2",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A3",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A3",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A3",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A4",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A4",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A4",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A5",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A5",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A5",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A6",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A6",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A6",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A7",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A7",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A7",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A8",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A8",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A8",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A9",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A9",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A9",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A10",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A10",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A10",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A11",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A11",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A11",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-write",
+    "actor": "A12",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-list",
+    "actor": "A12",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:delegate-photos.no-client-delete",
+    "actor": "A12",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.public-read-control",
+    "actor": "A1",
+    "expected": "200 and the exact bytes — public read is by design, and it is what makes the write refusals below a statement about the policy rather than about the bucket",
+    "observed": "200, body matches: true",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A1",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A1",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A1",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A2",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A2",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A2",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A3",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A3",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A3",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A4",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A4",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A4",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A5",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A5",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A5",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A6",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A6",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A6",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A7",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A7",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A7",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A8",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A8",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A8",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A9",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A9",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A9",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A10",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A10",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A10",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A11",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A11",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A11",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-write",
+    "actor": "A12",
+    "expected": "refused — neither migration creates a storage.objects INSERT policy",
+    "observed": "403 new row violates row-level security policy",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-list",
+    "actor": "A12",
+    "expected": "no object names — no storage.objects SELECT policy exists for a client role",
+    "observed": "0 object(s)",
+    "ok": true
+  },
+  {
+    "assertion": "bucket:news-images.no-client-delete",
+    "actor": "A12",
+    "expected": "no object removed — probed against a name that does not exist, so a permitted DELETE returns an empty set and destroys nothing either way",
+    "observed": "0 object(s) removed",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A1",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A2",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A3",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A4",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A5",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A6",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A7",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A8",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A10",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A11",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.denied-actor-changes-nothing",
+    "actor": "A12",
+    "expected": "the target row is byte-identical before and after the attempt",
+    "observed": "unchanged",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:cancelEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "8/8 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeTierAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "9/9 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:closePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:completeMembershipAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:deletePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:findAdminCandidateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:lookupMemberAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:openPollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:previewBulkAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:registerAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:rejectDelegateAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:requestDelegacyAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "5/5 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealApplicantIdAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealPersonalIdAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:revokeRoleAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:rsvpAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "10/10 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveEventAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveMembershipProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:savePollAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:setNewsCoverAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:unpublishNewsAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateDelegateProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "1/1 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateProfileAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateRegisteredNameAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "11/11 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:voidPaymentAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "2/2 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:voteAction.probe-is-valid",
+    "actor": "—",
+    "expected": "at least one allowed actor gets a result that is NOT the generic error — otherwise the arguments or the encoding are wrong and this action's deny cells prove nothing",
+    "observed": "9/9 allowed actors returned an informative result",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:approveDelegateAction.generic-refusal-is-real",
+    "actor": "A12",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:cancelEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 8",
+    "ok": true
+  },
+  {
+    "assertion": "action:changeTierAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
+    "ok": true
+  },
+  {
+    "assertion": "action:closePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:completeMembershipAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
+    "ok": true
+  },
+  {
+    "assertion": "action:confirmBulkAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deleteNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:deletePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:grantRoleAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:openPollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A10",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishEventAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A2",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A3",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A4",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A5",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A6",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A7",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A8",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A10",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:publishNewsAction.generic-refusal-is-real",
+    "actor": "A11",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:reassignMemberAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:recordPaymentAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:registerAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 11",
+    "ok": true
+  },
+  {
+    "assertion": "action:rejectDelegateAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:requestDelegacyAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealApplicantIdAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:revealPersonalIdAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:revokeRoleAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:rsvpAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 10",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveEventAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveMembershipProfileAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:saveNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:savePollAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:unpublishNewsAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:updateGraceDaysAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 1",
+    "ok": true
+  },
+  {
+    "assertion": "action:voidPaymentAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 2",
+    "ok": true
+  },
+  {
+    "assertion": "action:voteAction.generic-refusal-is-real",
+    "actor": "A1",
+    "expected": "the action returned ok:false AND the identical arguments were accepted for an allowed actor — so the generic message is a refusal of the CALLER, not a rejection of the payload",
+    "observed": "refused: true; allowed actors that succeeded with the same arguments: 9",
+    "ok": true
+  }
+]

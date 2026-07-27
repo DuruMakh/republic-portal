@@ -62,6 +62,26 @@ if (e6.code !== "42501")
 // Self-contained and idempotent: cleans up its own leftovers on every run.
 const PROBE_EMAIL = "schema-probe@example.com";
 
+/**
+ * Probe users that call register() must carry a VERIFIED PHONE.
+ *
+ * The security check-up's F3 fix (20260726121000_register_phone_guard.sql)
+ * refuses register() for any session whose auth record has no phone, because
+ * email sign-up is enabled and auto-confirmed on the project and a phone-less
+ * session was therefore free to obtain — the platform's "one SMS-verified
+ * phone, one person" assumption was not enforced at the membership boundary.
+ * Every probe below that registers used to rely on exactly that hole: created
+ * by email only, then registering fine.
+ *
+ * The tests encoded the bug, so the tests change. They keep signing in by
+ * email + password (no OTP is spent) and simply also carry a phone, which is
+ * what a real registrant has. The band is 5090030001..5090030004: ten national
+ * digits, outside the seed's nine-digit +99550####### block, outside the
+ * canonical admins (+99550900000{1..4}) and outside the audit's own fixtures
+ * (+9955090020001.. victims, +9955090029998/9).
+ */
+const probePhone = (n) => `+995509003000${n}`;
+
 async function findUserByEmail(email) {
   for (let page = 1; ; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
@@ -240,6 +260,8 @@ let funnelProbePassword;
     email: FUNNEL_PROBE_EMAIL,
     password: funnelProbePassword,
     email_confirm: true,
+    phone: probePhone(1),
+    phone_confirm: true,
   });
   if (fpCreateErr) throw new Error(`funnel probe createUser failed: ${fpCreateErr.message}`);
   fpId = fpUser.user.id;
@@ -530,6 +552,8 @@ let funnelProbePassword;
       email: PENDING_FIXTURE_EMAIL,
       password: fixturePassword,
       email_confirm: true,
+      phone: probePhone(2),
+      phone_confirm: true,
     });
     if (fixtureCreateErr)
       throw new Error(`pending fixture createUser failed: ${fixtureCreateErr.message}`);
@@ -585,6 +609,8 @@ let funnelProbePassword;
       email: REF_EMAIL,
       password: refPassword,
       email_confirm: true,
+      phone: probePhone(3),
+      phone_confirm: true,
     });
     if (refCreateErr) throw new Error(`ref probe createUser failed: ${refCreateErr.message}`);
     refId = refUser.user.id;
@@ -1126,6 +1152,8 @@ let funnelProbePassword;
     email: NA_EMAIL,
     password: naPassword,
     email_confirm: true,
+    phone: probePhone(4),
+    phone_confirm: true,
   });
   if (naCreateErr) throw new Error(`nonadmin createUser failed: ${naCreateErr.message}`);
   const naId = naUser.user.id;
