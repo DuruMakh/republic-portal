@@ -2,12 +2,21 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET } from "../lib/funnel";
+import {
+  assertE2ePhones,
+  cleanupClient,
+  cleanupUsersByPhone,
+  failIfAny,
+  SWEEP_HINT,
+} from "./cleanup-helpers";
 import { clickThroughOtpThrottle, loginAs, readFreshInboxOtp, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
 // (run number + attempt) and ends in 9 — the login journey's digit. Journey phones
 // replace the final digit. Personal IDs use the reserved 9-prefix (seed uses 1-prefix).
-const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
+// Exported so tests derive the expected phone from here rather than re-hardcoding
+// the fallback — this is read at module load, so vi.stubEnv can never reach it.
+export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE = LOGIN_PHONE.slice(0, 8);
 
 // Progressive registration reworked the journeys. Single digits are scarce (0–9,
@@ -302,29 +311,11 @@ export async function seedRegisteredMember(opts: {
 export { loginAs }; // spec imports stay untouched
 
 export async function cleanupJourneyUsers(): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    console.warn("e2e cleanup skipped: staging service credentials not in env");
-    return;
-  }
-  const admin = createClient(url, key);
   const phones = Object.values(JOURNEY).flatMap((j) => [
     `+995${journeyPhone(j)}`,
     `995${journeyPhone(j)}`,
   ]);
-  const { data: rows } = await admin.from("profiles").select("id").in("phone", phones);
-  const ids = (rows ?? []).map((r) => r.id);
-  if (ids.length === 0) return;
-  // memberships.delegate_id has NO cascade: a row pointing at a journey DELEGATE
-  // blocks deleteUser when iteration order deletes the delegate first. Detach
-  // first — scoped strictly to this run's own users.
-  const { error: detachErr } = await admin.from("memberships").delete().in("delegate_id", ids);
-  if (detachErr) console.warn(`e2e cleanup: membership detach failed: ${detachErr.message}`);
-  for (const id of ids) {
-    const { error } = await admin.auth.admin.deleteUser(id);
-    if (error) console.warn(`e2e cleanup: deleteUser ${id} failed: ${error.message}`);
-  }
+  await cleanupUsersByPhone("journey e2e cleanup", phones);
 }
 
 export async function getSeededReferral(): Promise<{ code: string; fullName: string }> {
@@ -384,23 +375,30 @@ export async function approveOwnDelegate(phoneNational: string): Promise<void> {
 }
 
 export async function cleanupLoginUser(): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    console.warn("login cleanup skipped: staging service credentials not in env");
-    return;
-  }
-  const admin = createClient(url, key);
+  const LABEL = "login e2e cleanup";
   const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
+  // Scans auth rather than profiles, but the phone still comes from the
+  // unvalidated E2E_TEST_PHONE — same guard as the profiles-based deletions.
+  assertE2ePhones(LABEL, [loginPhone]);
+  const admin = cleanupClient(LABEL);
+  if (!admin) return;
+  const failures: string[] = [];
   for (let page = 1; page <= 50; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error || data.users.length === 0) return;
+    // A listing error used to return early, making a broken lookup indistinguishable
+    // from "no orphan here" — success reported for a cleanup that did nothing.
+    if (error) {
+      failures.push(`listUsers page ${page} failed: ${error.message}`);
+      break;
+    }
+    if (data.users.length === 0) break;
     const orphan = data.users.find((u) => u.phone === loginPhone);
     if (orphan) {
       const { error: delErr } = await admin.auth.admin.deleteUser(orphan.id);
-      if (delErr) console.warn(`login cleanup: deleteUser ${orphan.id} failed: ${delErr.message}`);
-      return;
+      if (delErr) failures.push(`deleteUser ${orphan.id} failed: ${delErr.message}`);
+      break;
     }
-    if (data.users.length < 1000) return;
+    if (data.users.length < 1000) break;
   }
+  failIfAny(LABEL, failures, SWEEP_HINT);
 }

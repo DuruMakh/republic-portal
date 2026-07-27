@@ -7,6 +7,7 @@ import {
   serviceClient,
   signOutViaNav,
 } from "./admin-helpers";
+import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent, registerCompletedMember } from "./community-helpers";
 
 const MEMBER = 5; // phase4Phone(5) — reads the feed; never authors
@@ -14,15 +15,15 @@ const RUN = `e2e-news-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(async () => {
-  await cleanupPhase4Users([MEMBER]);
-  await cleanupCommunityContent("e2e-news-");
-});
+// runCleanups, not sequential awaits: a throw from one cleanup must not skip the
+// other, or a content failure strands this run's users where no later run looks.
+test.beforeAll(() =>
+  runCleanups([() => cleanupPhase4Users([MEMBER]), () => cleanupCommunityContent("e2e-news-")]),
+);
 
-test.afterAll(async () => {
-  await cleanupCommunityContent("e2e-news-");
-  await cleanupPhase4Users([MEMBER]);
-});
+test.afterAll(() =>
+  runCleanups([() => cleanupCommunityContent("e2e-news-"), () => cleanupPhase4Users([MEMBER])]),
+);
 
 test("editor publishes public + member-only articles; visibility holds everywhere", async ({
   page,

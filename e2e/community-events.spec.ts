@@ -9,6 +9,7 @@ import {
   signOutViaNav,
 } from "./admin-helpers";
 import { approveOwnDelegate, seedCompletedMember, seedPendingDelegate } from "./funnel-helpers";
+import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
 
 const DELEGATE = 6; // phase4Phone(6) — seeded delegate, service-approved
@@ -17,15 +18,21 @@ const RUN = `e2e-event-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(async () => {
-  await cleanupPhase4Users([DELEGATE, SUPPORTER]);
-  await cleanupCommunityContent("e2e-event-");
-});
+// runCleanups, not sequential awaits: a throw from one cleanup must not skip the
+// other, or a content failure strands this run's users where no later run looks.
+test.beforeAll(() =>
+  runCleanups([
+    () => cleanupPhase4Users([DELEGATE, SUPPORTER]),
+    () => cleanupCommunityContent("e2e-event-"),
+  ]),
+);
 
-test.afterAll(async () => {
-  await cleanupCommunityContent("e2e-event-");
-  await cleanupPhase4Users([DELEGATE, SUPPORTER]);
-});
+test.afterAll(() =>
+  runCleanups([
+    () => cleanupCommunityContent("e2e-event-"),
+    () => cleanupPhase4Users([DELEGATE, SUPPORTER]),
+  ]),
+);
 
 test("member RSVPs and cancels; delegate sees the team overview", async ({ page, browser }) => {
   // 0) editor publishes a future event

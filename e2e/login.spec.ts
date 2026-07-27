@@ -9,6 +9,10 @@ const TEST_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 // The registered-standing case seeds a profile on TEST_PHONE, so it must run AFTER
 // the fresh-phone case (which asserts TEST_PHONE has no profile yet).
 test.describe.configure({ mode: "serial" });
+// Cleanup runs BEFORE as well as after: a failed teardown now fails the run, and the
+// CI retry re-runs this whole serial group — the first test asserts TEST_PHONE has no
+// profile yet, so without a pre-clean the retry would start against dirty state.
+test.beforeAll(cleanupLoginUser);
 test.afterAll(cleanupLoginUser);
 
 test("fresh phone OTP login lands on the one-door /join form", async ({ page }) => {

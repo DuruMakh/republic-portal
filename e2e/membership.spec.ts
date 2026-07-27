@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { ADMIN_PHONES, loginAs, signOutViaNav } from "./admin-helpers";
+import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
 import {
   cleanupJourneyUsers,
@@ -17,14 +18,14 @@ const RUN = `e2e-memb-${Date.now().toString(36)}`;
 // canonical editor (audit actor stays permanent) — run serially.
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(async () => {
-  await cleanupJourneyUsers();
-  await cleanupCommunityContent("e2e-memb-");
-});
-test.afterAll(async () => {
-  await cleanupCommunityContent("e2e-memb-");
-  await cleanupJourneyUsers();
-});
+// runCleanups, not sequential awaits: a throw from one cleanup must not skip the
+// other, or a content failure strands this run's users where no later run looks.
+test.beforeAll(() =>
+  runCleanups([() => cleanupJourneyUsers(), () => cleanupCommunityContent("e2e-memb-")]),
+);
+test.afterAll(() =>
+  runCleanups([() => cleanupCommunityContent("e2e-memb-"), () => cleanupJourneyUsers()]),
+);
 
 test("full upgrade: register → wizard → member with a reference code and member nav", async ({
   page,
