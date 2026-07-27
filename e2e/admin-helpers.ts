@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
+import { cleanupUsersByPhone } from "./cleanup-helpers";
 import { loginAs as sharedLoginAs, serviceClient } from "./otp-helpers";
 
 /** Canonical seeded admins (scripts/seed-staging.mjs) — permanent audit actors. */
@@ -101,21 +102,6 @@ export async function getAuditRows(action: string, targetId: string): Promise<nu
 
 /** Deletes this run's phase-4 users (payments cascade; memberships detached first). */
 export async function cleanupPhase4Users(ks: readonly number[]): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    console.warn("phase-4 e2e cleanup skipped: staging service credentials not in env");
-    return;
-  }
-  const db = createClient(url, key);
   const phones = ks.flatMap((k) => [`+995${phase4Phone(k)}`, `995${phase4Phone(k)}`]);
-  const { data: rows } = await db.from("profiles").select("id").in("phone", phones);
-  const ids = (rows ?? []).map((r) => r.id as string);
-  if (ids.length === 0) return;
-  const { error: detachErr } = await db.from("memberships").delete().in("delegate_id", ids);
-  if (detachErr) console.warn(`phase-4 cleanup: membership detach failed: ${detachErr.message}`);
-  for (const id of ids) {
-    const { error } = await db.auth.admin.deleteUser(id);
-    if (error) console.warn(`phase-4 cleanup: deleteUser ${id} failed: ${error.message}`);
-  }
+  await cleanupUsersByPhone("phase-4 e2e cleanup", phones);
 }

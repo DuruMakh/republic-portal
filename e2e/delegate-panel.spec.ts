@@ -9,6 +9,7 @@ import {
   seedCompletedMember,
   seedPendingDelegate,
 } from "./funnel-helpers";
+import { runCleanups } from "./cleanup-helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -81,18 +82,28 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
 // 12) can then read within its freshness window — the exact flake seen in CI run
 // 29515512529. Leaving the world as we found it includes the ISR caches: after
 // deleting this run's users, poll both pages until they render 12 again.
+// runCleanups so a deletion failure still lets the caches settle: skipping the poll
+// re-arms the very flake this hook exists to prevent, and closing the context in
+// `finally` keeps a browser context from leaking when either step throws.
 test.afterAll(async ({ browser }) => {
-  await cleanupJourneyUsers();
   const context = await browser.newContext();
   const page = await context.newPage();
-  for (const [path, testId] of [
-    ["/delegates", "delegate-card"],
-    ["/leaderboard", "leader-row"],
-  ] as const) {
-    await expect(async () => {
-      await page.goto(path);
-      await expect(page.getByTestId(testId)).toHaveCount(12, { timeout: 2_000 });
-    }).toPass({ timeout: 90_000, intervals: [2_000] });
+  try {
+    await runCleanups([
+      () => cleanupJourneyUsers(),
+      async () => {
+        for (const [path, testId] of [
+          ["/delegates", "delegate-card"],
+          ["/leaderboard", "leader-row"],
+        ] as const) {
+          await expect(async () => {
+            await page.goto(path);
+            await expect(page.getByTestId(testId)).toHaveCount(12, { timeout: 2_000 });
+          }).toPass({ timeout: 90_000, intervals: [2_000] });
+        }
+      },
+    ]);
+  } finally {
+    await context.close();
   }
-  await context.close();
 });

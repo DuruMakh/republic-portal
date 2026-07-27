@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { phase4PersonalId, phase4Phone, serviceClient } from "./admin-helpers";
+import { phase4PersonalId, phase4Phone } from "./admin-helpers";
+import { cleanupClient, failIfAny } from "./cleanup-helpers";
 import { loginAs, seedCompletedMember } from "./funnel-helpers";
 
 /**
@@ -54,11 +55,21 @@ export async function memberRpcClient(page: Page): Promise<SupabaseClient> {
 
 /** Service-side cleanup of per-run content by title marker (cascades votes/rsvps/options). */
 export async function cleanupCommunityContent(marker: string): Promise<void> {
-  const db = serviceClient();
+  // cleanupClient, not serviceClient: every cleanup skips alike without staging
+  // credentials. serviceClient THROWS, which made two adjacent lines of one hook
+  // disagree about what a missing key means.
+  const db = cleanupClient("community content cleanup");
+  if (!db) return;
+  const failures: string[] = [];
   for (const table of ["news", "events"] as const) {
     const { error } = await db.from(table).delete().like("title", `%${marker}%`);
-    if (error) console.warn(`community cleanup ${table}: ${error.message}`);
+    if (error) failures.push(`${table} delete failed: ${error.message}`);
   }
   const { error } = await db.from("polls").delete().like("question", `%${marker}%`);
-  if (error) console.warn(`community cleanup polls: ${error.message}`);
+  if (error) failures.push(`polls delete failed: ${error.message}`);
+  failIfAny(
+    "community content cleanup",
+    failures,
+    `Rows matching "${marker}" survive, and every later run will see them.`,
+  );
 }

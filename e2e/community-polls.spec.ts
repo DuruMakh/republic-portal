@@ -8,6 +8,7 @@ import {
   serviceClient,
   signOutViaNav,
 } from "./admin-helpers";
+import { runCleanups } from "./cleanup-helpers";
 import {
   cleanupCommunityContent,
   memberRpcClient,
@@ -20,15 +21,21 @@ const RUN = `e2e-poll-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(async () => {
-  await cleanupPhase4Users([VOTER, WATCHER]);
-  await cleanupCommunityContent("e2e-poll-");
-});
+// runCleanups, not sequential awaits: a throw from one cleanup must not skip the
+// other, or a content failure strands this run's users where no later run looks.
+test.beforeAll(() =>
+  runCleanups([
+    () => cleanupPhase4Users([VOTER, WATCHER]),
+    () => cleanupCommunityContent("e2e-poll-"),
+  ]),
+);
 
-test.afterAll(async () => {
-  await cleanupCommunityContent("e2e-poll-");
-  await cleanupPhase4Users([VOTER, WATCHER]);
-});
+test.afterAll(() =>
+  runCleanups([
+    () => cleanupCommunityContent("e2e-poll-"),
+    () => cleanupPhase4Users([VOTER, WATCHER]),
+  ]),
+);
 
 test("vote once, results per the visibility rule, transparency derives from the register", async ({
   page,
