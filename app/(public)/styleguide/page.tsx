@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { ContentBody } from "@/components/ContentBody";
 import { ContentNav } from "@/components/ContentNav";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
 import { adminControlClasses, Field } from "@/components/Field";
 import { IndexRow } from "@/components/IndexRow";
@@ -29,6 +30,7 @@ import {
   paymentMethodLabel,
   paymentStatusKa,
 } from "@/lib/cabinet";
+import type { PublicEventItem } from "@/lib/supabase/public";
 import {
   DelegateBindingPickerSample,
   DelegateBindingReferralSample,
@@ -84,6 +86,34 @@ const CABINET_NAV_DEMO_ITEMS = cabinetNavItems("member").map((item, i) =>
 const ADMIN_NAV_DEMO_TABS = adminTabs(["super_admin"]).map((tab, i) =>
   i === 0 ? { ...tab, count: 3 } : tab,
 );
+
+// EventRow demo (owner fix #2): title/location spliced from the seeded
+// events (scripts/seed-staging.mjs) -- never hand-typed -- showing the plain
+// row and the cancelled-Pill state.
+const EVENT_ROW_DEMO_ITEMS: PublicEventItem[] = [
+  {
+    id: "styleguide-event-published",
+    slug: "styleguide-event-published",
+    title: "საერთო კრება თბილისში",
+    description: "",
+    location: "თბილისი, თავისუფლების მოედანი 1",
+    starts_at: "2026-08-14T18:00:00.000Z",
+    ends_at: "2026-08-14T20:00:00.000Z",
+    status: "published",
+    published_at: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "styleguide-event-cancelled",
+    slug: "styleguide-event-cancelled",
+    title: "გაუქმებული ბრიფინგი",
+    description: "",
+    location: "თბილისი, თავისუფლების მოედანი 1",
+    starts_at: "2026-08-20T18:00:00.000Z",
+    ends_at: null,
+    status: "cancelled",
+    published_at: "2026-07-01T00:00:00.000Z",
+  },
+];
 
 export default function StyleguidePage() {
   const demoPaymentStatus = paymentStatusKa(null);
@@ -380,7 +410,7 @@ export default function StyleguidePage() {
           </DataTable>
         </Card>
 
-        {/* 15. NewsCard / ContentBody / ContentNav */}
+        {/* 15. NewsCard / EventRow / ContentBody / ContentNav */}
         <Card title="შიგთავსის კომპონენტები">
           <div className="flex flex-col gap-5">
             <ContentBody body={"აბზაცი პირველი.\n\nბმულით: https://example.ge"} />
@@ -410,6 +440,11 @@ export default function StyleguidePage() {
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />
+            <div className="flex flex-col gap-3">
+              {EVENT_ROW_DEMO_ITEMS.map((e) => (
+                <EventRow key={e.id} event={e} />
+              ))}
+            </div>
             <ContentNav />
           </div>
         </Card>

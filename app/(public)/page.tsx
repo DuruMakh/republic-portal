@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { Card } from "@/components/Card";
 import { CountUp } from "@/components/CountUp";
+import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
+import { NewsCard } from "@/components/NewsCard";
 import { SectionRule } from "@/components/SectionRule";
 import { formatDateKa } from "@/lib/cabinet";
+import { splitEvents } from "@/lib/community";
+import { excerpt } from "@/lib/content-render";
 import { formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
 import {
   fetchPublicDelegates,
+  fetchPublicEvents,
   fetchPublicNews,
   fetchPublicStats,
   fetchTransparencyStats,
@@ -63,15 +67,20 @@ const TOTAL_GEL_LABEL = "შეგროვებული საწევრო
 const SUPPORTER_LABEL = "მხარდამჭერი";
 const NEWS_LABEL = "სიახლეები";
 const FINANCE_LABEL = "ფინანსები";
+const EVENTS_LABEL = "ღონისძიებები";
+const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
+const EVENTS_EMPTY = "მომავალი ღონისძიებები მალე გამოცხადდება.";
 
 export default async function HomePage() {
-  const [stats, delegates, tStats, news] = await Promise.all([
+  const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),
     fetchPublicDelegates(),
     fetchTransparencyStats(),
     fetchPublicNews(),
+    fetchPublicEvents(),
   ]);
   const ranked = rankDelegates(delegates);
+  const { upcoming } = splitEvents(events, new Date().toISOString());
 
   return (
     <main>
@@ -127,6 +136,38 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+          <div className="mt-10">
+            <SectionRule label={NEWS_LABEL} action={<Link href="/news">{FULL}</Link>} />
+            {news.length === 0 ? (
+              <p className="mt-4 text-muted-fg">{NEWS_EMPTY}</p>
+            ) : (
+              <div className="mt-6 grid gap-x-8 gap-y-8 sm:grid-cols-3">
+                {news.slice(0, 3).map((n) => (
+                  <NewsCard
+                    variant="tile"
+                    key={n.id}
+                    href={`/news/${n.slug}`}
+                    title={n.title}
+                    publishedAt={formatDateKa(n.published_at)}
+                    imageUrl={n.image_url}
+                    excerptText={excerpt(n.body)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mt-10">
+            <SectionRule label={EVENTS_LABEL} action={<Link href="/events">{FULL}</Link>} />
+            {upcoming.length === 0 ? (
+              <p className="mt-4 text-muted-fg">{EVENTS_EMPTY}</p>
+            ) : (
+              <div className="mt-6 flex flex-col gap-3">
+                {upcoming.slice(0, 3).map((e) => (
+                  <EventRow key={e.id} event={e} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <aside className="mt-8 flex flex-col gap-6 lg:mt-0 lg:pl-7">
           <div>
@@ -181,27 +222,6 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
-          <Card variant="callout">
-            <Eyebrow>{NEWS_LABEL}</Eyebrow>
-            <div className="mt-3 flex flex-col gap-3">
-              {news.slice(0, 3).map((n) => (
-                <div key={n.id}>
-                  <Link
-                    href={`/news/${n.slug}`}
-                    className="font-serif font-bold text-ink no-underline hover:text-brand"
-                  >
-                    {n.title}
-                  </Link>
-                  <p className="mt-0.5 text-[0.74rem] text-muted-fg">
-                    {formatDateKa(n.published_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3">
-              <Link href="/news">{FULL}</Link>
-            </p>
-          </Card>
         </aside>
       </div>
     </main>
