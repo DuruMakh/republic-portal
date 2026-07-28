@@ -544,6 +544,7 @@ export interface Database {
           p_region_id: number | null;
           p_status: string | null;
           p_include_ids: boolean;
+          p_city_id?: number | null;
         };
         Returns: Json;
       };

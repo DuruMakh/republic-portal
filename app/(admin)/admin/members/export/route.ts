@@ -1,4 +1,9 @@
-import { hasAnyRole, MEMBER_STATUS_LABELS_KA, sanitizeSearch } from "@/lib/admin";
+import {
+  hasAnyRole,
+  MEMBER_STATUS_LABELS_KA,
+  reconcileCityFilter,
+  sanitizeSearch,
+} from "@/lib/admin";
 import { membersFilterSchema, todayTbilisiIso } from "@/lib/admin-schemas";
 import { exportFileName, memberExportCsv, type MemberExportRow } from "@/lib/csv";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
@@ -37,20 +42,30 @@ export async function GET(request: Request) {
   // inside the RPC and the audited CSV would diverge from what the admin saw
   const search = filter.search ? sanitizeSearch(filter.search) : "";
   const supabase = await createServerSupabase();
-  // KNOWN GAP (owner fix #16): filter.cityId is deliberately NOT forwarded below.
-  // admin_export_members()'s signature has no p_city_id parameter — unlike
-  // region/status, city has no filter here yet, so a city-filtered list export
-  // still returns every city. Giving the RPC a city parameter means changing a
-  // SECURITY DEFINER function's argument list, which either leaves a stale
-  // unused overload behind or requires a drop+recreate plus re-grants — and
-  // this RPC is tracked column-for-column by the scripts/security/ audit
-  // manifest (manifest.json's function:admin_export_members entry, live-verified
-  // against staging). That is a separate, carefully-scoped change this task's
-  // brief did not ask for and this agent cannot re-verify live (no DB access) —
-  // flagged as a follow-up rather than risked here.
+
+  // Same reconciliation as the list page (app/(admin)/admin/members/page.tsx):
+  // a plain <form method="get"> can't reset a sibling <select>, so a stale
+  // ?cityId from a region the admin has since switched away from must be
+  // ignored here too — otherwise the export could silently disagree with the
+  // list it is required to match row-for-row. reconcileCityFilter is a no-op
+  // unless both filters are present, so the lookup only runs then.
+  let effectiveCityId = filter.cityId;
+  if (filter.cityId !== undefined && filter.regionId !== undefined) {
+    const { data: cities, error: citiesError } = await supabase
+      .from("cities")
+      .select("id")
+      .eq("region_id", filter.regionId);
+    if (citiesError) {
+      console.error(`cities lookup failed: ${citiesError.message}`); // detail stays server-side
+      return new Response("ექსპორტი ვერ შესრულდა", { status: 500 });
+    }
+    effectiveCityId = reconcileCityFilter(filter.cityId, filter.regionId, cities);
+  }
+
   const { data, error } = await supabase.rpc("admin_export_members", {
     p_search: search.length > 0 ? search : null,
     p_region_id: filter.regionId ?? null,
+    p_city_id: effectiveCityId ?? null,
     p_status: filter.status ?? null,
     p_include_ids: includeIds,
   });

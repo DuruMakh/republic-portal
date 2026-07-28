@@ -11,6 +11,7 @@ import {
   hasAnyRole,
   isStaff,
   MEMBER_STATUS_LABELS_KA,
+  reconcileCityFilter,
   ROLE_LABELS_KA,
   sanitizeSearch,
 } from "./admin";
@@ -25,6 +26,27 @@ describe("sanitizeSearch (one sanitizer for list, lookup and export)", () => {
   it("garbage-only input sanitizes to empty (callers must then skip the filter)", () => {
     expect(sanitizeSearch("((")).toBe("");
     expect(sanitizeSearch(",,")).toBe("");
+  });
+});
+
+describe("reconcileCityFilter (fix-list round 2, Task 6 review — stale city vs. region)", () => {
+  // A native <form method="get"> select can't reset a sibling select: switching
+  // regionId while an old cityId from a DIFFERENT region is still in the URL
+  // must not be handed to the query — profiles' composite FK (city_id, region_id)
+  // guarantees no row can satisfy both, which would silently zero the results.
+  const citiesInRegion1 = [{ id: 101 }, { id: 102 }];
+
+  it("applies a city that belongs to the selected region", () => {
+    expect(reconcileCityFilter(101, 1, citiesInRegion1)).toBe(101);
+  });
+  it("ignores a city that does not belong to the selected region", () => {
+    expect(reconcileCityFilter(999, 1, citiesInRegion1)).toBeUndefined();
+  });
+  it("applies the city as-is when no region is selected", () => {
+    expect(reconcileCityFilter(999, undefined, citiesInRegion1)).toBe(999);
+  });
+  it("passes through undefined when no city is selected", () => {
+    expect(reconcileCityFilter(undefined, 1, citiesInRegion1)).toBeUndefined();
   });
 });
 

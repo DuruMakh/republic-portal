@@ -132,6 +132,28 @@ export function sanitizeSearch(query: string): string {
   return query.replaceAll(/[,%()_\\]/g, " ").trim();
 }
 
+/**
+ * Reconciles a possibly-stale ?cityId against ?regionId (fix-list round 2,
+ * Task 6 review). The member-list filter form is a plain
+ * `<form method="get">` with native `<select>`s, so a sibling select can't
+ * reset another on submit: switching the region while a city from the OLD
+ * region is still in the URL would otherwise intersect two filters that
+ * profiles' composite FK `(city_id, region_id) references cities (id,
+ * region_id)` guarantees no row can ever satisfy — silently zero results,
+ * while the re-scoped city dropdown looks like "all cities" is selected.
+ * `citiesInRegion` must already be scoped to `regionId` (exactly as the
+ * dropdown's own cities query is); when `regionId` is undefined there is
+ * nothing to reconcile against, so `cityId` passes through unchanged.
+ */
+export function reconcileCityFilter(
+  cityId: number | undefined,
+  regionId: number | undefined,
+  citiesInRegion: readonly { id: number }[],
+): number | undefined {
+  if (cityId === undefined || regionId === undefined) return cityId;
+  return citiesInRegion.some((c) => c.id === cityId) ? cityId : undefined;
+}
+
 /** dd.mm.yyyy HH:MM in Tbilisi wall-clock time (audit viewer). */
 export function formatDateTimeKa(iso: string): string {
   const d = new Date(new Date(iso).getTime() + TBILISI_OFFSET_MS);
