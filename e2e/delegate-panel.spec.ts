@@ -76,12 +76,15 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await delegateContext.close();
 });
 
-// This spec temporarily approves a 13th delegate, and /delegates + /leaderboard are
-// ISR pages (revalidate 60): a Link prefetch during the approved window caches a
-// 13-delegate render that public.spec (which runs later and asserts the canonical
-// 12) can then read within its freshness window — the exact flake seen in CI run
-// 29515512529. Leaving the world as we found it includes the ISR caches: after
-// deleting this run's users, poll both pages until they render 12 again.
+// This spec temporarily approves an extra delegate, and /delegates + /leaderboard are
+// ISR pages (revalidate 60): a Link prefetch during the approved window can cache a
+// render that still includes this test's delegate, which a later spec could then read
+// within its freshness window — the flake seen in CI run 29515512529. Leaving
+// the world as we found it includes the ISR caches: after deleting this run's users,
+// poll both pages until THIS delegate's own name is gone. Staging is shared with real
+// users (the owner's own permanently-approved delegate account among them), so the
+// total delegate count is never a fixed number to poll back to — this delegate's name
+// is the only signal that's ours to check.
 // runCleanups so a deletion failure still lets the caches settle: skipping the poll
 // re-arms the very flake this hook exists to prevent, and closing the context in
 // `finally` keeps a browser context from leaking when either step throws.
@@ -98,7 +101,9 @@ test.afterAll(async ({ browser }) => {
         ] as const) {
           await expect(async () => {
             await page.goto(path);
-            await expect(page.getByTestId(testId)).toHaveCount(12, { timeout: 2_000 });
+            await expect(page.getByTestId(testId).getByText("ვატესტ პანელს")).toHaveCount(0, {
+              timeout: 2_000,
+            });
           }).toPass({ timeout: 90_000, intervals: [2_000] });
         }
       },
