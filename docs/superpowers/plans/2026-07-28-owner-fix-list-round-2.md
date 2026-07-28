@@ -646,7 +646,7 @@ alter table profiles add constraint profiles_membership_tier_fixed
 drop function member_change_tier(int);
 ```
 
-Then, in the same file, `create or replace function become_member_complete(p_tier int)` — copy the body **VERBATIM** from `20260721120000_progressive_registration.sql:529-614`, changing exactly one line: the tier guard (`if p_tier is null or p_tier not in (5, 10, 20) then raise exception 'invalid_tier'; end if;` at line 547) becomes:
+Then, in the same file, `create or replace function become_member_complete(p_tier int)` — copy the body **VERBATIM** from `20260721120000_progressive_registration.sql:529-581` (the `create function` line through its own `end $$;` — verify those boundaries by structure, not by these line numbers; 585 onward is a different function whose body contains a `'draft'` literal that would abort the push), changing exactly one line: the tier guard (`if p_tier is null or p_tier not in (5, 10, 20) then raise exception 'invalid_tier'; end if;`) becomes:
 
 ```sql
   if p_tier is distinct from 10 then raise exception 'invalid_tier'; end if;
