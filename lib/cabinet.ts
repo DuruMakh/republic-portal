@@ -190,8 +190,8 @@ export interface TeamMember {
 
 /** Team-table / summary-pill vocabulary (spec §3.3, §3.7); rendered via Pill's label override. */
 export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
-  profile_completed: "წევრი",
-  active_member: "აქტიური",
+  profile_completed: "წევრი (გადახდის გარეშე)",
+  active_member: "აქტიური წევრი",
 };
 
 /**

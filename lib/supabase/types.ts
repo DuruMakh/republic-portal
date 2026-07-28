@@ -268,6 +268,7 @@ export interface Database {
           standing: "registered" | "member" | "active";
           signup_delegate_first_name: string | null;
           signup_delegate_last_name: string | null;
+          city_id: number | null;
         };
         Relationships: [];
       };

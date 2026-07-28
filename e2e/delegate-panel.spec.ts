@@ -66,11 +66,12 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await dPage.goto("/delegate/team");
   await expect(dPage.getByTestId("team-count")).toHaveText("1");
   await expect(dPage.getByText("ვატესტ ბმულით")).toBeVisible();
-  // the row pill for a profile_completed member is „წევრი" (TEAM_STATUS_LABELS); scope
-  // to the table body — the header's status-filter <select> now carries the very same
-  // „წევრი" option text (V16 fix), and the thead th „წევრი" also sits outside the
-  // team-rows tbody, so an unscoped query would be ambiguous three ways over.
-  await expect(dPage.getByTestId("team-rows").getByText("წევრი")).toBeVisible();
+  // the row pill for a profile_completed member is „წევრი (გადახდის გარეშე)“
+  // (TEAM_STATUS_LABELS, owner fix #16); scope to the table body — the header's
+  // status-filter <select> carries the very same option text, and the thead th
+  // „წევრი“ also sits outside the team-rows tbody, so an unscoped
+  // query would be ambiguous.
+  await expect(dPage.getByTestId("team-rows").getByText("წევრი (გადახდის გარეშე)")).toBeVisible();
   await dPage.getByLabel("ძებნა სახელით ან გვარით").fill("არავინა");
   await expect(dPage.getByTestId("team-no-results")).toBeVisible();
   await delegateContext.close();

@@ -51,6 +51,7 @@ export default async function AdminMembersPage({
     }
   }
   if (filter.regionId) query = query.eq("region_id", filter.regionId);
+  if (filter.cityId) query = query.eq("city_id", filter.cityId);
   if (filter.status) query = query.eq("status", filter.status);
   const from = (filter.page - 1) * PAGE_SIZE;
   const {
@@ -66,12 +67,18 @@ export default async function AdminMembersPage({
     .order("id");
   if (regionsError) throw new Error(`regions failed: ${regionsError.message}`);
 
+  let citiesQuery = supabase.from("cities").select("id, name_ka, region_id").order("name_ka");
+  if (filter.regionId) citiesQuery = citiesQuery.eq("region_id", filter.regionId);
+  const { data: cities, error: citiesError } = await citiesQuery;
+  if (citiesError) throw new Error(`cities failed: ${citiesError.message}`);
+
   const total = count ?? 0;
   const shownFrom = total === 0 ? 0 : from + 1;
   const shownTo = Math.min(from + PAGE_SIZE, total);
   const currentParams = new URLSearchParams();
   if (filter.search) currentParams.set("search", filter.search);
   if (filter.regionId) currentParams.set("regionId", String(filter.regionId));
+  if (filter.cityId) currentParams.set("cityId", String(filter.cityId));
   if (filter.status) currentParams.set("status", filter.status);
 
   return (
@@ -110,6 +117,21 @@ export default async function AdminMembersPage({
               ))}
             </Select>
           </label>
+          <label className="flex min-w-[170px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
+            ქალაქი
+            <Select
+              variant="admin"
+              name="cityId"
+              defaultValue={filter.cityId ? String(filter.cityId) : ""}
+            >
+              <option value="">ყველა ქალაქი</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name_ka}
+                </option>
+              ))}
+            </Select>
+          </label>
           <label className="flex min-w-[150px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             სტატუსი
             <Select variant="admin" name="status" defaultValue={filter.status ?? ""}>
@@ -133,6 +155,7 @@ export default async function AdminMembersPage({
           <ExportControls
             search={filter.search}
             regionId={filter.regionId}
+            cityId={filter.cityId}
             status={filter.status}
             canIncludeIds={hasAnyRole(roles, ["super_admin"])}
           />

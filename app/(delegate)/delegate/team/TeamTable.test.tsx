@@ -24,25 +24,29 @@ describe("TeamTable", () => {
   it("renders rows with dates and status labels", () => {
     render(<TeamTable members={MEMBERS} />);
     // status labels are scoped to the table body: the status-filter <select>
-    // has options with this exact same Georgian text ("აქტიური" / "წევრი",
-    // sourced from the same TEAM_STATUS_LABELS map), which would otherwise
-    // make screen.getByText ambiguous.
+    // has options with this exact same Georgian text ("აქტიური წევრი" /
+    // "წევრი (გადახდის გარეშე)", sourced from the same TEAM_STATUS_LABELS map),
+    // which would otherwise make screen.getByText ambiguous.
     const rows = screen.getByTestId("team-rows");
     expect(screen.getByText("ნინო ბერიძე")).toBeInTheDocument();
     expect(screen.getByText("10.07.2026")).toBeInTheDocument();
-    expect(within(rows).getByText("აქტიური")).toBeInTheDocument();
-    expect(within(rows).getByText("წევრი")).toBeInTheDocument();
+    expect(within(rows).getByText("აქტიური წევრი")).toBeInTheDocument();
+    expect(within(rows).getByText("წევრი (გადახდის გარეშე)")).toBeInTheDocument();
   });
 
-  it("derives the status-filter option labels from TEAM_STATUS_LABELS (V16)", () => {
+  it("derives the status-filter option labels from TEAM_STATUS_LABELS (owner fix #16)", () => {
     render(<TeamTable members={MEMBERS} />);
     // the filter must not contradict the row pills it filters: profile_completed
-    // renders as "წევრი" everywhere else, so the option text has to match —
-    // the retired "რეგისტრირებული" wording (now repurposed for the lighter
-    // "registered" standing elsewhere) must not appear in this select at all.
+    // renders as "წევრი (გადახდის გარეშე)" everywhere else, so the option text has
+    // to match — the retired "რეგისტრირებული" wording (now repurposed for the
+    // lighter "registered" standing elsewhere) must not appear in this select at all.
     const select = screen.getByLabelText("სტატუსის ფილტრი");
-    expect(within(select).getByRole("option", { name: "წევრი" })).toHaveValue("profile_completed");
-    expect(within(select).getByRole("option", { name: "აქტიური" })).toHaveValue("active_member");
+    expect(within(select).getByRole("option", { name: "წევრი (გადახდის გარეშე)" })).toHaveValue(
+      "profile_completed",
+    );
+    expect(within(select).getByRole("option", { name: "აქტიური წევრი" })).toHaveValue(
+      "active_member",
+    );
     expect(within(select).queryByText("რეგისტრირებული")).not.toBeInTheDocument();
   });
 

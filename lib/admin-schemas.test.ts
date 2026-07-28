@@ -144,4 +144,8 @@ describe("membersFilterSchema — searchParams-tolerant", () => {
     expect(membersFilterSchema.parse({ status: "registered" }).status).toBe("registered");
     expect(membersFilterSchema.parse({ status: "draft" }).status).toBeUndefined();
   });
+  it("parses the city filter (owner fix #16)", () => {
+    expect(membersFilterSchema.parse({ cityId: "7" }).cityId).toBe(7);
+    expect(membersFilterSchema.parse({ cityId: "abc" }).cityId).toBeUndefined();
+  });
 });

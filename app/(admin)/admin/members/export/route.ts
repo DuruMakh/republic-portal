@@ -37,6 +37,17 @@ export async function GET(request: Request) {
   // inside the RPC and the audited CSV would diverge from what the admin saw
   const search = filter.search ? sanitizeSearch(filter.search) : "";
   const supabase = await createServerSupabase();
+  // KNOWN GAP (owner fix #16): filter.cityId is deliberately NOT forwarded below.
+  // admin_export_members()'s signature has no p_city_id parameter — unlike
+  // region/status, city has no filter here yet, so a city-filtered list export
+  // still returns every city. Giving the RPC a city parameter means changing a
+  // SECURITY DEFINER function's argument list, which either leaves a stale
+  // unused overload behind or requires a drop+recreate plus re-grants — and
+  // this RPC is tracked column-for-column by the scripts/security/ audit
+  // manifest (manifest.json's function:admin_export_members entry, live-verified
+  // against staging). That is a separate, carefully-scoped change this task's
+  // brief did not ask for and this agent cannot re-verify live (no DB access) —
+  // flagged as a follow-up rather than risked here.
   const { data, error } = await supabase.rpc("admin_export_members", {
     p_search: search.length > 0 ? search : null,
     p_region_id: filter.regionId ?? null,
