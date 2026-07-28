@@ -6,7 +6,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { Pill } from "@/components/Pill";
 import { SectionRule } from "@/components/SectionRule";
 import { StatCard } from "@/components/StatCard";
-import { barPct, hasAnyRole } from "@/lib/admin";
+import { hasAnyRole } from "@/lib/admin";
 import { pageParamSchema } from "@/lib/admin-schemas";
 import { formatAmountGel, formatDateKa, paymentMethodLabel } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
@@ -43,12 +43,6 @@ export default async function AdminFinancesPage({
     .single();
   if (statsError) throw new Error(`admin_finance_stats failed: ${statsError.message}`);
   const avgGel = stats.active_count > 0 ? stats.mrr_gel / stats.active_count : 0;
-  const tierRows = [
-    { tier: 5, count: stats.tier5_count },
-    { tier: 10, count: stats.tier10_count },
-    { tier: 20, count: stats.tier20_count },
-  ];
-  const maxTier = Math.max(1, ...tierRows.map((t) => t.count));
 
   const txFrom = (txPage - 1) * TX_PAGE_SIZE;
   const {
@@ -94,29 +88,6 @@ export default async function AdminFinancesPage({
           />
           <StatCard value={`${avgGel.toFixed(2)} ₾`} label="საშ. შენატანი" sub="ერთ წევრზე თვეში" />
         </div>
-
-        <Card title="განმეორებადი შენატანები დონეების მიხედვით">
-          <div className="flex flex-col gap-3">
-            {tierRows.map((t) => (
-              <div key={t.tier}>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-bold text-ink">
-                    {t.tier} ₾ <span className="font-semibold text-muted-fg">/ თვეში</span>
-                  </span>
-                  <span className="text-sm font-extrabold text-ink">
-                    {formatCountKa(t.count)} გამომწერი
-                  </span>
-                </div>
-                <div className="mt-1 h-2.5 overflow-hidden bg-surface">
-                  <div
-                    className="h-full bg-brand"
-                    style={{ width: `${barPct(t.count, maxTier)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
 
         <Card>
           <SectionRule

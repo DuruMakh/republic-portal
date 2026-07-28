@@ -35,7 +35,6 @@ import {
   DelegateBindingPickerSample,
   DelegateBindingReferralSample,
   OtpInputSample,
-  TierPickerSample,
 } from "./samples";
 
 // Design-token reference (spec §2.2). Token/class names are the literal Tailwind
@@ -281,11 +280,6 @@ export default function StyleguidePage() {
           <OtpInputSample />
         </Card>
 
-        {/* 12. TierPicker */}
-        <Card title="საწევროს არჩევა">
-          <TierPickerSample />
-        </Card>
-
         {/* 13. DelegateBinding */}
         <Card title="დელეგატის მიბმა — რეფერალით">
           <DelegateBindingReferralSample />
@@ -384,7 +378,7 @@ export default function StyleguidePage() {
         </Card>
 
         <Card title="გადარიცხვა">
-          <TransferInstructions tier={10} referenceCode="GR-ABC234" />
+          <TransferInstructions referenceCode="GR-ABC234" />
         </Card>
 
         <Card title="შენატანების დავთარი">

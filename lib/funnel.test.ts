@@ -5,7 +5,7 @@ import {
   isReferenceCode,
   isReferralCodeCandidate,
   mapFunnelError,
-  TIERS,
+  MEMBERSHIP_FEE_GEL,
   type CabinetStatePresent,
 } from "./funnel";
 
@@ -99,9 +99,9 @@ describe("mapFunnelError", () => {
   });
 });
 
-describe("TIERS", () => {
-  it("is exactly 5/10/20", () => {
-    expect([...TIERS]).toEqual([5, 10, 20]);
+describe("MEMBERSHIP_FEE_GEL", () => {
+  it("is fixed at 10 (owner fix #9) — the 5/10/20 choice is retired", () => {
+    expect(MEMBERSHIP_FEE_GEL).toBe(10);
   });
 });
 

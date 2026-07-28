@@ -32,7 +32,7 @@ export default async function MembershipDonePage() {
           <Pill status="profile_completed" />
         </div>
       </div>
-      <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
+      <TransferInstructions referenceCode={state.referenceCode} />
       <p className="mt-4 text-sm text-muted-fg">
         დელეგატი:{" "}
         <strong className="text-ink" data-testid="chosen-delegate">

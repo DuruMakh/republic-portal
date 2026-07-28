@@ -8,11 +8,11 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Field } from "@/components/Field";
 import { SelectField } from "@/components/Select";
 import { Stepper } from "@/components/Stepper";
-import { TierPicker } from "@/components/TierPicker";
 import {
   deriveMembershipPhase,
   DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
+  MEMBERSHIP_FEE_GEL,
   type CabinetStatePresent,
   type Tier,
 } from "@/lib/funnel";
@@ -67,8 +67,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   const [formError, setFormError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
-  // tier phase — ported from the old /join/step-3.
-  const [tier, setTier] = useState<Tier>(10);
+  // tier phase — ported from the old /join/step-3. Fixed fee (owner fix #9): no
+  // more choice, so this is a plain constant rather than state.
+  const tier: Tier = MEMBERSHIP_FEE_GEL;
   const [tierError, setTierError] = useState<string>();
   const [tierBusy, setTierBusy] = useState(false);
 
@@ -342,9 +343,15 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       <>
         <h2 className="font-serif font-bold border-b-2 border-ink pb-2">საწევრო შენატანი</h2>
         <p className="mb-5 mt-1 text-sm text-muted-fg">
-          აირჩიე ყოველთვიური საწევრო. შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
+          შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
         </p>
-        <TierPicker value={tier} onChange={setTier} />
+        <div className="border border-ink bg-paper-bright p-4 text-center">
+          <span className="block font-serif text-3xl font-bold text-ink">
+            {MEMBERSHIP_FEE_GEL}
+            <small className="text-lg font-bold">₾</small>
+          </span>
+          <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
+        </div>
         {tierError ? <p className="mt-3 text-sm text-danger">{tierError}</p> : null}
         <div className="mt-5 flex flex-col gap-3">
           <Button onClick={completeTier} disabled={tierBusy} size="lg">

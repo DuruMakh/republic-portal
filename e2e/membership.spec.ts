@@ -49,9 +49,8 @@ test("full upgrade: register → wizard → member with a reference code and mem
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
-  // tier phase → complete on tier 10
+  // tier phase → confirm the fixed fee and complete (owner fix #9: no more picker)
   await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
-  await page.getByRole("radio", { name: /10/ }).click();
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
 
   // done phase, now its own route: a GR- code and the central binding

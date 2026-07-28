@@ -25,7 +25,6 @@ test("a fresh member is set up (tier 10, central)", async ({ page }) => {
     firstName: "გადამხდელი",
     lastName: "პირველი",
     personalId: phase4PersonalId(PAYER),
-    tier: 10,
   });
   await loginAs(page, phase4Phone(PAYER));
   await page.goto("/me/profile");

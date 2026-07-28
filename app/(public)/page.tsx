@@ -23,10 +23,11 @@ export const revalidate = 60;
 // Manifesto block (kicker/headline/lede/two-column body) spliced -- never hand-retyped --
 // from prototype/kronika-d3/kronika-d3-template.html via the Task-11 brief's Step 1 node
 // snippet; every codepoint verified against the Georgian (Mkhedruli, U+10A0-U+10FF) Unicode
-// block before commit. P2's membership clause is the OWNER-APPROVED CORRECTED clause
-// (membership is a CHOICE of 5/10/20 GEL/month), replacing the mock's original fixed-price
-// wording -- see .superpowers/sdd/task-11-brief.md Step 1 and the georgian-quote-
-// transcription-hazard note (never retype Georgian by hand). P1 is rendered drop-cap: first
+// block before commit. P2's membership clause was the OWNER-APPROVED CORRECTED clause at
+// Task 11 (membership is a CHOICE of 5/10/20 GEL/month), replacing the mock's original
+// fixed-price wording. Owner fix #9 (2026-07-27) retires that choice for a fixed 10₾ fee,
+// so P2 below is corrected again -- see .superpowers/sdd/task-11-brief.md Step 1 and the
+// georgian-quote-transcription-hazard note (never retype Georgian by hand). P1 is rendered drop-cap: first
 // letter (P1.slice(0, 1)) floated large, rest (P1.slice(1)) as body text, below.
 const KICKER = "მანიფესტი";
 const HEADLINE = "ავაშენოთ ქართული რესპუბლიკა ერთად";
@@ -35,7 +36,7 @@ const LEDE =
 const P1 =
   "რესპუბლიკა არ შენდება ერთი მოედნიდან — ის იწერება ათასობით ხელმოწერით, ყოველ მხარეში, ყოველდღე. ჩვენი პლატფორმა თითოეულ წევრს აძლევს დადასტურებულ ხმას: პირადი ნომრით, SMS კოდით, საკუთარი დელეგატის არჩევით.";
 const P2 =
-  "დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობის შენატანი არჩევითია — 5, 10 ან 20₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება.";
+  "დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობის შენატანი — 10₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება.";
 const CONT = "გააგრძელე კითხვა →";
 const BYLINE1 = "მოძრაობის რედაქცია";
 const BYLINE2 = "3 წუთი კითხვა";
@@ -54,7 +55,7 @@ const LADDER_1_TITLE = "რეგისტრირებული";
 const LADDER_1_DESC = "სწრაფი რეგისტრაცია, გადახდის გარეშე.";
 const LADDER_1_LINK = "რეგისტრაცია →";
 const LADDER_2_TITLE = "წევრი";
-const LADDER_2_PRICE = "5/10/20₾ თვეში";
+const LADDER_2_PRICE = "10₾ თვეში";
 const LADDER_2_DESC = "სრული წევრობა და შიდა გამოკითხვები — კაბინეტიდან.";
 const LADDER_2_LINK = "დაიწყე რეგისტრაციით →";
 const LADDER_3_TITLE = "დელეგატი";

@@ -2,7 +2,6 @@
 
 import { DelegateBinding } from "@/components/DelegateBinding";
 import { OtpInput } from "@/components/OtpInput";
-import { TierPicker } from "@/components/TierPicker";
 
 // Styleguide gallery samples. The page itself is a Server Component, and
 // these components take onChange callbacks that can't cross the RSC
@@ -20,10 +19,6 @@ const delegateOptions = [
 
 export function OtpInputSample() {
   return <OtpInput value="123" onChange={() => undefined} />;
-}
-
-export function TierPickerSample() {
-  return <TierPicker value={10} onChange={() => undefined} />;
 }
 
 export function DelegateBindingReferralSample() {

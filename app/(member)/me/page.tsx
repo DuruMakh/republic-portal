@@ -34,7 +34,7 @@ export default async function CabinetOverviewPage() {
         <Eyebrow>შემდეგი ნაბიჯი</Eyebrow>
         <h2 className="mt-1 font-serif text-xl font-bold text-ink">გახდი წევრი</h2>
         <p className="mt-1 text-sm text-muted-fg">
-          წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 5₾-დან.
+          წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 10₾.
         </p>
         <ul className="mt-4 flex flex-col gap-2">
           {PERKS.map((perk) => (

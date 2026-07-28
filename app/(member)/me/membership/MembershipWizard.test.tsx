@@ -285,6 +285,15 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
 });
 
 describe("MembershipWizard — tier phase", () => {
+  it("shows the fixed fee as a confirmation, not a picker (owner fix #9)", () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByText(/10/)).toBeInTheDocument();
+    expect(screen.getByText("თვეში")).toBeInTheDocument();
+  });
+
   it("navigates to the done screen on successful completion", async () => {
     completeMembershipAction.mockResolvedValue({
       ok: true,
