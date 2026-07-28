@@ -198,9 +198,7 @@ export default function JoinForm() {
             <OtpVerification phone={phone} onVerified={afterVerify} />
           ) : (
             <div className="flex flex-col gap-4">
-              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">
-                პირადი მონაცემები
-              </h2>
+              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">პირადი მონაცემები</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label="სახელი"
