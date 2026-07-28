@@ -392,3 +392,29 @@ to the next round.
   migration restated `register()`; the restatement was verified line-by-line (task
   review) to carry every accumulated guard forward — no pending merge race,
   contrary to the plan's earlier warning.
+
+## ADR-023 (2026-07-28): Legacy Georgian-quote corruption accepted as-is; gate stays diff-scoped
+
+A whole-repo audit (2026-07-28, refreshed at the round-1 merge 5b054b2;
+codepoint-built per-file balance checks) found 28 tracked files where U+201E
+openers do not match U+201C/U+201D closers -- the historical "silent
+normalization" corruption from before the 2026-07-19 Phase 5 incident taught
+the splice-don't-retype rule. Every instance was classified: 12 internal docs
+(specs, plans, CHANGELOG, ARCHITECTURE, this log) carry the bulk; 13 code
+files (app/, e2e/, lib/cabinet.ts, lib/format.ts, one SQL migration) carry it
+in comments ONLY -- no rendered string and no e2e assertion literal in the
+shipped app is corrupted; lib/content-render.ts is legitimately unbalanced
+(lone quote characters in its trailing-punctuation regex class, not
+corruption); and the single rendered occurrence is one demo-fixture employer
+line duplicated across the two prototype/kronika-d3 HTML mocks (prototype,
+not product).
+
+**Owner decision: accept the legacy as-is -- no sweep.** A repair sweep of
+history-laden files (this log is append-only) would be churn without user
+benefit. `scripts/ka-gate.mjs` stays diff-scoped and keeps blocking NEW
+corruption; its header's stale "three legacy files" note is corrected to
+point here. Because the gate checks added lines, any edit touching a legacy
+line must leave it clean -- the debt retires organically. Proof the path
+works: round 1's own edits already retired e2e/registration.spec.ts's one
+legacy instance in passing. Prototype fixture polish (the two kronika-d3
+lines) stays optional and unscheduled.
