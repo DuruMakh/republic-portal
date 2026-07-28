@@ -485,7 +485,6 @@ export interface Database {
         Args: {
           p_first_name: string;
           p_last_name: string;
-          p_personal_id: string;
           p_ref_code?: string | null;
         };
         Returns: Json;
@@ -497,6 +496,7 @@ export interface Database {
           p_city_id: number;
           p_employment: string;
           p_delegate_id?: string | null;
+          p_personal_id?: string | null;
         };
         Returns: Json;
       };

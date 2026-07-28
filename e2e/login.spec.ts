@@ -27,7 +27,6 @@ test("fresh phone OTP login lands on the one-door /join form", async ({ page }) 
   // fresh phone with no profile → the one-door registration form (spec §4.1/§4.2)
   await expect(page).toHaveURL(/\/join$/);
   await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
-  await expect(page.getByLabel("პირადი ნომერი")).toBeVisible();
 });
 
 test("a registered-standing user logs in and lands on the registered cabinet", async ({ page }) => {

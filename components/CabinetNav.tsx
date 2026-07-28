@@ -24,13 +24,25 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
     router.refresh();
   }
 
+  // Longest matching href wins (owner fix list #7): "მთავარი" (/me) is a
+  // prefix of every cabinet route, so bare prefix-matching kept it lit on
+  // every page. Same rule AdminNav hardcodes for /admin, made data-driven —
+  // this nav also serves the delegate chrome, whose root is /delegate.
+  const matches = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  let activeHref: string | null = null;
+  for (const item of items) {
+    if (matches(item.href) && (activeHref === null || item.href.length > activeHref.length)) {
+      activeHref = item.href;
+    }
+  }
+
   return (
     <nav
       aria-label="კაბინეტის ნავიგაცია"
       className="mb-8 flex gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold"
     >
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = item.href === activeHref;
         return (
           <Link
             key={item.href}

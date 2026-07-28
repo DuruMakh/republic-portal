@@ -43,7 +43,7 @@ describe("DelegateChange", () => {
     );
     const select = screen.getByLabelText("დელეგატი");
     const options = Array.from(select.querySelectorAll("option")).map((o) => o.textContent);
-    expect(options[0]).toBe("ცენტრალური მოძრაობა");
+    expect(options[0]).toBe("არ მყავს დელეგატი");
     expect(options[1]).toBe("გიორგი მაისურაძე (მიმდინარე)");
     expect(options).toHaveLength(2); // Imereti delegate filtered out
   });

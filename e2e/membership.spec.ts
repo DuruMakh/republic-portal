@@ -10,6 +10,7 @@ import {
   journeyPersonalId,
   journeyPhone,
   passRegistration,
+  seedCompletedMember,
 } from "./funnel-helpers";
 
 const RUN = `e2e-memb-${Date.now().toString(36)}`;
@@ -36,14 +37,16 @@ test("full upgrade: register → wizard → member with a reference code and mem
     phone,
     firstName: "ვატესტ",
     lastName: "წევრობას",
-    personalId: journeyPersonalId(JOURNEY.membFull),
   });
 
   // the overview CTA opens the wizard's profile phase
   await page.getByTestId("become-member-cta").click();
   await expect(page).toHaveURL(/\/me\/membership/);
   await expect(page.getByLabel("დელეგატი")).toBeVisible(); // no referral → the picker shows
-  await fillMembershipProfile(page, { regionLabel: "თბილისი" });
+  await fillMembershipProfile(page, {
+    regionLabel: "თბილისი",
+    personalId: journeyPersonalId(JOURNEY.membFull),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
   // tier phase → complete on tier 10
@@ -54,7 +57,7 @@ test("full upgrade: register → wizard → member with a reference code and mem
   // done phase, now its own route: a GR- code and the central binding
   await expect(page).toHaveURL(/\/me\/membership\/done/);
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
-  await expect(page.getByTestId("chosen-delegate")).toHaveText("ცენტრალური მოძრაობა");
+  await expect(page.getByTestId("chosen-delegate")).toHaveText("არ მყავს დელეგატი");
   // the done screen's own pill must already read „წევრი" (V17) — it used to fall through
   // to Pill's retired default „პროფილი შევსებულია" since this <Pill> has no label override
   // (exact: the old substring match also passed against e.g. the აქტიური-წევრის copy below it)
@@ -88,12 +91,14 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
     phone,
     firstName: "ვატესტ",
     lastName: "გაგრძელებას",
-    personalId: journeyPersonalId(JOURNEY.membResume),
   });
 
   // save the profile phase only, then leave the wizard
   await page.goto("/me/membership");
-  await fillMembershipProfile(page, { regionLabel: "კახეთი" });
+  await fillMembershipProfile(page, {
+    regionLabel: "კახეთი",
+    personalId: journeyPersonalId(JOURNEY.membResume),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
   await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
 
@@ -120,13 +125,15 @@ test("referral binding survives to completion and shows as the current delegate"
     phone,
     firstName: "ვატესტ",
     lastName: "რეფერალით",
-    personalId: journeyPersonalId(JOURNEY.regReferral),
   });
 
   // complete the wizard — the referral card replaces the picker; binding is region-independent
   await page.goto("/me/membership");
   await expect(page.getByText(fullName)).toBeVisible();
-  await fillMembershipProfile(page, { regionLabel: "აჭარა" });
+  await fillMembershipProfile(page, {
+    regionLabel: "აჭარა",
+    personalId: journeyPersonalId(JOURNEY.regReferral),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
   await expect(page.getByTestId("chosen-delegate")).toHaveText(fullName);
@@ -158,7 +165,6 @@ test("a registered member RSVPs to a published event", async ({ page }) => {
     phone,
     firstName: "ვატესტ",
     lastName: "დასწრებას",
-    personalId: journeyPersonalId(JOURNEY.membRsvp),
   });
   await page.goto("/me/events");
   const eventCard = page.locator("section", { hasText: `შეხვედრა ${RUN}` });
@@ -170,4 +176,41 @@ test("a registered member RSVPs to a published event", async ({ page }) => {
   await page.reload();
   await expect(eventCard.getByText("✓ შენ მოდიხარ")).toBeVisible();
   await expect(eventCard.getByText(/სულ მოდის 1 მონაწილე/)).toBeVisible();
+});
+
+test("a personal ID already claimed by another member is rejected inline, staying on the profile phase", async ({
+  page,
+}) => {
+  // Review fix wave 1, finding F1: replaces registration.spec's retired duplicate-ID
+  // coverage, which filled a /join field that no longer exists — the check now lives
+  // in become_member_save_profile (owner fix #10), reached only from the wizard. The
+  // "corrects without a second SMS" half of the old test is unit-covered (JoinForm's
+  // afterVerify tests) and isn't recreated here.
+  const heldId = journeyPersonalId(JOURNEY.regDupId);
+  await seedCompletedMember({
+    phone: journeyPhone(JOURNEY.regDupId),
+    firstName: "ვატესტ",
+    lastName: "დუბლიკატს",
+    personalId: heldId,
+  });
+
+  const phone = journeyPhone(JOURNEY.membDupId);
+  await page.goto("/join");
+  await passRegistration(page, {
+    phone,
+    firstName: "ვატესტ",
+    lastName: "წევრობას",
+  });
+
+  await page.goto("/me/membership");
+  await fillMembershipProfile(page, {
+    regionLabel: "თბილისი",
+    personalId: heldId, // already claimed by the seeded member above
+  });
+  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+
+  // the duplicate surfaces as a field error, not a form banner, and the wizard
+  // stays on the profile phase — no silent advance to the tier phase
+  await expect(page.getByText("ეს პირადი ნომერი უკვე რეგისტრირებულია.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "იურიდიული პროფილი" })).toBeVisible();
 });

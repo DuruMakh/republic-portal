@@ -51,6 +51,8 @@ export interface CabinetStatePresent {
   lastName: string;
   /** e.g. "010********" — first 3 digits + asterisks; own-ID display without raw exposure. */
   personalIdMasked: string;
+  /** Whether profiles.personal_id is set — the wizard renders the ID field only when false (owner fix #10). */
+  hasPersonalId: boolean;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;

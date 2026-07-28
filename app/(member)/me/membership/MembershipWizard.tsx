@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Field, inputClasses } from "@/components/Field";
+import { Field } from "@/components/Field";
+import { SelectField } from "@/components/Select";
 import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
 import {
   deriveMembershipPhase,
+  DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
   type CabinetStatePresent,
   type Tier,
@@ -18,44 +20,11 @@ import { EMPLOYMENT_PRESETS, membershipProfileSchema } from "@/lib/funnel-schema
 import { createClient } from "@/lib/supabase/client";
 import { completeMembershipAction, saveMembershipProfileAction } from "./actions";
 
-const FIELD_KEYS = ["birthDate", "regionId", "cityId", "employment"] as const;
+const FIELD_KEYS = ["personalId", "birthDate", "regionId", "cityId", "employment"] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
   return typeof key === "string" && (FIELD_KEYS as readonly string[]).includes(key);
-}
-
-function LabeledSelect({
-  label,
-  id,
-  value,
-  onChange,
-  error,
-  children,
-}: {
-  label: string;
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold text-ink">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${inputClasses} ${error ? "border-danger" : "border-line"} bg-white`}
-      >
-        {children}
-      </select>
-      {error ? <p className="text-xs text-danger">{error}</p> : null}
-    </div>
-  );
 }
 
 // The wizard only ever renders "profile" and "tier" — a completed member never
@@ -68,14 +37,24 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",
   );
 
-  // profile phase — ported from the old /join/step-2 (spec §4.3), minus personalId
-  // and the delegate-role tcAccepted branch: this wizard only ever renders for
+  // profile phase — ported from the old /join/step-2 (spec §4.3), minus the
+  // delegate-role tcAccepted branch: this wizard only ever renders for
   // role === "member" (the page gate redirects role === "delegate" to /delegate).
   const referral = initialState.referral;
+  // Owner fix #10: the ID moved here from /join. Rendered only while NOT yet
+  // captured. Review finding F2: this used to read `!initialState.hasPersonalId`
+  // directly — a one-time snapshot that never refreshed. After a successful save
+  // captured the ID server-side, "← პროფილის შესწორება" re-rendered the now-stale
+  // editable field, and resubmitting it sent a value the server's immutable-once-
+  // set coalesce silently discarded. Tracking capture in state lets a successful
+  // save flip it immediately, independent of phase navigation.
+  const [idCaptured, setIdCaptured] = useState(initialState.hasPersonalId);
+  const askPersonalId = !idCaptured;
   const [regions, setRegions] = useState<{ id: number; name_ka: string }[]>([]);
   const [cities, setCities] = useState<{ id: number; name_ka: string }[]>([]);
   const [delegateOptions, setDelegateOptions] = useState<DelegateOption[]>([]);
 
+  const [personalId, setPersonalId] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [regionId, setRegionId] = useState<number | null>(null);
   const [cityId, setCityId] = useState<number | null>(null);
@@ -166,6 +145,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     setFormError(undefined);
     const employment = workPreset === "__other" ? workFree : workPreset;
     const parsed = membershipProfileSchema.safeParse({
+      // review finding M1: strip pasted separators before the regex check, same
+      // as JoinForm's retired personalId.replace(/\D/g, "") normalization
+      personalId: askPersonalId ? personalId.replace(/\D/g, "") : null,
       birthDate,
       regionId: regionId ?? 0,
       cityId: cityId ?? 0,
@@ -200,8 +182,19 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       setBusy(false);
     }
     if (!result.ok) {
-      setFormError(result.error);
+      if (result.error === DUPLICATE_PERSONAL_ID_MESSAGE) {
+        setErrors((prev) => ({ ...prev, personalId: result.error }));
+      } else {
+        setFormError(result.error);
+      }
       return;
+    }
+    // review finding F2: only trust a fresh capture when this submission actually
+    // asked for one (askPersonalId as the guard) — then read the server's own
+    // hasPersonalId off the returned state rather than assuming, so a back-then-
+    // resave never re-renders the (now immutable, server-ignored) ID field again
+    if (askPersonalId && result.state.exists) {
+      setIdCaptured(result.state.hasPersonalId);
     }
     // clears a stale error from an earlier failed completion attempt — this is
     // one persistent component, not a fresh page mount, so a prior tier-phase
@@ -240,6 +233,21 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           ეს მონაცემები საჭიროა წევრობის იურიდიული ვერიფიკაციისთვის. ინახება უსაფრთხოდ.
         </p>
         <div className="flex flex-col gap-4">
+          {askPersonalId ? (
+            <div className="flex flex-col gap-1.5">
+              <Field
+                label="პირადი ნომერი"
+                name="personalId"
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="01001000000"
+                value={personalId}
+                onChange={(e) => setPersonalId(e.target.value)}
+                error={errors.personalId}
+              />
+              <p className="text-xs text-muted-fg">11 ნიშნა</p>
+            </div>
+          ) : null}
           <Field
             label="დაბადების თარიღი"
             name="birthDate"
@@ -249,11 +257,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             error={errors.birthDate}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <LabeledSelect
+            <SelectField
               label="მხარე"
               id="mw-region"
               value={regionId === null ? "" : String(regionId)}
-              onChange={changeRegion}
+              onChange={(e) => changeRegion(e.target.value)}
               error={errors.regionId}
             >
               <option value="" disabled>
@@ -264,12 +272,12 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {r.name_ka}
                 </option>
               ))}
-            </LabeledSelect>
-            <LabeledSelect
+            </SelectField>
+            <SelectField
               label="ქალაქი / მუნიციპალიტეტი"
               id="mw-city"
               value={cityId === null ? "" : String(cityId)}
-              onChange={(v) => setCityId(v ? Number(v) : null)}
+              onChange={(e) => setCityId(e.target.value ? Number(e.target.value) : null)}
               error={errors.cityId}
             >
               <option value="" disabled>
@@ -280,13 +288,13 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {c.name_ka}
                 </option>
               ))}
-            </LabeledSelect>
+            </SelectField>
           </div>
-          <LabeledSelect
+          <SelectField
             label="სამუშაო ადგილი / სტატუსი"
             id="mw-work"
             value={workPreset}
-            onChange={setWorkPreset}
+            onChange={(e) => setWorkPreset(e.target.value)}
             error={errors.employment}
           >
             <option value="" disabled>
@@ -298,7 +306,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               </option>
             ))}
             <option value="__other">სხვა (მიუთითე)</option>
-          </LabeledSelect>
+          </SelectField>
           {workPreset === "__other" ? (
             <Field
               label="მიუთითე შენი საქმიანობა"
@@ -326,7 +334,6 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           <Button onClick={submitProfile} disabled={busy} size="lg">
             გაგრძელება →
           </Button>
-          <p className="text-center text-xs text-muted-fg">💾 მონაცემები ინახება ავტომატურად</p>
         </div>
       </>
     );

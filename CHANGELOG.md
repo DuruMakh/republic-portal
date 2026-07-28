@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — Owner fix-list round 1 (2026-07-28)
+
+- New dropdown look across the whole site: every select field now matches the design
+  system's underline style instead of the plain browser default (1)
+- The news front page now leads with one large story above a grid of the rest, and
+  article photos are bounded instead of stretching oversized (4)
+- The join form no longer shows the phone-number section heading twice (6)
+- In the member cabinet, only the page you're actually on lights up in the navigation
+  — no more two tabs highlighted at once (7)
+- The "saves automatically" caption under the membership form is gone (8)
+- Personal ID is now asked when becoming a member, not at initial sign-up: /join
+  collects only name, surname and phone, and the duplicate-ID check moved to the
+  membership step with it (10)
+- The city picker lists every municipality in the country plus all ten Tbilisi
+  districts, instead of the previous partial list (14)
+- Member pages that show no chosen delegate now read „არ მყავს დელეგატი“ instead of a
+  default that implied automatic backing of the central movement (15)
+
+Decisions behind these fixes are recorded in ADR-022.
+
 ## 0.10.0 — The security check-up (2026-07-27)
 
 - A full security review of the platform, and the most important result is what

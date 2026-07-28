@@ -2,16 +2,15 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CabinetNav } from "./CabinetNav";
 
-// Shared spies via vi.hoisted so both the (hoisted) vi.mock factories below and
-// the test bodies can see and control the same function references.
-const { push, refresh, signOut } = vi.hoisted(() => ({
+const { push, refresh, signOut, pathnameRef } = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),
   signOut: vi.fn(),
+  pathnameRef: { current: "/me/profile" },
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/me/profile",
+  usePathname: () => pathnameRef.current,
   useRouter: () => ({ push, refresh }),
 }));
 vi.mock("@/lib/supabase/client", () => ({
@@ -26,6 +25,7 @@ const ITEMS = [
 
 describe("CabinetNav", () => {
   beforeEach(() => {
+    pathnameRef.current = "/me/profile";
     push.mockClear();
     refresh.mockClear();
     signOut.mockReset();
@@ -72,5 +72,32 @@ describe("CabinetNav", () => {
     const { container } = render(<CabinetNav items={itemsWithCount} />);
     const link = container.querySelector('a[href="/me/delegate"]');
     expect(link).toHaveTextContent("3");
+  });
+
+  const REGISTERED_ITEMS = [
+    { href: "/me", label: "მთავარი" },
+    { href: "/me/events", label: "ღონისძიებები" },
+    { href: "/me/news", label: "სიახლეები" },
+    { href: "/me/profile", label: "პროფილი" },
+  ];
+
+  it("root „მთავარი“ is NOT marked on sibling subpages (owner fix #7)", () => {
+    pathnameRef.current = "/me/events";
+    render(<CabinetNav items={REGISTERED_ITEMS} />);
+    expect(screen.getByRole("link", { name: "ღონისძიებები" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "მთავარი" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("root „მთავარი“ is marked on /me itself and on subroutes no other item claims", () => {
+    pathnameRef.current = "/me";
+    const first = render(<CabinetNav items={REGISTERED_ITEMS} />);
+    expect(screen.getByRole("link", { name: "მთავარი" })).toHaveAttribute("aria-current", "page");
+    first.unmount();
+    pathnameRef.current = "/me/membership";
+    render(<CabinetNav items={REGISTERED_ITEMS} />);
+    expect(screen.getByRole("link", { name: "მთავარი" })).toHaveAttribute("aria-current", "page");
   });
 });

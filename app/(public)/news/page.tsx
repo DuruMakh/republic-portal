@@ -25,18 +25,32 @@ export default async function NewsPage() {
       ) : (
         <>
           <SectionRule label="სიახლეები" className="mt-8" />
-          <div className="mt-4 flex flex-col gap-4">
-            {news.map((n) => (
-              <NewsCard
-                key={n.id}
-                href={`/news/${n.slug}`}
-                title={n.title}
-                publishedAt={formatDateKa(n.published_at)}
-                imageUrl={n.image_url}
-                excerptText={excerpt(n.body)}
-              />
-            ))}
+          <div className="mt-6">
+            <NewsCard
+              variant="lead"
+              key={news[0]!.id}
+              href={`/news/${news[0]!.slug}`}
+              title={news[0]!.title}
+              publishedAt={formatDateKa(news[0]!.published_at)}
+              imageUrl={news[0]!.image_url}
+              excerptText={excerpt(news[0]!.body)}
+            />
           </div>
+          {news.length > 1 ? (
+            <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {news.slice(1).map((n) => (
+                <NewsCard
+                  variant="tile"
+                  key={n.id}
+                  href={`/news/${n.slug}`}
+                  title={n.title}
+                  publishedAt={formatDateKa(n.published_at)}
+                  imageUrl={n.image_url}
+                  excerptText={excerpt(n.body)}
+                />
+              ))}
+            </div>
+          ) : null}
         </>
       )}
     </main>

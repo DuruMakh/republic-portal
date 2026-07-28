@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { DelegateCard } from "@/components/DelegateCard";
 import { inputClasses } from "@/components/Field";
+import { Select } from "@/components/Select";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
 import type { Region } from "@/lib/supabase/public";
@@ -44,8 +45,8 @@ export function DelegateDirectory({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select
-          className={`${inputClasses} max-w-[280px]`}
+        <Select
+          className="max-w-[280px]"
           value={regionId}
           onChange={(e) => setRegionId(e.target.value)}
           aria-label="მხარე"
@@ -56,7 +57,7 @@ export function DelegateDirectory({
               {r.name_ka}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {filtered.length > 0 ? (
         <div className="grid min-w-0 lg:grid-cols-2 lg:gap-x-16">

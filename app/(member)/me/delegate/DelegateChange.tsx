@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { inputClasses } from "@/components/Field";
+import { SelectField } from "@/components/Select";
 import { changeDelegateSchema } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { changeDelegateAction } from "../actions";
@@ -32,7 +32,7 @@ export function DelegateChange({
   const [regionId, setRegionId] = useState(initialRegionId);
   // Seed to the current delegate only if it's a visible (approved) option; a
   // no-longer-approved binding isn't in `delegates`, so seeding its id would leave
-  // the controlled <select> pointing at a missing <option> (blank, dead-end submit).
+  // the controlled Select pointing at a missing <option> (blank, dead-end submit).
   const [choice, setChoice] = useState(
     currentDelegateId !== null && delegates.some((d) => d.id === currentDelegateId)
       ? currentDelegateId
@@ -87,47 +87,37 @@ export function DelegateChange({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="change-region" className="text-sm font-semibold text-ink">
-          რეგიონი
-        </label>
-        <select
-          id="change-region"
-          className={`${inputClasses} border-line`}
-          value={regionId}
-          onChange={(e) => changeRegion(Number(e.target.value))}
-        >
-          {regions.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name_ka}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="change-delegate" className="text-sm font-semibold text-ink">
-          დელეგატი
-        </label>
-        <select
-          id="change-delegate"
-          className={`${inputClasses} border-line`}
-          value={choice}
-          onChange={(e) => setChoice(e.target.value)}
-        >
-          <option value={CENTRAL}>
-            {currentDelegateId === null ? "ცენტრალური მოძრაობა (მიმდინარე)" : "ცენტრალური მოძრაობა"}
+      <SelectField
+        label="რეგიონი"
+        id="change-region"
+        value={regionId}
+        onChange={(e) => changeRegion(Number(e.target.value))}
+      >
+        {regions.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.name_ka}
           </option>
-          {options.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.first_name} {d.last_name}
-              {d.id === currentDelegateId ? " (მიმდინარე)" : ""}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-muted-fg">
-          აჩვენებს მხოლოდ დამტკიცებულ დელეგატებს არჩეულ რეგიონში.
-        </p>
-      </div>
+        ))}
+      </SelectField>
+      <SelectField
+        label="დელეგატი"
+        id="change-delegate"
+        value={choice}
+        onChange={(e) => setChoice(e.target.value)}
+      >
+        <option value={CENTRAL}>
+          {currentDelegateId === null ? "არ მყავს დელეგატი (მიმდინარე)" : "არ მყავს დელეგატი"}
+        </option>
+        {options.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.first_name} {d.last_name}
+            {d.id === currentDelegateId ? " (მიმდინარე)" : ""}
+          </option>
+        ))}
+      </SelectField>
+      <p className="text-xs text-muted-fg">
+        აჩვენებს მხოლოდ დამტკიცებულ დელეგატებს არჩეულ რეგიონში.
+      </p>
       {message ? (
         <p
           role="status"

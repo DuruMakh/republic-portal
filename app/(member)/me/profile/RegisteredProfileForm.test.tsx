@@ -10,12 +10,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
-function renderForm() {
+function renderForm(hasPersonalId = true) {
   return render(
     <RegisteredProfileForm
       initial={{ firstName: "ნინო", lastName: "ბერიძე" }}
       phone="995599123456"
       personalIdMasked="010********"
+      hasPersonalId={hasPersonalId}
     />,
   );
 }
@@ -29,6 +30,13 @@ describe("RegisteredProfileForm", () => {
     expect(screen.getByTestId("profile-phone")).toHaveAttribute("readonly");
     expect(screen.getByTestId("profile-pid")).toHaveValue("010********");
     expect(screen.getByTestId("profile-pid")).toHaveAttribute("readonly");
+  });
+
+  it("hides the PID row when the profile has no personal ID yet (owner fix #10)", () => {
+    renderForm(false);
+    expect(screen.queryByTestId("profile-pid")).toBeNull();
+    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
+    expect(screen.getByLabelText("სახელი")).toHaveValue("ნინო");
   });
 
   it("rejects an empty name in Georgian without calling the action", async () => {

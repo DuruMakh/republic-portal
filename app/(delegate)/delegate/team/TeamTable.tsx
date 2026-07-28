@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
+import { Select } from "@/components/Select";
 import { SectionRule } from "@/components/SectionRule";
 import {
   formatDateKa,
@@ -42,8 +43,8 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <select
-              className={adminControlClasses}
+            <Select
+              variant="admin"
               aria-label="სტატუსის ფილტრი"
               value={status}
               onChange={(e) => setStatus(e.target.value as StatusFilter)}
@@ -54,7 +55,7 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
                   stay literal since the filter logic keys on status, not label */}
               <option value="active_member">{TEAM_STATUS_LABELS.active_member}</option>
               <option value="profile_completed">{TEAM_STATUS_LABELS.profile_completed}</option>
-            </select>
+            </Select>
           </div>
         }
       />

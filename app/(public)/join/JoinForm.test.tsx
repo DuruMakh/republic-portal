@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
   NOT_AUTHENTICATED_MESSAGE,
   type CabinetStatePresent,
@@ -47,7 +46,8 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
     role: "member",
     firstName: "ნინო",
     lastName: "ბერიძე",
-    personalIdMasked: "010********",
+    personalIdMasked: "********",
+    hasPersonalId: false,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -75,7 +75,6 @@ async function driveToRegister() {
   render(<JoinForm />);
   fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
   fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-  fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
   fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), { target: { value: "555123456" } });
   fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
   const confirm = await screen.findByRole("button", { name: "დადასტურება" });
@@ -135,17 +134,22 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     expect(screen.queryByRole("button", { name: "დარეგისტრირება" })).toBeNull();
   });
 
-  it("duplicate personal ID surfaces as a field error in the retry phase, then corrects without a second SMS (regression)", async () => {
-    registerAction.mockResolvedValueOnce({ ok: false, error: DUPLICATE_PERSONAL_ID_MESSAGE });
+  it("a non-auth register failure keeps the proven session, and retrying without a fresh SMS succeeds (regression)", async () => {
+    // register() is now the 3-arg (name+ref only) form — it can no longer produce
+    // DUPLICATE_PERSONAL_ID_MESSAGE (owner fix #10 moved that check to the
+    // membership wizard's become_member_save_profile). This retargets the old
+    // duplicate-ID regression onto a failure register() CAN still raise, while
+    // keeping the same retry-then-succeed shape: the proven OTP session survives
+    // a failed register() and a resubmit needs no fresh SMS.
+    registerAction.mockResolvedValueOnce({ ok: false, error: GENERIC_FUNNEL_ERROR });
     await driveToRegister();
 
-    expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
+    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
     const retryButton = screen.getByRole("button", { name: "დარეგისტრირება" });
 
-    // fix the ID and resubmit via the proven session — success redirects to the cabinet
+    // resubmit via the proven session — success redirects to the cabinet
     registerAction.mockResolvedValueOnce({ ok: true, state: presentState() });
-    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "02002000000" } });
     fireEvent.click(retryButton);
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/me"));
@@ -157,5 +161,23 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     registerAction.mockResolvedValueOnce({ ok: true, state: presentState() });
     await driveToRegister();
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/me"));
+  });
+});
+
+describe("JoinForm — section headings (owner fix #6)", () => {
+  it("no phone section heading — the field's own label names it (owner fix #6)", () => {
+    // render JoinForm exactly as the first existing test in this file does
+    render(<JoinForm />);
+    expect(screen.queryByRole("heading", { name: /ტელეფონის ნომერი/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "პირადი მონაცემები" })).toBeInTheDocument();
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeInTheDocument();
+  });
+});
+
+describe("JoinForm — no personal ID at registration (owner fix #10)", () => {
+  it("does not ask for a personal ID at registration (owner fix #10)", () => {
+    // render JoinForm exactly as the first existing test in this file does
+    render(<JoinForm />);
+    expect(screen.queryByLabelText("პირადი ნომერი")).not.toBeInTheDocument();
   });
 });

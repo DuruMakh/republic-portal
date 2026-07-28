@@ -17,6 +17,7 @@ import { PageSheet } from "@/components/PageSheet";
 import { PhotoFigure } from "@/components/PhotoFigure";
 import { Pill } from "@/components/Pill";
 import { SectionRule } from "@/components/SectionRule";
+import { Select, SelectField } from "@/components/Select";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
@@ -228,6 +229,15 @@ export default function StyleguidePage() {
               value="ძებნის ველი (adminControlClasses)"
               className={adminControlClasses}
             />
+            <SelectField label="მხარე" defaultValue="">
+              <option value="">ყველა მხარე</option>
+              <option value="1">თბილისი</option>
+              <option value="2">აჭარა</option>
+            </SelectField>
+            <Select variant="admin" aria-label="მხარე" defaultValue="">
+              <option value="">ყველა მხარე</option>
+              <option value="1">თბილისი</option>
+            </Select>
           </div>
         </Card>
 
@@ -379,6 +389,24 @@ export default function StyleguidePage() {
               title="სიახლის ბარათი"
               publishedAt="19.07.2026"
               imageUrl={null}
+              excerptText="მოკლე შინაარსი ბარათისთვის…"
+              pill={<Pill status="profile_completed" label="წევრებისთვის" />}
+            />
+            <NewsCard
+              variant="lead"
+              href="/styleguide"
+              title="სიახლის ბარათი"
+              publishedAt="19.07.2026"
+              imageUrl="/og-default.png"
+              excerptText="მოკლე შინაარსი ბარათისთვის…"
+              pill={<Pill status="profile_completed" label="წევრებისთვის" />}
+            />
+            <NewsCard
+              variant="tile"
+              href="/styleguide"
+              title="სიახლის ბარათი"
+              publishedAt="19.07.2026"
+              imageUrl="/og-default.png"
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />

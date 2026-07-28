@@ -37,7 +37,7 @@ const REGIONS = [
   { id: 2, name_ka: "იმერეთი" },
 ];
 
-function renderForm(employment: string) {
+function renderForm(employment: string, hasPersonalId = true) {
   return render(
     <ProfileForm
       initial={{
@@ -49,6 +49,7 @@ function renderForm(employment: string) {
       }}
       phone="995599123456"
       regions={REGIONS}
+      hasPersonalId={hasPersonalId}
     />,
   );
 }
@@ -94,5 +95,12 @@ describe("ProfileForm", () => {
     await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
     fireEvent.change(screen.getByLabelText("მხარე"), { target: { value: "2" } });
     await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("9"));
+  });
+
+  it("hides the PID row when the profile has no personal ID yet (owner fix #10)", async () => {
+    renderForm("სტუდენტი", false);
+    expect(screen.queryByTestId("profile-pid")).toBeNull();
+    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
+    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
   });
 });

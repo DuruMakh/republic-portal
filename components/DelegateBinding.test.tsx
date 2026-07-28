@@ -30,7 +30,7 @@ describe("DelegateBinding", () => {
     );
     const select = screen.getByRole("combobox");
     const items = screen.getAllByRole("option");
-    expect(items[0]).toHaveTextContent("ცენტრალური მოძრაობა");
+    expect(items[0]).toHaveTextContent("არ მყავს დელეგატი");
     expect(select).toHaveValue("central");
   });
   it("picker mode: selecting a delegate reports its id, reselecting central reports null", () => {

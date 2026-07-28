@@ -13,19 +13,11 @@ describe("registerSchema", () => {
   const base = {
     firstName: "ნინო",
     lastName: "ბერიძე",
-    personalId: "01001012345",
     phone: "555 12 34 56",
   };
-  it("accepts the four fields and normalizes the phone", () => {
+  it("accepts the three fields and normalizes the phone (owner fix #10: no personal ID at registration)", () => {
     const parsed = registerSchema.parse(base);
     expect(parsed.phone).toBe("+995555123456");
-  });
-  it("rejects a personal ID that is not 11 digits, in Georgian", () => {
-    const r = registerSchema.safeParse({ ...base, personalId: "123" });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      expect(r.error.issues[0]?.message).toBe("პირადი ნომერი უნდა იყოს 11 ციფრი.");
-    }
   });
   it("accepts an optional referral code and rejects junk", () => {
     expect(registerSchema.safeParse({ ...base, refCode: "7K3M9Q" }).success).toBe(true);
@@ -39,7 +31,6 @@ describe("registerActionSchema", () => {
       registerActionSchema.safeParse({
         firstName: "ნინო",
         lastName: "ბერიძე",
-        personalId: "01001012345",
       }).success,
     ).toBe(true);
   });
@@ -47,6 +38,7 @@ describe("registerActionSchema", () => {
 
 describe("membershipProfileSchema", () => {
   const base = {
+    personalId: "01001012345",
     birthDate: "1990-05-20",
     regionId: 3,
     cityId: 7,
@@ -55,6 +47,16 @@ describe("membershipProfileSchema", () => {
   };
   it("accepts a full profile", () => {
     expect(membershipProfileSchema.safeParse(base).success).toBe(true);
+  });
+  it("accepts a null personal ID — owner fix #10: a profile that already has one is not asked again", () => {
+    expect(membershipProfileSchema.safeParse({ ...base, personalId: null }).success).toBe(true);
+  });
+  it("rejects a personal ID that is not 11 digits, in Georgian (moved from registerSchema, owner fix #10)", () => {
+    const r = membershipProfileSchema.safeParse({ ...base, personalId: "123" });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0]?.message).toBe("პირადი ნომერი უნდა იყოს 11 ციფრი.");
+    }
   });
   it("rejects a future birth date in Georgian", () => {
     const r = membershipProfileSchema.safeParse({ ...base, birthDate: "2999-01-01" });

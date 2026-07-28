@@ -360,3 +360,35 @@ close standing questions rather than because they change code.
   standing behind the deferred personal-ID squatting finding. The code half (the
   null-phone guard) ships in this phase; disabling the email provider is a project setting
   and remains an owner action, tracked in `docs/security/LAUNCH-BLOCKERS.md`.
+
+## ADR-022 (2026-07-28): Owner fix-list round 1 — decisions taken in implementation
+
+Source: the owner's "What to FIX" doc (2026-07-27), items 1/4/6/7/8a/14/15, plus item 10
+as clarified in chat on 2026-07-28. Item 16 and the remaining decision-items are deferred
+to the next round.
+
+- **Selects stay native under a design-system dress** (`Select` / `SelectField`): the
+  OS-native open list is accepted as a GOV.UK-style trade-off; a custom listbox is worth
+  building only if the owner's preview verdict demands it.
+- **„არ მყავს დელეგატი“ replaces „ცენტრალური მოძრაობა“** on member surfaces only — admin
+  vocabulary waits on item 16's wording decision.
+- **`/join` loses its §-numbered section headings** (item 6 clarification): the phone
+  heading is deleted outright, and the field labels carry the naming on their own.
+- **`cities` is completed to the 64 standard election municipalities + 10 Tbilisi
+  raions** (74 rows; the legacy თბილისი row stays, for FK integrity). Spelling
+  adjudication, recorded here: the plan drafted the two-word „თეთრი წყარო“;
+  implementation checked it against Georgian Wikipedia and the municipality's official
+  domain and corrected it to the official one-word „თეთრიწყარო“.
+- **Personal ID moves to membership, not registration** (item 10): `/join` collects only
+  name, surname and phone; the membership wizard asks for the ID only while the profile
+  still lacks one. `become_member_save_profile()` validates and writes it race-safely
+  (unqualified-column coalesce — a review fix over the plan's draft SQL);
+  `become_member_complete()` refuses to complete without it; immutability still runs
+  entirely through the definer-RPC-only write path. LB-1 (personal-ID squatting, deferred
+  2026-07-26) is narrowed at the `/join` door but NOT closed — it relocates to the
+  membership step, and `docs/security/LAUNCH-BLOCKERS.md` remains authoritative.
+- **Coordination fact, recorded for the record:** the security branch's `register()`
+  null-phone guard (94d56fb) was ALREADY merged into `main` before this branch's
+  migration restated `register()`; the restatement was verified line-by-line (task
+  review) to carry every accumulated guard forward — no pending merge race,
+  contrary to the plan's earlier warning.

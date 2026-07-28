@@ -22,6 +22,7 @@ export async function saveMembershipProfileAction(input: unknown): Promise<Actio
     p_city_id: parsed.data.cityId,
     p_employment: parsed.data.employment,
     p_delegate_id: parsed.data.delegateId,
+    p_personal_id: parsed.data.personalId,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
   return { ok: true, state: data as unknown as CabinetState };

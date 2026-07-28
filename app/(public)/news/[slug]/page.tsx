@@ -54,7 +54,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
           <img
             src={article.image_url}
             alt={article.title}
-            className="mt-6 w-full border border-hairline object-cover"
+            className="mt-6 max-h-[420px] w-full border border-hairline object-cover"
           />
         ) : null}
         <ContentBody body={article.body} className="mt-6" />

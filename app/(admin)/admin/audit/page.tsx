@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { adminControlClasses } from "@/components/Field";
+import { Select } from "@/components/Select";
 import {
   AUDIT_ACTION_LABELS_KA,
   auditActionLabel,
@@ -106,25 +107,25 @@ export default async function AdminAuditPage({
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="flex min-w-[200px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             მოქმედება
-            <select name="action" defaultValue={action ?? ""} className={adminControlClasses}>
+            <Select variant="admin" name="action" defaultValue={action ?? ""}>
               <option value="">ყველა მოქმედება</option>
               {Object.entries(AUDIT_ACTION_LABELS_KA).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             ადმინი
-            <select name="actorId" defaultValue={actorId ?? ""} className={adminControlClasses}>
+            <Select variant="admin" name="actorId" defaultValue={actorId ?? ""}>
               <option value="">ყველა ადმინი</option>
               {uniqueAdmins.map((a) => (
                 <option key={a.user_id} value={a.user_id}>
                   {a.first_name} {a.last_name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-sm font-semibold text-ink">
             დან

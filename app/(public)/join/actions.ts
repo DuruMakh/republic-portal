@@ -18,7 +18,6 @@ export async function registerAction(input: unknown): Promise<ActionResult> {
   const { data, error } = await supabase.rpc("register", {
     p_first_name: parsed.data.firstName,
     p_last_name: parsed.data.lastName,
-    p_personal_id: parsed.data.personalId,
     p_ref_code: parsed.data.refCode ?? null,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };

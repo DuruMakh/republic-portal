@@ -20,18 +20,23 @@ export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE = LOGIN_PHONE.slice(0, 8);
 
 // Progressive registration reworked the journeys. Single digits are scarce (0–9,
-// with 9 reserved for login.spec's fixed phone, 8 left free), so the slots are
-// explicit. cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
+// with 9 reserved for login.spec's fixed phone), so the slots are explicit.
+// cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
   regHappy: 0, // registration.spec: happy path + duplicate-phone re-entry
   membFull: 1, // membership.spec: full upgrade
-  regDupId: 2, // registration.spec: duplicate personal ID + retry
+  // review fix (owner fix #10 wave 1): the duplicate-ID check moved from /join to
+  // the wizard, so this slot no longer seeds a REGISTRANT attempting a dup'd ID —
+  // it now seeds the already-completed MEMBER whose ID the fresh registrant
+  // (membDupId, below) collides with.
+  regDupId: 2, // membership.spec: seeded member holding an already-taken personal ID
   membResume: 3, // membership.spec: wizard resume
   regReferral: 4, // registration.spec + membership.spec: referral capture → completion
   cabinet: 5, // cabinet.spec (ported setup)
   membRsvp: 6, // membership.spec: RSVP as registered
-  spare: 7, // 8 also free
+  spare: 7, // delegate-panel.spec: VIA_LINK_MEMBER
+  membDupId: 8, // membership.spec: fresh registrant colliding with regDupId's seeded ID
 } as const;
 
 export function journeyPhone(journey: number): string {
@@ -107,18 +112,17 @@ export async function submitJoinAndReadInboxOtp(
 }
 
 /**
- * Drive the one-door /join form (spec §4.1): the four light fields + dev-OTP, then
+ * Drive the one-door /join form (spec §4.1): the three light fields + dev-OTP, then
  * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
  * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
  * the /join page first (page.goto("/join")).
  */
 export async function passRegistration(
   page: Page,
-  opts: { phone: string; firstName: string; lastName: string; personalId: string },
+  opts: { phone: string; firstName: string; lastName: string },
 ): Promise<void> {
   await page.getByLabel("სახელი").fill(opts.firstName);
   await page.getByLabel("გვარი").fill(opts.lastName);
-  await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
   await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
   await submitJoinAndAwaitOtp(page);
   const otp = (await page.getByTestId("dev-otp").locator("strong").innerText()).trim();
@@ -156,10 +160,16 @@ async function firstCityOfRegion(regionLabel: string): Promise<{ id: number; nam
 }
 
 /**
- * Fill the become-a-member wizard's profile phase (spec §4.3) — the profile basics
- * minus personalId (now captured at registration). The wizard renders
- * region/city/employment as LabeledSelects; the delegate binding is separate and left
- * at its default (central) by this helper.
+ * Fill the become-a-member wizard's profile phase (spec §4.3) — the profile basics,
+ * plus the personal ID (owner fix #10: captured HERE now, not at registration). The
+ * wizard renders region/city/employment as design-system SelectFields; the delegate
+ * binding is separate and left at its default (central) by this helper.
+ *
+ * `personalId` is optional and, when given, is filled FIRST — the ID field renders at
+ * the top of the field stack, and only when the profile doesn't already have one.
+ * Journeys that registered through the NEW /join (no ID yet) MUST pass it; journeys
+ * resuming a service-seeded profile that already carries personal_id MUST NOT (the
+ * field doesn't render there — a fill would time out).
  *
  * The city is selected by its own id, never positionally. changeRegion() clears cityId
  * but the new region's <option>s only arrive after the Supabase round trip in the
@@ -173,9 +183,12 @@ async function firstCityOfRegion(regionLabel: string): Promise<{ id: number; nam
  */
 export async function fillMembershipProfile(
   page: Page,
-  opts: { regionLabel: string },
+  opts: { regionLabel: string; personalId?: string },
 ): Promise<void> {
   const city = await firstCityOfRegion(opts.regionLabel);
+  if (opts.personalId) {
+    await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
+  }
   await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
   await page.getByLabel("მხარე").selectOption({ label: opts.regionLabel });
   await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption(String(city.id));
