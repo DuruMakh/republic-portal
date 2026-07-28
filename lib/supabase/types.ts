@@ -38,6 +38,7 @@ export interface Database {
           employment: string | null;
           status: MemberStatusRow;
           signup_ref_code: string | null;
+          referral_code: string;
           pending_delegate_id: string | null;
           membership_tier: number | null;
           reference_code: string | null;

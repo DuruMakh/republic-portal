@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
 import { Pill } from "@/components/Pill";
+import { ReferralCard } from "@/components/ReferralCard";
 import { SectionRule } from "@/components/SectionRule";
 import {
   cabinetRole,
@@ -287,6 +288,10 @@ export default async function ProfilePage() {
                 დელეგატის შეცვლა →
               </Link>
             </Card>
+          ) : null}
+
+          {state.referralCode !== null ? (
+            <ReferralCard code={state.referralCode} count={state.referralCount} />
           ) : null}
 
           {teaserPoll ? (

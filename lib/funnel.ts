@@ -54,6 +54,10 @@ export interface CabinetStatePresent {
   personalIdMasked: string;
   /** Whether profiles.personal_id is set — the wizard renders the ID field only when false (owner fix #10). */
   hasPersonalId: boolean;
+  /** This person's referral link code — the delegate code when approved, else their own (owner fix #12). */
+  referralCode: string | null;
+  /** How many profiles signed up with that code. */
+  referralCount: number;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;

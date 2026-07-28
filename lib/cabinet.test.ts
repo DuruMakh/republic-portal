@@ -29,6 +29,8 @@ function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
     lastName: "ბერიძე",
     personalIdMasked: "010********",
     hasPersonalId: true,
+    referralCode: null,
+    referralCount: 0,
     birthDate: null,
     regionId: null,
     cityId: null,

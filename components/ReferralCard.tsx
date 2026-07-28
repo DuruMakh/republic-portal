@@ -5,12 +5,18 @@ import { Card } from "@/components/Card";
 import { CopyButton } from "@/components/CopyButton";
 import { QrCode } from "@/components/QrCode";
 import { buildReferralUrl } from "@/lib/cabinet";
+import { formatCountKa } from "@/lib/format";
+
+// Spliced byte-exact (never hand-typed) from the delegate panel's registered-count
+// StatCard label — app/(delegate)/delegate/page.tsx's
+// `<StatCard value={panel.registeredCount} label="რეგისტრირებული" />` (owner fix #12).
+const REGISTERED_LABEL = "რეგისტრირებული";
 
 /**
  * Origin is read client-side so the link is truthful on every deployment
  * (previews show the preview URL, production the real one) — ADR-011.
  */
-export function ReferralCard({ code }: { code: string }) {
+export function ReferralCard({ code, count }: { code: string; count: number }) {
   const [url, setUrl] = useState<string>();
 
   useEffect(() => {
@@ -39,6 +45,12 @@ export function ReferralCard({ code }: { code: string }) {
           </div>
         </>
       ) : null}
+      <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-hairline pt-3">
+        <span className="text-[0.74rem] text-muted-fg">{REGISTERED_LABEL}</span>
+        <span className="font-serif text-xl font-bold text-ink" data-testid="referral-count">
+          {formatCountKa(count)}
+        </span>
+      </p>
       <p className="mt-3 text-xs text-muted-fg">
         ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
       </p>

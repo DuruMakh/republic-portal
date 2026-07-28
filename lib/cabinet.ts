@@ -174,6 +174,8 @@ export interface DelegatePanelData {
   activeCount: number;
   totalCount: number;
   registeredCount: number;
+  /** Every sign-up the referral link produced, unlike registeredCount (status = 'registered' only) — owner fix #12. */
+  referralCount: number;
 }
 
 export type TeamMemberStatus = "profile_completed" | "active_member";

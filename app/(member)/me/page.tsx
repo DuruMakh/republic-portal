@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
+import { ReferralCard } from "@/components/ReferralCard";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { deriveMembershipPhase } from "@/lib/funnel";
 import { getCabinetState } from "@/lib/supabase/server";
@@ -50,6 +51,11 @@ export default async function CabinetOverviewPage() {
           </ButtonLink>
         </div>
       </Card>
+      {state.referralCode !== null ? (
+        <div className="mt-6">
+          <ReferralCard code={state.referralCode} count={state.referralCount} />
+        </div>
+      ) : null}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card>
           <h3 className="font-serif text-lg font-bold text-ink">ღონისძიებები</h3>

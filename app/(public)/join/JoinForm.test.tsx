@@ -48,6 +48,8 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
     lastName: "ბერიძე",
     personalIdMasked: "********",
     hasPersonalId: false,
+    referralCode: null,
+    referralCount: 0,
     birthDate: null,
     regionId: null,
     cityId: null,

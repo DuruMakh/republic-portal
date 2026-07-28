@@ -17,6 +17,7 @@ import { NewsCard } from "@/components/NewsCard";
 import { PageSheet } from "@/components/PageSheet";
 import { PhotoFigure } from "@/components/PhotoFigure";
 import { Pill } from "@/components/Pill";
+import { ReferralCard } from "@/components/ReferralCard";
 import { SectionRule } from "@/components/SectionRule";
 import { Select, SelectField } from "@/components/Select";
 import { StatCard } from "@/components/StatCard";
@@ -379,6 +380,10 @@ export default function StyleguidePage() {
 
         <Card title="გადარიცხვა">
           <TransferInstructions referenceCode="GR-ABC234" />
+        </Card>
+
+        <Card title="რეფერალური ბმული">
+          <ReferralCard code="M-ABC234" count={12} />
         </Card>
 
         <Card title="შენატანების დავთარი">
