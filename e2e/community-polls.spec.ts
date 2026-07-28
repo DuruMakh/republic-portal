@@ -171,12 +171,18 @@ test("vote once, results per the visibility rule, transparency derives from the 
     .from("delegates")
     .select("*", { count: "exact", head: true })
     .eq("status", "approved");
-  // one region row (spec §7): the busiest region's numbers, in its table row
-  // (if registered === active there, disambiguate the second assertion with .first())
+  // one region row (spec §7): the busiest region's row must show the same
+  // members figure independently computed above. (Owner fix #5 replaced this
+  // view's registered/active columns with members/collected_gel -- see
+  // 20260728140000_transparency_region_money.sql. registered's old predicate
+  // (status <> 'draft', OID-bound) is numerically identical to members' new
+  // one (status in ('profile_completed', 'active_member')); active had no
+  // replacement column because the page dropped that figure entirely, so the
+  // second assertion this block used to make is gone, not ported.)
   const { data: topRegion } = await db
     .from("transparency_regions")
     .select("*")
-    .order("registered", { ascending: false })
+    .order("members", { ascending: false })
     .limit(1)
     .single();
   // /transparency is ISR-cached (revalidate 60) with no on-demand revalidation
@@ -205,10 +211,7 @@ test("vote once, results per the visibility rule, transparency derives from the 
         .getByText(formatCountKa(approvedDelegates ?? 0)),
     ).toBeVisible({ timeout: 1_000 });
     const regionRow = page.getByRole("row", { name: new RegExp(topRegion!.name_ka) });
-    await expect(regionRow.getByText(formatCountKa(topRegion!.registered))).toBeVisible({
-      timeout: 1_000,
-    });
-    await expect(regionRow.getByText(formatCountKa(topRegion!.active))).toBeVisible({
+    await expect(regionRow.getByText(formatCountKa(topRegion!.members))).toBeVisible({
       timeout: 1_000,
     });
   }).toPass({ timeout: 150_000, intervals: [2_000, 5_000, 10_000] });

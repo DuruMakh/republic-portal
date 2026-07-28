@@ -424,12 +424,7 @@ export interface Database {
         Relationships: [];
       };
       transparency_stats: {
-        Row: {
-          total_gel: number;
-          registered_members: number;
-          approved_delegates: number;
-          members: number;
-        };
+        Row: { total_gel: number; registered_members: number; approved_delegates: number };
         Relationships: [];
       };
       transparency_regions: {

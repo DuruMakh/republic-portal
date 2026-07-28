@@ -575,7 +575,7 @@ async function publicFilterAssertions(clients) {
     ),
   );
 
-  // transparency_regions: one row per region, and `registered` must exclude
+  // transparency_regions: one row per region, and `members` must exclude
   // profiles still at status 'registered'. That population is the negative case.
   const regionCount = await tableCount("regions");
   const regionRows = await viewCount("transparency_regions");

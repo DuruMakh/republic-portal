@@ -125,7 +125,6 @@ export interface TransparencyStats {
   total_gel: number;
   registered_members: number;
   approved_delegates: number;
-  members: number;
 }
 
 export interface TransparencyRegion {
