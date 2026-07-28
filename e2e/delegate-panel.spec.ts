@@ -76,16 +76,16 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await delegateContext.close();
 });
 
-// This spec temporarily approves an extra delegate, and /delegates + /leaderboard are
-// ISR pages (revalidate 60): a Link prefetch during the approved window can cache a
-// render that still includes this test's delegate, which a later spec could then read
-// within its freshness window — the flake seen in CI run 29515512529. Leaving
-// the world as we found it includes the ISR caches: after deleting this run's users,
-// poll both pages until THIS delegate's own name is gone. Staging is shared with real
-// users (the owner's own permanently-approved delegate account among them), so the
-// total delegate count is never a fixed number to poll back to — this delegate's name
-// is the only signal that's ours to check.
-// runCleanups so a deletion failure still lets the caches settle: skipping the poll
+// This spec temporarily approves an extra delegate, and /leaderboard is an ISR page
+// (revalidate 60): a Link prefetch during the approved window can cache a render that
+// still includes this test's delegate, which a later spec could then read within its
+// freshness window — the flake seen in CI run 29515512529. Leaving the world as we
+// found it includes the ISR cache: after deleting this run's users, poll the page until
+// THIS delegate's own name is gone. Staging is shared with real users (the owner's own
+// permanently-approved delegate account among them), so the total delegate count is
+// never a fixed number to poll back to — this delegate's name is the only signal
+// that's ours to check.
+// runCleanups so a deletion failure still lets the cache settle: skipping the poll
 // re-arms the very flake this hook exists to prevent, and closing the context in
 // `finally` keeps a browser context from leaking when either step throws.
 test.afterAll(async ({ browser }) => {
@@ -95,17 +95,12 @@ test.afterAll(async ({ browser }) => {
     await runCleanups([
       () => cleanupJourneyUsers(),
       async () => {
-        for (const [path, testId] of [
-          ["/delegates", "delegate-card"],
-          ["/leaderboard", "leader-row"],
-        ] as const) {
-          await expect(async () => {
-            await page.goto(path);
-            await expect(page.getByTestId(testId).getByText("ვატესტ პანელს")).toHaveCount(0, {
-              timeout: 2_000,
-            });
-          }).toPass({ timeout: 90_000, intervals: [2_000] });
-        }
+        await expect(async () => {
+          await page.goto("/leaderboard");
+          await expect(page.getByTestId("leader-row").getByText("ვატესტ პანელს")).toHaveCount(0, {
+            timeout: 2_000,
+          });
+        }).toPass({ timeout: 90_000, intervals: [2_000] });
       },
     ]);
   } finally {
