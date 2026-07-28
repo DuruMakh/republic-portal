@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
   NOT_AUTHENTICATED_MESSAGE,
   type CabinetStatePresent,
@@ -135,11 +134,17 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     expect(screen.queryByRole("button", { name: "დარეგისტრირება" })).toBeNull();
   });
 
-  it("duplicate personal ID surfaces as a field error in the retry phase, then corrects without a second SMS (regression)", async () => {
-    registerAction.mockResolvedValueOnce({ ok: false, error: DUPLICATE_PERSONAL_ID_MESSAGE });
+  it("a non-auth register failure keeps the proven session, and retrying without a fresh SMS succeeds (regression)", async () => {
+    // register() is now the 3-arg (name+ref only) form — it can no longer produce
+    // DUPLICATE_PERSONAL_ID_MESSAGE (owner fix #10 moved that check to the
+    // membership wizard's become_member_save_profile). This retargets the old
+    // duplicate-ID regression onto a failure register() CAN still raise, while
+    // keeping the same retry-then-succeed shape: the proven OTP session survives
+    // a failed register() and a resubmit needs no fresh SMS.
+    registerAction.mockResolvedValueOnce({ ok: false, error: GENERIC_FUNNEL_ERROR });
     await driveToRegister();
 
-    expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
+    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
     const retryButton = screen.getByRole("button", { name: "დარეგისტრირება" });
 

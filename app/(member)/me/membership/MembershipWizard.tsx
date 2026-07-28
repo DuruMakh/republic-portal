@@ -41,9 +41,15 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   // delegate-role tcAccepted branch: this wizard only ever renders for
   // role === "member" (the page gate redirects role === "delegate" to /delegate).
   const referral = initialState.referral;
-  // Owner fix #10: the ID moved here from /join. Rendered only for a profile
-  // that doesn't already have one — every pre-change account does.
-  const askPersonalId = !initialState.hasPersonalId;
+  // Owner fix #10: the ID moved here from /join. Rendered only while NOT yet
+  // captured. Review finding F2: this used to read `!initialState.hasPersonalId`
+  // directly — a one-time snapshot that never refreshed. After a successful save
+  // captured the ID server-side, "← პროფილის შესწორება" re-rendered the now-stale
+  // editable field, and resubmitting it sent a value the server's immutable-once-
+  // set coalesce silently discarded. Tracking capture in state lets a successful
+  // save flip it immediately, independent of phase navigation.
+  const [idCaptured, setIdCaptured] = useState(initialState.hasPersonalId);
+  const askPersonalId = !idCaptured;
   const [regions, setRegions] = useState<{ id: number; name_ka: string }[]>([]);
   const [cities, setCities] = useState<{ id: number; name_ka: string }[]>([]);
   const [delegateOptions, setDelegateOptions] = useState<DelegateOption[]>([]);
@@ -139,7 +145,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     setFormError(undefined);
     const employment = workPreset === "__other" ? workFree : workPreset;
     const parsed = membershipProfileSchema.safeParse({
-      personalId: askPersonalId ? personalId : null,
+      // review finding M1: strip pasted separators before the regex check, same
+      // as JoinForm's retired personalId.replace(/\D/g, "") normalization
+      personalId: askPersonalId ? personalId.replace(/\D/g, "") : null,
       birthDate,
       regionId: regionId ?? 0,
       cityId: cityId ?? 0,
@@ -180,6 +188,13 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
         setFormError(result.error);
       }
       return;
+    }
+    // review finding F2: only trust a fresh capture when this submission actually
+    // asked for one (askPersonalId as the guard) — then read the server's own
+    // hasPersonalId off the returned state rather than assuming, so a back-then-
+    // resave never re-renders the (now immutable, server-ignored) ID field again
+    if (askPersonalId && result.state.exists) {
+      setIdCaptured(result.state.hasPersonalId);
     }
     // clears a stale error from an earlier failed completion attempt — this is
     // one persistent component, not a fresh page mount, so a prior tier-phase

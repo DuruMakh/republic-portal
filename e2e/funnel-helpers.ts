@@ -20,18 +20,23 @@ export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE = LOGIN_PHONE.slice(0, 8);
 
 // Progressive registration reworked the journeys. Single digits are scarce (0–9,
-// with 9 reserved for login.spec's fixed phone, 8 left free), so the slots are
-// explicit. cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
+// with 9 reserved for login.spec's fixed phone), so the slots are explicit.
+// cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
   regHappy: 0, // registration.spec: happy path + duplicate-phone re-entry
   membFull: 1, // membership.spec: full upgrade
-  regDupId: 2, // registration.spec: duplicate personal ID + retry
+  // review fix (owner fix #10 wave 1): the duplicate-ID check moved from /join to
+  // the wizard, so this slot no longer seeds a REGISTRANT attempting a dup'd ID —
+  // it now seeds the already-completed MEMBER whose ID the fresh registrant
+  // (membDupId, below) collides with.
+  regDupId: 2, // membership.spec: seeded member holding an already-taken personal ID
   membResume: 3, // membership.spec: wizard resume
   regReferral: 4, // registration.spec + membership.spec: referral capture → completion
   cabinet: 5, // cabinet.spec (ported setup)
   membRsvp: 6, // membership.spec: RSVP as registered
-  spare: 7, // 8 also free
+  spare: 7, // delegate-panel.spec: VIA_LINK_MEMBER
+  membDupId: 8, // membership.spec: fresh registrant colliding with regDupId's seeded ID
 } as const;
 
 export function journeyPhone(journey: number): string {
@@ -107,7 +112,7 @@ export async function submitJoinAndReadInboxOtp(
 }
 
 /**
- * Drive the one-door /join form (spec §4.1): the four light fields + dev-OTP, then
+ * Drive the one-door /join form (spec §4.1): the three light fields + dev-OTP, then
  * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
  * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
  * the /join page first (page.goto("/join")).

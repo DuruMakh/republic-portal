@@ -10,6 +10,7 @@ import {
   journeyPersonalId,
   journeyPhone,
   passRegistration,
+  seedCompletedMember,
 } from "./funnel-helpers";
 
 const RUN = `e2e-memb-${Date.now().toString(36)}`;
@@ -175,4 +176,41 @@ test("a registered member RSVPs to a published event", async ({ page }) => {
   await page.reload();
   await expect(eventCard.getByText("✓ შენ მოდიხარ")).toBeVisible();
   await expect(eventCard.getByText(/სულ მოდის 1 მონაწილე/)).toBeVisible();
+});
+
+test("a personal ID already claimed by another member is rejected inline, staying on the profile phase", async ({
+  page,
+}) => {
+  // Review fix wave 1, finding F1: replaces registration.spec's retired duplicate-ID
+  // coverage, which filled a /join field that no longer exists — the check now lives
+  // in become_member_save_profile (owner fix #10), reached only from the wizard. The
+  // "corrects without a second SMS" half of the old test is unit-covered (JoinForm's
+  // afterVerify tests) and isn't recreated here.
+  const heldId = journeyPersonalId(JOURNEY.regDupId);
+  await seedCompletedMember({
+    phone: journeyPhone(JOURNEY.regDupId),
+    firstName: "ვატესტ",
+    lastName: "დუბლიკატს",
+    personalId: heldId,
+  });
+
+  const phone = journeyPhone(JOURNEY.membDupId);
+  await page.goto("/join");
+  await passRegistration(page, {
+    phone,
+    firstName: "ვატესტ",
+    lastName: "წევრობას",
+  });
+
+  await page.goto("/me/membership");
+  await fillMembershipProfile(page, {
+    regionLabel: "თბილისი",
+    personalId: heldId, // already claimed by the seeded member above
+  });
+  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+
+  // the duplicate surfaces as a field error, not a form banner, and the wizard
+  // stays on the profile phase — no silent advance to the tier phase
+  await expect(page.getByText("ეს პირადი ნომერი უკვე რეგისტრირებულია.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "იურიდიული პროფილი" })).toBeVisible();
 });

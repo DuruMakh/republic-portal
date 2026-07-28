@@ -9,7 +9,14 @@
 -- closed by this — the squat window moves to the membership step. The restated
 -- register() body ALSO carries the ADR-021 null-phone guard (phone_required):
 -- this migration outdates the security branch's register(), and omitting the
--- guard here would revert that branch's fix at merge time.
+-- guard here would revert that branch's fix at merge time. Its PLACEMENT also
+-- differs from 20260726121000_register_phone_guard.sql, where it deliberately
+-- sat immediately after the already-exists return so it would precede
+-- register()'s personal-ID duplicate-check oracle — here it sits after the
+-- invalid_name/ref-code checks instead, which stays safe only because that
+-- oracle no longer lives in register() at all (it moved to
+-- become_member_save_profile below), so no DB read runs unguarded ahead of
+-- phone_required in the body that follows.
 --
 -- CORRECTION (task-9 execution, verified against the actual migration history
 -- in this worktree — for the PR body / security-branch reviewer): the ADR-021
@@ -126,6 +133,7 @@ declare
   v_uid uuid := auth.uid();
   v_profile public.profiles%rowtype;
   v_delegate uuid;
+  v_constraint text;
 begin
   if v_uid is null then raise exception 'not_authenticated'; end if;
   select * into v_profile from public.profiles where id = v_uid;
@@ -179,12 +187,30 @@ begin
       region_id = p_region_id,
       city_id = p_city_id,
       employment = btrim(p_employment),
-      personal_id = coalesce(v_profile.personal_id, p_personal_id),
+      -- review fix F3: coalesce against the COLUMN, not v_profile.personal_id.
+      -- v_profile was snapshotted by the plain `select` above, before this
+      -- statement takes the row lock — under a concurrent double-save both
+      -- callers' v_profile.personal_id still reads the pre-race null. The
+      -- bare column reference is re-evaluated against the row as it stands
+      -- once the lock is held (Postgres re-checks UPDATE expressions against
+      -- the latest committed version), so whichever caller's write lands
+      -- SECOND correctly preserves the FIRST caller's value instead of
+      -- clobbering it with its own p_personal_id.
+      personal_id = coalesce(personal_id, p_personal_id),
       pending_delegate_id = v_delegate
     where id = v_uid;
   exception when unique_violation then
-    -- two save-profile calls racing the same ID past the pre-check above
-    raise exception 'duplicate_personal_id';
+    -- two save-profile calls racing the same ID past the pre-check above —
+    -- dispatch on CONSTRAINT_NAME (register()'s idiom, 20260722140000 §1)
+    -- rather than assuming: this UPDATE's SET list only touches one unique
+    -- column (personal_id), but re-raising anything else unrecognized keeps
+    -- an unrelated future collision from being mislabeled as a duplicate ID.
+    get stacked diagnostics v_constraint = CONSTRAINT_NAME;
+    if v_constraint = 'profiles_personal_id_key' then
+      raise exception 'duplicate_personal_id';
+    else
+      raise;
+    end if;
   end;
 
   return public.cabinet_state();
@@ -193,11 +219,15 @@ end $$;
 grant execute on function become_member_save_profile(date, int, int, text, uuid, text) to authenticated;
 revoke execute on function become_member_save_profile(date, int, int, text, uuid, text) from public, anon;
 
--- 3) become_member_complete(): same signature (no drop, grants survive). Body
---    copied from become_member_complete's actual, unambiguous boundaries in
---    20260721120000_progressive_registration.sql (create function ... end $$;
---    at lines 529-581 — see the NOTE at the top of this file), plus exactly
---    the one `or v_profile.personal_id is null` insertion below.
+-- 3) become_member_complete(): same signature (no drop; grants survive
+--    create-or-replace automatically, but restated below anyway per house
+--    style — every function this migration touches gets an explicit
+--    grant/revoke, same as register() and become_member_save_profile()
+--    above). Body copied from become_member_complete's actual, unambiguous
+--    boundaries in 20260721120000_progressive_registration.sql (create
+--    function ... end $$; at lines 529-581 — see the NOTE at the top of this
+--    file), plus exactly the one `or v_profile.personal_id is null` insertion
+--    below.
 create or replace function become_member_complete(p_tier int) returns jsonb
 language plpgsql volatile security definer set search_path = '' as $$
 declare
@@ -253,9 +283,13 @@ begin
   return public.cabinet_state();
 end $$;
 
--- 4) cabinet_state(): same signature (no drop). Body copied VERBATIM from
---    20260721120000_progressive_registration.sql:333-413, plus exactly the
---    one 'hasPersonalId' key insertion below.
+grant execute on function become_member_complete(int) to authenticated;
+revoke execute on function become_member_complete(int) from public, anon;
+
+-- 4) cabinet_state(): same signature (no drop; grants restated below, same
+--    house-style reasoning as become_member_complete() above). Body copied
+--    VERBATIM from 20260721120000_progressive_registration.sql:333-413, plus
+--    exactly the one 'hasPersonalId' key insertion below.
 create or replace function cabinet_state() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -338,3 +372,6 @@ begin
     'admin', exists (select 1 from public.admin_roles ar where ar.user_id = v_uid)
   );
 end $$;
+
+grant execute on function cabinet_state() to authenticated;
+revoke execute on function cabinet_state() from public, anon;

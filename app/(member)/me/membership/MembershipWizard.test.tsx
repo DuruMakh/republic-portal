@@ -251,6 +251,36 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
     // still the profile phase — no separate form-level banner duplicating the same message
     expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    // field-level, not just a banner that happens to say the same words (review finding M2):
+    // Field only sets aria-invalid when its own `error` prop is populated
+    expect(screen.getByLabelText("პირადი ნომერი")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("stops asking for the ID after a successful save, even after navigating back to the profile phase (review finding F2)", async () => {
+    // askPersonalId used to be a one-time snapshot of initialState.hasPersonalId — a
+    // save that captures the ID server-side never refreshed it, so "← პროფილის
+    // შესწორება" re-rendered the now-stale editable field. Resubmitting it sent a
+    // value the server's immutable-once-set coalesce silently discarded.
+    saveMembershipProfileAction.mockResolvedValue({
+      ok: true,
+      state: cab({ ...PROFILED, hasPersonalId: true }),
+    });
+    render(
+      <MembershipWizard
+        initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
+      />,
+    );
+    expect(screen.getByLabelText("პირადი ნომერი")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
+    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+      target: { value: "1990-05-20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
+    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
   });
 });
 

@@ -3,14 +3,11 @@ import {
   cleanupJourneyUsers,
   getSeededReferral,
   JOURNEY,
-  journeyPersonalId,
   journeyPhone,
   passRegistration,
   submitJoinAndReadInboxOtp,
 } from "./funnel-helpers";
 
-// Journeys share per-run users and the duplicate-ID test depends on the happy-path
-// journey's personal ID already existing — run serially.
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(cleanupJourneyUsers);
@@ -62,32 +59,6 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
   await expect(page).toHaveURL(/\/me$/);
   // original identity untouched — the greeting is still the first registration's name
   await expect(page.getByRole("heading", { name: `გამარჯობა, ${firstName}!` })).toBeVisible();
-});
-
-test("duplicate personal ID is rejected inline, then corrected without a second code", async ({
-  page,
-}) => {
-  const phone = journeyPhone(JOURNEY.regDupId);
-  await page.goto("/join");
-  await page.getByLabel("სახელი").fill("ვატესტ");
-  await page.getByLabel("გვარი").fill("დუბლიკატს");
-  await page.getByLabel("პირადი ნომერი").fill(journeyPersonalId(JOURNEY.regHappy)); // taken already
-  await page.getByLabel("ტელეფონის ნომერი").fill(phone);
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  const devOtp = page.getByTestId("dev-otp");
-  await expect(devOtp).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("otp-0").fill((await devOtp.locator("strong").innerText()).trim());
-  await page.getByRole("button", { name: "დადასტურება" }).click();
-
-  // the duplicate surfaces as a field error; the phone stays proven (disabled)
-  await expect(page.getByText("ეს პირადი ნომერი უკვე რეგისტრირებულია.")).toBeVisible();
-  await expect(page.getByLabel("ტელეფონის ნომერი")).toBeDisabled();
-
-  // correct the ID and resubmit — the button is now „დარეგისტრირება" (no fresh OTP)
-  await page.getByLabel("პირადი ნომერი").fill(journeyPersonalId(JOURNEY.regDupId));
-  await page.getByRole("button", { name: "დარეგისტრირება" }).click();
-  await expect(page).toHaveURL(/\/me(\/|\?|#|$)/);
-  await expect(page.getByRole("heading", { name: /გამარჯობა/ })).toBeVisible();
 });
 
 test("a referral link is captured at registration and bound in the wizard", async ({ page }) => {
