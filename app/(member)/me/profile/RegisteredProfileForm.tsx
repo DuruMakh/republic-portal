@@ -21,10 +21,14 @@ export function RegisteredProfileForm({
   initial,
   phone,
   personalIdMasked,
+  hasPersonalId,
 }: {
   initial: { firstName: string; lastName: string };
   phone: string | null;
   personalIdMasked: string;
+  /** A registered person who hasn't reached the wizard has no ID yet — the masked
+   * row would lie about a value that doesn't exist (owner fix #10). */
+  hasPersonalId: boolean;
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState(initial.firstName);
@@ -97,16 +101,18 @@ export function RegisteredProfileForm({
               data-testid="profile-phone"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
-            <input
-              className={`${inputClasses} border-line bg-surface tracking-widest`}
-              value={personalIdMasked}
-              readOnly
-              aria-label="პირადი ნომერი"
-              data-testid="profile-pid"
-            />
-          </div>
+          {hasPersonalId ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
+              <input
+                className={`${inputClasses} border-line bg-surface tracking-widest`}
+                value={personalIdMasked}
+                readOnly
+                aria-label="პირადი ნომერი"
+                data-testid="profile-pid"
+              />
+            </div>
+          ) : null}
         </div>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {saved ? (

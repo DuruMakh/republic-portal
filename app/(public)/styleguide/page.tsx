@@ -397,7 +397,7 @@ export default function StyleguidePage() {
               href="/styleguide"
               title="სიახლის ბარათი"
               publishedAt="19.07.2026"
-              imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+              imageUrl="/og-default.png"
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />
@@ -406,7 +406,7 @@ export default function StyleguidePage() {
               href="/styleguide"
               title="სიახლის ბარათი"
               publishedAt="19.07.2026"
-              imageUrl="https://x.supabase.co/storage/v1/object/public/news-images/a.png"
+              imageUrl="/og-default.png"
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />

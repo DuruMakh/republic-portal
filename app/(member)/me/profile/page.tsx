@@ -73,12 +73,14 @@ export default async function ProfilePage() {
                   {formatPhoneKa(user?.phone)}
                 </span>
               </div>
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
-                <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
-                  {state.personalIdMasked}
-                </span>
-              </div>
+              {state.hasPersonalId ? (
+                <div className="flex justify-between border-b border-hairline py-2.5">
+                  <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
+                  <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
+                    {state.personalIdMasked}
+                  </span>
+                </div>
+              ) : null}
               <div className="flex justify-between border-b border-hairline py-2.5">
                 <span className="text-[0.85rem] text-muted-fg">რეგიონი</span>
                 <span
@@ -94,6 +96,7 @@ export default async function ProfilePage() {
                 initial={{ firstName: state.firstName, lastName: state.lastName }}
                 phone={user?.phone ?? null}
                 personalIdMasked={state.personalIdMasked}
+                hasPersonalId={state.hasPersonalId}
               />
             </div>
           </div>
@@ -274,11 +277,7 @@ export default async function ProfilePage() {
                     >
                       დელეგატი ამჟამად მიუწვდომელია
                     </p>
-                  ) : (
-                    <p className="mt-1 text-[0.78rem] text-muted-fg">
-                      შენ პირდაპირ ცენტრალურ მოძრაობას უჭერ მხარს.
-                    </p>
-                  )}
+                  ) : null}
                 </div>
               )}
               <Link

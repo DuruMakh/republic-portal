@@ -46,7 +46,7 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
     role: "member",
     firstName: "ნინო",
     lastName: "ბერიძე",
-    personalIdMasked: "010********",
+    personalIdMasked: "********",
     hasPersonalId: false,
     birthDate: null,
     regionId: null,
