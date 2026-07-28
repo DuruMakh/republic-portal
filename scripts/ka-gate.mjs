@@ -5,8 +5,12 @@
 // untracked files), so pre-existing quirks in old comments never block a
 // task. A naive whole-file adjacency check is deliberately absent: an ASCII
 // quote next to Georgian is usually just a TS string delimiter
-// (label: "..."), and three legacy files carry historical ASCII-closed
-// pairs in comments. Checks are built from escapes, never literal glyphs:
+// (label: "..."), and 28 legacy files carry historical ASCII-closed pairs
+// in comments and internal docs -- accepted as-is per DECISIONS.md ADR-022
+// (2026-07-28 audit; lib/content-render.ts is a 29th, legitimately
+// unbalanced: lone quote chars in a regex class). Editing a legacy line
+// puts it in the diff, so touched lines get cleaned in passing over time.
+// Checks are built from escapes, never literal glyphs:
 //   1. Greek look-alike characters
 //   2. a U+201E opener whose next quote character is ASCII (the classic
 //      silent-normalization corruption)

@@ -360,3 +360,26 @@ close standing questions rather than because they change code.
   standing behind the deferred personal-ID squatting finding. The code half (the
   null-phone guard) ships in this phase; disabling the email provider is a project setting
   and remains an owner action, tracked in `docs/security/LAUNCH-BLOCKERS.md`.
+
+## ADR-022 (2026-07-28): Legacy Georgian-quote corruption accepted as-is; gate stays diff-scoped
+
+A whole-repo audit (2026-07-28, main 08b4069; codepoint-built per-file balance
+checks) found 29 tracked files where U+201E openers do not match U+201C/U+201D
+closers -- the historical "silent normalization" corruption from before the
+2026-07-19 Phase 5 incident taught the splice-don't-retype rule. Classified
+per instance: ~305 instances across 11 internal docs (this log included); 24
+instances in code comments only (lib/, app/, e2e/, one SQL migration) with
+zero corrupted e2e assertion literals, so no test certifies corrupted UI;
+lib/content-render.ts is legitimately unbalanced (lone quote chars in its
+trailing-punctuation regex class, not corruption); the only rendered instances
+are one demo-fixture employer line duplicated in the two prototype/kronika-d3
+HTML files. Nothing a user of the shipped product sees is affected.
+
+**Owner decision: accept the legacy as-is -- no sweep.** A ~330-instance
+rewrite of history-laden files (this log is append-only) is churn without user
+benefit. `scripts/ka-gate.mjs` stays diff-scoped and keeps blocking NEW
+corruption; its header's stale "three legacy files" note is corrected to point
+here. Because the gate checks added lines, any future edit that touches a
+legacy line forces that line clean in passing -- the debt retires organically.
+Prototype fixture polish (the two kronika-d3 lines) stays optional and
+unscheduled.
