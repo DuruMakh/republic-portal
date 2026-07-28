@@ -17,6 +17,17 @@ describe("formatCountKa", () => {
   });
 });
 
+describe("formatCountKa null/undefined guard", () => {
+  it("treats a missing count as zero instead of throwing (fix-list round 2, Fix 2)", () => {
+    // An RPC payload read through `as unknown as` with no runtime validation
+    // reports referralCount as undefined against a database that predates the
+    // migration adding it -- formatCountKa must not throw .toString() on it.
+    expect(() => formatCountKa(undefined)).not.toThrow();
+    expect(formatCountKa(undefined)).toBe("0");
+    expect(formatCountKa(null)).toBe("0");
+  });
+});
+
 describe("delegateBioFallback", () => {
   it("renders the prototype's generated line for a region", () => {
     expect(delegateBioFallback("იმერეთი")).toBe(

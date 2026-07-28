@@ -15,8 +15,23 @@ const REGISTERED_LABEL = "რეგისტრირებული";
 /**
  * Origin is read client-side so the link is truthful on every deployment
  * (previews show the preview URL, production the real one) — ADR-011.
+ *
+ * `teamNote` (fix-list round 2, Fix 3 — additive, defaults true): the closing
+ * sentence claims everyone who signs up through the link is counted in "your
+ * team". True for a delegate's own link, but this card also renders for
+ * members and registered people (owner fix #12), whose link binds no team at
+ * all, only a count. /delegate keeps the default; /me and /me/profile pass
+ * false.
  */
-export function ReferralCard({ code, count }: { code: string; count: number }) {
+export function ReferralCard({
+  code,
+  count,
+  teamNote = true,
+}: {
+  code: string;
+  count: number;
+  teamNote?: boolean;
+}) {
   const [url, setUrl] = useState<string>();
 
   useEffect(() => {
@@ -51,9 +66,11 @@ export function ReferralCard({ code, count }: { code: string; count: number }) {
           {formatCountKa(count)}
         </span>
       </p>
-      <p className="mt-3 text-xs text-muted-fg">
-        ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
-      </p>
+      {teamNote ? (
+        <p className="mt-3 text-xs text-muted-fg" data-testid="referral-team-note">
+          ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
+        </p>
+      ) : null}
     </Card>
   );
 }

@@ -290,8 +290,12 @@ export default async function ProfilePage() {
             </Card>
           ) : null}
 
-          {state.referralCode !== null ? (
-            <ReferralCard code={state.referralCode} count={state.referralCount} />
+          {state.referralCode != null ? (
+            <ReferralCard
+              code={state.referralCode}
+              count={state.referralCount ?? 0}
+              teamNote={false}
+            />
           ) : null}
 
           {teaserPoll ? (

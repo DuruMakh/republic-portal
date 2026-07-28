@@ -24,13 +24,71 @@
 -- restate grants, so none are added here either — its signature is unchanged
 -- and grants already survive a plain create-or-replace.
 --
--- protect_profile_columns() (20260715120000 §2) is deliberately left untouched:
--- it only guards its listed columns for current_user in ('anon','authenticated'),
--- and `revoke update on profiles from authenticated` (20260715120000 §3) already
--- removes ALL client UPDATE privilege on profiles table-wide, so no direct client
--- write path to the new column exists for the trigger to guard in the first place.
+-- protect_profile_columns() CORRECTION + DECISION (Fix 4, owner fix-list round 2):
+-- this comment originally claimed `revoke update on profiles from authenticated`
+-- (20260715120000 §3) removes ALL client UPDATE privilege on profiles table-wide.
+-- That is FALSE and would mislead a future reader: 20260715213000_cabinets.sql:
+-- 10-11 re-grants scoped UPDATE on (first_name, last_name, region_id, city_id,
+-- employment) to authenticated, and that same migration's own header names
+-- protect_profile_columns() as the reason a real client UPDATE path needs
+-- independent depth in the first place ("protect_profile_columns() as depth
+-- against grant-widening"). The TRUE reason referral_code can't be written by a
+-- direct client UPDATE is narrower and purely column-level: that scoped grant's
+-- column list does not include referral_code, so naming it in an UPDATE ... SET
+-- list is refused with 42501 regardless of RLS or the trigger. DECISION:
+-- referral_code IS added to protect_profile_columns()'s guarded list below
+-- anyway (the create-or-replace immediately after this column is added) — same
+-- treatment as reference_code, its structurally identical sibling (unique,
+-- server-minted, immutable). No legitimate codepath ever updates referral_code
+-- as anon/authenticated (register() sets it once, as its owner, at insert time;
+-- nothing updates it after), so this is pure depth, not a fix to a live gap —
+-- but it keeps referral_code covered if a future migration ever widens the
+-- scoped grant by mistake, exactly like every other server-managed column this
+-- table has gained (reference_code, membership_tier, pending_delegate_id, ...).
 alter table profiles add column referral_code text unique
   check (referral_code ~ '^M-[A-HJKMNP-Z2-9]{6}$');
+
+-- protect_profile_columns(): restates the LIVE body (its latest redefinition,
+-- 20260721120000_progressive_registration.sql:54-85) verbatim, plus
+-- referral_code in the guarded list — the same house pattern every prior
+-- server-managed profiles column followed (signup_role/signup_ref_code/
+-- membership_tier/reference_code/registration_completed_at at 20260715120000,
+-- pending_delegate_id at 20260721120000). The trigger only fires BEFORE UPDATE
+-- (20260712212409_initial_schema.sql:114-115), never INSERT, so this has no
+-- effect on register()'s insert or on the service-role DEFAULT added below.
+create or replace function protect_profile_columns() returns trigger language plpgsql as $$
+begin
+  if current_user in ('anon', 'authenticated') then
+    if new.status is distinct from old.status
+      or new.personal_id is distinct from old.personal_id
+      or new.phone is distinct from old.phone
+      or new.id is distinct from old.id
+      or new.created_at is distinct from old.created_at
+      or new.signup_ref_code is distinct from old.signup_ref_code
+      or new.membership_tier is distinct from old.membership_tier
+      or new.reference_code is distinct from old.reference_code
+      or new.registration_completed_at is distinct from old.registration_completed_at
+      or new.pending_delegate_id is distinct from old.pending_delegate_id
+      or new.referral_code is distinct from old.referral_code
+    then
+      raise exception 'server-managed profile columns cannot be changed by client roles';
+    end if;
+    -- Phase 3 hardening rider — keep: value rules on direct client PATCHes
+    if new.first_name is distinct from old.first_name
+       and length(btrim(coalesce(new.first_name, ''))) not between 1 and 60 then
+      raise exception 'invalid_name';
+    end if;
+    if new.last_name is distinct from old.last_name
+       and length(btrim(coalesce(new.last_name, ''))) not between 1 and 60 then
+      raise exception 'invalid_name';
+    end if;
+    if new.employment is distinct from old.employment
+       and length(btrim(coalesce(new.employment, ''))) not between 1 and 100 then
+      raise exception 'invalid_employment';
+    end if;
+  end if;
+  return new;
+end $$;
 
 create function mint_member_referral_code() returns text
 language plpgsql volatile security definer set search_path = '' as $$
@@ -47,33 +105,60 @@ end $$;
 
 revoke execute on function mint_member_referral_code() from public, anon, authenticated;
 
--- Backfill every existing profile. The unique constraint is the final guard; the
--- loop re-runs only for rows a collision skipped. mint_member_referral_code() is
--- VOLATILE, so Postgres re-evaluates it per row rather than once for the whole
--- statement — every row gets its own draw, not a single value copied to all of
--- them. If two rows within the same UPDATE draw the same code, that whole
--- statement aborts on unique_violation (caught below, zero rows committed from
--- that attempt) and the next iteration redraws every still-null row fresh;
--- v_left only reaches 0 once every row holds a distinct code, and the loop
--- raises instead of silently giving up if 20 passes somehow never converge.
+-- Backfill every existing profile, one row at a time (Fix 5, owner fix-list
+-- round 2). A per-row loop makes each pass monotonically progressive: a
+-- collision on one row's draw retries only that row (its own inner attempt,
+-- bounded at 20 like mint_member_referral_code()'s own cap), never discarding
+-- any other row's already-committed code. The whole-table redraw this replaced
+-- does not scale — the reviewer's arithmetic: at ~10k profiles a single
+-- whole-table pass collides ~6% of the time; at ~100k it succeeds only ~0.4% of
+-- the time, and the fixed 20-pass ceiling would abort the migration outright.
+-- The final count below stays as the convergence backstop: it still raises
+-- before `set not null` if any row genuinely never got a code (astronomically
+-- unlikely against the 31^6 ≈ 887M-code space this alphabet gives 6 characters).
 do $$
-declare v_left int := -1;
+declare
+  r record;
+  v_left int;
 begin
-  for i in 1..20 loop
-    begin
-      update public.profiles
-         set referral_code = public.mint_member_referral_code()
-       where referral_code is null;
-    exception when unique_violation then
-      null; -- retry the survivors on the next pass
-    end;
-    select count(*) into v_left from public.profiles where referral_code is null;
-    exit when v_left = 0;
+  for r in select id from public.profiles where referral_code is null loop
+    for i in 1..20 loop
+      begin
+        update public.profiles set referral_code = public.mint_member_referral_code()
+         where id = r.id;
+        exit;
+      exception when unique_violation then
+        null; -- this row's draw collided with another row — retry with a fresh one
+      end;
+    end loop;
   end loop;
+
+  select count(*) into v_left from public.profiles where referral_code is null;
   if v_left <> 0 then
     raise exception 'referral_code backfill did not converge: % rows left', v_left;
   end if;
 end $$;
+
+-- Fix 1 (Critical, owner fix-list round 2): nine service-role insert paths never
+-- learned about this column — scripts/seed-staging.mjs, scripts/verify-schema.mjs
+-- (four call sites), scripts/verify-security-fixes.mjs, scripts/security/arguments.mjs
+-- (an upsert — Postgres validates NOT NULL on the row it constructs before an
+-- ON CONFLICT branch is even considered, so an upsert is exposed exactly like a
+-- plain insert), and e2e/funnel-helpers.ts's seedCompletedMember/seedRegisteredMember
+-- (the latter also backs seedPendingDelegate). Only register() was taught to supply
+-- referral_code explicitly. With no DEFAULT, every one of those writes would fail
+-- 23502 the instant `set not null` below lands. A DEFAULT means a service-role
+-- writer never has to know this column exists at all: register()'s own explicit
+-- value in its insert list still wins over the DEFAULT unchanged (an explicit
+-- INSERT value always overrides a column DEFAULT), so its
+-- profiles_referral_code_key retry loop above is unaffected either way.
+-- service_role is a role distinct from public/anon/authenticated, so granting it
+-- EXECUTE here is additive alongside the revoke above, not a reversal of it — and
+-- it is required: evaluating a column DEFAULT runs under the INSERTing role's own
+-- privileges, not mint_member_referral_code()'s SECURITY DEFINER context, so
+-- service_role needs its own EXECUTE grant to trigger the default at all.
+alter table profiles alter column referral_code set default public.mint_member_referral_code();
+grant execute on function mint_member_referral_code() to service_role;
 
 alter table profiles alter column referral_code set not null;
 
@@ -82,6 +167,12 @@ alter table profiles alter column referral_code set not null;
 -- unfiltered lookup.
 create index if not exists profiles_by_signup_ref_code
   on public.profiles (signup_ref_code);
+
+-- Fix 6 (Minor, owner fix-list round 2): profiles_draft_by_ref_code
+-- (20260716140000:89-90) indexed the same signup_ref_code column, filtered to
+-- one status value; the unfiltered index just above is its superset, so the
+-- old partial index is now dead weight on every profile write.
+drop index if exists profiles_draft_by_ref_code;
 
 -- 1) register(): same 3-arg signature as the live definition, so create-or-
 --    replace — no drop, grants restated below anyway (house style). Body

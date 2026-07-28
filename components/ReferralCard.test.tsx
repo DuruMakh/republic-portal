@@ -17,4 +17,14 @@ describe("ReferralCard", () => {
     render(<ReferralCard code="M-ABC234" count={7} />);
     expect(screen.getByTestId("referral-count")).toHaveTextContent("7");
   });
+
+  it("shows the team-note sentence by default (delegate surface)", () => {
+    render(<ReferralCard code="AB2C3D" count={3} />);
+    expect(screen.getByTestId("referral-team-note")).toBeInTheDocument();
+  });
+
+  it("hides the team-note sentence when teamNote is false (fix-list round 2, Fix 3 — a member's link binds no team)", () => {
+    render(<ReferralCard code="M-ABC234" count={3} teamNote={false} />);
+    expect(screen.queryByTestId("referral-team-note")).not.toBeInTheDocument();
+  });
 });

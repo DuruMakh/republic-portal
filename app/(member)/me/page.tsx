@@ -51,9 +51,13 @@ export default async function CabinetOverviewPage() {
           </ButtonLink>
         </div>
       </Card>
-      {state.referralCode !== null ? (
+      {state.referralCode != null ? (
         <div className="mt-6">
-          <ReferralCard code={state.referralCode} count={state.referralCount} />
+          <ReferralCard
+            code={state.referralCode}
+            count={state.referralCount ?? 0}
+            teamNote={false}
+          />
         </div>
       ) : null}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

@@ -76,8 +76,8 @@ export default async function DelegateDashboardPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {panel.referralCode ? (
-          <ReferralCard code={panel.referralCode} count={panel.referralCount} />
+        {panel.referralCode != null ? (
+          <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
         ) : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
