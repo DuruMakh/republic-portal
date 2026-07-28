@@ -114,11 +114,10 @@ export async function submitJoinAndReadInboxOtp(
  */
 export async function passRegistration(
   page: Page,
-  opts: { phone: string; firstName: string; lastName: string; personalId: string },
+  opts: { phone: string; firstName: string; lastName: string },
 ): Promise<void> {
   await page.getByLabel("სახელი").fill(opts.firstName);
   await page.getByLabel("გვარი").fill(opts.lastName);
-  await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
   await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
   await submitJoinAndAwaitOtp(page);
   const otp = (await page.getByTestId("dev-otp").locator("strong").innerText()).trim();
@@ -156,10 +155,16 @@ async function firstCityOfRegion(regionLabel: string): Promise<{ id: number; nam
 }
 
 /**
- * Fill the become-a-member wizard's profile phase (spec §4.3) — the profile basics
- * minus personalId (now captured at registration). The wizard renders
- * region/city/employment as LabeledSelects; the delegate binding is separate and left
- * at its default (central) by this helper.
+ * Fill the become-a-member wizard's profile phase (spec §4.3) — the profile basics,
+ * plus the personal ID (owner fix #10: captured HERE now, not at registration). The
+ * wizard renders region/city/employment as design-system SelectFields; the delegate
+ * binding is separate and left at its default (central) by this helper.
+ *
+ * `personalId` is optional and, when given, is filled FIRST — the ID field renders at
+ * the top of the field stack, and only when the profile doesn't already have one.
+ * Journeys that registered through the NEW /join (no ID yet) MUST pass it; journeys
+ * resuming a service-seeded profile that already carries personal_id MUST NOT (the
+ * field doesn't render there — a fill would time out).
  *
  * The city is selected by its own id, never positionally. changeRegion() clears cityId
  * but the new region's <option>s only arrive after the Supabase round trip in the
@@ -173,9 +178,12 @@ async function firstCityOfRegion(regionLabel: string): Promise<{ id: number; nam
  */
 export async function fillMembershipProfile(
   page: Page,
-  opts: { regionLabel: string },
+  opts: { regionLabel: string; personalId?: string },
 ): Promise<void> {
   const city = await firstCityOfRegion(opts.regionLabel);
+  if (opts.personalId) {
+    await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
+  }
   await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
   await page.getByLabel("მხარე").selectOption({ label: opts.regionLabel });
   await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption(String(city.id));

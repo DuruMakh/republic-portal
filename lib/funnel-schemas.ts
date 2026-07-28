@@ -51,7 +51,6 @@ const personalIdSchema = z
 export const registerSchema = z.object({
   firstName: nameSchema,
   lastName: nameSchema,
-  personalId: personalIdSchema,
   phone: phoneSchema,
   refCode: refCodeSchema.nullish(),
 });
@@ -60,6 +59,7 @@ export const registerSchema = z.object({
 export const registerActionSchema = registerSchema.omit({ phone: true });
 
 export const membershipProfileSchema = z.object({
+  personalId: personalIdSchema.nullable(),
   birthDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "მიუთითე დაბადების თარიღი." })

@@ -22,6 +22,7 @@ export function ProfileForm({
   initial,
   phone,
   regions,
+  hasPersonalId,
 }: {
   initial: {
     firstName: string;
@@ -32,6 +33,9 @@ export function ProfileForm({
   };
   phone: string | null;
   regions: { id: number; name_ka: string }[];
+  /** A registered person who hasn't reached the wizard has no ID yet — the masked
+   * row would lie about a value that doesn't exist (owner fix #10). */
+  hasPersonalId: boolean;
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState(initial.firstName);
@@ -148,17 +152,19 @@ export function ProfileForm({
               ნომრის შესაცვლელად საჭიროა ხელახალი დადასტურება.
             </p>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
-            <input
-              className={`${inputClasses} border-line bg-surface tracking-widest`}
-              value="•••••••••••"
-              readOnly
-              aria-label="პირადი ნომერი"
-              data-testid="profile-pid"
-            />
-            <p className="text-xs text-muted-fg">ვერიფიცირებული · დაცული მონაცემი.</p>
-          </div>
+          {hasPersonalId ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
+              <input
+                className={`${inputClasses} border-line bg-surface tracking-widest`}
+                value="•••••••••••"
+                readOnly
+                aria-label="პირადი ნომერი"
+                data-testid="profile-pid"
+              />
+              <p className="text-xs text-muted-fg">ვერიფიცირებული · დაცული მონაცემი.</p>
+            </div>
+          ) : null}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField

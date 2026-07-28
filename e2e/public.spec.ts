@@ -57,10 +57,11 @@ test.describe("home", () => {
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
     await cta.click();
     await expect(page).toHaveURL(/\/join$/);
-    // The four-field one-door form replaced the old funnel choice screen — see
-    // registration.spec.ts / membership.spec.ts.
+    // The three-field one-door form replaced the old funnel choice screen — see
+    // registration.spec.ts / membership.spec.ts. Owner fix #10: the personal ID
+    // moved to the become-a-member wizard, so it no longer renders here.
     await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
-    await expect(page.getByLabel("პირადი ნომერი")).toBeVisible();
+    await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);
   });
 });
 

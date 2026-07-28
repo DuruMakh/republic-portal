@@ -203,6 +203,7 @@ export default async function ProfilePage() {
               }}
               phone={user?.phone ?? null}
               regions={regions ?? []}
+              hasPersonalId={state.hasPersonalId}
             />
           </div>
 

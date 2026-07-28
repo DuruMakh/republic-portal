@@ -11,6 +11,7 @@ import { Stepper } from "@/components/Stepper";
 import { TierPicker } from "@/components/TierPicker";
 import {
   deriveMembershipPhase,
+  DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
   type CabinetStatePresent,
   type Tier,
@@ -19,7 +20,7 @@ import { EMPLOYMENT_PRESETS, membershipProfileSchema } from "@/lib/funnel-schema
 import { createClient } from "@/lib/supabase/client";
 import { completeMembershipAction, saveMembershipProfileAction } from "./actions";
 
-const FIELD_KEYS = ["birthDate", "regionId", "cityId", "employment"] as const;
+const FIELD_KEYS = ["personalId", "birthDate", "regionId", "cityId", "employment"] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
@@ -36,14 +37,18 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",
   );
 
-  // profile phase — ported from the old /join/step-2 (spec §4.3), minus personalId
-  // and the delegate-role tcAccepted branch: this wizard only ever renders for
+  // profile phase — ported from the old /join/step-2 (spec §4.3), minus the
+  // delegate-role tcAccepted branch: this wizard only ever renders for
   // role === "member" (the page gate redirects role === "delegate" to /delegate).
   const referral = initialState.referral;
+  // Owner fix #10: the ID moved here from /join. Rendered only for a profile
+  // that doesn't already have one — every pre-change account does.
+  const askPersonalId = !initialState.hasPersonalId;
   const [regions, setRegions] = useState<{ id: number; name_ka: string }[]>([]);
   const [cities, setCities] = useState<{ id: number; name_ka: string }[]>([]);
   const [delegateOptions, setDelegateOptions] = useState<DelegateOption[]>([]);
 
+  const [personalId, setPersonalId] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [regionId, setRegionId] = useState<number | null>(null);
   const [cityId, setCityId] = useState<number | null>(null);
@@ -134,6 +139,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     setFormError(undefined);
     const employment = workPreset === "__other" ? workFree : workPreset;
     const parsed = membershipProfileSchema.safeParse({
+      personalId: askPersonalId ? personalId : null,
       birthDate,
       regionId: regionId ?? 0,
       cityId: cityId ?? 0,
@@ -168,7 +174,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       setBusy(false);
     }
     if (!result.ok) {
-      setFormError(result.error);
+      if (result.error === DUPLICATE_PERSONAL_ID_MESSAGE) {
+        setErrors((prev) => ({ ...prev, personalId: result.error }));
+      } else {
+        setFormError(result.error);
+      }
       return;
     }
     // clears a stale error from an earlier failed completion attempt — this is
@@ -208,6 +218,21 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           ეს მონაცემები საჭიროა წევრობის იურიდიული ვერიფიკაციისთვის. ინახება უსაფრთხოდ.
         </p>
         <div className="flex flex-col gap-4">
+          {askPersonalId ? (
+            <div className="flex flex-col gap-1.5">
+              <Field
+                label="პირადი ნომერი"
+                name="personalId"
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="01001000000"
+                value={personalId}
+                onChange={(e) => setPersonalId(e.target.value)}
+                error={errors.personalId}
+              />
+              <p className="text-xs text-muted-fg">11 ნიშნა</p>
+            </div>
+          ) : null}
           <Field
             label="დაბადების თარიღი"
             name="birthDate"

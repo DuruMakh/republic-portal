@@ -27,7 +27,6 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
     phone,
     firstName,
     lastName: "ტესტი",
-    personalId: journeyPersonalId(JOURNEY.regHappy),
   });
 
   // registered overview greets them by name
@@ -54,7 +53,6 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
   await page.goto("/join");
   await page.getByLabel("სახელი").fill("სხვა");
   await page.getByLabel("გვარი").fill("სახელი");
-  await page.getByLabel("პირადი ნომერი").fill(journeyPersonalId(JOURNEY.spare)); // a different ID
   await page.getByLabel("ტელეფონის ნომერი").fill(phone);
   const reentryOtp = await submitJoinAndReadInboxOtp(page, phone);
   await page.getByTestId("otp-0").fill(reentryOtp);
@@ -100,7 +98,6 @@ test("a referral link is captured at registration and bound in the wizard", asyn
     phone,
     firstName: "ვატესტ",
     lastName: "რეფერალს",
-    personalId: journeyPersonalId(JOURNEY.regReferral),
   });
 
   // the become-a-member wizard shows the bound delegate — a read-only card, not the

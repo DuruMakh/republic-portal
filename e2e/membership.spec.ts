@@ -36,14 +36,16 @@ test("full upgrade: register → wizard → member with a reference code and mem
     phone,
     firstName: "ვატესტ",
     lastName: "წევრობას",
-    personalId: journeyPersonalId(JOURNEY.membFull),
   });
 
   // the overview CTA opens the wizard's profile phase
   await page.getByTestId("become-member-cta").click();
   await expect(page).toHaveURL(/\/me\/membership/);
   await expect(page.getByLabel("დელეგატი")).toBeVisible(); // no referral → the picker shows
-  await fillMembershipProfile(page, { regionLabel: "თბილისი" });
+  await fillMembershipProfile(page, {
+    regionLabel: "თბილისი",
+    personalId: journeyPersonalId(JOURNEY.membFull),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
   // tier phase → complete on tier 10
@@ -88,12 +90,14 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
     phone,
     firstName: "ვატესტ",
     lastName: "გაგრძელებას",
-    personalId: journeyPersonalId(JOURNEY.membResume),
   });
 
   // save the profile phase only, then leave the wizard
   await page.goto("/me/membership");
-  await fillMembershipProfile(page, { regionLabel: "კახეთი" });
+  await fillMembershipProfile(page, {
+    regionLabel: "კახეთი",
+    personalId: journeyPersonalId(JOURNEY.membResume),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
   await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
 
@@ -120,13 +124,15 @@ test("referral binding survives to completion and shows as the current delegate"
     phone,
     firstName: "ვატესტ",
     lastName: "რეფერალით",
-    personalId: journeyPersonalId(JOURNEY.regReferral),
   });
 
   // complete the wizard — the referral card replaces the picker; binding is region-independent
   await page.goto("/me/membership");
   await expect(page.getByText(fullName)).toBeVisible();
-  await fillMembershipProfile(page, { regionLabel: "აჭარა" });
+  await fillMembershipProfile(page, {
+    regionLabel: "აჭარა",
+    personalId: journeyPersonalId(JOURNEY.regReferral),
+  });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
   await expect(page.getByTestId("chosen-delegate")).toHaveText(fullName);
@@ -158,7 +164,6 @@ test("a registered member RSVPs to a published event", async ({ page }) => {
     phone,
     firstName: "ვატესტ",
     lastName: "დასწრებას",
-    personalId: journeyPersonalId(JOURNEY.membRsvp),
   });
   await page.goto("/me/events");
   const eventCard = page.locator("section", { hasText: `შეხვედრა ${RUN}` });

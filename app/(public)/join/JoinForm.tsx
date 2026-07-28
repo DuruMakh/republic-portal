@@ -9,7 +9,6 @@ import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
 import { deriveDestination } from "@/lib/cabinet";
 import {
-  DUPLICATE_PERSONAL_ID_MESSAGE,
   GENERIC_FUNNEL_ERROR,
   isReferralCodeCandidate,
   NOT_AUTHENTICATED_MESSAGE,
@@ -22,7 +21,7 @@ import { registerAction } from "./actions";
 
 type JoinPhase = "form" | "otp" | "retry";
 
-const FIELD_KEYS = ["firstName", "lastName", "personalId", "phone"] as const;
+const FIELD_KEYS = ["firstName", "lastName", "phone"] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
@@ -38,7 +37,6 @@ export default function JoinForm() {
   const [phase, setPhase] = useState<JoinPhase>("form");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [personalId, setPersonalId] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
@@ -89,12 +87,7 @@ export default function JoinForm() {
 
   function handleRegisterResult(result: ActionResult) {
     if (!result.ok) {
-      if (result.error === DUPLICATE_PERSONAL_ID_MESSAGE) {
-        // the phone is already OTP-proven for this session — no new code needed,
-        // just let them fix the personal ID and resubmit directly
-        setErrors({ personalId: result.error });
-        setPhase("retry");
-      } else if (result.error === NOT_AUTHENTICATED_MESSAGE) {
+      if (result.error === NOT_AUTHENTICATED_MESSAGE) {
         // the OTP session genuinely lapsed — the ONLY failure that legitimately
         // needs a fresh code, so drop all the way back to the phone form (finding V10)
         setFormError(result.error);
@@ -127,7 +120,6 @@ export default function JoinForm() {
     const parsed = registerSchema.safeParse({
       firstName,
       lastName,
-      personalId: personalId.replace(/\D/g, ""),
       phone: phoneInput,
       refCode,
     });
@@ -153,7 +145,6 @@ export default function JoinForm() {
     const parsed = registerActionSchema.safeParse({
       firstName,
       lastName,
-      personalId: personalId.replace(/\D/g, ""),
       refCode,
     });
     if (!parsed.success) {
@@ -179,7 +170,6 @@ export default function JoinForm() {
       const result = await registerAction({
         firstName,
         lastName,
-        personalId: personalId.replace(/\D/g, ""),
         refCode,
       });
       handleRegisterResult(result);
@@ -228,19 +218,6 @@ export default function JoinForm() {
                   onChange={(e) => setLastName(e.target.value)}
                   error={errors.lastName}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Field
-                  label="პირადი ნომერი"
-                  name="personalId"
-                  inputMode="numeric"
-                  maxLength={11}
-                  placeholder="01001000000"
-                  value={personalId}
-                  onChange={(e) => setPersonalId(e.target.value)}
-                  error={errors.personalId}
-                />
-                <p className="text-xs text-muted-fg">11 ნიშნა</p>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Field

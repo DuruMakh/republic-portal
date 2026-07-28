@@ -48,6 +48,7 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
     firstName: "ნინო",
     lastName: "ბერიძე",
     personalIdMasked: "010********",
+    hasPersonalId: false,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -75,7 +76,6 @@ async function driveToRegister() {
   render(<JoinForm />);
   fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
   fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-  fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
   fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), { target: { value: "555123456" } });
   fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
   const confirm = await screen.findByRole("button", { name: "დადასტურება" });
@@ -143,9 +143,8 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
     const retryButton = screen.getByRole("button", { name: "დარეგისტრირება" });
 
-    // fix the ID and resubmit via the proven session — success redirects to the cabinet
+    // resubmit via the proven session — success redirects to the cabinet
     registerAction.mockResolvedValueOnce({ ok: true, state: presentState() });
-    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "02002000000" } });
     fireEvent.click(retryButton);
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/me"));
@@ -169,5 +168,13 @@ describe("JoinForm — section headings (owner fix #6)", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "პირადი მონაცემები" })).toBeInTheDocument();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeInTheDocument();
+  });
+});
+
+describe("JoinForm — no personal ID at registration (owner fix #10)", () => {
+  it("does not ask for a personal ID at registration (owner fix #10)", () => {
+    // render JoinForm exactly as the first existing test in this file does
+    render(<JoinForm />);
+    expect(screen.queryByLabelText("პირადი ნომერი")).not.toBeInTheDocument();
   });
 });
