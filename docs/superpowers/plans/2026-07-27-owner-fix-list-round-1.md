@@ -564,7 +564,7 @@ export function NewsCard({
 `cities` currently seeds 37 rows (`20260712212415_seed_regions.sql`) — a partial list. Owner: every region lists all its municipalities; Tbilisi lists all its districts. Target = the standard 64 election municipalities (region rows keep the app's existing 11-მხარე split; existing center-name style kept, e.g. სტეფანწმინდა for ყაზბეგი municipality) **plus** Tbilisi's 10 raions. The legacy `თბილისი` city row stays (existing profiles reference it). Additive insert only — no schema change, no updates, no deletes.
 
 **Files:**
-- Create: `supabase/migrations/20260727121500_complete_municipalities.sql`
+- Create: `supabase/migrations/20260728093000_complete_municipalities.sql`
 
 **Interfaces:** none — pickers read `cities` filtered by `region_id`, ordered `name_ka` (MembershipWizard:134-139 verified; check ProfileForm's cities query does the same and add `.order("name_ka")` if missing).
 
@@ -605,9 +605,9 @@ where not exists (
 
 - [ ] **Step 2: Name-integrity gate (MANDATORY — the hazard here is silent homoglyphs).** Two checks before commit:
   1. Codepoint scan — every non-ASCII char in the file must be Mkhedruli:
-     `node -e "const s=require('fs').readFileSync('supabase/migrations/20260727121500_complete_municipalities.sql','utf8');const bad=[...s].filter(c=>{const p=c.codePointAt(0);return p>127&&!(p>=0x10D0&&p<=0x10FF);});console.log(bad.length?['BAD',...new Set(bad)]:'OK')"` — Expected: `OK`.
+     `node -e "const s=require('fs').readFileSync('supabase/migrations/20260728093000_complete_municipalities.sql','utf8');const bad=[...s].filter(c=>{const p=c.codePointAt(0);return p>127&&!(p>=0x10D0&&p<=0x10FF);});console.log(bad.length?['BAD',...new Set(bad)]:'OK')"` — Expected: `OK`.
   2. Cross-check the 37 names + the per-region totals against an authoritative list (WebFetch the CEC or Georgian-Wikipedia municipalities page) — expected totals per region after apply: თბილისი 11 (1 legacy + 10 raions), აჭარა 6, იმერეთი 12, კახეთი 8, ქვემო ქართლი 7, სამეგრელო-ზემო სვანეთი 9, სამცხე-ჯავახეთი 6, გურია 3, მცხეთა-მთიანეთი 4, რაჭა-ლეჩხუმი და ქვემო სვანეთი 4, შიდა ქართლი 4 — **74 total**. Any mismatch: fix the SQL, not the expectation.
-  3. `node scripts/ka-gate.mjs --diff main supabase/migrations/20260727121500_complete_municipalities.sql`
+  3. `node scripts/ka-gate.mjs --diff main supabase/migrations/20260728093000_complete_municipalities.sql`
 - [ ] **Step 3: Apply to staging** — `npx supabase db push` (repo practice; staging is the owner-approved target).
 - [ ] **Step 4: Verify live counts** — scratch script (not committed) with the anon key from `.env.local`; `cities` is anon-readable:
 
