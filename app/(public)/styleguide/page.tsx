@@ -412,6 +412,7 @@ export default function StyleguidePage() {
         <Card title="შიგთავსის კომპონენტები">
           <div className="flex flex-col gap-5">
             <ContentBody body={"აბზაცი პირველი.\n\nბმულით: https://example.ge"} />
+            <p className="text-[0.74rem] font-bold uppercase tracking-[.08em] text-muted-fg">row</p>
             <NewsCard
               href="/styleguide"
               title="სიახლის ბარათი"
@@ -420,6 +421,9 @@ export default function StyleguidePage() {
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />
+            <p className="text-[0.74rem] font-bold uppercase tracking-[.08em] text-muted-fg">
+              lead
+            </p>
             <NewsCard
               variant="lead"
               href="/styleguide"
@@ -429,6 +433,9 @@ export default function StyleguidePage() {
               excerptText="მოკლე შინაარსი ბარათისთვის…"
               pill={<Pill status="profile_completed" label="წევრებისთვის" />}
             />
+            <p className="text-[0.74rem] font-bold uppercase tracking-[.08em] text-muted-fg">
+              tile
+            </p>
             <NewsCard
               variant="tile"
               href="/styleguide"

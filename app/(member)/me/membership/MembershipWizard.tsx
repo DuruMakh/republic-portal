@@ -240,7 +240,6 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                 label="პირადი ნომერი"
                 name="personalId"
                 inputMode="numeric"
-                maxLength={11}
                 placeholder="01001000000"
                 value={personalId}
                 onChange={(e) => setPersonalId(e.target.value)}

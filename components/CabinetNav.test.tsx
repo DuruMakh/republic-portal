@@ -2,6 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CabinetNav } from "./CabinetNav";
 
+// vi.hoisted: vi.mock factories are hoisted above imports, so the mocks they
+// close over must be created in a hoisted block too — a plain const here would
+// still be in the temporal dead zone when the factory runs. pathnameRef is a
+// mutable box (not a value) so a test can retarget usePathname per case.
 const { push, refresh, signOut, pathnameRef } = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),

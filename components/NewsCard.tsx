@@ -18,7 +18,7 @@ export function NewsCard({
   imageUrl: string | null;
   excerptText: string;
   pill?: ReactNode;
-  /** row = cabinet/homepage brief (default) · lead = full-width opener · tile = grid card */
+  /** row = cabinet brief (default) · lead = full-width opener · tile = grid card (news index + homepage) */
   variant?: "row" | "lead" | "tile";
 }) {
   if (variant === "row") {

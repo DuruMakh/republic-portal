@@ -67,5 +67,7 @@ describe("NewsCard", () => {
       />,
     );
     expect(container.querySelector("img")!.className).toContain("aspect-[3/2]");
+    expect(screen.getByRole("heading").className).toContain("text-lg");
+    expect(screen.getByText("მოკლე შინაარსი…").className).toContain("line-clamp-2");
   });
 });
