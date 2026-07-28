@@ -319,9 +319,6 @@ export interface Database {
         Row: {
           mrr_gel: number;
           active_count: number;
-          tier5_count: number;
-          tier10_count: number;
-          tier20_count: number;
         };
         Relationships: [];
       };
@@ -503,7 +500,6 @@ export interface Database {
       become_member_complete: { Args: { p_tier: number }; Returns: Json };
       is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
       member_change_delegate: { Args: { p_delegate_id: string | null }; Returns: Json };
-      member_change_tier: { Args: { p_tier: number }; Returns: Json };
       // Phase 6 R2 (spec §3.1): member-only delegacy request; returns cabinet_state().
       request_delegacy: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_panel: { Args: Record<PropertyKey, never>; Returns: Json };

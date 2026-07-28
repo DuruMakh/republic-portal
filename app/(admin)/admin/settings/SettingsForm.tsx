@@ -47,7 +47,7 @@ export function SettingsForm({
       <p className="text-sm text-ink">
         წევრი აქტიურია გადახდილი პერიოდის ბოლოდან კიდევ{" "}
         {/* spec §3.9: bold covers ONLY „N დღე" — „კიდევ" stays outside the emphasis */}
-        <strong>{valid ? days : "—"} დღე</strong>. მაგალითად: 20 ₾ (ერთი თვის საწევრო), გადახდილი 1
+        <strong>{valid ? days : "—"} დღე</strong>. მაგალითად: 10 ₾ (ერთი თვის საწევრო), გადახდილი 1
         ივლისს, ფარავს 31 ივლისამდე → აქტიურია{" "}
         <strong>
           {/* spec §3.9: the example recomputes live as N changes */}
