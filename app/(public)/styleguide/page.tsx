@@ -299,7 +299,6 @@ export default function StyleguidePage() {
           <Masthead
             navItems={[
               { href: "/", label: "მთავარი" },
-              { href: "/delegates", label: "დელეგატები" },
               { href: "/leaderboard", label: "რეიტინგი" },
             ]}
             cta={

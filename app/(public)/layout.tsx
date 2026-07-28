@@ -18,7 +18,6 @@ const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლი
 
 const navItems: { href: string; label: string }[] = [
   { href: "/", label: "მთავარი" },
-  { href: "/delegates", label: "დელეგატები" },
   { href: "/leaderboard", label: "რეიტინგი" },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: "/events", label: "ღონისძიებები" },
