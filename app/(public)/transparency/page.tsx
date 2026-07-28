@@ -27,7 +27,7 @@ export default async function TransparencyPage() {
   // codepoint compare, not localeCompare: mkhedruli is codepoint-alphabetical and
   // Node/browser ICU disagreements have broken ka-GE rendering before (DECISIONS)
   const regions = [...regionsRaw].sort(
-    (a, b) => b.registered - a.registered || (a.name_ka < b.name_ka ? -1 : 1),
+    (a, b) => b.collected_gel - a.collected_gel || (a.name_ka < b.name_ka ? -1 : 1),
   );
 
   return (
@@ -45,7 +45,7 @@ export default async function TransparencyPage() {
           sub="სულ, დაარსებიდან"
         />
         <StatCard value={formatCountKa(publicStats.registered_total)} label="რეგისტრირებული" />
-        <StatCard value={formatCountKa(stats.registered_members)} label="წევრი" />
+        <StatCard value={formatCountKa(stats.members)} label="წევრი" />
         <StatCard value={formatCountKa(stats.approved_delegates)} label="დამტკიცებული დელეგატი" />
       </div>
 
@@ -56,15 +56,17 @@ export default async function TransparencyPage() {
             <>
               <th className={tableThClass}>რეგიონი</th>
               <th className={`${tableThClass} text-right`}>წევრი</th>
-              <th className={`${tableThClass} text-right`}>აქტიური</th>
+              <th className={`${tableThClass} text-right`}>შეგროვებული თანხა (₾)</th>
             </>
           }
         >
           {regions.map((r) => (
             <tr key={r.region_id} className={tableRowClass}>
               <td className={`${tableCellClass} font-semibold text-ink`}>{r.name_ka}</td>
-              <td className={`${tableCellClass} text-right`}>{formatCountKa(r.registered)}</td>
-              <td className={`${tableCellClass} text-right`}>{formatCountKa(r.active)}</td>
+              <td className={`${tableCellClass} text-right`}>{formatCountKa(r.members)}</td>
+              <td className={`${tableCellClass} text-right`}>
+                {formatCountKa(Math.round(r.collected_gel))}
+              </td>
             </tr>
           ))}
         </DataTable>

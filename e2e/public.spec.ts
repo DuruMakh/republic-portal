@@ -142,3 +142,16 @@ test.describe("robots", () => {
     expect(await robots.text()).toContain("Disallow: /");
   });
 });
+
+test.describe("transparency", () => {
+  // awaits the Task 9 migration push: transparency_regions on staging still
+  // returns registered/active until 20260728140000_transparency_region_money.sql
+  // is applied there. Flips back to `test` in Task 9.
+  test.fixme("the region table shows members and collected money", async ({ page }) => {
+    await page.goto("/transparency");
+    await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "წევრი" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /შეგროვებული თანხა/ })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
+  });
+});
