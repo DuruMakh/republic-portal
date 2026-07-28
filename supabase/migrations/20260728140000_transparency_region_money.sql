@@ -1,8 +1,10 @@
--- Owner fix list #5 (2026-07-27): the finances table shows collected money per
--- region, and the "member" column finally counts members instead of everyone who
--- ever registered. The column set changes, so transparency_regions is dropped and
--- recreated (create-or-replace cannot drop or rename columns); grants restated to
--- match 20260719150000 + the 20260726120000 write-grant revoke.
+-- Owner fix list #5 (2026-07-27): the finances table trades its `active` column for
+-- collected money per region. The member count is NOT redefined -- see the enum note
+-- below: the old `registered` column already counted completed memberships only, so
+-- the displayed per-region figures do not change. The column set changes, so
+-- transparency_regions is dropped and recreated (create-or-replace cannot drop or
+-- rename columns); grants restated to match 20260719150000 + the 20260726120000
+-- write-grant revoke.
 --
 -- Money is attributed to the PAYER'S CURRENT REGION: a member who moves takes their
 -- payment history with them.
