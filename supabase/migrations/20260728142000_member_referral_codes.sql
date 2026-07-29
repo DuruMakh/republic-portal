@@ -45,25 +45,6 @@
 -- but it keeps referral_code covered if a future migration ever widens the
 -- scoped grant by mistake, exactly like every other server-managed column this
 -- table has gained (reference_code, membership_tier, pending_delegate_id, ...).
---
--- OWNER DECISION (2026-07-29, code review of this same migration, pre-push):
--- referralCount SUMS both codes instead of counting whichever single code is
--- currently "active." The original "one person, one link" design below
--- (SOURCE VERIFICATION section) picks exactly one code per person: an
--- approved delegate's delegate code, or everyone else's own profile code.
--- Review surfaced a real consequence of that design: a member who
--- accumulates N sign-ups on their own M- link and is LATER approved as a
--- delegate would see referralCount silently reset to 0 the instant
--- referralCode switches to the delegate code — those N attributions become
--- permanently invisible, even though the rows are still sitting in
--- profiles.signup_ref_code, unchanged, forever. The owner's decision: keep
--- the DISPLAYED LINK exactly as designed (still the delegate code once
--- approved) but widen referralCount in cabinet_state() and delegate_panel()
--- to count sign-ups matching EITHER the person's own profile referral_code
--- OR (for an approved delegate) their delegate referral_code. Detail and the
--- NULL-handling rationale live at each changed key, below — do not
--- "simplify" this back to a single coalesce()/single code; that would
--- silently reintroduce the exact data loss this decision fixes.
 alter table profiles add column referral_code text unique
   check (referral_code ~ '^M-[A-HJKMNP-Z2-9]{6}$');
 
@@ -287,14 +268,9 @@ revoke execute on function register(text, text, text) from public, anon;
 -- 2) cabinet_state(): same signature, create-or-replace, grants restated below
 --    (house style). Body VERBATIM from
 --    20260728100000_personal_id_at_membership.sql:293-374 except the two new
---    keys inserted right after 'hasPersonalId', PLUS the OWNER DECISION
---    (2026-07-29, see header) reworking referralCount. One person, one LINK:
---    an approved delegate's referralCode stays their delegate code (which
---    also binds delegacy); everyone else's is their own profile code — that
---    part of the design is unchanged. referralCount, however, now SUMS
---    sign-ups matching either code instead of picking one, so a member's
---    sign-ups earned before approval survive their later approval as a
---    delegate. Full detail at the key itself, below.
+--    keys inserted right after 'hasPersonalId'. One person, one link: an
+--    approved delegate's link stays their delegate code (which also binds
+--    delegacy); everyone else uses their own profile code.
 create or replace function cabinet_state() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -364,24 +340,11 @@ begin
       (select d.referral_code from public.delegates d
         where d.id = v_uid and d.status = 'approved'),
       v_profile.referral_code),
-    -- OWNER DECISION (2026-07-29, see header): sum sign-ups matching EITHER
-    -- the profile's own referral_code OR the approved-delegate code, instead
-    -- of coalescing to a single code the way referralCode above still does.
-    -- NULL handling (deliberate): the delegate subselect is NULL for anyone
-    -- who is not an approved delegate, and `signup_ref_code = NULL` is NULL
-    -- (never TRUE) — so the second OR arm silently contributes zero rows for
-    -- non-delegates, leaving the count exactly p2.signup_ref_code =
-    -- v_profile.referral_code, same as before this change for that
-    -- population. No double-count risk either: a delegate referral_code and
-    -- a profile referral_code can never be equal (delegate codes are a bare
-    -- 6-char gen_funnel_code draw with no hyphen; profile codes always carry
-    -- the 'M-' prefix per the check constraint above), so no single p2 row
-    -- can satisfy both arms of the OR at once.
     'referralCount', (select count(*) from public.profiles p2
-                       where p2.signup_ref_code = v_profile.referral_code
-                          or p2.signup_ref_code = (
-                            select d.referral_code from public.delegates d
-                              where d.id = v_uid and d.status = 'approved')),
+                       where p2.signup_ref_code = coalesce(
+                         (select d.referral_code from public.delegates d
+                           where d.id = v_uid and d.status = 'approved'),
+                         v_profile.referral_code)),
     'birthDate', v_profile.birth_date,
     'regionId', v_profile.region_id,
     'cityId', v_profile.city_id,
@@ -405,33 +368,17 @@ revoke execute on function cabinet_state() from public, anon;
 
 -- 3) delegate_panel(): same signature, create-or-replace. Body VERBATIM from
 --    20260722120000_r2_ladder_and_numbers.sql:262-290 except one new key added
---    after 'registeredCount', PLUS the OWNER DECISION (2026-07-29, see header)
---    widening that new key. registeredCount is UNCHANGED and stays distinct:
---    it counts only status = 'registered' sign-ups via the delegate code.
---    referralCount counts every sign-up the delegate code produced, PLUS
---    every sign-up the delegate's own profile code produced (typically from
---    before they were approved, when their only shareable link was their M-
---    profile code) — the same sum-both-codes decision as cabinet_state()
---    above, and for the same reason: without it, sign-ups earned pre-approval
---    would never appear anywhere a delegate can see them. A profile row for
---    the caller is brought into scope below (same id as v_delegate,
---    guaranteed by the delegates(id) references profiles(id) FK) to read
---    that second code.
+--    after 'registeredCount'. Distinct from registeredCount, which counts only
+--    status = 'registered'; this counts every sign-up the link produced.
 create or replace function delegate_panel() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
   v_delegate public.delegates%rowtype;
-  v_profile public.profiles%rowtype;
 begin
   if v_uid is null then raise exception 'not_authenticated'; end if;
   select * into v_delegate from public.delegates where id = v_uid;
   if not found then raise exception 'not_a_delegate'; end if;
-  -- delegates.id references profiles(id) on delete cascade
-  -- (20260712212409_initial_schema.sql:34), so having just found a
-  -- delegates row for v_uid guarantees a profiles row for the same id
-  -- exists too — no separate "not found" branch needed for this select.
-  select * into v_profile from public.profiles where id = v_uid;
 
   return jsonb_build_object(
     'status', v_delegate.status::text,
@@ -450,20 +397,8 @@ begin
                           from public.profiles p
                           where p.signup_ref_code = v_delegate.referral_code
                             and p.status = 'registered'),
-    -- OWNER DECISION (2026-07-29, see header and the comment above this
-    -- function): sum sign-ups matching EITHER the delegate code OR this
-    -- delegate's own profile referral_code. v_delegate.referral_code is
-    -- NOT NULL by schema (delegates.referral_code text not null unique,
-    -- initial_schema.sql:36) and v_profile.referral_code is NOT NULL by
-    -- this migration's own `set not null` above, so unlike cabinet_state()'s
-    -- analogous OR, neither side of this comparison can ever be NULL — but
-    -- the two codes still can never collide (delegate codes are a bare
-    -- 6-char gen_funnel_code draw with no hyphen; profile codes always carry
-    -- the 'M-' prefix), so no single row can satisfy both arms and be
-    -- double-counted.
     'referralCount', (select count(*)
                         from public.profiles p
-                       where p.signup_ref_code = v_delegate.referral_code
-                          or p.signup_ref_code = v_profile.referral_code)
+                       where p.signup_ref_code = v_delegate.referral_code)
   );
 end $$;
