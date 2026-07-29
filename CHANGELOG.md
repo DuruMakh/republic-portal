@@ -1,6 +1,53 @@
 # Changelog
 
-## Unreleased — Owner fix-list round 1 (2026-07-28)
+## 0.11.0 — The owner fix list (2026-07-29)
+
+Both rounds of the fix list ship together; round 1 never carried a version number
+of its own.
+
+### Round 2
+
+- The home page now carries a proper news section and an events section, each with
+  a "see more" link, instead of a small news box tucked into the side column (2)
+- The delegates list page is gone: it duplicated the ranking page, so the ranking
+  page survives and the old address forwards to it automatically. Nothing is lost
+  — individual delegate pages are untouched, and the search-by-name and
+  filter-by-region controls that only existed on the old page now live on the
+  ranking page (3)
+- The finances page now shows, for each region, how many members it has and how
+  much money has been collected there. The "active" column it replaces is gone.
+  Money is attributed to the region a member lives in now, so someone who moves
+  takes their history with them. **The member numbers themselves do not change** —
+  that column already counted members rather than everyone who registered, despite
+  earlier advice to the contrary (5)
+- Membership is a fixed 10₾ a month. The 5/10/20 choice is gone from the sign-up
+  wizard, from the payments page, from the home page text and from the admin
+  statistics, and the database now refuses any other amount. Members who were on
+  5₾ or 20₾ are now on 10₾. **Nobody loses paid-up time**: every payment
+  permanently records the price it was made at, so past payments still buy exactly
+  the months they always bought (9)
+- Everyone now has their own referral link, not just approved delegates, and can
+  see how many people have registered through it. Members see a number only, never
+  a list of names. Someone who joins through a member's link is not assigned a
+  delegate — they choose their own, as before. If a member later becomes a
+  delegate, their earlier sign-ups still count towards their total (12)
+- The admin member list can be filtered by city, and the filter applies to the CSV
+  export as well as to what is on screen. Choosing a city and then switching to a
+  region that does not contain it no longer produces a silently empty list (16)
+- The three member statuses no longer read as a puzzle: "registered", "member (no
+  payment)" and "active member" now say plainly what each one is, everywhere they
+  appear — the list, the filter, the export and the delegate's own team table (16)
+- The caption under "I have no delegate" stays removed, as decided — it claimed
+  something the new wording contradicts (8b)
+
+Two items on the list are **not** in this release: the support page (11), which is
+waiting on its Georgian wording and a destination address, and item 13, whose text
+was never supplied.
+
+Decisions behind round 2, including two corrections to what was originally
+promised, are recorded in ADR-024.
+
+### Round 1
 
 - New dropdown look across the whole site: every select field now matches the design
   system's underline style instead of the plain browser default (1)
