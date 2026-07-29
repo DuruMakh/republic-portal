@@ -49,8 +49,14 @@ test("full upgrade: register → wizard → member with a reference code and mem
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
-  // tier phase → confirm the fixed fee and complete (owner fix #9: no more picker)
+  // tier phase → confirm the fixed fee and complete (owner fix #9: no more picker).
+  // Assert the AMOUNT, not just the heading: the heading alone would keep passing if
+  // the displayed fee regressed away from 10 GEL. The amount span renders
+  // MEMBERSHIP_FEE_GEL followed by a <small> lari sign, so its exact text is `10₾`;
+  // exact:true keeps this off the wrapping div, whose text also carries the
+  // per-month caption rendered below it.
   await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
+  await expect(page.getByText("10₾", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
 
   // done phase, now its own route: a GR- code and the central binding
