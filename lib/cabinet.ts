@@ -174,7 +174,13 @@ export interface DelegatePanelData {
   activeCount: number;
   totalCount: number;
   registeredCount: number;
-  /** Every sign-up the referral link produced, unlike registeredCount (status = 'registered' only) — owner fix #12. */
+  /**
+   * Every sign-up the delegate code produced, PLUS this delegate's own
+   * profile code (summed, not swapped — owner decision 2026-07-29, so
+   * sign-ups earned before approval are never dropped). Distinct from
+   * registeredCount, which counts only status = 'registered' via the
+   * delegate code alone — owner fix #12.
+   */
   referralCount: number;
 }
 

@@ -56,7 +56,12 @@ export interface CabinetStatePresent {
   hasPersonalId: boolean;
   /** This person's referral link code — the delegate code when approved, else their own (owner fix #12). */
   referralCode: string | null;
-  /** How many profiles signed up with that code. */
+  /**
+   * Sign-ups via this profile's own code, PLUS (once approved as a delegate)
+   * sign-ups via the delegate code too — summed, not swapped, so approval
+   * never drops the sign-ups earned earlier as an ordinary member (owner
+   * decision 2026-07-29; see supabase/migrations/20260728142000_member_referral_codes.sql).
+   */
   referralCount: number;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
