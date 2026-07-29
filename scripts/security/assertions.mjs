@@ -583,7 +583,7 @@ async function publicFilterAssertions(clients) {
     row(
       "transparency_regions.filter",
       "anon (A1)",
-      `${regionCount} region row(s), 'registered' excluding profiles at status 'registered'`,
+      `${regionCount} region row(s), 'members' excluding profiles at status 'registered'`,
       `${regionRows} row(s); ${stillRegistered} profile(s) at status 'registered' available as a negative case`,
       regionRows === regionCount,
       stillRegistered === 0

@@ -481,7 +481,15 @@ construction.** Member codes are `M-` + 6 characters from the existing
 alphabet; delegate codes can never contain a hyphen and payment references use
 `GR-`, so `signup_ref_code` is unambiguous without any cross-table lookup.
 Verified live: 1907 of 1907 profiles hold a well-formed unique code, and none
-of the 16 delegate codes contains a hyphen.
+of the 16 delegate codes contains a hyphen. **That no-hyphen guarantee for
+delegate codes rests on the generator, not a database constraint** —
+`profiles.referral_code` carries a CHECK pinning the `M-` prefix
+(`20260728142000:48-49`), but `delegates.referral_code` (`20260712212409:36`)
+has no CHECK forbidding a hyphen at all. The actual guarantee is
+`gen_funnel_code`'s hyphen-free alphabet plus the seeded `D`+digits shape
+(`scripts/seed-staging.mjs`); a future change to delegate-code generation that
+introduced a hyphen would silently break `signup_ref_code`'s unambiguity, with
+nothing in the schema to catch it.
 
 **Owner decision 2026-07-29 — an approved delegate's referral count sums both
 codes.** The original "one person, one link" design counted whichever single
@@ -519,5 +527,12 @@ later reader does not restore it as a perceived omission.
 **Known staleness, deliberately deferred:** `scripts/security/*` (the recorded
 corpus of the 2026-07-26 audit: `app-actions.mjs`, `arguments.mjs`,
 `manifest.json`, `live-objects.json`, `coverage.mjs`) still catalogs the
-dropped `member_change_tier` RPC. That corpus records what a completed audit
-probed; rewriting it is a separate decision, and nothing in CI runs it.
+dropped `member_change_tier` RPC — and the same staleness reaches beyond that
+corpus. `docs/security/*` (`coverage.md`, `findings.md`, `ledger.json`,
+`threat-model.md`) records the same RPC throughout; `lib/security/expectations.test.ts`
+cites it too, harmlessly — it is a string fixture, not a live call, so the
+suite stays green; and `scripts/security/probe.mjs`'s `profiles` read-column
+list (`READ_COLUMNS["table:profiles"]`) predates `referral_code`
+(`20260728142000_member_referral_codes.sql`) and so omits it. All of it
+records what a completed audit probed at the time; rewriting the corpus is a
+separate decision, and nothing in CI runs any of it.

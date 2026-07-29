@@ -57,10 +57,11 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await expect(page).toHaveURL(/\/me\/membership\/done/);
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
   await expect(page.getByTestId("chosen-delegate")).toHaveText("არ მყავს დელეგატი");
-  // the done screen's own pill must already read „წევრი" (V17) — it used to fall through
-  // to Pill's retired default „პროფილი შევსებულია" since this <Pill> has no label override
-  // (exact: the old substring match also passed against e.g. the აქტიური-წევრის copy below it)
-  await expect(page.getByText("წევრი", { exact: true })).toBeVisible();
+  // the done screen's own pill has no label override, so it falls through to
+  // Pill's own default for profile_completed — TEAM_STATUS_LABELS.profile_completed
+  // in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“, owner fix #16
+  // (exact: pins the match to this literal label, not a substring hit elsewhere on the page)
+  await expect(page.getByText("წევრი (გადახდის გარეშე)", { exact: true })).toBeVisible();
 
   // into the member cabinet — the nav now carries the member-only pages, with NO reload:
   // completeMembershipAction revalidates the (member) layout server-side, so the router
@@ -70,12 +71,15 @@ test("full upgrade: register → wizard → member with a reference code and mem
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "გადახდები" })).toBeVisible();
-  // membership pill — exact text, pinned to the Pill's <span>: the profile card also
-  // renders a member-since <dt> with the identical word, and the old non-exact .first()
-  // would have kept passing against ANY substring hit (e.g. წევრებისთვის in body copy)
+  // membership pill — exact text, pinned to the Pill's <span>: TEAM_STATUS_LABELS.
+  // profile_completed in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“ (owner fix #16).
+  // Both guards still matter: the wrapping <p> concatenates the reference code and
+  // the member-since text after the Pill's own label, so a non-exact match would
+  // also hit the <p>; and the member-since span is itself a <span>, so pinning to
+  // <span> alone isn't enough either — only the Pill satisfies both.
   const memberPill = page
     .locator("main")
-    .getByText("წევრი", { exact: true })
+    .getByText("წევრი (გადახდის გარეშე)", { exact: true })
     .and(page.locator("span"));
   await expect(memberPill).toHaveCount(1);
   await expect(memberPill).toBeVisible();

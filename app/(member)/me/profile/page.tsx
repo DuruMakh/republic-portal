@@ -127,9 +127,11 @@ export default async function ProfilePage() {
   const teamStatus: TeamMemberStatus =
     state.status === "active_member" ? "active_member" : "profile_completed";
   // An APPROVED delegate wins cabinetRole() (R2 §3.1); this page has no explicit
-  // redirect for that case (unchanged), so it keeps its pre-existing behavior of
-  // simply not rendering the member-only delegate rail — same gate the old
-  // summary-card delegate row used.
+  // redirect for that case (unchanged), so both consumers below must account for
+  // it directly: the member-only delegate rail stays gated on this flag (same gate
+  // the old summary-card delegate row used), and the ReferralCard's teamNote
+  // (fix-list round 2 review, Fix 2) is the negation of it — a delegate landing
+  // here directly has a link that DOES bind a team, same as /delegate's default.
   const isMemberRole = cabinetRole(state) === "member";
 
   // DECLARED reads (Global Constraints, spec §5.1): the my-delegate card needs
@@ -294,7 +296,11 @@ export default async function ProfilePage() {
             <ReferralCard
               code={state.referralCode}
               count={state.referralCount ?? 0}
-              teamNote={false}
+              // true only for the approved-delegate case reaching this page directly
+              // (see isMemberRole above): their referralCode IS the delegate code,
+              // which binds a team same as /delegate's default; false (member) is
+              // unchanged from before this fix.
+              teamNote={!isMemberRole}
             />
           ) : null}
 
