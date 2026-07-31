@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { Card } from "@/components/Card";
 import { CountUp } from "@/components/CountUp";
+import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
+import { NewsCard } from "@/components/NewsCard";
 import { SectionRule } from "@/components/SectionRule";
 import { formatDateKa } from "@/lib/cabinet";
+import { splitEvents } from "@/lib/community";
+import { excerpt } from "@/lib/content-render";
 import { formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
 import {
   fetchPublicDelegates,
+  fetchPublicEvents,
   fetchPublicNews,
   fetchPublicStats,
   fetchTransparencyStats,
@@ -19,10 +23,11 @@ export const revalidate = 60;
 // Manifesto block (kicker/headline/lede/two-column body) spliced -- never hand-retyped --
 // from prototype/kronika-d3/kronika-d3-template.html via the Task-11 brief's Step 1 node
 // snippet; every codepoint verified against the Georgian (Mkhedruli, U+10A0-U+10FF) Unicode
-// block before commit. P2's membership clause is the OWNER-APPROVED CORRECTED clause
-// (membership is a CHOICE of 5/10/20 GEL/month), replacing the mock's original fixed-price
-// wording -- see .superpowers/sdd/task-11-brief.md Step 1 and the georgian-quote-
-// transcription-hazard note (never retype Georgian by hand). P1 is rendered drop-cap: first
+// block before commit. P2's membership clause was the OWNER-APPROVED CORRECTED clause at
+// Task 11 (membership is a CHOICE of 5/10/20 GEL/month), replacing the mock's original
+// fixed-price wording. Owner fix #9 (2026-07-27) retires that choice for a fixed 10₾ fee,
+// so P2 below is corrected again -- see .superpowers/sdd/task-11-brief.md Step 1 and the
+// georgian-quote-transcription-hazard note (never retype Georgian by hand). P1 is rendered drop-cap: first
 // letter (P1.slice(0, 1)) floated large, rest (P1.slice(1)) as body text, below.
 const KICKER = "მანიფესტი";
 const HEADLINE = "ავაშენოთ ქართული რესპუბლიკა ერთად";
@@ -31,7 +36,7 @@ const LEDE =
 const P1 =
   "რესპუბლიკა არ შენდება ერთი მოედნიდან — ის იწერება ათასობით ხელმოწერით, ყოველ მხარეში, ყოველდღე. ჩვენი პლატფორმა თითოეულ წევრს აძლევს დადასტურებულ ხმას: პირადი ნომრით, SMS კოდით, საკუთარი დელეგატის არჩევით.";
 const P2 =
-  "დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობის შენატანი არჩევითია — 5, 10 ან 20₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება.";
+  "დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობის შენატანი — 10₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება.";
 const CONT = "გააგრძელე კითხვა →";
 const BYLINE1 = "მოძრაობის რედაქცია";
 const BYLINE2 = "3 წუთი კითხვა";
@@ -50,7 +55,7 @@ const LADDER_1_TITLE = "რეგისტრირებული";
 const LADDER_1_DESC = "სწრაფი რეგისტრაცია, გადახდის გარეშე.";
 const LADDER_1_LINK = "რეგისტრაცია →";
 const LADDER_2_TITLE = "წევრი";
-const LADDER_2_PRICE = "5/10/20₾ თვეში";
+const LADDER_2_PRICE = "10₾ თვეში";
 const LADDER_2_DESC = "სრული წევრობა და შიდა გამოკითხვები — კაბინეტიდან.";
 const LADDER_2_LINK = "დაიწყე რეგისტრაციით →";
 const LADDER_3_TITLE = "დელეგატი";
@@ -63,15 +68,20 @@ const TOTAL_GEL_LABEL = "შეგროვებული საწევრო
 const SUPPORTER_LABEL = "მხარდამჭერი";
 const NEWS_LABEL = "სიახლეები";
 const FINANCE_LABEL = "ფინანსები";
+const EVENTS_LABEL = "ღონისძიებები";
+const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
+const EVENTS_EMPTY = "მომავალი ღონისძიებები მალე გამოცხადდება.";
 
 export default async function HomePage() {
-  const [stats, delegates, tStats, news] = await Promise.all([
+  const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),
     fetchPublicDelegates(),
     fetchTransparencyStats(),
     fetchPublicNews(),
+    fetchPublicEvents(),
   ]);
   const ranked = rankDelegates(delegates);
+  const { upcoming } = splitEvents(events, new Date().toISOString());
 
   return (
     <main>
@@ -127,6 +137,38 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+          <div className="mt-10">
+            <SectionRule label={NEWS_LABEL} action={<Link href="/news">{FULL}</Link>} />
+            {news.length === 0 ? (
+              <p className="mt-4 text-muted-fg">{NEWS_EMPTY}</p>
+            ) : (
+              <div className="mt-6 grid gap-x-8 gap-y-8 sm:grid-cols-3">
+                {news.slice(0, 3).map((n) => (
+                  <NewsCard
+                    variant="tile"
+                    key={n.id}
+                    href={`/news/${n.slug}`}
+                    title={n.title}
+                    publishedAt={formatDateKa(n.published_at)}
+                    imageUrl={n.image_url}
+                    excerptText={excerpt(n.body)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mt-10">
+            <SectionRule label={EVENTS_LABEL} action={<Link href="/events">{FULL}</Link>} />
+            {upcoming.length === 0 ? (
+              <p className="mt-4 text-muted-fg">{EVENTS_EMPTY}</p>
+            ) : (
+              <div className="mt-6 flex flex-col gap-3">
+                {upcoming.slice(0, 3).map((e) => (
+                  <EventRow key={e.id} event={e} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <aside className="mt-8 flex flex-col gap-6 lg:mt-0 lg:pl-7">
           <div>
@@ -181,27 +223,6 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
-          <Card variant="callout">
-            <Eyebrow>{NEWS_LABEL}</Eyebrow>
-            <div className="mt-3 flex flex-col gap-3">
-              {news.slice(0, 3).map((n) => (
-                <div key={n.id}>
-                  <Link
-                    href={`/news/${n.slug}`}
-                    className="font-serif font-bold text-ink no-underline hover:text-brand"
-                  >
-                    {n.title}
-                  </Link>
-                  <p className="mt-0.5 text-[0.74rem] text-muted-fg">
-                    {formatDateKa(n.published_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3">
-              <Link href="/news">{FULL}</Link>
-            </p>
-          </Card>
         </aside>
       </div>
     </main>

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Badge } from "@/components/Badge";
 import { Eyebrow } from "@/components/Eyebrow";
-import { LeaderRow } from "@/components/LeaderRow";
+import { LeaderboardDirectory } from "@/components/LeaderboardDirectory";
 import { SectionRule } from "@/components/SectionRule";
 import { formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
-import { fetchPublicDelegates } from "@/lib/supabase/public";
+import { fetchPublicDelegates, fetchRegions } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
@@ -21,7 +21,8 @@ export const metadata: Metadata = {
 const SECTION_HEADING = "ცოცხალი რეიტინგი";
 
 export default async function LeaderboardPage() {
-  const ranked = rankDelegates(await fetchPublicDelegates());
+  const [delegates, regions] = await Promise.all([fetchPublicDelegates(), fetchRegions()]);
+  const ranked = rankDelegates(delegates);
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <div className="mb-2">
@@ -36,13 +37,7 @@ export default async function LeaderboardPage() {
           label={SECTION_HEADING}
           action={<Badge>{formatCountKa(ranked.length)} დელეგატი</Badge>}
         />
-        <ol className="list-none" role="list">
-          {ranked.map((d) => (
-            <li key={d.id}>
-              <LeaderRow delegate={d} />
-            </li>
-          ))}
-        </ol>
+        <LeaderboardDirectory delegates={ranked} regions={regions} />
       </div>
       <p className="mt-4 text-center text-xs text-muted-fg/80">
         რეიტინგი ახლდება ავტომატურად ყოველი ახალი აქტიური მხარდამჭერის დამატებისას.

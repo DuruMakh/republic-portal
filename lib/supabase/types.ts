@@ -38,6 +38,7 @@ export interface Database {
           employment: string | null;
           status: MemberStatusRow;
           signup_ref_code: string | null;
+          referral_code: string;
           pending_delegate_id: string | null;
           membership_tier: number | null;
           reference_code: string | null;
@@ -267,6 +268,7 @@ export interface Database {
           standing: "registered" | "member" | "active";
           signup_delegate_first_name: string | null;
           signup_delegate_last_name: string | null;
+          city_id: number | null;
         };
         Relationships: [];
       };
@@ -319,9 +321,6 @@ export interface Database {
         Row: {
           mrr_gel: number;
           active_count: number;
-          tier5_count: number;
-          tier10_count: number;
-          tier20_count: number;
         };
         Relationships: [];
       };
@@ -428,7 +427,7 @@ export interface Database {
         Relationships: [];
       };
       transparency_regions: {
-        Row: { region_id: number; name_ka: string; registered: number; active: number };
+        Row: { region_id: number; name_ka: string; members: number; collected_gel: number };
         Relationships: [];
       };
       admin_news: {
@@ -503,7 +502,6 @@ export interface Database {
       become_member_complete: { Args: { p_tier: number }; Returns: Json };
       is_registered: { Args: Record<PropertyKey, never>; Returns: boolean };
       member_change_delegate: { Args: { p_delegate_id: string | null }; Returns: Json };
-      member_change_tier: { Args: { p_tier: number }; Returns: Json };
       // Phase 6 R2 (spec §3.1): member-only delegacy request; returns cabinet_state().
       request_delegacy: { Args: Record<PropertyKey, never>; Returns: Json };
       delegate_panel: { Args: Record<PropertyKey, never>; Returns: Json };
@@ -546,6 +544,7 @@ export interface Database {
           p_region_id: number | null;
           p_status: string | null;
           p_include_ids: boolean;
+          p_city_id?: number | null;
         };
         Returns: Json;
       };

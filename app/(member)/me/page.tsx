@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
+import { ReferralCard } from "@/components/ReferralCard";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { deriveMembershipPhase } from "@/lib/funnel";
 import { getCabinetState } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ export default async function CabinetOverviewPage() {
         <Eyebrow>შემდეგი ნაბიჯი</Eyebrow>
         <h2 className="mt-1 font-serif text-xl font-bold text-ink">გახდი წევრი</h2>
         <p className="mt-1 text-sm text-muted-fg">
-          წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 5₾-დან.
+          წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 10₾.
         </p>
         <ul className="mt-4 flex flex-col gap-2">
           {PERKS.map((perk) => (
@@ -50,6 +51,15 @@ export default async function CabinetOverviewPage() {
           </ButtonLink>
         </div>
       </Card>
+      {state.referralCode != null ? (
+        <div className="mt-6">
+          <ReferralCard
+            code={state.referralCode}
+            count={state.referralCount ?? 0}
+            teamNote={false}
+          />
+        </div>
+      ) : null}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card>
           <h3 className="font-serif text-lg font-bold text-ink">ღონისძიებები</h3>

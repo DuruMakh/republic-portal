@@ -15,6 +15,10 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ავაშენოთ ქართული რესპუბლიკა ერთად" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
+    await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
+    await expect(page.getByRole("main").locator('a[href="/events"]')).toBeVisible();
+    await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toBeVisible();
     let active = 0;
     for (const id of ["stat-approved-delegates", "stat-active-members"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
@@ -45,8 +49,8 @@ test.describe("home", () => {
       expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
     }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
 
-    await page.getByRole("navigation").first().getByRole("link", { name: "დელეგატები" }).click();
-    await expect(page).toHaveURL(/\/delegates$/);
+    await page.getByRole("navigation").first().getByRole("link", { name: "რეიტინგი" }).click();
+    await expect(page).toHaveURL(/\/leaderboard$/);
   });
 
   test("the single register CTA lands on the one-door /join form", async ({ page }) => {
@@ -67,27 +71,6 @@ test.describe("home", () => {
   });
 });
 
-test.describe("delegate directory", () => {
-  test("lists approved delegates, search and region filter work", async ({ page }) => {
-    await page.goto("/delegates");
-    await expect(page.getByTestId("delegate-card").first()).toBeVisible();
-    const cardCount = await page.getByTestId("delegate-card").count();
-    expect(cardCount).toBeGreaterThanOrEqual(12); // seeded roster; staging may carry real extras
-    await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0); // pending stays hidden
-    await page.getByPlaceholder("ძებნა სახელით...").fill("გიორგი");
-    await expect(page.getByText("გიორგი მაისურაძე")).toBeVisible(); // seeded delegate found by name, regardless of extras
-    await page.getByPlaceholder("ძებნა სახელით...").fill("");
-    await page.getByRole("combobox").selectOption({ label: "გურია" });
-    await expect(page.getByText("ეკა მელაძე")).toBeVisible(); // settle: region filter applied
-    const guriaCount = await page.getByTestId("delegate-card").count();
-    expect(guriaCount).toBeGreaterThanOrEqual(1); // seeded per-region count
-    await page.getByPlaceholder("ძებნა სახელით...").fill("zzz");
-    await expect(
-      page.getByText("ამ პარამეტრებით დელეგატი ვერ მოიძებნა", { exact: false }),
-    ).toBeVisible();
-  });
-});
-
 test.describe("leaderboard", () => {
   test("ranks 12 delegates with plain numbering, no medals", async ({ page }) => {
     await page.goto("/leaderboard");
@@ -99,6 +82,30 @@ test.describe("leaderboard", () => {
     await expect(page.getByText("🥇")).toHaveCount(0);
     await expect(rows.first()).toContainText("გიორგი მაისურაძე");
     await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0);
+  });
+
+  test("search and region filter work, no-results notice shows", async ({ page }) => {
+    await page.goto("/leaderboard");
+    const rows = page.getByTestId("leader-row");
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThanOrEqual(12); // seeded roster; staging may carry real extras
+    await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0); // pending stays hidden
+    await page.getByPlaceholder("ძებნა სახელით...").fill("გიორგი");
+    await expect(page.getByText("გიორგი მაისურაძე")).toBeVisible();
+    await page.getByPlaceholder("ძებნა სახელით...").fill("");
+    await page.getByRole("combobox").selectOption({ label: "გურია" });
+    await expect(page.getByText("ეკა მელაძე")).toBeVisible();
+    await page.getByPlaceholder("ძებნა სახელით...").fill("zzz");
+    await expect(
+      page.getByText("ამ პარამეტრებით დელეგატი ვერ მოიძებნა", { exact: false }),
+    ).toBeVisible();
+  });
+
+  test("the retired /delegates index redirects, profile pages still resolve", async ({ page }) => {
+    await page.goto("/delegates");
+    await expect(page).toHaveURL(/\/leaderboard$/);
+    const profile = await page.goto("/delegates/giorgi-maisuradze");
+    expect(profile?.status()).toBe(200);
   });
 });
 
@@ -133,5 +140,15 @@ test.describe("robots", () => {
   test("non-production deployments refuse indexing", async ({ request }) => {
     const robots = await request.get("/robots.txt");
     expect(await robots.text()).toContain("Disallow: /");
+  });
+});
+
+test.describe("transparency", () => {
+  test("the region table shows members and collected money", async ({ page }) => {
+    await page.goto("/transparency");
+    await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "წევრი" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /შეგროვებული თანხა/ })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
   });
 });

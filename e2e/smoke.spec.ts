@@ -25,16 +25,15 @@ test("join shows the three-field one-door registration form", async ({ page }) =
 test("styleguide renders design system", async ({ page }) => {
   await page.goto("/styleguide");
   await expect(page.getByRole("button", { name: "ძირითადი" })).toBeVisible();
-  // Pill's active_member default (lib/cabinet TEAM_STATUS_LABELS.active_member = „აქტიური").
-  // Scoped to the "სტატუსები" demo card and exact-matched: the styleguide also has an
-  // unrelated StatCard demo labeled „აქტიური წევრი" (the retired Pill default), and
-  // Playwright's default getByText is a case-insensitive SUBSTRING match — an unscoped,
-  // non-exact „აქტიური წევრი" lookup would silently keep passing against that StatCard
-  // even if Pill's own active_member default regressed back to the retired string.
+  // Pill's active_member default (lib/cabinet TEAM_STATUS_LABELS.active_member =
+  // „აქტიური წევრი“, owner fix #16). Scoped to the "სტატუსები" demo card and
+  // exact-matched: the styleguide also has an unrelated StatCard demo labeled the
+  // very same „აქტიური წევრი“ outside any <section>, so an unscoped lookup
+  // would prove nothing about which one actually rendered.
   const statusesCard = page
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "სტატუსები", exact: true }) });
-  await expect(statusesCard.getByText("აქტიური", { exact: true })).toBeVisible();
+  await expect(statusesCard.getByText("აქტიური წევრი", { exact: true })).toBeVisible();
 });
 
 test("member area redirects anonymous users to login", async ({ page }) => {

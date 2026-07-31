@@ -116,7 +116,10 @@ describe("verdict.ts token classification vs. the live migrations", () => {
   // Verified once, out of band, that this file agrees with the database it is
   // standing in for: the token sequence extracted here matches `pg_proc.prosrc`
   // for all 54 live functions with zero mismatches (2026-07-26), and the live
-  // catalog produces the same single exemption listed below.
+  // catalog produces the same exemptions listed below (mint_member_referral_code
+  // added by owner fix #12, task-5 execution — not re-verified against the live
+  // catalog, since this migration is unpushed; verified by reading instead, same
+  // as every other claim in that migration).
   const GATELESS_BY_DESIGN = new Map([
     // A column-protection TRIGGER, not an RPC with a caller to admit or
     // refuse. It fires on any client-role UPDATE of profiles, gating on
@@ -126,6 +129,14 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // refuses one outside a trigger context regardless of grant. verdict.ts's
     // POST_GATE_TOKENS comment already carves out this exact pair.
     ["protect_profile_columns", ["invalid_name", "invalid_employment"]],
+    // A plain helper (not a trigger), but the same shape for this test's
+    // purposes: EXECUTE is revoked from every client role and it never reads
+    // auth.uid(), so it has no identity gate of its own to put in front of its
+    // one exhaustion raise. It is only ever reached through register()'s own
+    // gate (or the one-time backfill script in the same migration, which has
+    // no caller to gate at all). verdict.ts's POST_GATE_TOKENS comment carves
+    // out this pair too.
+    ["mint_member_referral_code", ["referral_code_exhausted"]],
   ]);
 
   /** Last definition of each function across the migrations, in apply order. */
@@ -182,12 +193,12 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // Tripwire, same role as the token-count one below: a new function is
     // welcome, but it should be a deliberate arrival, not a silent one.
     // 54 live + 4 dropped funnel_*; 59 since the security check-up's fix wave
-    // added payments_append_only() (L3-2). It needs no GATELESS_BY_DESIGN
-    // exemption, unlike protect_profile_columns: it raises a full SENTENCE
-    // ("payments are append-only", audit_log_immutable's idiom), never a token,
-    // so it carries nothing the gate-order invariant could find misplaced.
-    expect(latestFunctionBodies().size).toBe(59);
-    expect(GATELESS_BY_DESIGN.size).toBe(1);
+    // added payments_append_only() (L3-2); 60 since owner fix #12 (task-5
+    // execution) added mint_member_referral_code(), which DOES need a
+    // GATELESS_BY_DESIGN exemption (see above) — unlike payments_append_only,
+    // it raises an actual token, not a full sentence.
+    expect(latestFunctionBodies().size).toBe(60);
+    expect(GATELESS_BY_DESIGN.size).toBe(2);
   });
 
   it("finds exactly the token counts this test suite was written against", () => {
@@ -197,10 +208,12 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // happens to land in a valid bucket.
     const live = extractExceptionTokens();
     // 45 -> 46 and 5 -> 6 when the security check-up's fix wave added
-    // `phone_required` to register() (F3).
-    expect(live.size).toBe(46);
+    // `phone_required` to register() (F3). 46 -> 47 and 36 -> 37 when owner
+    // fix #12 (task-5 execution) added `referral_code_exhausted`
+    // (mint_member_referral_code(), classified POST_GATE_TOKENS above).
+    expect(live.size).toBe(47);
     expect(REFUSAL_TOKENS.size).toBe(6);
-    expect(POST_GATE_TOKENS.size).toBe(36);
+    expect(POST_GATE_TOKENS.size).toBe(37);
     expect(DELIBERATELY_UNCLASSIFIED.size).toBe(4);
   });
 });

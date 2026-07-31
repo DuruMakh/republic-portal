@@ -51,8 +51,10 @@ const pad = (n, w) => String(n).padStart(w, "0");
 const phoneFor = (i) => `+99550${pad(i, 7)}`; // 9 national digits starting 5; '50' block is seed-only
 const personalIdFor = (i) => `1${pad(i, 10)}`;
 const ACTIVE_RATIO = 0.86; // prototype parity
-const TIERS = [5, 10, 20];
-const tierFor = (i) => TIERS[i % 3];
+// Membership is a fixed monthly fee (owner fix #9) — mirrors lib/funnel.ts MEMBERSHIP_FEE_GEL.
+// The 5/10/20 choice is retired; profiles.membership_tier now has a check constraint
+// (20260728141000_fixed_membership_fee.sql) that rejects anything but 10.
+const MEMBERSHIP_FEE_GEL = 10;
 // GR-code alphabet (lib/funnel.ts FUNNEL_CODE_ALPHABET) — deterministic base-31
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const refCodeFor = (i) => {
@@ -382,7 +384,7 @@ await insertChunked(
         : {}
       : {
           region_id: regionId.get(p.region),
-          membership_tier: tierFor(p.i),
+          membership_tier: MEMBERSHIP_FEE_GEL,
           reference_code: refCodeFor(p.i),
           registration_completed_at: daysAgoIso(30 + (p.i % 200)),
         }),
@@ -424,7 +426,7 @@ await insertChunked("memberships", memberRows);
 const paymentRows = created
   .filter((p) => p.kind === "active")
   .map((p) => {
-    const tier = tierFor(p.i);
+    const tier = MEMBERSHIP_FEE_GEL;
     const months = p.i % 7 === 0 ? 3 : 1;
     return {
       member_id: p.id,
@@ -440,7 +442,7 @@ const paymentRows = created
     created
       .filter((p) => p.kind === "completed" && p.i % 5 === 0)
       .map((p) => {
-        const tier = tierFor(p.i);
+        const tier = MEMBERSHIP_FEE_GEL;
         return {
           member_id: p.id,
           amount_gel: tier,

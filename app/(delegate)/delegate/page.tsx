@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
+import { ReferralCard } from "@/components/ReferralCard";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
-import { ReferralCard } from "./ReferralCard";
 import { TeamRsvpCard } from "./TeamRsvpCard";
 
 export const metadata: Metadata = { title: "დელეგატის პანელი — ქართული რესპუბლიკა" };
@@ -76,7 +76,9 @@ export default async function DelegateDashboardPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {panel.referralCode ? <ReferralCard code={panel.referralCode} /> : null}
+        {panel.referralCode != null ? (
+          <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             value={panel.activeCount}

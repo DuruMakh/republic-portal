@@ -51,8 +51,9 @@ describe("OtpVerification.verify", () => {
   it("releases the button in a finally even when onVerified rejects (defense in depth)", async () => {
     // In production JoinForm's afterVerify catches its own failure, so onVerified never
     // rejects — but verify() must still never strand the button if it did. mockRejected-
-    // ValueOnce (the precise one-call simulation) matches the house style for rejection
-    // tests in this Vitest+jsdom setup (see TierChange.test.tsx).
+    // ValueOnce (not the persistent mockRejectedValue) is the house style for rejection
+    // tests in this Vitest+jsdom setup — it's also the more precise simulation anyway,
+    // since this test drives exactly one call.
     const onVerified = vi.fn<() => Promise<void>>().mockRejectedValueOnce(new Error("boom"));
     render(<OtpVerification phone={PHONE} onVerified={onVerified} />);
     fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "123456" } });

@@ -174,6 +174,14 @@ export interface DelegatePanelData {
   activeCount: number;
   totalCount: number;
   registeredCount: number;
+  /**
+   * Every sign-up the delegate code produced, PLUS this delegate's own
+   * profile code (summed, not swapped — owner decision 2026-07-29, so
+   * sign-ups earned before approval are never dropped). Distinct from
+   * registeredCount, which counts only status = 'registered' via the
+   * delegate code alone — owner fix #12.
+   */
+  referralCount: number;
 }
 
 export type TeamMemberStatus = "profile_completed" | "active_member";
@@ -188,8 +196,8 @@ export interface TeamMember {
 
 /** Team-table / summary-pill vocabulary (spec §3.3, §3.7); rendered via Pill's label override. */
 export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
-  profile_completed: "წევრი",
-  active_member: "აქტიური",
+  profile_completed: "წევრი (გადახდის გარეშე)",
+  active_member: "აქტიური წევრი",
 };
 
 /**

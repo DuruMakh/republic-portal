@@ -2,14 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
-import { DelegateCard } from "@/components/DelegateCard";
 import { inputClasses } from "@/components/Field";
+import { LeaderRow } from "@/components/LeaderRow";
 import { Select } from "@/components/Select";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
 import type { Region } from "@/lib/supabase/public";
 
-export function DelegateDirectory({
+/**
+ * Ranking + filters (owner fix #3): the delegates index retired into რეიტინგი,
+ * so the region/name filters that only existed there live here now. Ranks come
+ * from rankDelegates() over the FULL list, so filtering never renumbers anyone.
+ */
+export function LeaderboardDirectory({
   delegates,
   regions,
 }: {
@@ -28,12 +33,6 @@ export function DelegateDirectory({
       return okName && okRegion;
     });
   }, [delegates, query, regionId]);
-
-  // Two-column printed index (spec §4.2): left column takes the extra row on an
-  // odd count, matching the mock's rank-ordered left-then-right split.
-  const splitAt = Math.ceil(filtered.length / 2);
-  const leftColumn = filtered.slice(0, splitAt);
-  const rightColumn = filtered.slice(splitAt);
 
   return (
     <div>
@@ -60,18 +59,13 @@ export function DelegateDirectory({
         </Select>
       </div>
       {filtered.length > 0 ? (
-        <div className="grid min-w-0 lg:grid-cols-2 lg:gap-x-16">
-          <div className="min-w-0 lg:border-r lg:border-hairline lg:pr-8">
-            {leftColumn.map((d) => (
-              <DelegateCard key={d.id} delegate={d} />
-            ))}
-          </div>
-          <div className="min-w-0">
-            {rightColumn.map((d) => (
-              <DelegateCard key={d.id} delegate={d} />
-            ))}
-          </div>
-        </div>
+        <ol className="list-none" role="list">
+          {filtered.map((d) => (
+            <li key={d.id}>
+              <LeaderRow delegate={d} />
+            </li>
+          ))}
+        </ol>
       ) : (
         <Card>
           <div className="text-center text-muted-fg">

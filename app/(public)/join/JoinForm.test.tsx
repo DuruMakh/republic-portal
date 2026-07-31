@@ -48,6 +48,8 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
     lastName: "ბერიძე",
     personalIdMasked: "********",
     hasPersonalId: false,
+    referralCode: null,
+    referralCount: 0,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -112,17 +114,6 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     expect(signInWithOtpMock).toHaveBeenCalledTimes(1);
   });
 
-  it("routes a generic/transient register() error to the retry phase (proven session), not back to a new OTP", async () => {
-    registerAction.mockResolvedValueOnce({ ok: false, error: GENERIC_FUNNEL_ERROR });
-    await driveToRegister();
-
-    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "დარეგისტრირება" })).toBeInTheDocument();
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "გაგრძელება →" })).toBeNull();
-    expect(signInWithOtpMock).toHaveBeenCalledTimes(1); // no second OTP
-  });
-
   it("routes only a genuine not_authenticated error back to the form phase (fresh OTP)", async () => {
     registerAction.mockResolvedValueOnce({ ok: false, error: NOT_AUTHENTICATED_MESSAGE });
     await driveToRegister();
@@ -134,7 +125,7 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
     expect(screen.queryByRole("button", { name: "დარეგისტრირება" })).toBeNull();
   });
 
-  it("a non-auth register failure keeps the proven session, and retrying without a fresh SMS succeeds (regression)", async () => {
+  it("a non-auth register failure keeps the proven session: retry phase, no second SMS, resubmit succeeds", async () => {
     // register() is now the 3-arg (name+ref only) form — it can no longer produce
     // DUPLICATE_PERSONAL_ID_MESSAGE (owner fix #10 moved that check to the
     // membership wizard's become_member_save_profile). This retargets the old
@@ -146,6 +137,8 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
 
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "გაგრძელება →" })).toBeNull();
+    expect(signInWithOtpMock).toHaveBeenCalledTimes(1); // no second OTP yet, before the resubmit
     const retryButton = screen.getByRole("button", { name: "დარეგისტრირება" });
 
     // resubmit via the proven session — success redirects to the cabinet
@@ -165,8 +158,7 @@ describe("JoinForm — afterVerify failure handling (finding V10)", () => {
 });
 
 describe("JoinForm — section headings (owner fix #6)", () => {
-  it("no phone section heading — the field's own label names it (owner fix #6)", () => {
-    // render JoinForm exactly as the first existing test in this file does
+  it("no phone section heading — the field's own label names it", () => {
     render(<JoinForm />);
     expect(screen.queryByRole("heading", { name: /ტელეფონის ნომერი/ })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "პირადი მონაცემები" })).toBeInTheDocument();
@@ -176,7 +168,6 @@ describe("JoinForm — section headings (owner fix #6)", () => {
 
 describe("JoinForm — no personal ID at registration (owner fix #10)", () => {
   it("does not ask for a personal ID at registration (owner fix #10)", () => {
-    // render JoinForm exactly as the first existing test in this file does
     render(<JoinForm />);
     expect(screen.queryByLabelText("პირადი ნომერი")).not.toBeInTheDocument();
   });

@@ -107,16 +107,19 @@ describe("Badge", () => {
 describe("Pill", () => {
   it("maps status to Georgian label", () => {
     render(<Pill status="active_member" />);
-    // team-status vocabulary (lib/cabinet.ts TEAM_STATUS_LABELS): "აქტიური", not
-    // the retired "აქტიური წევრი" (V17/V23 sweep — Pill's own defaults were missed).
-    expect(screen.getByText("აქტიური")).toBeInTheDocument();
+    // team-status vocabulary (lib/cabinet.ts TEAM_STATUS_LABELS.active_member), owner
+    // fix #16: the fuller "აქტიური წევრი" — the bare "აქტიური" alone never
+    // said what it was active AT, so this reinstates the qualifier a V17/V23 sweep
+    // once retired.
+    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
   });
-  it("profile_completed maps to the current team-status label (V17)", () => {
+  it("profile_completed maps to the current team-status label (owner fix #16)", () => {
     render(<Pill status="profile_completed" />);
-    // was the retired "პროფილი შევსებულია"; every other member-status display
-    // already reads "წევრი" (TEAM_STATUS_LABELS.profile_completed).
-    expect(screen.getByText("წევრი")).toBeInTheDocument();
-    expect(screen.getByText("წევრი").className).toContain("text-ink");
+    // owner fix #16: bare "წევრი" read as the BETTER state than
+    // "აქტიური", so the unpaid standing now spells that out
+    // (TEAM_STATUS_LABELS.profile_completed).
+    expect(screen.getByText("წევრი (გადახდის გარეშე)")).toBeInTheDocument();
+    expect(screen.getByText("წევრი (გადახდის გარეშე)").className).toContain("text-ink");
   });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);

@@ -6,8 +6,8 @@ import { Pill } from "@/components/Pill";
 import { SectionRule } from "@/components/SectionRule";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
+import { MEMBERSHIP_FEE_GEL } from "@/lib/funnel";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
-import { TierChange } from "./TierChange";
 
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
@@ -45,9 +45,14 @@ export default async function BillingPage() {
 
       <div className="flex flex-col gap-6">
         <Card>
-          {/* null tier (legacy active_member) still gets a picker — the RPC accepts it */}
-          <TierChange currentTier={state.tier} />
-          <TransferInstructions tier={state.tier} referenceCode={state.referenceCode} />
+          <div className="border border-ink bg-paper-bright p-4 text-center">
+            <span className="block font-serif text-3xl font-bold text-ink">
+              {MEMBERSHIP_FEE_GEL}
+              <small className="text-lg font-bold">₾</small>
+            </span>
+            <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
+          </div>
+          <TransferInstructions referenceCode={state.referenceCode} />
           {state.status !== "active_member" ? (
             <p className="mt-4 text-sm text-muted-fg">
               აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.

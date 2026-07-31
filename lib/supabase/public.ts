@@ -130,8 +130,8 @@ export interface TransparencyStats {
 export interface TransparencyRegion {
   region_id: number;
   name_ka: string;
-  registered: number;
-  active: number;
+  members: number;
+  collected_gel: number;
 }
 
 export async function fetchTransparencyStats(): Promise<TransparencyStats> {

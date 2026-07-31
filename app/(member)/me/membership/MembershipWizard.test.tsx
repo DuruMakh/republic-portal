@@ -71,6 +71,8 @@ function cab(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent 
     lastName: "ბერიძე",
     personalIdMasked: "010********",
     hasPersonalId: true,
+    referralCode: null,
+    referralCount: 0,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -218,6 +220,34 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     });
   });
 
+  it("keeps every digit of a separator-formatted personal-ID paste now that the field has no maxlength to truncate it before submitProfile()'s normalisation runs", async () => {
+    saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
+    render(
+      <MembershipWizard
+        initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
+      />,
+    );
+    const idInput = screen.getByLabelText("პირადი ნომერი") as HTMLInputElement;
+    // A real browser caps inserted/pasted text at the input's maxlength attribute
+    // before the change event ever fires; fireEvent.change's direct .value
+    // assignment does not, so the cap is reproduced explicitly here to prove the
+    // paste normalisation in submitProfile() recovers every digit end-to-end.
+    const pastedWithSeparators = "010 01 000000"; // same 11 digits, grouped with spaces
+    const effectivePaste =
+      idInput.maxLength >= 0
+        ? pastedWithSeparators.slice(0, idInput.maxLength)
+        : pastedWithSeparators;
+    fireEvent.change(idInput, { target: { value: effectivePaste } });
+    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+      target: { value: "1990-05-20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
+    expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
+      personalId: "01001000000",
+    });
+  });
+
   it("submits personalId: null when the profile already has one, even though the field is hidden", async () => {
     saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
     render(
@@ -285,6 +315,15 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
 });
 
 describe("MembershipWizard — tier phase", () => {
+  it("shows the fixed fee as a confirmation, not a picker (owner fix #9)", () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByText(/10/)).toBeInTheDocument();
+    expect(screen.getByText("თვეში")).toBeInTheDocument();
+  });
+
   it("navigates to the done screen on successful completion", async () => {
     completeMembershipAction.mockResolvedValue({
       ok: true,

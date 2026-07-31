@@ -9,7 +9,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const delegates = await fetchPublicDelegates();
   return [
     { url: base, changeFrequency: "hourly", priority: 1 },
-    { url: `${base}/delegates`, changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/leaderboard`, changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/join`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/join/terms`, changeFrequency: "monthly", priority: 0.3 },

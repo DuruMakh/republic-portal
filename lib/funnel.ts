@@ -1,5 +1,6 @@
-export const TIERS = [5, 10, 20] as const;
-export type Tier = (typeof TIERS)[number];
+/** Membership is a fixed monthly fee (owner fix #9) — the 5/10/20 choice is retired. */
+export const MEMBERSHIP_FEE_GEL = 10;
+export type Tier = typeof MEMBERSHIP_FEE_GEL;
 
 /** Crockford-style: no I, L, O, 0, 1 — 31 unambiguous characters. DB mirror: gen_funnel_code(). */
 export const FUNNEL_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -53,6 +54,15 @@ export interface CabinetStatePresent {
   personalIdMasked: string;
   /** Whether profiles.personal_id is set — the wizard renders the ID field only when false (owner fix #10). */
   hasPersonalId: boolean;
+  /** This person's referral link code — the delegate code when approved, else their own (owner fix #12). */
+  referralCode: string | null;
+  /**
+   * Sign-ups via this profile's own code, PLUS (once approved as a delegate)
+   * sign-ups via the delegate code too — summed, not swapped, so approval
+   * never drops the sign-ups earned earlier as an ordinary member (owner
+   * decision 2026-07-29; see supabase/migrations/20260728142000_member_referral_codes.sql).
+   */
+  referralCount: number;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;

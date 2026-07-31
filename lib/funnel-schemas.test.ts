@@ -74,15 +74,26 @@ describe("otpSchema", () => {
 });
 
 describe("tierSchema", () => {
-  it("accepts only 5, 10, 20", () => {
+  it("accepts the fee and reports the Georgian message for anything else", () => {
     expect(tierSchema.safeParse({ tier: 10 }).success).toBe(true);
     const result = tierSchema.safeParse({ tier: 15 });
     expect(result.success).toBe(false);
-    // regression: z.union's `{ message }` shorthand ignores invalid_union issues
-    // (see the errorMap note in lib/funnel-schemas.ts).
+    // regression: z.literal's `{ message }` shorthand ignores invalid_literal issues,
+    // same gap the retired z.union had (see the errorMap note in lib/funnel-schemas.ts).
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe("აირჩიე საწევრო პაკეტი.");
     }
+  });
+});
+
+describe("tierSchema — fixed fee (owner fix #9)", () => {
+  it("accepts the fixed 10 GEL fee", () => {
+    expect(tierSchema.safeParse({ tier: 10 }).success).toBe(true);
+  });
+
+  it("rejects the retired 5 and 20 GEL tiers", () => {
+    expect(tierSchema.safeParse({ tier: 5 }).success).toBe(false);
+    expect(tierSchema.safeParse({ tier: 20 }).success).toBe(false);
   });
 });
 

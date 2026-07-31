@@ -5,7 +5,13 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
-import { hasAnyRole, isStaff, MEMBER_STATUS_LABELS_KA, sanitizeSearch } from "@/lib/admin";
+import {
+  hasAnyRole,
+  isStaff,
+  MEMBER_STATUS_LABELS_KA,
+  reconcileCityFilter,
+  sanitizeSearch,
+} from "@/lib/admin";
 import { adminControlClasses } from "@/components/Field";
 import { Select } from "@/components/Select";
 import { formatCountKa } from "@/lib/format";
@@ -39,6 +45,23 @@ export default async function AdminMembersPage({
   const canReveal = hasAnyRole(roles, ["super_admin"]);
   const canExport = hasAnyRole(roles, ["finance", "super_admin"]);
 
+  const { data: regions, error: regionsError } = await supabase
+    .from("regions")
+    .select("id, name_ka")
+    .order("id");
+  if (regionsError) throw new Error(`regions failed: ${regionsError.message}`);
+
+  let citiesQuery = supabase.from("cities").select("id, name_ka, region_id").order("name_ka");
+  if (filter.regionId) citiesQuery = citiesQuery.eq("region_id", filter.regionId);
+  const { data: cities, error: citiesError } = await citiesQuery;
+  if (citiesError) throw new Error(`cities failed: ${citiesError.message}`);
+
+  // A plain <form method="get"> with native <select>s can't reset a sibling
+  // on submit, so a stale ?cityId from a region the admin has since switched
+  // away from must be ignored here — before the query runs — rather than
+  // silently intersected with the new ?regionId (see reconcileCityFilter).
+  const effectiveCityId = reconcileCityFilter(filter.cityId, filter.regionId, cities);
+
   let query = supabase.from("admin_members").select("*", { count: "exact" });
   if (filter.search) {
     // ONE sanitizer with the payment lookup and the CSV export — the audited
@@ -51,6 +74,7 @@ export default async function AdminMembersPage({
     }
   }
   if (filter.regionId) query = query.eq("region_id", filter.regionId);
+  if (effectiveCityId) query = query.eq("city_id", effectiveCityId);
   if (filter.status) query = query.eq("status", filter.status);
   const from = (filter.page - 1) * PAGE_SIZE;
   const {
@@ -60,18 +84,13 @@ export default async function AdminMembersPage({
   } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
   if (error) throw new Error(`admin_members failed: ${error.message}`);
 
-  const { data: regions, error: regionsError } = await supabase
-    .from("regions")
-    .select("id, name_ka")
-    .order("id");
-  if (regionsError) throw new Error(`regions failed: ${regionsError.message}`);
-
   const total = count ?? 0;
   const shownFrom = total === 0 ? 0 : from + 1;
   const shownTo = Math.min(from + PAGE_SIZE, total);
   const currentParams = new URLSearchParams();
   if (filter.search) currentParams.set("search", filter.search);
   if (filter.regionId) currentParams.set("regionId", String(filter.regionId));
+  if (effectiveCityId) currentParams.set("cityId", String(effectiveCityId));
   if (filter.status) currentParams.set("status", filter.status);
 
   return (
@@ -110,6 +129,21 @@ export default async function AdminMembersPage({
               ))}
             </Select>
           </label>
+          <label className="flex min-w-[170px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
+            ქალაქი
+            <Select
+              variant="admin"
+              name="cityId"
+              defaultValue={effectiveCityId ? String(effectiveCityId) : ""}
+            >
+              <option value="">ყველა ქალაქი</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name_ka}
+                </option>
+              ))}
+            </Select>
+          </label>
           <label className="flex min-w-[150px] flex-1 flex-col gap-1 text-sm font-semibold text-ink">
             სტატუსი
             <Select variant="admin" name="status" defaultValue={filter.status ?? ""}>
@@ -133,6 +167,7 @@ export default async function AdminMembersPage({
           <ExportControls
             search={filter.search}
             regionId={filter.regionId}
+            cityId={effectiveCityId}
             status={filter.status}
             canIncludeIds={hasAnyRole(roles, ["super_admin"])}
           />

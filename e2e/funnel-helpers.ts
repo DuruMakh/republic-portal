@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { FUNNEL_CODE_ALPHABET } from "../lib/funnel";
+import { FUNNEL_CODE_ALPHABET, MEMBERSHIP_FEE_GEL } from "../lib/funnel";
 import {
   assertE2ePhones,
   cleanupClient,
@@ -200,14 +200,14 @@ export async function fillMembershipProfile(
  * status profile_completed, registration_completed_at, tier, GR- reference code) plus
  * an open membership row (delegate_id null = central) — the new invariant: members
  * always hold a membership. `delegateId` binds the membership to a specific delegate
- * (referral supporters); `tier` defaults to 10. Guard: e2e phones only.
+ * (referral supporters). Tier is always the fixed fee (owner fix #9) — the DB no
+ * longer accepts anything else. Guard: e2e phones only.
  */
 export async function seedCompletedMember(opts: {
   phone: string;
   firstName: string;
   lastName: string;
   personalId: string;
-  tier?: 5 | 10 | 20;
   delegateId?: string | null;
 }): Promise<{ id: string }> {
   if (!opts.phone.startsWith("55")) {
@@ -235,7 +235,7 @@ export async function seedCompletedMember(opts: {
     city_id: cityId,
     employment: "სტუდენტი",
     status: "profile_completed",
-    membership_tier: opts.tier ?? 10,
+    membership_tier: MEMBERSHIP_FEE_GEL,
     reference_code: `GR-${randomFunnelCode(6)}`,
     registration_completed_at: new Date().toISOString(),
   });

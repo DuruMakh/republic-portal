@@ -13,12 +13,10 @@ test.describe.configure({ mode: "serial" });
 test.beforeAll(cleanupJourneyUsers);
 test.afterAll(cleanupJourneyUsers);
 
-test("member cabinet: profile edit, delegate change, tier change, billing, one-way funnel", async ({
-  page,
-}) => {
+test("member cabinet: profile edit, delegate change, billing, one-way funnel", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.cabinet);
 
-  // Seed a completed member (tier 20). The subject here is post-registration cabinet
+  // Seed a completed member. The subject here is post-registration cabinet
   // behavior — the UI registration journey lives in registration/membership specs. The
   // default seed region (ქვემო ქართლი) has a real 3rd city, which the profile-edit step
   // below needs (თბილისი the region has exactly ONE city, so its index 2 never resolves).
@@ -27,7 +25,6 @@ test("member cabinet: profile edit, delegate change, tier change, billing, one-w
     firstName: "ვატესტ",
     lastName: "კაბინეტს",
     personalId: journeyPersonalId(JOURNEY.cabinet),
-    tier: 20,
   });
   await loginAs(page, phone);
 
@@ -61,17 +58,14 @@ test("member cabinet: profile edit, delegate change, tier change, billing, one-w
   await page.getByRole("button", { name: "დელეგატის შეცვლა" }).click();
   await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
 
-  // billing: permanent code + placeholder-marked details + tier change 20 → 5
+  // billing: permanent code + placeholder-marked details + the fixed fee, no change
+  // control (owner fix #9: the tier picker/change flow is retired)
   await page.goto("/me/billing");
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
   await expect(page.getByTestId("bank-placeholder")).toBeVisible();
-  await expect(page.getByTestId("current-tier")).toContainText("20 ₾");
-  await page.getByRole("button", { name: "შეცვლა" }).click();
-  await page.getByRole("radio", { name: /5/ }).click();
-  await page.getByRole("button", { name: "შენახვა" }).click();
-  await expect(page.getByText("საწევრო შეიცვალა ✓")).toBeVisible();
-  await expect(page.getByTestId("current-tier")).toContainText("5 ₾");
-  await expect(page.getByText("გადმორიცხე")).toContainText("5 ₾");
+  await expect(page.getByText("თვეში")).toBeVisible();
+  await expect(page.getByRole("button", { name: "შეცვლა" })).toHaveCount(0);
+  await expect(page.getByText("გადმორიცხე")).toContainText("10 ₾");
   await expect(page.getByTestId("billing-empty")).toBeVisible();
 
   // the cabinet is one-way now; a signed-in member is bounced off the join/delegate doors

@@ -455,21 +455,6 @@ let funnelProbePassword;
     if ((await countMemberships()) !== before + 1)
       throw new Error("same-delegate call must not mint a history row");
 
-    const { data: tierState, error: tierErr } = await authed.rpc("member_change_tier", {
-      p_tier: 5,
-    });
-    if (tierErr) throw new Error(`member_change_tier failed: ${tierErr.message}`);
-    if (tierState.tier !== 5) throw new Error(`tier should be 5, got ${tierState.tier}`);
-    if (tierState.referenceCode !== c1.referenceCode)
-      throw new Error("tier change must never touch the reference code");
-    if (
-      tierState.status !== "profile_completed" ||
-      typeof tierState.registrationCompletedAt !== "string"
-    )
-      throw new Error("cabinet_state must expose status + registrationCompletedAt");
-    if (tierState.standing !== "member" || tierState.completed !== true)
-      throw new Error(`cabinet_state standing/completed wrong: ${JSON.stringify(tierState)}`);
-
     const { error: notDelegateErr } = await authed.rpc("delegate_panel");
     if (!notDelegateErr || !notDelegateErr.message.includes("not_a_delegate"))
       throw new Error("delegate_panel must refuse a non-delegate caller");
@@ -482,9 +467,7 @@ let funnelProbePassword;
     });
     if (!anonRpcErr) throw new Error("LEAK: anon can execute member_change_delegate");
 
-    console.log(
-      "OK: cabinet RPCs — history-keeping change, no-op guard, tier change, gates, ref cap",
-    );
+    console.log("OK: cabinet RPCs — history-keeping change, no-op guard, gates, ref cap");
     // fpId survives past this block on success — Phase 5 (P5.4) reuses this
     // SAME completed member and owns its cleanup from there.
     funnelSucceeded = true;

@@ -6,7 +6,6 @@ import {
   registeredNameUpdateSchema,
 } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { tierSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 // No `state` field: every caller re-reads the truth via router.refresh() (the
@@ -78,15 +77,6 @@ export async function changeDelegateAction(input: unknown): Promise<CabinetActio
   const { error } = await supabase.rpc("member_change_delegate", {
     p_delegate_id: parsed.data.delegateId,
   });
-  if (error) return { ok: false, error: mapFunnelError(error.message) };
-  return { ok: true };
-}
-
-export async function changeTierAction(input: unknown): Promise<CabinetActionResult> {
-  const parsed = tierSchema.safeParse(input);
-  if (!parsed.success) return zodFail(parsed.error.issues[0]?.message);
-  const supabase = await createServerSupabase();
-  const { error } = await supabase.rpc("member_change_tier", { p_tier: parsed.data.tier });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
   return { ok: true };
 }

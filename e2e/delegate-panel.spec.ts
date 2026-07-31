@@ -66,26 +66,27 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await dPage.goto("/delegate/team");
   await expect(dPage.getByTestId("team-count")).toHaveText("1");
   await expect(dPage.getByText("ვატესტ ბმულით")).toBeVisible();
-  // the row pill for a profile_completed member is „წევრი" (TEAM_STATUS_LABELS); scope
-  // to the table body — the header's status-filter <select> now carries the very same
-  // „წევრი" option text (V16 fix), and the thead th „წევრი" also sits outside the
-  // team-rows tbody, so an unscoped query would be ambiguous three ways over.
-  await expect(dPage.getByTestId("team-rows").getByText("წევრი")).toBeVisible();
+  // the row pill for a profile_completed member is „წევრი (გადახდის გარეშე)“
+  // (TEAM_STATUS_LABELS, owner fix #16); scope to the table body — the header's
+  // status-filter <select> carries the very same option text, and the thead th
+  // „წევრი“ also sits outside the team-rows tbody, so an unscoped
+  // query would be ambiguous.
+  await expect(dPage.getByTestId("team-rows").getByText("წევრი (გადახდის გარეშე)")).toBeVisible();
   await dPage.getByLabel("ძებნა სახელით ან გვარით").fill("არავინა");
   await expect(dPage.getByTestId("team-no-results")).toBeVisible();
   await delegateContext.close();
 });
 
-// This spec temporarily approves an extra delegate, and /delegates + /leaderboard are
-// ISR pages (revalidate 60): a Link prefetch during the approved window can cache a
-// render that still includes this test's delegate, which a later spec could then read
-// within its freshness window — the flake seen in CI run 29515512529. Leaving
-// the world as we found it includes the ISR caches: after deleting this run's users,
-// poll both pages until THIS delegate's own name is gone. Staging is shared with real
-// users (the owner's own permanently-approved delegate account among them), so the
-// total delegate count is never a fixed number to poll back to — this delegate's name
-// is the only signal that's ours to check.
-// runCleanups so a deletion failure still lets the caches settle: skipping the poll
+// This spec temporarily approves an extra delegate, and /leaderboard is an ISR page
+// (revalidate 60): a Link prefetch during the approved window can cache a render that
+// still includes this test's delegate, which a later spec could then read within its
+// freshness window — the flake seen in CI run 29515512529. Leaving the world as we
+// found it includes the ISR cache: after deleting this run's users, poll the page until
+// THIS delegate's own name is gone. Staging is shared with real users (the owner's own
+// permanently-approved delegate account among them), so the total delegate count is
+// never a fixed number to poll back to — this delegate's name is the only signal
+// that's ours to check.
+// runCleanups so a deletion failure still lets the cache settle: skipping the poll
 // re-arms the very flake this hook exists to prevent, and closing the context in
 // `finally` keeps a browser context from leaking when either step throws.
 test.afterAll(async ({ browser }) => {
@@ -95,17 +96,12 @@ test.afterAll(async ({ browser }) => {
     await runCleanups([
       () => cleanupJourneyUsers(),
       async () => {
-        for (const [path, testId] of [
-          ["/delegates", "delegate-card"],
-          ["/leaderboard", "leader-row"],
-        ] as const) {
-          await expect(async () => {
-            await page.goto(path);
-            await expect(page.getByTestId(testId).getByText("ვატესტ პანელს")).toHaveCount(0, {
-              timeout: 2_000,
-            });
-          }).toPass({ timeout: 90_000, intervals: [2_000] });
-        }
+        await expect(async () => {
+          await page.goto("/leaderboard");
+          await expect(page.getByTestId("leader-row").getByText("ვატესტ პანელს")).toHaveCount(0, {
+            timeout: 2_000,
+          });
+        }).toPass({ timeout: 90_000, intervals: [2_000] });
       },
     ]);
   } finally {

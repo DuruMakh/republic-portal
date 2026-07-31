@@ -1,15 +1,9 @@
 import { CopyButton } from "@/components/CopyButton";
 import { QrCode } from "@/components/QrCode";
 import { BANK_DETAILS } from "@/lib/bank-details";
-import type { Tier } from "@/lib/funnel";
+import { MEMBERSHIP_FEE_GEL } from "@/lib/funnel";
 
-export function TransferInstructions({
-  tier,
-  referenceCode,
-}: {
-  tier: Tier | null;
-  referenceCode: string | null;
-}) {
+export function TransferInstructions({ referenceCode }: { referenceCode: string | null }) {
   // legacy pre-Phase-2 accounts have no code (spec §3.8) — show nothing
   if (!referenceCode) return null;
   return (
@@ -55,13 +49,11 @@ export function TransferInstructions({
             <dd className="text-right font-mono font-semibold text-ink">{BANK_DETAILS.iban}</dd>
           </div>
         </dl>
-        {tier !== null ? (
-          <p className="mt-3 text-sm text-ink">
-            გადმორიცხე <strong className="font-serif">{tier} ₾</strong> ყოველთვიურად ამ ანგარიშზე და
-            დანიშნულებაში მიუთითე შენი პირადი კოდი — ასე დავაკავშირებთ გადმორიცხვას შენს
-            წევრობასთან.
-          </p>
-        ) : null}
+        <p className="mt-3 text-sm text-ink">
+          გადმორიცხე <strong className="font-serif">{MEMBERSHIP_FEE_GEL} ₾</strong> ყოველთვიურად ამ
+          ანგარიშზე და დანიშნულებაში მიუთითე შენი პირადი კოდი — ასე დავაკავშირებთ გადმორიცხვას შენს
+          წევრობასთან.
+        </p>
       </div>
     </div>
   );

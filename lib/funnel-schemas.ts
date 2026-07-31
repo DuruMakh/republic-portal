@@ -76,7 +76,9 @@ export const tierSchema = z.object({
   // zod v3's `{ message }` shorthand only feeds invalid_type / invalid_enum_value
   // issues (see processCreateParams in zod/v3/types.js) — a z.union's
   // `invalid_union` issue code ignores it too, so this needs an explicit errorMap.
-  tier: z.union([z.literal(5), z.literal(10), z.literal(20)], {
+  // Fixed fee (owner fix #9): the 5/10/20 choice is retired, but the literal still
+  // needs its own errorMap — z.literal's `{ message }` shorthand has the same gap.
+  tier: z.literal(10, {
     errorMap: () => ({ message: "აირჩიე საწევრო პაკეტი." }),
   }),
 });

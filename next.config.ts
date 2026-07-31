@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
     // in the app carries tiny payloads.
     serverActions: { bodySizeLimit: "6mb" },
   },
+  async redirects() {
+    // Owner fix #3: the delegates index duplicated რეიტინგი and retired into it.
+    // EXACT source only — /delegates/<slug> profile pages must keep resolving.
+    return [{ source: "/delegates", destination: "/leaderboard", permanent: true }];
+  },
 };
 
 export default nextConfig;

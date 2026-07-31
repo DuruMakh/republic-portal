@@ -29,6 +29,8 @@ function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
     lastName: "ბერიძე",
     personalIdMasked: "010********",
     hasPersonalId: true,
+    referralCode: null,
+    referralCount: 0,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -114,9 +116,9 @@ describe("cabinetRole + nav", () => {
   });
 });
 
-it("team vocabulary: profile_completed is now „წევრი“", () => {
-  expect(TEAM_STATUS_LABELS.profile_completed).toBe("წევრი");
-  expect(TEAM_STATUS_LABELS.active_member).toBe("აქტიური");
+it("team vocabulary distinguishes paying members from unpaid ones (owner fix #16)", () => {
+  expect(TEAM_STATUS_LABELS.profile_completed).toBe("წევრი (გადახდის გარეშე)");
+  expect(TEAM_STATUS_LABELS.active_member).toBe("აქტიური წევრი");
 });
 
 describe("employment mapping (spec §3.3)", () => {

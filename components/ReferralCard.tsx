@@ -5,12 +5,33 @@ import { Card } from "@/components/Card";
 import { CopyButton } from "@/components/CopyButton";
 import { QrCode } from "@/components/QrCode";
 import { buildReferralUrl } from "@/lib/cabinet";
+import { formatCountKa } from "@/lib/format";
+
+// Spliced byte-exact (never hand-typed) from the delegate panel's registered-count
+// StatCard label — app/(delegate)/delegate/page.tsx's
+// `<StatCard value={panel.registeredCount} label="რეგისტრირებული" />` (owner fix #12).
+const REGISTERED_LABEL = "რეგისტრირებული";
 
 /**
  * Origin is read client-side so the link is truthful on every deployment
  * (previews show the preview URL, production the real one) — ADR-011.
+ *
+ * `teamNote` (fix-list round 2, Fix 3 — additive, defaults true): the closing
+ * sentence claims everyone who signs up through the link is counted in "your
+ * team". True for a delegate's own link, but this card also renders for
+ * members and registered people (owner fix #12), whose link binds no team at
+ * all, only a count. /delegate keeps the default; /me and /me/profile pass
+ * false.
  */
-export function ReferralCard({ code }: { code: string }) {
+export function ReferralCard({
+  code,
+  count,
+  teamNote = true,
+}: {
+  code: string;
+  count: number;
+  teamNote?: boolean;
+}) {
   const [url, setUrl] = useState<string>();
 
   useEffect(() => {
@@ -39,9 +60,17 @@ export function ReferralCard({ code }: { code: string }) {
           </div>
         </>
       ) : null}
-      <p className="mt-3 text-xs text-muted-fg">
-        ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
+      <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-hairline pt-3">
+        <span className="text-[0.74rem] text-muted-fg">{REGISTERED_LABEL}</span>
+        <span className="font-serif text-xl font-bold text-ink" data-testid="referral-count">
+          {formatCountKa(count)}
+        </span>
       </p>
+      {teamNote ? (
+        <p className="mt-3 text-xs text-muted-fg" data-testid="referral-team-note">
+          ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
+        </p>
+      ) : null}
     </Card>
   );
 }

@@ -8,11 +8,13 @@ import type { MemberStatusRow } from "@/lib/supabase/types";
 export function ExportControls({
   search,
   regionId,
+  cityId,
   status,
   canIncludeIds,
 }: {
   search: string | undefined;
   regionId: number | undefined;
+  cityId: number | undefined;
   status: MemberStatusRow | undefined;
   canIncludeIds: boolean;
 }) {
@@ -20,6 +22,7 @@ export function ExportControls({
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (regionId) params.set("regionId", String(regionId));
+  if (cityId) params.set("cityId", String(cityId));
   if (status) params.set("status", status);
   if (canIncludeIds && includeIds) params.set("includeIds", "1");
 

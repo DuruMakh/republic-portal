@@ -69,7 +69,16 @@ const DENIED_BY_PRIVILEGE = "42501";
  * `auth.uid()`) — the same reason `delegate_requires_completed_member` is
  * excluded below rather than classified. The classification is unaffected
  * either way: both tokens are validation, not an identity/standing refusal,
- * whichever context raises them.
+ * whichever context raises them. A third — `referral_code_exhausted` — is
+ * raised by mint_member_referral_code() (owner fix #12,
+ * 20260728142000_member_referral_codes.sql), the same shape of helper as
+ * protect_profile_columns(): EXECUTE is revoked from every client role and it
+ * has no `auth.uid()` gate of its own, because it is only ever reached
+ * through register()'s gate (the sole caller outside the one-time backfill
+ * script in that same migration). It is classified here for the same reason
+ * the doc above gives for invalid_name/invalid_employment: the token is a
+ * business-rule refusal (code-space exhaustion), not an identity/standing
+ * one, regardless of which function's body happens to raise it.
  *
  * Deliberately left out of both lists, and out of the drift guard's
  * required-classification set: `not_completed` and `profile_incomplete`
@@ -148,6 +157,12 @@ export const POST_GATE_TOKENS = new Set([
   "duplicate",
   "already_voted",
   "already_voided",
+  // Owner fix #12 (20260728142000_member_referral_codes.sql): raised by
+  // mint_member_referral_code() after 20 failed draws from the 31^6 code
+  // space — a business-rule exhaustion, not an identity/standing refusal.
+  // See the doc comment above for why it's classified despite the raising
+  // function having no gate of its own (same shape as protect_profile_columns()).
+  "referral_code_exhausted",
 ]);
 
 /**

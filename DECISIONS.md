@@ -418,3 +418,121 @@ line must leave it clean -- the debt retires organically. Proof the path
 works: round 1's own edits already retired e2e/registration.spec.ts's one
 legacy instance in passing. Prototype fixture polish (the two kronika-d3
 lines) stays optional and unscheduled.
+
+## ADR-024 (2026-07-29): Owner fix-list round 2 — decisions taken in implementation
+
+Source: the owner's "What to FIX" doc, remaining items 2/3/5/8b/9/12/16,
+approved in one decision pass 2026-07-28, plus one follow-up decision taken
+2026-07-29 (referral counts, below). **Item 11 (support page) was not built** —
+it needs owner-supplied Georgian copy, a destination address and a provisioned
+mail integration, and none arrived; the plan gated it rather than inventing
+copy. **Item 13 was never specced** — its text was never supplied and the
+source doc needs the owner's Google login.
+
+**The finances "member" column was NOT redefined, and the spec's warning that
+regional numbers would drop was wrong.** The spec approved by the owner said
+the column counted every registrant and would be narrowed to completed
+memberships, with every region's figure dropping as a result. Implementation
+review found the opposite: `20260721120000:26` renamed the `member_status`
+enum's original `draft` label to `registered`, and a stored view's predicate
+binds to the enum's OID rather than its label — so `status <> 'draft'` had
+silently continued to mean "completed memberships only" ever since. The column
+was already honest; only its spelling misled. Round 2 therefore trades the
+`active` column for collected money and redefines nothing, and the published
+per-region figures are unchanged. Live verification after the push: the view's
+per-region member sum (1775) reconciles exactly with a direct count of the same
+predicate.
+
+**Corollary, and it cost this round real time: `draft` is no longer a valid
+`member_status` label at all.** Stored bodies predating the rename are safe
+forever, but any NEW statement citing it raises 22P02 and rolls back the whole
+push. One migration was written with it and caught in review before reaching
+the database; a second near-miss came from a plan line-range citation that
+would have copied an unrelated function's legitimate events-status `draft`
+into a new statement. Convention (already set by `20260722120000:193-195`):
+write today's equivalent out in full, never restate the original literal.
+
+**Restated function bodies must come from the LIVE definition, not the one the
+plan cites.** A plan citation pointed at `20260721120000`'s
+`become_member_complete`, which `20260728100000` had already superseded with
+round 1's personal-ID guard; copying it verbatim would have silently reverted
+that guard. The implementer caught it. Same class of trap as the enum one:
+migration history is append-only, so "the definition" is always the newest.
+
+**`/delegates` retired into the ranking page** behind an exact-path permanent
+redirect, so bookmarks and search results keep working and `/delegates/<slug>`
+profile pages are untouched. The name/region filters that existed only on the
+dying page moved onto the ranking page rather than being lost. `DelegateCard`
+became dead code in the process (its only call site was the deleted directory)
+and was removed with it — the spec's claim that the slug page still used it
+was wrong.
+
+**Membership is a fixed 10 GEL/month.** The picker is deleted from the wizard
+and the billing page, `member_change_tier` is dropped, the admin tier
+distribution is gone, and the database refuses any other value. Existing 5/20
+members were moved to 10 by the migration. This is safe because
+`payments.tier_gel_at_payment` freezes each payment's price and
+`months_covered` is a generated column derived from it — re-tagging a profile
+cannot retroactively change what a past payment bought. Verified live: zero of
+1907 profiles carry any tier but 10 or null.
+
+**Referral codes: every profile has one, and collision safety is by
+construction.** Member codes are `M-` + 6 characters from the existing
+alphabet; delegate codes can never contain a hyphen and payment references use
+`GR-`, so `signup_ref_code` is unambiguous without any cross-table lookup.
+Verified live: 1907 of 1907 profiles hold a well-formed unique code, and none
+of the 16 delegate codes contains a hyphen. **That no-hyphen guarantee for
+delegate codes rests on the generator, not a database constraint** —
+`profiles.referral_code` carries a CHECK pinning the `M-` prefix
+(`20260728142000:48-49`), but `delegates.referral_code` (`20260712212409:36`)
+has no CHECK forbidding a hyphen at all. The actual guarantee is
+`gen_funnel_code`'s hyphen-free alphabet plus the seeded `D`+digits shape
+(`scripts/seed-staging.mjs`); a future change to delegate-code generation that
+introduced a hyphen would silently break `signup_ref_code`'s unambiguity, with
+nothing in the schema to catch it.
+
+**Owner decision 2026-07-29 — an approved delegate's referral count sums both
+codes.** The original "one person, one link" design counted whichever single
+code was active, so a member who earned N sign-ups on their own link and was
+later approved as a delegate would watch the count reset to 0 with those
+attributions permanently invisible. Review surfaced it; the owner chose to sum.
+The displayed link is unchanged (still the delegate code once approved) — only
+the count widened. This landed in its own migration
+(`20260729120000`) rather than in `20260728142000`, because the latter had
+already been pushed: amending an applied migration makes the file lie about
+what ran. `20260728142000` was restored byte-identical to its pushed state.
+
+**The admin city filter is reconciled server-side against the region.**
+`profiles` carries a composite FK `(city_id, region_id)`, so a stale city
+combined with a changed region cannot match any row — the list would have
+returned guaranteed-zero results behind a dropdown that had silently reset
+itself to "all cities". A pure `reconcileCityFilter()` in `lib/admin.ts`
+ignores a city that does not belong to the selected region, and the same
+reconciliation feeds the list, the pagination links and the export.
+`admin_export_members` gained `p_city_id` so the CSV honours the filter — the
+file's own documented invariant is that the export must never see a different
+row set than the list.
+
+**Status vocabulary is disambiguated in one place per surface.**
+`MEMBER_STATUS_LABELS_KA` (`lib/admin.ts`) and `TEAM_STATUS_LABELS`
+(`lib/cabinet.ts`) now distinguish a member with no recorded payment from a
+paying member in good standing; `Pill`'s own mirrored defaults follow, because
+several pages render it without an explicit label.
+
+**The round-1 caption under the no-delegate label stays removed** (owner, item
+8b): it asserted that a person with no delegate is backing the central
+movement, which the round-1 wording explicitly contradicts. Recorded here so a
+later reader does not restore it as a perceived omission.
+
+**Known staleness, deliberately deferred:** `scripts/security/*` (the recorded
+corpus of the 2026-07-26 audit: `app-actions.mjs`, `arguments.mjs`,
+`manifest.json`, `live-objects.json`, `coverage.mjs`) still catalogs the
+dropped `member_change_tier` RPC — and the same staleness reaches beyond that
+corpus. `docs/security/*` (`coverage.md`, `findings.md`, `ledger.json`,
+`threat-model.md`) records the same RPC throughout; `lib/security/expectations.test.ts`
+cites it too, harmlessly — it is a string fixture, not a live call, so the
+suite stays green; and `scripts/security/probe.mjs`'s `profiles` read-column
+list (`READ_COLUMNS["table:profiles"]`) predates `referral_code`
+(`20260728142000_member_referral_codes.sql`) and so omits it. All of it
+records what a completed audit probed at the time; rewriting the corpus is a
+separate decision, and nothing in CI runs any of it.

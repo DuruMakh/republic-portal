@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Pill } from "@/components/Pill";
-import { cardSkin } from "@/components/Card";
 import { SectionRule } from "@/components/SectionRule";
-import { contentPill } from "@/lib/admin";
-import { formatEventTimeKa, splitEvents } from "@/lib/community";
-import { fetchPublicEvents, type PublicEventItem } from "@/lib/supabase/public";
+import { splitEvents } from "@/lib/community";
+import { fetchPublicEvents } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
@@ -15,22 +12,6 @@ export const metadata: Metadata = {
   description: "მოძრაობის შეხვედრები და ღონისძიებები.",
   openGraph: { images: ["/og-default.png"] },
 };
-
-function EventRow({ event }: { event: PublicEventItem }) {
-  return (
-    <Link
-      href={`/events/${event.slug}`}
-      className={`${cardSkin} flex flex-wrap items-center gap-x-4 gap-y-1 p-4 transition-colors hover:border-brand/50`}
-    >
-      <span className="text-sm font-semibold text-muted-fg">
-        {formatEventTimeKa(event.starts_at, event.ends_at)}
-      </span>
-      <span className="font-bold text-ink">{event.title}</span>
-      <span className="text-sm text-muted-fg">{event.location}</span>
-      {event.status === "cancelled" ? <Pill {...contentPill("cancelled")} /> : null}
-    </Link>
-  );
-}
 
 export default async function EventsPage() {
   const events = await fetchPublicEvents();
