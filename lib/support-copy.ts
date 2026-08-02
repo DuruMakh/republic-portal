@@ -11,6 +11,8 @@
  * Register is informal singular throughout, matching the shipped public voice
  * („დარეგისტრირდი“, „აირჩიე ის შენს დელეგატად“) — owner decision, 2026-08-02.
  */
+/** Spliced from app/(public)/events/page.tsx:21 — the shared public eyebrow. */
+export const SUPPORT_EYEBROW = "ქართული რესპუბლიკა";
 export const SUPPORT_HEADING = "დაგვიკავშირდი";
 export const SUPPORT_LEDE = "მოგვწერე — ყველა შეტყობინებას ვკითხულობთ და გიპასუხებთ.";
 export const SUPPORT_NAME_LABEL = "სახელი";
