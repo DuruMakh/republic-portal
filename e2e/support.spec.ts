@@ -25,10 +25,25 @@ const MESSAGE = `${"ა".repeat(20)} ${RUN}`;
  * support_messages is revoked from every client role, so only the service key
  * can delete these -- the same reason the other write-path suites clean up
  * through cleanupClient rather than through the app.
+ *
+ * This one must FAIL rather than skip when credentials are absent, which is
+ * where it parts company with cleanupClient's documented behaviour ("a run
+ * without staging env never created anything to clean"). That holds for suites
+ * that seed their own fixtures with the service key. It does not hold here: the
+ * row is written by the APP SERVER out of its own environment, so this suite
+ * creates a row whether or not the test process can see a credential. Skipping
+ * quietly is exactly how the leftover rows this cleanup exists to prevent got
+ * into the owner's inbox in the first place.
  */
 async function cleanupSupportMessages(): Promise<void> {
   const client = cleanupClient("support cleanup");
-  if (!client) return;
+  if (!client) {
+    throw new Error(
+      "support cleanup cannot run: staging service credentials are not in this process's env.\n" +
+        "The app server wrote a real row regardless, so it would be stranded in the owner's inbox.\n" +
+        "Run the suite with the staging env loaded, e.g. `node --env-file=.env.local node_modules/@playwright/test/cli.js test support`.",
+    );
+  }
   const { error } = await client.from("support_messages").delete().like("message", `%${RUN}%`);
   failIfAny("support cleanup", error ? [error.message] : [], SWEEP_HINT);
 }
