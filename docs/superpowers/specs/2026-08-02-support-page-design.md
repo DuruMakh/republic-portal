@@ -54,10 +54,20 @@ by §9 instead.
 | Neither contact filled | `მიუთითე ელ-ფოსტა ან ტელეფონი.` | new |
 | Rate limited | `ბევრი შეტყობინება გაიგზავნა — სცადე ცოტა ხნის შემდეგ.` | new |
 | Footer link | `დაგვიკავშირდი` | new, same bytes as the heading |
+| Eyebrow above the heading | `ქართული რესპუბლიკა` | spliced — `app/(public)/events/page.tsx:21`; added during implementation to match the shipped public-page header shape |
 
 No typographic quotation marks appear anywhere in this copy. That is
 deliberate: the `U+201E`/`U+201C` pair is the repo's single most common
 corruption vector, and this page has no need of it.
+
+**Scope of this table, corrected 2026-08-02 after code review.** The rows above
+are the page's *prose* — what a visitor reads. They are not the complete string
+inventory: the field-level validation messages (`მაქსიმუმ 60 სიმბოლო` and
+siblings, spliced from `lib/funnel-schemas.ts`), the admin inbox's own headings
+and pager labels, and a Georgian fallback for the cases zod answers in English
+also live in `lib/support-copy.ts`. That module is the authoritative inventory;
+this table is the owner-facing subset. The earlier wording implied the two were
+the same set, which ADR-025 then repeated.
 
 ## 4. Data
 

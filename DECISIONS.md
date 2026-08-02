@@ -603,3 +603,85 @@ file and flagged this very paragraph on the first attempt: ka-gate exits 0 on
 all three fixtures, the new scan catches each by codepoint. The whole tracked codebase scans clean, which is the first evidence
 this repo carries no homoglyph corruption; the 2026-07-28 audit checked quotes
 only.
+
+---
+
+## ADR-026 (2026-08-02): Support-page code review — corrections to ADR-025
+
+A max-effort review of the support branch (ten independent finder angles, then
+mechanical verification) found fifteen defects, several of them in claims
+ADR-025 itself makes. This log is append-only, so the corrections are recorded
+here rather than by editing that entry.
+
+**Correction 1 — ADR-025 says the RPC's "protection is that the table
+underneath is revoked from every client role, so this function is the only way
+in." That was false as shipped.** The migration created
+`admin_support_messages` and granted SELECT without first revoking. On
+instances with classic default privileges a new view is born with ALL granted
+to client roles, and this one is single-relation over plain columns with no
+`security_invoker` and no `WITH CHECK OPTION` — auto-updatable, executing DML
+with the owner's RLS-exempt rights, and a view's `WHERE` does not constrain
+INSERT. `anon` could have POSTed to `/rest/v1/admin_support_messages` and
+written straight into `support_messages`, past RLS, past the table's own revoke
+and past every validation rule. The repo had already written this trap down
+(`20260719150000_community.sql:248`) and the plan for this branch contained the
+revoke line; implementation dropped it. Now restored.
+
+**Correction 2 — the throttle did not throttle.** `p_ip_hash` is the rate
+limit's key and the *caller* supplies it, while EXECUTE was granted to `anon`.
+Anyone holding the public anon key could call the RPC directly and omit the
+argument — the `default null` short-circuits the check — or send a fresh random
+value per call. EXECUTE is now revoked from `public`, `anon` and
+`authenticated` and granted only to `service_role`; the server action calls it
+through `lib/supabase/admin.ts`. Postgres cannot distinguish "our server" from
+"a browser holding the same public key", so a credential the browser lacks is
+the only thing that can. This also repairs the `GATELESS_BY_DESIGN` exemption,
+which had inverted the property the other two entries share: all three are now
+exempt because no client role can reach them.
+
+**Correction 3 — "The whole tracked codebase scans clean" overstated what ran.**
+The sweep covered quoted literals in `.ts`/`.tsx` only. Most user-facing
+Georgian in this repo is bare JSX text, which the scanner could not see, and
+running it over `.mjs` failed on the scanner's own source: its comments spelled
+out the Latin, Cyrillic and Greek examples as literal glyphs, so ka-gate
+rejected it and it flagged itself. Both are fixed — the examples are named by
+codepoint, JSX text is scanned, and the claim now holds for
+`.ts`/`.tsx`/`.mjs` quoted literals **and** JSX text, verified by `npm run
+ka:scan`.
+
+**The gate is now wired in.** `npm run ka:scan` exists, DESIGN.md's mandatory
+gate block names it with its invocation instead of describing a backstop that
+did not exist, and the script defaults to every tracked file so the command
+behaves the same on the owner's Windows shell as in CI.
+
+**A guard that reads migrations, not a snapshot.** The F5 view-write test
+iterated `scripts/security/live-objects.json`, a frozen introspection snapshot,
+so the missing revoke above passed 664 green tests: the new view was simply not
+in the file. `schema-guards.test.ts` now also parses every `create view` out of
+the migrations and asserts each has a matching revoke, which covers views this
+repo has not added yet. Proven by removing the revoke line and watching it fail.
+
+**Client and server measured different things.** zod counts UTF-16 code units
+and Postgres `length()` counts characters, so a five-emoji message passed the
+form and was refused by the database; and `btrim`'s one-argument form strips
+ASCII space only, so a message of ten newlines satisfied the server's length
+rule while the client rejected it. Both sides now count code points and trim
+the same whitespace set.
+
+**Errors now say something true.** A rejected server action left the submit
+button disabled forever with no message; `invalid_support_message` was rendered
+as "try again" for payloads that could never succeed; zod's English defaults
+("Required", "Expected string, received null") were reachable as user-facing
+copy on a public endpoint; and every field error collapsed into one unattached
+line. Each is fixed, with a regression test.
+
+**The inbox is readable.** It paged 50 rows with no pager, so message 51 was
+unreachable forever, and it discarded the query error so an unmigrated or broken
+view rendered as "there are no messages". It now paginates like every sibling
+admin list and throws like them. The e2e suite, which wrote a real row to shared
+staging on every CI run with no cleanup, now tags its rows and deletes them.
+
+**Design-system debt paid rather than added.** `TextareaField` joins
+`components/Field.tsx` (the shape `SelectField` already set) with a
+`/styleguide` entry, instead of a fifth hand-rolled textarea copying Field's
+label markup inline.
