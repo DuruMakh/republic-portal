@@ -163,6 +163,20 @@ export const POST_GATE_TOKENS = new Set([
   // See the doc comment above for why it's classified despite the raising
   // function having no gate of its own (same shape as protect_profile_columns()).
   "referral_code_exhausted",
+  // Support page (20260802120000_support_messages.sql): both raised by
+  // submit_support_message(). `invalid_support_message` is payload validation
+  // restated server-side; `too_many_requests` is the per-hashed-address
+  // throttle. Neither is an identity/standing refusal — the throttle refuses
+  // how OFTEN, never WHO, and the same caller is welcome back ten minutes
+  // later. The raising function has no gate of its own for the same reason as
+  // the two above: EXECUTE is revoked from public, anon and authenticated and
+  // granted only to service_role, so no client role can reach it and there is
+  // no caller to admit or refuse. (An earlier draft granted it to `anon`,
+  // which would have inverted the property this set is built on; code review
+  // caught it — the throttle's key is caller-supplied, so a client-role grant
+  // made the rate limit opt-in.)
+  "invalid_support_message",
+  "too_many_requests",
 ]);
 
 /**

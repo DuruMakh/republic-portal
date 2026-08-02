@@ -4,6 +4,7 @@
  * every read (self-gating views) and every mutation (RPC role checks). ADR-014.
  */
 import { TBILISI_OFFSET_MS } from "./cabinet";
+import { SUPPORT_ADMIN_TAB_LABEL } from "./support-copy";
 import type { MemberStatusRow } from "./supabase/types";
 
 export const ADMIN_ROLE_VALUES = ["super_admin", "verifier", "finance", "editor"] as const;
@@ -43,6 +44,7 @@ const TAB_MATRIX: { href: string; label: string; roles: readonly AdminRole[] }[]
   { href: "/admin/content", label: "შიგთავსი", roles: ["super_admin", "editor"] },
   { href: "/admin/admins", label: "ადმინები", roles: ["super_admin"] },
   { href: "/admin/audit", label: "აუდიტი", roles: ["super_admin"] },
+  { href: "/admin/support", label: SUPPORT_ADMIN_TAB_LABEL, roles: ["super_admin"] },
   { href: "/admin/settings", label: "პარამეტრები", roles: ["super_admin"] },
 ];
 

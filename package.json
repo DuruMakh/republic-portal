@@ -1,6 +1,6 @@
 {
   "name": "republic-portal",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "engines": {
     "node": ">=22"
@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "ka:scan": "node scripts/mixed-script-scan.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",

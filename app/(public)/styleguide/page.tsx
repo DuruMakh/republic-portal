@@ -10,7 +10,7 @@ import { ContentNav } from "@/components/ContentNav";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
-import { adminControlClasses, Field } from "@/components/Field";
+import { adminControlClasses, Field, TextareaField } from "@/components/Field";
 import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { NewsCard } from "@/components/NewsCard";
@@ -264,6 +264,8 @@ export default function StyleguidePage() {
               <option value="1">თბილისი</option>
               <option value="2">აჭარა</option>
             </SelectField>
+            <TextareaField label="შეტყობინება" rows={3} defaultValue="" />
+            <TextareaField label="შეტყობინება" rows={2} error="სულ მცირე 10 სიმბოლო" />
             <Select variant="admin" aria-label="მხარე" defaultValue="">
               <option value="">ყველა მხარე</option>
               <option value="1">თბილისი</option>

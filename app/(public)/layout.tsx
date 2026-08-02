@@ -5,6 +5,7 @@ import { HeaderSessionAction } from "@/components/HeaderSessionAction";
 import { Masthead } from "@/components/Masthead";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
 // pre-Task-10 app/(public)/layout.tsx). Only the /transparency label changes,
@@ -28,6 +29,9 @@ const footerLinks: { href: string; label: string }[] = [
   { href: "/join/terms", label: FOOTER_TERMS_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: "/transparency", label: NAV_TRANSPARENCY_LABEL },
+  // Footer, not top nav (spec §8): contact is a destination people go looking
+  // for, not a section of the publication.
+  { href: "/support", label: SUPPORT_FOOTER_LABEL },
 ];
 
 /**

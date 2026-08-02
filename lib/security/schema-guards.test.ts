@@ -395,3 +395,54 @@ describe("L3-2 — payments carries append-only protection", () => {
     expect(named).toEqual(["service_role"]);
   });
 });
+
+/**
+ * Added 2026-08-02 after code review. The F5 guard above iterates LIVE_VIEWS —
+ * a frozen introspection snapshot — so a view created by a NEW migration is
+ * invisible to it and inherits whatever default privileges grant. That is not
+ * hypothetical: the support page's admin view shipped without its `revoke all`
+ * and the whole suite stayed green, because the snapshot predates it.
+ *
+ * This guard reads the migrations instead, so it covers every view the repo
+ * will ever add. It encodes the rule the migrations already state in prose
+ * (20260719150000_community.sql: "views are born with ALL granted to client
+ * roles ... revoke everything before granting exactly SELECT").
+ */
+describe("every view created by a migration revokes client-role privileges", () => {
+  const created: { view: string; file: string }[] = [];
+  const revoked = new Set<string>();
+  for (const { file, sql: raw } of migrationsInOrder()) {
+    // Strip `--` comments first. These migrations discuss revoking at length in
+    // prose ("the 13 already-revoked views"), and a pattern that spans newlines
+    // will happily start inside a comment and swallow the statement after it.
+    const sql = raw.replace(/--[^\n]*/g, " ");
+    for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?view\s+([a-z_][a-z0-9_]*)/gi)) {
+      created.push({ view: m[1]!, file });
+    }
+    // Two spellings are in use and both satisfy the invariant:
+    //   revoke all on a, b from anon, authenticated;                (community.sql)
+    //   revoke insert, update, delete, truncate on a, b from ...;   (20260726120000)
+    // The second is what the F5 fix wave used, so matching only `all` would
+    // report eleven long-fixed views as violations.
+    for (const m of sql.matchAll(/revoke\s+([\s\S]*?)\s+on\s+([\s\S]*?)\s+from\s+([^;]+);/gi)) {
+      const privileges = (m[1] ?? "").toLowerCase();
+      const roles = (m[3] ?? "").toLowerCase();
+      const removesWrites = privileges.includes("all") || privileges.includes("insert");
+      if (!removesWrites) continue;
+      if (!roles.includes("anon") && !roles.includes("public")) continue;
+      for (const name of (m[2] ?? "").split(",")) {
+        const cleaned = name.replace(/\bsequence\b|\btable\b|\bfunction\b/gi, "").trim();
+        if (cleaned) revoked.add(cleaned);
+      }
+    }
+  }
+
+  it("finds the views this guard was written against", () => {
+    // Tripwire: a parse that silently matched nothing would pass every case.
+    expect(created.length).toBeGreaterThan(20);
+  });
+
+  it.each(created)("$view (added in $file) is revoked from client roles", ({ view }) => {
+    expect(revoked.has(view)).toBe(true);
+  });
+});

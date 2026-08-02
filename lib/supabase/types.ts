@@ -247,6 +247,20 @@ export interface Database {
         Row: { region_id: number; name_ka: string; member_count: number };
         Relationships: [];
       };
+      // The support_messages table itself is deliberately absent: no typed-client
+      // path touches it: writes go through submit_support_message, reads through
+      // this view. ip_hash is not exposed here -- it throttles, it is not read.
+      admin_support_messages: {
+        Row: {
+          id: number;
+          name: string;
+          email: string | null;
+          phone: string | null;
+          message: string;
+          created_at: string;
+        };
+        Relationships: [];
+      };
       admin_members: {
         Row: {
           id: string;
@@ -480,6 +494,16 @@ export interface Database {
     };
     Functions: {
       cabinet_state: { Args: Record<PropertyKey, never>; Returns: Json };
+      submit_support_message: {
+        Args: {
+          p_name: string;
+          p_email: string | null;
+          p_phone: string | null;
+          p_message: string;
+          p_ip_hash?: string | null;
+        };
+        Returns: number;
+      };
       register: {
         Args: {
           p_first_name: string;
