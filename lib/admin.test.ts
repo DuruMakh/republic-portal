@@ -15,6 +15,7 @@ import {
   ROLE_LABELS_KA,
   sanitizeSearch,
 } from "./admin";
+import { SUPPORT_ADMIN_TAB_LABEL } from "./support-copy";
 
 describe("sanitizeSearch (one sanitizer for list, lookup and export)", () => {
   it("strips PostgREST or() syntax and ILIKE wildcards", () => {
@@ -51,7 +52,7 @@ describe("reconcileCityFilter (fix-list round 2, Task 6 review — stale city vs
 });
 
 describe("adminTabs (spec §3.1 role → tab matrix)", () => {
-  it("super_admin sees all nine tabs in order", () => {
+  it("super_admin sees all ten tabs in order", () => {
     expect(adminTabs(["super_admin"]).map((t) => t.href)).toEqual([
       "/admin",
       "/admin/members",
@@ -61,8 +62,14 @@ describe("adminTabs (spec §3.1 role → tab matrix)", () => {
       "/admin/content",
       "/admin/admins",
       "/admin/audit",
+      "/admin/support",
       "/admin/settings",
     ]);
+  });
+  it("support messages are super_admin only — no other role sees the tab", () => {
+    for (const role of ["verifier", "finance", "editor"] as const) {
+      expect(adminTabs([role]).some((t) => t.href === "/admin/support")).toBe(false);
+    }
   });
   it("verifier: overview, members, verify, transfer", () => {
     expect(adminTabs(["verifier"]).map((t) => t.href)).toEqual([
@@ -90,7 +97,7 @@ describe("adminTabs (spec §3.1 role → tab matrix)", () => {
       "/admin/transfer",
     ]);
   });
-  it("labels are the prototype's Georgian nav vocabulary", () => {
+  it("labels are the prototype's Georgian nav vocabulary, plus the support inbox", () => {
     const labels = adminTabs(["super_admin"]).map((t) => t.label);
     expect(labels).toEqual([
       "მიმოხილვა",
@@ -101,6 +108,9 @@ describe("adminTabs (spec §3.1 role → tab matrix)", () => {
       "შიგთავსი",
       "ადმინები",
       "აუდიტი",
+      // Not prototype vocabulary — the support page is newer than the mock, so
+      // this label comes from its copy module rather than being retyped here.
+      SUPPORT_ADMIN_TAB_LABEL,
       "პარამეტრები",
     ]);
   });
