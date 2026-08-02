@@ -36,6 +36,8 @@ Every task's requirements implicitly include this section.
 | --- | --- |
 | `lib/mobile-nav.ts` | Every route→chrome decision. Pure. The single source of truth for which header, which bottom bar, which tabs. |
 | `lib/mobile-nav.test.ts` | Unit tests for the above. |
+| `lib/nav-active.ts` | The longest-match active-nav rule (owner fix #7), extracted from `CabinetNav` so the desktop nav and the tab bar cannot drift apart. |
+| `lib/nav-active.test.ts` | Unit tests for the above. |
 | `components/StickyBar.tsx` | The one mobile bottom-bar shell. Makes two bottom bars structurally impossible. |
 | `components/MobileBackHeader.tsx` | `← უკან` + red context label. |
 | `components/MobileMenu.tsx` | Full-screen public navigation overlay + its trigger button. |
@@ -95,7 +97,9 @@ const grab=(re,name)=>{const m=html.match(re); out.push(name+'\t'+(m?m[1]:'NOT F
 grab(/data-act=\"menu\"[^>]*>([^<]+)</,'menu');
 grab(/data-act=\"closeMenu\"[^>]*>([^<]+)</,'close');
 grab(/data-act=\"back\"[^>]*>([^<]+)</,'back');
-grab(/ერთ[^<]*/,'x');out.pop();
+// Codepoints, not literal Georgian: a script written to avoid hand-typed
+// Georgian must not itself contain hand-typed Georgian. ერთ is
+// the first word of the CTA subtitle.
 const sub=html.match(/>(ერთ [^<]+)</); out.push('ctaSub\t'+(sub?sub[1]:'NOT FOUND'));
 const cab=html.match(/data-act=\"cabinet\"[^>]*>([^<]+)</); out.push('ctaCabinet\t'+(cab?cab[1]:'NOT FOUND'));
 const js=html.match(/label: \"([^\"]+)\", on: r === \"mevents\"/); out.push('tabEvents\t'+(js?js[1]:'NOT FOUND'));
@@ -107,7 +111,7 @@ console.log(out.join('\n'));
 "
 ```
 
-Expected: ten `name<TAB>string` lines, none reading `NOT FOUND`. If any does, stop and read the bundle rather than typing the string by hand.
+Expected: **nine** `name<TAB>string` lines, none reading `NOT FOUND` (verified against the bundle on 2026-08-02 — `menu`, `close`, `back`, `ctaSub`, `ctaCabinet`, `tabEvents`, `tabPolls`, `tabNews`, `more`). If any reads `NOT FOUND`, stop and read the bundle rather than typing the string by hand.
 
 Then append the strings that already ship, copied byte-for-byte from their current homes with `grep`:
 
@@ -669,19 +673,15 @@ export const viewport: Viewport = {
 npm run build
 ```
 
-Expected: build succeeds. Then start the app and check the tag:
+Expected: build succeeds.
 
-```bash
-npm run dev
+Then confirm the tag actually renders. Start the dev server through the preview tooling (never a raw shell — this environment routes dev servers through the browser pane), open `/`, and check the head:
+
+```
+document.querySelector('meta[name="viewport"]').content
 ```
 
-In a second shell:
-
-```bash
-curl -s http://localhost:3000/ | grep -o '<meta name="viewport"[^>]*>'
-```
-
-Expected output contains `viewport-fit=cover`. If it does not, the export is in the wrong file — it must be `app/layout.tsx`, the root layout.
+Expected: the value contains `viewport-fit=cover`. If it does not, the export is in the wrong file — it must be `app/layout.tsx`, the root layout, not a route-group layout. Task 10 asserts this again in Playwright so it cannot silently regress.
 
 - [ ] **Step 7: Format and commit**
 
@@ -897,7 +897,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 // Spliced from the reference bundle (data-act="menu" / data-act="closeMenu").
 const MENU = "მენიუ";
 const CLOSE = "დახურვა";
+// The dialog and the nav inside it must not share a name, or a screen reader
+// announces the same label twice on entry. The nav keeps the shipped landmark
+// label; the dialog is named for the control that opened it.
 const MENU_NAV_LABEL = "მთავარი ნავიგაცია";
+const MENU_DIALOG_LABEL = MENU;
 
 /**
  * The public navigation below `md` (spec §4.9): a trigger in the masthead that
@@ -979,7 +983,7 @@ export function MobileMenu({
           ref={panelRef}
           role="dialog"
           aria-modal="true"
-          aria-label={MENU_NAV_LABEL}
+          aria-label={MENU_DIALOG_LABEL}
           className="fixed inset-0 z-50 flex flex-col bg-paper"
         >
           <div className="flex items-center justify-end border-b-2 border-ink px-5 pb-2.5 pt-4">
@@ -1274,6 +1278,8 @@ git commit -m "feat(mobile): sticky join CTA"
 ### Task 7: The cabinet tab bar and overflow sheet
 
 **Files:**
+- Create: `lib/nav-active.ts`
+- Create: `lib/nav-active.test.ts`
 - Create: `components/useSignOut.ts`
 - Create: `components/MobileTabBar.tsx`
 - Create: `components/MobileTabBar.test.tsx`
@@ -1283,9 +1289,72 @@ git commit -m "feat(mobile): sticky join CTA"
 
 **Interfaces:**
 - Consumes: `CabinetNavItem`; `mobileTabs`, `showsTabBar` from `lib/mobile-nav.ts`; `StickyBar`; `Badge`.
-- Produces: `useSignOut(): () => Promise<void>`; `MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: CabinetNavItem[] })`; `MobileMoreSheet({ items, onClose }: { items: CabinetNavItem[]; onClose: () => void })`.
+- Produces: `activeNavHref(items: ReadonlyArray<{ href: string }>, pathname: string): string | null`; `useSignOut(): () => Promise<void>`; `MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: CabinetNavItem[] })`; `MobileMoreSheet({ items, onClose }: { items: CabinetNavItem[]; onClose: () => void })`.
 
-- [ ] **Step 1: Extract the sign-out callback**
+- [ ] **Step 1: Extract the active-nav matcher — this prevents re-breaking owner fix #7**
+
+`CabinetNav` already solves a problem `MobileTabBar` has too, and the naive version of it is wrong. `/me` is a prefix of every cabinet route, so plain prefix matching lights „მთავარი“ on every page — the exact bug owner fix #7 already fixed once, guarded today by the test `root „მთავარი“ is NOT marked on sibling subpages` in `components/CabinetNav.test.tsx`. The registered tab set contains `/me`, so a naive matcher in the tab bar would reintroduce it.
+
+Extract the longest-match rule so both navs share one implementation. Create `lib/nav-active.ts`:
+
+```ts
+/**
+ * Longest matching href wins (owner fix #7). „მთავარი“ (/me) is a prefix of
+ * every cabinet route, so bare prefix matching keeps it lit on every page.
+ * Shared by CabinetNav (desktop) and MobileTabBar (mobile) so the rule cannot
+ * drift between them — it was already fixed once and must not regress.
+ */
+export function activeNavHref(items: ReadonlyArray<{ href: string }>, pathname: string): string | null {
+  let active: string | null = null;
+  for (const item of items) {
+    const matches = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (matches && (active === null || item.href.length > active.length)) active = item.href;
+  }
+  return active;
+}
+```
+
+Create `lib/nav-active.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { activeNavHref } from "./nav-active";
+
+const REGISTERED = [
+  { href: "/me" },
+  { href: "/me/events" },
+  { href: "/me/news" },
+  { href: "/me/profile" },
+];
+
+describe("activeNavHref", () => {
+  it("marks exactly the deepest match, never the /me root as well", () => {
+    expect(activeNavHref(REGISTERED, "/me/events")).toBe("/me/events");
+    expect(activeNavHref(REGISTERED, "/me/profile")).toBe("/me/profile");
+  });
+  it("marks the root on the root itself", () => {
+    expect(activeNavHref(REGISTERED, "/me")).toBe("/me");
+  });
+  it("falls back to the root on a subroute no other item claims", () => {
+    expect(activeNavHref(REGISTERED, "/me/membership")).toBe("/me");
+  });
+  it("returns null when nothing matches", () => {
+    expect(activeNavHref(REGISTERED, "/news")).toBeNull();
+  });
+});
+```
+
+Run: `npx vitest run lib/nav-active.test.ts` — expect FAIL first (unresolved import), then PASS after creating the module.
+
+Then replace the inline matcher in `components/CabinetNav.tsx` (the `const matches = ...` block through the `for` loop, lines 31-37) with:
+
+```tsx
+  const activeHref = activeNavHref(items, pathname);
+```
+
+adding `import { activeNavHref } from "@/lib/nav-active";`. Run `npx vitest run components/CabinetNav.test.tsx` — all 7 tests, including both owner-fix-#7 cases, must still pass.
+
+- [ ] **Step 2: Extract the sign-out callback**
 
 `CabinetNav` and `MobileMoreSheet` both need it, and copy-pasting a component is a forbidden pattern in CLAUDE.md. Create `components/useSignOut.ts`:
 
@@ -1316,7 +1385,15 @@ export function useSignOut(): () => Promise<void> {
 }
 ```
 
-Then in `components/CabinetNav.tsx`: delete the `useRouter` and `createClient` imports and the whole local `async function signOut()` block (lines 13-25), add `import { useSignOut } from "@/components/useSignOut";`, and add `const signOut = useSignOut();` beside the existing `const pathname = usePathname();`.
+Then in `components/CabinetNav.tsx`:
+
+- change `import { usePathname, useRouter } from "next/navigation";` to `import { usePathname } from "next/navigation";` — **`usePathname` is still needed, do not delete the whole line**;
+- delete `import { createClient } from "@/lib/supabase/client";` entirely;
+- delete the whole local `async function signOut()` block (lines 13-25);
+- add `import { useSignOut } from "@/components/useSignOut";`;
+- add `const signOut = useSignOut();` beside the existing `const pathname = usePathname();`.
+
+The existing `onClick={signOut}` on the sign-out button is unchanged — the hook returns a callback with the same shape.
 
 Also change the `<nav>` className on line 42 from:
 
@@ -1330,12 +1407,12 @@ to:
 "mb-8 hidden gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold md:flex"
 ```
 
-- [ ] **Step 2: Confirm the existing CabinetNav suite still passes**
+- [ ] **Step 3: Confirm the existing CabinetNav suite still passes**
 
 Run: `npx vitest run components/CabinetNav.test.tsx`
 Expected: PASS, 7 tests. The suite mocks `next/navigation` and `@/lib/supabase/client` at module level, so the mocks reach the hook's imports unchanged.
 
-- [ ] **Step 3: Write the failing tests**
+- [ ] **Step 4: Write the failing tests**
 
 Create `components/MobileTabBar.test.tsx`:
 
@@ -1413,6 +1490,26 @@ describe("MobileTabBar", () => {
     const bar = container.querySelector("nav")!;
     expect(bar.className).toContain("text-[0.74rem]");
   });
+
+  // Regression guard for owner fix #7. The registered tab set contains /me,
+  // which is a prefix of every other cabinet route; a naive prefix match marks
+  // two tabs at once. This is the exact bug already fixed in CabinetNav.
+  it("marks only the deepest tab when the registered set includes the /me root", () => {
+    const registered = [
+      { href: "/me", label: "მთავარი" },
+      { href: "/me/events", label: "ღონისძიება" },
+      { href: "/me/news", label: "სიახლე" },
+      { href: "/me/profile", label: "პროფილი" },
+    ];
+    pathnameRef.current = "/me/events";
+    const { container } = render(<MobileTabBar tabs={registered} more={[]} />);
+    expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "ღონისძიება" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "მთავარი" })).not.toHaveAttribute("aria-current");
+  });
 });
 ```
 
@@ -1474,12 +1571,12 @@ describe("MobileMoreSheet", () => {
 });
 ```
 
-- [ ] **Step 4: Run them and confirm they fail**
+- [ ] **Step 5: Run them and confirm they fail**
 
 Run: `npx vitest run components/MobileTabBar.test.tsx components/MobileMoreSheet.test.tsx`
 Expected: FAIL — both imports unresolved.
 
-- [ ] **Step 5: Write MobileMoreSheet**
+- [ ] **Step 6: Write MobileMoreSheet**
 
 Create `components/MobileMoreSheet.tsx`. **Copy „გასვლა“ and „← საჯარო“ from `scratch/mobile-strings.txt`.**
 
@@ -1495,6 +1592,9 @@ import { useSignOut } from "@/components/useSignOut";
 const SIGN_OUT = "გასვლა";
 const BACK_TO_PUBLIC = "← საჯარო";
 const SHEET_LABEL = "პირადი კაბინეტი";
+// The scrim is a close affordance, so it is labelled as one — reusing
+// SHEET_LABEL here would give the dialog and its dismiss button the same name.
+const CLOSE = "დახურვა";
 
 /**
  * The „მეტი“ overflow sheet (spec §4.6). Always carries „← საჯარო“ and
@@ -1516,7 +1616,7 @@ export function MobileMoreSheet({
       <button
         type="button"
         data-testid="more-scrim"
-        aria-label={SHEET_LABEL}
+        aria-label={CLOSE}
         onClick={onClose}
         className="flex-1 bg-ink/40"
       />
@@ -1557,7 +1657,7 @@ export function MobileMoreSheet({
 }
 ```
 
-- [ ] **Step 6: Write MobileTabBar**
+- [ ] **Step 7: Write MobileTabBar**
 
 Create `components/MobileTabBar.tsx`. **Copy „მეტი“ from `scratch/mobile-strings.txt` (`more`).**
 
@@ -1572,6 +1672,7 @@ import { MobileMoreSheet } from "@/components/MobileMoreSheet";
 import { StickyBar } from "@/components/StickyBar";
 import type { CabinetNavItem } from "@/lib/cabinet";
 import { showsTabBar } from "@/lib/mobile-nav";
+import { activeNavHref } from "@/lib/nav-active";
 
 // Spliced from the reference bundle's tab definitions (act: "more").
 const MORE = "მეტი";
@@ -1603,7 +1704,9 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
 
   if (!showsTabBar(pathname)) return null;
 
-  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // Longest-match, shared with CabinetNav. A naive prefix test would light
+  // „მთავარი“ (/me) on every registered page — owner fix #7, already fixed once.
+  const activeHref = activeNavHref(tabs, pathname);
   const slot =
     "flex flex-1 min-w-0 h-14 items-center justify-center gap-1 px-1 text-center no-underline";
 
@@ -1612,7 +1715,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
       <StickyBar>
         <nav aria-label={TABBAR_LABEL} className="flex text-[0.74rem] font-semibold">
           {tabs.map((tab) => {
-            const on = active(tab.href);
+            const on = tab.href === activeHref;
             return (
               <Link
                 key={tab.href}
@@ -1643,18 +1746,18 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
 }
 ```
 
-- [ ] **Step 7: Run the tests**
+- [ ] **Step 8: Run the tests**
 
 Run: `npx vitest run components/`
 Expected: PASS — 7 new `MobileTabBar` tests, 5 new `MobileMoreSheet` tests, and the existing `CabinetNav` suite still green.
 
-- [ ] **Step 8: Gate, format and commit**
+- [ ] **Step 9: Gate, format and commit**
 
 ```bash
 npm run format
-node scripts/ka-gate.mjs --diff main components/useSignOut.ts components/MobileTabBar.tsx components/MobileTabBar.test.tsx components/MobileMoreSheet.tsx components/MobileMoreSheet.test.tsx components/CabinetNav.tsx
+node scripts/ka-gate.mjs --diff main lib/nav-active.ts lib/nav-active.test.ts components/useSignOut.ts components/MobileTabBar.tsx components/MobileTabBar.test.tsx components/MobileMoreSheet.tsx components/MobileMoreSheet.test.tsx components/CabinetNav.tsx
 npm run ka:scan
-git add components/useSignOut.ts components/MobileTabBar.tsx components/MobileTabBar.test.tsx components/MobileMoreSheet.tsx components/MobileMoreSheet.test.tsx components/CabinetNav.tsx
+git add lib/nav-active.ts lib/nav-active.test.ts components/useSignOut.ts components/MobileTabBar.tsx components/MobileTabBar.test.tsx components/MobileMoreSheet.tsx components/MobileMoreSheet.test.tsx components/CabinetNav.tsx
 git commit -m "feat(mobile): cabinet tab bar and overflow sheet"
 ```
 
