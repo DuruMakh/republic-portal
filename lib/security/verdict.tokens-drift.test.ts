@@ -137,6 +137,15 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // no caller to gate at all). verdict.ts's POST_GATE_TOKENS comment carves
     // out this pair too.
     ["mint_member_referral_code", ["referral_code_exhausted"]],
+    // The support page's insert path (20260802120000_support_messages.sql).
+    // The clearest gateless-by-design case of the three: EXECUTE is granted to
+    // `anon` deliberately, because the contact form is public and a visitor
+    // need not have an account. There is no caller identity to admit or refuse,
+    // so there is no REFUSAL_TOKENS raise to put in front of its validation and
+    // throttle raises. Its protection is that the table underneath is revoked
+    // from every client role, so this function is the only way in and it
+    // restates every rule the form enforces.
+    ["submit_support_message", ["invalid_support_message", "too_many_requests"]],
   ]);
 
   /** Last definition of each function across the migrations, in apply order. */
@@ -197,8 +206,11 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // execution) added mint_member_referral_code(), which DOES need a
     // GATELESS_BY_DESIGN exemption (see above) — unlike payments_append_only,
     // it raises an actual token, not a full sentence.
-    expect(latestFunctionBodies().size).toBe(60);
-    expect(GATELESS_BY_DESIGN.size).toBe(2);
+    // 61 since the support page (20260802120000_support_messages.sql) added
+    // submit_support_message(), which also needs a GATELESS_BY_DESIGN
+    // exemption — it is granted to anon on purpose (see above).
+    expect(latestFunctionBodies().size).toBe(61);
+    expect(GATELESS_BY_DESIGN.size).toBe(3);
   });
 
   it("finds exactly the token counts this test suite was written against", () => {
@@ -211,9 +223,12 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // `phone_required` to register() (F3). 46 -> 47 and 36 -> 37 when owner
     // fix #12 (task-5 execution) added `referral_code_exhausted`
     // (mint_member_referral_code(), classified POST_GATE_TOKENS above).
-    expect(live.size).toBe(47);
+    // 47 -> 49 and 37 -> 39 when the support page added
+    // `invalid_support_message` and `too_many_requests`
+    // (submit_support_message(), both classified POST_GATE_TOKENS above).
+    expect(live.size).toBe(49);
     expect(REFUSAL_TOKENS.size).toBe(6);
-    expect(POST_GATE_TOKENS.size).toBe(37);
+    expect(POST_GATE_TOKENS.size).toBe(39);
     expect(DELIBERATELY_UNCLASSIFIED.size).toBe(4);
   });
 });
