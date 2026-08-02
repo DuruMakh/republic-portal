@@ -628,7 +628,7 @@ and past every validation rule. The repo had already written this trap down
 revoke line; implementation dropped it. Now restored.
 
 **Correction 2 — the throttle did not throttle.** `p_ip_hash` is the rate
-limit's key and the *caller* supplies it, while EXECUTE was granted to `anon`.
+limit's key and the _caller_ supplies it, while EXECUTE was granted to `anon`.
 Anyone holding the public anon key could call the RPC directly and omit the
 argument — the `default null` short-circuits the check — or send a fresh random
 value per call. EXECUTE is now revoked from `public`, `anon` and

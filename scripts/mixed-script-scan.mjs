@@ -61,13 +61,16 @@ for (const file of targets()) {
     const value = normalize(raw);
     if (!georgian.test(value)) continue;
     const chars = [...value];
-    const foreign = (i) => chars[i] !== undefined && isLetter.test(chars[i]) && !georgian.test(chars[i]);
+    const foreign = (i) =>
+      chars[i] !== undefined && isLetter.test(chars[i]) && !georgian.test(chars[i]);
     const geo = (i) => chars[i] !== undefined && georgian.test(chars[i]);
     // Flag a foreign letter only where it TOUCHES a Georgian one. That is what
     // corruption looks like; a deliberate Latin token beside Georgian --
     // "super_admin-ის", "GR-კოდი", "5XX XX XX XX" -- never touches one, and
     // flagging those buries the real signal under 100+ false alarms.
-    const offenders = [...new Set(chars.filter((_, i) => foreign(i) && (geo(i - 1) || geo(i + 1))))];
+    const offenders = [
+      ...new Set(chars.filter((_, i) => foreign(i) && (geo(i - 1) || geo(i + 1)))),
+    ];
     if (offenders.length === 0) continue;
     console.log(
       "MIXED-SCRIPT " +

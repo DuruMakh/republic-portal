@@ -184,7 +184,7 @@ npm run ka:scan
 
 That scan reads quoted literals **and** bare JSX text (where most user-facing Georgian
 lives) across every tracked `.ts`/`.tsx`/`.mjs`, and flags a Latin, Cyrillic or Greek
-letter *touching* a Georgian one — the shape corruption takes. A deliberate Latin token
+letter _touching_ a Georgian one — the shape corruption takes. A deliberate Latin token
 beside Georgian (`super_admin-ის`, `GR-კოდი`) is not flagged. With no arguments it scans
 the whole tree; pass paths to scan a subset. Both gates run over a task's touched files
 before commit; the scan is cheap enough to run whole-tree.
