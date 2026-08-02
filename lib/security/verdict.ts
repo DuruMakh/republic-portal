@@ -168,10 +168,13 @@ export const POST_GATE_TOKENS = new Set([
   // restated server-side; `too_many_requests` is the per-hashed-address
   // throttle. Neither is an identity/standing refusal — the throttle refuses
   // how OFTEN, never WHO, and the same caller is welcome back ten minutes
-  // later. The raising function is gateless by design and more plainly so
-  // than the two cases above: it is granted to `anon` on purpose, because the
-  // contact form is public and a visitor need not have an account, so there is
-  // no caller identity to admit or refuse in the first place.
+  // later. The raising function has no gate of its own for the same reason as
+  // the two above: EXECUTE is revoked from public, anon and authenticated and
+  // granted only to service_role, so no client role can reach it and there is
+  // no caller to admit or refuse. (An earlier draft granted it to `anon`,
+  // which would have inverted the property this set is built on; code review
+  // caught it — the throttle's key is caller-supplied, so a client-role grant
+  // made the rate limit opt-in.)
   "invalid_support_message",
   "too_many_requests",
 ]);

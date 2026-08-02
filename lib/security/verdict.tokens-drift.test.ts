@@ -138,13 +138,12 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // out this pair too.
     ["mint_member_referral_code", ["referral_code_exhausted"]],
     // The support page's insert path (20260802120000_support_messages.sql).
-    // The clearest gateless-by-design case of the three: EXECUTE is granted to
-    // `anon` deliberately, because the contact form is public and a visitor
-    // need not have an account. There is no caller identity to admit or refuse,
-    // so there is no REFUSAL_TOKENS raise to put in front of its validation and
-    // throttle raises. Its protection is that the table underneath is revoked
-    // from every client role, so this function is the only way in and it
-    // restates every rule the form enforces.
+    // Same property as the two above, which is what keeps this set meaningful:
+    // EXECUTE is revoked from public, anon and authenticated and granted only
+    // to service_role, so no client role can reach it and it has no caller
+    // identity to admit or refuse ahead of its validation and throttle raises.
+    // The page is public; the database call is not — the server action holds
+    // the only credential that can make it.
     ["submit_support_message", ["invalid_support_message", "too_many_requests"]],
   ]);
 
