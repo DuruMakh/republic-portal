@@ -176,4 +176,15 @@ node scripts/ka-gate.mjs --diff main <files>
 
 ka-gate checks for ASCII quotes adjacent to Georgian, Greek lookalikes, and balanced
 `U+201E`/`U+201C` pairs. It does **not** catch a lone Latin letter fused inside a Georgian word —
-so splicing (not retyping) remains the rule, and a mixed-script scan is the backstop.
+so splicing (not retyping) remains the rule, and the mixed-script scan is the backstop:
+
+```bash
+npm run ka:scan
+```
+
+That scan reads quoted literals **and** bare JSX text (where most user-facing Georgian
+lives) across every tracked `.ts`/`.tsx`/`.mjs`, and flags a Latin, Cyrillic or Greek
+letter *touching* a Georgian one — the shape corruption takes. A deliberate Latin token
+beside Georgian (`super_admin-ის`, `GR-კოდი`) is not flagged. With no arguments it scans
+the whole tree; pass paths to scan a subset. Both gates run over a task's touched files
+before commit; the scan is cheap enough to run whole-tree.
