@@ -12,22 +12,49 @@
 import { readFileSync } from "node:fs";
 
 const GEO = "\\u10A0-\\u10FF\\u1C90-\\u1CBF\\u2D00-\\u2D2F";
-// space . , ( ) - : ! ? the em dash, ASCII digits, and the Georgian paragraph
-// separator U+00B7 is deliberately NOT included -- add only what copy needs.
-const PUNCT =
-  "\\u0020\\u002E\\u002C\\u0028\\u0029\\u002D\\u003A\\u0021\\u003F\\u2014\\u0030-\\u0039";
 const hasGeo = new RegExp("[" + GEO + "]", "u");
-const pure = new RegExp("^[" + GEO + PUNCT + "]+$", "u");
-const allowedChar = new RegExp("[" + GEO + PUNCT + "]", "u");
+const georgian = new RegExp("[" + GEO + "]", "u");
+// We flag only LETTERS from other scripts, not every non-Georgian character.
+// The threat is a homoglyph -- a Latin "o", Cyrillic "о" or Greek
+// "ο" fused into a Georgian word, indistinguishable on screen. Digits,
+// punctuation and symbols (the footer's "©", an em dash) cannot be
+// mistaken for a Georgian letter, so an allowlist of permitted punctuation
+// would only grow forever and produce false alarms on legitimate copy.
+const isLetter = /\p{L}/u;
 
 let failures = 0;
 for (const file of process.argv.slice(2)) {
   const source = readFileSync(file, "utf8");
   const literals = source.match(/"[^"\n]*"|'[^'\n]*'|`[^`]*`/g) ?? [];
   for (const raw of literals) {
-    const value = raw.slice(1, -1);
-    if (!hasGeo.test(value) || pure.test(value)) continue;
-    const offenders = [...new Set([...value].filter((ch) => !allowedChar.test(ch)))];
+    // We read raw source, so normalise away two things that are not text.
+    // First ${...}: the identifier inside a template literal is Latin by
+    // definition and says nothing about the Georgian around it. Then escape
+    // sequences: in source, "ორი\nხაზი" carries a literal backslash and "n"
+    // sitting right against a Georgian letter, which is not a homoglyph.
+    const value = raw
+      .slice(1, -1)
+      .replace(/\$\{[^}]*\}/g, " ")
+      .replace(/\\u\{[0-9a-fA-F]+\}|\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\./g, " ");
+    if (!hasGeo.test(value)) continue;
+    // Flag a foreign letter only where it TOUCHES a Georgian one. That is what
+    // corruption looks like: a homoglyph fused into a word ("მoგვწერე"). A
+    // deliberate Latin token standing beside Georgian -- "super_admin-ის",
+    // "GR-კოდი", "5XX XX XX XX" -- never touches a Georgian letter directly,
+    // and flagging those would bury the real signal in noise.
+    const chars = [...value];
+    const foreign = (i) => {
+      const ch = chars[i];
+      return ch !== undefined && isLetter.test(ch) && !georgian.test(ch);
+    };
+    const geo = (i) => {
+      const ch = chars[i];
+      return ch !== undefined && georgian.test(ch);
+    };
+    const offenders = [
+      ...new Set(chars.filter((_, i) => foreign(i) && (geo(i - 1) || geo(i + 1)))),
+    ];
+    if (offenders.length === 0) continue;
     console.log(
       "MIXED-SCRIPT " +
         file +
