@@ -585,7 +585,7 @@ describe("StickyBar", () => {
   it("pads for the iPhone home indicator", () => {
     const { container } = render(<StickyBar>x</StickyBar>);
     const bar = container.firstElementChild as HTMLElement;
-    expect(bar.style.paddingBottom).toContain("safe-area-inset-bottom");
+    expect(bar.className).toContain("pb-[env(safe-area-inset-bottom)]");
   });
 
   it("carries the 2px ink rule the design system uses to separate chrome", () => {
@@ -623,10 +623,7 @@ import type { ReactNode } from "react";
  */
 export function StickyBar({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="sticky bottom-0 z-40 border-t-2 border-ink bg-paper md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
+    <div className="sticky bottom-0 z-40 border-t-2 border-ink bg-paper pb-[env(safe-area-inset-bottom)] md:hidden">
       {children}
     </div>
   );
@@ -1011,10 +1008,7 @@ export function MobileMenu({
           </nav>
 
           {cta ? (
-            <div
-              className="border-t-2 border-ink px-5 pt-3"
-              style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
-            >
+            <div className="border-t-2 border-ink px-5 pt-3 pb-[calc(0.75rem_+_env(safe-area-inset-bottom))]">
               {cta}
             </div>
           ) : null}
@@ -1624,8 +1618,7 @@ export function MobileMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-label={SHEET_LABEL}
-        className="border-t-2 border-ink bg-paper px-5 pt-4"
-        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+        className="border-t-2 border-ink bg-paper px-5 pt-4 pb-[calc(1rem_+_env(safe-area-inset-bottom))]"
       >
         {items.map((item) => (
           <Link
@@ -1879,17 +1872,44 @@ Follow whatever pattern that shows — a labelled section per component with a l
 
 Add one section per new component: `StickyBar`, `MobileBackHeader`, `MobileMenu`, `MobileJoinCta`, `MobileTabBar`, `MobileMoreSheet`.
 
-Because every one of them is `md:hidden`, they render blank on a desktop styleguide. Wrap each sample in a 390px-wide bordered frame that overrides the breakpoint for display purposes, and label it so a reviewer knows what they are looking at:
+**A wrapper div cannot make these visible.** Every one carries `md:hidden`, which is a media query against the *viewport* — a 390px-wide parent does not change the viewport, so the samples would render blank on a desktop styleguide and a reviewer would see an empty section. Do not attempt the wrapper approach.
+
+Render each sample inside a 390px `<iframe>` instead. An iframe has its own viewport, so `md:hidden` resolves to visible inside it — which is also the only way the gallery shows the component as it genuinely behaves. Add a small local helper at the top of `samples.tsx`:
 
 ```tsx
-<div className="w-[390px] max-w-full border border-frame">{/* sample */}</div>
+/**
+ * Mobile-only components carry `md:hidden`, a viewport media query — a narrow
+ * wrapper div cannot reveal them. An iframe has its own viewport, so the
+ * sample renders exactly as it does on a real phone.
+ */
+function PhoneFrame({ src, height }: { src: string; height: number }) {
+  return (
+    <iframe
+      src={src}
+      title={src}
+      width={390}
+      height={height}
+      className="max-w-full border border-frame"
+    />
+  );
+}
 ```
 
-Add a one-line note above the group: these are mobile-only components, shown here at 390px.
+Point each frame at a real route that exercises the component, so the gallery never drifts from the shipped chrome:
+
+| Sample | `src` | `height` |
+| --- | --- | --- |
+| Public header + menu trigger + join CTA | `/` | 640 |
+| Back header | `/join/terms` | 320 |
+| Cabinet tab bar | `/styleguide/mobile-tabbar-demo` | 260 |
+
+For the tab bar and the more-sheet there is no public route, so add a tiny demo page at `app/(public)/styleguide/mobile-tabbar-demo/page.tsx` that renders `MobileTabBar` with a fixed sample `tabs`/`more` array and nothing else. Keep it inside the styleguide folder so it is obviously gallery furniture, not product.
+
+Add a one-line note above the group: these are mobile-only components, shown at 390px in their own viewport because they are hidden at desktop width.
 
 - [ ] **Step 3: Verify the styleguide renders**
 
-Open `/styleguide` in the preview browser and screenshot the new section. Expected: six labelled samples, none blank.
+Open `/styleguide` in the preview browser and screenshot the new section. Expected: every frame shows live chrome — no blank frames. A blank frame means the iframe route failed to load, not that the component is broken; check the route first.
 
 - [ ] **Step 4: Update DESIGN.md**
 
