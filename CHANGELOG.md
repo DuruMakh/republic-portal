@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.12.0 - The support page (2026-08-02)
+
+A new page where anyone can write to the movement, reachable from the link in the
+footer of every public page (11).
+
+- Someone visiting the site can leave their name, a message, and either an email
+  address or a phone number - whichever they actually use. At least one of the two
+  is required, because a message nobody can reply to helps neither side.
+- Every message is stored, and you read them in the admin area under a new
+  Messages tab that only a super-admin can open. The list pages 50 at a time, so
+  nothing ever falls out of reach.
+- The same person can send three messages every ten minutes. Beyond that they are
+  asked to wait, which is what stops the page being used to flood you.
+- **No email is sent yet.** This was your decision: the address available was a
+  test one and the real destination will differ. Until that is wired up, nothing
+  notifies you - messages wait in the admin area until you look. The page tells
+  visitors they will get an answer, so that promise rests on the habit of checking.
+
+### Also in this release
+
+- A round of code review found fifteen problems in the above before it shipped,
+  including two that would have let a stranger write into the message table
+  directly and one that made the three-per-ten-minutes limit ignorable. All were
+  fixed and each is now covered by a test that fails against the old code.
+- The project gained a checker for a specific kind of invisible text corruption -
+  a Latin or Russian letter hidden inside a Georgian word, which looks perfect on
+  screen. The whole codebase was checked with it and is clean. This is the first
+  time that has been verified.
+- Two project tools that had quietly stopped working properly on your machine were
+  repaired, so problems now show up locally instead of only in the cloud.
+
+
 ## 0.11.0 — The owner fix list (2026-07-29)
 
 Both rounds of the fix list ship together; round 1 never carried a version number
