@@ -50,6 +50,10 @@ describe("mobileChrome", () => {
   });
   it("lets the back header win over the cabinet header in the membership wizard", () => {
     expect(mobileChrome("/me/membership")).toBe("back");
+    expect(mobileChrome("/me/membership/done")).toBe("back");
+  });
+  it("falls back to public chrome for an unclassified route", () => {
+    expect(mobileChrome("/some-unmapped-route")).toBe("public");
   });
 });
 

@@ -36,23 +36,16 @@ const STATIC_BACK: Record<string, BackTarget> = {
 /**
  * Dynamic detail routes. Matched by prefix because [slug] values are unbounded.
  * The trailing slash is load-bearing: it keeps "/news" (an index, no back
- * header) from matching, and keeps the public "/delegates/" profile prefix from
- * colliding with the "/delegate" cabinet root.
+ * header) from matching the article rule. It is not what keeps "/delegates/"
+ * from colliding with the "/delegate" cabinet root — that's the "s"; the
+ * load-bearing check for that collision is inCabinet's own
+ * startsWith("/delegate/").
  */
 const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
   { prefix: "/news/", target: { href: "/news", label: NEWS_INDEX } },
   { prefix: "/events/", target: { href: "/events", label: EVENTS_INDEX } },
   { prefix: "/delegates/", target: { href: "/leaderboard", label: BOARD_INDEX } },
 ];
-
-const PUBLIC_ROUTES: ReadonlySet<string> = new Set([
-  "/",
-  "/leaderboard",
-  "/news",
-  "/events",
-  "/transparency",
-  "/support",
-]);
 
 /** Routes that ARE the call to action, so a join bar under them is noise. */
 const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/login"]);
@@ -89,7 +82,8 @@ export function mobileBackTarget(pathname: string): BackTarget | null {
 export function mobileChrome(pathname: string): MobileChrome {
   if (mobileBackTarget(pathname) !== null) return "back";
   if (inCabinet(pathname)) return "cabinet";
-  if (PUBLIC_ROUTES.has(pathname)) return "public";
+  // Public chrome is the deliberate fallback for any route that is neither a
+  // back-target nor in-cabinet (including an unclassified or future route).
   return "public";
 }
 
