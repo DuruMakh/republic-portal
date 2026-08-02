@@ -34,5 +34,30 @@ export const SUPPORT_MAX_40 = "მაქსიმუმ 40 სიმბოლო
 export const SUPPORT_MIN_10 = "სულ მცირე 10 სიმბოლო";
 export const SUPPORT_MAX_2000 = "მაქსიმუმ 2000 სიმბოლო";
 
+/**
+ * Shown when a value is missing or is not text at all. zod's own message for
+ * that case is English („Expected string, received null“, „Required“) and the
+ * server action takes `unknown` from a public endpoint, so without this a
+ * hand-crafted request renders English on a Georgian-only site.
+ */
+export const SUPPORT_INVALID_INPUT = "მონაცემები არასწორია.";
+
 export const SUPPORT_ADMIN_TAB_LABEL = "შეტყობინებები";
 export const SUPPORT_ADMIN_EMPTY = "შეტყობინებები არ არის.";
+
+/**
+ * Column headings for the admin inbox. Deliberately NOT the form's field
+ * labels: those carry „(არასავალდებულო)“ to tell a visitor the field may be
+ * left blank, which is meaningless above data that has already been sent.
+ */
+export const SUPPORT_ADMIN_EMAIL_HEADING = "ელ-ფოსტა";
+export const SUPPORT_ADMIN_PHONE_HEADING = "ტელეფონი";
+
+/**
+ * Pager labels, spliced byte-for-byte from app/(admin)/admin/audit/page.tsx.
+ * Duplicated rather than shared because every admin list currently inlines its
+ * own pair; a shared pager vocabulary is the deeper fix and would touch four
+ * unrelated pages, so it is left for a task that owns them.
+ */
+export const SUPPORT_ADMIN_PREV = "← წინა";
+export const SUPPORT_ADMIN_NEXT = "შემდეგი →";

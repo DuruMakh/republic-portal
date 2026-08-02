@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SupportForm } from "./SupportForm";
 import {
+  SUPPORT_FAILURE,
+  SUPPORT_FILL_FIELD,
   SUPPORT_NEED_CONTACT,
   SUPPORT_RATE_LIMITED,
   SUPPORT_SUBMIT_LABEL,
@@ -57,6 +59,34 @@ describe("SupportForm", () => {
     fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
     expect(await screen.findByText(SUPPORT_RATE_LIMITED)).toBeInTheDocument();
     expect(screen.getByLabelText(/შეტყობინება/)).toHaveValue(MESSAGE);
+  });
+
+  // Code-review regressions (2026-08-02).
+  it("re-enables the button and explains itself when the action REJECTS", async () => {
+    // Network loss, or a stale action id after a redeploy. This used to leave
+    // the button disabled forever with no message and the text unrecoverable.
+    const submit = vi.fn().mockRejectedValue(new Error("Failed to fetch"));
+    render(<SupportForm submit={submit} />);
+    fill({ email: "someone@example.com" });
+    const button = screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL });
+    fireEvent.click(button);
+    expect(await screen.findByText(SUPPORT_FAILURE)).toBeInTheDocument();
+    await waitFor(() => expect(button).not.toBeDisabled());
+    expect(screen.getByLabelText(/შეტყობინება/)).toHaveValue(MESSAGE);
+  });
+
+  it("attaches each error to its own field instead of one anonymous line", async () => {
+    const submit = vi.fn();
+    render(<SupportForm submit={submit} />);
+    // Two problems at once: no name AND no way to reply.
+    fill({ name: "", email: "", phone: "" });
+    fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
+    // Both surface together, and each marks its own control invalid.
+    expect(await screen.findByText(SUPPORT_FILL_FIELD)).toBeInTheDocument();
+    expect(screen.getByText(SUPPORT_NEED_CONTACT)).toBeInTheDocument();
+    expect(screen.getByLabelText(/სახელი/)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/ელ-ფოსტა/)).toHaveAttribute("aria-invalid", "true");
+    expect(submit).not.toHaveBeenCalled();
   });
 
   it("disables the button while in flight", async () => {
