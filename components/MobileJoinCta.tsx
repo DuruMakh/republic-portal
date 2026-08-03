@@ -43,6 +43,13 @@ export function MobileJoinCta() {
     };
   }, []);
 
+  // The effect above still runs on /join, /join/terms and /login, where this
+  // renders nothing: hook rules put it before this guard. That is deliberate.
+  // Gating the effect on the initial pathname instead would be worse — it has
+  // [] deps, so a visitor who lands on /join and then navigates to / keeps the
+  // same mounted instance and would never subscribe, leaving the bar stuck on
+  // its guest state forever. The subscription is torn down on unmount, so the
+  // cost is one idle listener on three routes, not a leak.
   if (!showsJoinCta(pathname)) return null;
 
   return (
