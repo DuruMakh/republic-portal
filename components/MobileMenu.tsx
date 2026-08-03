@@ -14,6 +14,20 @@ const MENU_NAV_LABEL = "მთავარი ნავიგაცია";
 const MENU_DIALOG_LABEL = MENU;
 
 /**
+ * Focusable descendants, in tab order. `sessionSlot` and `cta` are arbitrary
+ * caller-supplied nodes, so the query must exclude controls that cannot take
+ * focus -- a disabled button as the last child would otherwise become a trap
+ * boundary that can never be reached, silently breaking the wrap.
+ */
+function focusableIn(panel: HTMLElement): HTMLElement[] {
+  return [
+    ...panel.querySelectorAll<HTMLElement>(
+      'a[href], button:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((el) => el.getAttribute("tabindex") !== "-1");
+}
+
+/**
  * The public navigation below `md` (spec §4.9): a trigger in the masthead that
  * opens a full-screen overlay listing the same destinations the desktop
  * masthead shows inline.
@@ -53,11 +67,17 @@ export function MobileMenu({
         return;
       }
       if (event.key !== "Tab" || !panelRef.current) return;
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>("a[href], button");
+      const focusable = focusableIn(panelRef.current);
       if (focusable.length === 0) return;
       const first = focusable[0]!;
       const last = focusable[focusable.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) {
+      // The trigger lives OUTSIDE the panel, so an activeElement that is
+      // neither end (including the trigger itself) must be pulled back in --
+      // otherwise the first Shift+Tab after opening escapes the overlay.
+      if (!panelRef.current.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -73,10 +93,21 @@ export function MobileMenu({
     };
   }, [open]);
 
-  // Returning focus to the trigger is what keeps keyboard users from being
-  // dumped at the top of the document when the overlay closes.
+  // Move focus into the panel on open, so the overlay owns the tab sequence
+  // from the first keystroke rather than from the second.
   useEffect(() => {
-    if (!open) triggerRef.current?.focus({ preventScroll: true });
+    if (!open || !panelRef.current) return;
+    focusableIn(panelRef.current)[0]?.focus({ preventScroll: true });
+  }, [open]);
+
+  // Returning focus to the trigger is what keeps keyboard users from being
+  // dumped at the top of the document when the overlay closes. Guarded on a
+  // real open->close transition: an unguarded effect also fires on mount, which
+  // stole focus to the trigger on every mobile page load.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open) triggerRef.current?.focus({ preventScroll: true });
+    wasOpen.current = open;
   }, [open]);
 
   return (

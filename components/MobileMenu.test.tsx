@@ -62,4 +62,62 @@ describe("MobileMenu", () => {
     const { container } = render(<MobileMenu navItems={NAV} />);
     expect((container.firstElementChild as HTMLElement).className).toContain("md:hidden");
   });
+
+  // A bare `if (!open) trigger.focus()` effect also runs on mount, which stole
+  // focus to the hamburger on every mobile page load and broke top-of-page tab
+  // order. Both halves matter: without the second, deleting the effect passes.
+  it("does not touch focus on first render", () => {
+    render(<MobileMenu navItems={NAV} />);
+    expect(document.activeElement).not.toBe(screen.getByRole("button", { name: "მენიუ" }));
+  });
+
+  it("returns focus to the trigger after a real open then close", () => {
+    render(<MobileMenu navItems={NAV} />);
+    const trigger = screen.getByRole("button", { name: "მენიუ" });
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("moves focus into the panel on open, so the overlay owns the tab sequence", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+  });
+
+  it("wraps Tab at the end of the panel back to the start", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    const dialog = screen.getByRole("dialog");
+    const focusable = [...dialog.querySelectorAll<HTMLElement>("a[href], button")];
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    last.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("wraps Shift+Tab at the start of the panel round to the end", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    const dialog = screen.getByRole("dialog");
+    const focusable = [...dialog.querySelectorAll<HTMLElement>("a[href], button")];
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    first.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  // The trigger sits outside the panel, so an activeElement that is neither
+  // boundary must be pulled back in — otherwise the first Shift+Tab after
+  // opening escapes the overlay while it still covers the screen.
+  it("pulls focus back in when it is outside the panel entirely", () => {
+    render(<MobileMenu navItems={NAV} />);
+    const trigger = screen.getByRole("button", { name: "მენიუ" });
+    fireEvent.click(trigger);
+    trigger.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+  });
 });

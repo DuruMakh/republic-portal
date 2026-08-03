@@ -67,9 +67,10 @@ export function Masthead({
     <>
       {back ? <MobileBackHeader href={back.href} label={back.label} /> : null}
       <header
-        className={`items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10 ${
-          back ? "hidden md:flex" : "flex"
-        }`}
+        // Conditional first so the non-back case reproduces the previously
+        // shipped class string byte-for-byte -- desktop output at >=768px must
+        // not change at all.
+        className={`${back ? "hidden md:flex" : "flex"} items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`}
       >
         <div className="flex items-center gap-2.5">
           <Link href="/" className="shrink-0">
