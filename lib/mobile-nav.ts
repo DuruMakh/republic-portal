@@ -1,7 +1,15 @@
 /**
- * Every route→chrome decision for the mobile layer (spec §4.3–§4.8), as pure
- * functions with no React or Next imports. Components read from here; nothing
- * here reads from a component.
+ * The mobile layer's two navigation decisions, as pure functions with no React
+ * or Next imports. Components read from here; nothing here reads from a
+ * component.
+ *
+ * 1. Route→chrome (spec §4.3–§4.8): which header a route gets, whether it
+ *    carries the join CTA, whether it carries the tab bar.
+ * 2. Nav-item curation (spec §4.6–§4.7): which cabinet destinations earn a
+ *    permanent tab and which fall to the overflow sheet.
+ *
+ * They live together because both answer "what chrome does this render?" for
+ * the same set of routes, and both are consumed by the same components.
  */
 
 export type MobileChrome = "public" | "back" | "cabinet";
