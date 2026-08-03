@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import type { CabinetNavItem } from "@/lib/cabinet";
+import { useFocusTrap } from "@/components/useFocusTrap";
 import { useSignOut } from "@/components/useSignOut";
 
 // Both already ship: „გასვლა“ from components/CabinetNav.tsx, „← საჯარო“ from
@@ -27,6 +29,28 @@ export function MobileMoreSheet({
   onClose: () => void;
 }) {
   const signOut = useSignOut();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Restore focus to whatever opened the sheet (the „მეტი“ tab), so closing it
+  // does not dump a keyboard user at the top of the document.
+  //
+  // This MUST be declared before useFocusTrap: effects run in call order, and
+  // the trap's first act is to move focus into the dialog. Declared after, this
+  // would capture the dialog's own first link as the "opener".
+  useEffect(() => {
+    const opener = document.activeElement;
+    return () => {
+      if (opener instanceof HTMLElement) opener.focus({ preventScroll: true });
+    };
+  }, []);
+
+  // This is a real aria-modal dialog, so it owns the keyboard while open:
+  // without the trap, Tab walks straight out of it into the tab bar and cabinet
+  // content sitting under the opaque overlay -- reachable by keyboard and by
+  // screen-reader swipe even though nothing is visible. Shared with the public
+  // menu rather than copied (see components/useFocusTrap.ts). The sheet only
+  // mounts while open, so `active` is unconditionally true.
+  useFocusTrap({ active: true, containerRef: dialogRef, onEscape: onClose });
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden">
@@ -38,6 +62,7 @@ export function MobileMoreSheet({
         className="flex-1 bg-ink/40"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={SHEET_LABEL}

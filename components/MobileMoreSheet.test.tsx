@@ -50,4 +50,54 @@ describe("MobileMoreSheet", () => {
     render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
   });
+
+  // An aria-modal dialog must own the keyboard. Without a trap, Tab walks out
+  // into the tab bar and cabinet content under the opaque overlay — reachable
+  // by keyboard and by screen-reader swipe while nothing is visible.
+  it("moves focus into the dialog on open", () => {
+    render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
+    expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+  });
+
+  it("closes on Escape", () => {
+    const onClose = vi.fn();
+    render(<MobileMoreSheet items={ITEMS} onClose={onClose} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("locks body scroll while open and restores it on close", () => {
+    const { unmount } = render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
+    expect(document.body.style.overflow).toBe("hidden");
+    unmount();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("wraps Tab at the end of the dialog back to the start", () => {
+    render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    const focusable = [...dialog.querySelectorAll<HTMLElement>("a[href], button")];
+    const first = focusable[0]!;
+    focusable[focusable.length - 1]!.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("pulls focus back in when it has escaped the dialog", () => {
+    render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
+    const scrim = screen.getByTestId("more-scrim");
+    scrim.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
+  });
+
+  it("returns focus to whatever opened it", () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    const { unmount } = render(<MobileMoreSheet items={ITEMS} onClose={vi.fn()} />);
+    unmount();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
 });

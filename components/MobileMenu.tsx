@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useFocusTrap } from "@/components/useFocusTrap";
 
 // Spliced from the reference bundle (data-act="menu" / data-act="closeMenu").
 const MENU = "მენიუ";
@@ -12,20 +13,6 @@ const CLOSE = "დახურვა";
 // label; the dialog is named for the control that opened it.
 const MENU_NAV_LABEL = "მთავარი ნავიგაცია";
 const MENU_DIALOG_LABEL = MENU;
-
-/**
- * Focusable descendants, in tab order. `sessionSlot` and `cta` are arbitrary
- * caller-supplied nodes, so the query must exclude controls that cannot take
- * focus -- a disabled button as the last child would otherwise become a trap
- * boundary that can never be reached, silently breaking the wrap.
- */
-function focusableIn(panel: HTMLElement): HTMLElement[] {
-  return [
-    ...panel.querySelectorAll<HTMLElement>(
-      'a[href], button:not(:disabled), [tabindex]:not([tabindex="-1"])',
-    ),
-  ].filter((el) => el.getAttribute("tabindex") !== "-1");
-}
 
 /**
  * The public navigation below `md` (spec §4.9): a trigger in the masthead that
@@ -56,49 +43,12 @@ export function MobileMenu({
     setOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !panelRef.current) return;
-      const focusable = focusableIn(panelRef.current);
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      // The trigger lives OUTSIDE the panel, so an activeElement that is
-      // neither end (including the trigger itself) must be pulled back in --
-      // otherwise the first Shift+Tab after opening escapes the overlay.
-      if (!panelRef.current.contains(document.activeElement)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  // Move focus into the panel on open, so the overlay owns the tab sequence
-  // from the first keystroke rather than from the second.
-  useEffect(() => {
-    if (!open || !panelRef.current) return;
-    focusableIn(panelRef.current)[0]?.focus({ preventScroll: true });
-  }, [open]);
+  // Escape, the Tab cycle, and the body-scroll lock are shared with the
+  // cabinet overflow sheet -- see components/useFocusTrap.ts. useCallback keeps
+  // the handler identity stable so the trap does not re-register (and reset the
+  // saved body overflow) on every render.
+  const close = useCallback(() => setOpen(false), []);
+  useFocusTrap({ active: open, containerRef: panelRef, onEscape: close });
 
   // Returning focus to the trigger is what keeps keyboard users from being
   // dumped at the top of the document when the overlay closes. Guarded on a
