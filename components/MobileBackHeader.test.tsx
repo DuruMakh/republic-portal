@@ -29,6 +29,11 @@ describe("MobileBackHeader", () => {
 
   it("puts the context label in brand red at or above the 0.74rem floor", () => {
     render(<MobileBackHeader href="/news" label="სიახლეები" />);
-    expect(screen.getByText("სიახლეები").className).toContain("text-brand");
+    const contextLabel = screen.getByText("სიახლეები");
+    expect(contextLabel.className).toContain("text-brand");
+    // DESIGN.md sets 0.74rem as a hard minimum ("No micro-print below it").
+    // Asserting the size class is the point of this test — without it a future
+    // edit could shrink the label under the floor and still pass.
+    expect(contextLabel.className).toContain("text-[0.74rem]");
   });
 });
