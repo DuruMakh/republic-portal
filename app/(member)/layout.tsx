@@ -2,8 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CabinetNav } from "@/components/CabinetNav";
 import { Masthead } from "@/components/Masthead";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageSheet } from "@/components/PageSheet";
 import { cabinetNavItems, cabinetRole } from "@/lib/cabinet";
+import { mobileTabs } from "@/lib/mobile-nav";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
 // Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html's
@@ -50,9 +52,11 @@ export default async function MemberLayout({ children }: { children: React.React
     supabase.from("member_polls").select("id", { count: "exact", head: true }).eq("status", "open"),
   ]);
   if (!state.exists) redirect("/join");
-  const items = cabinetNavItems(cabinetRole(state), state.admin).map((item) =>
+  const role = cabinetRole(state);
+  const items = cabinetNavItems(role, state.admin).map((item) =>
     item.href === "/me/polls" ? { ...item, count: openPollsCount || undefined } : item,
   );
+  const { tabs, more } = mobileTabs(items, role);
   return (
     <PageSheet>
       <Masthead
@@ -68,6 +72,7 @@ export default async function MemberLayout({ children }: { children: React.React
         <CabinetNav items={items} />
         {children}
       </div>
+      <MobileTabBar tabs={tabs} more={more} />
     </PageSheet>
   );
 }

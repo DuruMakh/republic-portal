@@ -3,6 +3,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HeaderSessionAction } from "@/components/HeaderSessionAction";
 import { Masthead } from "@/components/Masthead";
+import { MobileJoinCta } from "@/components/MobileJoinCta";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
@@ -58,6 +59,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             bottom on short pages. */}
         <div className="flex-1">{children}</div>
         <SiteFooter copyright={FOOTER_COPYRIGHT} links={footerLinks} />
+        <MobileJoinCta />
       </PageSheet>
     </>
   );

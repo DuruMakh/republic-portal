@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { CabinetNav } from "@/components/CabinetNav";
 import { Masthead } from "@/components/Masthead";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageSheet } from "@/components/PageSheet";
 import { cabinetNavItems, deriveDestination, isApprovedDelegate } from "@/lib/cabinet";
+import { mobileTabs } from "@/lib/mobile-nav";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
 // Spliced (never hand-retyped) BYTE-EXACT from the SHIPPED app/(delegate)/delegate/page.tsx's
@@ -35,13 +37,16 @@ export default async function DelegateLayout({ children }: { children: React.Rea
   if (!state.exists || !isApprovedDelegate(state)) {
     redirect(deriveDestination(state));
   }
+  const items = cabinetNavItems("delegate", state.admin);
+  const { tabs, more } = mobileTabs(items, "delegate");
   return (
     <PageSheet>
       <Masthead navItems={[]} tag={DELEGATE_TAG} cta={null} />
       <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-        <CabinetNav items={cabinetNavItems("delegate", state.admin)} />
+        <CabinetNav items={items} />
         {children}
       </div>
+      <MobileTabBar tabs={tabs} more={more} />
     </PageSheet>
   );
 }
