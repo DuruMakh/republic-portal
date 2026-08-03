@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/Badge";
 import { MobileMoreSheet } from "@/components/MobileMoreSheet";
 import { StickyBar } from "@/components/StickyBar";
@@ -34,14 +34,10 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
     setSheetOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!sheetOpen) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setSheetOpen(false);
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [sheetOpen]);
+  // Escape is handled by the sheet itself (components/useFocusTrap.ts), which is
+  // mounted over exactly the same window as this state. A second listener here
+  // would fire on the same keypress for the same result.
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
 
   if (!showsTabBar(pathname)) return null;
 
@@ -81,7 +77,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
           </button>
         </nav>
       </StickyBar>
-      {sheetOpen ? <MobileMoreSheet items={more} onClose={() => setSheetOpen(false)} /> : null}
+      {sheetOpen ? <MobileMoreSheet items={more} onClose={closeSheet} /> : null}
     </>
   );
 }

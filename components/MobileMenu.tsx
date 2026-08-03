@@ -19,7 +19,8 @@ const MENU_DIALOG_LABEL = MENU;
  * opens a full-screen overlay listing the same destinations the desktop
  * masthead shows inline.
  *
- * The focus trap is ~20 lines of local code rather than a dependency --
+ * Escape, the Tab cycle and the scroll lock come from components/useFocusTrap.ts,
+ * shared with the cabinet overflow sheet. Local code rather than a dependency --
  * adding one would need a DECISIONS.md entry for no real gain here.
  */
 export function MobileMenu({
