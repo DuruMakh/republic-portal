@@ -685,3 +685,50 @@ staging on every CI run with no cleanup, now tags its rows and deletes them.
 `components/Field.tsx` (the shape `SelectField` already set) with a
 `/styleguide` entry, instead of a fifth hand-rolled textarea copying Field's
 label markup inline.
+
+## ADR-027 (2026-08-03): Mobile chrome — scroll model, tab selection, and tab-label number
+
+The app shipped desktop-first: no `viewport-fit=cover`, no `env(safe-area-inset-*)`
+anywhere in the tree, no sticky or fixed navigation. On a phone the masthead put a
+172px logo plus five nav links plus a session action plus a CTA in one
+`overflow-x-auto` row, so the primary navigation was a horizontal scroll most people
+never found. This branch adds a mobile navigation layer. Three decisions in it are
+worth recording because each rejects an obvious alternative.
+
+**1 — Bars use document scroll with `sticky bottom-0`, not the reference prototype's
+welded app shell.** The owner-supplied reference (`geo-republic-mobile-v2.html`) nails
+its header and bottom bar to a `100dvh` frame and scrolls only the middle strip. That
+is an artifact of it being a self-contained prototype in a fixed 430px frame, not a
+design requirement, and on a real site it turns off behaviours phone users rely on: the
+browser's own address bar can never collapse (costing ~60px of an already short
+screen), back-navigation loses scroll restoration, and pull-to-refresh stops working.
+`sticky` also occupies layout space, so unlike `fixed` it cannot occlude the end of a
+page — verified in-browser at 390px, where the footer copyright ends 102px clear of the
+bar at the very bottom of the homepage. This removed a planned `PageSheet` change and
+a whole class of occlusion bug rather than mitigating it.
+
+**2 — Cabinet tabs are chosen by return frequency per role, not by `cabinetNavItems()`
+order.** Members and delegates have six destinations; the bar holds four plus „მეტი“.
+A plain `slice(0, 4)` was rejected: it would put გადახდები on the bar and bury
+გამოკითხვები, which inverts how often people actually return to each. Selection is an
+explicit per-role table (`TAB_HREFS` in `lib/mobile-nav.ts`). The conditional admin
+entry always lands in the sheet — it is a rare role-switching destination, not a daily
+one. Registered users get a „მეტი“ tab despite having exactly four destinations,
+because sign-out and „← საჯარო“ live in the sheet for every role.
+
+**3 — Tab labels use singular forms; the reference's sizing could not be copied.** The
+reference sets its tab labels at 10.8px, which is _below_ DESIGN.md §2.3's hard floor
+of 0.74rem (~11.8px, "No micro-print below it"). At the legal floor a twelve-character
+Georgian plural does not fit a fifth of a 360px screen. Rather than breach the
+accessibility floor, the bar uses the singular — ღონისძიება, გამოკითხვა, სიახლე — and
+პანელი for the delegate panel, while every page heading keeps its plural unchanged. So
+the tab bar is the one surface in the app where a section's name is singular, and that
+is a deliberate consequence of the text-size floor, not an inconsistency.
+
+Two defects the review wave caught are worth remembering rather than just fixing. A
+focus-return effect written as `if (!open) trigger.focus()` also runs on mount, so it
+stole focus to the hamburger on every mobile page load; and the overflow sheet first
+shipped as an `aria-modal` dialog with no focus management at all, while the public
+menu already had the whole thing. The second was fixed by extracting
+`components/useFocusTrap.ts` and consuming it in both, since duplicating a logic block
+is a forbidden pattern here.

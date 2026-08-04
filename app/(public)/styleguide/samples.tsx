@@ -17,6 +17,23 @@ const delegateOptions = [
   },
 ];
 
+/**
+ * Mobile-only components carry `md:hidden`, a viewport media query — a narrow
+ * wrapper div cannot reveal them. An iframe has its own viewport, so the
+ * sample renders exactly as it does on a real phone.
+ */
+export function PhoneFrame({ src, height }: { src: string; height: number }) {
+  return (
+    <iframe
+      src={src}
+      title={src}
+      width={390}
+      height={height}
+      className="max-w-full border border-frame"
+    />
+  );
+}
+
 export function OtpInputSample() {
   return <OtpInput value="123" onChange={() => undefined} />;
 }
