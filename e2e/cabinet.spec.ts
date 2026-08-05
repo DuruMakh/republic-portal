@@ -36,6 +36,11 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(mobileNav.locator('a[href="/me/profile"]')).toHaveAttribute("aria-current", "page");
   await expect(mobileNav.getByRole("button", { name: "მეტი" })).toBeVisible();
   await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
+  const mobileHeader = page.getByRole("banner");
+  await expect(mobileHeader).toHaveCSS("position", "sticky");
+  await page.evaluate(() => window.scrollTo(0, 500));
+  await expect.poll(async () => (await mobileHeader.boundingBox())?.y).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
   await expect(page.getByText("წევრი").first()).toBeVisible();
   await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
@@ -98,6 +103,11 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
       .getByRole("navigation", { name: "კაბინეტის ნავიგაცია" })
       .getByRole("link", { name: "გადახდები" }),
   ).toBeVisible();
+  await page.goto("/me/membership");
+  await expect(page).toHaveURL(/\/me\/membership\/done$/);
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+  await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
 
   // the cabinet is one-way now; a signed-in member is bounced off the join/delegate doors
   await page.goto("/join");

@@ -45,6 +45,14 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
   await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
   await page.setViewportSize({ width: 1280, height: 900 });
 
+  // The in-progress wizard keeps the established desktop Masthead and hides
+  // its mobile back header and bottom bar.
+  await page.goto("/me/membership");
+  await expect(page).toHaveURL(/\/me\/membership$/);
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+  await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
+
   // members-only surface, reached directly, bounces back to the overview
   await page.goto("/me/billing");
   await expect(page).toHaveURL(/\/me$/);

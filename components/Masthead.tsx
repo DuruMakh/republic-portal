@@ -54,6 +54,7 @@ export function Masthead({
   const hasNav = navItems.length > 0 || Boolean(sessionSlot) || Boolean(cta);
 
   const back = mobileBackTarget(pathname);
+  const mobileSticky = pathname !== "/styleguide" && !pathname.startsWith("/admin");
 
   return (
     <>
@@ -62,7 +63,9 @@ export function Masthead({
         // Conditional first so the non-back case reproduces the previously
         // shipped class string byte-for-byte -- desktop output at >=768px must
         // not change at all.
-        className={`${back ? "hidden md:flex" : "flex"} sticky top-0 z-40 items-center justify-between border-b-2 border-ink bg-paper px-5 pb-2.5 pt-4 sm:px-10 md:static md:z-auto`}
+        className={`${back ? "hidden md:flex" : "flex"} ${
+          mobileSticky ? "sticky top-0 z-40 bg-paper md:static md:z-auto" : ""
+        } items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`}
       >
         <div className="flex items-center gap-2.5">
           <BrandLockup />

@@ -93,6 +93,11 @@ test.describe("mobile chrome at 390x844", () => {
     await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
   });
 
+  test("the unchanged styleguide masthead does not become sticky", async ({ page }) => {
+    await page.goto("/styleguide");
+    await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+  });
+
   test("the join CTA is present on public routes and absent on the join flow", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("link", { name: JOIN_CTA_LABEL })).toBeVisible();
@@ -120,6 +125,10 @@ test.describe("mobile chrome at 390x844", () => {
     await expect(
       page.getByRole("banner").getByText(NEWS_INDEX_LABEL, { exact: true }),
     ).toBeVisible();
+    const header = page.getByRole("banner");
+    await expect(header).toHaveCSS("position", "sticky");
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
     await back.click();
     await expect(page).toHaveURL(/\/news$/);
   });
@@ -152,7 +161,7 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
   test("the inline nav is visible and no mobile chrome renders across public states", async ({
     page,
   }) => {
-    for (const path of [...PUBLIC_CHROME_ROUTES, "/join", "/login"]) {
+    for (const path of [...PUBLIC_CHROME_ROUTES, "/join", "/join/terms", "/login"]) {
       await page.goto(path);
       await expect(page.getByRole("link", { name: BOARD_LABEL }).first(), path).toBeVisible();
       await expect(page.getByRole("button", { name: MENU }), path).toBeHidden();
@@ -161,16 +170,25 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
     }
   });
 
-  test("a detail route keeps the desktop masthead and hides the mobile back header", async ({
+  test("all detail types keep the desktop masthead and hide the mobile back header", async ({
     page,
   }) => {
-    await page.goto("/news");
-    const firstArticle = page.locator("a[href^='/news/']").first();
-    await expect(firstArticle).toBeVisible();
-    await firstArticle.click();
-    await expect(page).toHaveURL(/\/news\/.+/);
-    await expect(page.getByRole("link", { name: BACK_LABEL })).toBeHidden();
-    await expect(page.getByRole("link", { name: BOARD_LABEL }).first()).toBeVisible();
+    const details = [
+      { index: "/news", href: "a[href^='/news/']", url: /\/news\/.+/ },
+      { index: "/events", href: "a[href^='/events/']", url: /\/events\/.+/ },
+      { index: "/leaderboard", href: "a[href^='/delegates/']", url: /\/delegates\/.+/ },
+    ];
+
+    for (const detail of details) {
+      await page.goto(detail.index);
+      const firstLink = page.locator(detail.href).first();
+      await expect(firstLink).toBeVisible();
+      await firstLink.click();
+      await expect(page).toHaveURL(detail.url);
+      await expect(page.getByRole("link", { name: BACK_LABEL, exact: true })).toBeHidden();
+      await expect(page.getByRole("link", { name: BOARD_LABEL }).first()).toBeVisible();
+      await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+    }
   });
 });
 

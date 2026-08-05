@@ -38,6 +38,16 @@ describe("MobileMenu", () => {
     expect(logo.closest("a")).toHaveAttribute("href", "/");
   });
 
+  it("closes when the home logo is activated on the home route", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    const logoLink = within(screen.getByRole("dialog")).getByRole("img").closest("a")!;
+
+    fireEvent.click(logoLink);
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("closes on the close button", () => {
     render(<MobileMenu navItems={NAV} />);
     fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));

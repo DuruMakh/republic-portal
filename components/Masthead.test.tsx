@@ -74,6 +74,16 @@ describe("Masthead", () => {
     expect(header.className).toContain("md:static");
   });
 
+  it("does not add mobile sticky positioning on routes declared unchanged", () => {
+    vi.mocked(usePathname).mockReturnValue("/admin");
+    const { rerender } = render(<Masthead navItems={[]} cta={null} />);
+    expect(screen.getByRole("banner").className).not.toContain("sticky");
+
+    vi.mocked(usePathname).mockReturnValue("/styleguide");
+    rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    expect(screen.getByRole("banner").className).not.toContain("sticky");
+  });
+
   it("on a back route, gives the Masthead header the reciprocal hidden/md:flex pair so exactly one banner landmark is ever visible", () => {
     // MobileBackHeader is md:hidden internally. If Masthead's own <header> had
     // no complementary hide, both would render below `md` and the page would
