@@ -36,6 +36,15 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
   }
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toHaveCount(0); // members-only
 
+  // The same registered role must expose its four destinations plus utilities
+  // through the real mobile cabinet chrome, not only the desktop CabinetNav.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(nav.getByRole("link")).toHaveCount(4);
+  await expect(nav.locator('a[href="/me"]')).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("button", { name: "მეტი" })).toBeVisible();
+  await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
+  await page.setViewportSize({ width: 1280, height: 900 });
+
   // members-only surface, reached directly, bounces back to the overview
   await page.goto("/me/billing");
   await expect(page).toHaveURL(/\/me$/);

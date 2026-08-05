@@ -45,7 +45,8 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
 
   // Longest-match, shared with CabinetNav. A naive prefix test would light
   // „მთავარი“ (/me) on every registered page — owner fix #7, already fixed once.
-  const activeHref = activeNavHref(tabs, pathname);
+  const activeHref = activeNavHref([...tabs, ...more], pathname);
+  const moreActive = more.some((item) => item.href === activeHref);
   const slot =
     "flex flex-1 min-w-0 h-14 items-center justify-center gap-1 px-1 text-center no-underline";
 
@@ -73,13 +74,18 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
             type="button"
             onClick={() => setSheetOpen(true)}
             aria-expanded={sheetOpen}
-            className={`${slot} border-t-2 border-transparent text-ink`}
+            aria-current={moreActive ? "page" : undefined}
+            className={`${slot} border-t-2 ${
+              moreActive ? "border-brand font-bold text-brand" : "border-transparent text-ink"
+            }`}
           >
             {MORE}
           </button>
         </nav>
       </StickyBar>
-      {sheetOpen ? <MobileMoreSheet items={more} onClose={closeSheet} /> : null}
+      {sheetOpen ? (
+        <MobileMoreSheet items={more} activeHref={activeHref} onClose={closeSheet} />
+      ) : null}
     </>
   );
 }

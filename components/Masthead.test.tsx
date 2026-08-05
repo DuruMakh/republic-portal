@@ -64,6 +64,16 @@ describe("Masthead", () => {
     expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
   });
 
+  it("keeps the mobile masthead sticky and resets positioning on desktop", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    const header = screen.getByRole("banner");
+    expect(header.className).toContain("sticky");
+    expect(header.className).toContain("top-0");
+    expect(header.className).toContain("bg-paper");
+    expect(header.className).toContain("md:static");
+  });
+
   it("on a back route, gives the Masthead header the reciprocal hidden/md:flex pair so exactly one banner landmark is ever visible", () => {
     // MobileBackHeader is md:hidden internally. If Masthead's own <header> had
     // no complementary hide, both would render below `md` and the page would

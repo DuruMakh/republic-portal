@@ -27,8 +27,15 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
     personalId: journeyPersonalId(JOURNEY.cabinet),
   });
   await loginAs(page, phone);
+  await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto("/me/profile");
+  const mobileNav = page.locator("div.sticky.bottom-0 nav");
+  await expect(mobileNav).toBeVisible();
+  await expect(mobileNav.getByRole("link")).toHaveCount(4);
+  await expect(mobileNav.locator('a[href="/me/profile"]')).toHaveAttribute("aria-current", "page");
+  await expect(mobileNav.getByRole("button", { name: "მეტი" })).toBeVisible();
+  await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
   await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
   await expect(page.getByText("წევრი").first()).toBeVisible();
   await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
@@ -61,12 +68,36 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   // billing: permanent code + placeholder-marked details + the fixed fee, no change
   // control (owner fix #9: the tier picker/change flow is retired)
   await page.goto("/me/billing");
+  const moreButton = mobileNav.getByRole("button", { name: "მეტი" });
+  await expect(moreButton).toHaveAttribute("aria-current", "page");
+  await moreButton.click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.locator('a[href="/me/billing"]')).toHaveAttribute("aria-current", "page");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        document.querySelector('[role="dialog"]')?.contains(document.activeElement),
+      ),
+    )
+    .toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  await expect(moreButton).toBeFocused();
   await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
   await expect(page.getByTestId("bank-placeholder")).toBeVisible();
   await expect(page.getByText("თვეში")).toBeVisible();
   await expect(page.getByRole("button", { name: "შეცვლა" })).toHaveCount(0);
   await expect(page.getByText("გადმორიცხე")).toContainText("10 ₾");
   await expect(page.getByTestId("billing-empty")).toBeVisible();
+
+  // Desktop keeps the established CabinetNav and suppresses the mobile bar.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(mobileNav).toBeHidden();
+  await expect(
+    page
+      .getByRole("navigation", { name: "კაბინეტის ნავიგაცია" })
+      .getByRole("link", { name: "გადახდები" }),
+  ).toBeVisible();
 
   // the cabinet is one-way now; a signed-in member is bounced off the join/delegate doors
   await page.goto("/join");

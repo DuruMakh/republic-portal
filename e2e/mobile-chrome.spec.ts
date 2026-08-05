@@ -2,11 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 // Task 10 regression guard for the chrome Tasks 3-9 shipped (public masthead
 // menu, sticky join CTA, back headers, StickyBar's single-bar-per-route
-// invariant, viewport-fit=cover). Cabinet chrome (tab bar / overflow sheet)
-// is deliberately NOT covered here -- see .superpowers/sdd/mobile-task-10-brief.md's
-// scope note: reaching a cabinet needs SMS-OTP against shared staging state
-// that e2e/cabinet.spec.ts owns, and the per-role tab logic already has
-// exhaustive unit coverage in lib/mobile-nav.test.ts.
+// invariant, viewport-fit=cover). Authenticated cabinet chrome is covered in
+// the existing isolated registration, cabinet, and delegate-panel journeys,
+// which already own their staging identities.
 //
 // Every Georgian literal below is copied byte-for-byte from shipped source,
 // never hand-typed (DESIGN.md's Georgian integrity gate):
@@ -30,7 +28,7 @@ const NEWS_INDEX_LABEL = "სიახლეები";
 // list it: it is the newest public route, and the exact bug class Task 9's
 // own controller review caught (a route accidentally mounting two
 // StickyBars) would otherwise ship on it unnoticed by any other test.
-const PUBLIC_CHROME_ROUTES = ["/", "/news", "/leaderboard", "/transparency", "/support"];
+const PUBLIC_CHROME_ROUTES = ["/", "/news", "/events", "/leaderboard", "/transparency", "/support"];
 
 // The menu trigger is a plain <button onClick> with no href fallback, so
 // clicking it only works once React has attached the handler. A goto() that
@@ -67,6 +65,32 @@ test.describe("mobile chrome at 390x844", () => {
     await expect(dialog.getByRole("link", { name: BOARD_LABEL })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
+  });
+
+  test("the menu traps keyboard focus and restores it to the trigger", async ({ page }) => {
+    await page.goto("/");
+    const trigger = page.getByRole("button", { name: MENU });
+    await openMobileMenu(page);
+    const dialog = page.getByRole("dialog");
+    const focusable = dialog.locator("a[href], button:not([disabled])");
+    const first = focusable.first();
+    const last = focusable.last();
+
+    await last.focus();
+    await page.keyboard.press("Tab");
+    await expect(first).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+
+  test("the public masthead remains pinned while the document scrolls", async ({ page }) => {
+    await page.goto("/");
+    const header = page.getByRole("banner");
+    await expect(header).toHaveCSS("position", "sticky");
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
   });
 
   test("the join CTA is present on public routes and absent on the join flow", async ({ page }) => {
@@ -125,11 +149,28 @@ test.describe("mobile chrome at 390x844", () => {
 test.describe("desktop chrome is unchanged at 1280px", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("the inline nav is visible and no mobile chrome renders", async ({ page }) => {
-    await page.goto("/");
+  test("the inline nav is visible and no mobile chrome renders across public states", async ({
+    page,
+  }) => {
+    for (const path of [...PUBLIC_CHROME_ROUTES, "/join", "/login"]) {
+      await page.goto(path);
+      await expect(page.getByRole("link", { name: BOARD_LABEL }).first(), path).toBeVisible();
+      await expect(page.getByRole("button", { name: MENU }), path).toBeHidden();
+      await expect(page.locator("div.sticky.bottom-0"), path).toBeHidden();
+      await expect(page.getByRole("banner").last(), path).toHaveCSS("position", "static");
+    }
+  });
+
+  test("a detail route keeps the desktop masthead and hides the mobile back header", async ({
+    page,
+  }) => {
+    await page.goto("/news");
+    const firstArticle = page.locator("a[href^='/news/']").first();
+    await expect(firstArticle).toBeVisible();
+    await firstArticle.click();
+    await expect(page).toHaveURL(/\/news\/.+/);
+    await expect(page.getByRole("link", { name: BACK_LABEL })).toBeHidden();
     await expect(page.getByRole("link", { name: BOARD_LABEL }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: MENU })).toBeHidden();
-    await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
   });
 });
 

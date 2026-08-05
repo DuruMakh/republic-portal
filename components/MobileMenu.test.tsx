@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { installMatchMedia } from "./test-utils/matchMedia";
 import { MobileMenu } from "./MobileMenu";
@@ -28,6 +28,14 @@ describe("MobileMenu", () => {
     for (const item of NAV) {
       expect(screen.getByRole("link", { name: item.label })).toHaveAttribute("href", item.href);
     }
+  });
+
+  it("keeps the linked brand lockup in the overlay header", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    const logo = within(screen.getByRole("dialog")).getByRole("img");
+    expect(logo.getAttribute("src")).toContain("lockup-horizontal-geo-red");
+    expect(logo.closest("a")).toHaveAttribute("href", "/");
   });
 
   it("closes on the close button", () => {

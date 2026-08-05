@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { BrandLockup } from "@/components/BrandLockup";
 import { buttonClasses } from "@/components/Button";
 import { useCloseAboveMd } from "@/components/useCloseAboveMd";
 import { useFocusTrap } from "@/components/useFocusTrap";
@@ -84,7 +85,8 @@ export function MobileMenu({
           aria-label={MENU_DIALOG_LABEL}
           className="fixed inset-0 z-50 flex flex-col bg-paper"
         >
-          <div className="flex items-center justify-end border-b-2 border-ink px-5 pb-2.5 pt-4">
+          <div className="flex items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4">
+            <BrandLockup />
             <button
               type="button"
               onClick={() => setOpen(false)}

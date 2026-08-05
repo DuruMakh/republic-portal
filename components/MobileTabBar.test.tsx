@@ -41,6 +41,22 @@ describe("MobileTabBar", () => {
       "page",
     );
     expect(screen.getByRole("link", { name: "პროფილი" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("button", { name: "მეტი" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks More and its sheet destination on an overflow route", () => {
+    pathnameRef.current = "/me/billing";
+    render(<MobileTabBar tabs={TABS} more={MORE} />);
+
+    const moreButton = screen.getByRole("button", { name: "მეტი" });
+    expect(moreButton).toHaveAttribute("aria-current", "page");
+    expect(moreButton.className).toContain("text-brand");
+
+    fireEvent.click(moreButton);
+    const current = screen.getByRole("link", { name: MORE[1]!.label });
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(current.className).toContain("text-brand");
+    expect(screen.getByRole("link", { name: MORE[0]!.label })).not.toHaveAttribute("aria-current");
   });
 
   it("carries the open-polls count as a badge", () => {

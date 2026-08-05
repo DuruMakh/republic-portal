@@ -15,7 +15,7 @@ const BACK = "← უკან";
  */
 export function MobileBackHeader({ href, label }: { href: string; label: string }) {
   return (
-    <header className="flex items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 md:hidden">
+    <header className="sticky top-0 z-40 flex items-center justify-between border-b-2 border-ink bg-paper px-5 pb-2.5 pt-4 md:hidden">
       <Link href={href} className="text-[0.82rem] font-bold text-ink no-underline hover:text-brand">
         {BACK}
       </Link>

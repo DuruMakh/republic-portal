@@ -23,9 +23,11 @@ const CLOSE = "დახურვა";
  */
 export function MobileMoreSheet({
   items,
+  activeHref = null,
   onClose,
 }: {
   items: CabinetNavItem[];
+  activeHref?: string | null;
   onClose: () => void;
 }) {
   const signOut = useSignOut();
@@ -72,8 +74,11 @@ export function MobileMoreSheet({
           <Link
             key={item.href}
             href={item.href}
+            aria-current={item.href === activeHref ? "page" : undefined}
             onClick={onClose}
-            className="block border-b border-hairline py-3.5 font-serif text-[1.12rem] font-bold text-ink no-underline hover:text-brand"
+            className={`block border-b border-hairline py-3.5 font-serif text-[1.12rem] font-bold no-underline hover:text-brand ${
+              item.href === activeHref ? "text-brand" : "text-ink"
+            }`}
           >
             {item.label}
           </Link>

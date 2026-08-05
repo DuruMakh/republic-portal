@@ -1,21 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { BrandLockup } from "@/components/BrandLockup";
 import { MobileBackHeader } from "@/components/MobileBackHeader";
 import { MobileMenu } from "@/components/MobileMenu";
 import { mobileBackTarget } from "@/lib/mobile-nav";
-
-// Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html's
-// <title> tag; every codepoint re-verified by script against the Georgian
-// (Mkhedruli, U+10D0-U+10FF) Unicode block before commit; see
-// docs/superpowers/sdd/task-5-brief.md and the georgian-quote-transcription-
-// hazard note (never retype Georgian by hand). Brand name; shared alt text
-// for both lockup orientations.
-const WORDMARK_ALT = "ქართული რესპუბლიკა";
 
 type NavItem = { href: string; label: string };
 
@@ -70,17 +62,10 @@ export function Masthead({
         // Conditional first so the non-back case reproduces the previously
         // shipped class string byte-for-byte -- desktop output at >=768px must
         // not change at all.
-        className={`${back ? "hidden md:flex" : "flex"} items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`}
+        className={`${back ? "hidden md:flex" : "flex"} sticky top-0 z-40 items-center justify-between border-b-2 border-ink bg-paper px-5 pb-2.5 pt-4 sm:px-10 md:static md:z-auto`}
       >
         <div className="flex items-center gap-2.5">
-          <Link href="/" className="shrink-0">
-            <Image
-              src="/brand/lockup-horizontal-geo-red.png"
-              alt={WORDMARK_ALT}
-              width={172}
-              height={58}
-            />
-          </Link>
+          <BrandLockup />
           {tag ? (
             <span className="text-[0.74rem] font-semibold tracking-[.14em] text-brand">{tag}</span>
           ) : null}

@@ -19,6 +19,14 @@ describe("MobileBackHeader", () => {
     expect((container.firstElementChild as HTMLElement).className).toContain("md:hidden");
   });
 
+  it("stays at the top while the mobile document scrolls", () => {
+    const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
+    const header = container.firstElementChild as HTMLElement;
+    expect(header.className).toContain("sticky");
+    expect(header.className).toContain("top-0");
+    expect(header.className).toContain("bg-paper");
+  });
+
   it("renders a header landmark over a 2px ink rule", () => {
     const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
     const header = container.firstElementChild as HTMLElement;
