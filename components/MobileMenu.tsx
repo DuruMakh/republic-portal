@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { buttonClasses } from "@/components/Button";
+import { useCloseAboveMd } from "@/components/useCloseAboveMd";
 import { useFocusTrap } from "@/components/useFocusTrap";
 
 // Spliced from the reference bundle (data-act="menu" / data-act="closeMenu").
@@ -50,6 +52,7 @@ export function MobileMenu({
   // saved body overflow) on every render.
   const close = useCallback(() => setOpen(false), []);
   useFocusTrap({ active: open, containerRef: panelRef, onEscape: close });
+  useCloseAboveMd(close);
 
   // Returning focus to the trigger is what keeps keyboard users from being
   // dumped at the top of the document when the overlay closes. Guarded on a
@@ -68,7 +71,7 @@ export function MobileMenu({
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="inline-flex h-[34px] items-center border border-ink px-3.5 text-[0.76rem] font-bold text-ink hover:bg-ink hover:text-paper"
+        className={buttonClasses("ghost", "sm")}
       >
         {MENU}
       </button>
@@ -85,7 +88,7 @@ export function MobileMenu({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="inline-flex h-[34px] items-center border border-ink bg-ink px-3.5 text-[0.76rem] font-bold text-paper hover:border-brand hover:bg-brand"
+              className={buttonClasses("primary", "sm")}
             >
               {CLOSE}
             </button>
@@ -96,6 +99,7 @@ export function MobileMenu({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={close}
                 aria-current={pathname === item.href ? "page" : undefined}
                 className="block border-b border-hairline py-4 font-serif text-[1.18rem] font-bold text-ink no-underline aria-[current=page]:text-brand"
               >

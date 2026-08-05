@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/Badge";
 import { MobileMoreSheet } from "@/components/MobileMoreSheet";
 import { StickyBar } from "@/components/StickyBar";
+import { useCloseAboveMd } from "@/components/useCloseAboveMd";
 import type { CabinetNavItem } from "@/lib/cabinet";
 import { showsTabBar } from "@/lib/mobile-nav";
 import { activeNavHref } from "@/lib/nav-active";
@@ -38,6 +39,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
   // mounted over exactly the same window as this state. A second listener here
   // would fire on the same keypress for the same result.
   const closeSheet = useCallback(() => setSheetOpen(false), []);
+  useCloseAboveMd(closeSheet);
 
   if (!showsTabBar(pathname)) return null;
 
@@ -62,7 +64,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
                   on ? "border-brand font-bold text-brand" : "border-transparent text-ink"
                 }`}
               >
-                <span className="truncate">{tab.label}</span>
+                <span className="min-w-0 break-words">{tab.label}</span>
                 {tab.count ? <Badge>{tab.count}</Badge> : null}
               </Link>
             );

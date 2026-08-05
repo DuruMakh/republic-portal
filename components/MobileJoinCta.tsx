@@ -1,11 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ButtonLink } from "@/components/ButtonLink";
 import { StickyBar } from "@/components/StickyBar";
+import { useSignedIn } from "@/components/useSignedIn";
 import { showsJoinCta } from "@/lib/mobile-nav";
-import { createClient } from "@/lib/supabase/client";
 
 // „შემოგვიერთდი“ is the shipped HEADER_CTA_LABEL from app/(public)/layout.tsx.
 // The other two are spliced from the reference bundle's CTA bar.
@@ -18,32 +17,14 @@ const CABINET = "ჩემი კაბინეტი →";
  *
  * The signed-in swap happens client-side AFTER mount, never on the server --
  * app/sw.ts runtime-caches same-origin HTML, so a server-rendered session
- * state would be handed to the next visitor. This mirrors
- * components/HeaderSessionAction.tsx, which carries the same constraint in its
- * own docstring. The guest CTA is therefore the correct cached default.
+ * state would be handed to the next visitor. useSignedIn shares that behavior
+ * with HeaderSessionAction; the guest CTA is the correct cached default.
  */
 export function MobileJoinCta() {
   const pathname = usePathname();
-  const [signedIn, setSignedIn] = useState(false);
+  const signedIn = useSignedIn();
 
-  useEffect(() => {
-    const supabase = createClient();
-    let cancelled = false;
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!cancelled) setSignedIn(session !== null);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSignedIn(session !== null);
-    });
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // The effect above still runs on /join, /join/terms and /login, where this
+  // The hook above still subscribes on /join, /join/terms and /login, where this
   // renders nothing: hook rules put it before this guard. That is deliberate.
   // Gating the effect on the initial pathname instead would be worse — it has
   // [] deps, so a visitor who lands on /join and then navigates to / keeps the

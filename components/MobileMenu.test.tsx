@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { installMatchMedia } from "./test-utils/matchMedia";
 import { MobileMenu } from "./MobileMenu";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
@@ -51,11 +52,36 @@ describe("MobileMenu", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
+  it("closes and restores body scroll when the viewport crosses above md", () => {
+    const media = installMatchMedia();
+    try {
+      render(<MobileMenu navItems={NAV} />);
+      fireEvent.click(screen.getByRole("button"));
+      expect(document.body.style.overflow).toBe("hidden");
+
+      act(() => media.emit("(min-width: 48rem)", true));
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(document.body.style.overflow).toBe("");
+    } finally {
+      media.restore();
+    }
+  });
+
   it("marks the current page for screen readers", () => {
     render(<MobileMenu navItems={NAV} />);
     fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
     expect(screen.getByRole("link", { name: "მთავარი" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "რეიტინგი" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("closes when the current-route link is clicked without a pathname change", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button"));
+
+    fireEvent.click(screen.getByRole("link", { current: "page" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("is hidden from md up, where the inline masthead nav takes over", () => {

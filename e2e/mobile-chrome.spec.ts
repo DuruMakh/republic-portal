@@ -132,3 +132,35 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
     await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
   });
 });
+
+test.describe("mobile tab labels", () => {
+  for (const width of [320, 360, 390]) {
+    test(`${width}px labels fit their slots without ellipsis`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/styleguide-mobile-tabbar");
+      const labels = page.locator("nav a > span:first-child");
+      await expect(labels).toHaveCount(4);
+
+      const behavior = await labels.evaluateAll((elements) =>
+        elements.map((element) => {
+          const label = element.getBoundingClientRect();
+          const slot = element.parentElement?.getBoundingClientRect();
+          return {
+            text: element.textContent,
+            textOverflow: getComputedStyle(element).textOverflow,
+            labelLeft: label.left,
+            labelRight: label.right,
+            slotLeft: slot?.left,
+            slotRight: slot?.right,
+            fits: slot ? label.left >= slot.left - 0.5 && label.right <= slot.right + 0.5 : false,
+          };
+        }),
+      );
+
+      for (const label of behavior) {
+        expect(label.textOverflow).not.toBe("ellipsis");
+        expect(label.fits, JSON.stringify(label)).toBe(true);
+      }
+    });
+  }
+});

@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { installMatchMedia } from "./test-utils/matchMedia";
 import { MobileTabBar } from "./MobileTabBar";
 
 const { pathnameRef } = vi.hoisted(() => ({ pathnameRef: { current: "/me/polls" } }));
@@ -53,6 +54,23 @@ describe("MobileTabBar", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes the overflow sheet and restores body scroll when crossing above md", () => {
+    const media = installMatchMedia();
+    try {
+      render(<MobileTabBar tabs={TABS} more={MORE} />);
+      fireEvent.click(screen.getByRole("button"));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(document.body.style.overflow).toBe("hidden");
+
+      act(() => media.emit("(min-width: 48rem)", true));
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(document.body.style.overflow).toBe("");
+    } finally {
+      media.restore();
+    }
   });
 
   it("still offers the overflow trigger when a role has no extra destinations, because sign-out lives there", () => {
