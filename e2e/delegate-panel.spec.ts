@@ -27,7 +27,7 @@ const VIA_LINK_MEMBER = JOURNEY.spare; // slot 7
 
 test("delegate lifecycle: pending panel → approval → live link → team", async ({ browser }) => {
   const delegatePhone = journeyPhone(PANEL_DELEGATE);
-  const delegateContext = await browser.newContext();
+  const delegateContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const dPage = await delegateContext.newPage();
 
   // seed a pending delegate and sign in — R2 routes a non-approved delegacy through
@@ -47,6 +47,12 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   // isApprovedDelegate flips true, so /delegate itself is reachable now
   await approveOwnDelegate(delegatePhone);
   await dPage.goto("/delegate");
+  const mobileNav = dPage.locator("div.sticky.bottom-0 nav");
+  await expect(mobileNav).toBeVisible();
+  await expect(mobileNav.getByRole("link")).toHaveCount(4);
+  await expect(mobileNav.locator('a[href="/delegate"]')).toHaveAttribute("aria-current", "page");
+  await expect(mobileNav.getByRole("button", { name: "მეტი" })).toBeVisible();
+  await expect(dPage.locator("div.sticky.bottom-0")).toHaveCount(1);
   await expect(dPage.getByText("დამტკიცებული").first()).toBeVisible();
   const url = (await dPage.getByTestId("referral-url").innerText()).trim();
   expect(url).toMatch(/\/join\?ref=/);
@@ -64,6 +70,7 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
 
   // the delegate's team reflects the new member instantly
   await dPage.goto("/delegate/team");
+  await expect(mobileNav.locator('a[href="/delegate"]')).toHaveAttribute("aria-current", "page");
   await expect(dPage.getByTestId("team-count")).toHaveText("1");
   await expect(dPage.getByText("ვატესტ ბმულით")).toBeVisible();
   // the row pill for a profile_completed member is „წევრი (გადახდის გარეშე)“
@@ -74,6 +81,11 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await expect(dPage.getByTestId("team-rows").getByText("წევრი (გადახდის გარეშე)")).toBeVisible();
   await dPage.getByLabel("ძებნა სახელით ან გვარით").fill("არავინა");
   await expect(dPage.getByTestId("team-no-results")).toBeVisible();
+  await dPage.setViewportSize({ width: 1280, height: 900 });
+  await expect(mobileNav).toBeHidden();
+  await expect(
+    dPage.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" }).locator('a[href="/delegate"]'),
+  ).toBeVisible();
   await delegateContext.close();
 });
 

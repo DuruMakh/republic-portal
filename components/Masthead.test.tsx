@@ -64,6 +64,40 @@ describe("Masthead", () => {
     expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
   });
 
+  it("keeps the mobile masthead sticky and resets positioning on desktop", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    const header = screen.getByRole("banner");
+    expect(header.className).toContain("sticky");
+    expect(header.className).toContain("top-0");
+    expect(header.className).toContain("bg-paper");
+    expect(header.className).toContain("md:static");
+  });
+
+  it("does not add mobile sticky positioning on routes declared unchanged", () => {
+    vi.mocked(usePathname).mockReturnValue("/admin");
+    const { rerender } = render(<Masthead navItems={[]} cta={null} />);
+    expect(screen.getByRole("banner").className).not.toContain("sticky");
+
+    vi.mocked(usePathname).mockReturnValue("/styleguide");
+    rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    expect(screen.getByRole("banner").className).not.toContain("sticky");
+  });
+
+  it("on a back route, gives the Masthead header the reciprocal hidden/md:flex pair so exactly one banner landmark is ever visible", () => {
+    // MobileBackHeader is md:hidden internally. If Masthead's own <header> had
+    // no complementary hide, both would render below `md` and the page would
+    // expose two implicit ARIA `banner` landmarks at once (Task 4 F3 carry).
+    vi.mocked(usePathname).mockReturnValue("/join");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
+    const headers = screen.getAllByRole("banner");
+    expect(headers).toHaveLength(2);
+    const [backHeader, mastheadHeader] = headers;
+    expect(backHeader!.className).toContain("md:hidden");
+    expect(mastheadHeader!.className).toContain("hidden");
+    expect(mastheadHeader!.className).toContain("md:flex");
+  });
+
   it("renders the tag text after the lockup when passed, and nothing when omitted", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     const { rerender } = render(

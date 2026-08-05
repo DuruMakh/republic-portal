@@ -9,6 +9,10 @@ const PAGES = [
   "/join",
   "/login",
   "/styleguide",
+  // Task 10: the mobile chrome (sticky bars, back headers) is new horizontal
+  // content on every page, and /support is the newest public route -- cheapest
+  // place to catch it overflowing before it ships anywhere else.
+  "/support",
 ];
 
 test.describe("360px viewport has no horizontal overflow", () => {

@@ -19,3 +19,7 @@ supabase/.temp/
 # pure duplication. ledger.json (the actual LedgerRow[] Tasks 6-9 consume)
 # stays tracked -- its git history IS the audit's evidence trail.
 docs/security/ledger-raw.json
+
+# Georgian byte-splicing working material (see the Georgian rule in DESIGN.md).
+# Regenerated on demand from the reference bundle; never a deliverable.
+scratch/

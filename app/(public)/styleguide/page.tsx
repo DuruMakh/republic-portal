@@ -36,6 +36,7 @@ import {
   DelegateBindingPickerSample,
   DelegateBindingReferralSample,
   OtpInputSample,
+  PhoneFrame,
 } from "./samples";
 
 // Design-token reference (spec §2.2). Token/class names are the literal Tailwind
@@ -466,6 +467,37 @@ export default function StyleguidePage() {
 
         <Card title="ადმინისტრირების ნავიგაცია">
           <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
+        </Card>
+
+        {/* 17. Mobile chrome. Every one of these carries `md:hidden`, a viewport
+            media query -- a narrow wrapper div cannot reveal them, so each
+            sample is an iframe with its own viewport, pointed at a real route.
+            That also keeps the gallery from drifting: it shows the shipped
+            chrome, not a copy of it. */}
+        <Card title="მობილურის ნავიგაცია">
+          <p className="mb-4 font-mono text-[0.74rem] text-muted-fg">
+            md:hidden — 390px viewport per frame
+          </p>
+          <div className="flex flex-col gap-6">
+            <div>
+              <p className="mb-2 font-mono text-[0.74rem] text-muted-fg">
+                Masthead + MobileMenu trigger + MobileJoinCta &mdash; /
+              </p>
+              <PhoneFrame src="/" height={640} />
+            </div>
+            <div>
+              <p className="mb-2 font-mono text-[0.74rem] text-muted-fg">
+                MobileBackHeader &mdash; /join/terms
+              </p>
+              <PhoneFrame src="/join/terms" height={320} />
+            </div>
+            <div>
+              <p className="mb-2 font-mono text-[0.74rem] text-muted-fg">
+                MobileTabBar + MobileMoreSheet &mdash; StickyBar
+              </p>
+              <PhoneFrame src="/styleguide-mobile-tabbar" height={260} />
+            </div>
+          </div>
         </Card>
       </main>
     </PageSheet>
