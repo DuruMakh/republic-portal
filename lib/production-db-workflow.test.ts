@@ -79,6 +79,36 @@ describe("production database delivery contract", () => {
     );
   });
 
+  it("accepts evidence only from the successful dry-run workflow run on this main commit", () => {
+    const workflow = readRepoFile(".github/workflows/production-db.yml");
+
+    const sourceRunCheck = workflow.indexOf("Verify approved dry-run workflow run");
+    const evidenceDownload = workflow.indexOf("Download approved dry-run evidence");
+    expect(sourceRunCheck).toBeGreaterThan(-1);
+    expect(evidenceDownload).toBeGreaterThan(sourceRunCheck);
+    expect(workflow).toContain("permissions:\n  actions: read\n  contents: read");
+    expect(workflow).toContain("GH_TOKEN: ${{ github.token }}");
+    expect(workflow).toContain(
+      'gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_DRY_RUN_RUN_ID"',
+    );
+    expect(workflow).toContain("jq -r '.id'");
+    expect(workflow).toContain("jq -r '.event'");
+    expect(workflow).toContain("jq -r '.path'");
+    expect(workflow).toContain("jq -r '.repository.full_name'");
+    expect(workflow).toContain("jq -r '.head_branch'");
+    expect(workflow).toContain("jq -r '.head_sha'");
+    expect(workflow).toContain("jq -r '.conclusion'");
+    expect(workflow).toContain('test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"');
+    expect(workflow).toContain('test "$APPROVED_RUN_EVENT" = "workflow_dispatch"');
+    expect(workflow).toContain(
+      'test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml@refs/heads/main"',
+    );
+    expect(workflow).toContain('test "$APPROVED_RUN_REPOSITORY" = "$GITHUB_REPOSITORY"');
+    expect(workflow).toContain('test "$APPROVED_RUN_HEAD_BRANCH" = "main"');
+    expect(workflow).toContain('test "$APPROVED_RUN_HEAD_SHA" = "$GITHUB_SHA"');
+    expect(workflow).toContain('test "$APPROVED_RUN_CONCLUSION" = "success"');
+  });
+
   it("asserts the committed 31-file migration baseline before each database phase", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 

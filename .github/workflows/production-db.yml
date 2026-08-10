@@ -119,6 +119,28 @@ jobs:
             *[!0-9]*) exit 1 ;;
           esac
 
+      - name: Verify approved dry-run workflow run
+        env:
+          APPROVED_DRY_RUN_RUN_ID: ${{ inputs.approved_dry_run_run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APPROVED_RUN="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_DRY_RUN_RUN_ID")"
+          APPROVED_RUN_ID="$(jq -r '.id' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_EVENT="$(jq -r '.event' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_PATH="$(jq -r '.path' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_REPOSITORY="$(jq -r '.repository.full_name' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_HEAD_BRANCH="$(jq -r '.head_branch' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_HEAD_SHA="$(jq -r '.head_sha' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_CONCLUSION="$(jq -r '.conclusion' <<<"$APPROVED_RUN")"
+          test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"
+          test "$APPROVED_RUN_EVENT" = "workflow_dispatch"
+          test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml@refs/heads/main"
+          test "$APPROVED_RUN_REPOSITORY" = "$GITHUB_REPOSITORY"
+          test "$APPROVED_RUN_HEAD_BRANCH" = "main"
+          test "$APPROVED_RUN_HEAD_SHA" = "$GITHUB_SHA"
+          test "$APPROVED_RUN_CONCLUSION" = "success"
+
       - name: Download approved dry-run evidence
         uses: actions/download-artifact@v5
         with:
