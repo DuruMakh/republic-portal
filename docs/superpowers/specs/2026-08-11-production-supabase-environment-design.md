@@ -44,8 +44,12 @@ The delivery path has two layers:
    explicitly linked to the production project. The CLI profile is stored in
    the user's Supabase configuration, never in Git.
 2. **Repeatable delivery from GitHub Actions.** A manually dispatched workflow
-   uses a dedicated GitHub Environment named `production-db`. It dry-runs and
-   applies committed migrations to the exact production project.
+   uses a dedicated GitHub Environment named `production-db` in two distinct
+   dispatches. The first is dry-run-only and uploads reviewable migration
+   evidence. After the owner reviews it, a second Apply dispatch names that
+   dry-run run ID, proves the same workflow/repository/main commit, repeats the
+   dry-run, requires byte-for-byte evidence equality, and only then applies
+   committed migrations to the exact production project.
 
 The implementation pins the verified CLI version `2.109.1` so local and hosted
 behavior do not drift silently.
@@ -118,18 +122,32 @@ before step 5. The bootstrap must never use `db reset` on a remote project.
 
 The later implementation adds a dedicated production-database workflow with:
 
-- `workflow_dispatch` only during the test period;
-- the `production-db` GitHub Environment;
-- a concurrency group that prevents overlapping production migration runs;
-- a pinned Supabase CLI version;
-- an exact project-ref safety assertion before database access;
-- migration-list reporting and `db push --dry-run` before apply;
-- migration apply only from committed files on the intended branch/ref;
-- a post-apply migration-list verification;
-- no seed command and no configuration push.
+- `workflow_dispatch` only during the test period and an `operation` input of
+  `dry-run` or `apply`;
+- the `production-db` GitHub Environment on both phases and a concurrency group
+  that prevents overlapping production migration runs;
+- a pinned Supabase CLI version, an exact project-ref assertion, and the exact
+  31-file committed migration baseline before either database phase;
+- a dry-run-only job that records the workflow reference, repository, main
+  ref, commit SHA, run ID, linked migration list, and dry-run output as an
+  immutable review artifact;
+- an Apply-only job that requires the owner to manually supply the approved
+  dry-run run ID in a second dispatch, downloads that artifact, verifies the
+  same workflow/repository/main commit, and repeats the migration list and
+  dry-run before any database write;
+- byte-for-byte equality of the previous and fresh migration-list/dry-run
+  evidence; any main-commit or remote pending-state change fails and requires a
+  new dry-run review;
+- migration apply only after that comparison, followed by a migration-list,
+  read-only schema/RLS verifier, schema lint, and security advisors;
+- no seed command, no `scripts/seed-staging.mjs`, no configuration push, and no
+  remote reset.
 
-The workflow must not print secrets or construct a database URL in a logged
-shell command. A failed dry-run, identity check, or migration stops the job.
+The second, owner-reviewed manual Apply dispatch is the required approval
+checkpoint immediately after a fresh dry-run; it does not rely on paid GitHub
+Environment reviewer features. The workflow must not print secrets or construct
+a database URL in a logged shell command. A failed identity check, evidence
+comparison, dry-run, or migration stops the job.
 
 Automatic deployment on every merge is intentionally deferred. Manual dispatch
 keeps the write boundary visible while the product is still in test mode.
@@ -165,7 +183,9 @@ Bootstrap is complete only when all of the following are evidenced:
 - no staging seed, staging users, development OTP hook configuration, or fake
   production data was copied;
 - no secret appears in Git history, workflow output, or tracked files;
-- the GitHub workflow can report a clean no-op dry-run after bootstrap;
+- the GitHub workflow can upload reviewable evidence for a clean no-op dry-run,
+  and an owner-reviewed Apply dispatch can only continue when its repeated
+  evidence is identical;
 - the application and Vercel still point to staging until a separately approved
   cutover.
 

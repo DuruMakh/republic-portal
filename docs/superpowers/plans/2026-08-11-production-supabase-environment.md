@@ -4,7 +4,7 @@
 
 **Goal:** Bootstrap the isolated Supabase project `uorvlshbrlbdnbauxsws` from the repository's 31 migrations and add a guarded, manually dispatched GitHub Actions path for future production migrations.
 
-**Architecture:** A local named Supabase CLI profile performs the one-time identity check, link, migration dry-run, owner approval checkpoint, bootstrap, and remote verification. A dedicated `production-db` GitHub Environment then supplies secrets to a manual workflow that refuses non-`main` refs or a mismatched project confirmation, applies migrations without seed/config changes, and runs a read-only schema check.
+**Architecture:** A local named Supabase CLI profile performs the one-time identity check, link, migration dry-run, owner approval checkpoint, bootstrap, and remote verification. A dedicated `production-db` GitHub Environment then supplies secrets to two manual workflow dispatches: Dry-run uploads evidence; the owner reviews it and manually dispatches Apply with that run ID. Apply rejects a different workflow/repository/main commit or pending migration state, repeats the dry-run, requires exact evidence equality, and only then writes migrations.
 
 **Tech Stack:** Supabase CLI `2.109.1`, PostgreSQL 17, GitHub Actions, PowerShell on the owner's Windows workstation, bash on the GitHub runner, Vitest `3.2.7` for workflow-contract tests.
 
@@ -22,6 +22,10 @@
 - No access token, database password, connection string, service-role key, or secret value may enter Git, tool arguments, workflow output, screenshots, or chat.
 - Rotate the database password previously shared in chat before storing the new value anywhere else.
 - Every remote database write has an explicit owner approval checkpoint immediately after a fresh dry-run.
+- GitHub delivery is two explicit dispatches: `dry-run` uploads evidence only; a
+  separately owner-dispatched `apply` names the reviewed dry-run run ID.
+  Apply proves the same workflow/repository/main commit and requires a fresh
+  migration-list/dry-run evidence match before `supabase db push --linked`.
 - Database state changes only through migrations. Never edit an already-applied migration or repair migration history by hand.
 - Every exposed `public` table must have RLS enabled. Required Data API access must be expressed by explicit grants because new Supabase projects no longer auto-expose new tables.
 - Work only on `codex/production-supabase-setup`; never push directly to `main` and never merge with failing CI.
@@ -32,7 +36,7 @@
 
 | File | Responsibility |
 |---|---|
-| `.github/workflows/production-db.yml` | Manual, main-only production migration workflow with exact-project confirmation, no seed/config push, concurrency protection, and post-apply checks. |
+| `.github/workflows/production-db.yml` | Manual, main-only two-dispatch production migration workflow: Dry-run uploads review evidence; Apply verifies the approved run and unchanged state before writing, then runs post-apply checks. |
 | `scripts/production-db-schema-check.sql` | Read-only/exception-only SQL asserting required schema objects and RLS on every `public` base/partitioned table. Safe to rerun after every migration. |
 | `lib/production-db-workflow.test.ts` | Static contract tests that make unsafe workflow drift fail ordinary CI without needing credentials or network access. |
 | `DECISIONS.md` | ADR-028 recording the separate project, Free-plan test boundary, CLI/Actions path, and migration-only rule. |
@@ -58,7 +62,10 @@ The relevant current changes are: new `public` tables are no longer automaticall
 
 **Interfaces:**
 - Consumes: GitHub Environment `production-db` secrets `SUPABASE_ACCESS_TOKEN`, `PRODUCTION_PROJECT_ID`, and `PRODUCTION_DB_PASSWORD`.
-- Produces: manually dispatched workflow `production-db.yml`; required input `confirm_project_ref`; reusable read-only SQL file `scripts/production-db-schema-check.sql`.
+- Produces: manually dispatched workflow `production-db.yml`; required inputs
+  `operation` and `confirm_project_ref`, plus `approved_dry_run_run_id` for an
+  Apply dispatch; reusable read-only SQL file
+  `scripts/production-db-schema-check.sql`.
 
 - [ ] **Step 1: Write the failing workflow-contract test** — `lib/production-db-workflow.test.ts`
 
@@ -67,8 +74,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const readRepoFile = (path: string): string =>
-  readFileSync(resolve(process.cwd(), path), "utf8");
+const readRepoFile = (path: string): string => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("production database delivery contract", () => {
   it("is manual, main-only, serialized, and pinned to the approved project and CLI", () => {
@@ -86,12 +92,19 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain("version: 2.109.1");
   });
 
-  it("maps only named environment secrets and checks both supplied refs before linking", () => {
+  it("maps exactly the named environment secrets and checks both supplied refs before linking", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 
     expect(workflow).toContain("SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}");
     expect(workflow).toContain("SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}");
     expect(workflow).toContain("SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}");
+    const secretReferences = workflow.match(/secrets\.[A-Z0-9_]+/g) ?? [];
+    expect([...new Set(secretReferences)].sort()).toEqual([
+      "secrets.PRODUCTION_DB_PASSWORD",
+      "secrets.PRODUCTION_PROJECT_ID",
+      "secrets.SUPABASE_ACCESS_TOKEN",
+    ]);
+    expect(secretReferences).toHaveLength(6);
     expect(workflow).toContain('test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"');
     expect(workflow).toContain('test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"');
 
@@ -101,17 +114,46 @@ describe("production database delivery contract", () => {
     expect(linking).toBeGreaterThan(validation);
   });
 
-  it("dry-runs before apply, verifies afterwards, and contains no destructive or seed/config command", () => {
+  it("requires a reviewed dry-run dispatch before a separate apply dispatch", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 
+    expect(workflow).toContain("operation:");
+    expect(workflow).toContain("- dry-run");
+    expect(workflow).toContain("- apply");
+    expect(workflow).toContain("approved_dry_run_run_id:");
+    expect(workflow).toContain("dry_run:");
+    expect(workflow).toContain("apply:");
+    expect(workflow).toContain("if: inputs.operation == 'dry-run'");
+    expect(workflow).toContain("if: inputs.operation == 'apply'");
+    expect(workflow).toContain("actions/upload-artifact@v4");
+    expect(workflow).toContain("actions/download-artifact@v5");
+    expect(workflow).toContain("run-id: ${{ inputs.approved_dry_run_run_id }}");
+    expect(workflow).toContain("test \"$APPROVED_WORKFLOW_REF\" = \"$GITHUB_WORKFLOW_REF\"");
+    expect(workflow).toContain("test \"$APPROVED_REPOSITORY\" = \"$GITHUB_REPOSITORY\"");
+    expect(workflow).toContain("test \"$APPROVED_REF\" = \"$GITHUB_REF\"");
+    expect(workflow).toContain("test \"$APPROVED_SHA\" = \"$GITHUB_SHA\"");
+
     const dryRun = workflow.indexOf("supabase db push --linked --dry-run");
-    const apply = workflow.indexOf("supabase db push --linked", dryRun + 1);
+    const freshDryRun = workflow.indexOf("supabase db push --linked --dry-run", dryRun + 1);
+    const evidenceComparison = workflow.indexOf("cmp --silent approved-dry-run-evidence/dry-run.txt fresh-dry-run-evidence/dry-run.txt");
+    const apply = workflow.indexOf("run: supabase db push --linked", freshDryRun + 1);
     const schemaCheck = workflow.indexOf("scripts/production-db-schema-check.sql");
     expect(dryRun).toBeGreaterThan(-1);
-    expect(apply).toBeGreaterThan(dryRun);
+    expect(freshDryRun).toBeGreaterThan(dryRun);
+    expect(evidenceComparison).toBeGreaterThan(freshDryRun);
+    expect(apply).toBeGreaterThan(evidenceComparison);
     expect(schemaCheck).toBeGreaterThan(apply);
-    expect(workflow.match(/supabase migration list --linked/g)).toHaveLength(2);
-    expect(workflow).not.toMatch(/--include-seed|config push|db reset|seed:staging/);
+    expect(workflow.match(/supabase migration list --linked/g)).toHaveLength(3);
+    expect(workflow).not.toMatch(/--include-seed|config push|db reset|seed:staging|scripts\/seed-staging\.mjs/);
+  });
+
+  it("asserts the committed 31-file migration baseline before each database phase", () => {
+    const workflow = readRepoFile(".github/workflows/production-db.yml");
+
+    expect(workflow).toContain("EXPECTED_MIGRATION_FILE_COUNT: 31");
+    expect(workflow.match(/Migration file baseline/g)).toHaveLength(2);
+    expect(workflow).toContain("find supabase/migrations -maxdepth 1 -type f -name '*.sql'");
+    expect(workflow).toContain('test "$ACTUAL_MIGRATION_FILE_COUNT" = "$EXPECTED_MIGRATION_FILE_COUNT"');
   });
 
   it("keeps the post-apply SQL verifier read-only and checks RLS", () => {
@@ -127,11 +169,13 @@ describe("production database delivery contract", () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and prove it fails because the workflow and SQL do not exist**
+- [ ] **Step 2: Run the focused test and prove the one-dispatch workflow fails the two-dispatch contract**
 
 Run: `npm.cmd exec -- vitest run lib/production-db-workflow.test.ts`
 
-Expected: FAIL with `ENOENT` for `.github/workflows/production-db.yml`.
+Expected: FAIL because the existing workflow has one secret mapping set, no
+`operation`/approved-run inputs, no evidence artifact handoff, and no 31-file
+baseline assertion.
 
 - [ ] **Step 3: Add the idempotent schema verifier** — `scripts/production-db-schema-check.sql`
 
@@ -173,82 +217,39 @@ join pg_catalog.pg_namespace as n on n.oid = c.relnamespace
 where n.nspname = 'public';
 ```
 
-- [ ] **Step 4: Add the manual production workflow** — `.github/workflows/production-db.yml`
+- [ ] **Step 4: Add the two-dispatch production workflow** — `.github/workflows/production-db.yml`
 
-```yaml
-name: Production database migrations
+The workflow is two distinct main-only jobs selected by the required
+`operation` choice input (`dry-run` or `apply`), with required
+`confirm_project_ref` and optional `approved_dry_run_run_id`. It grants
+`contents: read` and `actions: read`, retains
+`production-db-migrations` serialization, and gives both jobs the
+`production-db` Environment, CLI `2.109.1`, project reference, 31-file
+baseline, and exactly the three named environment-secret mappings.
 
-on:
-  workflow_dispatch:
-    inputs:
-      confirm_project_ref:
-        description: Type the production Supabase project ref to authorize this run
-        required: true
-        type: string
+Both jobs reject a non-main ref, empty access token/password, either project
+reference mismatch, and a migration-file count other than 31. `dry_run` links
+the project, writes `production-db-dry-run-evidence/metadata.env` with workflow
+ref/repository/ref/SHA/run ID/count plus `migration-state.txt` and `dry-run.txt`,
+then uploads that directory using `actions/upload-artifact@v4` as
+`production-db-dry-run-evidence`. It contains no non-dry-run `db push`.
 
-permissions:
-  contents: read
+`apply` requires numeric `approved_dry_run_run_id`, downloads that named
+artifact with `actions/download-artifact@v5` and that run ID, and proves its
+workflow ref, repository, main ref, SHA, and run ID match current context. It
+links the project only after that check, creates a fresh migration list and
+dry-run evidence, then must run these commands in order before its only write:
 
-concurrency:
-  group: production-db-migrations
-  cancel-in-progress: false
-
-jobs:
-  migrate:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment: production-db
-    env:
-      EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
-
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.109.1
-
-      - name: Validate immutable target
-        env:
-          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
-        run: |
-          set -euo pipefail
-          test "$GITHUB_REF" = "refs/heads/main"
-          test -n "$SUPABASE_ACCESS_TOKEN"
-          test -n "$SUPABASE_DB_PASSWORD"
-          test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"
-          test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"
-
-      - name: Link production project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
-
-      - name: Migration state before apply
-        run: supabase migration list --linked
-
-      - name: Dry-run migrations
-        run: supabase db push --linked --dry-run
-
-      - name: Apply migrations
-        run: supabase db push --linked
-
-      - name: Migration state after apply
-        run: supabase migration list --linked
-
-      - name: Verify schema and RLS
-        run: supabase db query --linked --file scripts/production-db-schema-check.sql
-
-      - name: Lint public schema
-        run: supabase db lint --linked --schema public --level warning --fail-on error
-
-      - name: Run security advisors
-        run: supabase db advisors --linked --type security --level error --fail-on error
+```bash
+cmp --silent approved-dry-run-evidence/migration-state.txt fresh-dry-run-evidence/migration-state.txt
+cmp --silent approved-dry-run-evidence/dry-run.txt fresh-dry-run-evidence/dry-run.txt
+supabase db push --linked
 ```
+
+After the write, it runs migration listing, the read-only schema/RLS verifier,
+public-schema lint, and security advisors. Neither phase may use
+`--include-seed`, `config push`, `db reset`, `seed:staging`, or
+`scripts/seed-staging.mjs`.
 
 - [ ] **Step 5: Append ADR-028 to `DECISIONS.md`**
 
@@ -272,11 +273,15 @@ dedicated `production-db` Environment. `supabase config push`, remote reset, and
 production seeding are forbidden by this path. No dependency was added.
 ```
 
+The ADR text above is preserved as the recorded decision. Its
+"dry-run-before-apply" wording is implemented by the two-dispatch contract in
+Step 4, never by one job that advances automatically from dry-run to Apply.
+
 - [ ] **Step 6: Run the focused test and verify it passes**
 
 Run: `npm.cmd exec -- vitest run lib/production-db-workflow.test.ts`
 
-Expected: 1 test file passed, 4 tests passed.
+Expected: 1 test file passed, 5 tests passed.
 
 - [ ] **Step 7: Run local quality gates**
 
@@ -289,13 +294,13 @@ npm.cmd run format:check
 npm.cmd test
 ```
 
-Expected: all commands exit 0; the full test count is at least the current 803 plus the 4 new contract tests.
+Expected: all commands exit 0; the full test count is at least the current 803 plus the 5 contract tests.
 
 - [ ] **Step 8: Commit the workflow implementation**
 
 ```powershell
-git add .github/workflows/production-db.yml scripts/production-db-schema-check.sql lib/production-db-workflow.test.ts DECISIONS.md
-git commit -m "ci: add guarded production database migrations"
+git add .github/workflows/production-db.yml scripts/production-db-schema-check.sql lib/production-db-workflow.test.ts DECISIONS.md docs/superpowers/specs/2026-08-11-production-supabase-environment-design.md docs/superpowers/plans/2026-08-11-production-supabase-environment.md
+git commit -m "ci: require reviewed production database dry-runs"
 ```
 
 ---
@@ -558,14 +563,16 @@ Expected: PR merged into `main`; implementation branch deleted remotely. Do not 
 
 ---
 
-### Task 6: Prove the merged GitHub workflow is a safe no-op
+### Task 6: Exercise the merged two-dispatch GitHub workflow
 
 **Files:**
 - No tracked file changes
 
 **Interfaces:**
 - Consumes: merged workflow on `main`, configured GitHub Environment, and already-bootstrapped production database.
-- Produces: successful hosted workflow evidence showing correct targeting, no pending migrations, and passing post-apply checks.
+- Produces: reviewable Dry-run evidence and, only after a second owner approval,
+  successful Apply evidence proving the same workflow/repository/main commit
+  and unchanged pending migration state.
 
 - [ ] **Step 1: Confirm `main` contains the merged workflow**
 
@@ -576,36 +583,67 @@ git fetch origin main
 git show origin/main:.github/workflows/production-db.yml
 ```
 
-Expected: the merged workflow includes CLI `2.109.1`, exact expected project ref, main-only guard, dry-run-before-apply, and no seed/config/reset command.
+Expected: the merged workflow includes CLI `2.109.1`, exact expected project
+ref, main-only guards, 31-file baseline, separate `dry-run`/`apply` inputs,
+artifact handoff/comparison, and no seed/config/reset command.
 
-- [ ] **Step 2: Obtain explicit owner approval to dispatch the production workflow**
+- [ ] **Step 2: Obtain explicit owner approval to dispatch Dry-run only**
 
-Explain that the database is already current, so `db push` should be a no-op, but the workflow still has production write credentials. Do not dispatch without a clear approval.
+Explain that this first dispatch cannot apply migrations. It uses production
+credentials only to inspect the target, save the migration list and dry-run
+output as a review artifact, and fail if the 31-file baseline is wrong. Do not
+dispatch without a clear approval.
 
-- [ ] **Step 3: Dispatch from `main` with the exact confirmation input**
+- [ ] **Step 3: Dispatch Dry-run from `main` with the exact confirmation input**
 
 Run:
 
 ```powershell
-gh workflow run production-db.yml --ref main -f confirm_project_ref=uorvlshbrlbdnbauxsws
+gh workflow run production-db.yml --ref main -f operation=dry-run -f confirm_project_ref=uorvlshbrlbdnbauxsws
 gh run list --workflow production-db.yml --limit 1
 ```
 
-Expected: one new run on `main`.
+Expected: one new successful Dry-run run on `main` and a downloadable
+`production-db-dry-run-evidence` artifact; no `supabase db push --linked`
+without `--dry-run` is executed.
 
-- [ ] **Step 4: Wait for and inspect the hosted run**
+- [ ] **Step 4: Review the exact Dry-run evidence**
 
 Resolve the newest run ID and inspect that exact run:
 
 ```powershell
-$productionDbRunId = gh run list --workflow production-db.yml --limit 1 --json databaseId --jq '.[0].databaseId'
-gh run watch $productionDbRunId --exit-status
-gh run view $productionDbRunId --log
+$dryRunId = gh run list --workflow production-db.yml --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run watch $dryRunId --exit-status
+gh run download $dryRunId -n production-db-dry-run-evidence -D production-db-dry-run-evidence
+Get-Content production-db-dry-run-evidence\metadata.env
+Get-Content production-db-dry-run-evidence\migration-state.txt
+Get-Content production-db-dry-run-evidence\dry-run.txt
 ```
 
-Expected: target validation passes, pre/post migration lists match, dry-run reports up to date, apply is a no-op, schema/RLS check passes, lint/advisors pass, and no secret appears in logs.
+Expected: the artifact identifies this exact workflow/repository/main SHA/run ID,
+the migration list and dry-run are reviewable, the project ref is correct, and
+no secret appears in logs or evidence. Present these exact files to the owner.
 
-- [ ] **Step 5: Final live verification and handoff**
+- [ ] **Step 5: Obtain owner approval, then dispatch Apply against the reviewed Dry-run**
+
+Do not dispatch Apply until the owner explicitly approves the specific
+`$dryRunId` evidence. The separate Apply dispatch is the write authorization;
+it must name that run ID and cannot proceed if `main` or remote pending state
+has changed.
+
+```powershell
+gh workflow run production-db.yml --ref main -f operation=apply -f confirm_project_ref=uorvlshbrlbdnbauxsws -f approved_dry_run_run_id=$dryRunId
+$applyRunId = gh run list --workflow production-db.yml --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run watch $applyRunId --exit-status
+gh run view $applyRunId --log
+```
+
+Expected: Apply verifies the selected artifact's workflow/repository/main SHA,
+repeats the migration list and dry-run exactly, only then performs the no-op
+apply, and passes post-apply migration list, schema/RLS check, lint, and
+security advisors. A mismatch fails and requires a new Dry-run review.
+
+- [ ] **Step 6: Final live verification and handoff**
 
 Run locally one final time:
 
