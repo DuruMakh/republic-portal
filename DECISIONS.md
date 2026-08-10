@@ -732,3 +732,19 @@ shipped as an `aria-modal` dialog with no focus management at all, while the pub
 menu already had the whole thing. The second was fixed by extracting
 `components/useFocusTrap.ts` and consuming it in both, since duplicating a logic block
 is a forbidden pattern here.
+
+## ADR-028 (2026-08-11): Separate production-candidate Supabase, migration-only delivery
+
+The portal now has a separate Supabase production-candidate project,
+`uorvlshbrlbdnbauxsws`. Staging remains `orcxtbedkexoclbfgvzd`; no staging data,
+users, OTP inbox, Auth/SMS configuration, or seed command crosses that boundary.
+
+The owner accepts Supabase Free for the next several months of synthetic testing.
+The project is not approved for real-person data until backup/restore, monitoring,
+Auth/SMS delivery, and plan level are reviewed again.
+
+Supabase MCP is not part of delivery. A named local CLI profile performs the
+one-time bootstrap; future schema delivery uses a manually dispatched GitHub
+Actions workflow with exact-project confirmation, dry-run-before-apply, and a
+dedicated `production-db` Environment. `supabase config push`, remote reset, and
+production seeding are forbidden by this path. No dependency was added.

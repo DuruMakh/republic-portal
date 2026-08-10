@@ -1,0 +1,72 @@
+name: Production database migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: Type the production Supabase project ref to authorize this run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-db-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production-db
+    env:
+      EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+
+      - name: Validate immutable target
+        env:
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_PASSWORD"
+          test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+          test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Migration state before apply
+        run: supabase migration list --linked
+
+      - name: Dry-run migrations
+        run: supabase db push --linked --dry-run
+
+      - name: Apply migrations
+        run: supabase db push --linked
+
+      - name: Migration state after apply
+        run: supabase migration list --linked
+
+      - name: Verify schema and RLS
+        run: supabase db query --linked --file scripts/production-db-schema-check.sql
+
+      - name: Lint public schema
+        run: supabase db lint --linked --schema public --level warning --fail-on error
+
+      - name: Run security advisors
+        run: supabase db advisors --linked --type security --level error --fail-on error
