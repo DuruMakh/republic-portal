@@ -39,10 +39,13 @@ deployment.
 
 The delivery path has two layers:
 
-1. **One-time bootstrap from the Supabase CLI.** A named local CLI profile is
-   authenticated for the production account and the repository worktree is
-   explicitly linked to the production project. The CLI profile is stored in
-   the user's Supabase configuration, never in Git.
+1. **One-time bootstrap from the Supabase CLI.** The standard `supabase` cloud
+   profile is authenticated for the production account, using the local token
+   label `republic-production`, and the repository worktree is explicitly
+   linked to the production project. CLI credentials and the active cloud
+   profile selector are stored in the user's Supabase configuration, never in
+   Git. The CLI's `--profile` flag selects a Supabase backend configuration; it
+   is not a name for a stored account credential.
 2. **Repeatable delivery from GitHub Actions.** A manually dispatched workflow
    uses a dedicated GitHub Environment named `production-db` in two distinct
    dispatches. The first is dry-run-only and uploads reviewable migration
@@ -101,8 +104,9 @@ cutover is out of scope.
 
 ## 6. One-time bootstrap sequence
 
-1. Authenticate a named Supabase CLI profile for the production account without
-   exposing the token in the repository.
+1. Authenticate the standard Supabase CLI cloud profile for the production
+   account, label the stored token `republic-production`, and do not expose the
+   token in the repository.
 2. Link only the isolated production worktree to
    `uorvlshbrlbdnbauxsws`; do not replace the staging link in other worktrees.
 3. Verify the remote project identity, region, health, current migration table,

@@ -4,7 +4,7 @@
 
 **Goal:** Bootstrap the isolated Supabase project `uorvlshbrlbdnbauxsws` from the repository's 31 migrations and add a guarded, manually dispatched GitHub Actions path for future production migrations.
 
-**Architecture:** A local named Supabase CLI profile performs the one-time identity check, link, migration dry-run, owner approval checkpoint, bootstrap, and remote verification. A dedicated `production-db` GitHub Environment then supplies secrets to two manual workflow dispatches: Dry-run uploads evidence; the owner reviews it and manually dispatches Apply with that run ID. Apply rejects a different workflow/repository/main commit or pending migration state, repeats the dry-run, requires exact evidence equality, and only then writes migrations.
+**Architecture:** The standard local Supabase CLI cloud profile, with the stored token labeled `republic-production`, performs the one-time identity check, link, migration dry-run, owner approval checkpoint, bootstrap, and remote verification. A dedicated `production-db` GitHub Environment then supplies secrets to two manual workflow dispatches: Dry-run uploads evidence; the owner reviews it and manually dispatches Apply with that run ID. Apply rejects a different workflow/repository/main commit or pending migration state, repeats the dry-run, requires exact evidence equality, and only then writes migrations.
 
 **Tech Stack:** Supabase CLI `2.109.1`, PostgreSQL 17, GitHub Actions, PowerShell on the owner's Windows workstation, bash on the GitHub runner, Vitest `3.2.7` for workflow-contract tests.
 
@@ -305,7 +305,7 @@ git commit -m "ci: require reviewed production database dry-runs"
 
 ---
 
-### Task 2: Establish the named CLI profile and produce a read-only bootstrap dry-run
+### Task 2: Establish CLI credentials and produce a read-only bootstrap dry-run
 
 **Files:**
 - Local ignored state only: `supabase/.temp/project-ref`
@@ -313,18 +313,18 @@ git commit -m "ci: require reviewed production database dry-runs"
 
 **Interfaces:**
 - Consumes: a newly rotated production database password and a Supabase personal access token entered privately by the owner.
-- Produces: CLI profile `republic-production`, an isolated worktree link to `uorvlshbrlbdnbauxsws`, remote migration inventory, and exact dry-run output for owner approval.
+- Produces: the standard `supabase` cloud profile with token label `republic-production`, an isolated worktree link to `uorvlshbrlbdnbauxsws`, remote migration inventory, and exact dry-run output for owner approval.
 
 - [ ] **Step 1: Rotate and store credentials outside chat and Git**
 
 The owner changes the production project's database password in the Supabase dashboard, stores the replacement in a password manager, and creates a personal access token in the production Supabase account. Neither value is pasted into chat or supplied as a command-line argument.
 
-- [ ] **Step 2: Authenticate the named profile through the private terminal prompt**
+- [ ] **Step 2: Authenticate the standard cloud profile through the private terminal prompt**
 
 Run from the isolated worktree:
 
 ```powershell
-npm.cmd exec -- supabase login --name republic-production --no-browser --profile republic-production
+npm.cmd exec -- supabase login --name republic-production --no-browser
 ```
 
 Expected: the CLI prompts privately for the personal access token and finishes with `Finished supabase login.`
@@ -334,7 +334,7 @@ Expected: the CLI prompts privately for the personal access token and finishes w
 Run:
 
 ```powershell
-npm.cmd exec -- supabase projects list --profile republic-production --output-format json
+npm.cmd exec -- supabase projects list --output-format json
 ```
 
 Expected: exactly one returned accessible project has `id` equal to `uorvlshbrlbdnbauxsws`. Stop if it is missing or if the project is not healthy.
@@ -344,7 +344,7 @@ Expected: exactly one returned accessible project has `id` equal to `uorvlshbrlb
 Run and enter the rotated database password only at the private prompt:
 
 ```powershell
-npm.cmd exec -- supabase link --project-ref uorvlshbrlbdnbauxsws --profile republic-production
+npm.cmd exec -- supabase link --project-ref uorvlshbrlbdnbauxsws
 Get-Content supabase/.temp/project-ref
 git status --short
 ```
@@ -368,7 +368,7 @@ Expected: count `31`, first `20260712212409_initial_schema.sql`, last `202608021
 Run:
 
 ```powershell
-npm.cmd exec -- supabase migration list --linked --profile republic-production
+npm.cmd exec -- supabase migration list --linked
 ```
 
 Expected for a new project: all 31 versions appear only in the local column and none appears as an unexplained remote-only version. Stop and reconcile if any remote migration or user schema already exists.
@@ -378,7 +378,7 @@ Expected for a new project: all 31 versions appear only in the local column and 
 Run:
 
 ```powershell
-npm.cmd exec -- supabase db push --linked --dry-run --profile republic-production
+npm.cmd exec -- supabase db push --linked --dry-run
 ```
 
 Expected: the CLI lists the same 31 migrations in order and does not mention seed/config application. Preserve only sanitized output that contains migration filenames and status; discard any line containing connection details.
@@ -404,8 +404,8 @@ Run:
 
 ```powershell
 Get-Content supabase/.temp/project-ref
-npm.cmd exec -- supabase projects list --profile republic-production --output-format json
-npm.cmd exec -- supabase db push --linked --dry-run --profile republic-production
+npm.cmd exec -- supabase projects list --output-format json
+npm.cmd exec -- supabase db push --linked --dry-run
 ```
 
 Expected: exact ref `uorvlshbrlbdnbauxsws`, healthy project, and the same 31 pending migrations approved in Task 2. Any difference invalidates the approval and returns to Task 2 Step 8.
@@ -415,7 +415,7 @@ Expected: exact ref `uorvlshbrlbdnbauxsws`, healthy project, and the same 31 pen
 Run once:
 
 ```powershell
-npm.cmd exec -- supabase db push --linked --profile republic-production
+npm.cmd exec -- supabase db push --linked
 ```
 
 Expected: all 31 migrations apply successfully in order. On failure, stop; do not run migration repair, remote reset, manual SQL repair, or retry blindly.
@@ -425,8 +425,8 @@ Expected: all 31 migrations apply successfully in order. On failure, stop; do no
 Run:
 
 ```powershell
-npm.cmd exec -- supabase migration list --linked --profile republic-production
-npm.cmd exec -- supabase db push --linked --dry-run --profile republic-production
+npm.cmd exec -- supabase migration list --linked
+npm.cmd exec -- supabase db push --linked --dry-run
 ```
 
 Expected: all 31 local/remote versions align and the dry-run reports the linked project is up to date.
@@ -436,7 +436,7 @@ Expected: all 31 local/remote versions align and the dry-run reports the linked 
 Run:
 
 ```powershell
-npm.cmd exec -- supabase db query --linked --file scripts/production-db-schema-check.sql --profile republic-production
+npm.cmd exec -- supabase db query --linked --file scripts/production-db-schema-check.sql
 ```
 
 Expected: command exits 0, the three required relations exist, and no `public` base or partitioned table lacks RLS.
@@ -446,7 +446,7 @@ Expected: command exits 0, the three required relations exist, and no `public` b
 Run:
 
 ```powershell
-npm.cmd exec -- supabase db query --linked --profile republic-production "select (select count(*) from auth.users) as auth_users, (select count(*) from public.dev_otp_inbox) as otp_rows, (select count(*) from public.support_messages) as support_rows;"
+npm.cmd exec -- supabase db query --linked "select (select count(*) from auth.users) as auth_users, (select count(*) from public.dev_otp_inbox) as otp_rows, (select count(*) from public.support_messages) as support_rows;"
 ```
 
 Expected immediately after bootstrap: `auth_users = 0`, `otp_rows = 0`, `support_rows = 0`. Migration-owned reference data such as regions and cities is expected and is not staging seed.
@@ -456,8 +456,8 @@ Expected immediately after bootstrap: `auth_users = 0`, `otp_rows = 0`, `support
 Run:
 
 ```powershell
-npm.cmd exec -- supabase db lint --linked --schema public --level warning --fail-on error --profile republic-production
-npm.cmd exec -- supabase db advisors --linked --type security --level error --fail-on error --profile republic-production
+npm.cmd exec -- supabase db lint --linked --schema public --level warning --fail-on error
+npm.cmd exec -- supabase db advisors --linked --type security --level error --fail-on error
 ```
 
 Expected: both commands exit 0. Record warnings separately; any error-severity finding blocks completion and is fixed forward through a new migration on the feature branch.
@@ -648,8 +648,8 @@ security advisors. A mismatch fails and requires a new Dry-run review.
 Run locally one final time:
 
 ```powershell
-npm.cmd exec -- supabase migration list --linked --profile republic-production
-npm.cmd exec -- supabase db push --linked --dry-run --profile republic-production
+npm.cmd exec -- supabase migration list --linked
+npm.cmd exec -- supabase db push --linked --dry-run
 ```
 
 Expected: all 31 bootstrap migrations remain aligned and the project is up to date. Report the merged commit, workflow run URL, production project ref, verification results, known Free-plan limitations, and the remaining pre-launch tasks: Auth/SMS policy, Vercel cutover, backup/restore, monitoring, and real-data approval.

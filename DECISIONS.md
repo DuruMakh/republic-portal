@@ -748,3 +748,13 @@ one-time bootstrap; future schema delivery uses a manually dispatched GitHub
 Actions workflow with exact-project confirmation, dry-run-before-apply, and a
 dedicated `production-db` Environment. `supabase config push`, remote reset, and
 production seeding are forbidden by this path. No dependency was added.
+
+## ADR-029 (2026-08-11): Correct Supabase CLI account-label terminology
+
+Supabase CLI `2.109.1` uses `--profile` to select a Supabase backend
+configuration, not to name a stored account credential. Local production
+bootstrap therefore uses the standard built-in `supabase` cloud profile and
+labels the stored token `republic-production` with `supabase login --name`.
+The isolated worktree link remains the mechanism that selects the exact
+production project. This corrects ADR-028's "named local CLI profile" wording;
+the GitHub workflow, migration boundary, and approval contract are unchanged.
