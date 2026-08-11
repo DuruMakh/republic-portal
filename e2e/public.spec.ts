@@ -53,7 +53,7 @@ test.describe("home", () => {
     await expect(page).toHaveURL(/\/leaderboard$/);
   });
 
-  test("the single register CTA lands on the one-door /join form", async ({ page }) => {
+  test("the single register CTA lands on the Google-gated join flow", async ({ page }) => {
     await page.goto("/");
     // One door now: the ladder's first column CTA is „რეგისტრაცია →“ (app/(public)/page.tsx);
     // the old two-door „გახდი დელეგატი“ is gone. Scope to <main> — the header keeps its own
@@ -63,10 +63,11 @@ test.describe("home", () => {
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
     await cta.click();
     await expect(page).toHaveURL(/\/join$/);
-    // The three-field one-door form replaced the old funnel choice screen — see
-    // registration.spec.ts / membership.spec.ts. Owner fix #10: the personal ID
-    // moved to the become-a-member wizard, so it no longer renders here.
+    // Logged-out visitors must establish the Google identity before any personal
+    // or phone fields appear. The authenticated form is covered in registration.spec.
     await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
+    await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
     await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);
   });
 });

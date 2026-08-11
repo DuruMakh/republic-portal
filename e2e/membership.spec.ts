@@ -3,6 +3,7 @@ import { ADMIN_PHONES, loginAs, signOutViaNav } from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
 import {
+  cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
   fillMembershipProfile,
   getSeededReferral,
@@ -21,18 +22,33 @@ test.describe.configure({ mode: "serial" });
 
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the
 // other, or a content failure strands this run's users where no later run looks.
+const googleJourneyPhones = [
+  JOURNEY.membFull,
+  JOURNEY.membResume,
+  JOURNEY.regReferral,
+  JOURNEY.membRsvp,
+  JOURNEY.membDupId,
+].map(journeyPhone);
+
 test.beforeAll(() =>
-  runCleanups([() => cleanupJourneyUsers(), () => cleanupCommunityContent("e2e-memb-")]),
+  runCleanups([
+    () => cleanupJourneyUsers(),
+    () => cleanupGoogleBackedTestUsers(googleJourneyPhones),
+    () => cleanupCommunityContent("e2e-memb-"),
+  ]),
 );
 test.afterAll(() =>
-  runCleanups([() => cleanupCommunityContent("e2e-memb-"), () => cleanupJourneyUsers()]),
+  runCleanups([
+    () => cleanupCommunityContent("e2e-memb-"),
+    () => cleanupJourneyUsers(),
+    () => cleanupGoogleBackedTestUsers(googleJourneyPhones),
+  ]),
 );
 
 test("full upgrade: register → wizard → member with a reference code and member nav", async ({
   page,
 }) => {
   const phone = journeyPhone(JOURNEY.membFull);
-  await page.goto("/join");
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",
@@ -95,7 +111,6 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
   page,
 }) => {
   const phone = journeyPhone(JOURNEY.membResume);
-  await page.goto("/join");
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",
@@ -129,11 +144,11 @@ test("referral binding survives to completion and shows as the current delegate"
 }) => {
   const { code, fullName } = await getSeededReferral();
   const phone = journeyPhone(JOURNEY.regReferral);
-  await page.goto(`/join?ref=${encodeURIComponent(code)}`);
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",
     lastName: "რეფერალით",
+    refCode: code,
   });
 
   // complete the wizard — the referral card replaces the picker; binding is region-independent
@@ -169,7 +184,6 @@ test("a registered member RSVPs to a published event", async ({ page }) => {
 
   // a REGISTERED (not member) user RSVPs — the gate is registered-level (spec §4.2, D3)
   const phone = journeyPhone(JOURNEY.membRsvp);
-  await page.goto("/join");
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",
@@ -204,7 +218,6 @@ test("a personal ID already claimed by another member is rejected inline, stayin
   });
 
   const phone = journeyPhone(JOURNEY.membDupId);
-  await page.goto("/join");
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",

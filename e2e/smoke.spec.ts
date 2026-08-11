@@ -15,10 +15,11 @@ test("home renders in Georgian with a single register CTA", async ({ page }) => 
   await expect(page.getByTestId("stat-registered-total")).toBeVisible();
 });
 
-test("join shows the three-field one-door registration form", async ({ page }) => {
+test("join requires Google before showing registration fields", async ({ page }) => {
   await page.goto("/join");
   await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
-  // owner fix #10: the personal ID moved to the become-a-member wizard
+  await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
+  await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
   await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);
 });
 
