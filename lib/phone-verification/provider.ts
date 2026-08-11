@@ -30,7 +30,7 @@ export function createPhoneVerificationProvider(
       throw new Error("test phone verification provider is forbidden in production");
     }
 
-    return createTestPhoneVerificationProvider();
+    return createTestPhoneVerificationProvider(configured);
   }
 
   throw new Error("PHONE_VERIFICATION_PROVIDER must be verify_ge or test");

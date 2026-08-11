@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { createTestPhoneVerificationProvider } from "./test-provider";
 
 describe("createTestPhoneVerificationProvider", () => {
+  it("forbids direct construction in production", () => {
+    expect(() => createTestPhoneVerificationProvider({ NEXT_PUBLIC_APP_ENV: "production" })).toThrow(
+      "test phone verification provider is forbidden in production",
+    );
+  });
+
   it("returns a deterministic request ID derived from the idempotency key", async () => {
     const provider = createTestPhoneVerificationProvider();
 
