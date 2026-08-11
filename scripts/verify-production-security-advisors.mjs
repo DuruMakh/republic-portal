@@ -32,7 +32,9 @@ export function verifyProductionSecurityAdvisors(payload) {
   const missing = expectedViews.filter((name) => !sorted.includes(name));
   const extra = sorted.filter((name) => !expectedViews.includes(name));
   if (missing.length || extra.length) {
-    throw new Error(`Advisor view set mismatch; missing=${missing.join(",")}; extra=${extra.join(",")}`);
+    throw new Error(
+      `Advisor view set mismatch; missing=${missing.join(",")}; extra=${extra.join(",")}`,
+    );
   }
   return { acceptedViews: sorted };
 }
@@ -46,7 +48,9 @@ if (isCli) {
     const result = verifyProductionSecurityAdvisors(payload);
     process.stdout.write(`Accepted ${result.acceptedViews.length} reviewed advisor findings.\n`);
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : "Advisor verification failed."}\n`);
+    process.stderr.write(
+      `${error instanceof Error ? error.message : "Advisor verification failed."}\n`,
+    );
     process.exitCode = 1;
   }
 }

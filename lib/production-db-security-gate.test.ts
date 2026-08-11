@@ -138,9 +138,7 @@ describe("production security advisor gate", () => {
   });
 
   it("normalizes client view grants in one forward migration", () => {
-    const migrations = readdirSync(migrationsDirectory).filter((name) =>
-      name.endsWith(".sql"),
-    );
+    const migrations = readdirSync(migrationsDirectory).filter((name) => name.endsWith(".sql"));
     const matchingMigrations = migrations.filter((name) =>
       name.endsWith("_normalize_production_view_grants.sql"),
     );
@@ -151,14 +149,9 @@ describe("production security advisor gate", () => {
 
     expect(matchingMigrations).toHaveLength(1);
     expect(migrations).toHaveLength(32);
-    expect(access.public_read.some((name) => access.signed_in_read.includes(name))).toBe(
-      false,
-    );
+    expect(access.public_read.some((name) => access.signed_in_read.includes(name))).toBe(false);
 
-    const migration = readFileSync(
-      join(migrationsDirectory, matchingMigrations[0] ?? ""),
-      "utf8",
-    );
+    const migration = readFileSync(join(migrationsDirectory, matchingMigrations[0] ?? ""), "utf8");
     const revokeStatement = migration.match(
       /revoke all on\s+([\s\S]*?)\s+from anon, authenticated;/i,
     )?.[0];
@@ -185,11 +178,7 @@ describe("production security advisor gate", () => {
     expect(revokeIndex).toBeLessThan(publicGrantIndex);
     expect(revokeIndex).toBeLessThan(signedInGrantIndex);
     expect(publicGrantIndex).toBeLessThan(signedInGrantIndex);
-    expect(sqlStatements).toEqual([
-      revokeStatement,
-      publicGrantStatement,
-      signedInGrantStatement,
-    ]);
+    expect(sqlStatements).toEqual([revokeStatement, publicGrantStatement, signedInGrantStatement]);
     expect(relationNames(revokeStatement ?? "").sort()).toEqual(
       [...access.public_read, ...access.signed_in_read].sort(),
     );
@@ -202,9 +191,7 @@ describe("production security advisor gate", () => {
   });
 
   it("accepts exactly the reviewed 25 security-definer views", () => {
-    const fixturePath = writeFixture(
-      JSON.stringify({ results: reviewedViews.map(advisorResult) }),
-    );
+    const fixturePath = writeFixture(JSON.stringify({ results: reviewedViews.map(advisorResult) }));
 
     const result = runVerifier(fixturePath);
 
@@ -219,9 +206,7 @@ describe("production security advisor gate", () => {
   });
 
   it("rejects a missing allowlisted view", () => {
-    const results = reviewedViews
-      .filter((name) => name !== "public_stats")
-      .map(advisorResult);
+    const results = reviewedViews.filter((name) => name !== "public_stats").map(advisorResult);
 
     const result = runVerifier(writeFixture(JSON.stringify({ results })));
 
