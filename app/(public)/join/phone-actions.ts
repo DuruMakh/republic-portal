@@ -7,7 +7,6 @@ import { normalizeGeorgianPhone } from "@/lib/validation";
 import {
   buildPhoneVerificationIdempotencyKey,
   PHONE_VERIFICATION_MAX_ATTEMPTS,
-  PHONE_VERIFICATION_MAX_SENDS_PER_HOUR,
   PHONE_VERIFICATION_MESSAGES,
   PHONE_VERIFICATION_TTL_SECONDS,
   type PhoneVerificationFailure,
@@ -17,13 +16,11 @@ import {
 } from "@/lib/phone-verification/contracts";
 import { createPhoneVerificationProvider } from "@/lib/phone-verification/provider";
 import {
-  cleanupOldChallenges,
+  completePhoneVerificationSend,
   consumeChallenge,
-  countRecentChallenges,
-  invalidateActiveChallenges,
   readOwnedChallenge,
-  recordChallengeFailure,
-  storeOrReuseChallenge,
+  reservePhoneVerificationAttempt,
+  reservePhoneVerificationSend,
 } from "@/lib/phone-verification/store";
 import { PhoneVerificationProviderError } from "@/lib/phone-verification/verify-ge";
 
@@ -39,14 +36,6 @@ function failure(code: PhoneVerificationFailureCode): PhoneVerificationFailure {
 
 function providerFailure(error: unknown): PhoneVerificationFailureCode {
   return error instanceof PhoneVerificationProviderError ? error.code : "service_unavailable";
-}
-
-function isoBefore(nowMs: number, milliseconds: number): string {
-  return new Date(nowMs - milliseconds).toISOString();
-}
-
-function hasReachedLimit(counts: { userCount: number; phoneCount: number }, limit: number): boolean {
-  return counts.userCount >= limit || counts.phoneCount >= limit;
 }
 
 async function attachConfirmedPhone(
@@ -83,70 +72,42 @@ export async function sendPhoneVerificationAction(
   if (!phone) return failure("invalid_phone");
 
   const nowMs = Date.now();
-  const nowIso = new Date(nowMs).toISOString();
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return failure("service_unavailable");
+  }
 
   try {
-    await cleanupOldChallenges(admin, {
+    const idempotencyKey = buildPhoneVerificationIdempotencyKey({
       userId: user.id,
       phone,
-      beforeIso: isoBefore(nowMs, 24 * 60 * 60 * 1000),
+      purpose: "registration",
+      nowMs,
     });
-
-    const recent = await countRecentChallenges(admin, {
+    const reservation = await reservePhoneVerificationSend(admin, {
       userId: user.id,
       phone,
-      sinceIso: isoBefore(nowMs, 60 * 1000),
+      idempotencyKey,
     });
-    if (hasReachedLimit(recent, 1)) return failure("too_many_requests");
-
-    const hourly = await countRecentChallenges(admin, {
-      userId: user.id,
-      phone,
-      sinceIso: isoBefore(nowMs, 60 * 60 * 1000),
-    });
-    if (hasReachedLimit(hourly, PHONE_VERIFICATION_MAX_SENDS_PER_HOUR)) {
-      return failure("too_many_requests");
-    }
+    if (!reservation) return failure("too_many_requests");
 
     const provider = createPhoneVerificationProvider();
     const sent = await provider.send({
       phone,
       purpose: "registration",
-      idempotencyKey: buildPhoneVerificationIdempotencyKey({
-        userId: user.id,
-        phone,
-        purpose: "registration",
-        nowMs,
-      }),
+      idempotencyKey,
     });
     const expiresAt = new Date(nowMs + PHONE_VERIFICATION_TTL_SECONDS * 1000).toISOString();
-    const stored = await storeOrReuseChallenge(admin, {
-      user_id: user.id,
-      phone,
-      purpose: "registration",
-      provider: sent.provider,
-      provider_request_id: sent.requestId,
-      expires_at: expiresAt,
-    });
-
-    await invalidateActiveChallenges(admin, {
+    const completed = await completePhoneVerificationSend(admin, {
+      reservationId: reservation.reservationId,
       userId: user.id,
-      nowIso,
-      exceptChallengeId: stored.id,
+      provider: sent.provider,
+      providerRequestId: sent.requestId,
+      expiresAt,
     });
-
-    if (stored.reused) {
-      const existing = await readOwnedChallenge(admin, {
-        challengeId: stored.id,
-        userId: user.id,
-        nowIso,
-      });
-      if (!existing) return failure("service_unavailable");
-      return { ok: true, challengeId: stored.id, phone, expiresAt: existing.expires_at };
-    }
-
-    return { ok: true, challengeId: stored.id, phone, expiresAt };
+    return { ok: true, challengeId: completed.id, phone, expiresAt: completed.expiresAt };
   } catch (caught) {
     const code = providerFailure(caught);
     return failure(code === "too_many_requests" ? code : "service_unavailable");
@@ -171,7 +132,12 @@ export async function verifyPhoneVerificationAction(
     return failure(invalidChallenge ? "expired_code" : "invalid_code");
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return failure("service_unavailable");
+  }
   const nowIso = new Date().toISOString();
   try {
     const challenge = await readOwnedChallenge(admin, {
@@ -192,6 +158,12 @@ export async function verifyPhoneVerificationAction(
       return failure("service_unavailable");
     }
 
+    const reservedAttempt = await reservePhoneVerificationAttempt(admin, {
+      challengeId: challenge.id,
+      userId: user.id,
+    });
+    if (reservedAttempt === null) return failure("too_many_requests");
+
     const provider = createPhoneVerificationProvider();
     try {
       const result = await provider.verify({
@@ -199,21 +171,10 @@ export async function verifyPhoneVerificationAction(
         code: parsed.data.code,
       });
       if (!result.verified) {
-        const attempts = await recordChallengeFailure(admin, {
-          challengeId: challenge.id,
-          userId: user.id,
-        });
-        return failure(attempts === null ? "expired_code" : "invalid_code");
+        return failure("invalid_code");
       }
     } catch (caught) {
       const code = providerFailure(caught);
-      if (code === "invalid_code") {
-        const attempts = await recordChallengeFailure(admin, {
-          challengeId: challenge.id,
-          userId: user.id,
-        });
-        if (attempts === null) return failure("expired_code");
-      }
       return failure(code);
     }
 

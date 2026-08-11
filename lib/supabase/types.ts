@@ -163,6 +163,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      phone_verification_send_reservations: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          idempotency_key: string;
+          challenge_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone: string;
+          purpose?: "registration";
+          idempotency_key: string;
+          challenge_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone?: string;
+          purpose?: "registration";
+          idempotency_key?: string;
+          challenge_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       admin_roles: {
         Row: {
           user_id: string;
@@ -559,9 +589,23 @@ export interface Database {
         };
         Returns: Json;
       };
-      record_phone_verification_failure: {
+      reserve_phone_verification_send: {
+        Args: { p_user_id: string; p_phone: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      complete_phone_verification_send: {
+        Args: {
+          p_reservation_id: string;
+          p_user_id: string;
+          p_provider: string;
+          p_provider_request_id: string;
+          p_expires_at: string;
+        };
+        Returns: Json;
+      };
+      reserve_phone_verification_attempt: {
         Args: { p_challenge_id: string; p_user_id: string };
-        Returns: number;
+        Returns: number | null;
       };
       consume_phone_verification_challenge: {
         Args: { p_challenge_id: string; p_user_id: string };

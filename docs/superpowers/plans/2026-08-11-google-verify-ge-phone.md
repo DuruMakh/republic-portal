@@ -504,6 +504,15 @@ git commit -m "feat: add sealed phone verification challenges"
 
 ### Task 4: Challenge store and authenticated send/verify actions
 
+> **Concurrency amendment (2026-08-11):** The implementation details below that
+> describe app-side send counting, post-provider failure counting, direct
+> challenge insertion, or `record_phone_verification_failure` are superseded by
+> service-role-only atomic RPCs. A sealed send reservation is recorded under
+> deterministic user-then-phone transaction locks before provider send;
+> provider success atomically creates/reuses and supersedes to one canonical
+> challenge; each verification attempt is reserved before provider verification.
+> Failed provider/configuration calls remain counted conservatively.
+
 **Files:**
 - Create: `lib/phone-verification/store.ts`
 - Create: `lib/phone-verification/store.test.ts`

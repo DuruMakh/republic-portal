@@ -13,12 +13,10 @@ const mocks = vi.hoisted(() => ({
   createProvider: vi.fn(),
   send: vi.fn(),
   verify: vi.fn(),
-  cleanup: vi.fn(),
-  count: vi.fn(),
-  store: vi.fn(),
-  invalidate: vi.fn(),
+  reserveSend: vi.fn(),
+  completeSend: vi.fn(),
   read: vi.fn(),
-  recordFailure: vi.fn(),
+  reserveAttempt: vi.fn(),
   consume: vi.fn(),
 }));
 
@@ -28,12 +26,10 @@ vi.mock("@/lib/phone-verification/provider", () => ({
   createPhoneVerificationProvider: mocks.createProvider,
 }));
 vi.mock("@/lib/phone-verification/store", () => ({
-  cleanupOldChallenges: mocks.cleanup,
-  countRecentChallenges: mocks.count,
-  storeOrReuseChallenge: mocks.store,
-  invalidateActiveChallenges: mocks.invalidate,
+  reservePhoneVerificationSend: mocks.reserveSend,
+  completePhoneVerificationSend: mocks.completeSend,
+  reservePhoneVerificationAttempt: mocks.reserveAttempt,
   readOwnedChallenge: mocks.read,
-  recordChallengeFailure: mocks.recordFailure,
   consumeChallenge: mocks.consume,
 }));
 
@@ -41,6 +37,7 @@ import { sendPhoneVerificationAction, verifyPhoneVerificationAction } from "./ph
 
 const userId = "22222222-2222-4222-8222-222222222222";
 const challengeId = "11111111-1111-4111-8111-111111111111";
+const reservationId = "33333333-3333-4333-8333-333333333333";
 const phone = "+995555123456";
 const activeRow: ChallengeRow = {
   id: challengeId,
@@ -73,131 +70,104 @@ describe("phone verification server actions", () => {
       auth: { admin: { updateUserById: mocks.updateUserById } },
     });
     mocks.createProvider.mockReturnValue({ send: mocks.send, verify: mocks.verify });
-    mocks.cleanup.mockResolvedValue(undefined);
-    mocks.count.mockResolvedValue({ userCount: 0, phoneCount: 0 });
-    mocks.send.mockResolvedValue({ provider: "test", requestId: "provider-secret-id" });
-    mocks.store.mockResolvedValue({ id: challengeId, reused: false });
-    mocks.invalidate.mockResolvedValue(undefined);
+    mocks.reserveSend.mockResolvedValue({ reservationId });
+    mocks.completeSend.mockResolvedValue({ id: challengeId, expiresAt: activeRow.expires_at });
     mocks.read.mockResolvedValue(activeRow);
-    mocks.recordFailure.mockResolvedValue(1);
+    mocks.reserveAttempt.mockResolvedValue(1);
     mocks.consume.mockResolvedValue(true);
+    mocks.send.mockResolvedValue({ provider: "test", requestId: "provider-secret-id" });
     mocks.verify.mockResolvedValue({ verified: true });
     mocks.updateUserById.mockResolvedValue({ data: {}, error: null });
   });
 
-  it("rejects a missing session before creating privileged dependencies", async () => {
+  it("rejects missing or non-Google sessions before privileged dependencies", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toEqual({
+    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
       ok: false,
       code: "not_authenticated",
-      message: PHONE_VERIFICATION_MESSAGES.not_authenticated,
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    expect(mocks.createProvider).not.toHaveBeenCalled();
-  });
-
-  it("requires a server-owned Google provider before privileged work", async () => {
+    vi.clearAllMocks();
     authenticate(["email"]);
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toEqual({
+    mocks.createServerSupabase.mockResolvedValue({ auth: { getUser: mocks.getUser } });
+    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
       ok: false,
       code: "google_required",
-      message: PHONE_VERIFICATION_MESSAGES.google_required,
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    expect(mocks.createProvider).not.toHaveBeenCalled();
   });
 
-  it("rejects a malformed phone before privileged work", async () => {
+  it("rejects malformed phone input before privileged work", async () => {
     authenticate();
-    await expect(sendPhoneVerificationAction({ phone: "not-a-phone" })).resolves.toEqual({
+    await expect(sendPhoneVerificationAction({ phone: "bad" })).resolves.toEqual({
       ok: false,
       code: "invalid_phone",
       message: PHONE_VERIFICATION_MESSAGES.invalid_phone,
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    expect(mocks.createProvider).not.toHaveBeenCalled();
   });
 
-  it("enforces the 60-second and hourly limits without calling the provider", async () => {
+  it("atomically reserves the send before provider work and completes one canonical challenge", async () => {
     authenticate();
-    mocks.count.mockResolvedValueOnce({ userCount: 1, phoneCount: 0 });
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
-      ok: false,
-      code: "too_many_requests",
-    });
-    expect(mocks.createProvider).not.toHaveBeenCalled();
-
-    vi.clearAllMocks();
-    authenticate();
-    mocks.createServerSupabase.mockResolvedValue({ auth: { getUser: mocks.getUser } });
-    mocks.createAdminClient.mockReturnValue({ auth: { admin: { updateUserById: mocks.updateUserById } } });
-    mocks.cleanup.mockResolvedValue(undefined);
-    mocks.count
-      .mockResolvedValueOnce({ userCount: 0, phoneCount: 0 })
-      .mockResolvedValueOnce({ userCount: 5, phoneCount: 0 });
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
-      ok: false,
-      code: "too_many_requests",
-    });
-    expect(mocks.createProvider).not.toHaveBeenCalled();
-  });
-
-  it("sends a normalized phone with an opaque idempotency key and 300-second expiry", async () => {
-    authenticate();
-    const result = await sendPhoneVerificationAction({ phone: "555 12 34 56" });
-
-    expect(result).toEqual({
+    await expect(sendPhoneVerificationAction({ phone: "555 12 34 56" })).resolves.toEqual({
       ok: true,
       challengeId,
       phone,
-      expiresAt: "2026-08-11T12:05:00.000Z",
+      expiresAt: activeRow.expires_at,
     });
-    expect(mocks.send).toHaveBeenCalledWith({
+    expect(mocks.reserveSend).toHaveBeenCalledWith(expect.anything(), {
+      userId,
       phone,
-      purpose: "registration",
       idempotencyKey: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
-    expect(mocks.send.mock.calls[0]?.[0].idempotencyKey).not.toContain(phone);
-    expect(mocks.store).toHaveBeenCalledWith(expect.anything(), {
-      user_id: userId,
-      phone,
-      purpose: "registration",
+    expect(mocks.reserveSend.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.send.mock.invocationCallOrder[0] ?? 0,
+    );
+    expect(mocks.completeSend).toHaveBeenCalledWith(expect.anything(), {
+      reservationId,
+      userId,
       provider: "test",
-      provider_request_id: "provider-secret-id",
-      expires_at: "2026-08-11T12:05:00.000Z",
+      providerRequestId: "provider-secret-id",
+      expiresAt: activeRow.expires_at,
     });
-    expect(mocks.invalidate).toHaveBeenCalledWith(expect.anything(), {
-      userId,
-      nowIso: "2026-08-11T12:00:00.000Z",
-      exceptChallengeId: challengeId,
-    });
-    expect(result).not.toHaveProperty("provider_request_id");
   });
 
-  it("reuses the provider request expiry and still invalidates older active challenges", async () => {
+  it("returns the atomic send limit without constructing or calling the provider", async () => {
     authenticate();
-    mocks.store.mockResolvedValue({ id: challengeId, reused: true });
-    mocks.read.mockResolvedValue({ ...activeRow, expires_at: "2026-08-11T12:04:00.000Z" });
-
+    mocks.reserveSend.mockResolvedValue(null);
     await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toEqual({
-      ok: true,
-      challengeId,
-      phone,
-      expiresAt: "2026-08-11T12:04:00.000Z",
+      ok: false,
+      code: "too_many_requests",
+      message: PHONE_VERIFICATION_MESSAGES.too_many_requests,
     });
-    expect(mocks.invalidate).toHaveBeenCalledWith(expect.anything(), {
-      userId,
-      nowIso: "2026-08-11T12:00:00.000Z",
-      exceptChallengeId: challengeId,
-    });
+    expect(mocks.createProvider).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
   });
+
+  it.each(["send", "verify"])(
+    "maps %s admin-client configuration errors to service_unavailable",
+    async (action) => {
+      authenticate();
+      mocks.createAdminClient.mockImplementation(() => {
+        throw new Error("missing service configuration");
+      });
+      const result =
+        action === "send"
+          ? await sendPhoneVerificationAction({ phone: "555123456" })
+          : await verifyPhoneVerificationAction({ challengeId, code: "123456" });
+      expect(result).toEqual({
+        ok: false,
+        code: "service_unavailable",
+        message: PHONE_VERIFICATION_MESSAGES.service_unavailable,
+      });
+      expect(mocks.createProvider).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([
     ["malformed", { challengeId: "bad", code: "123456" }],
-    ["foreign", { challengeId, code: "123456" }],
-    ["expired", { challengeId, code: "123456" }],
-    ["stale consumed", { challengeId, code: "123456" }],
-  ])("returns the recovery message for a %s challenge without provider work", async (_name, input) => {
+    ["foreign or expired", { challengeId, code: "123456" }],
+  ])("returns recovery copy for a %s challenge without provider work", async (_name, input) => {
     authenticate();
     mocks.read.mockResolvedValue(null);
     await expect(verifyPhoneVerificationAction(input)).resolves.toEqual({
@@ -208,7 +178,7 @@ describe("phone verification server actions", () => {
     expect(mocks.createProvider).not.toHaveBeenCalled();
   });
 
-  it("atomically records a wrong code and maps the provider error to approved copy", async () => {
+  it("reserves an attempt before Verify.ge and maps a wrong code without a post-call increment", async () => {
     authenticate();
     mocks.verify.mockRejectedValue(new PhoneVerificationProviderError("invalid_code"));
     await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
@@ -216,31 +186,24 @@ describe("phone verification server actions", () => {
       code: "invalid_code",
       message: PHONE_VERIFICATION_MESSAGES.invalid_code,
     });
-    expect(mocks.recordFailure).toHaveBeenCalledWith(expect.anything(), { challengeId, userId });
+    expect(mocks.reserveAttempt).toHaveBeenCalledWith(expect.anything(), { challengeId, userId });
+    expect(mocks.reserveAttempt.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.verify.mock.invocationCallOrder[0] ?? 0,
+    );
   });
 
-  it("returns recovery copy when a concurrent state change prevents wrong-code accounting", async () => {
+  it("blocks the sixth concurrent attempt before provider verification", async () => {
     authenticate();
-    mocks.verify.mockRejectedValue(new PhoneVerificationProviderError("invalid_code"));
-    mocks.recordFailure.mockResolvedValue(null);
-    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
-      ok: false,
-      code: "expired_code",
-      message: PHONE_VERIFICATION_MESSAGES.expired_code,
-    });
-  });
-
-  it("refuses a sixth attempt without calling the provider", async () => {
-    authenticate();
-    mocks.read.mockResolvedValue({ ...activeRow, verify_attempts: 5 });
-    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toMatchObject({
-      ok: false,
-      code: "too_many_requests",
-    });
+    mocks.read.mockResolvedValue({ ...activeRow, verify_attempts: 4 });
+    mocks.reserveAttempt.mockResolvedValue(null);
+    await expect(
+      verifyPhoneVerificationAction({ challengeId, code: "123456" }),
+    ).resolves.toMatchObject({ ok: false, code: "too_many_requests" });
     expect(mocks.createProvider).not.toHaveBeenCalled();
+    expect(mocks.verify).not.toHaveBeenCalled();
   });
 
-  it("consumes a correct proof once, then attaches and confirms the phone", async () => {
+  it("consumes a correct reserved attempt once, then confirms the Auth phone", async () => {
     authenticate();
     await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
       ok: true,
@@ -250,7 +213,7 @@ describe("phone verification server actions", () => {
     expect(mocks.updateUserById).toHaveBeenCalledWith(userId, { phone, phone_confirm: true });
   });
 
-  it("retries only Auth phone attachment after verification succeeded but attachment failed", async () => {
+  it("retries only Auth attachment for a valid consumed proof after transient failure", async () => {
     authenticate();
     mocks.read
       .mockResolvedValueOnce(activeRow)
@@ -258,43 +221,50 @@ describe("phone verification server actions", () => {
     mocks.updateUserById
       .mockResolvedValueOnce({ data: null, error: { code: "unexpected_failure" } })
       .mockResolvedValueOnce({ data: {}, error: null });
-
-    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
-      ok: false,
-      code: "service_unavailable",
-      message: PHONE_VERIFICATION_MESSAGES.service_unavailable,
-    });
+    await expect(
+      verifyPhoneVerificationAction({ challengeId, code: "123456" }),
+    ).resolves.toMatchObject({ ok: false, code: "service_unavailable" });
     await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
       ok: true,
       phone,
     });
-    expect(mocks.createProvider).toHaveBeenCalledTimes(1);
+    expect(mocks.reserveAttempt).toHaveBeenCalledTimes(1);
     expect(mocks.verify).toHaveBeenCalledTimes(1);
     expect(mocks.consume).toHaveBeenCalledTimes(1);
-    expect(mocks.updateUserById).toHaveBeenCalledTimes(2);
-    expect(mocks.send).not.toHaveBeenCalled();
   });
 
-  it.each(["phone_exists", "user_already_exists"])(
-    "maps Supabase Auth %s to phone_in_use without profile writes",
-    async (code) => {
-      authenticate();
-      mocks.read.mockResolvedValue({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
-      mocks.updateUserById.mockResolvedValue({ data: null, error: { code } });
-      await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
-        ok: false,
-        code: "phone_in_use",
-        message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
-      });
-      expect(mocks.updateUserById).toHaveBeenCalledTimes(1);
-    },
-  );
+  it.each(["phone_exists", "user_already_exists"])("maps Auth %s to phone_in_use", async (code) => {
+    authenticate();
+    mocks.read.mockResolvedValue({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
+    mocks.updateUserById.mockResolvedValue({ data: null, error: { code } });
+    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
+      ok: false,
+      code: "phone_in_use",
+      message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
+    });
+  });
 
   it.each([
-    ["send", () => mocks.send.mockRejectedValue(new Error("secret provider details")), () => sendPhoneVerificationAction({ phone: "555123456" })],
-    ["verify", () => mocks.verify.mockRejectedValue(new PhoneVerificationProviderError("service_unavailable")), () => verifyPhoneVerificationAction({ challengeId, code: "123456" })],
-    ["config", () => mocks.createProvider.mockImplementation(() => { throw new Error("missing secret"); }), () => sendPhoneVerificationAction({ phone: "555123456" })],
-  ])("redacts a %s failure as service_unavailable", async (_name, arrange, act) => {
+    [
+      "provider send",
+      () => mocks.send.mockRejectedValue(new Error("secret provider details")),
+      () => sendPhoneVerificationAction({ phone: "555123456" }),
+    ],
+    [
+      "provider verify",
+      () =>
+        mocks.verify.mockRejectedValue(new PhoneVerificationProviderError("service_unavailable")),
+      () => verifyPhoneVerificationAction({ challengeId, code: "123456" }),
+    ],
+    [
+      "provider config",
+      () =>
+        mocks.createProvider.mockImplementation(() => {
+          throw new Error("missing secret");
+        }),
+      () => sendPhoneVerificationAction({ phone: "555123456" }),
+    ],
+  ])("redacts a %s failure", async (_name, arrange, act) => {
     authenticate();
     arrange();
     await expect(act()).resolves.toEqual({

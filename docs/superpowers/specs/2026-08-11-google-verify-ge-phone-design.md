@@ -197,6 +197,16 @@ User-facing failures distinguish only what helps the person recover: invalid or
 expired code, resend cooldown, too many attempts, number already used, lost
 Google session and temporary service failure. All text is Georgian.
 
+### Concurrency amendment (2026-08-11)
+
+Send limits are reserved transactionally in a sealed service-role ledger before
+calling Verify.ge. The reservation RPC serializes the user scope first and the
+phone scope second; provider success is then bound to one canonical challenge
+and supersedes older user/phone challenges in a second atomic RPC. Verification
+attempts are incremented atomically before the provider call, so at most five
+concurrent guesses can reach Verify.ge. Failed provider/configuration calls keep
+their send or attempt reservation and therefore fail closed conservatively.
+
 ## 8. Existing system changes
 
 - `/login` becomes one Google sign-in button and no longer accepts a phone.

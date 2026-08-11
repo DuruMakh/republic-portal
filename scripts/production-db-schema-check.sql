@@ -18,6 +18,10 @@ begin
     raise exception 'required relation public.phone_verification_challenges is missing';
   end if;
 
+  if to_regclass('public.phone_verification_send_reservations') is null then
+    raise exception 'required relation public.phone_verification_send_reservations is missing';
+  end if;
+
   if not exists (
     select 1
     from pg_catalog.pg_class as c
@@ -28,6 +32,18 @@ begin
       and c.relrowsecurity
   ) then
     raise exception 'public.phone_verification_challenges must have RLS enabled';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_catalog.pg_class as c
+    join pg_catalog.pg_namespace as n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'phone_verification_send_reservations'
+      and c.relkind in ('r', 'p')
+      and c.relrowsecurity
+  ) then
+    raise exception 'public.phone_verification_send_reservations must have RLS enabled';
   end if;
 
   if exists (
@@ -73,20 +89,54 @@ begin
     raise exception 'service_role challenge table privileges drifted';
   end if;
 
-  if to_regprocedure('public.record_phone_verification_failure(uuid,uuid)') is null
+  if has_table_privilege('anon', 'public.phone_verification_send_reservations', 'SELECT, INSERT, UPDATE, DELETE')
+     or has_any_column_privilege('anon', 'public.phone_verification_send_reservations', 'SELECT, INSERT, UPDATE, REFERENCES')
+     or has_table_privilege('authenticated', 'public.phone_verification_send_reservations', 'SELECT, INSERT, UPDATE, DELETE')
+     or has_any_column_privilege('authenticated', 'public.phone_verification_send_reservations', 'SELECT, INSERT, UPDATE, REFERENCES') then
+    raise exception 'phone verification reservation table leaked to a browser role';
+  end if;
+
+  if not has_table_privilege('service_role', 'public.phone_verification_send_reservations', 'SELECT')
+     or not has_table_privilege('service_role', 'public.phone_verification_send_reservations', 'INSERT')
+     or not has_table_privilege('service_role', 'public.phone_verification_send_reservations', 'UPDATE')
+     or not has_table_privilege('service_role', 'public.phone_verification_send_reservations', 'DELETE') then
+    raise exception 'service_role reservation table privileges drifted';
+  end if;
+
+  if to_regprocedure('public.reserve_phone_verification_send(uuid,text,text)') is null
+     or to_regprocedure('public.complete_phone_verification_send(uuid,uuid,text,text,timestamp with time zone)') is null
+     or to_regprocedure('public.reserve_phone_verification_attempt(uuid,uuid)') is null
      or to_regprocedure('public.consume_phone_verification_challenge(uuid,uuid)') is null
      or to_regprocedure('public.register_google(text,text,text)') is null then
     raise exception 'required phone verification function is missing';
   end if;
 
   if has_function_privilege(
-       'anon', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+       'anon', 'public.reserve_phone_verification_send(uuid,text,text)', 'EXECUTE'
      )
      or has_function_privilege(
-       'authenticated', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+       'authenticated', 'public.reserve_phone_verification_send(uuid,text,text)', 'EXECUTE'
      )
      or not has_function_privilege(
-       'service_role', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+       'service_role', 'public.reserve_phone_verification_send(uuid,text,text)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon', 'public.complete_phone_verification_send(uuid,uuid,text,text,timestamp with time zone)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'authenticated', 'public.complete_phone_verification_send(uuid,uuid,text,text,timestamp with time zone)', 'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role', 'public.complete_phone_verification_send(uuid,uuid,text,text,timestamp with time zone)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon', 'public.reserve_phone_verification_attempt(uuid,uuid)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'authenticated', 'public.reserve_phone_verification_attempt(uuid,uuid)', 'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role', 'public.reserve_phone_verification_attempt(uuid,uuid)', 'EXECUTE'
      )
      or has_function_privilege(
        'anon', 'public.consume_phone_verification_challenge(uuid,uuid)', 'EXECUTE'
