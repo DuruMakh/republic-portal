@@ -132,6 +132,11 @@ describe("production security advisor gate", () => {
     const revokeIndex = migration.indexOf(revokeStatement ?? "");
     const publicGrantIndex = migration.indexOf(publicGrantStatement ?? "");
     const signedInGrantIndex = migration.indexOf(signedInGrantStatement ?? "");
+    const sqlStatements = migration
+      .split(";")
+      .map((statement) => statement.trim())
+      .filter(Boolean)
+      .map((statement) => `${statement};`);
 
     expect(migration).toContain("revoke all on");
     expect(migration).toContain("from anon, authenticated");
@@ -140,6 +145,12 @@ describe("production security advisor gate", () => {
     expect(migration).toContain("to authenticated");
     expect(revokeIndex).toBeLessThan(publicGrantIndex);
     expect(revokeIndex).toBeLessThan(signedInGrantIndex);
+    expect(publicGrantIndex).toBeLessThan(signedInGrantIndex);
+    expect(sqlStatements).toEqual([
+      revokeStatement,
+      publicGrantStatement,
+      signedInGrantStatement,
+    ]);
     expect(relationNames(revokeStatement ?? "").sort()).toEqual(
       [...access.public_read, ...access.signed_in_read].sort(),
     );
