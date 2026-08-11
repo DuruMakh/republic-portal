@@ -131,7 +131,8 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain("set role anon");
     expect(workflow).toContain("set role authenticated");
     expect(workflow).toContain("42501");
-    expect(workflow).toContain("permission denied for function has_any_admin_role");
+    expect(workflow).toContain("permission denied for view admin_overview");
+    expect(workflow).not.toContain("permission denied for function has_any_admin_role");
     expect(workflow).not.toContain("--fail-on error");
 
     const applyIndex = workflow.indexOf("- name: Apply migrations");

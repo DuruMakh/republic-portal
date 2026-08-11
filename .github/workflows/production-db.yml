@@ -240,7 +240,7 @@ jobs:
           set -e
           test "$ANON_ADMIN_STATUS" -ne 0
           grep -F "42501" production-db-security-evidence/anon-admin.txt >/dev/null
-          grep -F "permission denied for function has_any_admin_role" \
+          grep -F "permission denied for view admin_overview" \
             production-db-security-evidence/anon-admin.txt >/dev/null
 
           supabase db query --linked \
