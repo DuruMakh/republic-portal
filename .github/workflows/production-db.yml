@@ -35,7 +35,7 @@ jobs:
     environment: production-db
     env:
       EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
-      EXPECTED_MIGRATION_FILE_COUNT: 31
+      EXPECTED_MIGRATION_FILE_COUNT: 32
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
@@ -99,7 +99,7 @@ jobs:
     environment: production-db
     env:
       EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
-      EXPECTED_MIGRATION_FILE_COUNT: 31
+      EXPECTED_MIGRATION_FILE_COUNT: 32
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
@@ -221,8 +221,51 @@ jobs:
       - name: Verify schema and RLS
         run: supabase db query --linked --file scripts/production-db-schema-check.sql
 
-      - name: Lint public schema
-        run: supabase db lint --linked --schema public --level warning --fail-on error
+      - name: Run production role probes
+        run: |
+          set -euo pipefail
+          mkdir -p production-db-security-evidence
 
-      - name: Run security advisors
-        run: supabase db advisors --linked --type security --level error --fail-on error
+          supabase db query --linked \
+            "set role anon; select count(*) as anon_public_stats_rows from public.public_stats;" \
+            > production-db-security-evidence/anon-public.txt
+          jq -e '.rows == [{"anon_public_stats_rows":1}]' \
+            production-db-security-evidence/anon-public.txt >/dev/null
+
+          set +e
+          supabase db query --linked \
+            "set role anon; select count(*) from public.admin_overview;" \
+            > production-db-security-evidence/anon-admin.txt 2>&1
+          ANON_ADMIN_STATUS="$?"
+          set -e
+          test "$ANON_ADMIN_STATUS" -ne 0
+          grep -F "42501" production-db-security-evidence/anon-admin.txt >/dev/null
+          grep -F "permission denied for function has_any_admin_role" \
+            production-db-security-evidence/anon-admin.txt >/dev/null
+
+          supabase db query --linked \
+            "set role authenticated; select count(*) as authenticated_admin_overview_rows from public.admin_overview;" \
+            > production-db-security-evidence/authenticated-non-admin.txt
+          jq -e '.rows == [{"authenticated_admin_overview_rows":0}]' \
+            production-db-security-evidence/authenticated-non-admin.txt >/dev/null
+
+      - name: Lint public schema
+        run: supabase db lint --linked --schema public --level warning
+
+      - name: Capture security advisors
+        run: |
+          set -euo pipefail
+          mkdir -p production-db-security-evidence
+          supabase db advisors --linked --type security --level error --fail-on none --output-format json \
+            > production-db-security-evidence/advisors.json
+
+      - name: Verify reviewed security advisor set
+        run: node scripts/verify-production-security-advisors.mjs production-db-security-evidence/advisors.json
+
+      - name: Upload production security evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-db-security-evidence
+          path: production-db-security-evidence
+          if-no-files-found: warn

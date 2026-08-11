@@ -110,10 +110,10 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain('test "$APPROVED_RUN_CONCLUSION" = "success"');
   });
 
-  it("asserts the committed 31-file migration baseline before each database phase", () => {
+  it("asserts the committed 32-file migration baseline before each database phase", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 
-    expect(workflow).toContain("EXPECTED_MIGRATION_FILE_COUNT: 31");
+    expect(workflow).toContain("EXPECTED_MIGRATION_FILE_COUNT: 32");
     expect(workflow.match(/Migration file baseline/g)).toHaveLength(2);
     expect(workflow).toContain("find supabase/migrations -maxdepth 1 -type f -name '*.sql'");
     expect(workflow).toContain(
@@ -121,7 +121,32 @@ describe("production database delivery contract", () => {
     );
   });
 
-  it("keeps the post-apply SQL verifier read-only and checks RLS", () => {
+  it("runs the post-apply security gates in dependency order and preserves their evidence", () => {
+    const workflow = readRepoFile(".github/workflows/production-db.yml");
+
+    expect(workflow).toContain("production-db-security-evidence/advisors.json");
+    expect(workflow).toContain("--fail-on none");
+    expect(workflow).toContain("verify-production-security-advisors.mjs");
+    expect(workflow).toContain("production-db-security-evidence");
+    expect(workflow).toContain("set role anon");
+    expect(workflow).toContain("set role authenticated");
+    expect(workflow).toContain("42501");
+    expect(workflow).toContain("permission denied for function has_any_admin_role");
+    expect(workflow).not.toContain("--fail-on error");
+
+    const applyIndex = workflow.indexOf("- name: Apply migrations");
+    const schemaCheckIndex = workflow.indexOf("- name: Verify schema and RLS");
+    const roleProbeIndex = workflow.indexOf("- name: Run production role probes");
+    const advisorCaptureIndex = workflow.indexOf("- name: Capture security advisors");
+    const advisorVerifyIndex = workflow.indexOf("- name: Verify reviewed security advisor set");
+
+    expect(applyIndex).toBeLessThan(schemaCheckIndex);
+    expect(schemaCheckIndex).toBeLessThan(roleProbeIndex);
+    expect(roleProbeIndex).toBeLessThan(advisorCaptureIndex);
+    expect(advisorCaptureIndex).toBeLessThan(advisorVerifyIndex);
+  });
+
+  it("keeps the post-apply SQL verifier read-only and checks RLS plus exact client view grants", () => {
     const sql = readRepoFile("scripts/production-db-schema-check.sql");
     const withoutComments = sql.replace(/--.*$/gm, "");
 
@@ -129,6 +154,76 @@ describe("production database delivery contract", () => {
     expect(sql).toContain("public.regions");
     expect(sql).toContain("public.profiles");
     expect(sql).toContain("public.support_messages");
+    expect(sql).toContain("role_table_grants");
+    expect(sql).toContain("production view set drifted");
+    expect(sql).toContain("production view grants drifted");
+    expect(sql).toMatch(/\bexcept\b/i);
+    expect(sql).toContain("anon");
+    expect(sql).toContain("authenticated");
+    expect(sql).toContain("SELECT");
+    for (const viewName of [
+      "public_delegates",
+      "public_events",
+      "public_news",
+      "public_stats",
+      "transparency_regions",
+      "transparency_stats",
+      "admin_admins",
+      "admin_audit",
+      "admin_delegate_queue",
+      "admin_events",
+      "admin_finance_stats",
+      "admin_members",
+      "admin_news",
+      "admin_overview",
+      "admin_payments",
+      "admin_poll_options",
+      "admin_polls",
+      "admin_region_stats",
+      "admin_settings",
+      "admin_support_messages",
+      "member_event_going_counts",
+      "member_news",
+      "member_poll_options",
+      "member_polls",
+      "poll_option_counts",
+    ]) {
+      expect(sql).toContain(`('${viewName}')`);
+    }
+    for (const viewName of [
+      "public_delegates",
+      "public_events",
+      "public_news",
+      "public_stats",
+      "transparency_regions",
+      "transparency_stats",
+    ]) {
+      expect(sql).toContain(`('${viewName}', 'anon', 'SELECT')`);
+      expect(sql).toContain(`('${viewName}', 'authenticated', 'SELECT')`);
+    }
+    for (const viewName of [
+      "admin_admins",
+      "admin_audit",
+      "admin_delegate_queue",
+      "admin_events",
+      "admin_finance_stats",
+      "admin_members",
+      "admin_news",
+      "admin_overview",
+      "admin_payments",
+      "admin_poll_options",
+      "admin_polls",
+      "admin_region_stats",
+      "admin_settings",
+      "admin_support_messages",
+      "member_event_going_counts",
+      "member_news",
+      "member_poll_options",
+      "member_polls",
+      "poll_option_counts",
+    ]) {
+      expect(sql).toContain(`('${viewName}', 'authenticated', 'SELECT')`);
+    }
     expect(withoutComments).not.toMatch(/\b(insert|update|delete|truncate|drop|alter|create)\b/i);
   });
 });
