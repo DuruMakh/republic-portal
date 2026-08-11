@@ -250,7 +250,7 @@ jobs:
             production-db-security-evidence/authenticated-non-admin.txt >/dev/null
 
       - name: Lint public schema
-        run: supabase db lint --linked --schema public --level warning
+        run: supabase db lint --linked --schema public --level warning --fail-on error
 
       - name: Capture security advisors
         run: |

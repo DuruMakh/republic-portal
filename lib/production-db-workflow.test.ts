@@ -125,7 +125,6 @@ describe("production database delivery contract", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 
     expect(workflow).toContain("production-db-security-evidence/advisors.json");
-    expect(workflow).toContain("--fail-on none");
     expect(workflow).toContain("verify-production-security-advisors.mjs");
     expect(workflow).toContain("production-db-security-evidence");
     expect(workflow).toContain("set role anon");
@@ -133,16 +132,23 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain("42501");
     expect(workflow).toContain("permission denied for view admin_overview");
     expect(workflow).not.toContain("permission denied for function has_any_admin_role");
-    expect(workflow).not.toContain("--fail-on error");
 
     const applyIndex = workflow.indexOf("- name: Apply migrations");
     const schemaCheckIndex = workflow.indexOf("- name: Verify schema and RLS");
     const roleProbeIndex = workflow.indexOf("- name: Run production role probes");
+    const lintIndex = workflow.indexOf("- name: Lint public schema");
     const advisorCaptureIndex = workflow.indexOf("- name: Capture security advisors");
     const advisorVerifyIndex = workflow.indexOf("- name: Verify reviewed security advisor set");
+    const lintStep = workflow.slice(lintIndex, advisorCaptureIndex);
+    const advisorStep = workflow.slice(advisorCaptureIndex, advisorVerifyIndex);
 
     expect(applyIndex).toBeLessThan(schemaCheckIndex);
     expect(schemaCheckIndex).toBeLessThan(roleProbeIndex);
+    expect(roleProbeIndex).toBeLessThan(lintIndex);
+    expect(lintStep).toContain("--fail-on error");
+    expect(lintStep).not.toContain("--fail-on none");
+    expect(advisorStep).toContain("--fail-on none");
+    expect(advisorStep).not.toContain("--fail-on error");
     expect(roleProbeIndex).toBeLessThan(advisorCaptureIndex);
     expect(advisorCaptureIndex).toBeLessThan(advisorVerifyIndex);
   });
@@ -150,14 +156,28 @@ describe("production database delivery contract", () => {
   it("keeps the post-apply SQL verifier read-only and checks RLS plus exact client view grants", () => {
     const sql = readRepoFile("scripts/production-db-schema-check.sql");
     const withoutComments = sql.replace(/--.*$/gm, "");
+    const executableSql = withoutComments.replace(/'(?:''|[^'])*'/g, "''");
 
     expect(sql).toContain("relrowsecurity");
     expect(sql).toContain("public.regions");
     expect(sql).toContain("public.profiles");
     expect(sql).toContain("public.support_messages");
     expect(sql).toContain("role_table_grants");
+    expect(sql).toContain("table_privileges");
+    expect(sql).toContain("has_table_privilege");
+    expect(sql).toContain("has_any_column_privilege");
+    expect(sql).toContain("aclexplode");
+    expect(sql).toContain("pg_has_role");
     expect(sql).toContain("production view set drifted");
     expect(sql).toContain("production view grants drifted");
+    expect(sql).toContain("production view effective privileges drifted");
+    expect(sql).toContain("production view column privileges drifted");
+    expect(sql).toContain(
+      "join expected_views as expected on expected.view_name = grants.table_name",
+    );
+    expect(sql).toContain("grants.grantee = 'PUBLIC'");
+    expect(sql).toContain("'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN'");
+    expect(sql).toContain("'INSERT, UPDATE, REFERENCES'");
     expect(sql).toMatch(/\bexcept\b/i);
     expect(sql).toContain("anon");
     expect(sql).toContain("authenticated");
@@ -225,6 +245,6 @@ describe("production database delivery contract", () => {
     ]) {
       expect(sql).toContain(`('${viewName}', 'authenticated', 'SELECT')`);
     }
-    expect(withoutComments).not.toMatch(/\b(insert|update|delete|truncate|drop|alter|create)\b/i);
+    expect(executableSql).not.toMatch(/\b(insert|update|delete|truncate|drop|alter|create)\b/i);
   });
 });

@@ -24,7 +24,7 @@ revoke all on
   member_poll_options,
   member_polls,
   poll_option_counts
-  from anon, authenticated;
+  from public, anon, authenticated;
 
 grant select on
   public_delegates,

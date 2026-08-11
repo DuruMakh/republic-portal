@@ -153,7 +153,7 @@ describe("production security advisor gate", () => {
 
     const migration = readFileSync(join(migrationsDirectory, matchingMigrations[0] ?? ""), "utf8");
     const revokeStatement = migration.match(
-      /revoke all on\s+([\s\S]*?)\s+from anon, authenticated;/i,
+      /revoke all on\s+([\s\S]*?)\s+from public, anon, authenticated;/i,
     )?.[0];
     const publicGrantStatement = migration.match(
       /grant select on\s+([\s\S]*?)\s+to anon, authenticated;/i,
@@ -171,7 +171,8 @@ describe("production security advisor gate", () => {
       .map((statement) => `${statement};`);
 
     expect(migration).toContain("revoke all on");
-    expect(migration).toContain("from anon, authenticated");
+    expect(migration).toContain("from public, anon, authenticated");
+    expect(migration).not.toContain("security_invoker");
     expect(migration).toContain("grant select on");
     expect(migration).toContain("to anon, authenticated");
     expect(migration).toContain("to authenticated");
