@@ -9,17 +9,16 @@ import { Field } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { PhoneVerification } from "@/components/PhoneVerification";
 import { deriveDestination } from "@/lib/cabinet";
-import {
-  GENERIC_FUNNEL_ERROR,
-  isReferralCodeCandidate,
-  NOT_AUTHENTICATED_MESSAGE,
-  type ActionResult,
-  type CabinetState,
-} from "@/lib/funnel";
+import { GENERIC_FUNNEL_ERROR, isReferralCodeCandidate, type CabinetState } from "@/lib/funnel";
 import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
 import { createClient } from "@/lib/supabase/client";
-import { registerGoogleAction } from "./google-actions";
+import { normalizeGeorgianPhone } from "@/lib/validation";
+import {
+  registerGoogleAction,
+  type GoogleRegistrationActionResult,
+  type GoogleRegistrationFailureCode,
+} from "./google-actions";
 import { sendPhoneVerificationAction } from "./phone-actions";
 
 type GoogleJoinPhase = "loading" | "google" | "form" | "otp" | "retry";
@@ -32,12 +31,8 @@ function isFieldKey(key: unknown): key is FieldKey {
   return typeof key === "string" && (FIELD_KEYS as readonly string[]).includes(key);
 }
 
-function isGoogleSessionError(message: string): boolean {
-  return (
-    message === NOT_AUTHENTICATED_MESSAGE ||
-    message === PHONE_VERIFICATION_MESSAGES.not_authenticated ||
-    message === PHONE_VERIFICATION_MESSAGES.google_required
-  );
+function isGoogleSessionError(code: GoogleRegistrationFailureCode): boolean {
+  return code === "not_authenticated" || code === "google_required";
 }
 
 export function GoogleJoinForm() {
@@ -52,6 +47,7 @@ export function GoogleJoinForm() {
   const [lastName, setLastName] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
+  const [confirmedPhone, setConfirmedPhone] = useState<string>();
   const [challenge, setChallenge] = useState<Challenge>();
   const [verifiedPhone, setVerifiedPhone] = useState<string>();
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
@@ -95,7 +91,13 @@ export function GoogleJoinForm() {
           router.replace(deriveDestination(state));
           return;
         }
-        if (user.phone && user.phone_confirmed_at) setPhoneInput(user.phone);
+        if (user.phone && user.phone_confirmed_at) {
+          const normalizedPhone = normalizeGeorgianPhone(user.phone);
+          if (normalizedPhone !== null) {
+            setPhoneInput(normalizedPhone);
+            setConfirmedPhone(normalizedPhone);
+          }
+        }
         setPhase("form");
       } catch {
         if (!cancelled) {
@@ -127,12 +129,13 @@ export function GoogleJoinForm() {
     setFormError(message);
     setChallenge(undefined);
     setVerifiedPhone(undefined);
+    setConfirmedPhone(undefined);
     setPhase("google");
   }
 
-  function handleRegisterResult(result: ActionResult) {
+  function handleRegisterResult(result: GoogleRegistrationActionResult) {
     if (!result.ok) {
-      if (isGoogleSessionError(result.error)) {
+      if (isGoogleSessionError(result.code)) {
         returnToGoogle(result.error);
       } else {
         setFormError(result.error);
@@ -152,6 +155,16 @@ export function GoogleJoinForm() {
     router.replace("/me");
   }
 
+  function handlePreflightFailure(result: Extract<GoogleRegistrationActionResult, { ok: false }>) {
+    if (isGoogleSessionError(result.code)) {
+      returnToGoogle(result.error);
+    } else if (result.code === "phone_in_use") {
+      setErrors({ phone: result.error });
+    } else {
+      setFormError(result.error);
+    }
+  }
+
   async function submitForm() {
     setFormError(undefined);
     const parsed = registerSchema.safeParse({
@@ -168,6 +181,22 @@ export function GoogleJoinForm() {
     setErrors({});
     setBusy(true);
     try {
+      if (confirmedPhone === parsed.data.phone) {
+        const registration = await registerGoogleAction({
+          firstName: parsed.data.firstName,
+          lastName: parsed.data.lastName,
+          refCode: parsed.data.refCode,
+        });
+        if (registration.ok) {
+          handleRegisterResult(registration);
+          return;
+        }
+        if (registration.code !== "phone_required") {
+          handlePreflightFailure(registration);
+          return;
+        }
+      }
+
       const result = await sendPhoneVerificationAction({ phone: parsed.data.phone });
       if (!result.ok) {
         if (result.code === "not_authenticated" || result.code === "google_required") {
@@ -241,6 +270,15 @@ export function GoogleJoinForm() {
     }
   }
 
+  function changePhone() {
+    setChallenge(undefined);
+    setVerifiedPhone(undefined);
+    setPhone("");
+    setFormError(undefined);
+    setErrors({});
+    setPhase("form");
+  }
+
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
       <Eyebrow>წევრის რეგისტრაცია</Eyebrow>
@@ -272,13 +310,18 @@ export function GoogleJoinForm() {
           ) : null}
 
           {phase === "otp" && challenge ? (
-            <PhoneVerification
-              phone={phone}
-              challengeId={challenge.challengeId}
-              expiresAt={challenge.expiresAt}
-              onChallengeChanged={setChallenge}
-              onVerified={afterPhoneVerified}
-            />
+            <div className="flex flex-col gap-4">
+              <PhoneVerification
+                phone={phone}
+                challengeId={challenge.challengeId}
+                expiresAt={challenge.expiresAt}
+                onChallengeChanged={setChallenge}
+                onVerified={afterPhoneVerified}
+              />
+              <Button variant="ghost" size="sm" onClick={changePhone}>
+                ნომრის შეცვლა
+              </Button>
+            </div>
           ) : null}
 
           {phase === "form" || phase === "retry" ? (

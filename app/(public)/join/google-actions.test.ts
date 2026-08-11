@@ -32,7 +32,7 @@ describe("registerGoogleAction", () => {
   it("validates the existing registration schema before opening Supabase", async () => {
     await expect(
       registerGoogleAction({ firstName: "", lastName: "ბერიძე", refCode: "bad ref" }),
-    ).resolves.toEqual({ ok: false, error: "შეავსე ეს ველი" });
+    ).resolves.toEqual({ ok: false, code: "invalid_input", error: "შეავსე ეს ველი" });
 
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalled();
@@ -51,16 +51,24 @@ describe("registerGoogleAction", () => {
   });
 
   it.each([
-    ["P0001: google_required", "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა."],
-    ["P0001: phone_required", "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი."],
-    ["P0001: phone_in_use", PHONE_VERIFICATION_MESSAGES.phone_in_use],
-    ["database unavailable", GENERIC_FUNNEL_ERROR],
-  ])("maps %s without leaking the raw database failure", async (raw, expected) => {
-    mocks.rpc.mockResolvedValue({ data: null, error: { message: raw } });
+    ["P0001: google_required", "google_required", "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა."],
+    [
+      "P0001: phone_required",
+      "phone_required",
+      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    ],
+    ["P0001: phone_in_use", "phone_in_use", PHONE_VERIFICATION_MESSAGES.phone_in_use],
+    ["database unavailable", "service_unavailable", GENERIC_FUNNEL_ERROR],
+  ])(
+    "maps %s to stable code %s without leaking the raw database failure",
+    async (raw, code, expected) => {
+      mocks.rpc.mockResolvedValue({ data: null, error: { message: raw } });
 
-    await expect(registerGoogleAction(VALID_INPUT)).resolves.toEqual({
-      ok: false,
-      error: expected,
-    });
-  });
+      await expect(registerGoogleAction(VALID_INPUT)).resolves.toEqual({
+        ok: false,
+        code,
+        error: expected,
+      });
+    },
+  );
 });

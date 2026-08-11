@@ -20,6 +20,14 @@ const NEW_CHALLENGE_ID = "22222222-2222-4222-8222-222222222222";
 const EXPIRES_AT = "2026-08-11T12:05:00.000Z";
 const NEW_EXPIRES_AT = "2026-08-11T12:06:00.000Z";
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
 function renderVerification(
   overrides: {
     onChallengeChanged?: (challenge: { challengeId: string; expiresAt: string }) => void;
@@ -28,7 +36,7 @@ function renderVerification(
 ) {
   const onChallengeChanged = overrides.onChallengeChanged ?? vi.fn();
   const onVerified = overrides.onVerified ?? vi.fn();
-  render(
+  const view = render(
     <PhoneVerification
       phone={PHONE}
       challengeId={CHALLENGE_ID}
@@ -37,7 +45,7 @@ function renderVerification(
       onVerified={onVerified}
     />,
   );
-  return { onChallengeChanged, onVerified };
+  return { ...view, onChallengeChanged, onVerified };
 }
 
 beforeEach(() => {
@@ -162,5 +170,50 @@ describe("PhoneVerification", () => {
 
     await waitFor(() => expect(onVerified).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(confirm).toBeEnabled());
+  });
+
+  it("does not invoke onVerified when verification finishes after unmount", async () => {
+    const pending = deferred<{ ok: true; phone: string }>();
+    mocks.verify.mockReturnValueOnce(pending.promise);
+    const onVerified = vi.fn();
+    const { unmount } = renderVerification({ onVerified });
+    fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+    unmount();
+
+    await act(async () => {
+      pending.resolve({ ok: true, phone: PHONE });
+      await pending.promise;
+    });
+
+    expect(onVerified).not.toHaveBeenCalled();
+  });
+
+  it("does not replace the challenge when resend finishes after unmount", async () => {
+    vi.useFakeTimers();
+    const pending = deferred<{
+      ok: true;
+      challengeId: string;
+      phone: string;
+      expiresAt: string;
+    }>();
+    mocks.send.mockReturnValueOnce(pending.promise);
+    const onChallengeChanged = vi.fn();
+    const { unmount } = renderVerification({ onChallengeChanged });
+    act(() => vi.advanceTimersByTime(60_000));
+    fireEvent.click(screen.getByRole("button", { name: "ხელახლა გაგზავნა" }));
+    unmount();
+
+    await act(async () => {
+      pending.resolve({
+        ok: true,
+        challengeId: NEW_CHALLENGE_ID,
+        phone: PHONE,
+        expiresAt: NEW_EXPIRES_AT,
+      });
+      await pending.promise;
+    });
+
+    expect(onChallengeChanged).not.toHaveBeenCalled();
   });
 });

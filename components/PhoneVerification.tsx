@@ -34,7 +34,15 @@ export function PhoneVerification({
   const [cooldown, setCooldown] = useState(PHONE_VERIFICATION_RESEND_SECONDS);
   const inFlightRef = useRef(false);
   const verifiedRef = useRef(false);
+  const mountedRef = useRef(false);
   const cooldownActive = cooldown > 0;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!cooldownActive) return;
@@ -58,6 +66,7 @@ export function PhoneVerification({
         challengeId,
         code: parsed.data.code,
       });
+      if (!mountedRef.current) return;
       if (!result.ok) {
         setError(result.message);
         return;
@@ -71,10 +80,10 @@ export function PhoneVerification({
         verifiedRef.current = false;
       }
     } catch {
-      setError(PHONE_VERIFICATION_MESSAGES.service_unavailable);
+      if (mountedRef.current) setError(PHONE_VERIFICATION_MESSAGES.service_unavailable);
     } finally {
       inFlightRef.current = false;
-      setBusy(false);
+      if (mountedRef.current) setBusy(false);
     }
   }
 
@@ -85,6 +94,7 @@ export function PhoneVerification({
     setBusy(true);
     try {
       const result = await sendPhoneVerificationAction({ phone });
+      if (!mountedRef.current) return;
       if (!result.ok) {
         setError(result.message);
         return;
@@ -94,10 +104,10 @@ export function PhoneVerification({
       onChallengeChanged({ challengeId: result.challengeId, expiresAt: result.expiresAt });
       setCooldown(PHONE_VERIFICATION_RESEND_SECONDS);
     } catch {
-      setError(PHONE_VERIFICATION_MESSAGES.service_unavailable);
+      if (mountedRef.current) setError(PHONE_VERIFICATION_MESSAGES.service_unavailable);
     } finally {
       inFlightRef.current = false;
-      setBusy(false);
+      if (mountedRef.current) setBusy(false);
     }
   }
 

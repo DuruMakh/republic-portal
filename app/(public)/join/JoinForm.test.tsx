@@ -231,7 +231,7 @@ describe("GoogleJoinForm", () => {
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue("");
   });
 
-  it("prefills a confirmed Auth phone but still requires the same Verify.ge proof", async () => {
+  it("resumes a consumed phone proof after reload without sending a second SMS", async () => {
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
     fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
     fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
@@ -239,9 +239,60 @@ describe("GoogleJoinForm", () => {
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue(PHONE);
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
-    await waitFor(() => expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: PHONE }));
-    expect(mocks.registerGoogle).not.toHaveBeenCalled();
+    await waitFor(() => expect(mocks.registerGoogle).toHaveBeenCalledTimes(1));
+    expect(mocks.registerGoogle).toHaveBeenCalledWith({
+      firstName: "ნინო",
+      lastName: "ბერიძე",
+      refCode: null,
+    });
+    expect(mocks.sendPhone).not.toHaveBeenCalled();
+    expect(mocks.replace).toHaveBeenCalledWith("/me");
+  });
+
+  it("sends exactly one SMS when the confirmed phone has no consumed proof", async () => {
+    mocks.registerGoogle.mockResolvedValueOnce({
+      ok: false,
+      code: "phone_required",
+      error: "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    });
+    await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
+    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+
+    await waitFor(() => expect(mocks.registerGoogle).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.sendPhone).toHaveBeenCalledTimes(1));
+    expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: PHONE });
     expect(await screen.findByRole("button", { name: "დადასტურება" })).toBeInTheDocument();
+  });
+
+  it("does not send SMS when confirmed-phone preflight fails for another reason", async () => {
+    mocks.registerGoogle.mockResolvedValueOnce({
+      ok: false,
+      code: "service_unavailable",
+      error: GENERIC_FUNNEL_ERROR,
+    });
+    await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
+    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+
+    expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
+    expect(mocks.sendPhone).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeEnabled();
+  });
+
+  it("does not preflight a changed phone against the unrelated confirmed phone", async () => {
+    await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
+    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+      target: { value: "555654321" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+
+    await waitFor(() => expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: "+995555654321" }));
+    expect(mocks.registerGoogle).not.toHaveBeenCalled();
   });
 
   it("moves a successful send to the provider-neutral code screen", async () => {
@@ -282,7 +333,11 @@ describe("GoogleJoinForm", () => {
 
   it("keeps verified phone proof for registration retry and sends no second SMS", async () => {
     mocks.registerGoogle
-      .mockResolvedValueOnce({ ok: false, error: GENERIC_FUNNEL_ERROR })
+      .mockResolvedValueOnce({
+        ok: false,
+        code: "service_unavailable",
+        error: GENERIC_FUNNEL_ERROR,
+      })
       .mockResolvedValueOnce({ ok: true, state: presentState() });
     await sendGoogleCode();
     fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "123456" } });
@@ -328,6 +383,10 @@ describe("GoogleJoinForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
 
     expect(await screen.findByText(PHONE_VERIFICATION_MESSAGES.phone_in_use)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "ნომრის შეცვლა" }));
+
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "კოდის მიღება" })).toBeInTheDocument();
     expect(mocks.registerGoogle).not.toHaveBeenCalled();
     expect(mocks.replace).not.toHaveBeenCalled();
   });
