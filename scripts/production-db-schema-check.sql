@@ -14,6 +14,22 @@ begin
     raise exception 'required relation public.support_messages is missing';
   end if;
 
+  if to_regclass('public.phone_verification_challenges') is null then
+    raise exception 'required relation public.phone_verification_challenges is missing';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_catalog.pg_class as c
+    join pg_catalog.pg_namespace as n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'phone_verification_challenges'
+      and c.relkind in ('r', 'p')
+      and c.relrowsecurity
+  ) then
+    raise exception 'public.phone_verification_challenges must have RLS enabled';
+  end if;
+
   if exists (
     select 1
     from pg_catalog.pg_class as c
@@ -23,6 +39,82 @@ begin
       and not c.relrowsecurity
   ) then
     raise exception 'one or more public tables have RLS disabled';
+  end if;
+
+  if has_table_privilege('anon', 'public.phone_verification_challenges', 'SELECT')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'INSERT')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'UPDATE')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'DELETE')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'TRUNCATE')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'REFERENCES')
+     or has_table_privilege('anon', 'public.phone_verification_challenges', 'TRIGGER')
+     or has_any_column_privilege('anon', 'public.phone_verification_challenges', 'SELECT')
+     or has_any_column_privilege('anon', 'public.phone_verification_challenges', 'INSERT')
+     or has_any_column_privilege('anon', 'public.phone_verification_challenges', 'UPDATE')
+     or has_any_column_privilege('anon', 'public.phone_verification_challenges', 'REFERENCES')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'SELECT')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'INSERT')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'DELETE')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'TRUNCATE')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'REFERENCES')
+     or has_table_privilege('authenticated', 'public.phone_verification_challenges', 'TRIGGER')
+     or has_any_column_privilege('authenticated', 'public.phone_verification_challenges', 'SELECT')
+     or has_any_column_privilege('authenticated', 'public.phone_verification_challenges', 'INSERT')
+     or has_any_column_privilege('authenticated', 'public.phone_verification_challenges', 'UPDATE')
+     or has_any_column_privilege('authenticated', 'public.phone_verification_challenges', 'REFERENCES') then
+    raise exception 'phone verification challenge table leaked to a browser role';
+  end if;
+
+  if not has_table_privilege('service_role', 'public.phone_verification_challenges', 'SELECT')
+     or not has_table_privilege('service_role', 'public.phone_verification_challenges', 'INSERT')
+     or not has_table_privilege('service_role', 'public.phone_verification_challenges', 'UPDATE')
+     or not has_table_privilege('service_role', 'public.phone_verification_challenges', 'DELETE') then
+    raise exception 'service_role challenge table privileges drifted';
+  end if;
+
+  if to_regprocedure('public.record_phone_verification_failure(uuid,uuid)') is null
+     or to_regprocedure('public.consume_phone_verification_challenge(uuid,uuid)') is null
+     or to_regprocedure('public.register_google(text,text,text)') is null then
+    raise exception 'required phone verification function is missing';
+  end if;
+
+  if has_function_privilege(
+       'anon', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'authenticated', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role', 'public.record_phone_verification_failure(uuid,uuid)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'anon', 'public.consume_phone_verification_challenge(uuid,uuid)', 'EXECUTE'
+     )
+     or has_function_privilege(
+       'authenticated', 'public.consume_phone_verification_challenge(uuid,uuid)', 'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role', 'public.consume_phone_verification_challenge(uuid,uuid)', 'EXECUTE'
+     ) then
+    raise exception 'internal phone verification function privileges drifted';
+  end if;
+
+  if has_function_privilege('anon', 'public.register_google(text,text,text)', 'EXECUTE')
+     or not has_function_privilege(
+       'authenticated', 'public.register_google(text,text,text)', 'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role', 'public.register_google(text,text,text)', 'EXECUTE'
+     ) then
+    raise exception 'register_google function privileges drifted';
+  end if;
+
+  -- Additive rollout: the legacy phone registration RPC remains available to
+  -- authenticated users until the separately reviewed hardening migration.
+  if has_function_privilege('anon', 'public.register(text,text,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.register(text,text,text)', 'EXECUTE') then
+    raise exception 'legacy register function privileges changed before hardening';
   end if;
 
   if exists (

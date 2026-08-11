@@ -148,7 +148,7 @@ describe("production security advisor gate", () => {
     };
 
     expect(matchingMigrations).toHaveLength(1);
-    expect(migrations).toHaveLength(32);
+    expect(migrations).toHaveLength(33);
     expect(access.public_read.some((name) => access.signed_in_read.includes(name))).toBe(false);
 
     const migration = readFileSync(join(migrationsDirectory, matchingMigrations[0] ?? ""), "utf8");

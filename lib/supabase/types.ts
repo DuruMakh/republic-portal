@@ -124,6 +124,45 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      phone_verification_challenges: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          provider: "verify_ge" | "test";
+          provider_request_id: string;
+          verify_attempts: number;
+          expires_at: string;
+          consumed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          provider: "verify_ge" | "test";
+          provider_request_id: string;
+          verify_attempts?: number;
+          expires_at: string;
+          consumed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone?: string;
+          purpose?: "registration";
+          provider?: "verify_ge" | "test";
+          provider_request_id?: string;
+          verify_attempts?: number;
+          expires_at?: string;
+          consumed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       admin_roles: {
         Row: {
           user_id: string;
@@ -511,6 +550,22 @@ export interface Database {
           p_ref_code?: string | null;
         };
         Returns: Json;
+      };
+      register_google: {
+        Args: {
+          p_first_name: string;
+          p_last_name: string;
+          p_ref_code?: string | null;
+        };
+        Returns: Json;
+      };
+      record_phone_verification_failure: {
+        Args: { p_challenge_id: string; p_user_id: string };
+        Returns: number;
+      };
+      consume_phone_verification_challenge: {
+        Args: { p_challenge_id: string; p_user_id: string };
+        Returns: boolean;
       };
       become_member_save_profile: {
         Args: {

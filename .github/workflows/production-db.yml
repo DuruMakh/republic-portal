@@ -35,7 +35,7 @@ jobs:
     environment: production-db
     env:
       EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
-      EXPECTED_MIGRATION_FILE_COUNT: 32
+      EXPECTED_MIGRATION_FILE_COUNT: 33
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
@@ -99,7 +99,7 @@ jobs:
     environment: production-db
     env:
       EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
-      EXPECTED_MIGRATION_FILE_COUNT: 32
+      EXPECTED_MIGRATION_FILE_COUNT: 33
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
       SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
