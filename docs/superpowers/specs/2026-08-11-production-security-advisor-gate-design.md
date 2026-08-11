@@ -142,7 +142,7 @@ The workflow then runs three separate role probes:
 
 1. `anon` can read exactly one row from `public_stats`;
 2. an `anon` read of `admin_overview` exits non-zero and contains SQLSTATE
-   `42501` plus the expected role-helper permission denial;
+   `42501` plus `permission denied for view admin_overview`;
 3. `authenticated` without a JWT identity reads zero rows from
    `admin_overview`.
 

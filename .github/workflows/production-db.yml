@@ -226,14 +226,14 @@ jobs:
           set -euo pipefail
           mkdir -p production-db-security-evidence
 
-          supabase db query --linked \
+          supabase db query --linked --output json --agent yes \
             "set role anon; select count(*) as anon_public_stats_rows from public.public_stats;" \
             > production-db-security-evidence/anon-public.txt
           jq -e '.rows == [{"anon_public_stats_rows":1}]' \
             production-db-security-evidence/anon-public.txt >/dev/null
 
           set +e
-          supabase db query --linked \
+          supabase db query --linked --output json --agent yes \
             "set role anon; select count(*) from public.admin_overview;" \
             > production-db-security-evidence/anon-admin.txt 2>&1
           ANON_ADMIN_STATUS="$?"
@@ -243,7 +243,7 @@ jobs:
           grep -F "permission denied for view admin_overview" \
             production-db-security-evidence/anon-admin.txt >/dev/null
 
-          supabase db query --linked \
+          supabase db query --linked --output json --agent yes \
             "set role authenticated; select count(*) as authenticated_admin_overview_rows from public.admin_overview;" \
             > production-db-security-evidence/authenticated-non-admin.txt
           jq -e '.rows == [{"authenticated_admin_overview_rows":0}]' \

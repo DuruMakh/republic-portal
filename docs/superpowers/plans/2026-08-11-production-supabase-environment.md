@@ -457,10 +457,11 @@ Run:
 
 ```powershell
 npm.cmd exec -- supabase db lint --linked --schema public --level warning --fail-on error
-npm.cmd exec -- supabase db advisors --linked --type security --level error --fail-on error
+npm.cmd exec -- supabase db advisors --linked --type security --level error --fail-on none --output-format json > production-db-security-evidence/advisors.json
+node scripts/verify-production-security-advisors.mjs production-db-security-evidence/advisors.json
 ```
 
-Expected: both commands exit 0. Record warnings separately; any error-severity finding blocks completion and is fixed forward through a new migration on the feature branch.
+Expected: lint exits 0 and the advisor verifier accepts exactly the 25 reviewed ADR-030 findings. Missing, extra, duplicate, or malformed advisor findings block completion and are fixed forward through a new migration on the feature branch. This correction records the exact gate used after the original bootstrap execution; it does not rewrite that earlier execution record.
 
 - [ ] **Step 7: Report bootstrap evidence**
 

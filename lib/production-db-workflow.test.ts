@@ -139,12 +139,17 @@ describe("production database delivery contract", () => {
     const lintIndex = workflow.indexOf("- name: Lint public schema");
     const advisorCaptureIndex = workflow.indexOf("- name: Capture security advisors");
     const advisorVerifyIndex = workflow.indexOf("- name: Verify reviewed security advisor set");
+    const roleProbeStep = workflow.slice(roleProbeIndex, lintIndex);
     const lintStep = workflow.slice(lintIndex, advisorCaptureIndex);
     const advisorStep = workflow.slice(advisorCaptureIndex, advisorVerifyIndex);
 
     expect(applyIndex).toBeLessThan(schemaCheckIndex);
     expect(schemaCheckIndex).toBeLessThan(roleProbeIndex);
     expect(roleProbeIndex).toBeLessThan(lintIndex);
+    expect(
+      roleProbeStep.match(/supabase db query --linked --output json --agent yes/g) ?? [],
+    ).toHaveLength(3);
+    expect(roleProbeStep).not.toContain("--output-format");
     expect(lintStep).toContain("--fail-on error");
     expect(lintStep).not.toContain("--fail-on none");
     expect(advisorStep).toContain("--fail-on none");

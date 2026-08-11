@@ -378,7 +378,7 @@ expect(workflow).toContain("production-db-security-evidence");
 expect(workflow).toContain("set role anon");
 expect(workflow).toContain("set role authenticated");
 expect(workflow).toContain("42501");
-expect(workflow).toContain("permission denied for function has_any_admin_role");
+expect(workflow).toContain("permission denied for view admin_overview");
 expect(workflow).not.toContain("--fail-on error");
 ```
 
@@ -424,24 +424,24 @@ After `Verify schema and RLS`, add one `Run production role probes` shell step t
 set -euo pipefail
 mkdir -p production-db-security-evidence
 
-supabase db query --linked \
+supabase db query --linked --output json --agent yes \
   "set role anon; select count(*) as anon_public_stats_rows from public.public_stats;" \
   > production-db-security-evidence/anon-public.txt
 jq -e '.rows == [{"anon_public_stats_rows":1}]' \
   production-db-security-evidence/anon-public.txt >/dev/null
 
 set +e
-supabase db query --linked \
+supabase db query --linked --output json --agent yes \
   "set role anon; select count(*) from public.admin_overview;" \
   > production-db-security-evidence/anon-admin.txt 2>&1
 ANON_ADMIN_STATUS="$?"
 set -e
 test "$ANON_ADMIN_STATUS" -ne 0
 grep -F "42501" production-db-security-evidence/anon-admin.txt >/dev/null
-grep -F "permission denied for function has_any_admin_role" \
+grep -F "permission denied for view admin_overview" \
   production-db-security-evidence/anon-admin.txt >/dev/null
 
-supabase db query --linked \
+supabase db query --linked --output json --agent yes \
   "set role authenticated; select count(*) as authenticated_admin_overview_rows from public.admin_overview;" \
   > production-db-security-evidence/authenticated-non-admin.txt
 jq -e '.rows == [{"authenticated_admin_overview_rows":0}]' \
@@ -562,4 +562,3 @@ Expected: the first 31 local/remote versions align; exactly one new local-only m
 - [ ] **Step 6: Stop for owner approval**
 
 Present the exact migration filename, target ref, project health, local/remote parity, dry-run output, and plain-language impact. Do not run non-dry-run `db push` until the owner explicitly approves that exact new migration.
-
