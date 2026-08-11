@@ -767,3 +767,12 @@ signed-in-read profiles, rather than blanket acceptance or a change to
 `security_invoker`. Advisor acceptance is exact: any addition, removal, or
 reclassification of a view requires review and an explicit update to the
 committed access matrix and migration contract.
+
+## ADR-031 (2026-08-11): Google identity with isolated Verify.ge phone proof
+
+Google/Supabase remains the identity authority. Verify.ge proves a phone number
+only during registration and does not create a session or become an identity
+provider. The official `@smart-pay-chain/otp` SDK is pinned at `2.1.7` and is
+isolated behind `PhoneVerificationProvider`, so a future provider replacement
+does not change registration logic. The `test` provider is refused in
+production. No webhook is created, and no provider key is committed to Git.

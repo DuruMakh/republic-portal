@@ -107,9 +107,12 @@ scopes; the app does not request access to Gmail, contacts, Drive or other
 Google data.
 
 Hosted production exposes Google as the only signup/login provider. Supabase
-phone sign-in is disabled there. A database guard also requires a matching
-`auth.identities` row with `provider = 'google'` before a new profile can be
-registered; client-editable user metadata is never trusted for this decision.
+phone sign-in is disabled there. A database guard also requires a server-owned
+`raw_app_meta_data.providers` assertion that includes `google` before a new
+profile can be registered. Supabase owns `app_metadata`, so clients cannot edit
+it; this shape also permits deterministic staging fixtures without weakening
+production authorization. Client-editable `user_metadata` is never trusted for
+this decision.
 
 ## 5. Verify.ge boundary
 
