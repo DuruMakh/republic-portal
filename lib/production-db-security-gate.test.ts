@@ -1,5 +1,5 @@
 import { execPath } from "node:process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -47,7 +47,17 @@ const reviewedViews = [
 ];
 
 const verifierPath = resolve("scripts/verify-production-security-advisors.mjs");
+const viewAccessPath = resolve("scripts/production-security-view-access.json");
+const migrationsDirectory = resolve("supabase/migrations");
 const fixtureDirectories: string[] = [];
+
+const relationNames = (statement: string) =>
+  statement
+    .replace(/^(?:revoke all|grant select) on\s+/i, "")
+    .replace(/\s+(?:from|to)\s+[^;]+;$/i, "")
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
 
 const advisorResult = (name: string): AdvisorResult => ({
   name: "security_definer_view",
@@ -88,6 +98,59 @@ afterEach(() => {
 });
 
 describe("production security advisor gate", () => {
+  it("normalizes client view grants in one forward migration", () => {
+    const migrations = readdirSync(migrationsDirectory).filter((name) =>
+      name.endsWith(".sql"),
+    );
+    const matchingMigrations = migrations.filter((name) =>
+      name.endsWith("_normalize_production_view_grants.sql"),
+    );
+    const access = JSON.parse(readFileSync(viewAccessPath, "utf8")) as {
+      public_read: string[];
+      signed_in_read: string[];
+    };
+
+    expect(matchingMigrations).toHaveLength(1);
+    expect(migrations).toHaveLength(32);
+    expect(access.public_read.some((name) => access.signed_in_read.includes(name))).toBe(
+      false,
+    );
+
+    const migration = readFileSync(
+      join(migrationsDirectory, matchingMigrations[0] ?? ""),
+      "utf8",
+    );
+    const revokeStatement = migration.match(
+      /revoke all on\s+([\s\S]*?)\s+from anon, authenticated;/i,
+    )?.[0];
+    const publicGrantStatement = migration.match(
+      /grant select on\s+([\s\S]*?)\s+to anon, authenticated;/i,
+    )?.[0];
+    const signedInGrantStatement = migration.match(
+      /grant select on\s+(?:(?!grant select on)[\s\S])*?\s+to authenticated;/i,
+    )?.[0];
+    const revokeIndex = migration.indexOf(revokeStatement ?? "");
+    const publicGrantIndex = migration.indexOf(publicGrantStatement ?? "");
+    const signedInGrantIndex = migration.indexOf(signedInGrantStatement ?? "");
+
+    expect(migration).toContain("revoke all on");
+    expect(migration).toContain("from anon, authenticated");
+    expect(migration).toContain("grant select on");
+    expect(migration).toContain("to anon, authenticated");
+    expect(migration).toContain("to authenticated");
+    expect(revokeIndex).toBeLessThan(publicGrantIndex);
+    expect(revokeIndex).toBeLessThan(signedInGrantIndex);
+    expect(relationNames(revokeStatement ?? "").sort()).toEqual(
+      [...access.public_read, ...access.signed_in_read].sort(),
+    );
+    expect(relationNames(publicGrantStatement ?? "").sort()).toEqual(
+      [...access.public_read].sort(),
+    );
+    expect(relationNames(signedInGrantStatement ?? "").sort()).toEqual(
+      [...access.signed_in_read].sort(),
+    );
+  });
+
   it("accepts exactly the reviewed 25 security-definer views", () => {
     const fixturePath = writeFixture(
       JSON.stringify({ results: reviewedViews.map(advisorResult) }),

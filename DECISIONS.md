@@ -758,3 +758,12 @@ labels the stored token `republic-production` with `supabase login --name`.
 The isolated worktree link remains the mechanism that selects the exact
 production project. This corrects ADR-028's "named local CLI profile" wording;
 the GitHub workflow, migration boundary, and approval contract are unchanged.
+
+## ADR-030 (2026-08-11): Normalize intentional owner-executed view grants
+
+The 25 owner-executed views accepted by the production security advisor remain
+intentional. Their client grants are normalized to the committed public-read and
+signed-in-read profiles, rather than blanket acceptance or a change to
+`security_invoker`. Advisor acceptance is exact: any addition, removal, or
+reclassification of a view requires review and an explicit update to the
+committed access matrix and migration contract.
