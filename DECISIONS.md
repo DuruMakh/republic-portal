@@ -732,3 +732,38 @@ shipped as an `aria-modal` dialog with no focus management at all, while the pub
 menu already had the whole thing. The second was fixed by extracting
 `components/useFocusTrap.ts` and consuming it in both, since duplicating a logic block
 is a forbidden pattern here.
+
+## ADR-028 (2026-08-11): Separate production-candidate Supabase, migration-only delivery
+
+The portal now has a separate Supabase production-candidate project,
+`uorvlshbrlbdnbauxsws`. Staging remains `orcxtbedkexoclbfgvzd`; no staging data,
+users, OTP inbox, Auth/SMS configuration, or seed command crosses that boundary.
+
+The owner accepts Supabase Free for the next several months of synthetic testing.
+The project is not approved for real-person data until backup/restore, monitoring,
+Auth/SMS delivery, and plan level are reviewed again.
+
+Supabase MCP is not part of delivery. A named local CLI profile performs the
+one-time bootstrap; future schema delivery uses a manually dispatched GitHub
+Actions workflow with exact-project confirmation, dry-run-before-apply, and a
+dedicated `production-db` Environment. `supabase config push`, remote reset, and
+production seeding are forbidden by this path. No dependency was added.
+
+## ADR-029 (2026-08-11): Correct Supabase CLI account-label terminology
+
+Supabase CLI `2.109.1` uses `--profile` to select a Supabase backend
+configuration, not to name a stored account credential. Local production
+bootstrap therefore uses the standard built-in `supabase` cloud profile and
+labels the stored token `republic-production` with `supabase login --name`.
+The isolated worktree link remains the mechanism that selects the exact
+production project. This corrects ADR-028's "named local CLI profile" wording;
+the GitHub workflow, migration boundary, and approval contract are unchanged.
+
+## ADR-030 (2026-08-11): Normalize intentional owner-executed view grants
+
+The 25 owner-executed views accepted by the production security advisor remain
+intentional. Their client grants are normalized to the committed public-read and
+signed-in-read profiles, rather than blanket acceptance or a change to
+`security_invoker`. Advisor acceptance is exact: any addition, removal, or
+reclassification of a view requires review and an explicit update to the
+committed access matrix and migration contract.

@@ -1,0 +1,271 @@
+name: Production database migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Run a reviewable dry-run or apply an approved dry-run
+        required: true
+        type: choice
+        options:
+          - dry-run
+          - apply
+      confirm_project_ref:
+        description: Type the production Supabase project ref to authorize this run
+        required: true
+        type: string
+      approved_dry_run_run_id:
+        description: Successful dry-run workflow run ID approved by the owner before apply
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: production-db-migrations
+  cancel-in-progress: false
+
+jobs:
+  dry_run:
+    if: inputs.operation == 'dry-run' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production-db
+    env:
+      EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
+      EXPECTED_MIGRATION_FILE_COUNT: 32
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+
+      - name: Validate immutable target
+        env:
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_PASSWORD"
+          test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+          test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+
+      - name: Migration file baseline
+        run: |
+          set -euo pipefail
+          ACTUAL_MIGRATION_FILE_COUNT="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d '[:space:]')"
+          test "$ACTUAL_MIGRATION_FILE_COUNT" = "$EXPECTED_MIGRATION_FILE_COUNT"
+
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Create dry-run evidence
+        run: |
+          set -euo pipefail
+          mkdir -p production-db-dry-run-evidence
+          {
+            printf 'workflow_ref=%s\n' "$GITHUB_WORKFLOW_REF"
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'ref=%s\n' "$GITHUB_REF"
+            printf 'sha=%s\n' "$GITHUB_SHA"
+            printf 'run_id=%s\n' "$GITHUB_RUN_ID"
+            printf 'migration_file_count=%s\n' "$EXPECTED_MIGRATION_FILE_COUNT"
+          } > production-db-dry-run-evidence/metadata.env
+          supabase migration list --linked > production-db-dry-run-evidence/migration-state.txt
+          supabase db push --linked --dry-run > production-db-dry-run-evidence/dry-run.txt
+
+      - name: Upload dry-run evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-db-dry-run-evidence
+          path: production-db-dry-run-evidence
+          if-no-files-found: error
+
+  apply:
+    if: inputs.operation == 'apply' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production-db
+    env:
+      EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
+      EXPECTED_MIGRATION_FILE_COUNT: 32
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Validate approved dry-run run ID
+        env:
+          APPROVED_DRY_RUN_RUN_ID: ${{ inputs.approved_dry_run_run_id }}
+        run: |
+          set -euo pipefail
+          test -n "$APPROVED_DRY_RUN_RUN_ID"
+          case "$APPROVED_DRY_RUN_RUN_ID" in
+            *[!0-9]*) exit 1 ;;
+          esac
+
+      - name: Verify approved dry-run workflow run
+        env:
+          APPROVED_DRY_RUN_RUN_ID: ${{ inputs.approved_dry_run_run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APPROVED_RUN="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$APPROVED_DRY_RUN_RUN_ID")"
+          APPROVED_RUN_ID="$(jq -r '.id' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_EVENT="$(jq -r '.event' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_PATH="$(jq -r '.path' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_REPOSITORY="$(jq -r '.repository.full_name' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_HEAD_BRANCH="$(jq -r '.head_branch' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_HEAD_SHA="$(jq -r '.head_sha' <<<"$APPROVED_RUN")"
+          APPROVED_RUN_CONCLUSION="$(jq -r '.conclusion' <<<"$APPROVED_RUN")"
+          test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"
+          test "$APPROVED_RUN_EVENT" = "workflow_dispatch"
+          test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml@main"
+          test "$APPROVED_RUN_REPOSITORY" = "$GITHUB_REPOSITORY"
+          test "$APPROVED_RUN_HEAD_BRANCH" = "main"
+          test "$APPROVED_RUN_HEAD_SHA" = "$GITHUB_SHA"
+          test "$APPROVED_RUN_CONCLUSION" = "success"
+
+      - name: Download approved dry-run evidence
+        uses: actions/download-artifact@v5
+        with:
+          name: production-db-dry-run-evidence
+          path: approved-dry-run-evidence
+          run-id: ${{ inputs.approved_dry_run_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify approved dry-run identity
+        env:
+          APPROVED_DRY_RUN_RUN_ID: ${{ inputs.approved_dry_run_run_id }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test -f approved-dry-run-evidence/metadata.env
+          APPROVED_WORKFLOW_REF="$(sed -n 's/^workflow_ref=//p' approved-dry-run-evidence/metadata.env)"
+          APPROVED_REPOSITORY="$(sed -n 's/^repository=//p' approved-dry-run-evidence/metadata.env)"
+          APPROVED_REF="$(sed -n 's/^ref=//p' approved-dry-run-evidence/metadata.env)"
+          APPROVED_SHA="$(sed -n 's/^sha=//p' approved-dry-run-evidence/metadata.env)"
+          APPROVED_RUN_ID="$(sed -n 's/^run_id=//p' approved-dry-run-evidence/metadata.env)"
+          APPROVED_MIGRATION_FILE_COUNT="$(sed -n 's/^migration_file_count=//p' approved-dry-run-evidence/metadata.env)"
+          test "$APPROVED_WORKFLOW_REF" = "$GITHUB_WORKFLOW_REF"
+          test "$APPROVED_REPOSITORY" = "$GITHUB_REPOSITORY"
+          test "$APPROVED_REF" = "$GITHUB_REF"
+          test "$APPROVED_SHA" = "$GITHUB_SHA"
+          test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"
+          test "$APPROVED_MIGRATION_FILE_COUNT" = "$EXPECTED_MIGRATION_FILE_COUNT"
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+
+      - name: Validate immutable target
+        env:
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_PASSWORD"
+          test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+          test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+
+      - name: Migration file baseline
+        run: |
+          set -euo pipefail
+          ACTUAL_MIGRATION_FILE_COUNT="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d '[:space:]')"
+          test "$ACTUAL_MIGRATION_FILE_COUNT" = "$EXPECTED_MIGRATION_FILE_COUNT"
+
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Create fresh dry-run evidence
+        run: |
+          set -euo pipefail
+          mkdir -p fresh-dry-run-evidence
+          supabase migration list --linked > fresh-dry-run-evidence/migration-state.txt
+          supabase db push --linked --dry-run > fresh-dry-run-evidence/dry-run.txt
+
+      - name: Require unchanged pending migration state
+        run: |
+          set -euo pipefail
+          cmp --silent approved-dry-run-evidence/migration-state.txt fresh-dry-run-evidence/migration-state.txt || {
+            echo "Pending migration state changed; dispatch a new dry-run." >&2
+            exit 1
+          }
+          cmp --silent approved-dry-run-evidence/dry-run.txt fresh-dry-run-evidence/dry-run.txt || {
+            echo "Dry-run output changed; dispatch a new dry-run." >&2
+            exit 1
+          }
+
+      - name: Apply migrations
+        run: supabase db push --linked
+
+      - name: Migration state after apply
+        run: supabase migration list --linked
+
+      - name: Verify schema and RLS
+        run: supabase db query --linked --file scripts/production-db-schema-check.sql
+
+      - name: Run production role probes
+        run: |
+          set -euo pipefail
+          mkdir -p production-db-security-evidence
+
+          supabase db query --linked --output json --agent yes \
+            "set role anon; select count(*) as anon_public_stats_rows from public.public_stats;" \
+            > production-db-security-evidence/anon-public.txt
+          jq -e '.rows == [{"anon_public_stats_rows":1}]' \
+            production-db-security-evidence/anon-public.txt >/dev/null
+
+          set +e
+          supabase db query --linked --output json --agent yes \
+            "set role anon; select count(*) from public.admin_overview;" \
+            > production-db-security-evidence/anon-admin.txt 2>&1
+          ANON_ADMIN_STATUS="$?"
+          set -e
+          test "$ANON_ADMIN_STATUS" -ne 0
+          grep -F "42501" production-db-security-evidence/anon-admin.txt >/dev/null
+          grep -F "permission denied for view admin_overview" \
+            production-db-security-evidence/anon-admin.txt >/dev/null
+
+          supabase db query --linked --output json --agent yes \
+            "set role authenticated; select count(*) as authenticated_admin_overview_rows from public.admin_overview;" \
+            > production-db-security-evidence/authenticated-non-admin.txt
+          jq -e '.rows == [{"authenticated_admin_overview_rows":0}]' \
+            production-db-security-evidence/authenticated-non-admin.txt >/dev/null
+
+      - name: Lint public schema
+        run: supabase db lint --linked --schema public --level warning --fail-on error
+
+      - name: Capture security advisors
+        run: |
+          set -euo pipefail
+          mkdir -p production-db-security-evidence
+          supabase db advisors --linked --type security --level error --fail-on none --output-format json \
+            > production-db-security-evidence/advisors.json
+
+      - name: Verify reviewed security advisor set
+        run: node scripts/verify-production-security-advisors.mjs production-db-security-evidence/advisors.json
+
+      - name: Upload production security evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-db-security-evidence
+          path: production-db-security-evidence
+          if-no-files-found: warn
