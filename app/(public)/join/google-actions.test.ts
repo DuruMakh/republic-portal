@@ -51,24 +51,80 @@ describe("registerGoogleAction", () => {
   });
 
   it.each([
-    ["P0001: google_required", "google_required", "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა."],
-    [
-      "P0001: phone_required",
-      "phone_required",
-      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
-    ],
-    ["P0001: phone_in_use", "phone_in_use", PHONE_VERIFICATION_MESSAGES.phone_in_use],
-    ["database unavailable", "service_unavailable", GENERIC_FUNNEL_ERROR],
+    {
+      token: "not_authenticated",
+      error: { code: "P0001", message: "not_authenticated", details: null, hint: null },
+      stableCode: "not_authenticated",
+      expected: PHONE_VERIFICATION_MESSAGES.not_authenticated,
+    },
+    {
+      token: "google_required",
+      error: { code: "P0001", message: "google_required", details: null, hint: null },
+      stableCode: "google_required",
+      expected: "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
+    },
+    {
+      token: "phone_required",
+      error: { code: "P0001", message: "phone_required", details: null, hint: null },
+      stableCode: "phone_required",
+      expected: "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    },
   ])(
-    "maps %s to stable code %s without leaking the raw database failure",
-    async (raw, code, expected) => {
-      mocks.rpc.mockResolvedValue({ data: null, error: { message: raw } });
+    "maps exact P0001 exception $token to stable code $stableCode",
+    async ({ error, stableCode, expected }) => {
+      mocks.rpc.mockResolvedValue({ data: null, error });
 
       await expect(registerGoogleAction(VALID_INPUT)).resolves.toEqual({
         ok: false,
-        code,
+        code: stableCode,
         error: expected,
       });
     },
   );
+
+  it.each([
+    [
+      "wrong PostgreSQL code",
+      { code: "XX000", message: "phone_required", details: null, hint: null },
+    ],
+    [
+      "message containing the token",
+      {
+        code: "P0001",
+        message: "column phone_required is unavailable",
+        details: null,
+        hint: null,
+      },
+    ],
+    [
+      "extended token",
+      { code: "P0001", message: "phone_required_extra", details: null, hint: null },
+    ],
+    [
+      "whitespace variant",
+      { code: "P0001", message: " phone_required ", details: null, hint: null },
+    ],
+    ["missing code", { message: "phone_required", details: null, hint: null }],
+    [
+      "token only in details and hint",
+      {
+        code: "P0001",
+        message: "database unavailable",
+        details: "phone_required",
+        hint: "phone_required",
+      },
+    ],
+    [
+      "non-contract phone_in_use token",
+      { code: "P0001", message: "phone_in_use", details: null, hint: null },
+    ],
+  ])("fails closed for %s", async (_label, error) => {
+    mocks.rpc.mockResolvedValue({ data: null, error });
+
+    await expect(registerGoogleAction(VALID_INPUT)).resolves.toEqual({
+      ok: false,
+      code: "service_unavailable",
+      error: GENERIC_FUNNEL_ERROR,
+    });
+  });
 });

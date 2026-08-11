@@ -266,7 +266,7 @@ describe("GoogleJoinForm", () => {
     expect(await screen.findByRole("button", { name: "დადასტურება" })).toBeInTheDocument();
   });
 
-  it("does not send SMS when confirmed-phone preflight fails for another reason", async () => {
+  it("sends no SMS when an adversarial preflight error fails closed", async () => {
     mocks.registerGoogle.mockResolvedValueOnce({
       ok: false,
       code: "service_unavailable",

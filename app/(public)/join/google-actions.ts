@@ -10,35 +10,33 @@ export type GoogleRegistrationFailureCode =
   | "not_authenticated"
   | "google_required"
   | "phone_required"
-  | "phone_in_use"
   | "service_unavailable";
 
 export type GoogleRegistrationActionResult =
   | { ok: true; state: CabinetState }
   | { ok: false; code: GoogleRegistrationFailureCode; error: string };
 
+interface GoogleRegistrationRpcError {
+  code?: unknown;
+  message?: unknown;
+}
+
 function mapGoogleRegistrationError(
-  message: string | null | undefined,
+  error: GoogleRegistrationRpcError,
 ): Extract<GoogleRegistrationActionResult, { ok: false }> {
-  if (message?.includes("not_authenticated")) {
-    return {
-      ok: false,
-      code: "not_authenticated",
-      error: PHONE_VERIFICATION_MESSAGES.not_authenticated,
-    };
-  }
-  if (message?.includes("google_required")) {
-    return { ok: false, code: "google_required", error: mapFunnelError(message) };
-  }
-  if (message?.includes("phone_required")) {
-    return { ok: false, code: "phone_required", error: mapFunnelError(message) };
-  }
-  if (message?.includes("phone_in_use")) {
-    return {
-      ok: false,
-      code: "phone_in_use",
-      error: PHONE_VERIFICATION_MESSAGES.phone_in_use,
-    };
+  if (error.code === "P0001") {
+    switch (error.message) {
+      case "not_authenticated":
+        return {
+          ok: false,
+          code: "not_authenticated",
+          error: PHONE_VERIFICATION_MESSAGES.not_authenticated,
+        };
+      case "google_required":
+        return { ok: false, code: "google_required", error: mapFunnelError(error.message) };
+      case "phone_required":
+        return { ok: false, code: "phone_required", error: mapFunnelError(error.message) };
+    }
   }
   return { ok: false, code: "service_unavailable", error: GENERIC_FUNNEL_ERROR };
 }
@@ -62,7 +60,7 @@ export async function registerGoogleAction(
       p_last_name: parsed.data.lastName,
       p_ref_code: parsed.data.refCode ?? null,
     });
-    if (error) return mapGoogleRegistrationError(error.message);
+    if (error) return mapGoogleRegistrationError(error);
     return { ok: true, state: data as unknown as CabinetState };
   } catch {
     return { ok: false, code: "service_unavailable", error: GENERIC_FUNNEL_ERROR };

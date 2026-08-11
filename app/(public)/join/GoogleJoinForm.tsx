@@ -158,8 +158,6 @@ export function GoogleJoinForm() {
   function handlePreflightFailure(result: Extract<GoogleRegistrationActionResult, { ok: false }>) {
     if (isGoogleSessionError(result.code)) {
       returnToGoogle(result.error);
-    } else if (result.code === "phone_in_use") {
-      setErrors({ phone: result.error });
     } else {
       setFormError(result.error);
     }
