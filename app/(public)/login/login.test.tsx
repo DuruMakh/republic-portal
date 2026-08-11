@@ -1,21 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const replaceMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock }),
 }));
 
-// Supabase browser client: signInWithOtp (the SMS send), verifyOtp (OTP proof,
-// always succeeds in these tests — only the post-verify cabinet_state lookup
-// varies), and rpc (cabinet_state).
 const signInWithOtpMock = vi.fn();
+const signInWithOAuthMock = vi.fn();
 const verifyOtpMock = vi.fn();
 const rpcMock = vi.fn();
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
       signInWithOtp: (arg: unknown) => signInWithOtpMock(arg),
+      signInWithOAuth: (arg: unknown) => signInWithOAuthMock(arg),
       verifyOtp: (arg: unknown) => verifyOtpMock(arg),
     },
     rpc: (name: string) => rpcMock(name),
@@ -24,16 +23,15 @@ vi.mock("@/lib/supabase/client", () => ({
 
 import LoginPage from "./page";
 
-// R2 §7c: a lapsed/failed cabinet_state lookup must surface this message, not
-// silently bounce an existing member to /join. Byte-spliced from the task-3
-// brief — see .superpowers/sdd/task-3-brief.md Step 4.
 const ROUTE_ERROR_MESSAGE = "მონაცემების წამოღება ვერ მოხერხდა — სცადე თავიდან.";
 
-// Renders the page, fills the phone field, requests a code, and submits a
-// 6-digit OTP — driving the flow to exactly the point where
-// routeByCabinetState runs (mirrors JoinForm.test.tsx's driveToRegister).
-async function driveToVerify(code = "123456") {
-  render(<LoginPage />);
+async function renderLogin(error?: string) {
+  const searchParams = error ? { error } : {};
+  render(await LoginPage({ searchParams: Promise.resolve(searchParams) }));
+}
+
+async function driveLegacyToVerify(code = "123456") {
+  await renderLogin();
   fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
     target: { value: "555123456" },
   });
@@ -44,45 +42,85 @@ async function driveToVerify(code = "123456") {
 }
 
 beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "phone");
   replaceMock.mockReset();
   signInWithOtpMock.mockReset();
+  signInWithOAuthMock.mockReset();
   verifyOtpMock.mockReset();
   rpcMock.mockReset();
   signInWithOtpMock.mockResolvedValue({ error: null });
+  signInWithOAuthMock.mockResolvedValue({ error: null });
   verifyOtpMock.mockResolvedValue({ error: null });
 });
 
-describe("LoginPage — cabinet_state lookup failure surface (R2 §7c)", () => {
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("LoginPage rollout selector", () => {
+  it("defaults to the unchanged phone login when the setting is missing", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "");
+
+    await renderLogin();
+
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "კოდის მიღება" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Google-ით შესვლა" })).toBeNull();
+  });
+
+  it("keeps the phone login when the setting is exactly phone", async () => {
+    await renderLogin();
+
+    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "კოდის მიღება" })).toBeInTheDocument();
+  });
+
+  it("shows only Google login in google mode and defers cabinet lookup to the callback", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "google");
+
+    await renderLogin("oauth_callback");
+
+    expect(screen.getAllByRole("button", { name: "Google-ით შესვლა" })).toHaveLength(1);
+    expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
+    expect(screen.queryByTestId("otp-0")).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
+    );
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("LegacyPhoneLogin cabinet_state lookup failure surface", () => {
   it("shows the Georgian lookup error and does not bounce to /join", async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: { message: "boom" } });
 
-    await driveToVerify();
+    await driveLegacyToVerify();
 
     expect(await screen.findByText(ROUTE_ERROR_MESSAGE)).toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it("a null data payload (no error object) is treated the same as an rpc error", async () => {
+  it("treats null data without an error object as a lookup failure", async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: null });
 
-    await driveToVerify();
+    await driveLegacyToVerify();
 
     expect(await screen.findByText(ROUTE_ERROR_MESSAGE)).toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it("a successful lookup still routes to the derived destination (no regression)", async () => {
+  it("still routes a successful lookup to the derived destination", async () => {
     rpcMock.mockResolvedValueOnce({ data: { exists: false }, error: null });
 
-    await driveToVerify();
+    await driveLegacyToVerify();
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/join"));
     expect(screen.queryByText(ROUTE_ERROR_MESSAGE)).toBeNull();
   });
 
-  it("retry re-runs ONLY the lookup on the live session — never verifyOtp (the SMS token is single-use)", async () => {
+  it("retries only the lookup on the live session and never reuses the SMS token", async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: { message: "boom" } });
-    await driveToVerify();
+    await driveLegacyToVerify();
     expect(await screen.findByText(ROUTE_ERROR_MESSAGE)).toBeInTheDocument();
 
     rpcMock.mockResolvedValueOnce({ data: { exists: false }, error: null });
@@ -90,7 +128,6 @@ describe("LoginPage — cabinet_state lookup failure surface (R2 §7c)", () => {
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/join"));
     expect(screen.queryByText(ROUTE_ERROR_MESSAGE)).toBeNull();
-    // the consumed OTP must not be re-submitted: one verify for the whole journey
     expect(verifyOtpMock).toHaveBeenCalledTimes(1);
     expect(rpcMock).toHaveBeenCalledTimes(2);
   });
