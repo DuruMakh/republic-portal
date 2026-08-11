@@ -140,6 +140,7 @@ describe("production security advisor gate", () => {
   ] as const)("rejects a changed %s contract field", (field, value) => {
     const results = reviewedViews.map(advisorResult);
     const resultToMutate = results[0];
+    if (!resultToMutate) throw new Error("Expected an advisor result to mutate.");
 
     if (field === "name") resultToMutate.name = value;
     if (field === "level") resultToMutate.level = value;
