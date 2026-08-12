@@ -93,6 +93,24 @@ function readVerificationResult(body: VerifyGeResponse): boolean | null {
   return typeof data?.success === "boolean" ? data.success : null;
 }
 
+async function hasVerifiedStatus(
+  fetcher: typeof fetch,
+  headers: Record<string, string>,
+  requestId: string,
+): Promise<boolean> {
+  try {
+    const response = await fetcher(`${VERIFY_GE_BASE_URL}/otp/${encodeURIComponent(requestId)}`, {
+      method: "GET",
+      headers,
+    });
+    const body = await readVerifyGeResponse(response);
+    const data = asObject(body.data);
+    return response.ok && readApiError(body) === null && data?.status === "VERIFIED";
+  } catch {
+    return false;
+  }
+}
+
 export function createVerifyGeProvider(
   apiKey: string,
   fetcher: typeof fetch = fetch,
@@ -161,6 +179,9 @@ export function createVerifyGeProvider(
         const mappedError =
           error instanceof PhoneVerificationProviderError ? error : mapVerifyGeError(error);
         if (mappedError.code === "service_unavailable") {
+          if (await hasVerifiedStatus(fetcher, baseHeaders, input.requestId)) {
+            return { verified: true };
+          }
           logProviderFailure("verify_ge_verification_failed", error);
         }
         throw mappedError;

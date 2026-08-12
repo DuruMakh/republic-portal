@@ -109,6 +109,82 @@ describe("createVerifyGeProvider", () => {
     );
   });
 
+  it("accepts a provider-confirmed code when the verification response omits its result", async () => {
+    const fetcher = createFetch();
+    fetcher
+      .mockResolvedValueOnce(
+        jsonResponse({ success: true, data: { message: "OTP verified successfully" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: {
+            id: "req-123",
+            phoneNumber: "+9955******56",
+            channel: "SMS",
+            status: "VERIFIED",
+            attempts: 0,
+            maxAttempts: 5,
+            expiresAt: "2026-08-12T12:05:00.000Z",
+            verifiedAt: "2026-08-12T12:01:00.000Z",
+            createdAt: "2026-08-12T12:00:00.000Z",
+            isExpired: false,
+          },
+        }),
+      );
+    const provider = createProvider(fetcher);
+
+    await expect(provider.verify({ requestId: "req-123", code: "123456" })).resolves.toEqual({
+      verified: true,
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      "https://otp-service-production-ge.up.railway.app/api/v1/otp/req-123",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${serverSecret}`,
+          "Content-Type": "application/json",
+          "X-OTP-SDK-Language": "typescript",
+          "X-OTP-SDK-Platform": "node",
+          "X-OTP-SDK-Version": "2.1.7",
+        },
+      },
+    );
+  });
+
+  it("fails closed when an ambiguous verification is not confirmed as verified", async () => {
+    const fetcher = createFetch();
+    fetcher
+      .mockResolvedValueOnce(
+        jsonResponse({ success: true, data: { message: "Verification result unavailable" } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: {
+            id: "req-123",
+            phoneNumber: "+9955******56",
+            channel: "SMS",
+            status: "SENT",
+            attempts: 0,
+            maxAttempts: 5,
+            expiresAt: "2026-08-12T12:05:00.000Z",
+            verifiedAt: null,
+            createdAt: "2026-08-12T12:00:00.000Z",
+            isExpired: false,
+          },
+        }),
+      );
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const provider = createProvider(fetcher);
+
+    await expect(provider.verify({ requestId: "req-123", code: "123456" })).rejects.toMatchObject({
+      code: "service_unavailable",
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
     ["INVALID_OTP_CODE", "invalid_code"],
     ["OTP_EXPIRED", "expired_code"],
