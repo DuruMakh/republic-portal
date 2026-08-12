@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ZodIssue } from "zod";
+import { AuthEntryShell } from "@/components/AuthEntryShell";
+import { AuthProgress } from "@/components/AuthProgress";
 import { Button } from "@/components/Button";
-import { Eyebrow } from "@/components/Eyebrow";
 import { Field } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { PhoneVerification } from "@/components/PhoneVerification";
@@ -277,105 +278,117 @@ export function GoogleJoinForm() {
     setPhase("form");
   }
 
+  const phoneStep = phase === "form" || phase === "otp" || phase === "retry";
+  const currentStep = phoneStep ? ("phone" as const) : ("google" as const);
+
   return (
-    <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
-      <Eyebrow>წევრის რეგისტრაცია</Eyebrow>
-      <h1 className="mt-1 font-serif text-3xl font-bold text-ink">შემოგვიერთდი ერთ წუთში</h1>
-      <p className="mt-3 text-muted-fg">მხოლოდ ძირითადი მონაცემები — დანარჩენს კაბინეტში ნახავ.</p>
-      <div className="mt-8">
-        <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
-          {notice ? (
-            <p className="mb-4 rounded-lg bg-ink/5 p-3 text-sm text-ink" data-testid="join-notice">
-              {notice}
+    <AuthEntryShell
+      eyebrow={phoneStep ? "ნაბიჯი 2 — ტელეფონის დადასტურება" : "ნაბიჯი 1 — წევრის რეგისტრაცია"}
+      title="შემოგვიერთდი ერთ წუთში"
+      intro="Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."
+      progress={<AuthProgress currentStep={currentStep} />}
+      asideTitle={phoneStep ? "რატომ ტელეფონი?" : "როგორ მუშაობს"}
+      aside={
+        phoneStep ? (
+          <p>ნომერზე მიიღებ ერთჯერად SMS კოდს. შემდეგ შესვლისთვის მხოლოდ Google დაგჭირდება.</p>
+        ) : (
+          <ol className="flex list-decimal flex-col gap-2 pl-4">
+            <li>Google-ით უსაფრთხოდ შედიხარ.</li>
+            <li>ახალი წევრი ერთხელ ადასტურებს ტელეფონის ნომერს.</li>
+            <li>შემდეგ პირდაპირ პირად კაბინეტში გადადიხარ.</li>
+          </ol>
+        )
+      }
+    >
+      {notice ? (
+        <p
+          className="mb-5 border-l-2 border-brand bg-surface px-4 py-3 text-sm text-ink"
+          data-testid="join-notice"
+        >
+          {notice}
+        </p>
+      ) : null}
+
+      {phase === "loading" ? (
+        <p role="status" className="text-sm text-muted-fg">
+          მონაცემები იტვირთება…
+        </p>
+      ) : null}
+
+      {phase === "google" ? (
+        <div className="flex max-w-xl flex-col gap-4">
+          <GoogleAuthButton nextPath={nextPath} label="Google-ით გაგრძელება" />
+          {formError ? (
+            <p role="alert" className="text-sm font-semibold text-danger">
+              {formError}
             </p>
-          ) : null}
-
-          {phase === "loading" ? (
-            <p role="status" className="text-sm text-muted-fg">
-              მონაცემები იტვირთება…
-            </p>
-          ) : null}
-
-          {phase === "google" ? (
-            <div className="flex flex-col gap-4">
-              <GoogleAuthButton nextPath={nextPath} label="Google-ით გაგრძელება" />
-              {formError ? (
-                <p role="alert" className="text-sm font-semibold text-danger">
-                  {formError}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {phase === "otp" && challenge ? (
-            <div className="flex flex-col gap-4">
-              <PhoneVerification
-                phone={phone}
-                challengeId={challenge.challengeId}
-                expiresAt={challenge.expiresAt}
-                onChallengeChanged={setChallenge}
-                onVerified={afterPhoneVerified}
-              />
-              <Button variant="ghost" size="sm" onClick={changePhone}>
-                ნომრის შეცვლა
-              </Button>
-            </div>
-          ) : null}
-
-          {phase === "form" || phase === "retry" ? (
-            <div className="flex flex-col gap-4">
-              <h2 className="font-serif font-bold border-b-2 border-ink pb-2">პირადი მონაცემები</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label="სახელი"
-                  name="firstName"
-                  placeholder="მაგ. ნინო"
-                  value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
-                  error={errors.firstName}
-                />
-                <Field
-                  label="გვარი"
-                  name="lastName"
-                  placeholder="მაგ. ბერიძე"
-                  value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
-                  error={errors.lastName}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Field
-                  label="ტელეფონის ნომერი"
-                  name="phone"
-                  inputMode="tel"
-                  placeholder="+995 5XX XX XX XX"
-                  value={phoneInput}
-                  onChange={(event) => setPhoneInput(event.target.value)}
-                  error={errors.phone}
-                  disabled={phase === "retry"}
-                />
-                <p className="text-xs text-muted-fg">
-                  {phase === "retry"
-                    ? "ნომერი დადასტურებულია"
-                    : "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად."}
-                </p>
-              </div>
-              {formError ? (
-                <p role="alert" className="text-sm font-semibold text-danger">
-                  {formError}
-                </p>
-              ) : null}
-              <Button
-                onClick={phase === "retry" ? submitRetry : submitForm}
-                disabled={busy}
-                size="lg"
-              >
-                {phase === "retry" ? "დარეგისტრირება" : "კოდის მიღება"}
-              </Button>
-            </div>
           ) : null}
         </div>
-      </div>
-    </main>
+      ) : null}
+
+      {phase === "otp" && challenge ? (
+        <div className="flex max-w-xl flex-col gap-4">
+          <PhoneVerification
+            phone={phone}
+            challengeId={challenge.challengeId}
+            expiresAt={challenge.expiresAt}
+            onChallengeChanged={setChallenge}
+            onVerified={afterPhoneVerified}
+          />
+          <Button variant="ghost" size="sm" onClick={changePhone}>
+            ნომრის შეცვლა
+          </Button>
+        </div>
+      ) : null}
+
+      {phase === "form" || phase === "retry" ? (
+        <div className="flex max-w-2xl flex-col gap-4">
+          <h2 className="font-serif font-bold border-b-2 border-ink pb-2">პირადი მონაცემები</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="სახელი"
+              name="firstName"
+              placeholder="მაგ. ნინო"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              error={errors.firstName}
+            />
+            <Field
+              label="გვარი"
+              name="lastName"
+              placeholder="მაგ. ბერიძე"
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              error={errors.lastName}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Field
+              label="ტელეფონის ნომერი"
+              name="phone"
+              inputMode="tel"
+              placeholder="+995 5XX XX XX XX"
+              value={phoneInput}
+              onChange={(event) => setPhoneInput(event.target.value)}
+              error={errors.phone}
+              disabled={phase === "retry"}
+            />
+            <p className="text-xs text-muted-fg">
+              {phase === "retry"
+                ? "ნომერი დადასტურებულია"
+                : "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად."}
+            </p>
+          </div>
+          {formError ? (
+            <p role="alert" className="text-sm font-semibold text-danger">
+              {formError}
+            </p>
+          ) : null}
+          <Button onClick={phase === "retry" ? submitRetry : submitForm} disabled={busy} size="lg">
+            {phase === "retry" ? "დარეგისტრირება" : "კოდის მიღება"}
+          </Button>
+        </div>
+      ) : null}
+    </AuthEntryShell>
   );
 }

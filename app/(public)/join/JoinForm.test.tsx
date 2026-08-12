@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_FUNNEL_ERROR, type CabinetStatePresent } from "@/lib/funnel";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
@@ -99,6 +99,11 @@ async function renderJoin() {
   await Promise.resolve();
 }
 
+function expectCurrentRegistrationStep(label: "Google" | "ტელეფონი") {
+  const progress = screen.getByRole("list", { name: "რეგისტრაციის ნაბიჯები" });
+  expect(within(progress).getByText(label).closest("li")).toHaveAttribute("aria-current", "step");
+}
+
 async function reachGoogleForm(user = googleUser()) {
   mocks.getUser.mockResolvedValue({ data: { user }, error: null });
   mocks.rpc.mockResolvedValue({ data: { exists: false }, error: null });
@@ -192,11 +197,22 @@ describe("JoinForm rollout selector", () => {
 });
 
 describe("GoogleJoinForm", () => {
+  it("keeps the Google step current while registration state loads", () => {
+    mocks.getUser.mockReturnValue(new Promise(() => undefined));
+
+    render(<JoinForm />);
+
+    expectCurrentRegistrationStep("Google");
+    expect(screen.getByText("ნაბიჯი 1 — წევრის რეგისტრაცია")).toBeInTheDocument();
+  });
+
   it("shows only the Google gate when signed out and preserves a valid referral through OAuth", async () => {
     mocks.search = "?ref=D00101";
     await renderJoin();
 
     const google = await screen.findByRole("button", { name: "Google-ით გაგრძელება" });
+    expectCurrentRegistrationStep("Google");
+    expect(screen.getByRole("complementary")).toHaveAccessibleName("როგორ მუშაობს");
     expect(screen.queryByLabelText("სახელი")).toBeNull();
     expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
     fireEvent.click(google);
@@ -226,6 +242,9 @@ describe("GoogleJoinForm", () => {
   it("shows the name and phone form for a Google user without a profile", async () => {
     await reachGoogleForm();
 
+    expectCurrentRegistrationStep("ტელეფონი");
+    expect(screen.getByText("ნაბიჯი 2 — ტელეფონის დადასტურება")).toBeInTheDocument();
+    expect(screen.getByRole("complementary")).toHaveAccessibleName("რატომ ტელეფონი?");
     expect(screen.getByLabelText("სახელი")).toBeEnabled();
     expect(screen.getByLabelText("გვარი")).toBeEnabled();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue("");
@@ -298,6 +317,7 @@ describe("GoogleJoinForm", () => {
   it("moves a successful send to the provider-neutral code screen", async () => {
     await sendGoogleCode();
 
+    expectCurrentRegistrationStep("ტელეფონი");
     expect(screen.getByText(PHONE, { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "SMS კოდი" })).toBeInTheDocument();
     expect(screen.queryByText("Supabase", { exact: false })).toBeNull();
@@ -344,6 +364,7 @@ describe("GoogleJoinForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
 
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
+    expectCurrentRegistrationStep("ტელეფონი");
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
     const retry = screen.getByRole("button", { name: "დარეგისტრირება" });
     fireEvent.click(retry);

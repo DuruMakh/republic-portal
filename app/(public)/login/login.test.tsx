@@ -86,6 +86,10 @@ describe("LoginPage rollout selector", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
     );
+    expect(screen.getByRole("heading", { name: "შესვლა" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "რეგისტრაციის ნაბიჯები" })).toBeNull();
+    expect(screen.getByRole("complementary")).toHaveAccessibleName("პირველად ხარ?");
+    expect(screen.getByText("Google-ით შედიხარ უსაფრთხოდ და სწრაფად.")).toBeInTheDocument();
     expect(rpcMock).not.toHaveBeenCalled();
   });
 });
