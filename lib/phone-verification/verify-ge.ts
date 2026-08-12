@@ -1,21 +1,26 @@
 import "server-only";
 
 import {
-  InvalidOtpError,
-  OtpChannel,
-  OtpClient,
-  OtpExpiredError,
-  RateLimitError,
-} from "@smart-pay-chain/otp";
-
-import {
   PHONE_VERIFICATION_CODE_LENGTH,
   PHONE_VERIFICATION_TTL_SECONDS,
   type PhoneVerificationFailureCode,
   type PhoneVerificationProvider,
 } from "./contracts";
 
-type VerifyGeSdk = Pick<OtpClient, "sendOtp" | "verifyOtp">;
+const VERIFY_GE_BASE_URL = "https://api.verify.ge/api/v1";
+
+type VerifyGeError = {
+  name?: string;
+  code?: string;
+  statusCode?: number;
+  retryable?: boolean;
+};
+
+type VerifyGeResponse = {
+  success?: unknown;
+  data?: unknown;
+  error?: unknown;
+};
 
 export class PhoneVerificationProviderError extends Error {
   constructor(readonly code: PhoneVerificationFailureCode) {
@@ -24,97 +29,118 @@ export class PhoneVerificationProviderError extends Error {
   }
 }
 
-function hasSdkErrorCode(error: unknown, code: string): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === code;
+function asObject(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 }
 
-function safeErrorField(error: unknown, field: string): string | number | boolean | undefined {
-  if (typeof error !== "object" || error === null || !(field in error)) return undefined;
-  const value = error[field as keyof typeof error];
-  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
-    ? value
-    : undefined;
+function readError(error: unknown): VerifyGeError {
+  const value = asObject(error);
+  return {
+    name: typeof value?.name === "string" ? value.name : undefined,
+    code: typeof value?.code === "string" ? value.code : undefined,
+    statusCode: typeof value?.statusCode === "number" ? value.statusCode : undefined,
+    retryable: typeof value?.retryable === "boolean" ? value.retryable : undefined,
+  };
+}
+
+function mapVerifyGeError(error: unknown): PhoneVerificationProviderError {
+  const { code } = readError(error);
+  if (code === "INVALID_OTP_CODE") return new PhoneVerificationProviderError("invalid_code");
+  if (code === "OTP_EXPIRED" || code === "OTP_NOT_FOUND") {
+    return new PhoneVerificationProviderError("expired_code");
+  }
+  if (code === "RATE_LIMIT_EXCEEDED" || code === "OTP_MAX_ATTEMPTS") {
+    return new PhoneVerificationProviderError("too_many_requests");
+  }
+  return new PhoneVerificationProviderError("service_unavailable");
 }
 
 function logVerificationFailure(error: unknown): void {
+  const safe = readError(error);
   console.error(
     JSON.stringify({
       level: "error",
       event: "verify_ge_verification_failed",
-      errorName: safeErrorField(error, "name"),
-      errorCode: safeErrorField(error, "code"),
-      statusCode: safeErrorField(error, "statusCode"),
-      retryable: safeErrorField(error, "retryable"),
+      errorName: safe.name,
+      errorCode: safe.code,
+      statusCode: safe.statusCode,
+      retryable: safe.retryable,
     }),
   );
 }
 
-function hasRequestId(result: unknown): result is { requestId: string } {
-  return (
-    typeof result === "object" &&
-    result !== null &&
-    "requestId" in result &&
-    typeof result.requestId === "string" &&
-    result.requestId.length > 0
-  );
+async function readVerifyGeResponse(response: Response): Promise<VerifyGeResponse> {
+  const body: unknown = await response.json();
+  const value = asObject(body);
+  if (!value) throw new PhoneVerificationProviderError("service_unavailable");
+  return value;
 }
 
-function mapVerifyGeError(error: unknown): PhoneVerificationProviderError {
-  if (error instanceof InvalidOtpError || hasSdkErrorCode(error, "INVALID_OTP_CODE")) {
-    return new PhoneVerificationProviderError("invalid_code");
-  }
+function readApiError(body: VerifyGeResponse): VerifyGeError | null {
+  return body.success === false ? readError(body.error) : null;
+}
 
-  if (
-    error instanceof OtpExpiredError ||
-    hasSdkErrorCode(error, "OTP_EXPIRED") ||
-    hasSdkErrorCode(error, "OTP_NOT_FOUND")
-  ) {
-    return new PhoneVerificationProviderError("expired_code");
-  }
+function readRequestId(body: VerifyGeResponse): string | null {
+  const data = asObject(body.data);
+  return typeof data?.requestId === "string" && data.requestId.length > 0 ? data.requestId : null;
+}
 
-  if (error instanceof RateLimitError || hasSdkErrorCode(error, "RATE_LIMIT_EXCEEDED")) {
-    return new PhoneVerificationProviderError("too_many_requests");
-  }
-
-  return new PhoneVerificationProviderError("service_unavailable");
+function readVerificationResult(body: VerifyGeResponse): boolean | null {
+  const data = asObject(body.data);
+  return typeof data?.success === "boolean" ? data.success : null;
 }
 
 export function createVerifyGeProvider(
   apiKey: string,
-  sdk?: VerifyGeSdk,
+  fetcher: typeof fetch = fetch,
 ): PhoneVerificationProvider {
-  if (!apiKey) {
-    throw new Error("VERIFY_GE_API_KEY is missing");
-  }
+  if (!apiKey) throw new Error("VERIFY_GE_API_KEY is missing");
 
-  const client = sdk ?? new OtpClient({ apiKey, autoConfig: true });
+  const baseHeaders = { "Content-Type": "application/json", "X-API-Key": apiKey };
 
   return {
     async send(input) {
       try {
-        const result: unknown = await client.sendOtp({
-          phoneNumber: input.phone,
-          channel: OtpChannel.SMS,
-          ttl: PHONE_VERIFICATION_TTL_SECONDS,
-          length: PHONE_VERIFICATION_CODE_LENGTH,
-          idempotencyKey: input.idempotencyKey,
+        const response = await fetcher(`${VERIFY_GE_BASE_URL}/otp/send`, {
+          method: "POST",
+          headers: { ...baseHeaders, "X-Idempotency-Key": input.idempotencyKey },
+          body: JSON.stringify({
+            phoneNumber: input.phone,
+            channel: "SMS",
+            ttl: PHONE_VERIFICATION_TTL_SECONDS,
+            length: PHONE_VERIFICATION_CODE_LENGTH,
+          }),
         });
-
-        if (!hasRequestId(result)) {
+        const body = await readVerifyGeResponse(response);
+        const apiError = readApiError(body);
+        if (apiError) throw mapVerifyGeError(apiError);
+        const requestId = readRequestId(body);
+        if (!response.ok || !requestId) {
           throw new PhoneVerificationProviderError("service_unavailable");
         }
-
-        return { provider: "verify_ge", requestId: result.requestId };
+        return { provider: "verify_ge", requestId };
       } catch (error) {
         throw error instanceof PhoneVerificationProviderError ? error : mapVerifyGeError(error);
       }
     },
     async verify(input) {
       try {
-        const result = await client.verifyOtp({ requestId: input.requestId, code: input.code });
-        return { verified: result.success === true };
+        const response = await fetcher(`${VERIFY_GE_BASE_URL}/otp/verify`, {
+          method: "POST",
+          headers: baseHeaders,
+          body: JSON.stringify({ requestId: input.requestId, code: input.code }),
+        });
+        const body = await readVerifyGeResponse(response);
+        const apiError = readApiError(body);
+        if (apiError) throw apiError;
+        const verified = readVerificationResult(body);
+        if (!response.ok || verified === null) {
+          throw new PhoneVerificationProviderError("service_unavailable");
+        }
+        return { verified };
       } catch (error) {
-        const mappedError = mapVerifyGeError(error);
+        const mappedError =
+          error instanceof PhoneVerificationProviderError ? error : mapVerifyGeError(error);
         if (mappedError.code === "service_unavailable") logVerificationFailure(error);
         throw mappedError;
       }

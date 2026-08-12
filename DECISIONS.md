@@ -776,3 +776,13 @@ provider. The official `@smart-pay-chain/otp` SDK is pinned at `2.1.7` and is
 isolated behind `PhoneVerificationProvider`, so a future provider replacement
 does not change registration logic. The `test` provider is refused in
 production. No webhook is created, and no provider key is committed to Git.
+
+## ADR-032 (2026-08-12): Verify.ge documented REST API replaces incompatible SDK
+
+Verify.ge SMS sending and code verification use its documented
+`https://api.verify.ge/api/v1` REST API with the server-only `X-API-Key` header.
+The pinned `@smart-pay-chain/otp@2.1.7` package is removed because it targets a
+different host and authentication scheme and throws while parsing current API
+verification failures. The existing `PhoneVerificationProvider` boundary keeps
+registration behavior unchanged and continues to redact phone numbers, codes,
+request IDs, and provider messages from logs.

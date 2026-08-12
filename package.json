@@ -27,7 +27,6 @@
     "security:verify-fixes": "node --env-file=.env.local scripts/verify-security-fixes.mjs"
   },
   "dependencies": {
-    "@smart-pay-chain/otp": "2.1.7",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.47.0",
     "next": "^16.2.10",

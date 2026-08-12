@@ -4,31 +4,23 @@ vi.mock("server-only", () => ({}));
 
 import { createVerifyGeProvider, PhoneVerificationProviderError } from "./verify-ge";
 
-type VerifyGeSdk = NonNullable<Parameters<typeof createVerifyGeProvider>[1]>;
-
 const serverSecret = "server-secret";
 const idempotencyKey = "a".repeat(64);
 
-function createSdk() {
-  return {
-    sendOtp: vi.fn<() => Promise<unknown>>().mockResolvedValue({
-      requestId: "req-123",
-      expiresAt: new Date("2026-08-11T12:05:00.000Z"),
-      status: "SENT",
-    }),
-    verifyOtp: vi
-      .fn<() => Promise<unknown>>()
-      .mockResolvedValue({ success: true, message: "verified" }),
-  };
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
-function createProvider(sdk: ReturnType<typeof createSdk>) {
-  return createVerifyGeProvider(serverSecret, sdk as unknown as VerifyGeSdk);
+function createFetch() {
+  return vi.fn<typeof fetch>();
 }
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+function createProvider(fetcher: ReturnType<typeof createFetch>) {
+  return createVerifyGeProvider(serverSecret, fetcher);
+}
 
 async function captureError(
   operation: () => Promise<unknown>,
@@ -43,10 +35,24 @@ async function captureError(
   throw new Error("Expected operation to reject");
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("createVerifyGeProvider", () => {
-  it("sends the provider's required SMS payload and returns its request ID", async () => {
-    const sdk = createSdk();
-    const provider = createProvider(sdk);
+  it("sends through the documented Verify.ge REST endpoint and returns its request ID", async () => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(
+      jsonResponse({
+        success: true,
+        data: {
+          requestId: "req-123",
+          expiresAt: "2026-08-12T12:05:00.000Z",
+          status: "SENT",
+        },
+      }),
+    );
+    const provider = createProvider(fetcher);
 
     await expect(
       provider.send({
@@ -55,63 +61,63 @@ describe("createVerifyGeProvider", () => {
         idempotencyKey,
       }),
     ).resolves.toEqual({ provider: "verify_ge", requestId: "req-123" });
-    expect(sdk.sendOtp).toHaveBeenCalledWith({
-      phoneNumber: "+995555123456",
-      channel: "SMS",
-      ttl: 300,
-      length: 6,
-      idempotencyKey,
+    expect(fetcher).toHaveBeenCalledWith("https://api.verify.ge/api/v1/otp/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": serverSecret,
+        "X-Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({
+        phoneNumber: "+995555123456",
+        channel: "SMS",
+        ttl: 300,
+        length: 6,
+      }),
     });
   });
 
-  it("returns the SDK verification decision", async () => {
-    const sdk = createSdk();
-    const provider = createProvider(sdk);
+  it("verifies through the documented Verify.ge REST endpoint", async () => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(
+      jsonResponse({ success: true, data: { success: true, message: "verified" } }),
+    );
+    const provider = createProvider(fetcher);
 
     await expect(provider.verify({ requestId: "req-123", code: "123456" })).resolves.toEqual({
       verified: true,
     });
-    expect(sdk.verifyOtp).toHaveBeenCalledWith({ requestId: "req-123", code: "123456" });
+    expect(fetcher).toHaveBeenCalledWith("https://api.verify.ge/api/v1/otp/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": serverSecret },
+      body: JSON.stringify({ requestId: "req-123", code: "123456" }),
+    });
   });
 
   it.each([
-    ["null", null],
-    ["undefined", undefined],
-    ["a non-object", "sent"],
-    ["a non-string request ID", { requestId: 123 }],
-    ["an empty request ID", { requestId: "" }],
-  ])("fails closed when the send response is %s", async (_description, response) => {
-    const sdk = createSdk();
-    sdk.sendOtp.mockResolvedValueOnce(response);
-    const provider = createProvider(sdk);
-
-    await expect(
-      provider.send({ phone: "+995555123456", purpose: "registration", idempotencyKey }),
-    ).rejects.toMatchObject({ code: "service_unavailable", message: "service_unavailable" });
-  });
-
-  it("redacts an SDK timeout or rejection", async () => {
-    const sdk = createSdk();
-    sdk.sendOtp.mockRejectedValueOnce(new Error(`timeout for ${serverSecret}`));
-    const provider = createProvider(sdk);
-
-    const error = await captureError(() =>
-      provider.send({ phone: "+995555123456", purpose: "registration", idempotencyKey }),
+    ["INVALID_OTP_CODE", "invalid_code"],
+    ["OTP_EXPIRED", "expired_code"],
+    ["OTP_NOT_FOUND", "expired_code"],
+    ["RATE_LIMIT_EXCEEDED", "too_many_requests"],
+    ["OTP_MAX_ATTEMPTS", "too_many_requests"],
+  ] as const)("maps the REST API %s error without exposing its message", async (apiCode, code) => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          success: false,
+          error: {
+            code: apiCode,
+            message: `provider ${serverSecret}`,
+            statusCode: 400,
+            retryable: false,
+          },
+          meta: { requestId: serverSecret, timestamp: "2026-08-12T12:00:00.000Z" },
+        },
+        400,
+      ),
     );
-
-    expect(error).toMatchObject({ code: "service_unavailable", message: "service_unavailable" });
-    expect(error.message).not.toContain(serverSecret);
-  });
-
-  it.each([
-    [{ code: "INVALID_OTP_CODE", message: `invalid ${serverSecret}` }, "invalid_code"],
-    [{ code: "OTP_EXPIRED", message: `expired ${serverSecret}` }, "expired_code"],
-    [{ code: "OTP_NOT_FOUND", message: `missing ${serverSecret}` }, "expired_code"],
-    [{ code: "RATE_LIMIT_EXCEEDED", message: `limited ${serverSecret}` }, "too_many_requests"],
-  ] as const)("maps the SDK %s error code without exposing its message", async (sdkError, code) => {
-    const sdk = createSdk();
-    sdk.verifyOtp.mockRejectedValueOnce(sdkError);
-    const provider = createProvider(sdk);
+    const provider = createProvider(fetcher);
 
     const error = await captureError(() =>
       provider.verify({ requestId: "req-123", code: "123456" }),
@@ -121,19 +127,26 @@ describe("createVerifyGeProvider", () => {
     expect(error.message).not.toContain(serverSecret);
   });
 
-  it("logs only safe diagnostic fields for an unknown verification failure", async () => {
-    const sdk = createSdk();
-    sdk.verifyOtp.mockRejectedValueOnce({
-      name: "OtpError",
-      code: "SERVICE_UNAVAILABLE",
-      statusCode: 503,
-      retryable: true,
-      message: `provider ${serverSecret}`,
-      requestId: serverSecret,
-      details: { secret: serverSecret },
-    });
+  it("logs only safe diagnostic fields for an unknown REST verification failure", async () => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          success: false,
+          error: {
+            code: "SERVICE_UNAVAILABLE",
+            message: `provider ${serverSecret}`,
+            statusCode: 503,
+            retryable: true,
+            details: { secret: serverSecret },
+          },
+          meta: { requestId: serverSecret, timestamp: "2026-08-12T12:00:00.000Z" },
+        },
+        503,
+      ),
+    );
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const provider = createProvider(sdk);
+    const provider = createProvider(fetcher);
 
     await expect(provider.verify({ requestId: "req-123", code: "123456" })).rejects.toMatchObject({
       code: "service_unavailable",
@@ -143,7 +156,7 @@ describe("createVerifyGeProvider", () => {
       JSON.stringify({
         level: "error",
         event: "verify_ge_verification_failed",
-        errorName: "OtpError",
+        errorName: undefined,
         errorCode: "SERVICE_UNAVAILABLE",
         statusCode: 503,
         retryable: true,
@@ -152,9 +165,41 @@ describe("createVerifyGeProvider", () => {
     expect(consoleError.mock.calls.flat().join(" ")).not.toContain(serverSecret);
   });
 
-  it("requires a server-only API key before constructing the SDK", () => {
-    expect(() => createVerifyGeProvider("", createSdk() as unknown as VerifyGeSdk)).toThrow(
-      "VERIFY_GE_API_KEY is missing",
+  it.each([
+    ["send", { success: true, data: { requestId: "" } }],
+    ["verify", { success: true, data: { success: "yes" } }],
+  ])("fails closed when the %s success response is malformed", async (operation, body) => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(jsonResponse(body));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const provider = createProvider(fetcher);
+
+    const result =
+      operation === "send"
+        ? provider.send({ phone: "+995555123456", purpose: "registration", idempotencyKey })
+        : provider.verify({ requestId: "req-123", code: "123456" });
+
+    await expect(result).rejects.toMatchObject({
+      code: "service_unavailable",
+      message: "service_unavailable",
+    });
+  });
+
+  it("redacts a network failure", async () => {
+    const fetcher = createFetch();
+    fetcher.mockRejectedValueOnce(new TypeError(`network ${serverSecret}`));
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const provider = createProvider(fetcher);
+
+    const error = await captureError(() =>
+      provider.verify({ requestId: "req-123", code: "123456" }),
     );
+
+    expect(error).toMatchObject({ code: "service_unavailable", message: "service_unavailable" });
+    expect(consoleError.mock.calls.flat().join(" ")).not.toContain(serverSecret);
+  });
+
+  it("requires a server-only API key before making requests", () => {
+    expect(() => createVerifyGeProvider("", createFetch())).toThrow("VERIFY_GE_API_KEY is missing");
   });
 });
