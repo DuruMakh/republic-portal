@@ -21,9 +21,21 @@ afterEach(() => {
 });
 
 describe("GoogleAuthButton", () => {
+  it("renders the official Google mark as part of one accessible provider action", () => {
+    render(<GoogleAuthButton nextPath="/join" label="Google-ით გაგრძელება" />);
+
+    const button = screen.getByRole("button", { name: "Google-ით გაგრძელება" });
+    expect(button).toHaveAttribute("aria-busy", "false");
+    const mark = screen.getByTestId("google-mark");
+    expect(mark).toHaveAttribute("alt", "");
+    expect(mark.getAttribute("src")).toContain("google-g.png");
+  });
+
   it("starts Supabase Google OAuth with the current origin and preserved join path", async () => {
     render(<GoogleAuthButton nextPath="/join?ref=D00101" label="Google-ით გაგრძელება" />);
-    vi.stubGlobal("window", { location: { origin: "https://portal.test" } });
+    vi.stubGlobal("window", {
+      location: { origin: "https://portal.test", href: "https://portal.test/" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Google-ით გაგრძელება" }));
     vi.unstubAllGlobals();
@@ -44,7 +56,9 @@ describe("GoogleAuthButton", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Google-ით გაგრძელება" }));
 
-    expect(screen.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeDisabled();
+    const button = screen.getByRole("button", { name: "Google-ით გაგრძელება" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
   });
 
   it("recovers and shows one Georgian error line when OAuth fails", async () => {

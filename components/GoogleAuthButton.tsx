@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { Button } from "@/components/Button";
 import { safeAuthNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 
@@ -33,9 +33,24 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
 
   return (
     <div className="flex flex-col gap-3">
-      <Button onClick={startGoogleOAuth} disabled={pending}>
-        {label}
-      </Button>
+      <button
+        type="button"
+        onClick={startGoogleOAuth}
+        disabled={pending}
+        aria-busy={pending}
+        className="relative inline-flex min-h-[48px] w-full items-center justify-center border border-[#747775] bg-white px-12 text-[0.9rem] font-medium text-[#1f1f1f] no-underline transition-colors hover:bg-[#f8f9fa] disabled:pointer-events-none disabled:opacity-60"
+      >
+        <Image
+          src="/brand/google-g.png"
+          alt=""
+          aria-hidden="true"
+          data-testid="google-mark"
+          width={20}
+          height={20}
+          className="absolute left-3"
+        />
+        <span>{label}</span>
+      </button>
       {error ? (
         <p role="alert" className="text-sm font-semibold text-danger">
           {error}

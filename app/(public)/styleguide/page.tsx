@@ -1,4 +1,5 @@
 import { AdminNav } from "@/components/AdminNav";
+import { AuthProgress } from "@/components/AuthProgress";
 import { BallotBar, ballotButtonClasses } from "@/components/Ballot";
 import { Badge } from "@/components/Badge";
 import { Button, type ButtonVariant } from "@/components/Button";
@@ -11,6 +12,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
 import { adminControlClasses, Field, TextareaField } from "@/components/Field";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { NewsCard } from "@/components/NewsCard";
@@ -206,6 +208,13 @@ export default function StyleguidePage() {
                 <Button variant="ghost-inverse" size="lg">
                   დიდი
                 </Button>
+              </div>
+            </div>
+            <div className="border-t border-hairline pt-4">
+              <div className="mb-3 text-xs font-semibold text-muted-fg">ავტორიზაციის ნაკადი</div>
+              <AuthProgress currentStep="phone" />
+              <div className="mt-4 max-w-md">
+                <GoogleAuthButton nextPath="/join" label="Google-ით გაგრძელება" />
               </div>
             </div>
           </div>
