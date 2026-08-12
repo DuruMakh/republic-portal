@@ -107,6 +107,11 @@ const RAISE_EXCEPTION_SQLSTATE = "P0001";
  */
 export const REFUSAL_TOKENS = new Set([
   "not_authenticated",
+  // Google phone registration (20260811182202_google_verify_phone.sql):
+  // register_google() confirms the authenticated caller has a Google identity
+  // before checking phone proof or processing registration payload/business
+  // rules. This is therefore a caller identity/provider-standing refusal.
+  "google_required",
   "missing_role",
   "not_a_delegate",
   "not_approved",

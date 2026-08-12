@@ -35,6 +35,11 @@ const DELIBERATELY_UNCLASSIFIED = new Set([
   // Belongs to a trigger (enforce_delegate_completed), not an RPC with a
   // caller to refuse or admit.
   "delegate_requires_completed_member",
+  // Raised only by complete_phone_verification_send(), an internal
+  // service-role-only SECURITY INVOKER RPC whose EXECUTE privilege is revoked
+  // from public, anon, and authenticated. It validates reservation/challenge
+  // ownership and state, not a browser caller's authorization standing.
+  "phone_verification_completion_failed",
 ]);
 
 /**
@@ -207,8 +212,11 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // it raises an actual token, not a full sentence.
     // 61 since the support page (20260802120000_support_messages.sql) added
     // submit_support_message(), which also needs a GATELESS_BY_DESIGN
-    // exemption — it is granted to anon on purpose (see above).
-    expect(latestFunctionBodies().size).toBe(61);
+    // exemption because only service_role can execute it (see above).
+    // 66 since Google phone verification (20260811182202_google_verify_phone.sql)
+    // added five latest function definitions. Its service-only helpers need no
+    // GATELESS_BY_DESIGN exemption because none raises a POST_GATE_TOKENS value.
+    expect(latestFunctionBodies().size).toBe(66);
     expect(GATELESS_BY_DESIGN.size).toBe(3);
   });
 
@@ -225,9 +233,13 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // 47 -> 49 and 37 -> 39 when the support page added
     // `invalid_support_message` and `too_many_requests`
     // (submit_support_message(), both classified POST_GATE_TOKENS above).
-    expect(live.size).toBe(49);
-    expect(REFUSAL_TOKENS.size).toBe(6);
+    // 49 -> 51 when Google phone verification added `google_required` and
+    // `phone_verification_completion_failed`: the first increases refusal
+    // tokens 6 -> 7; the internal service-only state token increases the
+    // deliberately unclassified set 4 -> 5. Post-gate tokens remain 39.
+    expect(live.size).toBe(51);
+    expect(REFUSAL_TOKENS.size).toBe(7);
     expect(POST_GATE_TOKENS.size).toBe(39);
-    expect(DELIBERATELY_UNCLASSIFIED.size).toBe(4);
+    expect(DELIBERATELY_UNCLASSIFIED.size).toBe(5);
   });
 });

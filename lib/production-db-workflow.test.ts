@@ -110,10 +110,10 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain('test "$APPROVED_RUN_CONCLUSION" = "success"');
   });
 
-  it("asserts the committed 32-file migration baseline before each database phase", () => {
+  it("asserts the committed 33-file migration baseline before each database phase", () => {
     const workflow = readRepoFile(".github/workflows/production-db.yml");
 
-    expect(workflow).toContain("EXPECTED_MIGRATION_FILE_COUNT: 32");
+    expect(workflow).toContain("EXPECTED_MIGRATION_FILE_COUNT: 33");
     expect(workflow.match(/Migration file baseline/g)).toHaveLength(2);
     expect(workflow).toContain("find supabase/migrations -maxdepth 1 -type f -name '*.sql'");
     expect(workflow).toContain(
