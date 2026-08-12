@@ -7,7 +7,7 @@ import {
   type PhoneVerificationProvider,
 } from "./contracts";
 
-const VERIFY_GE_BASE_URL = "https://api.verify.ge/api/v1";
+const VERIFY_GE_BASE_URL = "https://otp-service-production-ge.up.railway.app/api/v1";
 
 type VerifyGeError = {
   name?: string;
@@ -99,7 +99,13 @@ export function createVerifyGeProvider(
 ): PhoneVerificationProvider {
   if (!apiKey) throw new Error("VERIFY_GE_API_KEY is missing");
 
-  const baseHeaders = { "Content-Type": "application/json", "X-API-Key": apiKey };
+  const baseHeaders = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+    "X-OTP-SDK-Language": "typescript",
+    "X-OTP-SDK-Platform": "node",
+    "X-OTP-SDK-Version": "2.1.7",
+  };
 
   return {
     async send(input) {

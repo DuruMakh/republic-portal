@@ -786,3 +786,13 @@ different host and authentication scheme and throws while parsing current API
 verification failures. The existing `PhoneVerificationProvider` boundary keeps
 registration behavior unchanged and continues to redact phone numbers, codes,
 request IDs, and provider messages from logs.
+
+## ADR-033 (2026-08-12): Use the Verify.ge endpoint that accepts dashboard OTP keys
+
+The issued `otps_` dashboard key is valid on Verify.ge's SDK service at
+`https://otp-service-production-ge.up.railway.app/api/v1`, but the newer
+`api.verify.ge` host rejects it with `AUTHENTICATION_FAILED`. The portal therefore
+calls the key-compatible service directly with the same bearer and SDK-identification
+headers as the published SDK, while retaining our own safe response parsing. This
+supersedes ADR-032's host and authentication detail; the provider boundary, redacted
+logs, and Google-first registration behavior are unchanged.

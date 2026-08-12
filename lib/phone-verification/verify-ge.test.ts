@@ -40,7 +40,7 @@ afterEach(() => {
 });
 
 describe("createVerifyGeProvider", () => {
-  it("sends through the documented Verify.ge REST endpoint and returns its request ID", async () => {
+  it("sends through the API endpoint that accepts dashboard OTP keys and returns its request ID", async () => {
     const fetcher = createFetch();
     fetcher.mockResolvedValueOnce(
       jsonResponse({
@@ -61,20 +61,26 @@ describe("createVerifyGeProvider", () => {
         idempotencyKey,
       }),
     ).resolves.toEqual({ provider: "verify_ge", requestId: "req-123" });
-    expect(fetcher).toHaveBeenCalledWith("https://api.verify.ge/api/v1/otp/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": serverSecret,
-        "X-Idempotency-Key": idempotencyKey,
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://otp-service-production-ge.up.railway.app/api/v1/otp/send",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serverSecret}`,
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": idempotencyKey,
+          "X-OTP-SDK-Language": "typescript",
+          "X-OTP-SDK-Platform": "node",
+          "X-OTP-SDK-Version": "2.1.7",
+        },
+        body: JSON.stringify({
+          phoneNumber: "+995555123456",
+          channel: "SMS",
+          ttl: 300,
+          length: 6,
+        }),
       },
-      body: JSON.stringify({
-        phoneNumber: "+995555123456",
-        channel: "SMS",
-        ttl: 300,
-        length: 6,
-      }),
-    });
+    );
   });
 
   it("verifies through the documented Verify.ge REST endpoint", async () => {
@@ -87,11 +93,20 @@ describe("createVerifyGeProvider", () => {
     await expect(provider.verify({ requestId: "req-123", code: "123456" })).resolves.toEqual({
       verified: true,
     });
-    expect(fetcher).toHaveBeenCalledWith("https://api.verify.ge/api/v1/otp/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-API-Key": serverSecret },
-      body: JSON.stringify({ requestId: "req-123", code: "123456" }),
-    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://otp-service-production-ge.up.railway.app/api/v1/otp/verify",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serverSecret}`,
+          "Content-Type": "application/json",
+          "X-OTP-SDK-Language": "typescript",
+          "X-OTP-SDK-Platform": "node",
+          "X-OTP-SDK-Version": "2.1.7",
+        },
+        body: JSON.stringify({ requestId: "req-123", code: "123456" }),
+      },
+    );
   });
 
   it.each([
