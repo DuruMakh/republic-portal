@@ -23,4 +23,12 @@ describe("AuthProgress", () => {
     expect(screen.getByText("02")).toBeInTheDocument();
     expect(screen.getByText("03")).toBeInTheDocument();
   });
+
+  it("keeps every mobile label readable instead of truncating it", () => {
+    render(<AuthProgress currentStep="google" />);
+
+    expect(screen.getByText("Google")).not.toHaveClass("truncate");
+    expect(screen.getByText("ტელეფონი")).not.toHaveClass("truncate");
+    expect(screen.getByText("კაბინეტი")).not.toHaveClass("truncate");
+  });
 });
