@@ -10,6 +10,7 @@ import { cleanupCommunityContent } from "./community-helpers";
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
+  vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
   createClient.mockReset();
 });
 afterEach(() => vi.unstubAllEnvs());

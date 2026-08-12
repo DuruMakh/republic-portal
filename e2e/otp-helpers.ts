@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import { assertE2eFixtureEnvironment } from "./cleanup-helpers";
 
 const APP_BASE_URL = "http://localhost:3000";
 
@@ -12,19 +13,12 @@ function publicSupabaseConfig(): { url: string; key: string } {
   return { url, key };
 }
 
-function assertE2eAuthEnvironment(): void {
-  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
-  if (appEnv !== "development" && appEnv !== "preview") {
-    throw new Error("e2e Auth fixtures are allowed only in development or preview");
-  }
-}
-
 /** Install a real @supabase/ssr cookie session without exposing either token. */
 export async function installSupabaseSession(
   page: Page,
   session: Pick<Session, "access_token" | "refresh_token">,
 ): Promise<void> {
-  assertE2eAuthEnvironment();
+  assertE2eFixtureEnvironment();
   const { url, key } = publicSupabaseConfig();
   const serialized = new Map<string, string>();
   const setAll: SetAllCookies = (cookiesToSet) => {
@@ -44,13 +38,13 @@ export async function installSupabaseSession(
       name,
       value,
       url: APP_BASE_URL,
-      path: "/",
     })),
   );
 }
 
 /** THE service-role client for e2e seeding + dev-OTP inbox reads (staging only). */
 export function serviceClient(): SupabaseClient {
+  assertE2eFixtureEnvironment();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("e2e needs staging service credentials");
@@ -59,6 +53,7 @@ export function serviceClient(): SupabaseClient {
 
 /** THE dev_otp_inbox poll: newest row for the phone, no older than sentAt. */
 export async function readFreshInboxOtp(phoneNational: string, sentAt: number): Promise<string> {
+  assertE2eFixtureEnvironment();
   const db = serviceClient();
   const forms = [`+995${phoneNational}`, `995${phoneNational}`];
   for (let i = 0; i < 20; i++) {
@@ -87,7 +82,7 @@ export async function loginAs(
   phoneNational: string,
   landing: RegExp = /\/(me|delegate|admin)(\/|\?|#|$)/,
 ): Promise<void> {
-  assertE2eAuthEnvironment();
+  assertE2eFixtureEnvironment();
   const { url, key } = publicSupabaseConfig();
   const auth = createClient(url, key, {
     auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },

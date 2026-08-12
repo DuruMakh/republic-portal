@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { phase4PersonalId, phase4Phone } from "./admin-helpers";
-import { cleanupClient, failIfAny } from "./cleanup-helpers";
+import { assertE2eFixtureEnvironment, cleanupClient, failIfAny } from "./cleanup-helpers";
 import { loginAs, seedCompletedMember } from "./funnel-helpers";
 
 /**
@@ -12,6 +12,7 @@ import { loginAs, seedCompletedMember } from "./funnel-helpers";
  * as a completed member), so its consumers keep working untouched.
  */
 export async function registerCompletedMember(page: Page, k: number): Promise<void> {
+  assertE2eFixtureEnvironment();
   const phone = phase4Phone(k);
   await seedCompletedMember({
     phone,
@@ -32,6 +33,7 @@ export async function registerCompletedMember(page: Page, k: number): Promise<vo
  * inside; adapt the decode, do not weaken the assertion.
  */
 export async function memberRpcClient(page: Page): Promise<SupabaseClient> {
+  assertE2eFixtureEnvironment();
   const cookies = await page.context().cookies();
   const joined = cookies
     .filter((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name))
@@ -55,6 +57,7 @@ export async function memberRpcClient(page: Page): Promise<SupabaseClient> {
 
 /** Service-side cleanup of per-run content by title marker (cascades votes/rsvps/options). */
 export async function cleanupCommunityContent(marker: string): Promise<void> {
+  assertE2eFixtureEnvironment();
   // cleanupClient, not serviceClient: every cleanup skips alike without staging
   // credentials. serviceClient THROWS, which made two adjacent lines of one hook
   // disagree about what a missing key means.

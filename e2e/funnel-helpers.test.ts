@@ -22,10 +22,15 @@ import {
   cleanupGoogleBackedTestUsers,
   cleanupLoginUser,
   createGoogleBackedTestUser,
+  approveOwnDelegate,
+  fillMembershipProfile,
+  getSeededReferral,
   JOURNEY,
   journeyPhone,
   LOGIN_PHONE,
   passRegistration,
+  seedCompletedMember,
+  seedPendingDelegate,
   seedRegisteredMember,
 } from "./funnel-helpers";
 
@@ -185,6 +190,53 @@ describe("seedRegisteredMember", () => {
       status: "registered",
     });
   });
+});
+
+describe("suite-wide fixture environment guard", () => {
+  const registered = {
+    userId: "google-user-1",
+    phone: "550001230",
+    firstName: "ნინო",
+    lastName: "ტესტი",
+    personalId: "95500012300",
+  };
+  const completed = {
+    phone: "550001230",
+    firstName: "ნინო",
+    lastName: "ტესტი",
+    personalId: "95500012300",
+  };
+
+  test.each([undefined, "test", "staging", "production", "Preview"])(
+    "all service-backed fixture entry points reject %s before client or database work",
+    async (appEnv) => {
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
+      vi.stubEnv("PHONE_VERIFICATION_PROVIDER", "test");
+
+      const calls = [
+        () => cleanupLoginUser(),
+        () => cleanupJourneyUsers(),
+        () => seedRegisteredMember(registered),
+        () => seedCompletedMember(completed),
+        () => seedPendingDelegate(completed),
+        () => approveOwnDelegate("550001230"),
+        () => getSeededReferral(),
+        () => fillMembershipProfile({} as never, { regionLabel: "თბილისი" }),
+        () =>
+          passRegistration({} as never, {
+            phone: "550001230",
+            firstName: "ნინო",
+            lastName: "ტესტი",
+          }),
+      ];
+
+      for (const call of calls) {
+        await expect(call()).rejects.toThrow(/development|preview/i);
+      }
+      expect(createClient).not.toHaveBeenCalled();
+      expect(installSupabaseSession).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("passRegistration", () => {

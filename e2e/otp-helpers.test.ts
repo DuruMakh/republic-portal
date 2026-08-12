@@ -16,7 +16,7 @@ vi.mock("@supabase/supabase-js", () => ({ createClient }));
 vi.mock("@supabase/ssr", () => ({ createServerClient }));
 vi.mock("@playwright/test", () => ({ expect: playwrightExpect }));
 
-import { installSupabaseSession, loginAs } from "./otp-helpers";
+import { installSupabaseSession, loginAs, readFreshInboxOtp } from "./otp-helpers";
 
 const session = {
   access_token: "access-token-that-must-stay-private",
@@ -56,13 +56,16 @@ beforeEach(() => {
 });
 
 describe("loginAs", () => {
-  test("cannot request staging OTPs in production", async () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+  test.each([undefined, "test", "staging", "production", "Preview"])(
+    "cannot request staging OTPs when NEXT_PUBLIC_APP_ENV is %s",
+    async (appEnv) => {
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
 
-    await expect(loginAs({} as Page, "550001239")).rejects.toThrow(/development|preview/i);
+      await expect(loginAs({} as Page, "550001239")).rejects.toThrow(/development|preview/i);
 
-    expect(createClient).not.toHaveBeenCalled();
-  });
+      expect(createClient).not.toHaveBeenCalled();
+    },
+  );
 
   test("uses the staging OTP APIs, installs the returned session, and opens the target", async () => {
     const signInWithOtp = vi.fn().mockResolvedValue({ data: {}, error: null });
@@ -141,15 +144,17 @@ describe("installSupabaseSession", () => {
         name: "sb-session.0",
         value: "cookie-part-0",
         url: "http://localhost:3000",
-        path: "/",
       },
       {
         name: "sb-session.1",
         value: "cookie-part-1",
         url: "http://localhost:3000",
-        path: "/",
       },
     ]);
+    for (const cookie of addCookies.mock.calls[0]![0]) {
+      expect(cookie).not.toHaveProperty("path");
+      expect(cookie).not.toHaveProperty("domain");
+    }
   });
 
   test("does not put session tokens in logs or cookie URLs", async () => {
@@ -181,6 +186,21 @@ describe("installSupabaseSession", () => {
 
       expect(createServerClient).not.toHaveBeenCalled();
       expect(addCookies).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("service-role fixture boundary", () => {
+  test.each([undefined, "test", "staging", "production", "Preview"])(
+    "rejects before creating a service client when NEXT_PUBLIC_APP_ENV is %s",
+    async (appEnv) => {
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
+
+      await expect(readFreshInboxOtp("550001239", Date.now())).rejects.toThrow(
+        /development|preview/i,
+      );
+
+      expect(createClient).not.toHaveBeenCalled();
     },
   );
 });

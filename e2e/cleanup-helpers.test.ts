@@ -70,6 +70,7 @@ describe("cleanupUsersByPhone", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
     createClient.mockReset();
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -116,6 +117,19 @@ describe("cleanupUsersByPhone", () => {
     ).rejects.toThrow(/995599123456/);
     expect(createClient).not.toHaveBeenCalled();
   });
+
+  test.each([undefined, "test", "staging", "production", "Preview"])(
+    "rejects before lookup or deletion when NEXT_PUBLIC_APP_ENV is %s",
+    async (appEnv) => {
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
+
+      await expect(cleanupUsersByPhone("phase-4 e2e cleanup", PHONES)).rejects.toThrow(
+        /development|preview/i,
+      );
+
+      expect(createClient).not.toHaveBeenCalled();
+    },
+  );
 
   test("rejects when the membership detach fails", async () => {
     const db = fakeUserClient({

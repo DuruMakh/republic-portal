@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET, MEMBERSHIP_FEE_GEL } from "../lib/funnel";
 import {
   assertE2ePhones,
+  assertE2eFixtureEnvironment,
   cleanupClient,
   cleanupUsersByPhone,
   failIfAny,
@@ -57,18 +58,11 @@ function googleFixtureEmail(phoneSlot: string): string {
   return `e2e+${phoneSlot}@example.invalid`;
 }
 
-function assertGoogleFixtureEnvironment(): void {
-  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
-  if (appEnv !== "development" && appEnv !== "preview") {
-    throw new Error("Google e2e fixtures are allowed only in development or preview");
-  }
-}
-
 export async function createGoogleBackedTestUser(
   page: Page,
   phoneSlot: string,
 ): Promise<{ id: string }> {
-  assertGoogleFixtureEnvironment();
+  assertE2eFixtureEnvironment();
   const email = googleFixtureEmail(phoneSlot);
   const password = `E2e-${randomBytes(24).toString("hex")}!Aa1`;
   const admin = serviceClient();
@@ -103,7 +97,7 @@ export async function createGoogleBackedTestUser(
 }
 
 export async function cleanupGoogleBackedTestUsers(phoneSlots: readonly string[]): Promise<void> {
-  assertGoogleFixtureEnvironment();
+  assertE2eFixtureEnvironment();
   const label = "Google-backed e2e cleanup";
   const emails = new Set(phoneSlots.map(googleFixtureEmail));
   const admin = cleanupClient(label);
@@ -175,6 +169,7 @@ export async function passRegistration(
   page: Page,
   opts: { phone: string; firstName: string; lastName: string; refCode?: string },
 ): Promise<void> {
+  assertE2eFixtureEnvironment();
   if (process.env.PHONE_VERIFICATION_PROVIDER !== "test") {
     throw new Error("registration e2e requires PHONE_VERIFICATION_PROVIDER=test");
   }
@@ -244,6 +239,7 @@ export async function fillMembershipProfile(
   page: Page,
   opts: { regionLabel: string; personalId?: string },
 ): Promise<void> {
+  assertE2eFixtureEnvironment();
   const city = await firstCityOfRegion(opts.regionLabel);
   if (opts.personalId) {
     await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
@@ -269,6 +265,7 @@ export async function seedCompletedMember(opts: {
   personalId: string;
   delegateId?: string | null;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
@@ -319,6 +316,7 @@ export async function seedPendingDelegate(opts: {
   lastName: string;
   personalId: string;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   const { id } = await seedCompletedMember(opts); // e2e-phone guard runs inside
   const admin = serviceClient();
   const { error: closeErr } = await admin
@@ -349,6 +347,7 @@ export async function seedRegisteredMember(opts: {
   lastName: string;
   personalId: string;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
@@ -376,6 +375,7 @@ export async function seedRegisteredMember(opts: {
 export { loginAs }; // spec imports stay untouched
 
 export async function cleanupJourneyUsers(): Promise<void> {
+  assertE2eFixtureEnvironment();
   const phones = Object.values(JOURNEY).flatMap((j) => [
     `+995${journeyPhone(j)}`,
     `995${journeyPhone(j)}`,
@@ -384,6 +384,7 @@ export async function cleanupJourneyUsers(): Promise<void> {
 }
 
 export async function getSeededReferral(): Promise<{ code: string; fullName: string }> {
+  assertE2eFixtureEnvironment();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("referral journey needs staging service credentials");
@@ -414,6 +415,7 @@ export async function getSeededReferral(): Promise<{ code: string; fullName: str
 }
 
 export async function approveOwnDelegate(phoneNational: string): Promise<void> {
+  assertE2eFixtureEnvironment();
   if (!phoneNational.startsWith("55")) {
     throw new Error(`refusing to approve non-e2e phone ${phoneNational}`);
   }
@@ -440,6 +442,7 @@ export async function approveOwnDelegate(phoneNational: string): Promise<void> {
 }
 
 export async function cleanupLoginUser(): Promise<void> {
+  assertE2eFixtureEnvironment();
   const LABEL = "login e2e cleanup";
   const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
   // Scans auth rather than profiles, but the phone still comes from the

@@ -5,6 +5,14 @@ export const SWEEP_HINT =
   "Leftovers leak into every later run. Sweep with:\n" +
   "  node --env-file=.env.local scripts/sweep-staging-e2e.mjs --apply";
 
+/** All E2E fixtures are staging-only, with an exact fail-closed environment allow-list. */
+export function assertE2eFixtureEnvironment(): void {
+  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
+  if (appEnv !== "development" && appEnv !== "preview") {
+    throw new Error("e2e fixtures are allowed only in development or preview");
+  }
+}
+
 /**
  * Fails the run with every collected cleanup failure named.
  *
@@ -53,6 +61,7 @@ export async function runCleanups(steps: readonly (() => Promise<void>)[]): Prom
  * credentials long before teardown.
  */
 export function cleanupClient(label: string): SupabaseClient | null {
+  assertE2eFixtureEnvironment();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
@@ -84,6 +93,7 @@ export function assertE2ePhones(label: string, phones: readonly string[]): void 
  * range (registration/membership specs) — identical mechanics, different phones.
  */
 export async function cleanupUsersByPhone(label: string, phones: readonly string[]): Promise<void> {
+  assertE2eFixtureEnvironment();
   assertE2ePhones(label, phones);
   const db = cleanupClient(label);
   if (!db) return;
