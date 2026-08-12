@@ -16,7 +16,9 @@ function createSdk() {
       expiresAt: new Date("2026-08-11T12:05:00.000Z"),
       status: "SENT",
     }),
-    verifyOtp: vi.fn<() => Promise<unknown>>().mockResolvedValue({ success: true, message: "verified" }),
+    verifyOtp: vi
+      .fn<() => Promise<unknown>>()
+      .mockResolvedValue({ success: true, message: "verified" }),
   };
 }
 
@@ -24,7 +26,9 @@ function createProvider(sdk: ReturnType<typeof createSdk>) {
   return createVerifyGeProvider(serverSecret, sdk as unknown as VerifyGeSdk);
 }
 
-async function captureError(operation: () => Promise<unknown>): Promise<PhoneVerificationProviderError> {
+async function captureError(
+  operation: () => Promise<unknown>,
+): Promise<PhoneVerificationProviderError> {
   try {
     await operation();
   } catch (error) {
@@ -104,7 +108,9 @@ describe("createVerifyGeProvider", () => {
     sdk.verifyOtp.mockRejectedValueOnce(sdkError);
     const provider = createProvider(sdk);
 
-    const error = await captureError(() => provider.verify({ requestId: "req-123", code: "123456" }));
+    const error = await captureError(() =>
+      provider.verify({ requestId: "req-123", code: "123456" }),
+    );
 
     expect(error).toMatchObject({ code, message: code });
     expect(error.message).not.toContain(serverSecret);

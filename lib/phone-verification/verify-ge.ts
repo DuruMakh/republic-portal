@@ -54,7 +54,10 @@ function mapVerifyGeError(error: unknown): PhoneVerificationProviderError {
   return new PhoneVerificationProviderError("service_unavailable");
 }
 
-export function createVerifyGeProvider(apiKey: string, sdk?: VerifyGeSdk): PhoneVerificationProvider {
+export function createVerifyGeProvider(
+  apiKey: string,
+  sdk?: VerifyGeSdk,
+): PhoneVerificationProvider {
   if (!apiKey) {
     throw new Error("VERIFY_GE_API_KEY is missing");
   }

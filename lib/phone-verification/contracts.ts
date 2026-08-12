@@ -35,12 +35,10 @@ export type PhoneVerificationFailure = {
 };
 
 export type SendPhoneVerificationActionResult =
-  | { ok: true; challengeId: string; phone: string; expiresAt: string }
-  | PhoneVerificationFailure;
+  { ok: true; challengeId: string; phone: string; expiresAt: string } | PhoneVerificationFailure;
 
 export type VerifyPhoneVerificationActionResult =
-  | { ok: true; phone: string }
-  | PhoneVerificationFailure;
+  { ok: true; phone: string } | PhoneVerificationFailure;
 
 export interface SendPhoneVerificationInput {
   phone: string;

@@ -13,13 +13,11 @@ type PhoneVerificationEnvironment = {
 export function createPhoneVerificationProvider(
   environment?: PhoneVerificationEnvironment,
 ): PhoneVerificationProvider {
-  const configured =
-    environment ??
-    {
-      PHONE_VERIFICATION_PROVIDER: process.env.PHONE_VERIFICATION_PROVIDER,
-      NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
-      VERIFY_GE_API_KEY: process.env.VERIFY_GE_API_KEY,
-    };
+  const configured = environment ?? {
+    PHONE_VERIFICATION_PROVIDER: process.env.PHONE_VERIFICATION_PROVIDER,
+    NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+    VERIFY_GE_API_KEY: process.env.VERIFY_GE_API_KEY,
+  };
 
   if (configured.PHONE_VERIFICATION_PROVIDER === "verify_ge") {
     return createVerifyGeProvider(configured.VERIFY_GE_API_KEY ?? "");

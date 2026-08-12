@@ -209,8 +209,6 @@ describe("mapFunnelError — Google-backed registration", () => {
     expect(mapFunnelError("phone_required")).toBe(
       "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
     );
-    expect(mapFunnelError("not_authenticated")).toBe(
-      "სესია ამოიწურა — დაადასტურე ნომერი თავიდან.",
-    );
+    expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
   });
 });
