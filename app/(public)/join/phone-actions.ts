@@ -43,13 +43,15 @@ async function attachConfirmedPhone(
   userId: string,
   phone: string,
 ): Promise<VerifyPhoneVerificationActionResult> {
-  const { error } = await admin.auth.admin.updateUserById(userId, {
-    phone,
-    phone_confirm: true,
-  });
-  if (!error) return { ok: true, phone };
-  if (error.code === "phone_exists" || error.code === "user_already_exists") {
-    return failure("phone_in_use");
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { error } = await admin.auth.admin.updateUserById(userId, {
+      phone,
+      phone_confirm: true,
+    });
+    if (!error) return { ok: true, phone };
+    if (error.code === "phone_exists" || error.code === "user_already_exists") {
+      return failure("phone_in_use");
+    }
   }
   return failure("service_unavailable");
 }

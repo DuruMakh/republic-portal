@@ -213,21 +213,16 @@ describe("phone verification server actions", () => {
     expect(mocks.updateUserById).toHaveBeenCalledWith(userId, { phone, phone_confirm: true });
   });
 
-  it("retries only Auth attachment for a valid consumed proof after transient failure", async () => {
+  it("retries only Auth attachment after one transient failure", async () => {
     authenticate();
-    mocks.read
-      .mockResolvedValueOnce(activeRow)
-      .mockResolvedValueOnce({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
     mocks.updateUserById
       .mockResolvedValueOnce({ data: null, error: { code: "unexpected_failure" } })
       .mockResolvedValueOnce({ data: {}, error: null });
-    await expect(
-      verifyPhoneVerificationAction({ challengeId, code: "123456" }),
-    ).resolves.toMatchObject({ ok: false, code: "service_unavailable" });
     await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
       ok: true,
       phone,
     });
+    expect(mocks.updateUserById).toHaveBeenCalledTimes(2);
     expect(mocks.reserveAttempt).toHaveBeenCalledTimes(1);
     expect(mocks.verify).toHaveBeenCalledTimes(1);
     expect(mocks.consume).toHaveBeenCalledTimes(1);
