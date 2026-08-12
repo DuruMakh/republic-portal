@@ -55,12 +55,15 @@ function mapVerifyGeError(error: unknown): PhoneVerificationProviderError {
   return new PhoneVerificationProviderError("service_unavailable");
 }
 
-function logVerificationFailure(error: unknown): void {
+function logProviderFailure(
+  event: "verify_ge_send_failed" | "verify_ge_verification_failed",
+  error: unknown,
+): void {
   const safe = readError(error);
   console.error(
     JSON.stringify({
       level: "error",
-      event: "verify_ge_verification_failed",
+      event,
       errorName: safe.name,
       errorCode: safe.code,
       statusCode: safe.statusCode,
@@ -113,14 +116,24 @@ export function createVerifyGeProvider(
         });
         const body = await readVerifyGeResponse(response);
         const apiError = readApiError(body);
-        if (apiError) throw mapVerifyGeError(apiError);
+        if (apiError) {
+          const mappedError = mapVerifyGeError(apiError);
+          if (mappedError.code === "service_unavailable") {
+            logProviderFailure("verify_ge_send_failed", apiError);
+          }
+          throw mappedError;
+        }
         const requestId = readRequestId(body);
         if (!response.ok || !requestId) {
           throw new PhoneVerificationProviderError("service_unavailable");
         }
         return { provider: "verify_ge", requestId };
       } catch (error) {
-        throw error instanceof PhoneVerificationProviderError ? error : mapVerifyGeError(error);
+        if (error instanceof PhoneVerificationProviderError) throw error;
+        const mappedError = mapVerifyGeError(error);
+        if (mappedError.code === "service_unavailable")
+          logProviderFailure("verify_ge_send_failed", error);
+        throw mappedError;
       }
     },
     async verify(input) {
@@ -141,7 +154,9 @@ export function createVerifyGeProvider(
       } catch (error) {
         const mappedError =
           error instanceof PhoneVerificationProviderError ? error : mapVerifyGeError(error);
-        if (mappedError.code === "service_unavailable") logVerificationFailure(error);
+        if (mappedError.code === "service_unavailable") {
+          logProviderFailure("verify_ge_verification_failed", error);
+        }
         throw mappedError;
       }
     },

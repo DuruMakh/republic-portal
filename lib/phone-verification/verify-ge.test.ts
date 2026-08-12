@@ -165,6 +165,44 @@ describe("createVerifyGeProvider", () => {
     expect(consoleError.mock.calls.flat().join(" ")).not.toContain(serverSecret);
   });
 
+  it("logs only safe diagnostic fields for an unknown REST send failure", async () => {
+    const fetcher = createFetch();
+    fetcher.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          success: false,
+          error: {
+            code: "INSUFFICIENT_BALANCE",
+            message: `provider ${serverSecret}`,
+            statusCode: 402,
+            retryable: false,
+            details: { secret: serverSecret },
+          },
+          meta: { requestId: serverSecret, timestamp: "2026-08-12T12:00:00.000Z" },
+        },
+        402,
+      ),
+    );
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const provider = createProvider(fetcher);
+
+    await expect(
+      provider.send({ phone: "+995555123456", purpose: "registration", idempotencyKey }),
+    ).rejects.toMatchObject({ code: "service_unavailable" });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      JSON.stringify({
+        level: "error",
+        event: "verify_ge_send_failed",
+        errorName: undefined,
+        errorCode: "INSUFFICIENT_BALANCE",
+        statusCode: 402,
+        retryable: false,
+      }),
+    );
+    expect(consoleError.mock.calls.flat().join(" ")).not.toContain(serverSecret);
+  });
+
   it.each([
     ["send", { success: true, data: { requestId: "" } }],
     ["verify", { success: true, data: { success: "yes" } }],
