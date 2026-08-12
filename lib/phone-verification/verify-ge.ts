@@ -28,6 +28,27 @@ function hasSdkErrorCode(error: unknown, code: string): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === code;
 }
 
+function safeErrorField(error: unknown, field: string): string | number | boolean | undefined {
+  if (typeof error !== "object" || error === null || !(field in error)) return undefined;
+  const value = error[field as keyof typeof error];
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+    ? value
+    : undefined;
+}
+
+function logVerificationFailure(error: unknown): void {
+  console.error(
+    JSON.stringify({
+      level: "error",
+      event: "verify_ge_verification_failed",
+      errorName: safeErrorField(error, "name"),
+      errorCode: safeErrorField(error, "code"),
+      statusCode: safeErrorField(error, "statusCode"),
+      retryable: safeErrorField(error, "retryable"),
+    }),
+  );
+}
+
 function hasRequestId(result: unknown): result is { requestId: string } {
   return (
     typeof result === "object" &&
@@ -43,7 +64,11 @@ function mapVerifyGeError(error: unknown): PhoneVerificationProviderError {
     return new PhoneVerificationProviderError("invalid_code");
   }
 
-  if (error instanceof OtpExpiredError || hasSdkErrorCode(error, "OTP_EXPIRED")) {
+  if (
+    error instanceof OtpExpiredError ||
+    hasSdkErrorCode(error, "OTP_EXPIRED") ||
+    hasSdkErrorCode(error, "OTP_NOT_FOUND")
+  ) {
     return new PhoneVerificationProviderError("expired_code");
   }
 
@@ -89,7 +114,9 @@ export function createVerifyGeProvider(
         const result = await client.verifyOtp({ requestId: input.requestId, code: input.code });
         return { verified: result.success === true };
       } catch (error) {
-        throw mapVerifyGeError(error);
+        const mappedError = mapVerifyGeError(error);
+        if (mappedError.code === "service_unavailable") logVerificationFailure(error);
+        throw mappedError;
       }
     },
   };

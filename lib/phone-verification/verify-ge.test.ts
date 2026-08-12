@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -25,6 +25,10 @@ function createSdk() {
 function createProvider(sdk: ReturnType<typeof createSdk>) {
   return createVerifyGeProvider(serverSecret, sdk as unknown as VerifyGeSdk);
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 async function captureError(
   operation: () => Promise<unknown>,
@@ -102,6 +106,7 @@ describe("createVerifyGeProvider", () => {
   it.each([
     [{ code: "INVALID_OTP_CODE", message: `invalid ${serverSecret}` }, "invalid_code"],
     [{ code: "OTP_EXPIRED", message: `expired ${serverSecret}` }, "expired_code"],
+    [{ code: "OTP_NOT_FOUND", message: `missing ${serverSecret}` }, "expired_code"],
     [{ code: "RATE_LIMIT_EXCEEDED", message: `limited ${serverSecret}` }, "too_many_requests"],
   ] as const)("maps the SDK %s error code without exposing its message", async (sdkError, code) => {
     const sdk = createSdk();
@@ -114,6 +119,37 @@ describe("createVerifyGeProvider", () => {
 
     expect(error).toMatchObject({ code, message: code });
     expect(error.message).not.toContain(serverSecret);
+  });
+
+  it("logs only safe diagnostic fields for an unknown verification failure", async () => {
+    const sdk = createSdk();
+    sdk.verifyOtp.mockRejectedValueOnce({
+      name: "OtpError",
+      code: "SERVICE_UNAVAILABLE",
+      statusCode: 503,
+      retryable: true,
+      message: `provider ${serverSecret}`,
+      requestId: serverSecret,
+      details: { secret: serverSecret },
+    });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const provider = createProvider(sdk);
+
+    await expect(provider.verify({ requestId: "req-123", code: "123456" })).rejects.toMatchObject({
+      code: "service_unavailable",
+    });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      JSON.stringify({
+        level: "error",
+        event: "verify_ge_verification_failed",
+        errorName: "OtpError",
+        errorCode: "SERVICE_UNAVAILABLE",
+        statusCode: 503,
+        retryable: true,
+      }),
+    );
+    expect(consoleError.mock.calls.flat().join(" ")).not.toContain(serverSecret);
   });
 
   it("requires a server-only API key before constructing the SDK", () => {
