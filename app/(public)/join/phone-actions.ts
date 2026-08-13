@@ -18,6 +18,7 @@ import { createPhoneVerificationProvider } from "@/lib/phone-verification/provid
 import {
   completePhoneVerificationSend,
   consumeChallenge,
+  phoneBelongsToAnotherProfile,
   readOwnedChallenge,
   reservePhoneVerificationAttempt,
   reservePhoneVerificationSend,
@@ -49,7 +50,11 @@ async function attachConfirmedPhone(
       phone_confirm: true,
     });
     if (!error) return { ok: true, phone };
-    if (error.code === "phone_exists" || error.code === "user_already_exists") {
+    if (
+      error.code === "phone_exists" ||
+      error.code === "user_already_exists" ||
+      error.code === "identity_already_exists"
+    ) {
       return failure("phone_in_use");
     }
   }
@@ -150,6 +155,14 @@ export async function verifyPhoneVerificationAction(
     if (!challenge) return failure("expired_code");
 
     if (challenge.consumed_at !== null) {
+      if (
+        await phoneBelongsToAnotherProfile(admin, {
+          userId: user.id,
+          phone: challenge.phone,
+        })
+      ) {
+        return failure("phone_in_use");
+      }
       return attachConfirmedPhone(admin, user.id, challenge.phone);
     }
 
@@ -185,6 +198,14 @@ export async function verifyPhoneVerificationAction(
       userId: user.id,
     });
     if (!consumed) return failure("expired_code");
+    if (
+      await phoneBelongsToAnotherProfile(admin, {
+        userId: user.id,
+        phone: challenge.phone,
+      })
+    ) {
+      return failure("phone_in_use");
+    }
     return attachConfirmedPhone(admin, user.id, challenge.phone);
   } catch {
     return failure("service_unavailable");

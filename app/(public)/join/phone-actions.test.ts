@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   verify: vi.fn(),
   reserveSend: vi.fn(),
   completeSend: vi.fn(),
+  phoneInUse: vi.fn(),
   read: vi.fn(),
   reserveAttempt: vi.fn(),
   consume: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("@/lib/phone-verification/provider", () => ({
 vi.mock("@/lib/phone-verification/store", () => ({
   reservePhoneVerificationSend: mocks.reserveSend,
   completePhoneVerificationSend: mocks.completeSend,
+  phoneBelongsToAnotherProfile: mocks.phoneInUse,
   reservePhoneVerificationAttempt: mocks.reserveAttempt,
   readOwnedChallenge: mocks.read,
   consumeChallenge: mocks.consume,
@@ -72,6 +74,7 @@ describe("phone verification server actions", () => {
     mocks.createProvider.mockReturnValue({ send: mocks.send, verify: mocks.verify });
     mocks.reserveSend.mockResolvedValue({ reservationId });
     mocks.completeSend.mockResolvedValue({ id: challengeId, expiresAt: activeRow.expires_at });
+    mocks.phoneInUse.mockResolvedValue(false);
     mocks.read.mockResolvedValue(activeRow);
     mocks.reserveAttempt.mockResolvedValue(1);
     mocks.consume.mockResolvedValue(true);
@@ -192,6 +195,37 @@ describe("phone verification server actions", () => {
     );
   });
 
+  it("reports a claimed phone only after the caller proves control with a correct code", async () => {
+    authenticate();
+    mocks.phoneInUse.mockResolvedValue(true);
+
+    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
+      ok: false,
+      code: "phone_in_use",
+      message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
+    });
+    expect(mocks.reserveAttempt).toHaveBeenCalledTimes(1);
+    expect(mocks.verify).toHaveBeenCalledTimes(1);
+    expect(mocks.consume).toHaveBeenCalledTimes(1);
+    expect(mocks.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it("keeps reporting a claimed phone when retrying an already verified code", async () => {
+    authenticate();
+    mocks.read.mockResolvedValue({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
+    mocks.phoneInUse.mockResolvedValue(true);
+
+    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
+      ok: false,
+      code: "phone_in_use",
+      message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
+    });
+    expect(mocks.reserveAttempt).not.toHaveBeenCalled();
+    expect(mocks.verify).not.toHaveBeenCalled();
+    expect(mocks.consume).not.toHaveBeenCalled();
+    expect(mocks.updateUserById).not.toHaveBeenCalled();
+  });
+
   it("blocks the sixth concurrent attempt before provider verification", async () => {
     authenticate();
     mocks.read.mockResolvedValue({ ...activeRow, verify_attempts: 4 });
@@ -228,16 +262,21 @@ describe("phone verification server actions", () => {
     expect(mocks.consume).toHaveBeenCalledTimes(1);
   });
 
-  it.each(["phone_exists", "user_already_exists"])("maps Auth %s to phone_in_use", async (code) => {
-    authenticate();
-    mocks.read.mockResolvedValue({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
-    mocks.updateUserById.mockResolvedValue({ data: null, error: { code } });
-    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
-      ok: false,
-      code: "phone_in_use",
-      message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
-    });
-  });
+  it.each(["phone_exists", "user_already_exists", "identity_already_exists"])(
+    "maps Auth %s to phone_in_use",
+    async (code) => {
+      authenticate();
+      mocks.read.mockResolvedValue({ ...activeRow, consumed_at: "2026-08-11T12:04:00.000Z" });
+      mocks.updateUserById.mockResolvedValue({ data: null, error: { code } });
+      await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual(
+        {
+          ok: false,
+          code: "phone_in_use",
+          message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
+        },
+      );
+    },
+  );
 
   it.each([
     [

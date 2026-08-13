@@ -6,6 +6,7 @@ vi.mock("server-only", () => ({}));
 import {
   completePhoneVerificationSend,
   consumeChallenge,
+  phoneBelongsToAnotherProfile,
   readOwnedChallenge,
   reservePhoneVerificationAttempt,
   reservePhoneVerificationSend,
@@ -27,6 +28,16 @@ function makeReadAdmin(response: { data: ChallengeRow | null; error: unknown }) 
   return { admin: { from: vi.fn(() => query) } as unknown as AdminClient, query };
 }
 
+function makePhoneOwnerAdmin(response: { data: { id: string } | null; error: unknown }) {
+  const maybeSingle = vi.fn().mockResolvedValue(response);
+  const query = { select: vi.fn(), eq: vi.fn(), neq: vi.fn(), limit: vi.fn(), maybeSingle };
+  query.select.mockReturnValue(query);
+  query.eq.mockReturnValue(query);
+  query.neq.mockReturnValue(query);
+  query.limit.mockReturnValue(query);
+  return { admin: { from: vi.fn(() => query) } as unknown as AdminClient, query };
+}
+
 const userId = "22222222-2222-4222-8222-222222222222";
 const challengeId = "11111111-1111-4111-8111-111111111111";
 const reservationId = "33333333-3333-4333-8333-333333333333";
@@ -45,6 +56,31 @@ const baseRow: ChallengeRow = {
 };
 
 describe("phone verification challenge store", () => {
+  it("detects a profile that already owns the phone without returning its identity", async () => {
+    const conflict = makePhoneOwnerAdmin({
+      data: { id: "44444444-4444-4444-8444-444444444444" },
+      error: null,
+    });
+
+    await expect(phoneBelongsToAnotherProfile(conflict.admin, { userId, phone })).resolves.toBe(
+      true,
+    );
+    expect(conflict.query.eq).toHaveBeenCalledWith("phone", phone);
+    expect(conflict.query.neq).toHaveBeenCalledWith("id", userId);
+  });
+
+  it("allows an unclaimed phone and fails closed when the ownership check fails", async () => {
+    const available = makePhoneOwnerAdmin({ data: null, error: null });
+    await expect(phoneBelongsToAnotherProfile(available.admin, { userId, phone })).resolves.toBe(
+      false,
+    );
+
+    const failed = makePhoneOwnerAdmin({ data: null, error: { message: "backend unavailable" } });
+    await expect(phoneBelongsToAnotherProfile(failed.admin, { userId, phone })).rejects.toThrow(
+      "phone verification store failed",
+    );
+  });
+
   it("reserves a send atomically and returns only the opaque reservation ID", async () => {
     const { admin, rpc } = makeAdmin();
     rpc.mockResolvedValue({

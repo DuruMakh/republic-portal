@@ -34,6 +34,21 @@ function storeError(): Error {
   return new Error("phone verification store failed");
 }
 
+export async function phoneBelongsToAnotherProfile(
+  admin: AdminClient,
+  input: { userId: string; phone: string },
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("phone", input.phone)
+    .neq("id", input.userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw storeError();
+  return data !== null;
+}
+
 export async function reservePhoneVerificationSend(
   admin: AdminClient,
   input: { userId: string; phone: string; idempotencyKey: string },
