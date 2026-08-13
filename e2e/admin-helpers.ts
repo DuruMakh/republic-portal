@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { type SupabaseClient } from "@supabase/supabase-js";
-import { cleanupUsersByPhone } from "./cleanup-helpers";
+import { assertE2eFixtureEnvironment, cleanupUsersByPhone } from "./cleanup-helpers";
 import { loginAs as sharedLoginAs, serviceClient } from "./otp-helpers";
 
 /** Canonical seeded admins (scripts/seed-staging.mjs) — permanent audit actors. */
@@ -37,6 +37,7 @@ export { serviceClient };
  * /me. The trailing boundary keeps public /delegates pages from matching.
  */
 export async function loginAs(page: Page, phoneNational: string): Promise<void> {
+  assertE2eFixtureEnvironment();
   await sharedLoginAs(
     page,
     phoneNational,
@@ -46,12 +47,14 @@ export async function loginAs(page: Page, phoneNational: string): Promise<void> 
 
 /** Both CabinetNav and AdminNav expose the same გასვლა control. */
 export async function signOutViaNav(page: Page): Promise<void> {
+  assertE2eFixtureEnvironment();
   await page.getByRole("button", { name: "გასვლა" }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
 }
 
 /** Exported: specs scope card interactions to `verify-card-<id>` testids with it. */
 export async function profileIdByPhone(db: SupabaseClient, phoneNational: string): Promise<string> {
+  assertE2eFixtureEnvironment();
   const { data, error } = await db
     .from("profiles")
     .select("id")
@@ -65,6 +68,7 @@ export async function profileIdByPhone(db: SupabaseClient, phoneNational: string
 }
 
 export async function getReferenceCode(phoneNational: string): Promise<string> {
+  assertE2eFixtureEnvironment();
   const db = serviceClient();
   const id = await profileIdByPhone(db, phoneNational);
   const { data, error } = await db.from("profiles").select("reference_code").eq("id", id).single();
@@ -73,6 +77,7 @@ export async function getReferenceCode(phoneNational: string): Promise<string> {
 }
 
 export async function getReferralCode(phoneNational: string): Promise<string> {
+  assertE2eFixtureEnvironment();
   const db = serviceClient();
   const id = await profileIdByPhone(db, phoneNational);
   const { data, error } = await db.from("delegates").select("referral_code").eq("id", id).single();
@@ -82,6 +87,7 @@ export async function getReferralCode(phoneNational: string): Promise<string> {
 
 /** The permanent public slug, stamped by admin_approve_delegate — read post-approval. */
 export async function getDelegateSlug(phoneNational: string): Promise<string> {
+  assertE2eFixtureEnvironment();
   const db = serviceClient();
   const id = await profileIdByPhone(db, phoneNational);
   const { data, error } = await db.from("delegates").select("slug").eq("id", id).single();
@@ -90,6 +96,7 @@ export async function getDelegateSlug(phoneNational: string): Promise<string> {
 }
 
 export async function getAuditRows(action: string, targetId: string): Promise<number> {
+  assertE2eFixtureEnvironment();
   const db = serviceClient();
   const { count, error } = await db
     .from("audit_log")
@@ -102,6 +109,7 @@ export async function getAuditRows(action: string, targetId: string): Promise<nu
 
 /** Deletes this run's phase-4 users (payments cascade; memberships detached first). */
 export async function cleanupPhase4Users(ks: readonly number[]): Promise<void> {
+  assertE2eFixtureEnvironment();
   const phones = ks.flatMap((k) => [`+995${phase4Phone(k)}`, `995${phase4Phone(k)}`]);
   await cleanupUsersByPhone("phase-4 e2e cleanup", phones);
 }

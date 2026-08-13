@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        if: hashFiles('playwright.config.ts') != ''
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
@@ -27,8 +29,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_ENV: preview
-      - run: npx playwright install --with-deps chromium
-        if: hashFiles('playwright.config.ts') != ''
+          PHONE_VERIFICATION_PROVIDER: test
+          NEXT_PUBLIC_AUTH_MODE: google
       - name: Derive per-run e2e test phone
         if: hashFiles('playwright.config.ts') != ''
         run: |
@@ -48,4 +50,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_ENV: preview
+          PHONE_VERIFICATION_PROVIDER: test
+          NEXT_PUBLIC_AUTH_MODE: google
           CI: "true"

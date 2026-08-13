@@ -767,3 +767,32 @@ signed-in-read profiles, rather than blanket acceptance or a change to
 `security_invoker`. Advisor acceptance is exact: any addition, removal, or
 reclassification of a view requires review and an explicit update to the
 committed access matrix and migration contract.
+
+## ADR-031 (2026-08-11): Google identity with isolated Verify.ge phone proof
+
+Google/Supabase remains the identity authority. Verify.ge proves a phone number
+only during registration and does not create a session or become an identity
+provider. The official `@smart-pay-chain/otp` SDK is pinned at `2.1.7` and is
+isolated behind `PhoneVerificationProvider`, so a future provider replacement
+does not change registration logic. The `test` provider is refused in
+production. No webhook is created, and no provider key is committed to Git.
+
+## ADR-032 (2026-08-12): Verify.ge documented REST API replaces incompatible SDK
+
+Verify.ge SMS sending and code verification use its documented
+`https://api.verify.ge/api/v1` REST API with the server-only `X-API-Key` header.
+The pinned `@smart-pay-chain/otp@2.1.7` package is removed because it targets a
+different host and authentication scheme and throws while parsing current API
+verification failures. The existing `PhoneVerificationProvider` boundary keeps
+registration behavior unchanged and continues to redact phone numbers, codes,
+request IDs, and provider messages from logs.
+
+## ADR-033 (2026-08-12): Use the Verify.ge endpoint that accepts dashboard OTP keys
+
+The issued `otps_` dashboard key is valid on Verify.ge's SDK service at
+`https://otp-service-production-ge.up.railway.app/api/v1`, but the newer
+`api.verify.ge` host rejects it with `AUTHENTICATION_FAILED`. The portal therefore
+calls the key-compatible service directly with the same bearer and SDK-identification
+headers as the published SDK, while retaining our own safe response parsing. This
+supersedes ADR-032's host and authentication detail; the provider boundary, redacted
+logs, and Google-first registration behavior are unchanged.

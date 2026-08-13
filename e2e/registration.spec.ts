@@ -1,25 +1,32 @@
 import { expect, test } from "@playwright/test";
+import { runCleanups } from "./cleanup-helpers";
 import {
+  cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
   getSeededReferral,
   JOURNEY,
   journeyPhone,
   passRegistration,
-  submitJoinAndReadInboxOtp,
 } from "./funnel-helpers";
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(cleanupJourneyUsers);
-test.afterAll(cleanupJourneyUsers);
+const cleanupRegistrationUsers = () =>
+  runCleanups([
+    cleanupJourneyUsers,
+    () =>
+      cleanupGoogleBackedTestUsers([
+        journeyPhone(JOURNEY.regHappy),
+        journeyPhone(JOURNEY.regReferral),
+      ]),
+  ]);
 
-test("registers in one door, lands in the registered cabinet; same phone re-entry no-ops", async ({
-  page,
-}) => {
-  test.setTimeout(200_000); // headroom for the 62s OTP cooldown ride-out below
+test.beforeAll(cleanupRegistrationUsers);
+test.afterAll(cleanupRegistrationUsers);
+
+test("registers through Google and lands in the registered cabinet", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.regHappy);
   const firstName = "ნინო";
-  await page.goto("/join");
   await passRegistration(page, {
     phone,
     firstName,
@@ -56,36 +63,16 @@ test("registers in one door, lands in the registered cabinet; same phone re-entr
   // members-only surface, reached directly, bounces back to the overview
   await page.goto("/me/billing");
   await expect(page).toHaveURL(/\/me$/);
-
-  // Same phone, fresh (signed-out) session: proving ownership again is a no-op — the
-  // RPC never overwrites the existing profile, so the original first name survives.
-  // This phone now HAS a registered profile, so /api/dev/otp withholds the on-screen
-  // code (account-takeover guard) — read it from dev_otp_inbox via the service client.
-  // Re-sending to the just-verified phone also hits Supabase's ~60s per-phone cooldown,
-  // which submitJoinAndReadInboxOtp rides out before returning the code.
-  await page.context().clearCookies();
-  await page.goto("/join");
-  await page.getByLabel("სახელი").fill("სხვა");
-  await page.getByLabel("გვარი").fill("სახელი");
-  await page.getByLabel("ტელეფონის ნომერი").fill(phone);
-  const reentryOtp = await submitJoinAndReadInboxOtp(page, phone);
-  await page.getByTestId("otp-0").fill(reentryOtp);
-  await page.getByRole("button", { name: "დადასტურება" }).click();
-
-  await expect(page.getByTestId("join-notice")).toHaveText("ეს ნომერი უკვე რეგისტრირებულია");
-  await expect(page).toHaveURL(/\/me$/);
-  // original identity untouched — the greeting is still the first registration's name
-  await expect(page.getByRole("heading", { name: `გამარჯობა, ${firstName}!` })).toBeVisible();
 });
 
 test("a referral link is captured at registration and bound in the wizard", async ({ page }) => {
   const { code, fullName } = await getSeededReferral();
   const phone = journeyPhone(JOURNEY.regReferral);
-  await page.goto(`/join?ref=${encodeURIComponent(code)}`);
   await passRegistration(page, {
     phone,
     firstName: "ვატესტ",
     lastName: "რეფერალს",
+    refCode: code,
   });
 
   // the become-a-member wizard shows the bound delegate — a read-only card, not the

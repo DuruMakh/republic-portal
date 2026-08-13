@@ -118,9 +118,10 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     // over-restriction bug would sit in needs-live-proof forever, since
     // 42501 essentially never fires for these functions (every client role
     // holds EXECUTE; the finer-grained role check happens in the body).
-    // Three of the four genuine-permission tokens (not just missing_role),
-    // to prove this isn't hardcoded to one string — not_authenticated is
-    // deliberately excluded from this set; see the next two tests.
+    // Three of the six caller-standing refusal tokens besides
+    // not_authenticated (not just missing_role), to prove this isn't
+    // hardcoded to one string. not_authenticated is deliberately excluded
+    // from this set; see the next two tests.
     expect(
       judge("allow", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "view"),
     ).toBe("finding");
@@ -136,7 +137,7 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     // The one REFUSAL_TOKENS member that is not an authorization verdict:
     // "no session was presented" more plausibly means a stale entry in
     // Task 1's on-disk session cache than a real app bug, and unlike the
-    // other four refusal tokens, treating it as a finding here would turn
+    // six other refusal tokens, treating it as a finding here would turn
     // one bad cached JWT into a false "over-restriction" finding across
     // every surface for that actor at once. This is the path that was
     // previously untested — allow + missing_role was pinned above, but

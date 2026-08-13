@@ -127,6 +127,7 @@ const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   profile_incomplete: "ჯერ შეავსე წინა ნაბიჯები.",
   already_completed: "რეგისტრაცია უკვე დასრულებულია.",
   not_authenticated: "სესია ამოიწურა — დაადასტურე ნომერი თავიდან.",
+  google_required: "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
   // Security check-up F3: the session is valid but carries no verified phone
   // (email sign-up is enabled and auto-confirmed on the project, so such a
   // session is obtainable). Distinct from not_authenticated — signing in again

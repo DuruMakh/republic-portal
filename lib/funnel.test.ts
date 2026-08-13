@@ -196,3 +196,19 @@ describe("mapFunnelError — the security check-up's phone_required (F3)", () =>
     expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
   });
 });
+
+describe("mapFunnelError — Google-backed registration", () => {
+  it("maps google_required to the approved Georgian recovery instruction", () => {
+    expect(mapFunnelError("P0001: google_required")).toBe(
+      "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
+    );
+  });
+
+  it("keeps Google, confirmed-phone, and missing-session failures distinct", () => {
+    expect(mapFunnelError("google_required")).toBe("რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.");
+    expect(mapFunnelError("phone_required")).toBe(
+      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    );
+    expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
+  });
+});

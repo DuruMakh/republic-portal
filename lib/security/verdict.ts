@@ -41,14 +41,16 @@ const DENIED_BY_PRIVILEGE = "42501";
  * then (where relevant) role or standing. A match proves the caller never
  * got in. Confirmed for every occurrence of every token below, not assumed:
  * `not_authenticated` (68 occurrences) is always the literal first statement
- * in the function body; `missing_role` (39, including admin_export_members'
+ * in the function body. `google_required` and `phone_required` check the
+ * authenticated caller's identity provider and verified-phone standing before
+ * registration payload or business processing. `missing_role` (39, including admin_export_members'
  * second, narrower super_admin-only check) is always the next statement with
  * nothing but `not_authenticated` before it; `not_a_delegate`/`not_approved`
  * (delegate_panel, delegate_team, delegate_team_rsvps) and `not_a_member`
  * (member_change_delegate, request_delegacy) are always caller-standing
  * checks — never about some other row's state — that run before any
  * business logic touches the function's actual payload, even where they
- * aren't literally the second statement. On the deny side all five are
+ * aren't literally the second statement. On the deny side all seven are
  * equally conclusive (any of them proves the actor didn't get in). On the
  * allow side they are NOT interchangeable — `not_authenticated` is carved
  * out; see NO_SESSION_TOKEN below judge() for why.
@@ -94,6 +96,10 @@ const DENIED_BY_PRIVILEGE = "42501";
  * was dropped in 20260721120000_progressive_registration.sql).
  * `delegate_requires_completed_member` belongs to a trigger
  * (enforce_delegate_completed), not an RPC with a caller to refuse or admit.
+ * `phone_verification_completion_failed` belongs only to the service-role-only
+ * complete_phone_verification_send() SECURITY INVOKER RPC and validates its
+ * internal reservation/challenge ownership or state, not a browser caller's
+ * authorization standing.
  * `audit_log is append-only` / `server-managed profile columns cannot be
  * changed by client roles` are full-sentence trigger messages, not tokens.
  */
@@ -107,6 +113,11 @@ const RAISE_EXCEPTION_SQLSTATE = "P0001";
  */
 export const REFUSAL_TOKENS = new Set([
   "not_authenticated",
+  // Google phone registration (20260811182202_google_verify_phone.sql):
+  // register_google() confirms the authenticated caller has a Google identity
+  // before checking phone proof or processing registration payload/business
+  // rules. This is therefore a caller identity/provider-standing refusal.
+  "google_required",
   "missing_role",
   "not_a_delegate",
   "not_approved",

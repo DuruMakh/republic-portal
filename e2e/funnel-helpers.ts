@@ -1,15 +1,17 @@
+import { randomBytes } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET, MEMBERSHIP_FEE_GEL } from "../lib/funnel";
 import {
   assertE2ePhones,
+  assertE2eFixtureEnvironment,
   cleanupClient,
   cleanupUsersByPhone,
   failIfAny,
   SWEEP_HINT,
 } from "./cleanup-helpers";
-import { clickThroughOtpThrottle, loginAs, readFreshInboxOtp, serviceClient } from "./otp-helpers";
+import { installSupabaseSession, loginAs, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
 // (run number + attempt) and ends in 9 — the login journey's digit. Journey phones
@@ -45,6 +47,83 @@ export function journeyPhone(journey: number): string {
 
 export function journeyPersonalId(journey: number): string {
   return `9${BASE.slice(1)}${journey}00`; // 11 digits, 9-prefixed
+}
+
+const GOOGLE_FIXTURE_SLOT = /^55\d{7}$/;
+
+function googleFixtureEmail(phoneSlot: string): string {
+  if (!GOOGLE_FIXTURE_SLOT.test(phoneSlot)) {
+    throw new Error(`refusing Google fixture slot outside the 55 e2e block: ${phoneSlot}`);
+  }
+  return `e2e+${phoneSlot}@example.invalid`;
+}
+
+export async function createGoogleBackedTestUser(
+  page: Page,
+  phoneSlot: string,
+): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
+  const email = googleFixtureEmail(phoneSlot);
+  const password = `E2e-${randomBytes(24).toString("hex")}!Aa1`;
+  const admin = serviceClient();
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    app_metadata: { provider: "google", providers: ["google"], e2e: true },
+  });
+  if (createError || !created.user) {
+    throw new Error(`createGoogleBackedTestUser failed: ${createError?.message ?? "no user"}`);
+  }
+
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Google e2e fixture needs public Supabase credentials");
+    const anon = createClient(url, key, {
+      auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
+    });
+    const { data, error } = await anon.auth.signInWithPassword({ email, password });
+    if (error || !data.session) throw new Error("Google e2e fixture sign-in failed");
+    await installSupabaseSession(page, data.session);
+    return { id: created.user.id };
+  } catch (error) {
+    const { error: cleanupError } = await admin.auth.admin.deleteUser(created.user.id);
+    if (cleanupError) {
+      throw new Error(`Google e2e fixture setup and cleanup failed: ${cleanupError.message}`);
+    }
+    throw error;
+  }
+}
+
+export async function cleanupGoogleBackedTestUsers(phoneSlots: readonly string[]): Promise<void> {
+  assertE2eFixtureEnvironment();
+  const label = "Google-backed e2e cleanup";
+  const emails = new Set(phoneSlots.map(googleFixtureEmail));
+  const admin = cleanupClient(label);
+  if (!admin) return;
+  const failures: string[] = [];
+  const ids: string[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) {
+      failures.push(`listUsers page ${page} failed: ${error.message}`);
+      break;
+    }
+    ids.push(
+      ...data.users.filter((user) => user.email && emails.has(user.email)).map((user) => user.id),
+    );
+    if (data.users.length < 1000) break;
+  }
+  if (ids.length > 0) {
+    const { error } = await admin.from("memberships").delete().in("delegate_id", ids);
+    if (error) failures.push(`membership detach failed: ${error.message}`);
+  }
+  for (const id of ids) {
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) failures.push(`deleteUser ${id} failed: ${error.message}`);
+  }
+  failIfAny(label, failures, SWEEP_HINT);
 }
 
 /** 6-char default region+city for seeded members. ქვემო ქართლი has 4 cities —
@@ -83,50 +162,25 @@ function randomFunnelCode(len: number): string {
 }
 
 /**
- * Click „გაგრძელება →" on the filled /join form and wait for the dev-OTP to appear.
- * A phone that was OTP-verified moments ago (the duplicate-phone re-entry, or the same
- * journey slot reused by a sibling spec) hits Supabase's ~60s per-phone OTP cooldown:
- * submitForm's signInWithOtp errors, the page shows „კოდის გაგზავნა ვერ მოხერხდა…" and
- * stays on the form, so the dev-OTP never renders. Ride the window out and retry the
- * send — same idiom as loginAs. Fresh phones reveal the code on the first click (no wait).
- */
-export async function submitJoinAndAwaitOtp(page: Page): Promise<void> {
-  await clickThroughOtpThrottle(page, "გაგრძელება →", page.getByTestId("dev-otp"));
-}
-
-/**
- * Re-entry variant of submitJoinAndAwaitOtp for a phone that ALREADY has a profile.
- * /api/dev/otp withholds the on-screen code for any existing account (account-takeover
- * guard, app/api/dev/otp/route.ts), so the „სატესტო კოდი" block never renders — wait
- * on the OtpVerification step (the otp-0 field) instead, then read the fresh code
- * straight from dev_otp_inbox via the service client, exactly as loginAs does. Returns
- * the OTP.
- */
-export async function submitJoinAndReadInboxOtp(
-  page: Page,
-  phoneNational: string,
-): Promise<string> {
-  const otpField = page.getByTestId("otp-0");
-  const sentAt = await clickThroughOtpThrottle(page, "გაგრძელება →", otpField);
-  return readFreshInboxOtp(phoneNational, sentAt);
-}
-
-/**
- * Drive the one-door /join form (spec §4.1): the three light fields + dev-OTP, then
- * wait for /me. Same dev-otp/otp-0 mechanics as the retired step-one helper; the
- * account is fresh (not completed) so the dev-otp UI element renders. Callers land on
- * the /join page first (page.goto("/join")).
+ * Create and sign in a synthetic Google identity, then drive the visible registration
+ * form with the deterministic provider code. No Google website or paid SMS is used.
  */
 export async function passRegistration(
   page: Page,
-  opts: { phone: string; firstName: string; lastName: string },
+  opts: { phone: string; firstName: string; lastName: string; refCode?: string },
 ): Promise<void> {
+  assertE2eFixtureEnvironment();
+  if (process.env.PHONE_VERIFICATION_PROVIDER !== "test") {
+    throw new Error("registration e2e requires PHONE_VERIFICATION_PROVIDER=test");
+  }
+  await createGoogleBackedTestUser(page, opts.phone);
+  await page.goto(opts.refCode ? `/join?ref=${encodeURIComponent(opts.refCode)}` : "/join");
   await page.getByLabel("სახელი").fill(opts.firstName);
   await page.getByLabel("გვარი").fill(opts.lastName);
   await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
-  await submitJoinAndAwaitOtp(page);
-  const otp = (await page.getByTestId("dev-otp").locator("strong").innerText()).trim();
-  await page.getByTestId("otp-0").fill(otp); // OtpInput distributes pasted digits
+  await page.getByRole("button", { name: "კოდის მიღება" }).click();
+  await expect(page.getByTestId("otp-0")).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("otp-0").fill("123456");
   await page.getByRole("button", { name: "დადასტურება" }).click();
   await expect(page).toHaveURL(/\/me(\/|\?|#|$)/, { timeout: 15_000 });
 }
@@ -185,6 +239,7 @@ export async function fillMembershipProfile(
   page: Page,
   opts: { regionLabel: string; personalId?: string },
 ): Promise<void> {
+  assertE2eFixtureEnvironment();
   const city = await firstCityOfRegion(opts.regionLabel);
   if (opts.personalId) {
     await page.getByLabel("პირადი ნომერი").fill(opts.personalId);
@@ -210,6 +265,7 @@ export async function seedCompletedMember(opts: {
   personalId: string;
   delegateId?: string | null;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
@@ -260,6 +316,7 @@ export async function seedPendingDelegate(opts: {
   lastName: string;
   personalId: string;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   const { id } = await seedCompletedMember(opts); // e2e-phone guard runs inside
   const admin = serviceClient();
   const { error: closeErr } = await admin
@@ -284,26 +341,20 @@ export async function seedPendingDelegate(opts: {
  * only members hold a membership). Used by login.spec's registered-standing case.
  */
 export async function seedRegisteredMember(opts: {
+  userId: string;
   phone: string;
   firstName: string;
   lastName: string;
   personalId: string;
 }): Promise<{ id: string }> {
+  assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
     throw new Error(`refusing to seed non-e2e phone ${opts.phone}`);
   }
   const admin = serviceClient();
   const authPhone = `+995${opts.phone}`;
-  const { data: created, error: userErr } = await admin.auth.admin.createUser({
-    phone: authPhone,
-    phone_confirm: true,
-  });
-  if (userErr || !created?.user) {
-    throw new Error(`seedRegisteredMember createUser failed: ${userErr?.message}`);
-  }
-  const id = created.user.id;
   const { error: pErr } = await admin.from("profiles").insert({
-    id,
+    id: opts.userId,
     first_name: opts.firstName,
     last_name: opts.lastName,
     phone: authPhone,
@@ -311,7 +362,7 @@ export async function seedRegisteredMember(opts: {
     status: "registered",
   });
   if (pErr) throw new Error(`seedRegisteredMember profile insert failed: ${pErr.message}`);
-  return { id };
+  return { id: opts.userId };
 }
 
 /**
@@ -324,6 +375,7 @@ export async function seedRegisteredMember(opts: {
 export { loginAs }; // spec imports stay untouched
 
 export async function cleanupJourneyUsers(): Promise<void> {
+  assertE2eFixtureEnvironment();
   const phones = Object.values(JOURNEY).flatMap((j) => [
     `+995${journeyPhone(j)}`,
     `995${journeyPhone(j)}`,
@@ -332,6 +384,7 @@ export async function cleanupJourneyUsers(): Promise<void> {
 }
 
 export async function getSeededReferral(): Promise<{ code: string; fullName: string }> {
+  assertE2eFixtureEnvironment();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("referral journey needs staging service credentials");
@@ -362,6 +415,7 @@ export async function getSeededReferral(): Promise<{ code: string; fullName: str
 }
 
 export async function approveOwnDelegate(phoneNational: string): Promise<void> {
+  assertE2eFixtureEnvironment();
   if (!phoneNational.startsWith("55")) {
     throw new Error(`refusing to approve non-e2e phone ${phoneNational}`);
   }
@@ -388,6 +442,7 @@ export async function approveOwnDelegate(phoneNational: string): Promise<void> {
 }
 
 export async function cleanupLoginUser(): Promise<void> {
+  assertE2eFixtureEnvironment();
   const LABEL = "login e2e cleanup";
   const loginPhone = `995${LOGIN_PHONE}`; // auth stores phones without '+'
   // Scans auth rather than profiles, but the phone still comes from the

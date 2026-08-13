@@ -124,6 +124,75 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      phone_verification_challenges: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          provider: "verify_ge" | "test";
+          provider_request_id: string;
+          verify_attempts: number;
+          expires_at: string;
+          consumed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          provider: "verify_ge" | "test";
+          provider_request_id: string;
+          verify_attempts?: number;
+          expires_at: string;
+          consumed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone?: string;
+          purpose?: "registration";
+          provider?: "verify_ge" | "test";
+          provider_request_id?: string;
+          verify_attempts?: number;
+          expires_at?: string;
+          consumed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      phone_verification_send_reservations: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone: string;
+          purpose: "registration";
+          idempotency_key: string;
+          challenge_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone: string;
+          purpose?: "registration";
+          idempotency_key: string;
+          challenge_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone?: string;
+          purpose?: "registration";
+          idempotency_key?: string;
+          challenge_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       admin_roles: {
         Row: {
           user_id: string;
@@ -511,6 +580,36 @@ export interface Database {
           p_ref_code?: string | null;
         };
         Returns: Json;
+      };
+      register_google: {
+        Args: {
+          p_first_name: string;
+          p_last_name: string;
+          p_ref_code?: string | null;
+        };
+        Returns: Json;
+      };
+      reserve_phone_verification_send: {
+        Args: { p_user_id: string; p_phone: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      complete_phone_verification_send: {
+        Args: {
+          p_reservation_id: string;
+          p_user_id: string;
+          p_provider: string;
+          p_provider_request_id: string;
+          p_expires_at: string;
+        };
+        Returns: Json;
+      };
+      reserve_phone_verification_attempt: {
+        Args: { p_challenge_id: string; p_user_id: string };
+        Returns: number | null;
+      };
+      consume_phone_verification_challenge: {
+        Args: { p_challenge_id: string; p_user_id: string };
+        Returns: boolean;
       };
       become_member_save_profile: {
         Args: {

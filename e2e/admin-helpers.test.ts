@@ -15,6 +15,7 @@ import { cleanupPhase4Users, phase4Phone } from "./admin-helpers";
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
+  vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
   createClient.mockReset();
 });
 afterEach(() => vi.unstubAllEnvs());
