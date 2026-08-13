@@ -135,7 +135,7 @@ jobs:
           APPROVED_RUN_CONCLUSION="$(jq -r '.conclusion' <<<"$APPROVED_RUN")"
           test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"
           test "$APPROVED_RUN_EVENT" = "workflow_dispatch"
-          test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml@main"
+          test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml"
           test "$APPROVED_RUN_REPOSITORY" = "$GITHUB_REPOSITORY"
           test "$APPROVED_RUN_HEAD_BRANCH" = "main"
           test "$APPROVED_RUN_HEAD_SHA" = "$GITHUB_SHA"
