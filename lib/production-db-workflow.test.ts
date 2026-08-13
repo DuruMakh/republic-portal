@@ -100,9 +100,8 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain("jq -r '.conclusion'");
     expect(workflow).toContain('test "$APPROVED_RUN_ID" = "$APPROVED_DRY_RUN_RUN_ID"');
     expect(workflow).toContain('test "$APPROVED_RUN_EVENT" = "workflow_dispatch"');
-    expect(workflow).toContain(
-      'test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml@main"',
-    );
+    expect(workflow).toContain('test "$APPROVED_RUN_PATH" = ".github/workflows/production-db.yml"');
+    expect(workflow).not.toContain(".github/workflows/production-db.yml@main");
     expect(workflow).not.toContain(".github/workflows/production-db.yml@refs/heads/main");
     expect(workflow).toContain('test "$APPROVED_RUN_REPOSITORY" = "$GITHUB_REPOSITORY"');
     expect(workflow).toContain('test "$APPROVED_RUN_HEAD_BRANCH" = "main"');
