@@ -44,4 +44,29 @@ describe("AuthEntryShell", () => {
     expect(screen.queryByRole("list", { name: "რეგისტრაციის ნაბიჯები" })).toBeNull();
     expect(screen.getByRole("complementary")).toHaveAccessibleName("პირველად ხარ?");
   });
+
+  it("starts compact continuation states directly with their action", () => {
+    render(
+      <AuthEntryShell
+        eyebrow="ნაბიჯი 2 — ტელეფონის დადასტურება"
+        title="შემოგვიერთდი ერთ წუთში"
+        intro="Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."
+        progress={<AuthProgress currentStep="phone" />}
+        asideTitle="რატომ ტელეფონი?"
+        aside={<p>ერთჯერადი კოდი</p>}
+        compact
+      >
+        <label>
+          სახელი
+          <input />
+        </label>
+      </AuthEntryShell>,
+    );
+
+    expect(screen.getByRole("main")).toHaveAccessibleName("რეგისტრაციის გაგრძელება");
+    expect(screen.getByRole("list", { name: "რეგისტრაციის ნაბიჯები" })).toBeInTheDocument();
+    expect(screen.getByLabelText("სახელი")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeNull();
+    expect(screen.queryByRole("complementary")).toBeNull();
+  });
 });

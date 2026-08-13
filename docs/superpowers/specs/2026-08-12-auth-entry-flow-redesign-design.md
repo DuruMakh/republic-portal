@@ -57,12 +57,12 @@ type, and the existing Kronika rules.
 
 ### Step 2 — Personal details and phone
 
-After Google succeeds, the same page shell remains in place and the second
-progress item becomes active.
-
-The main area shows the existing first-name, last-name, and phone fields. The
-side note explains that the phone is used only for a one-time registration
-code. Submitting valid details sends the Verify.ge code.
+After Google succeeds, the second progress item becomes active and the main area
+starts directly with the existing first-name, last-name, and phone fields.
+The opening eyebrow, large title, intro sentence, explanatory rail, divider, and
+the duplicate personal-details heading are omitted from this continuation state.
+The short Verify.ge disclosure remains below the phone field. Submitting valid
+details sends the Verify.ge code.
 
 When the code has been sent, the progress row stays on the phone step. The main
 area changes to the existing six-digit verification control, shows the verified

@@ -9,6 +9,7 @@ export function AuthEntryShell({
   children,
   asideTitle,
   aside,
+  compact = false,
 }: {
   eyebrow: ReactNode;
   title: ReactNode;
@@ -17,7 +18,20 @@ export function AuthEntryShell({
   children: ReactNode;
   asideTitle: ReactNode;
   aside: ReactNode;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <main
+        aria-label="რეგისტრაციის გაგრძელება"
+        className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-8 sm:px-8 sm:pt-12 lg:px-12 lg:pb-24 lg:pt-16"
+      >
+        {progress ? <div className="mb-10 sm:mb-14">{progress}</div> : null}
+        <section className="max-w-2xl">{children}</section>
+      </main>
+    );
+  }
+
   return (
     <main
       aria-labelledby="auth-entry-title"

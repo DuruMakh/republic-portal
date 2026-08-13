@@ -507,6 +507,7 @@ const currentStep = phoneStep ? "phone" : "google";
   title="შემოგვიერთდი ერთ წუთში"
   intro="Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."
   progress={<AuthProgress currentStep={currentStep} />}
+  compact={phoneStep}
   asideTitle={phoneStep ? "რატომ ტელეფონი?" : "როგორ მუშაობს"}
   aside={
     phoneStep ? (
@@ -565,7 +566,6 @@ const currentStep = phoneStep ? "phone" : "google";
 
   {phase === "form" || phase === "retry" ? (
     <div className="flex max-w-2xl flex-col gap-4">
-      <h2 className="border-b-2 border-ink pb-2 font-serif font-bold">პირადი მონაცემები</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="სახელი"
@@ -618,7 +618,8 @@ Keep every existing branch, handler, validation message, retry rule, resend rule
 
 - remove the old `bg-paper-bright` enclosing card and its shadow;
 - keep the notice square with a left civic-red rule instead of `rounded-lg`;
-- keep the form heading's printed rule and all visible labels;
+- in phone continuation states, start directly with the form/OTP action and omit the repeated eyebrow, title, intro, explanatory rail, divider, and personal-details heading;
+- keep all field labels and the short Verify.ge disclosure;
 - keep the OTP and change-number controls in the same shell;
 - keep the action width at `max-w-2xl` and avoid horizontal overflow.
 

@@ -243,8 +243,13 @@ describe("GoogleJoinForm", () => {
     await reachGoogleForm();
 
     expectCurrentRegistrationStep("ტელეფონი");
-    expect(screen.getByText("ნაბიჯი 2 — ტელეფონის დადასტურება")).toBeInTheDocument();
-    expect(screen.getByRole("complementary")).toHaveAccessibleName("რატომ ტელეფონი?");
+    expect(screen.queryByText("ნაბიჯი 2 — ტელეფონის დადასტურება")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeNull();
+    expect(
+      screen.queryByText("Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."),
+    ).toBeNull();
+    expect(screen.queryByRole("heading", { name: "პირადი მონაცემები" })).toBeNull();
+    expect(screen.queryByRole("complementary")).toBeNull();
     expect(screen.getByLabelText("სახელი")).toBeEnabled();
     expect(screen.getByLabelText("გვარი")).toBeEnabled();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue("");
