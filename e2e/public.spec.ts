@@ -12,7 +12,7 @@ test.describe("home", () => {
   test("hero, live counters and nav work", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "ავაშენოთ ქართული რესპუბლიკა ერთად" }),
+      page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();

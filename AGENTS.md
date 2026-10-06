@@ -6,6 +6,10 @@ Production app for "ქართული რესპუბლიკა" (Georg
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
 UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
 
+## Communication language
+
+The user may ask questions or give tasks in Georgian. Conduct work in English and use English for all communication by default, including questions, plans, progress updates, explanations, and final answers. Respond in Georgian only when the user explicitly requests it.
+
 ## Process (non-negotiable)
 
 - Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Codex + /codex review)

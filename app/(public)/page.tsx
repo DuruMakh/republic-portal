@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
-import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
 import { NewsCard } from "@/components/NewsCard";
 import { SectionRule } from "@/components/SectionRule";
@@ -20,29 +19,19 @@ import {
 
 export const revalidate = 60;
 
-// Manifesto block (kicker/headline/lede/two-column body) spliced -- never hand-retyped --
-// from prototype/kronika-d3/kronika-d3-template.html via the Task-11 brief's Step 1 node
-// snippet; every codepoint verified against the Georgian (Mkhedruli, U+10A0-U+10FF) Unicode
-// block before commit. P2's membership clause was the OWNER-APPROVED CORRECTED clause at
-// Task 11 (membership is a CHOICE of 5/10/20 GEL/month), replacing the mock's original
-// fixed-price wording. Owner fix #9 (2026-07-27) retires that choice for a fixed 10₾ fee,
-// so P2 below is corrected again -- see .superpowers/sdd/task-11-brief.md Step 1 and the
-// georgian-quote-transcription-hazard note (never retype Georgian by hand). P1 is rendered drop-cap: first
-// letter (P1.slice(0, 1)) floated large, rest (P1.slice(1)) as body text, below.
-const KICKER = "მანიფესტი";
-const HEADLINE = "ავაშენოთ ქართული რესპუბლიკა ერთად";
-const LEDE =
-  "გამჭვირვალე სამოქალაქო მოძრაობა — ვერიფიცირებული დელეგატები, ღია რეიტინგი და საჯარო ფინანსები. შენს ხელში.";
+// Homepage copy supplied by the owner on 2026-10-07. P1 keeps its opening drop cap.
+const HEADLINE = "ერთად შევქმნათ ქართული რესპუბლიკა";
+const LEDE = "იდეები მხოლოდ მაშინ ცვლიან ქვეყანას, როდესაც ადამიანები მათ გარშემო ერთიანდებიან.";
 const P1 =
-  "რესპუბლიკა არ შენდება ერთი მოედნიდან — ის იწერება ათასობით ხელმოწერით, ყოველ მხარეში, ყოველდღე. ჩვენი პლატფორმა თითოეულ წევრს აძლევს დადასტურებულ ხმას: პირადი ნომრით, SMS კოდით, საკუთარი დელეგატის არჩევით.";
+  "ქართული რესპუბლიკის პორტალის მიზანია შექმნას სივრცე, სადაც ქართველი ხალხი გაერთიანდება, ორგანიზდება, აირჩევს საკუთარ წარმომადგენლებს და უშუალოდ მიიღებს მონაწილეობას გადაწყვეტილებების მიღებაში.";
 const P2 =
-  "დელეგატები ლაგდებიან ღია რეიტინგში მხარდამჭერების მიხედვით; ყოველი ლარი აღირიცხება საჯარო დავთარში. წევრობის შენატანი — 10₾ თვეში — და ყველა გადაწყვეტილება შიდა გამოკითხვით მტკიცდება.";
-const CONT = "გააგრძელე კითხვა →";
-const BYLINE1 = "მოძრაობის რედაქცია";
-const BYLINE2 = "3 წუთი კითხვა";
+  "საქართველო ეკუთვნის ხალხს და არა ვიწრო კორუმპირებულ ელიტას, რომელიც ჩვენს ხარჯზე მდიდრდება და ქვეყნის სიმდიდრეს პირად ქონებად აქცევს.";
+const P3 =
+  "საქართველოს უნდა მართავდნენ ადამიანები, რომლებიც ქართველ ხალხს ემსახურებიან და არა ოლიგარქებს.";
+const P4 =
+  "ჩვენ გვჯერა, რომ ერთად შეგვიძლია დავიბრუნოთ საქართველო და შევქმნათ ქვეყანა, სადაც ქართულ ოჯახს ღირსეული და მდიდარი ცხოვრების შესაძლებლობა აქვს, სახელმწიფო კი თითოეულ ადამიანს ემსახურება.";
 const STRIP = "როგორ შემოგვიერთდები";
 const REG = "რეესტრი — დღეს";
-const SRC = "წყარო: საჯარო დავთარი";
 const TOP = "რეიტინგი — ხუთეული";
 const FULL = "სრულად →";
 
@@ -55,7 +44,6 @@ const LADDER_1_TITLE = "რეგისტრირებული";
 const LADDER_1_DESC = "სწრაფი რეგისტრაცია, გადახდის გარეშე.";
 const LADDER_1_LINK = "რეგისტრაცია →";
 const LADDER_2_TITLE = "წევრი";
-const LADDER_2_PRICE = "10₾ თვეში";
 const LADDER_2_DESC = "სრული წევრობა და შიდა გამოკითხვები — კაბინეტიდან.";
 const LADDER_2_LINK = "დაიწყე რეგისტრაციით →";
 const LADDER_3_TITLE = "დელეგატი";
@@ -67,7 +55,6 @@ const STAT_APPROVED_LABEL = "დამტკიცებული დელე�
 const TOTAL_GEL_LABEL = "შეგროვებული საწევრო შენატანები";
 const SUPPORTER_LABEL = "მხარდამჭერი";
 const NEWS_LABEL = "სიახლეები";
-const FINANCE_LABEL = "ფინანსები";
 const EVENTS_LABEL = "ღონისძიებები";
 const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
 const EVENTS_EMPTY = "მომავალი ღონისძიებები მალე გამოცხადდება.";
@@ -86,27 +73,27 @@ export default async function HomePage() {
   return (
     <main>
       <div className="grid gap-0 px-5 pb-12 pt-8 sm:px-10 lg:grid-cols-[1fr_348px]">
-        <div className="lg:border-r lg:border-hairline lg:pr-8">
-          <Eyebrow>{KICKER}</Eyebrow>
-          <h1 className="mt-2.5 font-serif text-[2rem] font-bold leading-[1.16] [text-wrap:balance] sm:text-[2.7rem]">
+        <div className="lg:border-r lg:border-hairline lg:pr-8 lg:[container-type:inline-size]">
+          <h1 className="font-serif text-[2rem] font-bold leading-[1.16] [text-wrap:balance] sm:text-[2.7rem] lg:text-[4cqw] lg:whitespace-nowrap">
             {HEADLINE}
           </h1>
-          <p className="mt-3.5 font-serif text-[1.12rem] leading-[1.6] text-prose">{LEDE}</p>
-          <div className="mt-4 flex gap-3.5 border-y border-hairline py-2 text-[0.74rem] text-muted-fg">
-            <span>{BYLINE1}</span>
-            <span>·</span>
-            <span>{BYLINE2}</span>
-          </div>
+          <p className="mt-3.5 font-serif text-[1.12rem] leading-[1.6] text-prose lg:text-[clamp(0.74rem,2.1cqw,1.12rem)] lg:whitespace-nowrap">
+            {LEDE}
+          </p>
           <div className="mt-4 grid gap-7 sm:grid-cols-2">
-            <p className="text-[0.92rem] leading-[1.75] sm:text-justify">
-              <span className="float-left pr-2.5 pt-1 font-serif text-[3.4rem] font-bold leading-[0.78] text-brand">
-                {P1.slice(0, 1)}
-              </span>
-              {P1.slice(1)}
-            </p>
-            <p className="text-[0.92rem] leading-[1.75] sm:text-justify">
-              {P2} <Link href="#join-strip">{CONT}</Link>
-            </p>
+            <div className="space-y-4">
+              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">
+                <span className="float-left pr-2.5 pt-1 font-serif text-[3.4rem] font-bold leading-[0.78] text-brand">
+                  {P1.slice(0, 1)}
+                </span>
+                {P1.slice(1)}
+              </p>
+              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P2}</p>
+            </div>
+            <div className="space-y-4">
+              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P3}</p>
+              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P4}</p>
+            </div>
           </div>
           <div id="join-strip" className="mt-6">
             <SectionRule label={STRIP} />
@@ -119,10 +106,7 @@ export default async function HomePage() {
                 </p>
               </div>
               <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
-                <div className="font-serif font-bold text-ink">
-                  {LADDER_2_TITLE}{" "}
-                  <span className="text-[0.7rem] font-bold text-brand">{LADDER_2_PRICE}</span>
-                </div>
+                <div className="font-serif font-bold text-ink">{LADDER_2_TITLE}</div>
                 <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_2_DESC}</p>
                 <p className="mt-2">
                   <Link href="/join">{LADDER_2_LINK}</Link>
@@ -202,10 +186,6 @@ export default async function HomePage() {
                 </span>
               </div>
             </div>
-            <p className="mt-2.5 text-[0.74rem] text-muted-fg">
-              {SRC} · {formatDateKa(new Date().toISOString())} ·{" "}
-              <Link href="/transparency">{FINANCE_LABEL}</Link>
-            </p>
           </div>
           <div>
             <SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>} />
