@@ -14,6 +14,9 @@ export default async function MembershipDonePage() {
   // approved-only: pending/rejected requesters keep their member surfaces (R2 §3.1)
   if (isApprovedDelegate(state)) redirect("/delegate");
   if (!state.completed) redirect("/me/membership"); // nothing to show until the wizard finishes
+  // ADR-036: only a not-yet-active member is "under the board's review". A paying
+  // (active_member) member who lands here by URL keeps the plain completed heading.
+  const underReview = state.status !== "active_member";
 
   return (
     <main className="mx-auto max-w-xl">
@@ -21,13 +24,16 @@ export default async function MembershipDonePage() {
         <Eyebrow>წევრობის გაფორმება</Eyebrow>
       </div>
       <div className="mx-auto max-w-lg border-y-2 border-ink py-10 text-center">
-        <h1 className="font-serif text-4xl font-bold text-ink">განაცხადი გაგზავნილია ✓</h1>
+        <h1 className="font-serif text-4xl font-bold text-ink">
+          {underReview ? "განაცხადი გაგზავნილია ✓" : "რეგისტრაცია დასრულებულია ✓"}
+        </h1>
         <div className="mt-4">
-          {/* ADR-036: shown as under the board's review. The stored status is still
-              profile_completed; only this screen's wording changed. */}
-          <Pill status="pending" />
+          {/* the stored status stays profile_completed; only the wording says "pending" */}
+          <Pill status={underReview ? "pending" : "active_member"} />
         </div>
-        <p className="mt-4 text-sm text-prose">შენს განაცხადს განიხილავს ბორდი.</p>
+        {underReview ? (
+          <p className="mt-4 text-sm text-prose">შენს განაცხადს განიხილავს ბორდი.</p>
+        ) : null}
       </div>
       <p className="mt-4 text-sm text-muted-fg">
         დელეგატი:{" "}

@@ -351,6 +351,14 @@ describe("MembershipWizard — tier phase", () => {
     expect(completeMembershipAction).not.toHaveBeenCalled();
   });
 
+  it("announces the consent prompt and retires it once a box is ticked", async () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(CONSENT_ERROR);
+    fireEvent.click(screen.getByRole("checkbox", { name: DATA_CONSENT }));
+    expect(screen.queryByText(CONSENT_ERROR)).toBeNull();
+  });
+
   it("navigates to the done screen on successful completion", async () => {
     completeMembershipAction.mockResolvedValue({
       ok: true,
@@ -367,7 +375,7 @@ describe("MembershipWizard — tier phase", () => {
     agreeToBoth();
     fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     await waitFor(() => expect(completeMembershipAction).toHaveBeenCalledWith({ tier: 10 }));
-    // the done screen (GR- code, bank instructions, chosen delegate) now lives at its
+    // the done screen (application sent, chosen delegate) now lives at its
     // own route — /me/membership/done — rendered server-side, not in this component
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/me/membership/done"));
   });

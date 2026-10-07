@@ -285,7 +285,7 @@ export default function StyleguidePage() {
 
         {/* 10. Stepper */}
         <Card title="სტეპერი">
-          <Stepper steps={["პროფილი", "საწევრო"]} current={1} />
+          <Stepper steps={["პროფილი", "განაცხადი"]} current={1} />
         </Card>
 
         {/* 11. OtpInput */}

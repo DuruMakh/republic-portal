@@ -893,7 +893,7 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder
   registering"), while the structure says the board admits members. Building that admission
   path is separate work.
 
-## ADR-036 (2026-10-07): The membership questionnaire is headed "member's details", with no line under it
+## ADR-036 (2026-10-07): The membership wizard: "member's details" heading, and a board-reviewed application in place of the dues step
 
 The first step of the membership wizard (`/me/membership`) was headed `იურიდიული პროფილი`
 with the line "this data is needed for the membership's legal verification; it is stored
@@ -929,7 +929,10 @@ statuses or the admin tools.
   when. The check is client-side only; the server action does not see the boxes. A charter /
   principles consent was drafted and dropped by the owner.
 - **The done screen** reads `განაცხადი გაგზავნილია ✓` with the `pending` pill
-  (`განხილვის პროცესში`) and "the board will review your application". The bank-transfer
+  (`განხილვის პროცესში`) and "the board will review your application". A member who is
+  already `active_member` (reaching it by URL) instead keeps the page's previous heading
+  `რეგისტრაცია დასრულებულია ✓` with the active-member pill, so nobody who already pays is
+  told they are under review. The bank-transfer
   instructions, the reference code and the "active after the first payment" line are gone
   from it.
 - **Known mismatch, accepted.** The system is unchanged: the stored status is still

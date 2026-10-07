@@ -211,6 +211,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
     setPhase("tier");
   }
 
+  // a ticked box retires the consent prompt; a server error stays until the next send
+  function clearConsentError() {
+    setTierError((prev) => (prev === CONSENT_REQUIRED_MESSAGE ? undefined : prev));
+  }
+
   async function completeTier() {
     if (!dataConsent || !duesConsent) {
       setTierError(CONSENT_REQUIRED_MESSAGE);
@@ -358,15 +363,25 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           <CheckboxField
             label="თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად"
             checked={dataConsent}
-            onChange={(e) => setDataConsent(e.target.checked)}
+            onChange={(e) => {
+              setDataConsent(e.target.checked);
+              clearConsentError();
+            }}
           />
           <CheckboxField
             label={`თანახმა ვარ, მომავალში, როცა საწევრო შემოიღება, ვიხდიდე ყოველთვიურ საწევროს — ${MEMBERSHIP_FEE_GEL} ₾ თვეში`}
             checked={duesConsent}
-            onChange={(e) => setDuesConsent(e.target.checked)}
+            onChange={(e) => {
+              setDuesConsent(e.target.checked);
+              clearConsentError();
+            }}
           />
         </div>
-        {tierError ? <p className="mt-3 text-sm text-danger">{tierError}</p> : null}
+        {tierError ? (
+          <p role="alert" className="mt-3 text-sm text-danger">
+            {tierError}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-col gap-3">
           <Button onClick={completeTier} disabled={tierBusy} size="lg">
             განაცხადის გაგზავნა
