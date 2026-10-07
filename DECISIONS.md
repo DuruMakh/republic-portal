@@ -824,4 +824,6 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   member straight to their cabinet (ADR-031 and the 2026-08-12 auth-entry design), so one
   button serves new and returning people. `/login` stays routable: the member-area
   redirect, the OAuth failure redirect and bookmarks still land there. This amends
-  ADR-020's header description (a sign-in button beside the join CTA).
+  ADR-020's header description (a sign-in button beside the join CTA) and supersedes the
+  sentence in section 2 of the 2026-08-12 auth-entry design that says `/login` is reached
+  from the header's sign-in label.
