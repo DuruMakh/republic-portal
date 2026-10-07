@@ -1,6 +1,6 @@
 # Organization structure page (`/structure`) — design
 
-Date: 2026-10-07 · Status: owner-approved design, spec awaiting owner review
+Date: 2026-10-07 · Status: owner-approved design and spec (2026-10-07)
 UX contract: `prototype/structure-concept/index.html` (published concept, version 5,
 https://claude.ai/artifact/7RZntWZM7Ds1jSxsJUmZFm)
 
@@ -124,12 +124,14 @@ Static server-rendered page, no client JavaScript, no database, no env vars.
 | `app/(public)/structure/page.tsx` | route | Composes the above; `metadata` title. |
 
 **Board member data.** `BoardMember = { name: string; photo: string; bio: string;
-socials: { network: "facebook" | "instagram" | "x" | "linkedin"; url: string }[] }`.
+socials: { network: "facebook" | "tiktok" | "linkedin"; url: string }[] }`.
 Schema rules: non-empty name; `photo` is a path under `/board/` (files in
 `public/board/`, rendered with `next/image`, alt = name); bio 1–300 characters; each
-social `url` is `https://` on that network's own host (facebook.com, instagram.com,
-x.com/twitter.com, linkedin.com); no email or phone fields exist. A unit test parses
-`BOARD_MEMBERS` with the schema, so a bad entry fails CI. More networks only on request.
+social `url` is `https://` on that network's own host (facebook.com, tiktok.com,
+linkedin.com); no email or phone fields exist. Facebook and TikTok are the usual pair;
+LinkedIn appears only for some members — every network is optional per person. A unit
+test parses `BOARD_MEMBERS` with the schema, so a bad entry fails CI. Owner-confirmed
+set (2026-10-07); more networks only on request.
 
 **Social links** open in a new tab with `rel="noopener noreferrer"` and a Georgian
 `aria-label` naming the network and person.
