@@ -854,3 +854,21 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   `headers()` or database reads) or every route would turn dynamic. Next ignores a not-found file's own
   metadata when a page raises the 404, so the hidden finance page itself returns the generic
   Georgian not-found title, never its own.
+
+## ADR-035 (2026-10-07): The structure page's condensed display type and pebble motif
+
+Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
+
+- **Information only.** The page explains the board, members and general vote in owner-approved
+  short text (spec `docs/superpowers/specs/2026-10-07-organization-structure-page-design.md` §2);
+  it changes no flow on the site. The board roster lives in code (`lib/board-members.ts`),
+  launches empty with a coming-soon notice, and each roster change ships through a preview for
+  owner sign-off. Social links are Facebook, TikTok and LinkedIn, each optional per person; no
+  email or phone.
+- **A deliberate departure from Kronika, scoped to this page.** The owner asked for a more
+  visual page and approved a concept with condensed display headings and a pebble motif
+  (კენჭისყრა is literally casting pebbles). The page keeps the public chrome and the existing
+  colour tokens; the concept's cooler ground became the site's paper so it sits in the sheet.
+- **Cost.** The condensed headings load the `wdth` axis of Noto Sans Georgian for the whole
+  site (next/font serves one variable file), so every page's font download is slightly
+  heavier. No new dependency.
