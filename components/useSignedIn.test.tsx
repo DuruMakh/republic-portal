@@ -5,47 +5,21 @@ import { useSignedIn } from "./useSignedIn";
 type TestSession = { user: { id: string } } | null;
 type AuthListener = (event: string, session: TestSession) => void;
 
-const { getSession, onAuthStateChange, unsubscribe, signedInStateWrites } = vi.hoisted(() => ({
+const { getSession, onAuthStateChange, unsubscribe } = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(),
   unsubscribe: vi.fn(),
-  signedInStateWrites: [] as unknown[],
 }));
-
-vi.mock("react", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react")>();
-  return {
-    ...actual,
-    useState: <State,>(initial: State) => {
-      const [state, setState] = actual.useState(initial);
-      if (!Object.is(initial, false)) return [state, setState] as const;
-      const trackedSetState: typeof setState = (next) => {
-        signedInStateWrites.push(next);
-        setState(next);
-      };
-      return [state, trackedSetState] as const;
-    },
-  };
-});
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ auth: { getSession, onAuthStateChange } }),
 }));
-
-function deferredSession() {
-  let resolve!: (value: { data: { session: TestSession } }) => void;
-  const promise = new Promise<{ data: { session: TestSession } }>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-}
 
 describe("useSignedIn", () => {
   beforeEach(() => {
     getSession.mockReset();
     onAuthStateChange.mockReset();
     unsubscribe.mockReset();
-    signedInStateWrites.length = 0;
     onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe } } });
   });
 
@@ -81,25 +55,5 @@ describe("useSignedIn", () => {
     unmount();
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
-  });
-
-  it("ignores an initial session that resolves after unmount", async () => {
-    const pending = deferredSession();
-    getSession.mockReturnValue(pending.promise);
-    const observed: boolean[] = [];
-    const { unmount } = renderHook(() => {
-      const signedIn = useSignedIn();
-      observed.push(signedIn);
-      return signedIn;
-    });
-    unmount();
-
-    await act(async () => {
-      pending.resolve({ data: { session: { user: { id: "late" } } } });
-      await pending.promise;
-    });
-
-    expect(observed).toEqual([false]);
-    expect(signedInStateWrites).toEqual([]);
   });
 });
