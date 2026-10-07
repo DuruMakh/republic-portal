@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/Card";
 import { CopyButton } from "@/components/CopyButton";
 import { QrCode } from "@/components/QrCode";
+import { MEMBER_STATUS_LABELS_KA } from "@/lib/admin";
 import { buildReferralUrl } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 
 // ADR-039: the link's sign-ups, counted apart — supporters have not finished the
 // membership form, members have. Both figures sum the person's own M- link and,
-// once approved, their delegate link (owner decision 2026-07-29). Labels spliced
-// byte-exact from the status vocabulary (MEMBER_STATUS_LABELS_KA in lib/admin.ts).
-const SUPPORTERS_LABEL = "მხარდამჭერი";
-const MEMBERS_LABEL = "წევრი";
+// once approved, their delegate link (owner decision 2026-07-29). The labels are the
+// status vocabulary's own words, so the card always says what the status pill says.
+const SUPPORTERS_LABEL = MEMBER_STATUS_LABELS_KA.registered;
+const MEMBERS_LABEL = MEMBER_STATUS_LABELS_KA.profile_completed;
 
 /**
  * Origin is read client-side so the link is truthful on every deployment
