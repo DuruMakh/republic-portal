@@ -210,3 +210,31 @@ test.describe("transparency", () => {
     await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
   });
 });
+
+test.describe("structure page", () => {
+  test("the header link opens it; sections, rules, roster notice and anchors work", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("navigation").first().getByRole("link", { name: "სტრუქტურა" }).click();
+    await expect(page).toHaveURL(/\/structure$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "ორგანიზაციული სტრუქტურა" }),
+    ).toBeVisible();
+    for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა", "ბორდის შემადგენლობა"]) {
+      await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole("img", { name: "5-დან 4 ხმა" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "5-დან 3 ხმა" })).toBeVisible();
+    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
+
+    await page
+      .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+      .getByRole("link", { name: "საერთო კენჭისყრა", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/structure#vote$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "საერთო კენჭისყრა", exact: true }),
+    ).toBeInViewport();
+  });
+});
