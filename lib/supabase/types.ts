@@ -294,11 +294,17 @@ export interface Database {
           bio: string | null;
           photo_url: string | null;
           active_supporters: number;
+          members: number;
         };
         Relationships: [];
       };
       public_stats: {
-        Row: { approved_delegates: number; active_members: number; registered_total: number };
+        Row: {
+          approved_delegates: number;
+          active_members: number;
+          registered_total: number;
+          members_total: number;
+        };
         Relationships: [];
       };
       admin_overview: {

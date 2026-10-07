@@ -29,7 +29,7 @@ if (e3) console.log("OK: anon dev_otp_inbox query permission-denied (42501) — 
 const { data: viewRows, error: e4 } = await anon
   .from("public_delegates")
   .select(
-    "id, slug, first_name, last_name, region_id, region_name_ka, bio, photo_url, active_supporters",
+    "id, slug, first_name, last_name, region_id, region_name_ka, bio, photo_url, active_supporters, members",
   )
   .limit(3);
 if (e4) throw new Error(`anon cannot read public_delegates: ${e4.message}`);
