@@ -78,3 +78,21 @@ describe("public layout — finances public (SHOW_PUBLIC_FINANCES=true)", () => 
     ).toHaveAttribute("href", "/transparency");
   });
 });
+
+describe("public layout — structure link", () => {
+  const STRUCTURE = "სტრუქტურა";
+
+  it("links სტრუქტურა from the header, the footer and the phone menu", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+    expect(
+      within(screen.getByRole("contentinfo")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+  });
+});

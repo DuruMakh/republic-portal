@@ -6,6 +6,7 @@ import { MobileJoinCta } from "@/components/MobileJoinCta";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
+import { STRUCTURE_HREF, STRUCTURE_NAV_LABEL } from "@/lib/structure-copy";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
@@ -23,12 +24,14 @@ const navItems: { href: string; label: string }[] = [
   { href: "/leaderboard", label: "რეიტინგი" },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: "/events", label: "ღონისძიებები" },
+  { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
 ];
 
 const footerLinks: { href: string; label: string }[] = [
   { href: "/join/terms", label: FOOTER_TERMS_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
+  { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
   // Footer, not top nav (spec §8): contact is a destination people go looking
   // for, not a section of the publication.
