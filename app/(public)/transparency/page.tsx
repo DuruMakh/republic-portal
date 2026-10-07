@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
 import { SectionRule } from "@/components/SectionRule";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import { StatCard } from "@/components/StatCard";
 import { formatCountKa } from "@/lib/format";
 import { showPublicFinances } from "@/lib/public-finances";
@@ -20,10 +21,11 @@ const FINANCES_METADATA: Metadata = {
   openGraph: { images: ["/og-default.png"] },
 };
 
-// While hidden the page contributes no metadata at all (ADR-034): a static export would still
-// be streamed inside the not-found response and could show up as the browser tab title.
+// While hidden the page presents the generic not-found title and never its own (ADR-034): a
+// static export would still be streamed inside the not-found response and could show up as the
+// browser tab title, and Next ignores the not-found file's own metadata for a page-raised 404.
 export function generateMetadata(): Metadata {
-  return showPublicFinances() ? FINANCES_METADATA : {};
+  return showPublicFinances() ? FINANCES_METADATA : NOT_FOUND_METADATA;
 }
 
 export default async function TransparencyPage() {

@@ -797,7 +797,7 @@ headers as the published SDK, while retaining our own safe response parsing. Thi
 supersedes ADR-032's host and authentication detail; the provider boundary, redacted
 logs, and Google-first registration behavior are unchanged.
 
-## ADR-034 (2026-10-07): Public finances hidden behind one switch; one header account action
+## ADR-034 (2026-10-07): Public finances hidden behind one switch; one header account action; a Georgian not-found page
 
 Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
 
@@ -827,3 +827,13 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   ADR-020's header description (a sign-in button beside the join CTA) and supersedes the
   sentence in section 2 of the 2026-08-12 auth-entry design that says `/login` is reached
   from the header's sign-in label.
+- **A Georgian not-found page (owner request, same day).** Hiding `/transparency` made the
+  framework's English "This page could not be found" a visible part of the product, and CLAUDE.md
+  requires Georgian user-facing text. `components/NotFoundNotice.tsx` is the one notice (built
+  from `CenteredNotice`, reusing the delegate page's "link may be outdated" sentence, one button
+  home). `app/(public)/not-found.tsx` shows it inside the public header and footer, as the default
+  page already did for a missing article, event or the hidden finance page. `app/not-found.tsx`
+  handles every other 404 (unknown URLs, and not-found raised in the member and admin areas) and
+  wraps the notice in the same public chrome, where the old default was a bare page with no
+  header. Next ignores a not-found file's own metadata when a page raises the 404, so the hidden
+  finance page itself returns the generic Georgian not-found title, never its own.

@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import TransparencyPage, { generateMetadata } from "./page";
 
 beforeEach(() => {
@@ -33,10 +34,13 @@ describe("/transparency while finances are hidden (the default)", () => {
     expect(data.fetchPublicStats).not.toHaveBeenCalled();
   });
 
-  it("carries no page metadata, so even the not-found response cannot name the page", () => {
+  it("presents as a generic not-found, so even the 404 cannot name the finance page", () => {
     // A static metadata export is still streamed inside the 404's page data and can end up as the
-    // browser tab title; only an empty result keeps the hidden page anonymous.
-    expect(generateMetadata()).toEqual({});
+    // browser tab title, so while hidden the page's metadata must be the generic Georgian
+    // not-found title and never its own.
+    const metadata = generateMetadata();
+    expect(metadata).toEqual(NOT_FOUND_METADATA);
+    expect(JSON.stringify(metadata)).not.toContain("გამჭვირვალობა");
   });
 });
 
