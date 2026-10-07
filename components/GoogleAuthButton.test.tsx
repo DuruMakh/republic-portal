@@ -31,6 +31,14 @@ describe("GoogleAuthButton", () => {
     expect(mark.getAttribute("src")).toContain("google-g.png");
   });
 
+  it("wears the site's ink-outline button on paper, not Google's white button (owner choice, ADR-035)", () => {
+    render(<GoogleAuthButton nextPath="/join" label="Google-ით გაგრძელება" />);
+
+    const button = screen.getByRole("button", { name: "Google-ით გაგრძელება" });
+    expect(button).toHaveClass("border-ink", "bg-transparent", "text-ink", "hover:bg-ink");
+    expect(button).not.toHaveClass("bg-white");
+  });
+
   it("starts Supabase Google OAuth with the current origin and preserved join path", async () => {
     render(<GoogleAuthButton nextPath="/join?ref=D00101" label="Google-ით გაგრძელება" />);
     vi.stubGlobal("window", {

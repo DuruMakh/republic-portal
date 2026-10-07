@@ -66,9 +66,7 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
   it("names the three steps supporter, member, delegate with the agreed descriptions", async () => {
     render(await HomePage());
 
-    expect(
-      screen.getByText("მარტივი რეგისტრაცია მეილით და ტელეფონით. უფასოდ."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("მარტივი რეგისტრაცია მეილით და ტელეფონით.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(
       "href",
       "/join",

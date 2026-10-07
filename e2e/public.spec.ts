@@ -71,7 +71,7 @@ test.describe("home", () => {
     await expect(page).toHaveURL(/\/join$/);
     // Logged-out visitors must establish the Google identity before any personal
     // or phone fields appear. The authenticated form is covered in registration.spec.
-    await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "შემოგვიერთდი", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
     await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
     await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);

@@ -41,7 +41,7 @@ const FULL = "სრულად →";
 // figure (active members) says so instead of supporter. The collected-dues label matches
 // app/(public)/transparency/page.tsx.
 const LADDER_1_TITLE = "მხარდამჭერი";
-const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით. უფასოდ.";
+const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით.";
 const LADDER_1_LINK = "გახდი მხარდამჭერი →";
 const LADDER_2_TITLE = "წევრი";
 const LADDER_2_DESC = "აყენებს ინიციატივებს და მონაწილეობს საერთო კენჭისყრაში.";

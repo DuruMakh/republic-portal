@@ -878,6 +878,17 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder
   vote on what it refers to them). Delegate: the movement's representative in their own town,
   village or neighbourhood. The member column no longer mentions dues, by owner decision.
   "By email" is the owner's choice of wording for what is a Google sign-in, as the plainer word.
+- **The registration page says supporter.** `/join` is headed `შემოგვიერთდი` (no "in one
+  minute"), its step label reads `ნაბიჯი 1 — მხარდამჭერად რეგისტრაცია`, and "how it works"
+  lists four steps: Google sign-in, one phone confirmation, becoming a supporter in the
+  cabinet, and a longer questionnaire there for anyone who wants membership. The site says
+  nowhere that joining is free or takes a minute: the phone join bar's
+  `ერთ წუთში · გადახდის გარეშე` line, the ladder's `უფასოდ` and the "in one minute" phrases
+  on `/join`, its search description and the delegate page are gone.
+- **The Google button wears the site's outline button.** The owner chose the ink-outline style
+  (ink border and text on paper, filling ink on hover) over Google's white button, amending the
+  2026-08-12 auth-entry design's "conventional white Google button". The official multicolour
+  G mark is unchanged, as Google's brand rules require.
 - **Known mismatch left open.** The member column still links to the sign-up ("start by
   registering"), while the structure says the board admits members. Building that admission
   path is separate work.

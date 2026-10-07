@@ -26,9 +26,10 @@ describe("MobileJoinCta", () => {
     expect(cta).toHaveAttribute("href", "/join");
   });
 
-  it("shows the reassurance line to a guest", async () => {
+  it("shows no time or price line under the guest CTA (owner copy round, ADR-035)", async () => {
     render(<MobileJoinCta />);
-    expect(await screen.findByText("ერთ წუთში · გადახდის გარეშე")).toBeInTheDocument();
+    await screen.findByRole("link", { name: "შემოგვიერთდი" });
+    expect(screen.queryByText(/წუთ|გადახდ|უფასო/)).toBeNull();
   });
 
   it("renders the guest CTA first, so the cached shell is never signed-in", () => {
@@ -42,7 +43,6 @@ describe("MobileJoinCta", () => {
     render(<MobileJoinCta />);
     const cta = await screen.findByRole("link", { name: "ჩემი კაბინეტი →" });
     expect(cta).toHaveAttribute("href", "/me");
-    expect(screen.queryByText("ერთ წუთში · გადახდის გარეშე")).toBeNull();
   });
 
   it("renders nothing on the routes that are themselves the call to action", () => {

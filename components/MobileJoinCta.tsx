@@ -6,10 +6,10 @@ import { StickyBar } from "@/components/StickyBar";
 import { useSignedIn } from "@/components/useSignedIn";
 import { showsJoinCta } from "@/lib/mobile-nav";
 
-// „შემოგვიერთდი“ is the shipped HEADER_CTA_LABEL from app/(public)/layout.tsx.
-// The other two are spliced from the reference bundle's CTA bar.
+// „შემოგვიერთდი“ is the shipped HEADER_CTA_LABEL from app/(public)/layout.tsx; the
+// cabinet label is spliced from the reference bundle's CTA bar. No time or price line
+// under the guest CTA, by owner decision (ADR-035).
 const JOIN = "შემოგვიერთდი";
-const JOIN_SUB = "ერთ წუთში · გადახდის გარეშე";
 const CABINET = "ჩემი კაბინეტი →";
 
 /**
@@ -41,12 +41,9 @@ export function MobileJoinCta() {
             {CABINET}
           </ButtonLink>
         ) : (
-          <>
-            <ButtonLink href="/join" size="lg" className="w-full">
-              {JOIN}
-            </ButtonLink>
-            <p className="mt-1.5 text-center text-[0.74rem] text-muted-fg">{JOIN_SUB}</p>
-          </>
+          <ButtonLink href="/join" size="lg" className="w-full">
+            {JOIN}
+          </ButtonLink>
         )}
       </div>
     </StickyBar>

@@ -4,7 +4,7 @@ import JoinForm from "./JoinForm";
 
 export const metadata: Metadata = {
   title: "რეგისტრაცია — ქართული რესპუბლიკა",
-  description: "დარეგისტრირდი ერთ წუთში — მხოლოდ ძირითადი მონაცემები, დანარჩენს კაბინეტში ნახავ.",
+  description: "გახდი მხარდამჭერი — მხოლოდ ძირითადი მონაცემები, დანარჩენს კაბინეტში ნახავ.",
   openGraph: { images: ["/og-default.png"] },
 };
 
