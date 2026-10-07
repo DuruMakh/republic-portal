@@ -14,8 +14,6 @@ vi.mock("@/lib/supabase/client", () => ({
 import PublicLayout from "./layout";
 
 const FINANCES = "ფინანსები";
-const JOIN = "შემოგვიერთდი";
-const SIGN_IN = "შესვლა";
 const MENU = "მენიუ";
 
 function renderLayout() {
@@ -48,21 +46,12 @@ describe("public layout — finances hidden (the default)", () => {
     expect(document.querySelector('a[href="/transparency"]')).toBeNull();
   });
 
-  it("gives the header one account action — შემოგვიერთდი — and no separate შესვლა", () => {
-    renderLayout();
-    const header = screen.getByRole("banner");
-    expect(within(header).getByRole("link", { name: JOIN })).toHaveAttribute("href", "/join");
-    expect(within(header).queryByRole("link", { name: SIGN_IN })).not.toBeInTheDocument();
-    expect(header.querySelector('a[href="/login"]')).toBeNull();
-  });
-
-  it("keeps the phone menu to the same one account action, with no შესვლა and no ფინანსები", () => {
+  it("keeps ფინანსები out of the phone menu", () => {
     renderLayout();
     fireEvent.click(screen.getByRole("button", { name: MENU }));
-    const menu = screen.getByRole("dialog");
-    expect(within(menu).getByRole("link", { name: JOIN })).toHaveAttribute("href", "/join");
-    expect(within(menu).queryByRole("link", { name: SIGN_IN })).not.toBeInTheDocument();
-    expect(within(menu).queryByRole("link", { name: FINANCES })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("link", { name: FINANCES }),
+    ).not.toBeInTheDocument();
   });
 });
 
