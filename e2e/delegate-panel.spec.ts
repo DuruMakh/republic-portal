@@ -73,12 +73,12 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await expect(mobileNav.locator('a[href="/delegate"]')).toHaveAttribute("aria-current", "page");
   await expect(dPage.getByTestId("team-count")).toHaveText("1");
   await expect(dPage.getByText("ვატესტ ბმულით")).toBeVisible();
-  // the row pill for a profile_completed member is „წევრი (გადახდის გარეშე)“
-  // (TEAM_STATUS_LABELS, owner fix #16); scope to the table body — the header's
-  // status-filter <select> carries the very same option text, and the thead th
-  // „წევრი“ also sits outside the team-rows tbody, so an unscoped
-  // query would be ambiguous.
-  await expect(dPage.getByTestId("team-rows").getByText("წევრი (გადახდის გარეშე)")).toBeVisible();
+  // the row pill reads plainly „წევრი“ (TEAM_STATUS_LABELS, ADR-037); scope to the table
+  // body — the thead th „წევრი“ sits outside the team-rows tbody, so an unscoped query
+  // would be ambiguous.
+  await expect(
+    dPage.getByTestId("team-rows").getByText("წევრი", { exact: true }).first(),
+  ).toBeVisible();
   await dPage.getByLabel("ძებნა სახელით ან გვარით").fill("არავინა");
   await expect(dPage.getByTestId("team-no-results")).toBeVisible();
   await dPage.setViewportSize({ width: 1280, height: 900 });

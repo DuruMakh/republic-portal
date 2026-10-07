@@ -21,50 +21,26 @@ const MEMBERS: TeamMember[] = [
 ];
 
 describe("TeamTable", () => {
-  it("renders rows with dates and status labels", () => {
+  it("renders rows with dates, and every member reads plainly as member (ADR-037)", () => {
     render(<TeamTable members={MEMBERS} />);
-    // status labels are scoped to the table body: the status-filter <select>
-    // has options with this exact same Georgian text ("აქტიური წევრი" /
-    // "წევრი (გადახდის გარეშე)", sourced from the same TEAM_STATUS_LABELS map),
-    // which would otherwise make screen.getByText ambiguous.
     const rows = screen.getByTestId("team-rows");
     expect(screen.getByText("ნინო ბერიძე")).toBeInTheDocument();
     expect(screen.getByText("10.07.2026")).toBeInTheDocument();
-    expect(within(rows).getByText("აქტიური წევრი")).toBeInTheDocument();
-    expect(within(rows).getByText("წევრი (გადახდის გარეშე)")).toBeInTheDocument();
+    expect(within(rows).getAllByText("წევრი")).toHaveLength(2);
   });
 
-  it("derives the status-filter option labels from TEAM_STATUS_LABELS (owner fix #16)", () => {
+  it("has no status filter — both statuses are the same word now (ADR-037)", () => {
     render(<TeamTable members={MEMBERS} />);
-    // the filter must not contradict the row pills it filters: profile_completed
-    // renders as "წევრი (გადახდის გარეშე)" everywhere else, so the option text has
-    // to match — the retired "რეგისტრირებული" wording (now repurposed for the
-    // lighter "registered" standing elsewhere) must not appear in this select at all.
-    const select = screen.getByLabelText("სტატუსის ფილტრი");
-    expect(within(select).getByRole("option", { name: "წევრი (გადახდის გარეშე)" })).toHaveValue(
-      "profile_completed",
-    );
-    expect(within(select).getByRole("option", { name: "აქტიური წევრი" })).toHaveValue(
-      "active_member",
-    );
-    expect(within(select).queryByText("რეგისტრირებული")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("სტატუსის ფილტრი")).toBeNull();
   });
 
-  it("filters by search and by status", () => {
+  it("filters by search", () => {
     render(<TeamTable members={MEMBERS} />);
     fireEvent.change(screen.getByLabelText("ძებნა სახელით ან გვარით"), {
       target: { value: "გიორგი" },
     });
     expect(screen.queryByText("ნინო ბერიძე")).not.toBeInTheDocument();
     expect(screen.getByText("გიორგი წიკლაური")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("ძებნა სახელით ან გვარით"), {
-      target: { value: "" },
-    });
-    fireEvent.change(screen.getByLabelText("სტატუსის ფილტრი"), {
-      target: { value: "active_member" },
-    });
-    expect(screen.getByText("ნინო ბერიძე")).toBeInTheDocument();
-    expect(screen.queryByText("გიორგი წიკლაური")).not.toBeInTheDocument();
   });
 
   it("shows the empty state for a fresh delegate and a no-results state when filtered", () => {

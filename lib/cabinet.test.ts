@@ -116,9 +116,9 @@ describe("cabinetRole + nav", () => {
   });
 });
 
-it("team vocabulary distinguishes paying members from unpaid ones (owner fix #16)", () => {
-  expect(TEAM_STATUS_LABELS.profile_completed).toBe("წევრი (გადახდის გარეშე)");
-  expect(TEAM_STATUS_LABELS.active_member).toBe("აქტიური წევრი");
+it("team vocabulary calls every member a member — no dues, no active tier (ADR-037)", () => {
+  expect(TEAM_STATUS_LABELS.profile_completed).toBe("წევრი");
+  expect(TEAM_STATUS_LABELS.active_member).toBe("წევრი");
 });
 
 describe("employment mapping (spec §3.3)", () => {

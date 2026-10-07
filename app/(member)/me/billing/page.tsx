@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
@@ -7,11 +7,14 @@ import { SectionRule } from "@/components/SectionRule";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { formatAmountGel, formatDateKa, paymentMethodLabel, paymentStatusKa } from "@/lib/cabinet";
 import { MEMBERSHIP_FEE_GEL } from "@/lib/funnel";
+import { showMembershipDues } from "@/lib/membership-dues";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
 export default async function BillingPage() {
+  // Dues hidden (the default, ADR-037): the page does not exist, even by its address.
+  if (!showMembershipDues()) notFound();
   const supabase = await createServerSupabase();
   const state = await getCabinetState(); // layout guarantees exists only
   if (!state.exists) redirect("/join"); // soft-nav defense: narrow before reading profile fields

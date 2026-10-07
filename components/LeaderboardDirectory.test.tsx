@@ -12,7 +12,8 @@ const mk = (over: Partial<RankedDelegate>): RankedDelegate => ({
   region_name_ka: "თბილისი",
   bio: null,
   photo_url: null,
-  active_supporters: 10,
+  active_supporters: 0,
+  members: 10,
   rank: 1,
   ...over,
 });

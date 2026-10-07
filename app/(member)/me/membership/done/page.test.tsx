@@ -65,6 +65,7 @@ describe("membership done page (ADR-036)", () => {
     expect(screen.queryByText("განხილვის პროცესში")).toBeNull();
     expect(screen.queryByText("შენს განაცხადს განიხილავს ბორდი.")).toBeNull();
     expect(screen.queryByRole("heading", { name: "განაცხადი გაგზავნილია ✓" })).toBeNull();
-    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    // the active_member pill reads plainly „წევრი“ since ADR-037 (no active tier)
+    expect(screen.getByText("წევრი")).toBeInTheDocument();
   });
 });

@@ -12,7 +12,8 @@ const mk = (rank: number): RankedDelegate => ({
   region_name_ka: "გურია",
   bio: null,
   photo_url: null,
-  active_supporters: 84,
+  active_supporters: 3,
+  members: 84,
   rank,
 });
 
@@ -52,9 +53,10 @@ describe("LeaderRow", () => {
     expect(screen.getByText("გურია")).toBeInTheDocument();
     expect(screen.getByText("84")).toBeInTheDocument();
   });
-  it("labels the figure as active members — supporter now names the free tier", () => {
+  it("shows the delegate's members, labelled plainly as members (ADR-037)", () => {
     render(<LeaderRow delegate={mk(2)} />);
-    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    expect(screen.getByText("წევრი")).toBeInTheDocument();
+    expect(screen.queryByText("3")).not.toBeInTheDocument();
     expect(screen.queryByText("მხარდამჭერი")).not.toBeInTheDocument();
   });
 });

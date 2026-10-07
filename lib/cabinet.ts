@@ -196,8 +196,9 @@ export interface TeamMember {
 
 /** Team-table / summary-pill vocabulary (spec §3.3, §3.7); rendered via Pill's label override. */
 export const TEAM_STATUS_LABELS: Record<TeamMemberStatus, string> = {
-  profile_completed: "წევრი (გადახდის გარეშე)",
-  active_member: "აქტიური წევრი",
+  // no dues, no active tier (ADR-037): both member statuses are simply a member
+  profile_completed: "წევრი",
+  active_member: "წევრი",
 };
 
 /**

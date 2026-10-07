@@ -53,10 +53,11 @@ test("member requests delegacy -> pending card, member life intact", async ({ pa
   await expect(page).toHaveURL(/\/me\/delegacy/);
   await page.getByRole("button", { name: "მოთხოვნის გაგზავნა" }).click();
   await expect(page.getByText("მოთხოვნა გაგზავნილია")).toBeVisible();
-  // member life untouched: member nav still carries polls + billing
+  // member life untouched: member nav still carries polls (and no payments while dues
+  // are hidden, ADR-037)
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "გადახდები" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "გადახდები" })).toHaveCount(0);
   await signOutViaNav(page);
 });
 

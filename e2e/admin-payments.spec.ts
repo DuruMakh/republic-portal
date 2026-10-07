@@ -44,10 +44,12 @@ test("finance records a single payment by GR-code — the member turns active", 
   await page.getByRole("button", { name: "აღრიცხვა" }).click();
   await expect(page.getByText(/აღირიცხა — 1 თვე · წევრი ახლა აქტიურია/)).toBeVisible();
 
-  // derivation is visible platform-wide: the member list shows აქტიური. Scoped by
-  // this member's own unique GR-code — never positional (spec §7 isolation rule).
+  // the member list shows a paying member plainly as „წევრი“ (no active tier, ADR-037).
+  // Scoped by this member's own unique GR-code — never positional (spec §7 isolation rule).
   await page.goto(`/admin/members?search=${code}`);
-  await expect(page.getByTestId("admin-members-body").getByText("აქტიური")).toBeVisible();
+  const body = page.getByTestId("admin-members-body");
+  await expect(body.getByText("წევრი", { exact: true })).toBeVisible();
+  await expect(body.getByText("აქტიური")).toHaveCount(0);
 });
 
 test("bulk paste classifies five row kinds and records exactly the two valid ones", async ({
@@ -96,12 +98,15 @@ test("void demotes nothing here (two live payments remain) but marks the row", a
   await signOutViaNav(page);
 });
 
-test("the member's own cabinet shows the history, including the voided row", async ({ page }) => {
+test("while dues are hidden the member sees no payments, only plain membership", async ({
+  page,
+}) => {
+  // ADR-037: finance can still record payments, but SHOW_MEMBERSHIP_DUES is off by default,
+  // so the member's payments page does not exist and a paying member reads as „წევრი“.
   await loginAs(page, phase4Phone(PAYER));
   await page.goto("/me/billing");
-  await expect(page.getByText("გაუქმებული")).toBeVisible();
-  await expect(page.getByText("დადასტურებული").first()).toBeVisible();
-  // two live payments keep them active
+  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
   await page.goto("/me/profile");
-  await expect(page.getByText("აქტიური")).toBeVisible();
+  await expect(page.locator("main").getByText("წევრი", { exact: true }).first()).toBeVisible();
+  await expect(page.locator("main").getByText("აქტიური წევრი")).toHaveCount(0);
 });

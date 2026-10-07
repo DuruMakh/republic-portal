@@ -5,29 +5,19 @@ import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
-import { Select } from "@/components/Select";
 import { SectionRule } from "@/components/SectionRule";
-import {
-  formatDateKa,
-  TEAM_STATUS_LABELS,
-  type TeamMember,
-  type TeamMemberStatus,
-} from "@/lib/cabinet";
-
-type StatusFilter = "all" | TeamMemberStatus;
+import { formatDateKa, TEAM_STATUS_LABELS, type TeamMember } from "@/lib/cabinet";
 
 export function TeamTable({ members }: { members: TeamMember[] }) {
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return members.filter((m) => {
-      if (status !== "all" && m.status !== status) return false;
       if (q && !`${m.firstName} ${m.lastName}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [members, query, status]);
+  }, [members, query]);
 
   return (
     <Card>
@@ -43,19 +33,6 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <Select
-              variant="admin"
-              aria-label="სტატუსის ფილტრი"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            >
-              <option value="all">ყველა სტატუსი</option>
-              {/* labels sourced from TEAM_STATUS_LABELS (single source, spec §3.3/§3.7)
-                  so the filter text always matches the row pills it filters; values
-                  stay literal since the filter logic keys on status, not label */}
-              <option value="active_member">{TEAM_STATUS_LABELS.active_member}</option>
-              <option value="profile_completed">{TEAM_STATUS_LABELS.profile_completed}</option>
-            </Select>
           </div>
         }
       />

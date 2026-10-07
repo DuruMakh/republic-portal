@@ -2,10 +2,10 @@ import Link from "next/link";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
 
-// The ranked figure counts a delegate's active members (active_supporters). It was
-// labelled with the supporter word until ADR-035 gave that word to the free tier;
-// app/(public)/page.tsx and app/(member)/me/profile/page.tsx carry the same label.
-const RANK_FIGURE_LABEL = "აქტიური წევრი";
+// The ranked figure counts every member in a delegate's team (ADR-037: no dues, so no
+// "active" tier). app/(public)/page.tsx and app/(member)/me/profile/page.tsx carry the
+// same label.
+const RANK_FIGURE_LABEL = "წევრი";
 
 /** Printed-index leaderboard row (spec §3.3): medals retired, plain numeral rank,
  * №1 in text-brand -- restyled with IndexRow's class language, but kept as its own
@@ -33,7 +33,7 @@ export function LeaderRow({ delegate }: { delegate: RankedDelegate }) {
       </span>
       <span className="text-right">
         <span className="block font-serif font-bold tabular-nums text-ink">
-          {formatCountKa(delegate.active_supporters)}
+          {formatCountKa(delegate.members)}
         </span>
         <span className="block text-[0.74rem] text-muted-fg">{RANK_FIGURE_LABEL}</span>
       </span>

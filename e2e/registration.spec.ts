@@ -60,9 +60,9 @@ test("registers through Google and lands in the registered cabinet", async ({ pa
   await expect(page.getByRole("banner")).toHaveCSS("position", "static");
   await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
 
-  // members-only surface, reached directly, bounces back to the overview
+  // the payments page does not exist while dues are hidden (ADR-037), for anyone
   await page.goto("/me/billing");
-  await expect(page).toHaveURL(/\/me$/);
+  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
 });
 
 test("a referral link is captured at registration and bound in the wizard", async ({ page }) => {
