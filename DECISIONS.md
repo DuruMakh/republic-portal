@@ -910,3 +910,7 @@ Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
 - **Cost.** The condensed headings load the `wdth` axis of Noto Sans Georgian for the whole
   site (next/font serves one variable file), so every page's font download is slightly
   heavier. No new dependency.
+- **A shorter header.** In the same session the owner removed სიახლეები and ღონისძიებები from
+  the public header and phone menu: both are reached from the homepage, and სიახლეები stays in
+  the footer. The header now reads მთავარი, რეიტინგი, სტრუქტურა (plus ფინანსები only when
+  finances are public, ADR-034).

@@ -19,11 +19,11 @@ const HEADER_CTA_LABEL = "შემოგვიერთდი";
 const FOOTER_TERMS_LABEL = "წესები";
 const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი";
 
+// News and events are reached from the homepage (and news from the footer), not the header:
+// owner decision 2026-10-07, ADR-036.
 const navItems: { href: string; label: string }[] = [
   { href: "/", label: "მთავარი" },
   { href: "/leaderboard", label: "რეიტინგი" },
-  { href: "/news", label: NAV_NEWS_LABEL },
-  { href: "/events", label: "ღონისძიებები" },
   { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
 ];
