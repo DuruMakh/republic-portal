@@ -11,7 +11,7 @@ import { ContentNav } from "@/components/ContentNav";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
-import { adminControlClasses, Field, TextareaField } from "@/components/Field";
+import { adminControlClasses, CheckboxField, Field, TextareaField } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
@@ -275,6 +275,7 @@ export default function StyleguidePage() {
             </SelectField>
             <TextareaField label="შეტყობინება" rows={3} defaultValue="" />
             <TextareaField label="შეტყობინება" rows={2} error="სულ მცირე 10 სიმბოლო" />
+            <CheckboxField label="თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს" />
             <Select variant="admin" aria-label="მხარე" defaultValue="">
               <option value="">ყველა მხარე</option>
               <option value="1">თბილისი</option>

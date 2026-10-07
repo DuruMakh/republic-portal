@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { ADMIN_PHONES, loginAs, signOutViaNav } from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
@@ -15,6 +15,17 @@ import {
 } from "./funnel-helpers";
 
 const RUN = `e2e-memb-${Date.now().toString(36)}`;
+
+// the application step sends only once both consents are ticked (ADR-036)
+async function agreeAndSend(page: Page) {
+  await page
+    .getByRole("checkbox", {
+      name: "თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად",
+    })
+    .check();
+  await page.getByRole("checkbox", { name: /ვიხდიდე ყოველთვიურ საწევროს — 10 ₾ თვეში$/ }).check();
+  await page.getByRole("button", { name: "განაცხადის გაგზავნა" }).click();
+}
 
 // Journeys share the per-run journey phones; journey 4 also creates an event as the
 // canonical editor (audit actor stays permanent) — run serially.
@@ -45,7 +56,7 @@ test.afterAll(() =>
   ]),
 );
 
-test("full upgrade: register → wizard → member with a reference code and member nav", async ({
+test("full upgrade: register → wizard → application sent and member nav", async ({
   page,
 }) => {
   const phone = journeyPhone(JOURNEY.membFull);
@@ -65,25 +76,18 @@ test("full upgrade: register → wizard → member with a reference code and mem
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
-  // tier phase → confirm the fixed fee and complete (owner fix #9: no more picker).
-  // Assert the AMOUNT, not just the heading: the heading alone would keep passing if
-  // the displayed fee regressed away from 10 GEL. The amount span renders
-  // MEMBERSHIP_FEE_GEL followed by a <small> lari sign, so its exact text is `10₾`;
-  // exact:true keeps this off the wrapping div, whose text also carries the
-  // per-month caption rendered below it.
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
-  await expect(page.getByText("10₾", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
+  // application phase (ADR-036): the board reviews it; the dues consent names the
+  // amount, so a fee regression away from 10 GEL still fails here
+  await expect(page.getByRole("heading", { name: "წევრობის განაცხადი" })).toBeVisible();
+  await agreeAndSend(page);
 
-  // done phase, now its own route: a GR- code and the central binding
+  // done phase, its own route: application sent, under review, the central binding,
+  // and no bank-transfer instructions any more
   await expect(page).toHaveURL(/\/me\/membership\/done/);
-  await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
+  await expect(page.getByRole("heading", { name: "განაცხადი გაგზავნილია ✓" })).toBeVisible();
+  await expect(page.getByText("განხილვის პროცესში", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("reference-code")).toHaveCount(0);
   await expect(page.getByTestId("chosen-delegate")).toHaveText("არ მყავს დელეგატი");
-  // the done screen's own pill has no label override, so it falls through to
-  // Pill's own default for profile_completed — TEAM_STATUS_LABELS.profile_completed
-  // in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“, owner fix #16
-  // (exact: pins the match to this literal label, not a substring hit elsewhere on the page)
-  await expect(page.getByText("წევრი (გადახდის გარეშე)", { exact: true })).toBeVisible();
 
   // into the member cabinet — the nav now carries the member-only pages, with NO reload:
   // completeMembershipAction revalidates the (member) layout server-side, so the router
@@ -124,7 +128,7 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
     personalId: journeyPersonalId(JOURNEY.membResume),
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "წევრობის განაცხადი" })).toBeVisible();
 
   // the overview CTA now reads „continue…"
   await page.goto("/me");
@@ -132,8 +136,8 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
 
   // reopening resumes straight on the tier phase — the saved region survived
   await page.goto("/me/membership");
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
-  await page.getByRole("button", { name: "← პროფილის შესწორება" }).click();
+  await expect(page.getByRole("heading", { name: "წევრობის განაცხადი" })).toBeVisible();
+  await page.getByRole("button", { name: "← მონაცემების შესწორება" }).click();
   await expect(page.getByLabel("მხარე")).toHaveValue(/^[1-9]\d*$/); // real region id, not placeholder
   const selected = (await page.getByLabel("მხარე").locator("option:checked").innerText()).trim();
   expect(selected).toBe("კახეთი");
@@ -159,7 +163,7 @@ test("referral binding survives to completion and shows as the current delegate"
     personalId: journeyPersonalId(JOURNEY.regReferral),
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
+  await agreeAndSend(page);
   await expect(page.getByTestId("chosen-delegate")).toHaveText(fullName);
 
   // the member cabinet shows the referral delegate as current

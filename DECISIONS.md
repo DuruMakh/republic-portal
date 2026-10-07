@@ -908,5 +908,33 @@ and "stored safely" was a promise nobody could check.
   birth date appear in no view, only admins can reveal a personal ID and each reveal is
   audited, and the column is not encrypted, so the copy must not say it is.
 - **Left as is.** The stepper still labels this step `პროფილი`; the owner did not ask to
-  change it. The second step (dues) is to be reworked separately: the owner said there will
-  be no dues at this stage and the step will hold several other questions instead.
+  change it.
+
+### Second step: a membership application the board reviews (same day, owner decision)
+
+The owner: there are no dues at this stage; a member is finally verified by the **board**
+(the site's word is `ბორდი`, the owner's choice); and the applicant should agree to pay a
+monthly due in future. **Text only, by owner decision** — no change to the database, the
+statuses or the admin tools.
+
+- **The step.** The stepper's second label is `განაცხადი`. The step is headed
+  `წევრობის განაცხადი`, says what happens next (the board reviews the application; once
+  confirmed, you become a member) and asks two consents: processing personal data for the
+  membership, and paying a monthly due of 10 ₾ in future once dues are introduced (the
+  amount shown by owner decision). The 10 ₾ box, the bank-transfer line and the
+  `რეგისტრაციის დასრულება` button are gone; the button reads `განაცხადის გაგზავნა`.
+- **Both consents are required.** With no column to record an unticked optional box (and
+  no schema change wanted), an optional box would throw the answer away. Required, sending
+  the application is itself the consent, and `registration_completed_at` already records
+  when. The check is client-side only; the server action does not see the boxes. A charter /
+  principles consent was drafted and dropped by the owner.
+- **The done screen** reads `განაცხადი გაგზავნილია ✓` with the `pending` pill
+  (`განხილვის პროცესში`) and "the board will review your application". The bank-transfer
+  instructions, the reference code and the "active after the first payment" line are gone
+  from it.
+- **Known mismatch, accepted.** The system is unchanged: the stored status is still
+  `profile_completed`, a person still becomes an active member only when an admin records a
+  payment, and there is no board-approval action. The member cabinet, `/me/billing` and the
+  homepage still speak of dues; the owner chose to leave them for later.
+- **New component.** `CheckboxField` (components/Field.tsx), added to DESIGN.md and the
+  styleguide; no dependency added.
