@@ -106,20 +106,32 @@ beforeEach(() => {
   pushMock.mockReset();
 });
 
+const DATA_CONSENT = "თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად";
+const DUES_CONSENT =
+  "თანახმა ვარ, მომავალში, როცა საწევრო შემოიღება, ვიხდიდე ყოველთვიურ საწევროს — 10 ₾ თვეში";
+const CONSENT_ERROR = "გასაგზავნად მონიშნე ორივე თანხმობა.";
+
+function agreeToBoth() {
+  fireEvent.click(screen.getByRole("checkbox", { name: DATA_CONSENT }));
+  fireEvent.click(screen.getByRole("checkbox", { name: DUES_CONSENT }));
+}
+
 describe("MembershipWizard — phase derivation", () => {
   it("starts on the profile phase when wizard fields are incomplete", async () => {
     render(<MembershipWizard initialState={cab({})} />);
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
-    expect(screen.queryByText("საწევრო შენატანი")).toBeNull();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
+    // owner decision (ADR-036): the heading stands alone, no explanatory line under it
+    expect(screen.queryByText(/ვერიფიკაციისთვის/)).toBeNull();
+    expect(screen.queryByText("წევრობის განაცხადი")).toBeNull();
     await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
   });
 
   it("starts on the tier phase directly when the profile is already saved", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
-    expect(screen.queryByText("იურიდიული პროფილი")).toBeNull();
+    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
+    expect(screen.queryByText("წევრის მონაცემები")).toBeNull();
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" })).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: "განაცხადის გაგზავნა" })).toBeInTheDocument(),
     );
   });
 });
@@ -151,7 +163,7 @@ describe("MembershipWizard — profile phase", () => {
       employment: "სტუდენტი",
       delegateId: null,
     });
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
   });
 
   it("shows the Georgian error message when the save action fails", async () => {
@@ -169,7 +181,7 @@ describe("MembershipWizard — profile phase", () => {
     expect(
       await screen.findByText("სესია ამოიწურა — დაადასტურე ნომერი თავიდან."),
     ).toBeInTheDocument();
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
   });
 
   it("shows a Georgian error and re-enables the button when the save action rejects", async () => {
@@ -185,7 +197,7 @@ describe("MembershipWizard — profile phase", () => {
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(submitButton).not.toBeDisabled();
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
   });
 });
 
@@ -280,7 +292,7 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
     expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
     // still the profile phase — no separate form-level banner duplicating the same message
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     // field-level, not just a banner that happens to say the same words (review finding M2):
     // Field only sets aria-invalid when its own `error` prop is populated
     expect(screen.getByLabelText("პირადი ნომერი")).toHaveAttribute("aria-invalid", "true");
@@ -306,22 +318,45 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
       target: { value: "1990-05-20" },
     });
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
   });
 });
 
 describe("MembershipWizard — tier phase", () => {
-  it("shows the fixed fee as a confirmation, not a picker (owner fix #9)", () => {
+  it("speaks of the board's review and asks two consents, the dues one naming 10 ₾ (ADR-036)", () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
-    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
+    expect(screen.getByText("შენს განაცხადს განიხილავს ბორდი")).toBeInTheDocument();
+    expect(screen.getByText("დადასტურების შემდეგ ხდები მოძრაობის წევრი")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: DATA_CONSENT })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: DUES_CONSENT })).not.toBeChecked();
+    // the old fee box and bank-transfer line are gone
+    expect(screen.queryByText("თვეში")).toBeNull();
+    expect(screen.queryByText(/საბანკო გადარიცხვით/)).toBeNull();
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-    expect(screen.getByText(/10/)).toBeInTheDocument();
-    expect(screen.getByText("თვეში")).toBeInTheDocument();
+  });
+
+  it("refuses to send until both consents are ticked, without calling the server", async () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    const send = screen.getByRole("button", { name: "განაცხადის გაგზავნა" });
+    fireEvent.click(send);
+    expect(await screen.findByText(CONSENT_ERROR)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox", { name: DATA_CONSENT }));
+    fireEvent.click(send);
+    expect(screen.getByText(CONSENT_ERROR)).toBeInTheDocument();
+    expect(completeMembershipAction).not.toHaveBeenCalled();
+  });
+
+  it("announces the consent prompt and retires it once a box is ticked", async () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(CONSENT_ERROR);
+    fireEvent.click(screen.getByRole("checkbox", { name: DATA_CONSENT }));
+    expect(screen.queryByText(CONSENT_ERROR)).toBeNull();
   });
 
   it("navigates to the done screen on successful completion", async () => {
@@ -337,9 +372,10 @@ describe("MembershipWizard — tier phase", () => {
       }),
     });
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
+    agreeToBoth();
+    fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     await waitFor(() => expect(completeMembershipAction).toHaveBeenCalledWith({ tier: 10 }));
-    // the done screen (GR- code, bank instructions, chosen delegate) now lives at its
+    // the done screen (application sent, chosen delegate) now lives at its
     // own route — /me/membership/done — rendered server-side, not in this component
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/me/membership/done"));
   });
@@ -350,15 +386,17 @@ describe("MembershipWizard — tier phase", () => {
       error: "აირჩიე საწევრო პაკეტი.",
     });
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
+    agreeToBoth();
+    fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
   });
 
   it("shows a Georgian error, re-enables the button, and does not navigate when completion rejects", async () => {
     completeMembershipAction.mockRejectedValue(new Error("network drop"));
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    const completeButton = screen.getByRole("button", { name: "რეგისტრაციის დასრულება" });
+    agreeToBoth();
+    const completeButton = screen.getByRole("button", { name: "განაცხადის გაგზავნა" });
     fireEvent.click(completeButton);
     await waitFor(() => expect(completeMembershipAction).toHaveBeenCalledWith({ tier: 10 }));
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
@@ -368,9 +406,9 @@ describe("MembershipWizard — tier phase", () => {
 
   it("returns to the profile phase with fields intact via the back button", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByLabelText("დაბადების თარიღი")).toHaveValue(PROFILED.birthDate),
     );
@@ -381,12 +419,13 @@ describe("MembershipWizard — tier phase", () => {
     completeMembershipAction.mockResolvedValue({ ok: false, error: "აირჩიე საწევრო პაკეტი." });
     saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
+    agreeToBoth();
+    fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
+    fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
     expect(screen.queryByText("აირჩიე საწევრო პაკეტი.")).toBeNull();
   });
 });
