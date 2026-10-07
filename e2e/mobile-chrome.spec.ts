@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { FINANCES_PUBLIC } from "./finances-switch";
 
 // Task 10 regression guard for the chrome Tasks 3-9 shipped (public masthead
 // menu, sticky join CTA, back headers, StickyBar's single-bar-per-route
@@ -28,7 +29,17 @@ const NEWS_INDEX_LABEL = "სიახლეები";
 // list it: it is the newest public route, and the exact bug class Task 9's
 // own controller review caught (a route accidentally mounting two
 // StickyBars) would otherwise ship on it unnoticed by any other test.
-const PUBLIC_CHROME_ROUTES = ["/", "/news", "/events", "/leaderboard", "/transparency", "/support"];
+//
+// ADR-034: /transparency is a 404 (no public chrome at all) while finances are hidden, so it
+// joins this sweep only when the switch is on.
+const PUBLIC_CHROME_ROUTES = [
+  "/",
+  "/news",
+  "/events",
+  "/leaderboard",
+  ...(FINANCES_PUBLIC ? ["/transparency"] : []),
+  "/support",
+];
 
 // The menu trigger is a plain <button onClick> with no href fallback, so
 // clicking it only works once React has attached the handler. A goto() that

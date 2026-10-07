@@ -796,3 +796,32 @@ calls the key-compatible service directly with the same bearer and SDK-identific
 headers as the published SDK, while retaining our own safe response parsing. This
 supersedes ADR-032's host and authentication detail; the provider boundary, redacted
 logs, and Google-first registration behavior are unchanged.
+
+## ADR-034 (2026-10-07): Public finances hidden behind one switch; one header account action
+
+Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
+
+- **Public finances are hidden, not deleted.** `/transparency` answers not-found to
+  everyone, even with the exact address. Every link to it is gone (header menu, phone
+  menu, footer), and so is the homepage collected-dues figure, which is the same number.
+  All of the code stays, behind `showPublicFinances()` in `lib/public-finances.ts`, which is
+  true only when the server-side variable `SHOW_PUBLIC_FINANCES` is exactly `true`. To bring
+  everything back, set that variable in Vercel and redeploy: the page, the links, the
+  homepage figure and their tests return together. Unset, or any other value, stays hidden,
+  so a typo can never expose finances. The variable is server-only on purpose (no
+  `NEXT_PUBLIC_` prefix).
+- **What the switch does not cover.** The admin finance tools and members' own billing are
+  not public surfaces and are unchanged. The aggregate views `transparency_stats` and
+  `transparency_regions` stay readable by `anon` through the public data API, as ADR-030
+  and the security manifest record, so hiding the page does not hide those totals. Locking
+  them is a separate database change, to be taken only if the owner wants the numbers
+  themselves kept secret.
+- **One account action in the header.** The ghost sign-in button is gone from the header
+  and the phone menu. That one slot is the join door (`/join`) for guests and the cabinet
+  link once signed in, in a single variant so the swap never changes the button's shape;
+  this also ends the old pairing of a cabinet link and a join button for signed-in members.
+  It works because `/join` and `/login` both continue with Google and send a registered
+  member straight to their cabinet (ADR-031 and the 2026-08-12 auth-entry design), so one
+  button serves new and returning people. `/login` stays routable: the member-area
+  redirect, the OAuth failure redirect and bookmarks still land there. This amends
+  ADR-020's header description (a sign-in button beside the join CTA).

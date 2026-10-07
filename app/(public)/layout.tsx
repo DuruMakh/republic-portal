@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { ButtonLink } from "@/components/ButtonLink";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HeaderSessionAction } from "@/components/HeaderSessionAction";
 import { Masthead } from "@/components/Masthead";
 import { MobileJoinCta } from "@/components/MobileJoinCta";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
+import { filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
@@ -39,26 +39,30 @@ const footerLinks: { href: string; label: string }[] = [
  * Public chrome (spec Sec 3.1-3.2): DemoBanner above the paper sheet, then the
  * sheet itself -- Masthead, the page content, SiteFooter. The old emoji-emblem
  * header and footer are gone (Task 10).
+ *
+ * The header carries ONE account action (HeaderSessionAction): the join door for guests,
+ * the cabinet link once signed in. The finance link stays in the nav and footer arrays above
+ * but only renders while showPublicFinances() is true (hidden by default, ADR-034).
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
+  const financesPublic = showPublicFinances();
+
   return (
     <>
       <DemoBanner />
       <PageSheet>
         <Masthead
-          navItems={navItems}
-          cta={
-            <ButtonLink href="/join" size="sm">
-              {HEADER_CTA_LABEL}
-            </ButtonLink>
-          }
-          sessionSlot={<HeaderSessionAction />}
+          navItems={filterFinanceLinks(navItems, financesPublic)}
+          cta={<HeaderSessionAction joinLabel={HEADER_CTA_LABEL} />}
         />
         {/* FOOTER-PIN: PageSheet is min-h-screen flex flex-col; a growing plain
             div (not <main> -- pages render their own) pins SiteFooter to the
             bottom on short pages. */}
         <div className="flex-1">{children}</div>
-        <SiteFooter copyright={FOOTER_COPYRIGHT} links={footerLinks} />
+        <SiteFooter
+          copyright={FOOTER_COPYRIGHT}
+          links={filterFinanceLinks(footerLinks, financesPublic)}
+        />
         <MobileJoinCta />
       </PageSheet>
     </>

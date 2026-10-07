@@ -4,6 +4,7 @@
 // anchored on seeded names/ranks, not exact totals. CI never seeds — if these fail on
 // a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
+import { FINANCES_PUBLIC } from "./finances-switch";
 import { serviceClient } from "./otp-helpers";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
@@ -144,7 +145,28 @@ test.describe("robots", () => {
   });
 });
 
+// ADR-034: the finance page is hidden unless SHOW_PUBLIC_FINANCES=true. Exactly one of the two
+// groups below runs, so flipping the switch re-enables the original assertions untouched.
+test.describe("finances hidden", () => {
+  test.skip(FINANCES_PUBLIC, "finances are public — see the transparency group");
+
+  test("/transparency answers 404 even with the exact address", async ({ page }) => {
+    const response = await page.goto("/transparency");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
+  });
+
+  test("no public page links to it", async ({ page }) => {
+    for (const path of ["/", "/news", "/events", "/leaderboard", "/join", "/support"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href="/transparency"]'), path).toHaveCount(0);
+    }
+  });
+});
+
 test.describe("transparency", () => {
+  test.skip(!FINANCES_PUBLIC, "finances are hidden (ADR-034) — see the finances hidden group");
+
   test("the region table shows members and collected money", async ({ page }) => {
     await page.goto("/transparency");
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toBeVisible();
