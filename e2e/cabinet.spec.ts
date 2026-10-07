@@ -32,7 +32,11 @@ test("member cabinet: profile edit, delegate change, one-way funnel, no admin", 
   await loginAs(page, phone);
   await page.goto("/me/profile");
   await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
-  await expect(page.getByText("წევრი").first()).toBeVisible();
+  // the status pill, pinned to its <span> — the referral card's „წევრი“ row (a <dt>,
+  // ADR-039) would otherwise satisfy a bare text match on its own
+  await expect(
+    page.locator("main").getByText("წევრი", { exact: true }).and(page.locator("span")),
+  ).toBeVisible();
   await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
 
   // signed-in phone chrome at layout level: exactly one bottom tab bar, a header that stays
