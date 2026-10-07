@@ -160,7 +160,7 @@ export default async function ProfilePage() {
         </h1>
         <p className="flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-fg">
           <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
-          {/* the GR- code is the bank-transfer reference: only with the dues (ADR-036) */}
+          {/* the GR- code is the bank-transfer reference: only with the dues (ADR-037) */}
           {showMembershipDues() && state.referenceCode ? (
             <span>· {state.referenceCode}</span>
           ) : null}

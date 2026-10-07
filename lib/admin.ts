@@ -57,7 +57,7 @@ export function adminTabs(roles: readonly AdminRole[]): AdminTab[] {
 /** Member list / export status vocabulary — matches Pill's status colors. */
 export const MEMBER_STATUS_LABELS_KA: Record<MemberStatusRow, string> = {
   registered: "მხარდამჭერი",
-  // no dues, no active tier (ADR-036): both member statuses are simply a member
+  // no dues, no active tier (ADR-037): both member statuses are simply a member
   profile_completed: "წევრი",
   active_member: "წევრი",
 };

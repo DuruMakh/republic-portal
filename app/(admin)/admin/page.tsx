@@ -99,7 +99,7 @@ export default async function AdminOverviewPage() {
           <div className="text-[0.74rem] text-muted-fg">ვერიფიკაციის მოლოდინში</div>
           <div className="text-[0.74rem] text-warn mt-0.5">საჭიროებს გადახედვას</div>
         </div>
-        {/* No "active" tier while dues are dropped (ADR-036): the paying-member card is
+        {/* No "active" tier while dues are dropped (ADR-037): the paying-member card is
             gone, and the dues total shows only with SHOW_MEMBERSHIP_DUES. */}
         {showMembershipDues() ? (
           <StatCard

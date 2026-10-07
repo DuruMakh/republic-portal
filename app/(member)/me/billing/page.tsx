@@ -13,7 +13,7 @@ import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "გადახდები — ქართული რესპუბლიკა" };
 
 export default async function BillingPage() {
-  // Dues hidden (the default, ADR-036): the page does not exist, even by its address.
+  // Dues hidden (the default, ADR-037): the page does not exist, even by its address.
   if (!showMembershipDues()) notFound();
   const supabase = await createServerSupabase();
   const state = await getCabinetState(); // layout guarantees exists only

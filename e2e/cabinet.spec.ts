@@ -71,7 +71,7 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
 
   // „ჩემი დელეგატი“ lives in the „მეტი“ sheet (no payments tab while dues are hidden,
-  // ADR-036), so this page marks the sheet's button as current
+  // ADR-037), so this page marks the sheet's button as current
   const moreButton = mobileNav.getByRole("button", { name: "მეტი" });
   await expect(moreButton).toHaveAttribute("aria-current", "page");
   await moreButton.click();
@@ -89,7 +89,7 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(sheet).toBeHidden();
   await expect(moreButton).toBeFocused();
 
-  // dues are hidden by default (SHOW_MEMBERSHIP_DUES, ADR-036): the payments page itself
+  // dues are hidden by default (SHOW_MEMBERSHIP_DUES, ADR-037): the payments page itself
   // answers not-found, even by its address
   await page.goto("/me/billing");
   await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();

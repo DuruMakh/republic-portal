@@ -893,13 +893,64 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder
   registering"), while the structure says the board admits members. Building that admission
   path is separate work.
 
-## ADR-036 (2026-10-07): No dues for now — every member is simply a member; payments hidden behind one switch
+## ADR-036 (2026-10-07): The membership wizard: "member's details" heading, and a board-reviewed application in place of the dues step
+
+The first step of the membership wizard (`/me/membership`) was headed `იურიდიული პროფილი`
+with the line "this data is needed for the membership's legal verification; it is stored
+safely" under it. The owner disliked both: the words were bureaucratic and explained nothing,
+and "stored safely" was a promise nobody could check.
+
+- **Heading.** The step is now headed `წევრის მონაცემები` (member's details), chosen by the
+  owner from three drafted options.
+- **No explanatory line.** The owner chose to drop the line under the heading entirely rather
+  than replace it. A drafted replacement (why the personal ID is asked for and who can see it)
+  was offered and declined; if one returns, it must stay true to the schema: personal ID and
+  birth date appear in no view, only admins can reveal a personal ID and each reveal is
+  audited, and the column is not encrypted, so the copy must not say it is.
+- **Left as is.** The stepper still labels this step `პროფილი`; the owner did not ask to
+  change it.
+
+### Second step: a membership application the board reviews (same day, owner decision)
+
+The owner: there are no dues at this stage; a member is finally verified by the **board**
+(the site's word is `ბორდი`, the owner's choice); and the applicant should agree to pay a
+monthly due in future. **Text only, by owner decision** — no change to the database, the
+statuses or the admin tools.
+
+- **The step.** The stepper's second label is `განაცხადი`. The step is headed
+  `წევრობის განაცხადი`, says what happens next (the board reviews the application; once
+  confirmed, you become a member) and asks two consents: processing personal data for the
+  membership, and paying a monthly due of 10 ₾ in future once dues are introduced (the
+  amount shown by owner decision). The 10 ₾ box, the bank-transfer line and the
+  `რეგისტრაციის დასრულება` button are gone; the button reads `განაცხადის გაგზავნა`.
+- **Both consents are required.** With no column to record an unticked optional box (and
+  no schema change wanted), an optional box would throw the answer away. Required, sending
+  the application is itself the consent, and `registration_completed_at` already records
+  when. The check is client-side only; the server action does not see the boxes. A charter /
+  principles consent was drafted and dropped by the owner.
+- **The done screen** reads `განაცხადი გაგზავნილია ✓` with the `pending` pill
+  (`განხილვის პროცესში`) and "the board will review your application". A member who is
+  already `active_member` (reaching it by URL) instead keeps the page's previous heading
+  `რეგისტრაცია დასრულებულია ✓` with the active-member pill, so nobody who already pays is
+  told they are under review. The bank-transfer
+  instructions, the reference code and the "active after the first payment" line are gone
+  from it.
+- **Known mismatch, accepted.** The system is unchanged: the stored status is still
+  `profile_completed`, a person still becomes an active member only when an admin records a
+  payment, and there is no board-approval action. The member cabinet, `/me/billing` and the
+  homepage still speak of dues; the owner chose to leave them for later.
+- **New component.** `CheckboxField` (components/Field.tsx), added to DESIGN.md and the
+  styleguide; no dependency added.
+
+## ADR-037 (2026-10-07): No dues for now — every member is simply a member; payments hidden behind one switch
 
 Owner decisions, taken in chat on 2026-10-07: dues are dropped for now and nobody will pay at
 this stage, so the "active member" idea disappears and a member is simply a member,
 everywhere. Payment is hidden, not deleted (owner chose hide over delete). Plan:
 `docs/superpowers/plans/2026-10-07-member-without-dues.md`. This finishes what ADR-035 left
-for the dues-removal work.
+for the dues-removal work. Numbered 037 because the membership-wizard decision merged first as
+ADR-036; code comments and the migration written before the renumbering cite this decision as
+ADR-036.
 
 - **One word for members.** Both member statuses (`profile_completed`, `active_member`) read
   `წევრი` on the status pill, in the admin member list and the delegate team table, and every
@@ -920,13 +971,15 @@ for the dues-removal work.
 - **Payments behind `SHOW_MEMBERSHIP_DUES`.** Server-only, shown only for the word `true`
   (whitespace ignored), `lib/membership-dues.ts`, the same shape as ADR-034's finance switch.
   Hidden (the default) means: no `გადახდები` tab in either cabinet; `/me/billing` answers
-  not-found, even by its address; the membership wizard's second step is `წევრობის
-დადასტურება` with no fee, price or bank sentence (it still completes with the fixed tier the
-  schema requires, which nobody is asked to pay); the done page shows no payment code, transfer
-  details or payment sentence; the cabinet invitation drops "monthly dues 10₾"; the profile
+  not-found, even by its address; the cabinet invitation drops "monthly dues 10₾"; the profile
   header drops the payment code; the admin overview drops the dues total. To bring dues back,
   set the variable in Vercel and redeploy. That restores the payment surfaces only: the labels
   and counts above stay as they are, and an "active" tier would need its own design.
+- **The membership wizard and its done page follow ADR-036.** Its application step (board
+  review, two consents including future 10₾ dues) and its done page ("application sent", no
+  payment code or bank details) were merged first and stand as they are; the switch does not
+  touch them. This decision supersedes ADR-036's note that `/me/billing` and the homepage still
+  speak of dues.
 - **Not covered.** The admin finances tab, payment recording and the active-member settings
   page are staff tooling and unchanged. The hidden public finance page is untouched.
 - **Release order.** The new columns must exist before code that reads them is served. The

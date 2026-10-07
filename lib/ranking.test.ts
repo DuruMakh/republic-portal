@@ -8,7 +8,7 @@ const d = (first: string, last: string, members: number) => ({
 });
 
 describe("rankDelegates", () => {
-  it("orders by members descending and assigns 1-based ranks (ADR-036)", () => {
+  it("orders by members descending and assigns 1-based ranks (ADR-037)", () => {
     const ranked = rankDelegates([d("ეკა", "მელაძე", 98), d("გიორგი", "მაისურაძე", 342)]);
     expect(ranked.map((r) => [r.first_name, r.rank])).toEqual([
       ["გიორგი", 1],

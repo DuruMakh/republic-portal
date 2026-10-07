@@ -38,7 +38,7 @@ const FULL = "სრულად →";
 
 // Ladder columns and the supporter wording: the owner's 2026-10-07 copy round (ADR-035) —
 // supporter is the free tier, so the registry counter says it too. With dues dropped there
-// is no "active" tier (ADR-036): the member counter and a delegate's ranked figure count
+// is no "active" tier (ADR-037): the member counter and a delegate's ranked figure count
 // every member. The collected-dues label matches app/(public)/transparency/page.tsx.
 const LADDER_1_TITLE = "მხარდამჭერი";
 const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით.";

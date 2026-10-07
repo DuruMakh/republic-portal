@@ -4,7 +4,7 @@ Owner direction, in chat on 2026-10-07: dues are dropped for now; nobody will pa
 stage, so the "active member" idea disappears and everyone who completed membership is
 simply a member, everywhere. Payment UI is hidden behind one switch (owner chose hide
 over delete), so dues can return by setting a variable and redeploying. Stacked on PR #26
-(ADR-035); recorded as ADR-036.
+(ADR-035); recorded as ADR-037.
 
 ## Decisions
 
@@ -45,5 +45,5 @@ over delete), so dues can return by setting a variable and redeploying. Stacked 
 5. Gates: migration count 33 → 34 in `production-db.yml` and its test; seed/verify scripts
    that read `active_supporters`; e2e wording.
 6. Apply the migration to staging (`supabase db push --db-url`, additive only), verify the
-   preview, ADR-036, PR stacked on #26. Production database: owner dispatches the gated
+   preview, ADR-037, PR stacked on #26. Production database: owner dispatches the gated
    production-db workflow when releasing the real site.

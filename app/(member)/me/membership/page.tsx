@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isApprovedDelegate } from "@/lib/cabinet";
-import { showMembershipDues } from "@/lib/membership-dues";
 import { getCabinetState } from "@/lib/supabase/server";
 import { MembershipWizard } from "./MembershipWizard";
 
@@ -14,5 +13,5 @@ export default async function MembershipPage() {
   if (isApprovedDelegate(state)) redirect("/delegate");
   if (state.completed) redirect("/me/membership/done"); // already a member — nothing left to do here
 
-  return <MembershipWizard initialState={state} showDues={showMembershipDues()} />;
+  return <MembershipWizard initialState={state} />;
 }

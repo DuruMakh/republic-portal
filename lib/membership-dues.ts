@@ -2,10 +2,11 @@
 export const BILLING_HREF = "/me/billing";
 
 /**
- * Whether membership dues are shown anywhere: the cabinet's payments tab and page, the fee
- * step of the membership wizard, the bank-transfer details after it, the dues line on the
- * cabinet invitation, the payment reference in the profile header and the admin dues total.
- * Hidden unless SHOW_MEMBERSHIP_DUES is the word "true" (owner decision 2026-10-07, ADR-036:
+ * Whether membership dues are shown: the cabinet's payments tab and page, the dues line on
+ * the cabinet invitation, the payment reference in the profile header and the admin dues
+ * total. (The membership wizard and its done page follow ADR-037 and show no payment details
+ * either way.) Hidden unless SHOW_MEMBERSHIP_DUES is the word "true" (owner decision
+ * 2026-10-07, ADR-037:
  * nobody pays at this stage), so an unset or mistyped value never asks anyone for money.
  * Whitespace around the word is ignored, as for SHOW_PUBLIC_FINANCES.
  *

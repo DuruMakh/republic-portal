@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
 import { Eyebrow } from "@/components/Eyebrow";
-import { Field } from "@/components/Field";
+import { CheckboxField, Field } from "@/components/Field";
 import { SelectField } from "@/components/Select";
 import { Stepper } from "@/components/Stepper";
 import {
@@ -31,18 +31,9 @@ function isFieldKey(key: unknown): key is FieldKey {
 // reaches this component (the page gate redirects to /me/membership/done first).
 type WizardPhase = "profile" | "tier";
 
-/**
- * `showDues` (SHOW_MEMBERSHIP_DUES, read by the server page): while dues are hidden (the
- * default, ADR-036) the second step only confirms membership — no fee, no bank sentence.
- * It still completes with the fixed tier the schema requires; nobody is asked to pay it.
- */
-export function MembershipWizard({
-  initialState,
-  showDues = false,
-}: {
-  initialState: CabinetStatePresent;
-  showDues?: boolean;
-}) {
+const CONSENT_REQUIRED_MESSAGE = "გასაგზავნად მონიშნე ორივე თანხმობა.";
+
+export function MembershipWizard({ initialState }: { initialState: CabinetStatePresent }) {
   const router = useRouter();
   const [phase, setPhase] = useState<WizardPhase>(() =>
     deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",
@@ -55,7 +46,7 @@ export function MembershipWizard({
   // Owner fix #10: the ID moved here from /join. Rendered only while NOT yet
   // captured. Review finding F2: this used to read `!initialState.hasPersonalId`
   // directly — a one-time snapshot that never refreshed. After a successful save
-  // captured the ID server-side, "← პროფილის შესწორება" re-rendered the now-stale
+  // captured the ID server-side, "← მონაცემების შესწორება" re-rendered the now-stale
   // editable field, and resubmitting it sent a value the server's immutable-once-
   // set coalesce silently discarded. Tracking capture in state lets a successful
   // save flip it immediately, independent of phase navigation.
@@ -83,6 +74,11 @@ export function MembershipWizard({
   const tier: Tier = MEMBERSHIP_FEE_GEL;
   const [tierError, setTierError] = useState<string>();
   const [tierBusy, setTierBusy] = useState(false);
+  // ADR-036: the step is an application the board reviews. Both consents are
+  // required, so sending the application is itself the consent; there is no column
+  // to record an unticked optional box, by owner decision (text-only change).
+  const [dataConsent, setDataConsent] = useState(false);
+  const [duesConsent, setDuesConsent] = useState(false);
 
   // prefill once from the server-provided initial state (resume / back-navigation)
   useEffect(() => {
@@ -133,7 +129,7 @@ export function MembershipWizard({
         .from("public_delegates")
         .select("id, first_name, last_name, region_name_ka")
         .eq("region_id", regionId)
-        .order("members", { ascending: false })
+        .order("active_supporters", { ascending: false })
         .then(({ data }) =>
           setDelegateOptions(
             (data ?? []).map((d) => ({
@@ -215,7 +211,16 @@ export function MembershipWizard({
     setPhase("tier");
   }
 
+  // a ticked box retires the consent prompt; a server error stays until the next send
+  function clearConsentError() {
+    setTierError((prev) => (prev === CONSENT_REQUIRED_MESSAGE ? undefined : prev));
+  }
+
   async function completeTier() {
+    if (!dataConsent || !duesConsent) {
+      setTierError(CONSENT_REQUIRED_MESSAGE);
+      return;
+    }
     setTierError(undefined);
     setTierBusy(true);
     let result: Awaited<ReturnType<typeof completeMembershipAction>>;
@@ -240,10 +245,7 @@ export function MembershipWizard({
   if (phase === "profile") {
     phaseContent = (
       <>
-        <h2 className="font-serif font-bold border-b-2 border-ink pb-2">იურიდიული პროფილი</h2>
-        <p className="mb-5 mt-1 text-sm text-muted-fg">
-          ეს მონაცემები საჭიროა წევრობის იურიდიული ვერიფიკაციისთვის. ინახება უსაფრთხოდ.
-        </p>
+        <h2 className="mb-5 font-serif font-bold border-b-2 border-ink pb-2">წევრის მონაცემები</h2>
         <div className="flex flex-col gap-4">
           {askPersonalId ? (
             <div className="flex flex-col gap-1.5">
@@ -351,35 +353,41 @@ export function MembershipWizard({
   } else {
     phaseContent = (
       <>
-        {showDues ? (
-          <>
-            <h2 className="font-serif font-bold border-b-2 border-ink pb-2">საწევრო შენატანი</h2>
-            <p className="mb-5 mt-1 text-sm text-muted-fg">
-              შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
-            </p>
-            <div className="border border-ink bg-paper-bright p-4 text-center">
-              <span className="block font-serif text-3xl font-bold text-ink">
-                {MEMBERSHIP_FEE_GEL}
-                <small className="text-lg font-bold">₾</small>
-              </span>
-              <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
-            </div>
-          </>
-        ) : (
-          <h2 className="font-serif font-bold border-b-2 border-ink pb-2">წევრობის დადასტურება</h2>
-        )}
-        {tierError ? <p className="mt-3 text-sm text-danger">{tierError}</p> : null}
+        <h2 className="mb-5 font-serif font-bold border-b-2 border-ink pb-2">წევრობის განაცხადი</h2>
+        <p className="text-[0.74rem] font-bold tracking-[.08em] text-muted-fg">რა მოხდება შემდეგ</p>
+        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-sm text-prose">
+          <li>შენს განაცხადს განიხილავს ბორდი</li>
+          <li>დადასტურების შემდეგ ხდები მოძრაობის წევრი</li>
+        </ol>
+        <div className="mt-5 flex flex-col gap-3 border-t border-hairline pt-5">
+          <CheckboxField
+            label="თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად"
+            checked={dataConsent}
+            onChange={(e) => {
+              setDataConsent(e.target.checked);
+              clearConsentError();
+            }}
+          />
+          <CheckboxField
+            label={`თანახმა ვარ, მომავალში, როცა საწევრო შემოიღება, ვიხდიდე ყოველთვიურ საწევროს — ${MEMBERSHIP_FEE_GEL} ₾ თვეში`}
+            checked={duesConsent}
+            onChange={(e) => {
+              setDuesConsent(e.target.checked);
+              clearConsentError();
+            }}
+          />
+        </div>
+        {tierError ? (
+          <p role="alert" className="mt-3 text-sm text-danger">
+            {tierError}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-col gap-3">
           <Button onClick={completeTier} disabled={tierBusy} size="lg">
-            რეგისტრაციის დასრულება
+            განაცხადის გაგზავნა
           </Button>
-          {showDues ? (
-            <p className="text-center text-xs text-muted-fg">
-              გადახდა ხდება საბანკო გადარიცხვით — ბარათის მონაცემები არ გჭირდება.
-            </p>
-          ) : null}
           <Button variant="ghost" onClick={() => setPhase("profile")} disabled={tierBusy}>
-            ← პროფილის შესწორება
+            ← მონაცემების შესწორება
           </Button>
         </div>
       </>
@@ -392,10 +400,7 @@ export function MembershipWizard({
         <Eyebrow>წევრობის გაფორმება</Eyebrow>
       </div>
       <div className="mb-6 flex justify-center">
-        <Stepper
-          steps={["პროფილი", showDues ? "საწევრო" : "დადასტურება"]}
-          current={phase === "profile" ? 1 : 2}
-        />
+        <Stepper steps={["პროფილი", "განაცხადი"]} current={phase === "profile" ? 1 : 2} />
       </div>
       <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
         {phaseContent}

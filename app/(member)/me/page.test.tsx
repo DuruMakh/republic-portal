@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 describe("cabinet invitation to membership", () => {
-  it("names no dues while they are hidden (the default, ADR-036)", async () => {
+  it("names no dues while they are hidden (the default, ADR-037)", async () => {
     render(await CabinetOverviewPage());
 
     expect(screen.getByText("წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს.")).toBeInTheDocument();

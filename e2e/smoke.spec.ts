@@ -39,7 +39,7 @@ test("join requires Google before showing registration fields", async ({ page })
 test("styleguide renders design system", async ({ page }) => {
   await page.goto("/styleguide");
   await expect(page.getByRole("button", { name: "ძირითადი" })).toBeVisible();
-  // Pill's member default (both member statuses read „წევრი“, ADR-036). Scoped to the
+  // Pill's member default (both member statuses read „წევრი“, ADR-037). Scoped to the
   // "სტატუსები" demo card and exact-matched: the styleguide also has an unrelated StatCard
   // demo labeled the very same word outside any <section>, so an unscoped lookup would
   // prove nothing about which one actually rendered. Two pills carry it, hence toHaveCount.

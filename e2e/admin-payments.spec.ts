@@ -44,7 +44,7 @@ test("finance records a single payment by GR-code — the member turns active", 
   await page.getByRole("button", { name: "აღრიცხვა" }).click();
   await expect(page.getByText(/აღირიცხა — 1 თვე · წევრი ახლა აქტიურია/)).toBeVisible();
 
-  // the member list shows a paying member plainly as „წევრი“ (no active tier, ADR-036).
+  // the member list shows a paying member plainly as „წევრი“ (no active tier, ADR-037).
   // Scoped by this member's own unique GR-code — never positional (spec §7 isolation rule).
   await page.goto(`/admin/members?search=${code}`);
   const body = page.getByTestId("admin-members-body");
@@ -101,7 +101,7 @@ test("void demotes nothing here (two live payments remain) but marks the row", a
 test("while dues are hidden the member sees no payments, only plain membership", async ({
   page,
 }) => {
-  // ADR-036: finance can still record payments, but SHOW_MEMBERSHIP_DUES is off by default,
+  // ADR-037: finance can still record payments, but SHOW_MEMBERSHIP_DUES is off by default,
   // so the member's payments page does not exist and a paying member reads as „წევრი“.
   await loginAs(page, phase4Phone(PAYER));
   await page.goto("/me/billing");

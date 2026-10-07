@@ -49,7 +49,7 @@ test.describe("home", () => {
       await page.goto("/");
       const text = await page.getByTestId("stat-registered-total").innerText();
       expect(Number(text.replace(/[^\d]/g, ""))).toBe(registeredTotal);
-      // registered is the whole register; members are a subset of it (D5/R2-5, ADR-036)
+      // registered is the whole register; members are a subset of it (D5/R2-5, ADR-037)
       expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(members);
     }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
 
@@ -124,7 +124,7 @@ test.describe("delegate page", () => {
     await expect(page.getByText("პოზიცია რეიტინგში")).toBeVisible();
     // .first() keeps the locator on the StatCard label (the active-member stat under
     // test) should the wording ever repeat on the page, without loosening the check.
-    await expect(page.getByText("წევრი", { exact: true }).first()).toBeVisible(); // member stat present (ADR-036)
+    await expect(page.getByText("წევრი", { exact: true }).first()).toBeVisible(); // member stat present (ADR-037)
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
     expect(ogTitle).toContain("გიორგი მაისურაძე");
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute("content");

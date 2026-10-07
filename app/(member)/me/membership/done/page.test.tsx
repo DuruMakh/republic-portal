@@ -1,44 +1,71 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cabinetStateFixture } from "@/lib/test-cabinet-state";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CabinetStatePresent } from "@/lib/funnel";
 
-const server = vi.hoisted(() => ({ getCabinetState: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => server);
-vi.mock("next/navigation", () => ({
-  redirect: (to: string) => {
-    throw new Error(`redirect:${to}`);
-  },
-}));
+const redirectMock = vi.fn((path: string) => {
+  throw new Error(`redirect:${path}`);
+});
+vi.mock("next/navigation", () => ({ redirect: (path: string) => redirectMock(path) }));
+
+const getCabinetStateMock = vi.fn();
+vi.mock("@/lib/supabase/server", () => ({ getCabinetState: () => getCabinetStateMock() }));
 
 import MembershipDonePage from "./page";
 
+function completed(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
+  return {
+    exists: true,
+    standing: "member",
+    status: "profile_completed",
+    role: "member",
+    firstName: "ნინო",
+    lastName: "ბერიძე",
+    personalIdMasked: "010********",
+    hasPersonalId: true,
+    referralCode: null,
+    referralCount: 0,
+    birthDate: "1990-05-20",
+    regionId: 1,
+    cityId: 5,
+    employment: "სტუდენტი",
+    tier: 10,
+    referenceCode: "GR-APQ694",
+    completed: true,
+    delegateStatus: null,
+    referral: null,
+    pendingDelegate: null,
+    chosenDelegate: null,
+    membershipExists: true,
+    registrationCompletedAt: "2026-10-07T10:00:00Z",
+    createdAt: "2026-07-21T10:00:00Z",
+    admin: false,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
-  vi.stubEnv("SHOW_MEMBERSHIP_DUES", undefined);
-  server.getCabinetState.mockResolvedValue(cabinetStateFixture());
+  redirectMock.mockClear();
+  getCabinetStateMock.mockReset();
 });
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
-describe("membership done page while dues are hidden (the default, ADR-036)", () => {
-  it("shows no payment code, transfer details or payment sentence", async () => {
+describe("membership done page (ADR-036)", () => {
+  it("tells a fresh applicant the board will review the application, with no transfer instructions", async () => {
+    getCabinetStateMock.mockResolvedValue(completed());
     render(await MembershipDonePage());
-
-    expect(screen.getByText("რეგისტრაცია დასრულებულია ✓")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "განაცხადი გაგზავნილია ✓" })).toBeInTheDocument();
+    expect(screen.getByText("განხილვის პროცესში")).toBeInTheDocument();
+    expect(screen.getByText("შენს განაცხადს განიხილავს ბორდი.")).toBeInTheDocument();
+    expect(screen.queryByTestId("reference-code")).toBeNull();
     expect(screen.queryByText("GR-APQ694")).toBeNull();
-    expect(screen.queryByText(/₾|გადმორიცხ|შენატან|აქტიური/)).toBeNull();
-    expect(screen.getByTestId("chosen-delegate")).toHaveTextContent("არ მყავს დელეგატი");
   });
-});
 
-describe("membership done page once dues are on (SHOW_MEMBERSHIP_DUES=true)", () => {
-  it("shows the payment code again", async () => {
-    vi.stubEnv("SHOW_MEMBERSHIP_DUES", "true");
-
+  it("does not tell an already-active member their application is under review", async () => {
+    getCabinetStateMock.mockResolvedValue(completed({ status: "active_member" }));
     render(await MembershipDonePage());
-
-    expect(screen.getAllByText("GR-APQ694").length).toBeGreaterThan(0);
-    expect(screen.getByText(/გადმორიცხე/)).toBeInTheDocument();
+    expect(screen.queryByText("განხილვის პროცესში")).toBeNull();
+    expect(screen.queryByText("შენს განაცხადს განიხილავს ბორდი.")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "განაცხადი გაგზავნილია ✓" })).toBeNull();
+    // the active_member pill reads plainly „წევრი“ since ADR-037 (no active tier)
+    expect(screen.getByText("წევრი")).toBeInTheDocument();
   });
 });

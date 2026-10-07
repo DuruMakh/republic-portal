@@ -73,7 +73,7 @@ test("delegate lifecycle: pending panel → approval → live link → team", as
   await expect(mobileNav.locator('a[href="/delegate"]')).toHaveAttribute("aria-current", "page");
   await expect(dPage.getByTestId("team-count")).toHaveText("1");
   await expect(dPage.getByText("ვატესტ ბმულით")).toBeVisible();
-  // the row pill reads plainly „წევრი“ (TEAM_STATUS_LABELS, ADR-036); scope to the table
+  // the row pill reads plainly „წევრი“ (TEAM_STATUS_LABELS, ADR-037); scope to the table
   // body — the thead th „წევრი“ sits outside the team-rows tbody, so an unscoped query
   // would be ambiguous.
   await expect(

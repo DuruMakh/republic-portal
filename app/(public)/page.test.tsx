@@ -88,7 +88,7 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
     expect(screen.queryByText("რეგისტრირებული")).not.toBeInTheDocument();
   });
 
-  it("counts and labels plain members in the registry and the ranking (ADR-036)", async () => {
+  it("counts and labels plain members in the registry and the ranking (ADR-037)", async () => {
     data.fetchPublicDelegates.mockResolvedValue([
       {
         id: "00000000-0000-0000-0000-000000000001",

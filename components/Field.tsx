@@ -61,3 +61,20 @@ export function TextareaField({
     </div>
   );
 }
+
+/**
+ * Consent-style checkbox: the whole sentence is the label, so clicking the text
+ * toggles the box and the box's accessible name is the sentence itself. `accent-ink`
+ * keeps the native control (keyboard, focus, screen readers) in the site's ink.
+ */
+export function CheckboxField({
+  label,
+  ...props
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: string }) {
+  return (
+    <label className="flex items-start gap-3 text-sm text-prose">
+      <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-ink" {...props} />
+      <span>{label}</span>
+    </label>
+  );
+}

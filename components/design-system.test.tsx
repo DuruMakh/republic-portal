@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 // TEAM_STATUS_LABELS is imported here only as a test-time guard against Pill's own
 // STATUS_CONFIG literals drifting out of sync with lib/cabinet — see the "stays in sync
@@ -8,7 +8,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Eyebrow } from "./Eyebrow";
-import { Field } from "./Field";
+import { CheckboxField, Field } from "./Field";
 import { Pill } from "./Pill";
 import { StatCard } from "./StatCard";
 import { Stepper } from "./Stepper";
@@ -105,7 +105,7 @@ describe("Badge", () => {
 });
 
 describe("Pill", () => {
-  it("both member statuses read plainly as member, in one look (ADR-036: no dues, no active tier)", () => {
+  it("both member statuses read plainly as member, in one look (ADR-037: no dues, no active tier)", () => {
     const paid = render(<Pill status="active_member" />);
     const paidPill = screen.getByText("წევრი");
     const paidClass = paidPill.className;
@@ -173,6 +173,16 @@ describe("Field", () => {
     render(<Field label="ტელეფონი" name="phone" />);
     const label = screen.getByText("ტელეფონი");
     expect(label.className).toContain("tracking-[.08em]");
+  });
+});
+
+describe("CheckboxField", () => {
+  it("is a real checkbox named by its label, toggled by clicking the text", () => {
+    render(<CheckboxField label="თანახმა ვარ" defaultChecked={false} />);
+    const box = screen.getByRole("checkbox", { name: "თანახმა ვარ" });
+    expect(box).not.toBeChecked();
+    fireEvent.click(screen.getByText("თანახმა ვარ"));
+    expect(box).toBeChecked();
   });
 });
 

@@ -60,7 +60,7 @@ test("registers through Google and lands in the registered cabinet", async ({ pa
   await expect(page.getByRole("banner")).toHaveCSS("position", "static");
   await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
 
-  // the payments page does not exist while dues are hidden (ADR-036), for anyone
+  // the payments page does not exist while dues are hidden (ADR-037), for anyone
   await page.goto("/me/billing");
   await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
 });

@@ -9,7 +9,7 @@ export interface PublicDelegate {
   photo_url: string | null;
   /** Paying members only; kept for finance tooling, not shown while dues are dropped. */
   active_supporters: number;
-  /** Every member in the delegate's team — what the ranking counts (ADR-036). */
+  /** Every member in the delegate's team — what the ranking counts (ADR-037). */
   members: number;
 }
 

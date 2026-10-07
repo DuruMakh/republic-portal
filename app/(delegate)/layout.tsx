@@ -38,7 +38,7 @@ export default async function DelegateLayout({ children }: { children: React.Rea
   if (!state.exists || !isApprovedDelegate(state)) {
     redirect(deriveDestination(state));
   }
-  // No payments tab while dues are hidden (ADR-036).
+  // No payments tab while dues are hidden (ADR-037).
   const items = filterBillingLinks(cabinetNavItems("delegate", state.admin), showMembershipDues());
   const { tabs, more } = mobileTabs(items, "delegate");
   return (

@@ -148,7 +148,7 @@ export default async function AdminMembersPage({
             სტატუსი
             <Select variant="admin" name="status" defaultValue={filter.status ?? ""}>
               <option value="">ყველა სტატუსი</option>
-              {/* No active_member option: it reads „წევრი" too now (ADR-036), and the audited
+              {/* No active_member option: it reads „წევრი" too now (ADR-037), and the audited
                   export filters on one status value, so the two cannot share one option. */}
               <option value="profile_completed">{MEMBER_STATUS_LABELS_KA.profile_completed}</option>
               <option value="registered">{MEMBER_STATUS_LABELS_KA.registered}</option>

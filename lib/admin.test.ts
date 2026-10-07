@@ -177,7 +177,7 @@ describe("vocabulary and bars", () => {
       active_member: "წევრი",
     });
   });
-  it("status labels name the supporter and the member — no active tier (ADR-036)", () => {
+  it("status labels name the supporter and the member — no active tier (ADR-037)", () => {
     expect(MEMBER_STATUS_LABELS_KA.registered).toBe("მხარდამჭერი");
     expect(MEMBER_STATUS_LABELS_KA.profile_completed).toBe("წევრი");
     expect(MEMBER_STATUS_LABELS_KA.active_member).toBe("წევრი");

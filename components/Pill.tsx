@@ -13,7 +13,7 @@ const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
   // Mirror lib/cabinet.ts's TEAM_STATUS_LABELS (kept as separate literals here, not
   // imported, so this generic primitive doesn't couple to the cabinet domain) — update
   // both together if the team-status vocabulary changes again.
-  // Both member statuses are simply a member while there are no dues (ADR-036).
+  // Both member statuses are simply a member while there are no dues (ADR-037).
   profile_completed: { label: "წევრი", className: "bg-ok/10 text-ok-deep" },
   active_member: { label: "წევრი", className: "bg-ok/10 text-ok-deep" },
   pending: { label: "განხილვის პროცესში", className: "bg-warn/10 text-warn-deep" },

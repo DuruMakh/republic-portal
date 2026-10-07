@@ -2,7 +2,7 @@ import Link from "next/link";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
 
-// The ranked figure counts every member in a delegate's team (ADR-036: no dues, so no
+// The ranked figure counts every member in a delegate's team (ADR-037: no dues, so no
 // "active" tier). app/(public)/page.tsx and app/(member)/me/profile/page.tsx carry the
 // same label.
 const RANK_FIGURE_LABEL = "წევრი";

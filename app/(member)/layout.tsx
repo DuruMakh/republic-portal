@@ -54,7 +54,7 @@ export default async function MemberLayout({ children }: { children: React.React
   ]);
   if (!state.exists) redirect("/join");
   const role = cabinetRole(state);
-  // No payments tab while dues are hidden (ADR-036).
+  // No payments tab while dues are hidden (ADR-037).
   const items = filterBillingLinks(cabinetNavItems(role, state.admin), showMembershipDues()).map(
     (item) => (item.href === "/me/polls" ? { ...item, count: openPollsCount || undefined } : item),
   );

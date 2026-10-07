@@ -27,7 +27,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("payments page while dues are hidden (the default, ADR-036)", () => {
+describe("payments page while dues are hidden (the default, ADR-037)", () => {
   it("answers not-found before reading any payment", async () => {
     await expect(BillingPage()).rejects.toThrow("not-found");
     expect(server.createServerSupabase).not.toHaveBeenCalled();

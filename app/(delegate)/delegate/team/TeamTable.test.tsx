@@ -21,7 +21,7 @@ const MEMBERS: TeamMember[] = [
 ];
 
 describe("TeamTable", () => {
-  it("renders rows with dates, and every member reads plainly as member (ADR-036)", () => {
+  it("renders rows with dates, and every member reads plainly as member (ADR-037)", () => {
     render(<TeamTable members={MEMBERS} />);
     const rows = screen.getByTestId("team-rows");
     expect(screen.getByText("ნინო ბერიძე")).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("TeamTable", () => {
     expect(within(rows).getAllByText("წევრი")).toHaveLength(2);
   });
 
-  it("has no status filter — both statuses are the same word now (ADR-036)", () => {
+  it("has no status filter — both statuses are the same word now (ADR-037)", () => {
     render(<TeamTable members={MEMBERS} />);
     expect(screen.queryByLabelText("სტატუსის ფილტრი")).toBeNull();
   });

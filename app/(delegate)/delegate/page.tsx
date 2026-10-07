@@ -79,7 +79,7 @@ export default async function DelegateDashboardPage() {
         {panel.referralCode != null ? (
           <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
         ) : null}
-        {/* No dues, so no "active" tier (ADR-036): totalCount — every member in the
+        {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
             team, the same figure the ranking counts — is the headline. */}
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard value={panel.totalCount} label="წევრი" sub="ლიმიტის გარეშე" accent="brand" />

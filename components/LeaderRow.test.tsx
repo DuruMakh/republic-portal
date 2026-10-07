@@ -53,7 +53,7 @@ describe("LeaderRow", () => {
     expect(screen.getByText("გურია")).toBeInTheDocument();
     expect(screen.getByText("84")).toBeInTheDocument();
   });
-  it("shows the delegate's members, labelled plainly as members (ADR-036)", () => {
+  it("shows the delegate's members, labelled plainly as members (ADR-037)", () => {
     render(<LeaderRow delegate={mk(2)} />);
     expect(screen.getByText("წევრი")).toBeInTheDocument();
     expect(screen.queryByText("3")).not.toBeInTheDocument();
