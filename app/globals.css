@@ -61,7 +61,7 @@
   }
 }
 
-/* /structure (ADR-036): condensed display headings and the pebble shape. */
+/* /structure (ADR-037): condensed display headings and the pebble shape. */
 @utility display-heading {
   font-family: var(--font-sans);
   font-stretch: 68%;

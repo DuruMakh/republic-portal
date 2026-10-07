@@ -13,7 +13,7 @@ import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/compon
 import { DecisionRuleCard } from "@/components/DecisionRuleCard";
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
-import { adminControlClasses, Field, TextareaField } from "@/components/Field";
+import { adminControlClasses, CheckboxField, Field, TextareaField } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
@@ -290,6 +290,7 @@ export default function StyleguidePage() {
             </SelectField>
             <TextareaField label="შეტყობინება" rows={3} defaultValue="" />
             <TextareaField label="შეტყობინება" rows={2} error="სულ მცირე 10 სიმბოლო" />
+            <CheckboxField label="თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს" />
             <Select variant="admin" aria-label="მხარე" defaultValue="">
               <option value="">ყველა მხარე</option>
               <option value="1">თბილისი</option>
@@ -299,7 +300,7 @@ export default function StyleguidePage() {
 
         {/* 10. Stepper */}
         <Card title="სტეპერი">
-          <Stepper steps={["პროფილი", "საწევრო"]} current={1} />
+          <Stepper steps={["პროფილი", "განაცხადი"]} current={1} />
         </Card>
 
         {/* 11. OtpInput */}
@@ -492,7 +493,7 @@ export default function StyleguidePage() {
           <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
         </Card>
 
-        {/* 17. /structure pieces (ADR-036): the condensed display heading, the
+        {/* 17. /structure pieces (ADR-037): the condensed display heading, the
             pebble rule card, the membership path, the tally and the roster's
             launch (empty) state. Copy and counts come from lib/, never hand-typed. */}
         <Card title={STRUCTURE_TITLE}>

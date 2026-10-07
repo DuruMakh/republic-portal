@@ -94,7 +94,7 @@ concept's own top bar and footer are mock-ups only.
 - **New: condensed display headings.** Load the `wdth` axis on the existing
   `Noto_Sans_Georgian` (`axes: ["wdth"]` — supported by next/font, axis 62.5–100) and add
   one `display` text style (sans, `font-stretch: 68%`, weight ~850, tight leading). Used
-  for this page's `h1`/`h2`s only, for now. Recorded in DESIGN.md + ADR-036 (adds font
+  for this page's `h1`/`h2`s only, for now. Recorded in DESIGN.md + ADR-037 (adds font
   bytes site-wide; no new dependency).
 - **New: pebble motif.** One `Pebble` primitive (the irregular border-radius ellipse)
   reused by bullets, rule cards, path nodes; SVG pebbles for the council and the tally.
@@ -137,7 +137,7 @@ set (2026-10-07); more networks only on request.
 naming the network (its Latin brand name) and the person, e.g. `Facebook: <name>`.
 
 **Navigation.** Add `{ href: "/structure", label: "სტრუქტურა" }` to the public
-`navItems` (after რეიტინგი, before the hidden-by-default finance link; news and events left the header in the same PR, ADR-036) and to
+`navItems` (after რეიტინგი, before the hidden-by-default finance link; news and events left the header in the same PR, ADR-037) and to
 `footerLinks`. `MobileMenu` already renders `navItems`, so phones get it too. Add
 `/structure` to `app/sitemap.ts`.
 

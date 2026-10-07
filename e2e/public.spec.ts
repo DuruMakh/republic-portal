@@ -19,7 +19,7 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
-    // Since ADR-036 the header carries neither page: these homepage links are the way in
+    // Since ADR-037 the header carries neither page: these homepage links are the way in
     // (news is also in the footer; events is reachable only from here).
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
     await expect(page.getByRole("main").locator('a[href="/events"]')).toBeVisible();
