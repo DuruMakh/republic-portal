@@ -44,10 +44,12 @@ test("finance records a single payment by GR-code — the member turns active", 
   await page.getByRole("button", { name: "აღრიცხვა" }).click();
   await expect(page.getByText(/აღირიცხა — 1 თვე · წევრი ახლა აქტიურია/)).toBeVisible();
 
-  // derivation is visible platform-wide: the member list shows აქტიური. Scoped by
-  // this member's own unique GR-code — never positional (spec §7 isolation rule).
+  // the member list shows a paying member plainly as „წევრი“ (no active tier, ADR-036).
+  // Scoped by this member's own unique GR-code — never positional (spec §7 isolation rule).
   await page.goto(`/admin/members?search=${code}`);
-  await expect(page.getByTestId("admin-members-body").getByText("აქტიური")).toBeVisible();
+  const body = page.getByTestId("admin-members-body");
+  await expect(body.getByText("წევრი", { exact: true })).toBeVisible();
+  await expect(body.getByText("აქტიური")).toHaveCount(0);
 });
 
 test("bulk paste classifies five row kinds and records exactly the two valid ones", async ({
