@@ -23,6 +23,7 @@ export function Masthead({
   cta,
   sessionSlot,
   tag,
+  eventsShown = true,
 }: {
   navItems: NavItem[];
   cta: ReactNode;
@@ -33,6 +34,12 @@ export function Masthead({
    * Omitted on the public layout, which keeps the bare lockup.
    */
   tag?: string;
+  /**
+   * showEvents(), read by the server layout (the switch is server-only). Only the public
+   * layout passes it: while events are hidden an old event address gets no back header
+   * pointing at the hidden index (ADR-038).
+   */
+  eventsShown?: boolean;
 }) {
   const pathname = useChromePathname();
 
@@ -53,7 +60,7 @@ export function Masthead({
   // empty <nav> that a screen reader would announce as a hollow landmark.
   const hasNav = navItems.length > 0 || Boolean(sessionSlot) || Boolean(cta);
 
-  const back = mobileBackTarget(pathname);
+  const back = mobileBackTarget(pathname, eventsShown);
   const mobileSticky = pathname !== "/styleguide" && !pathname.startsWith("/admin");
 
   return (

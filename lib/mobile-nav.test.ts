@@ -198,3 +198,22 @@ describe("mobileTabs while events are hidden (ADR-038)", () => {
     }
   });
 });
+
+describe("mobileBackTarget while events are hidden (ADR-038)", () => {
+  it("gives an old event address no back header, so a 404 never links to the hidden index", () => {
+    expect(mobileBackTarget("/events/tbilisi-meeting", false)).toBeNull();
+    expect(mobileChrome("/events/tbilisi-meeting", false)).toBe("public");
+  });
+
+  it("leaves every other back target as it is", () => {
+    expect(mobileBackTarget("/news/some-article", false)).toEqual({
+      href: "/news",
+      label: "სიახლეები",
+    });
+    expect(mobileBackTarget("/join", false)?.href).toBe("/");
+  });
+
+  it("keeps the events back header by default, when events are shown", () => {
+    expect(mobileBackTarget("/events/tbilisi-meeting")?.href).toBe("/events");
+  });
+});

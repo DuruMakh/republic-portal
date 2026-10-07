@@ -48,13 +48,15 @@ const footerLinks: { href: string; label: string }[] = [
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const financesPublic = showPublicFinances();
+  const eventsShown = showEvents();
 
   return (
     <>
       <DemoBanner />
       <PageSheet>
         <Masthead
-          navItems={filterEventLinks(filterFinanceLinks(navItems, financesPublic), showEvents())}
+          navItems={filterEventLinks(filterFinanceLinks(navItems, financesPublic), eventsShown)}
+          eventsShown={eventsShown}
           cta={<HeaderSessionAction joinLabel={HEADER_CTA_LABEL} />}
         />
         {/* FOOTER-PIN: PageSheet is min-h-screen flex flex-col; a growing plain

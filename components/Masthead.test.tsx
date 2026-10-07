@@ -109,3 +109,18 @@ describe("Masthead", () => {
     expect(screen.queryByText("პირადი კაბინეტი")).not.toBeInTheDocument();
   });
 });
+
+describe("Masthead on an old event address (ADR-038)", () => {
+  it("shows no back link to the events index while events are hidden", () => {
+    vi.mocked(usePathname).mockReturnValue("/events/tbilisi-meeting");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} eventsShown={false} />);
+    expect(screen.queryByRole("link", { name: /ღონისძიებ/ })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
+  });
+
+  it("keeps the back link while events are shown", () => {
+    vi.mocked(usePathname).mockReturnValue("/events/tbilisi-meeting");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} eventsShown />);
+    expect(document.querySelector('a[href="/events"]')).not.toBeNull();
+  });
+});

@@ -236,6 +236,15 @@ test.describe("events hidden", () => {
     await expect(page).not.toHaveTitle(/ღონისძიებ/);
   });
 
+  test("an old event address on a phone has no back link to the hidden index", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const response = await page.goto("/events/no-such-event-xyz");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+    await expect(page.locator('a[href="/events"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /ღონისძიებ/ })).toHaveCount(0);
+  });
+
   test("no public page links to it", async ({ page }) => {
     for (const path of ["/", "/news", "/leaderboard", "/join", "/support"]) {
       await page.goto(path);

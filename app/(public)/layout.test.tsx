@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+const nav = vi.hoisted(() => ({ pathname: "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -31,6 +32,7 @@ beforeEach(() => {
   // flip these tests. The public-mode tests below stub it to "true" themselves.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
   vi.stubEnv("SHOW_EVENTS", undefined);
+  nav.pathname = "/";
 });
 
 afterEach(() => {
@@ -102,5 +104,13 @@ describe("public layout — events (ADR-038)", () => {
       "href",
       "/events",
     );
+  });
+});
+
+describe("public layout on an old event address (ADR-038)", () => {
+  it("gives the not-found page no back link to the hidden events index", () => {
+    nav.pathname = "/events/tbilisi-meeting";
+    renderLayout();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
   });
 });

@@ -72,11 +72,17 @@ function inCabinet(pathname: string): boolean {
  * screen. Deliberately a fixed parent rather than router.back(): an article
  * opened from a shared link has no history behind it, and back() would leave
  * the site entirely (spec §4.8).
+ *
+ * While events are hidden (ADR-038) an old event address is a 404 with no
+ * events index to return to, so it gets no back header — the plain public
+ * header instead. Only the public layout reads the switch; the cabinet and
+ * admin chrome never sit on an event address, hence the default.
  */
-export function mobileBackTarget(pathname: string): BackTarget | null {
+export function mobileBackTarget(pathname: string, eventsShown = true): BackTarget | null {
   const exact = STATIC_BACK[pathname];
   if (exact) return exact;
   for (const { prefix, target } of PREFIX_BACK) {
+    if (!eventsShown && prefix === "/events/") continue;
     if (pathname.startsWith(prefix) && pathname.length > prefix.length) return target;
   }
   return null;
@@ -87,8 +93,8 @@ export function mobileBackTarget(pathname: string): BackTarget | null {
  * cabinet header, which is what takes the tab bar off the membership wizard.
  * Never called for /admin — admin chrome is out of scope and unchanged.
  */
-export function mobileChrome(pathname: string): MobileChrome {
-  if (mobileBackTarget(pathname) !== null) return "back";
+export function mobileChrome(pathname: string, eventsShown = true): MobileChrome {
+  if (mobileBackTarget(pathname, eventsShown) !== null) return "back";
   if (inCabinet(pathname)) return "cabinet";
   // Public chrome is the deliberate fallback for any route that is neither a
   // back-target nor in-cabinet (including an unclassified or future route).
