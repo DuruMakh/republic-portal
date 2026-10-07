@@ -115,12 +115,12 @@ Static server-rendered page, no client JavaScript, no database, no env vars.
 | `lib/board-members.ts` | data + schema | `BoardMember` type, zod `boardMemberSchema`, and `BOARD_MEMBERS: BoardMember[] = []`. |
 | `components/Pebble.tsx` | UI | The pebble shape primitive (size, filled/outlined). |
 | `components/PebbleCouncil.tsx` | UI | Hero SVG from `councilLayout()`; `aria-hidden`. |
-| `components/PebbleTally.tsx` | UI | Vote SVG from `tallyLayout()` + legend; `role="img"` with a Georgian label. |
+| `components/PebbleTally.tsx` | UI | Vote SVG from `tallyLayout()` (`aria-hidden`) + the visible legend, which carries the meaning. |
 | `components/DecisionRuleCard.tsx` | UI | Headline, body, 5 pebbles with `votesNeeded` filled. |
 | `components/MembershipPath.tsx` | UI | The 3 numbered steps. |
 | `components/BoardRoster.tsx` | UI | Empty state vs. cards. |
 | `components/BoardMemberCard.tsx` | UI | Photo, name, bio, `SocialLinks`. |
-| `components/SocialLinks.tsx` | UI | Inline-SVG icons for the allowed networks. |
+| `components/SocialLinks.tsx` | UI | Square text marks (fb / tt / in), as in the approved concept — no brand-logo artwork. |
 | `app/(public)/structure/page.tsx` | route | Composes the above; `metadata` title. |
 
 **Board member data.** `BoardMember = { name: string; photo: string; bio: string;
