@@ -133,8 +133,8 @@ LinkedIn appears only for some members — every network is optional per person.
 test parses `BOARD_MEMBERS` with the schema, so a bad entry fails CI. Owner-confirmed
 set (2026-10-07); more networks only on request.
 
-**Social links** open in a new tab with `rel="noopener noreferrer"` and a Georgian
-`aria-label` naming the network and person.
+**Social links** open in a new tab with `rel="noopener noreferrer"` and an `aria-label`
+naming the network (its Latin brand name) and the person, e.g. `Facebook: <name>`.
 
 **Navigation.** Add `{ href: "/structure", label: "სტრუქტურა" }` to the public
 `navItems` (after ღონისძიებები, before the hidden-by-default finance link) and to

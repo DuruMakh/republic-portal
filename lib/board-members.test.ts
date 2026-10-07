@@ -62,6 +62,11 @@ describe("boardMemberSchema", () => {
 });
 
 describe("BOARD_MEMBERS", () => {
+  it("has unique names (they key the roster cards)", () => {
+    const names = BOARD_MEMBERS.map((m) => m.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("every entry passes the schema and its photo file exists in public/", () => {
     for (const member of BOARD_MEMBERS) {
       expect(boardMemberSchema.safeParse(member).success, member.name).toBe(true);

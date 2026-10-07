@@ -15,7 +15,11 @@ function Ellipse({ p, className, delay }: { p: PebbleShape; className: string; d
   );
 }
 
-/** Hero drawing on /structure: the board's seats on a ring, members gathered around (spec §3.1). */
+/**
+ * Hero drawing on /structure: the board's seats on a ring, members gathered around (spec §3.1).
+ * Width comes from the caller's className only: a built-in `w-full` would win over it in the
+ * generated CSS order.
+ */
 export function PebbleCouncil({
   seats,
   centerLabel,
@@ -31,7 +35,7 @@ export function PebbleCouncil({
     <svg
       aria-hidden="true"
       viewBox={`${-COUNCIL_HALF} ${-COUNCIL_HALF} ${side} ${side}`}
-      className={`block h-auto w-full overflow-visible ${className}`}
+      className={`block h-auto overflow-visible ${className}`}
     >
       {layout.members.map((p, i) => (
         <Ellipse key={`m${i}`} p={p} className="fill-line" />

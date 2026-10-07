@@ -41,7 +41,8 @@ export const metadata: Metadata = { title: `${STRUCTURE_TITLE} — ${SUPPORT_EYE
 const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
 const LABEL = "text-[0.74rem] font-bold tracking-[.2em] text-muted-fg";
 // Board follows the index strip's own rule, so only later sections draw a top border.
-const SECTION = "scroll-mt-6 py-[clamp(36px,5vw,64px)]";
+// scroll-mt-24 clears the masthead, which is sticky below md (components/Masthead.tsx).
+const SECTION = "scroll-mt-24 py-[clamp(36px,5vw,64px)] md:scroll-mt-6";
 const RULED = `${SECTION} border-t border-line`;
 const H2 = "display-heading text-[clamp(2rem,4vw,3.1rem)] text-ink";
 const LEAD =
@@ -62,7 +63,7 @@ function SectionHead({
   lead: string;
 }) {
   return (
-    <div className="mb-[clamp(20px,3vw,32px)] grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6">
+    <div className="mb-[clamp(20px,3vw,32px)] grid items-end gap-6 min-[900px]:grid-cols-[minmax(0,1fr)_auto]">
       <div>
         <h2 id={`${id}-title`} className={H2}>
           {title}

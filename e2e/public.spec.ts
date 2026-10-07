@@ -237,4 +237,28 @@ test.describe("structure page", () => {
       page.getByRole("heading", { level: 2, name: "საერთო კენჭისყრა", exact: true }),
     ).toBeInViewport();
   });
+
+  test.describe("on a phone", () => {
+    test.use({ viewport: { width: 360, height: 780 } });
+
+    test("an index link lands its heading below the sticky header, not under it", async ({
+      page,
+    }) => {
+      await page.goto("/structure");
+      for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა"]) {
+        await page
+          .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+          .getByRole("link", { name, exact: true })
+          .click();
+        const heading = page.getByRole("heading", { level: 2, name, exact: true });
+        await expect(heading).toBeInViewport();
+        const header = await page.getByRole("banner").boundingBox();
+        const top = await heading.boundingBox();
+        expect(header, "the sticky header is on screen").not.toBeNull();
+        expect(top!.y, `${name} heading clears the header`).toBeGreaterThanOrEqual(
+          header!.y + header!.height,
+        );
+      }
+    });
+  });
 });

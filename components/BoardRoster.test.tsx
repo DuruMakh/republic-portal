@@ -18,6 +18,11 @@ describe("BoardRoster", () => {
       screen.getByRole("heading", { level: 2, name: "ბორდის შემადგენლობა" }),
     ).toBeInTheDocument();
     expect(screen.getByText("მალე")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ბორდის შემადგენლობა" })).toHaveAttribute(
+      "id",
+      "roster",
+    );
+    expect(container.querySelector(".animate-pulse")).toBeNull();
     expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(5);
     expect(screen.queryAllByRole("article")).toHaveLength(0);
   });
