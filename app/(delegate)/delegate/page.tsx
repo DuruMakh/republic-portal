@@ -82,13 +82,24 @@ export default async function DelegateDashboardPage() {
 
       <div className="flex flex-col gap-6">
         {panel.referralCode != null ? (
-          <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
+          <ReferralCard
+            code={panel.referralCode}
+            supporters={panel.referralSupporters ?? 0}
+            members={panel.referralMembers ?? 0}
+          />
         ) : null}
         {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
-            team, the same figure the ranking counts — is the headline. */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard value={panel.totalCount} label="წევრი" sub="ლიმიტის გარეშე" accent="brand" />
-          <StatCard value={panel.registeredCount} label="მხარდამჭერი" />
+            team, the same figure the ranking counts — is the headline. „გუნდის წევრი“
+            keeps it apart from the referral card's წევრი row, which counts the link's
+            sign-ups instead (ADR-038); the card's supporter row replaced the old
+            delegate-link-only supporter box. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard
+            value={panel.totalCount}
+            label="გუნდის წევრი"
+            sub="ლიმიტის გარეშე"
+            accent="brand"
+          />
           <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
         </div>
         <Card>

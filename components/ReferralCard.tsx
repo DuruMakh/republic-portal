@@ -7,11 +7,12 @@ import { QrCode } from "@/components/QrCode";
 import { buildReferralUrl } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 
-// Spliced byte-exact (never hand-typed) from the delegate panel's registered-count
-// StatCard label — app/(delegate)/delegate/page.tsx's
-// `<StatCard value={panel.registeredCount} label="მხარდამჭერი" />` (owner fix #12;
-// renamed from the registered wording in the 2026-10-07 copy round, ADR-035).
-const REGISTERED_LABEL = "მხარდამჭერი";
+// ADR-038: the link's sign-ups, counted apart — supporters have not finished the
+// membership form, members have. Both figures sum the person's own M- link and,
+// once approved, their delegate link (owner decision 2026-07-29). Labels spliced
+// byte-exact from the status vocabulary (MEMBER_STATUS_LABELS_KA in lib/admin.ts).
+const SUPPORTERS_LABEL = "მხარდამჭერი";
+const MEMBERS_LABEL = "წევრი";
 
 /**
  * Origin is read client-side so the link is truthful on every deployment
@@ -26,11 +27,13 @@ const REGISTERED_LABEL = "მხარდამჭერი";
  */
 export function ReferralCard({
   code,
-  count,
+  supporters,
+  members,
   teamNote = true,
 }: {
   code: string;
-  count: number;
+  supporters: number;
+  members: number;
   teamNote?: boolean;
 }) {
   const [url, setUrl] = useState<string>();
@@ -61,12 +64,21 @@ export function ReferralCard({
           </div>
         </>
       ) : null}
-      <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-hairline pt-3">
-        <span className="text-[0.74rem] text-muted-fg">{REGISTERED_LABEL}</span>
-        <span className="font-serif text-xl font-bold text-ink" data-testid="referral-count">
-          {formatCountKa(count)}
-        </span>
-      </p>
+      <dl className="mt-3 border-t border-hairline pt-3">
+        {(
+          [
+            [SUPPORTERS_LABEL, supporters, "referral-supporters"],
+            [MEMBERS_LABEL, members, "referral-members"],
+          ] as const
+        ).map(([label, value, testId]) => (
+          <div key={testId} className="flex items-baseline justify-between gap-3">
+            <dt className="text-[0.74rem] text-muted-fg">{label}</dt>
+            <dd className="font-serif text-xl font-bold text-ink" data-testid={testId}>
+              {formatCountKa(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
       {teamNote ? (
         <p className="mt-3 text-xs text-muted-fg" data-testid="referral-team-note">
           ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.

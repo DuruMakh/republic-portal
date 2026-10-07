@@ -21,6 +21,8 @@ function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
     hasPersonalId: true,
     referralCode: null,
     referralCount: 0,
+    referralSupporters: 0,
+    referralMembers: 0,
     birthDate: null,
     regionId: null,
     cityId: null,

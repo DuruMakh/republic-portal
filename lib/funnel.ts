@@ -63,6 +63,10 @@ export interface CabinetStatePresent {
    * decision 2026-07-29; see supabase/migrations/20260728142000_member_referral_codes.sql).
    */
   referralCount: number;
+  /** ADR-038: referralCount's sign-ups that have not finished the membership form. */
+  referralSupporters: number;
+  /** ADR-038: referralCount's sign-ups that have (profile_completed / active_member). */
+  referralMembers: number;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;
