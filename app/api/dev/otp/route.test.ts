@@ -192,38 +192,53 @@ describe("GET /api/dev/otp — account-takeover guard (finding V3, restored V13)
     expect(await res.json()).toEqual({ otp: "123456" });
   });
 
-  it("withholds (404) for a completed account (unchanged Phase-2 contract)", async () => {
-    createAdminClientMock.mockReturnValue(
-      makeAdmin({
-        profile: {
-          data: [
-            {
-              id: "u2",
-              status: "profile_completed",
-              registration_completed_at: new Date().toISOString(),
-            },
-          ],
-          error: null,
-        },
-        otp: freshOtp,
-      }),
-    );
-    const { res } = await timedGet("+995555000002");
-    expect(res.status).toBe(404);
+  // No separate profile_completed / active_member cases: the route withholds on the
+  // row's EXISTENCE and never reads its status, so every status walks the branch the
+  // registered-account case above already pins.
+});
+
+/**
+ * The FIRST guard. Everything below it is a service-role path (profile lookup,
+ * inbox reads, inbox prune) that answers anonymous strangers, so it may exist only
+ * where the flag says development or preview. At launch the flag flips to
+ * `production` (DECISIONS.md: the dev-OTP finding "retires at launch") — that flip
+ * is what closes the endpoint, so the shut gate must be pinned: same 404 body as a
+ * withheld code, and no privileged client ever created.
+ */
+describe("GET /api/dev/otp — closed outside development/preview", () => {
+  beforeEach(() => {
+    createAdminClientMock.mockReset();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it("withholds (404) for an active_member account (unchanged Phase-2 contract)", async () => {
-    createAdminClientMock.mockReturnValue(
-      makeAdmin({
-        profile: {
-          data: [{ id: "u3", status: "active_member", registration_completed_at: null }],
-          error: null,
-        },
-        otp: freshOtp,
-      }),
+  it.each([
+    { label: "production, pointed at a production database", appEnv: "production", db: "prod" },
+    { label: "production, still pointed at staging", appEnv: "production", db: "staging" },
+    { label: "staging", appEnv: "staging", db: "staging" },
+    { label: "test", appEnv: "test", db: "staging" },
+    { label: "an empty flag", appEnv: "", db: "prod" },
+    { label: "no flag at all", appEnv: undefined, db: "prod" },
+    { label: "a differently-cased Preview", appEnv: "Preview", db: "staging" },
+    { label: "a differently-cased DEVELOPMENT", appEnv: "DEVELOPMENT", db: "staging" },
+    { label: "a padded ' preview'", appEnv: " preview", db: "staging" },
+  ])("answers 404 for $label without creating a service-role client", async ({ appEnv, db }) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
+    vi.stubEnv(
+      "NEXT_PUBLIC_SUPABASE_URL",
+      db === "prod"
+        ? "https://prodrefabcdefgh.supabase.co"
+        : "https://orcxtbedkexoclbfgvzd.supabase.co",
     );
-    const { res } = await timedGet("+995555000003");
+    // a working client that WOULD serve the code — only the gate can withhold it
+    createAdminClientMock.mockReturnValue(makeAdmin({ profile: noProfile, otp: freshOtp }));
+
+    const res = await GET(makeRequest("+995555000020"));
+
     expect(res.status).toBe(404);
+    expect(await res.text()).toBe('{"error":"not found"}');
+    expect(createAdminClientMock).not.toHaveBeenCalled();
   });
 });
 
