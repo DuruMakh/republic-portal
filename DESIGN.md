@@ -67,10 +67,13 @@ Georgian**. `lang="ka"` throughout.
 
 - **Serif** — headlines, people's names, dates, and **all numerals** (counters, amounts,
   rankings, ledger figures). Manifesto/article ledes are serif ~1.12rem.
+  With the desktop sidebar, the homepage lede uses `clamp(0.74rem, 2.1cqw, 1.12rem)`
+  to fit on one line while respecting the text-size floor; smaller screens wrap normally.
 - **Sans** — UI labels, forms, buttons, nav, and small-caps section labels (~.7rem, weight
   700, letterspacing ~.18em).
-- Base 15px, line-height 1.65. Page `h1`s are serif 2.1–2.7rem; the homepage manifesto
-  headline is serif ~2.7rem with `text-wrap: balance`.
+- Base 15px, line-height 1.65. Page `h1`s are serif 2.1–2.7rem. The homepage headline
+  uses `text-wrap: balance` on smaller screens; with the desktop sidebar, its size is
+  4% of the main column's width (`4cqw`) so the owner's title fits on one line.
 - **Minimum text-size floor: 0.74rem (~11px).** No micro-print below it.
 - Justified two-column body is desktop-only; mobile is single-column, left-aligned (Georgian
   does not hyphenate — justified narrow columns produce rivers).

@@ -150,14 +150,13 @@ export default function StyleguidePage() {
 
         {/* 2. Type scale */}
         <Card title="შრიფტები">
-          <div className="flex flex-col gap-4">
-            <p className="font-serif text-[2.1rem] font-bold leading-tight text-ink">
-              ავაშენოთ ქართული რესპუბლიკა ერთად
+          <div className="flex flex-col gap-4 [container-type:inline-size]">
+            <p className="font-serif text-[2rem] font-bold leading-[1.16] text-ink [text-wrap:balance] sm:text-[2.7rem] lg:text-[4cqw] lg:whitespace-nowrap">
+              ერთად შევქმნათ ქართული რესპუბლიკა
             </p>
             <h2 className="font-serif text-[1.6rem] font-bold text-ink">ჩვენი დელეგატები</h2>
-            <p className="max-w-prose font-serif text-[1.12rem] leading-[1.6] text-prose">
-              გამჭვირვალე სამოქალაქო მოძრაობა — ვერიფიცირებული დელეგატები, ღია რეიტინგი და საჯარო
-              ფინანსები. შენს ხელში.
+            <p className="max-w-prose font-serif text-[1.12rem] leading-[1.6] text-prose lg:max-w-none lg:text-[clamp(0.74rem,2.1cqw,1.12rem)] lg:whitespace-nowrap">
+              იდეები მხოლოდ მაშინ ცვლიან ქვეყანას, როდესაც ადამიანები მათ გარშემო ერთიანდებიან.
             </p>
             <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-ink">
               რეიტინგი
