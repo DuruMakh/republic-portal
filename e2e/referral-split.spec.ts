@@ -27,23 +27,35 @@ test.afterAll(() => cleanupPhase4Users([REFERRER, FRIEND_A, FRIEND_B]));
 
 async function seedReferred(slot: number, signupRefCode: string): Promise<string> {
   const phone = phase4Phone(slot);
-  const { data, error } = await serviceClient().auth.admin.createUser({
+  const admin = serviceClient();
+  const { data, error } = await admin.auth.admin.createUser({
     phone: `+995${phone}`,
     phone_confirm: true,
   });
   if (error || !data.user) throw new Error(`referred user create failed: ${error?.message}`);
-  await seedRegisteredMember({
-    userId: data.user.id,
-    phone,
-    firstName: "მოწვეული",
-    lastName: `ტესტი${slot}`,
-    personalId: phase4PersonalId(slot),
-    signupRefCode,
-  });
+  try {
+    await seedRegisteredMember({
+      userId: data.user.id,
+      phone,
+      firstName: "მოწვეული",
+      lastName: `ტესტი${slot}`,
+      personalId: phase4PersonalId(slot),
+      signupRefCode,
+    });
+  } catch (seedError) {
+    // cleanupPhase4Users finds users through their profile, so an auth user whose
+    // profile never landed would outlive the run and block this slot's next createUser
+    await admin.auth.admin.deleteUser(data.user.id);
+    throw seedError;
+  }
   return data.user.id;
 }
 
-/** What the membership form's completion writes: member status plus an open membership. */
+/**
+ * The part of finishing the membership form the referral figures depend on: member
+ * status, the completion stamp, and the open membership every member holds. The real
+ * form also writes the profile details, tier and reference code, which no count reads.
+ */
 async function finishMembershipForm(id: string): Promise<void> {
   const db = serviceClient();
   const { error: pErr } = await db
