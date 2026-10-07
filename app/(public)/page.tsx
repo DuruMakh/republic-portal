@@ -36,25 +36,24 @@ const REG = "რეესტრი — დღეს";
 const TOP = "რეიტინგი — ხუთეული";
 const FULL = "სრულად →";
 
-// Ladder columns: fresh copy from the Task-11 brief's shipped vocabulary (Step 2), spliced
-// -- never hand-retyped. Rail labels reused byte-exact from their existing shipped pages:
-// the three counter labels from this file's own prior hero (git history), the collected-dues
-// label from app/(public)/transparency/page.tsx, the supporter label from
-// components/LeaderRow.tsx, and the finance nav label from app/(public)/layout.tsx.
-const LADDER_1_TITLE = "რეგისტრირებული";
-const LADDER_1_DESC = "სწრაფი რეგისტრაცია, გადახდის გარეშე.";
-const LADDER_1_LINK = "რეგისტრაცია →";
+// Ladder columns and the supporter wording: the owner's 2026-10-07 copy round (ADR-035) —
+// supporter is the free tier, so the registry counter says it too and a delegate's ranked
+// figure (active members) says so instead of supporter. The collected-dues label matches
+// app/(public)/transparency/page.tsx.
+const LADDER_1_TITLE = "მხარდამჭერი";
+const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით. უფასოდ.";
+const LADDER_1_LINK = "გახდი მხარდამჭერი →";
 const LADDER_2_TITLE = "წევრი";
-const LADDER_2_DESC = "სრული წევრობა და შიდა გამოკითხვები — კაბინეტიდან.";
+const LADDER_2_DESC = "აყენებს ინიციატივებს და მონაწილეობს საერთო კენჭისყრაში.";
 const LADDER_2_LINK = "დაიწყე რეგისტრაციით →";
 const LADDER_3_TITLE = "დელეგატი";
-const LADDER_3_DESC = "წევრებისთვის, დადასტურებით.";
+const LADDER_3_DESC = "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.";
 const LADDER_3_LINK = "გაეცანი წესებს →";
-const STAT_REGISTERED_LABEL = "რეგისტრირებული";
+const STAT_REGISTERED_LABEL = "მხარდამჭერი";
 const STAT_ACTIVE_LABEL = "აქტიური წევრი";
 const STAT_APPROVED_LABEL = "დამტკიცებული დელეგატი";
 const TOTAL_GEL_LABEL = "შეგროვებული საწევრო შენატანები";
-const SUPPORTER_LABEL = "მხარდამჭერი";
+const RANK_FIGURE_LABEL = "აქტიური წევრი";
 const NEWS_LABEL = "სიახლეები";
 const EVENTS_LABEL = "ღონისძიებები";
 const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
@@ -203,7 +202,7 @@ export default async function HomePage() {
                   name={`${d.first_name} ${d.last_name}`}
                   meta={d.region_name_ka ?? "—"}
                   figure={formatCountKa(d.active_supporters)}
-                  figureLabel={SUPPORTER_LABEL}
+                  figureLabel={RANK_FIGURE_LABEL}
                   href={`/delegates/${d.slug}`}
                 />
               ))}

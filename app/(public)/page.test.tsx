@@ -62,6 +62,56 @@ describe("homepage counters while finances are hidden (the default)", () => {
   });
 });
 
+describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)", () => {
+  it("names the three steps supporter, member, delegate with the agreed descriptions", async () => {
+    render(await HomePage());
+
+    expect(
+      screen.getByText("მარტივი რეგისტრაცია მეილით და ტელეფონით. უფასოდ."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(
+      "href",
+      "/join",
+    );
+    expect(
+      screen.getByText("აყენებს ინიციატივებს და მონაწილეობს საერთო კენჭისყრაში."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში."),
+    ).toBeInTheDocument();
+  });
+
+  it("calls the light tier a supporter everywhere on the page, never registered", async () => {
+    render(await HomePage());
+
+    // two exact hits: the first ladder column's title and the registry counter's label
+    expect(screen.getAllByText("მხარდამჭერი", { exact: true })).toHaveLength(2);
+    expect(screen.queryByText("რეგისტრირებული")).not.toBeInTheDocument();
+  });
+
+  it("labels a delegate's ranking figure as active members, not supporters", async () => {
+    data.fetchPublicDelegates.mockResolvedValue([
+      {
+        id: "00000000-0000-0000-0000-000000000001",
+        slug: "delegate-1",
+        first_name: "ეკა",
+        last_name: "მელაძე",
+        region_id: 8,
+        region_name_ka: "გურია",
+        bio: null,
+        photo_url: null,
+        active_supporters: 84,
+      },
+    ]);
+
+    render(await HomePage());
+
+    // the registry counter's active-member label plus the one ranked row's figure label
+    expect(screen.getAllByText("აქტიური წევრი", { exact: true })).toHaveLength(2);
+    expect(screen.getAllByText("მხარდამჭერი", { exact: true })).toHaveLength(2);
+  });
+});
+
 describe("homepage counters once finances are public (SHOW_PUBLIC_FINANCES=true)", () => {
   it("shows the collected-dues figure again", async () => {
     vi.stubEnv("SHOW_PUBLIC_FINANCES", "true");

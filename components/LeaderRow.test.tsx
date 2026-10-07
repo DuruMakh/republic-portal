@@ -52,4 +52,9 @@ describe("LeaderRow", () => {
     expect(screen.getByText("გურია")).toBeInTheDocument();
     expect(screen.getByText("84")).toBeInTheDocument();
   });
+  it("labels the figure as active members — supporter now names the free tier", () => {
+    render(<LeaderRow delegate={mk(2)} />);
+    expect(screen.getByText("აქტიური წევრი")).toBeInTheDocument();
+    expect(screen.queryByText("მხარდამჭერი")).not.toBeInTheDocument();
+  });
 });

@@ -127,7 +127,7 @@ describe("Pill", () => {
   });
   it("registered status renders the light-tier label", () => {
     render(<Pill status="registered" />);
-    expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();
+    expect(screen.getByText("მხარდამჭერი")).toBeInTheDocument();
   });
   it("stays in sync with TEAM_STATUS_LABELS (lib/cabinet) for profile_completed/active_member", () => {
     // Pill's STATUS_CONFIG duplicates these two labels as its own literals (kept in sync

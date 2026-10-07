@@ -82,12 +82,12 @@ export default async function DelegateDashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             value={panel.activeCount}
-            label="აქტიური მხარდამჭერი"
+            label="აქტიური წევრი"
             sub="ლიმიტის გარეშე"
             accent="brand"
           />
           <StatCard value={panel.totalCount} label="სულ გუნდში" />
-          <StatCard value={panel.registeredCount} label="რეგისტრირებული" />
+          <StatCard value={panel.registeredCount} label="მხარდამჭერი" />
           <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
         </div>
         <Card>

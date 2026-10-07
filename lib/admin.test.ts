@@ -172,13 +172,13 @@ describe("audit taxonomy (spec §4.5)", () => {
 describe("vocabulary and bars", () => {
   it("member statuses cover all three values", () => {
     expect(MEMBER_STATUS_LABELS_KA).toEqual({
-      registered: "რეგისტრირებული",
+      registered: "მხარდამჭერი",
       profile_completed: "წევრი (გადახდის გარეშე)",
       active_member: "აქტიური წევრი",
     });
   });
   it("status labels distinguish paying members from unpaid ones (owner fix #16)", () => {
-    expect(MEMBER_STATUS_LABELS_KA.registered).toBe("რეგისტრირებული");
+    expect(MEMBER_STATUS_LABELS_KA.registered).toBe("მხარდამჭერი");
     expect(MEMBER_STATUS_LABELS_KA.profile_completed).toBe("წევრი (გადახდის გარეშე)");
     expect(MEMBER_STATUS_LABELS_KA.active_member).toBe("აქტიური წევრი");
   });

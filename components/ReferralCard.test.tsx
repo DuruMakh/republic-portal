@@ -16,6 +16,7 @@ describe("ReferralCard", () => {
   it("shows how many people registered through the link (owner fix #12)", () => {
     render(<ReferralCard code="M-ABC234" count={7} />);
     expect(screen.getByTestId("referral-count")).toHaveTextContent("7");
+    expect(screen.getByText("მხარდამჭერი")).toBeInTheDocument();
   });
 
   it("shows the team-note sentence by default (delegate surface)", () => {
