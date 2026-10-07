@@ -3,7 +3,7 @@
 Owner direction, in chat on 2026-10-08: the referral link should report two separate counts,
 `მხარდამჭერი` and `წევრი`. Someone who signs up through the link counts as a supporter; when
 they finish the membership form they move across — supporters −1, members +1. Recorded as
-ADR-038.
+ADR-039.
 
 ## Decisions (owner, in chat)
 
@@ -66,7 +66,7 @@ ADR-038.
    two; page test.
 5. e2e: the delegate-panel spec reads the new test IDs.
 6. `npm run ka:scan`, full gate set, `/qa` on the preview with screenshots of all three
-   pages, ADR-038, PR, owner sign-off.
+   pages, ADR-039, PR, owner sign-off.
 
 ## Out of scope
 

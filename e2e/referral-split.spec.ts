@@ -10,7 +10,7 @@ import {
 import { approveOwnDelegate, seedPendingDelegate, seedRegisteredMember } from "./funnel-helpers";
 import { clientFor, otpSession } from "./otp-helpers";
 
-// ADR-038: the referral figures split into supporters (signed up through the link,
+// ADR-039: the referral figures split into supporters (signed up through the link,
 // membership form not finished) and members (finished it). Nothing is stored: a
 // person moves from one figure to the other when their status changes, and sign-ups
 // earned before delegate approval stay counted after it.
