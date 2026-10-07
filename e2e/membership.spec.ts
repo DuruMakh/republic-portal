@@ -234,5 +234,5 @@ test("a personal ID already claimed by another member is rejected inline, stayin
   // the duplicate surfaces as a field error, not a form banner, and the wizard
   // stays on the profile phase — no silent advance to the tier phase
   await expect(page.getByText("ეს პირადი ნომერი უკვე რეგისტრირებულია.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "იურიდიული პროფილი" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "წევრის მონაცემები" })).toBeVisible();
 });

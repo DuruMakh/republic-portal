@@ -109,7 +109,9 @@ beforeEach(() => {
 describe("MembershipWizard — phase derivation", () => {
   it("starts on the profile phase when wizard fields are incomplete", async () => {
     render(<MembershipWizard initialState={cab({})} />);
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
+    // owner decision (ADR-036): the heading stands alone, no explanatory line under it
+    expect(screen.queryByText(/ვერიფიკაციისთვის/)).toBeNull();
     expect(screen.queryByText("საწევრო შენატანი")).toBeNull();
     await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
   });
@@ -117,7 +119,7 @@ describe("MembershipWizard — phase derivation", () => {
   it("starts on the tier phase directly when the profile is already saved", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
     expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
-    expect(screen.queryByText("იურიდიული პროფილი")).toBeNull();
+    expect(screen.queryByText("წევრის მონაცემები")).toBeNull();
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" })).toBeInTheDocument(),
     );
@@ -169,7 +171,7 @@ describe("MembershipWizard — profile phase", () => {
     expect(
       await screen.findByText("სესია ამოიწურა — დაადასტურე ნომერი თავიდან."),
     ).toBeInTheDocument();
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
   });
 
   it("shows a Georgian error and re-enables the button when the save action rejects", async () => {
@@ -185,7 +187,7 @@ describe("MembershipWizard — profile phase", () => {
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(submitButton).not.toBeDisabled();
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
   });
 });
 
@@ -280,7 +282,7 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
     expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
     // still the profile phase — no separate form-level banner duplicating the same message
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     // field-level, not just a banner that happens to say the same words (review finding M2):
     // Field only sets aria-invalid when its own `error` prop is populated
     expect(screen.getByLabelText("პირადი ნომერი")).toHaveAttribute("aria-invalid", "true");
@@ -309,7 +311,7 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
   });
 });
@@ -370,7 +372,7 @@ describe("MembershipWizard — tier phase", () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
     expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
-    expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
+    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByLabelText("დაბადების თარიღი")).toHaveValue(PROFILED.birthDate),
     );

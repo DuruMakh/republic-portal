@@ -229,10 +229,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   if (phase === "profile") {
     phaseContent = (
       <>
-        <h2 className="font-serif font-bold border-b-2 border-ink pb-2">იურიდიული პროფილი</h2>
-        <p className="mb-5 mt-1 text-sm text-muted-fg">
-          ეს მონაცემები საჭიროა წევრობის იურიდიული ვერიფიკაციისთვის. ინახება უსაფრთხოდ.
-        </p>
+        <h2 className="mb-5 font-serif font-bold border-b-2 border-ink pb-2">წევრის მონაცემები</h2>
         <div className="flex flex-col gap-4">
           {askPersonalId ? (
             <div className="flex flex-col gap-1.5">

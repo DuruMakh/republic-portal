@@ -892,3 +892,21 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder
 - **Known mismatch left open.** The member column still links to the sign-up ("start by
   registering"), while the structure says the board admits members. Building that admission
   path is separate work.
+
+## ADR-036 (2026-10-07): The membership questionnaire is headed "member's details", with no line under it
+
+The first step of the membership wizard (`/me/membership`) was headed `იურიდიული პროფილი`
+with the line "this data is needed for the membership's legal verification; it is stored
+safely" under it. The owner disliked both: the words were bureaucratic and explained nothing,
+and "stored safely" was a promise nobody could check.
+
+- **Heading.** The step is now headed `წევრის მონაცემები` (member's details), chosen by the
+  owner from three drafted options.
+- **No explanatory line.** The owner chose to drop the line under the heading entirely rather
+  than replace it. A drafted replacement (why the personal ID is asked for and who can see it)
+  was offered and declined; if one returns, it must stay true to the schema: personal ID and
+  birth date appear in no view, only admins can reveal a personal ID and each reveal is
+  audited, and the column is not encrypted, so the copy must not say it is.
+- **Left as is.** The stepper still labels this step `პროფილი`; the owner did not ask to
+  change it. The second step (dues) is to be reworked separately: the owner said there will
+  be no dues at this stage and the step will hold several other questions instead.
