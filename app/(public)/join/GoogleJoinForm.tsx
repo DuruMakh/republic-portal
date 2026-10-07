@@ -283,8 +283,10 @@ export function GoogleJoinForm() {
 
   return (
     <AuthEntryShell
-      eyebrow={phoneStep ? "ნაბიჯი 2 — ტელეფონის დადასტურება" : "ნაბიჯი 1 — წევრის რეგისტრაცია"}
-      title="შემოგვიერთდი ერთ წუთში"
+      eyebrow={
+        phoneStep ? "ნაბიჯი 2 — ტელეფონის დადასტურება" : "ნაბიჯი 1 — მხარდამჭერად რეგისტრაცია"
+      }
+      title="შემოგვიერთდი"
       intro="Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."
       progress={<AuthProgress currentStep={currentStep} />}
       asideTitle={phoneStep ? "რატომ ტელეფონი?" : "როგორ მუშაობს"}
@@ -294,8 +296,9 @@ export function GoogleJoinForm() {
         ) : (
           <ol className="flex list-decimal flex-col gap-2 pl-4">
             <li>Google-ით უსაფრთხოდ შედიხარ.</li>
-            <li>ახალი წევრი ერთხელ ადასტურებს ტელეფონის ნომერს.</li>
-            <li>შემდეგ პირდაპირ პირად კაბინეტში გადადიხარ.</li>
+            <li>ერთხელ ადასტურებ ტელეფონის ნომერს.</li>
+            <li>ხდები მხარდამჭერი და გადადიხარ პირად კაბინეტში.</li>
+            <li>თუ წევრობა გინდა, კაბინეტში ავსებ უფრო ვრცელ კითხვარს.</li>
           </ol>
         )
       }

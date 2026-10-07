@@ -28,10 +28,9 @@ import { RegisteredProfileForm } from "./RegisteredProfileForm";
 
 export const metadata: Metadata = { title: "ჩემი პროფილი — ქართული რესპუბლიკა" };
 
-// Reused byte-exact from components/LeaderRow.tsx (itself spliced from
-// app/(public)/page.tsx's SUPPORTER_LABEL, Task 11) — the my-delegate rail
+// Same label as components/LeaderRow.tsx's RANK_FIGURE_LABEL (ADR-035) — the my-delegate rail
 // card shows the same rank/region/supporters shape as the public registry.
-const SUPPORTER_LABEL = "მხარდამჭერი";
+const RANK_FIGURE_LABEL = "აქტიური წევრი";
 // Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html's
 // member-cabinet poll teaser (S4); verified against the Georgian (Mkhedruli,
 // U+10A0-U+10FF) Unicode block before commit — see the georgian-quote-
@@ -259,7 +258,7 @@ export default async function ProfilePage() {
                     name={`${myDelegateRanked.first_name} ${myDelegateRanked.last_name}`}
                     meta={myDelegateRanked.region_name_ka ?? "—"}
                     figure={formatCountKa(myDelegateRanked.active_supporters)}
-                    figureLabel={SUPPORTER_LABEL}
+                    figureLabel={RANK_FIGURE_LABEL}
                     href={`/delegates/${myDelegateRanked.slug}`}
                   />
                 </div>

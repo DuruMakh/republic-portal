@@ -203,7 +203,8 @@ describe("GoogleJoinForm", () => {
     render(<JoinForm />);
 
     expectCurrentRegistrationStep("Google");
-    expect(screen.getByText("ნაბიჯი 1 — წევრის რეგისტრაცია")).toBeInTheDocument();
+    expect(screen.getByText("ნაბიჯი 1 — მხარდამჭერად რეგისტრაცია")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "შემოგვიერთდი" })).toBeInTheDocument();
   });
 
   it("shows only the Google gate when signed out and preserves a valid referral through OAuth", async () => {
@@ -212,7 +213,19 @@ describe("GoogleJoinForm", () => {
 
     const google = await screen.findByRole("button", { name: "Google-ით გაგრძელება" });
     expectCurrentRegistrationStep("Google");
-    expect(screen.getByRole("complementary")).toHaveAccessibleName("როგორ მუშაობს");
+    const aside = screen.getByRole("complementary");
+    expect(aside).toHaveAccessibleName("როგორ მუშაობს");
+    // supporter first, membership later from the cabinet (owner copy round, ADR-035)
+    expect(
+      within(aside)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual([
+      "Google-ით უსაფრთხოდ შედიხარ.",
+      "ერთხელ ადასტურებ ტელეფონის ნომერს.",
+      "ხდები მხარდამჭერი და გადადიხარ პირად კაბინეტში.",
+      "თუ წევრობა გინდა, კაბინეტში ავსებ უფრო ვრცელ კითხვარს.",
+    ]);
     expect(screen.queryByLabelText("სახელი")).toBeNull();
     expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
     fireEvent.click(google);
@@ -244,7 +257,7 @@ describe("GoogleJoinForm", () => {
 
     expectCurrentRegistrationStep("ტელეფონი");
     expect(screen.queryByText("ნაბიჯი 2 — ტელეფონის დადასტურება")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი" })).toBeNull();
     expect(
       screen.queryByText("Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."),
     ).toBeNull();

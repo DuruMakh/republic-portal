@@ -9,8 +9,9 @@ import { formatCountKa } from "@/lib/format";
 
 // Spliced byte-exact (never hand-typed) from the delegate panel's registered-count
 // StatCard label — app/(delegate)/delegate/page.tsx's
-// `<StatCard value={panel.registeredCount} label="რეგისტრირებული" />` (owner fix #12).
-const REGISTERED_LABEL = "რეგისტრირებული";
+// `<StatCard value={panel.registeredCount} label="მხარდამჭერი" />` (owner fix #12;
+// renamed from the registered wording in the 2026-10-07 copy round, ADR-035).
+const REGISTERED_LABEL = "მხარდამჭერი";
 
 /**
  * Origin is read client-side so the link is truthful on every deployment

@@ -38,7 +38,7 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
         onClick={startGoogleOAuth}
         disabled={pending}
         aria-busy={pending}
-        className="relative inline-flex min-h-[48px] w-full items-center justify-center border border-[#747775] bg-white px-12 text-[0.9rem] font-medium text-[#1f1f1f] no-underline transition-colors hover:bg-[#f8f9fa] disabled:pointer-events-none disabled:opacity-60"
+        className="relative inline-flex min-h-[48px] w-full items-center justify-center border border-ink bg-transparent px-12 text-[0.9rem] font-medium text-ink no-underline transition-colors hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:opacity-60"
       >
         <Image
           src="/brand/google-g.png"

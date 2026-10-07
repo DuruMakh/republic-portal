@@ -25,7 +25,7 @@ export default async function MyDelegatePage() {
       supabase.from("regions").select("id, name_ka").order("id"),
     ]);
   if (delegatesError) {
-    // a transient failure must not show „0 აქტიური მხარდამჭერი" for a real delegate
+    // a transient failure must not show „0 აქტიური წევრი" for a real delegate
     throw new Error(`public_delegates query failed: ${delegatesError.message}`);
   }
   if (regionsError) {
@@ -77,7 +77,7 @@ export default async function MyDelegatePage() {
               </div>
               {current ? (
                 <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-sm">
-                  <span className="text-muted-fg">აქტიური მხარდამჭერი</span>
+                  <span className="text-muted-fg">აქტიური წევრი</span>
                   <strong className="font-serif text-lg text-ink">
                     {formatCountKa(current.active_supporters)}
                   </strong>

@@ -78,7 +78,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
       </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard
-          label="აქტიური მხარდამჭერი"
+          label="აქტიური წევრი"
           value={formatCountKa(delegate.active_supporters)}
           accent="brand"
           sub="ღია რეიტინგში"
@@ -94,8 +94,8 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
           <div className="text-center">
             <h2 className="text-lg font-bold text-ink">დაუდექი მხარში {delegate.first_name}-ს</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg">
-              დარეგისტრირდი ერთ წუთში და წევრობის გაფორმებისას აირჩიე ის შენს დელეგატად — მხარდაჭერა
-              წევრობით ხდება.
+              დარეგისტრირდი და წევრობის გაფორმებისას აირჩიე ის შენს დელეგატად — მხარდაჭერა წევრობით
+              ხდება.
             </p>
             <div className="mt-5">
               <ButtonLink href="/join" size="lg">

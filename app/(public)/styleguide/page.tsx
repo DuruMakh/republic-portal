@@ -334,7 +334,7 @@ export default function StyleguidePage() {
               name="გიორგი მაისურაძე"
               meta="თბილისი — დამტკიცებული · იან 2026"
               figure={342}
-              figureLabel="მხარდამჭერი"
+              figureLabel="აქტიური წევრი"
               href="/leaderboard"
             />
             <IndexRow
@@ -342,7 +342,7 @@ export default function StyleguidePage() {
               name="თამარ ქავთარაძე"
               meta="აჭარა — დამტკიცებული · იან 2026"
               figure={287}
-              figureLabel="მხარდამჭერი"
+              figureLabel="აქტიური წევრი"
               href="/leaderboard"
             />
             <IndexRow
@@ -350,7 +350,7 @@ export default function StyleguidePage() {
               name="ლევან ჩხეიძე"
               meta="იმერეთი — დამტკიცებული · თებ 2026"
               figure={256}
-              figureLabel="მხარდამჭერი"
+              figureLabel="აქტიური წევრი"
             />
           </div>
         </Card>

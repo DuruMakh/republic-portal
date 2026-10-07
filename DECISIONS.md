@@ -854,3 +854,41 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   `headers()` or database reads) or every route would turn dynamic. Next ignores a not-found file's own
   metadata when a page raises the 404, so the hidden finance page itself returns the generic
   Georgian not-found title, never its own.
+
+## ADR-035 (2026-10-07): The free tier is called supporter; the ladder copy states what each step does
+
+Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder.
+
+- **Supporter, not registered.** The free first step is now `მხარდამჭერი` wherever the
+  site shows it as a standing or a count: the homepage ladder and registry counter, the
+  transparency counter, the admin overview card, the member-status pill and admin member
+  list, the delegate cabinet card and every referral card's count. Where the old word is an
+  adjective or a verb in a sentence ("already registered", "registered members"), it stays.
+- **The ranked figure is active members.** That supporter word used to label a delegate's
+  ranked figure, which counts the people in their team whose status is active member. With
+  the word now naming the free tier, the homepage would have shown two different numbers under
+  one label, so the figure, the delegate page stat, the share image, the cabinet stats and the
+  leaderboard text now say `აქტიური წევრი`. The owner's direction is that, once dues are
+  dropped, "active" loses its meaning and this becomes plain "member". That needs the count
+  itself to change (it counts only paying members today), so it is left to the dues-removal
+  work and not done here, where it would put a wrong label on the number.
+- **The ladder describes each step.** Supporter: a simple sign-up by email and phone, free.
+  Member: puts forward initiatives and votes in the general ballot, taken from the owner's
+  organisational structure (members are admitted by the board, may bring initiatives to it and
+  vote on what it refers to them). Delegate: the movement's representative in their own town,
+  village or neighbourhood. The member column no longer mentions dues, by owner decision.
+  "By email" is the owner's choice of wording for what is a Google sign-in, as the plainer word.
+- **The registration page says supporter.** `/join` is headed `შემოგვიერთდი` (no "in one
+  minute"), its step label reads `ნაბიჯი 1 — მხარდამჭერად რეგისტრაცია`, and "how it works"
+  lists four steps: Google sign-in, one phone confirmation, becoming a supporter in the
+  cabinet, and a longer questionnaire there for anyone who wants membership. The site says
+  nowhere that joining is free or takes a minute: the phone join bar's
+  `ერთ წუთში · გადახდის გარეშე` line, the ladder's `უფასოდ` and the "in one minute" phrases
+  on `/join`, its search description and the delegate page are gone.
+- **The Google button wears the site's outline button.** The owner chose the ink-outline style
+  (ink border and text on paper, filling ink on hover) over Google's white button, amending the
+  2026-08-12 auth-entry design's "conventional white Google button". The official multicolour
+  G mark is unchanged, as Google's brand rules require.
+- **Known mismatch left open.** The member column still links to the sign-up ("start by
+  registering"), while the structure says the board admits members. Building that admission
+  path is separate work.
