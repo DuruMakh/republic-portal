@@ -56,9 +56,7 @@ test.afterAll(() =>
   ]),
 );
 
-test("full upgrade: register → wizard → application sent and member nav", async ({
-  page,
-}) => {
+test("full upgrade: register → wizard → application sent and member nav", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.membFull);
   await passRegistration(page, {
     phone,
