@@ -23,10 +23,10 @@ test.afterAll(() => cleanupPhase4Users([CIVILIAN]));
 // R2 (spec §5): admin_overview grew the registered-total + conversion figures; the
 // super-admin is the canonical isStaff role with no narrower gate, so it's the
 // baseline check that the overview cards render at all.
-test("super-admin sees the registered + conversion overview cards", async ({ page }) => {
+test("super-admin sees the supporter + conversion overview cards", async ({ page }) => {
   await loginAs(page, ADMIN_PHONES.super);
   await page.goto("/admin");
-  await expect(page.getByText("რეგისტრირებული")).toBeVisible();
+  await expect(page.getByText("მხარდამჭერი", { exact: true })).toBeVisible();
   await expect(page.getByText("კონვერსია")).toBeVisible();
   await signOutViaNav(page);
 });

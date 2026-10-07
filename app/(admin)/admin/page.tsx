@@ -68,7 +68,7 @@ export default async function AdminOverviewPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 border-t-2 border-ink">
         <StatCard
           value={formatCountKa(overview.registered_total)}
-          label="რეგისტრირებული"
+          label="მხარდამჭერი"
           sub="ჯამური რეესტრი — წევრებიც შედიან"
         />
         <StatCard
@@ -84,7 +84,7 @@ export default async function AdminOverviewPage() {
         <StatCard
           value={formatCountKa(overview.active_members)}
           label="აქტიური წევრი"
-          sub="↑ გადამხდელი მხარდამჭერები"
+          sub="↑ გადამხდელი წევრები"
         />
         <StatCard
           value={formatCountKa(overview.approved_delegates)}

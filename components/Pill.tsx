@@ -9,7 +9,7 @@ type Status =
 
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
   draft: { label: "მონახაზი", className: "bg-surface text-muted-fg" },
-  registered: { label: "რეგისტრირებული", className: "bg-surface text-muted-fg" },
+  registered: { label: "მხარდამჭერი", className: "bg-surface text-muted-fg" },
   // Mirror lib/cabinet.ts's TEAM_STATUS_LABELS (kept as separate literals here, not
   // imported, so this generic primitive doesn't couple to the cabinet domain) — update
   // both together if the team-status vocabulary changes again.

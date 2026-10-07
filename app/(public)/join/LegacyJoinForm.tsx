@@ -185,7 +185,7 @@ export function LegacyJoinForm() {
   return (
     <main className="mx-auto max-w-xl px-6 pb-16 pt-10">
       <Eyebrow>წევრის რეგისტრაცია</Eyebrow>
-      <h1 className="mt-1 font-serif text-3xl font-bold text-ink">შემოგვიერთდი ერთ წუთში</h1>
+      <h1 className="mt-1 font-serif text-3xl font-bold text-ink">შემოგვიერთდი</h1>
       <p className="mt-3 text-muted-fg">მხოლოდ ძირითადი მონაცემები — დანარჩენს კაბინეტში ნახავ.</p>
       <div className="mt-8">
         <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">

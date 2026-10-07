@@ -59,17 +59,19 @@ test.describe("home", () => {
 
   test("the single register CTA lands on the Google-gated join flow", async ({ page }) => {
     await page.goto("/");
-    // One door now: the ladder's first column CTA is „რეგისტრაცია →“ (app/(public)/page.tsx);
+    // One door now: the ladder's first column CTA is „გახდი მხარდამჭერი →“ (app/(public)/page.tsx);
     // the old two-door „გახდი დელეგატი“ is gone. Scope to <main> — the header keeps its own
     // „შემოგვიერთდი“ link outside <main> (app/(public)/layout.tsx).
-    const cta = page.getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true });
+    const cta = page
+      .getByRole("main")
+      .getByRole("link", { name: "გახდი მხარდამჭერი →", exact: true });
     await expect(cta).toBeVisible();
     await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
     await cta.click();
     await expect(page).toHaveURL(/\/join$/);
     // Logged-out visitors must establish the Google identity before any personal
     // or phone fields appear. The authenticated form is covered in registration.spec.
-    await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "შემოგვიერთდი", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
     await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
     await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);
@@ -120,11 +122,9 @@ test.describe("delegate page", () => {
     await expect(page.getByRole("heading", { name: "გიორგი მაისურაძე" })).toBeVisible();
     await expect(page.getByText("#1")).toBeVisible();
     await expect(page.getByText("პოზიცია რეიტინგში")).toBeVisible();
-    // .first(): this text also appears inside the CTA copy further down the page
-    // ("გახდი მისი აქტიური მხარდამჭერი"), so the bare locator hits Playwright's
-    // strict-mode multi-match guard. .first() disambiguates to the StatCard label
-    // (the actual supporter-stat element under test) without loosening the check.
-    await expect(page.getByText("აქტიური მხარდამჭერი").first()).toBeVisible(); // supporter stat present
+    // .first() keeps the locator on the StatCard label (the active-member stat under
+    // test) should the wording ever repeat on the page, without loosening the check.
+    await expect(page.getByText("აქტიური წევრი").first()).toBeVisible(); // active-member stat present
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
     expect(ogTitle).toContain("გიორგი მაისურაძე");
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute("content");

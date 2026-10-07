@@ -18,7 +18,7 @@ test("home renders in Georgian with a single register CTA", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "ქართული რესპუბლიკა" })).toBeVisible();
   // one-door registration: the hero CTA is „დარეგისტრირდი"; the old „გახდი დელეგატი" is gone
   await expect(
-    page.getByRole("main").getByRole("link", { name: "რეგისტრაცია →", exact: true }),
+    page.getByRole("main").getByRole("link", { name: "გახდი მხარდამჭერი →", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("გახდი დელეგატი")).toHaveCount(0);
   // the header keeps its own CTA (app/(public)/layout.tsx); the ladder's third counter
@@ -30,7 +30,7 @@ test("home renders in Georgian with a single register CTA", async ({ page }) => 
 
 test("join requires Google before showing registration fields", async ({ page }) => {
   await page.goto("/join");
-  await expect(page.getByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "შემოგვიერთდი", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
   await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
   await expect(page.getByLabel("პირადი ნომერი")).toHaveCount(0);

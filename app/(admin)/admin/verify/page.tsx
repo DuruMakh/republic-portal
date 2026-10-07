@@ -79,7 +79,7 @@ export default async function AdminVerifyPage({
                   <th className={tableThClass}>დელეგატი</th>
                   <th className={tableThClass}>რეგიონი</th>
                   <th className={tableThClass}>საჯარო გვერდი</th>
-                  <th className={tableThClass}>მხარდამჭერები</th>
+                  <th className={tableThClass}>გუნდი</th>
                   <th className={tableThClass}>ბიო / ფოტო</th>
                   <th className={tableThClass}>დამტკიცდა</th>
                   <th className={tableThClass}></th>
