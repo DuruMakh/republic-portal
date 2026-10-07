@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import roster from "../scripts/seed-roster.json";
-import { makeSlug } from "./slug";
+import { makeSlugFrom } from "./slug";
 
 const REGIONS = [
   "თბილისი",
@@ -24,10 +24,10 @@ describe("seed roster", () => {
   it("uses only canonical region names", () => {
     for (const d of roster) expect(REGIONS).toContain(d.region);
   });
-  it("slugs match makeSlug output in roster order", () => {
+  it("slugs match makeSlugFrom output in roster order", () => {
     const taken = new Set<string>();
     for (const d of roster) {
-      const expected = makeSlug(`${d.first_name} ${d.last_name}`, taken);
+      const expected = makeSlugFrom(`${d.first_name} ${d.last_name}`, "delegati", taken);
       expect(d.slug).toBe(expected);
       taken.add(expected);
     }

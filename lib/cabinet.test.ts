@@ -11,7 +11,6 @@ import {
   formatDateKa,
   formatPhoneKa,
   formToEmployment,
-  initialsKa,
   memberSinceKa,
   paymentMethodLabel,
   paymentStatusKa,
@@ -161,16 +160,13 @@ describe("formatPhoneKa", () => {
   });
 });
 
-describe("formatDateKa / initialsKa / labels", () => {
+describe("formatDateKa / labels", () => {
   it("dd.mm.yyyy in Tbilisi time, deterministic (no ICU)", () => {
     expect(formatDateKa("2026-07-15")).toBe("15.07.2026"); // date-only stays put
     expect(formatDateKa("2026-07-15T10:00:00Z")).toBe("15.07.2026");
     // UTC+4: 22:10Z on the 15th is 02:10 on the 16th locally
     expect(formatDateKa("2026-07-15T22:10:00Z")).toBe("16.07.2026");
     expect(formatDateKa("garbage")).toBe("garbage");
-  });
-  it("initials from Georgian names", () => {
-    expect(initialsKa("ნინო", "ბერიძე")).toBe("ნბ");
   });
   it("payment method label", () => {
     expect(paymentMethodLabel("manual")).toBe("გადარიცხვა");
