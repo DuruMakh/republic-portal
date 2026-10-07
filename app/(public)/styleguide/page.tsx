@@ -492,7 +492,7 @@ export default function StyleguidePage() {
           <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
         </Card>
 
-        {/* 17. /structure pieces (ADR-035): the condensed display heading, the
+        {/* 17. /structure pieces (ADR-036): the condensed display heading, the
             pebble rule card, the membership path, the tally and the roster's
             launch (empty) state. Copy and counts come from lib/, never hand-typed. */}
         <Card title={STRUCTURE_TITLE}>

@@ -8,7 +8,7 @@ const TONE: Record<PebbleTone, string> = {
   outline: "bg-paper-bright border-2 border-brand text-brand",
 };
 
-/** The irregular pebble shape (/structure motif, ADR-035). Size and rotation come via className. */
+/** The irregular pebble shape (/structure motif, ADR-036). Size and rotation come via className. */
 export function Pebble({
   tone = "brand",
   className = "",

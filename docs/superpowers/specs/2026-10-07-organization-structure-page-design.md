@@ -94,7 +94,7 @@ concept's own top bar and footer are mock-ups only.
 - **New: condensed display headings.** Load the `wdth` axis on the existing
   `Noto_Sans_Georgian` (`axes: ["wdth"]` — supported by next/font, axis 62.5–100) and add
   one `display` text style (sans, `font-stretch: 68%`, weight ~850, tight leading). Used
-  for this page's `h1`/`h2`s only, for now. Recorded in DESIGN.md + ADR-035 (adds font
+  for this page's `h1`/`h2`s only, for now. Recorded in DESIGN.md + ADR-036 (adds font
   bytes site-wide; no new dependency).
 - **New: pebble motif.** One `Pebble` primitive (the irregular border-radius ellipse)
   reused by bullets, rule cards, path nodes; SVG pebbles for the council and the tally.

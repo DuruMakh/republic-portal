@@ -49,7 +49,7 @@
 | `app/(public)/layout.tsx` (+`layout.test.tsx`) | modify | Header + footer link. |
 | `app/sitemap.ts` | modify | `/structure` entry. |
 | `app/(public)/styleguide/page.tsx` | modify | Gallery entries for the new components. |
-| `DESIGN.md`, `DECISIONS.md` | modify | Register rows; ADR-035. |
+| `DESIGN.md`, `DECISIONS.md` | modify | Register rows; ADR-036. |
 | `e2e/public.spec.ts`, `e2e/responsive.spec.ts` | modify | Journey + 360px overflow sweep. |
 
 ---
@@ -725,7 +725,7 @@ Expected: FAIL — modules not found.
 const notoSans = Noto_Sans_Georgian({
   subsets: ["georgian"],
   variable: "--font-noto-sans-georgian",
-  // The condensed display headings on /structure (ADR-035) need the width axis.
+  // The condensed display headings on /structure (ADR-036) need the width axis.
   axes: ["wdth"],
 });
 ```
@@ -733,7 +733,7 @@ const notoSans = Noto_Sans_Georgian({
 `app/globals.css` — append at the end of the file:
 
 ```css
-/* /structure (ADR-035): condensed display headings and the pebble shape. */
+/* /structure (ADR-036): condensed display headings and the pebble shape. */
 @utility display-heading {
   font-family: var(--font-sans);
   font-stretch: 68%;
@@ -777,7 +777,7 @@ const TONE: Record<PebbleTone, string> = {
   outline: "bg-paper-bright border-2 border-brand text-brand",
 };
 
-/** The irregular pebble shape (/structure motif, ADR-035). Size and rotation come via className. */
+/** The irregular pebble shape (/structure motif, ADR-036). Size and rotation come via className. */
 export function Pebble({
   tone = "brand",
   className = "",
@@ -1687,7 +1687,7 @@ git commit -F msg.txt   # "feat(structure): /structure page, header + footer + p
 ### Task 8: Living styleguide and design records
 
 **Files:**
-- Modify: `app/(public)/styleguide/page.tsx` (add one `Card` before the mobile-chrome card, item "17" → renumber the comment of the mobile card to 18), `DESIGN.md` (component register + a short "Display headings" note under Type), `DECISIONS.md` (append ADR-035)
+- Modify: `app/(public)/styleguide/page.tsx` (add one `Card` before the mobile-chrome card, item "17" → renumber the comment of the mobile card to 18), `DESIGN.md` (component register + a short "Display headings" note under Type), `DECISIONS.md` (append ADR-036)
 
 **Interfaces:**
 - Consumes: `Pebble`, `DecisionRuleCard`, `MembershipPath`, `PebbleTally`, `BoardRoster` (Tasks 4–6); copy from Task 1.
@@ -1736,7 +1736,7 @@ import {
 and, immediately before the `{/* 17. Mobile chrome.` comment (renumber that comment to 18):
 
 ```tsx
-        {/* 17. /structure pieces (ADR-035): the condensed display heading, the
+        {/* 17. /structure pieces (ADR-036): the condensed display heading, the
             pebble rule card, the membership path, the tally and the roster's
             launch (empty) state. Copy comes from lib/structure-copy.ts. */}
         <Card title={STRUCTURE_TITLE}>
@@ -1759,13 +1759,13 @@ and, immediately before the `{/* 17. Mobile chrome.` comment (renumber that comm
 
 ```md
 - **Display (condensed)** — `display-heading` utility: Noto Sans Georgian at `font-stretch: 68%`,
-  weight ~850, tight leading. Used only on `/structure` headings for now (ADR-035).
+  weight ~850, tight leading. Used only on `/structure` headings for now (ADR-036).
 ```
 
 and append to the "### Furniture" component-register table these rows:
 
 ```md
-| `Pebble`                 | `{ tone?, className?, children? }`                                       | The `/structure` motif (ADR-035): an irregular rounded shape via the `pebble` utility; tones `brand` (filled), `empty` (surface + line), `outline` (bright + brand ring). Decorative (`aria-hidden`). The one sanctioned organic shape; square corners stay the rule elsewhere. |
+| `Pebble`                 | `{ tone?, className?, children? }`                                       | The `/structure` motif (ADR-036): an irregular rounded shape via the `pebble` utility; tones `brand` (filled), `empty` (surface + line), `outline` (bright + brand ring). Decorative (`aria-hidden`). The one sanctioned organic shape; square corners stay the rule elsewhere. |
 | `DecisionRuleCard`       | `{ headline, body, needed, total }`                                      | Rule headline in condensed display red, body in serif, and `total` pebbles with `needed` filled; the pebble row is `role="img"` named `5-დან 4 ხმა`.                                                                                                                   |
 | `MembershipPath`         | `{ label, steps }`                                                       | Ordered steps on a vertical hairline; numbered outline pebbles, the last filled.                                                                                                                                                                                       |
 | `PebbleCouncil`          | `{ seats, centerLabel, className? }`                                     | `/structure` hero drawing from `councilLayout()`; seats fade in once (reduced-motion: none).                                                                                                                                                                           |
@@ -1776,7 +1776,7 @@ and append to the "### Furniture" component-register table these rows:
 `DECISIONS.md` — append:
 
 ```md
-## ADR-035 (2026-10-07): The structure page's condensed display type and pebble motif
+## ADR-036 (2026-10-07): The structure page's condensed display type and pebble motif
 
 Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
 
@@ -1805,7 +1805,7 @@ Expected: PASS.
 
 ```bash
 git add "app/(public)/styleguide/page.tsx" "app/(public)/styleguide/styleguide.test.tsx" DESIGN.md DECISIONS.md
-git commit -F msg.txt   # "docs(structure): styleguide gallery, design register rows, ADR-035"
+git commit -F msg.txt   # "docs(structure): styleguide gallery, design register rows, ADR-036"
 ```
 
 ---

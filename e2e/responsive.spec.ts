@@ -16,7 +16,7 @@ const PAGES = [
   // content on every page, and /support is the newest public route -- cheapest
   // place to catch it overflowing before it ships anywhere else.
   "/support",
-  // The organization structure page (ADR-035): two-column sections that must stack.
+  // The organization structure page (ADR-036): two-column sections that must stack.
   "/structure",
 ];
 
