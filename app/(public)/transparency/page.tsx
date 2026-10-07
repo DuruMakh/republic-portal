@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Eyebrow } from "@/components/Eyebrow";
 import { SectionRule } from "@/components/SectionRule";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import { StatCard } from "@/components/StatCard";
 import { formatCountKa } from "@/lib/format";
+import { showPublicFinances } from "@/lib/public-finances";
 import {
   fetchPublicStats,
   fetchTransparencyRegions,
@@ -12,13 +15,24 @@ import {
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+const FINANCES_METADATA: Metadata = {
   title: "გამჭვირვალობა — ქართული რესპუბლიკა",
   description: "ღია მონაცემები მოძრაობის წევრობასა და შემოსავლებზე — პირდაპირ რეესტრიდან.",
   openGraph: { images: ["/og-default.png"] },
 };
 
+// While hidden the page presents the generic not-found title and never its own (ADR-034): a
+// static export would still be streamed inside the not-found response and could show up as the
+// browser tab title, and Next ignores the not-found file's own metadata for a page-raised 404.
+export function generateMetadata(): Metadata {
+  return showPublicFinances() ? FINANCES_METADATA : NOT_FOUND_METADATA;
+}
+
 export default async function TransparencyPage() {
+  // Hidden by owner decision (ADR-034): not-found for everyone, before any data is fetched.
+  // Set SHOW_PUBLIC_FINANCES=true and redeploy to bring the page back as it was.
+  if (!showPublicFinances()) notFound();
+
   const [stats, regionsRaw, publicStats] = await Promise.all([
     fetchTransparencyStats(),
     fetchTransparencyRegions(),

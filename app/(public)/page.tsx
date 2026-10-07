@@ -8,6 +8,7 @@ import { formatDateKa } from "@/lib/cabinet";
 import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
 import { formatCountKa } from "@/lib/format";
+import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
 import {
   fetchPublicDelegates,
@@ -60,10 +61,13 @@ const NEWS_EMPTY = "სიახლეები მალე გამოჩნ�
 const EVENTS_EMPTY = "მომავალი ღონისძიებები მალე გამოცხადდება.";
 
 export default async function HomePage() {
+  // The collected-dues figure is part of the hidden finance surface (ADR-034): no fetch,
+  // no row, until SHOW_PUBLIC_FINANCES=true.
+  const financesPublic = showPublicFinances();
   const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),
     fetchPublicDelegates(),
-    fetchTransparencyStats(),
+    financesPublic ? fetchTransparencyStats() : Promise.resolve(null),
     fetchPublicNews(),
     fetchPublicEvents(),
   ]);
@@ -179,12 +183,14 @@ export default async function HomePage() {
                   <CountUp value={stats.registered_total} />
                 </span>
               </div>
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">{TOTAL_GEL_LABEL}</span>
-                <span className="font-serif text-xl font-bold">
-                  {formatCountKa(Math.round(tStats.total_gel))}₾
-                </span>
-              </div>
+              {tStats ? (
+                <div className="flex justify-between border-b border-hairline py-2.5">
+                  <span className="text-[0.85rem] text-muted-fg">{TOTAL_GEL_LABEL}</span>
+                  <span className="font-serif text-xl font-bold">
+                    {formatCountKa(Math.round(tStats.total_gel))}₾
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
           <div>

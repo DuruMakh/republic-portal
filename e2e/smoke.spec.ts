@@ -1,4 +1,17 @@
 import { expect, test } from "@playwright/test";
+import { FINANCES_PUBLIC } from "./finances-switch";
+
+test("the header has one account action, and no finance link while finances are hidden", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "შემოგვიერთდი", exact: true })).toHaveCount(1);
+  await expect(header.getByRole("link", { name: "შესვლა", exact: true })).toHaveCount(0);
+  await expect(header.getByRole("link", { name: "ფინანსები", exact: true })).toHaveCount(
+    FINANCES_PUBLIC ? 1 : 0,
+  );
+});
 
 test("home renders in Georgian with a single register CTA", async ({ page }) => {
   await page.goto("/");

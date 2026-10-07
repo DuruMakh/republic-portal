@@ -4,9 +4,13 @@
 // anchored on seeded names/ranks, not exact totals. CI never seeds — if these fail on
 // a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
+import { FINANCES_PUBLIC } from "./finances-switch";
 import { serviceClient } from "./otp-helpers";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
+const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა.";
+const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
+const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
 
 test.describe("home", () => {
   test("hero, live counters and nav work", async ({ page }) => {
@@ -137,6 +141,35 @@ test.describe("delegate page", () => {
   });
 });
 
+test.describe("missing pages", () => {
+  // An unknown URL and a missing article or event are different Next.js paths (the site-wide
+  // not-found vs the public group's), so each gets its own check.
+  for (const path of [
+    "/no-such-page-xyz",
+    "/news/no-such-article-xyz",
+    "/events/no-such-event-xyz",
+  ]) {
+    test(`${path} is a Georgian 404 inside the site header`, async ({ page }) => {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(404);
+      await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+      await expect(page.getByRole("link", { name: NOT_FOUND_HOME })).toHaveAttribute("href", "/");
+      await expect(
+        page.getByRole("banner").getByRole("link", { name: "შემოგვიერთდი", exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText("This page could not be found")).toHaveCount(0);
+      // Articles and events set their own Georgian "not found" titles; whatever the page, the
+      // framework's English default must never reach the tab.
+      await expect(page).not.toHaveTitle(/could not be found/);
+    });
+  }
+
+  test("an unknown URL titles the tab in Georgian", async ({ page }) => {
+    await page.goto("/no-such-page-xyz");
+    await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+  });
+});
+
 test.describe("robots", () => {
   test("non-production deployments refuse indexing", async ({ request }) => {
     const robots = await request.get("/robots.txt");
@@ -144,7 +177,31 @@ test.describe("robots", () => {
   });
 });
 
+// ADR-034: the finance page is hidden unless SHOW_PUBLIC_FINANCES=true. Exactly one of the two
+// groups below runs, so flipping the switch re-enables the original assertions untouched.
+test.describe("finances hidden", () => {
+  test.skip(FINANCES_PUBLIC, "finances are public — see the transparency group");
+
+  test("/transparency answers 404 even with the exact address", async ({ page }) => {
+    const response = await page.goto("/transparency");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+    // the tab names no finance page either: it reads as any other missing page
+    await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+    await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
+  });
+
+  test("no public page links to it", async ({ page }) => {
+    for (const path of ["/", "/news", "/events", "/leaderboard", "/join", "/support"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href="/transparency"]'), path).toHaveCount(0);
+    }
+  });
+});
+
 test.describe("transparency", () => {
+  test.skip(!FINANCES_PUBLIC, "finances are hidden (ADR-034) — see the finances hidden group");
+
   test("the region table shows members and collected money", async ({ page }) => {
     await page.goto("/transparency");
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toBeVisible();

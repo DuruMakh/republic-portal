@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { BrandLockup } from "@/components/BrandLockup";
+import { useChromePathname } from "@/components/ChromePathname";
 import { MobileBackHeader } from "@/components/MobileBackHeader";
 import { MobileMenu } from "@/components/MobileMenu";
 import { mobileBackTarget } from "@/lib/mobile-nav";
@@ -34,7 +34,7 @@ export function Masthead({
    */
   tag?: string;
 }) {
-  const pathname = usePathname();
+  const pathname = useChromePathname();
 
   const navLinks = navItems.map((item) => (
     <Link

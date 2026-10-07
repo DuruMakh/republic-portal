@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
+import { useChromePathname } from "@/components/ChromePathname";
 import { StickyBar } from "@/components/StickyBar";
 import { useSignedIn } from "@/components/useSignedIn";
 import { showsJoinCta } from "@/lib/mobile-nav";
@@ -21,7 +21,7 @@ const CABINET = "ჩემი კაბინეტი →";
  * with HeaderSessionAction; the guest CTA is the correct cached default.
  */
 export function MobileJoinCta() {
-  const pathname = usePathname();
+  const pathname = useChromePathname();
   const signedIn = useSignedIn();
 
   // The hook above still subscribes on /join, /join/terms and /login, where this

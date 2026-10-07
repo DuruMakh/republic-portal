@@ -116,4 +116,12 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(page).toHaveURL(/\/me\/profile/);
   await page.goto("/");
   await expect(page.getByRole("link", { name: "კაბინეტი" })).toBeVisible();
+
+  // a missing cabinet page shows just the notice inside the cabinet's own chrome: the public
+  // header and footer must not nest inside it (app/route-groups.test.tsx)
+  const missing = await page.goto("/me/news/no-such-article-xyz");
+  expect(missing?.status()).toBe(404);
+  await expect(page.getByRole("heading", { level: 1, name: "გვერდი ვერ მოიძებნა." })).toBeVisible();
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("contentinfo")).toHaveCount(0);
 });

@@ -61,7 +61,8 @@ sends existing users to their cabinet from login and /join. Registration is
 progressive, not a one-way funnel: register() opens the cabinet immediately;
 becoming a member happens later via the in-cabinet wizard
 (become_member_save_profile then become_member_complete). The public header
-swaps შესვლა→კაბინეტი client-side (the cached shell stays session-agnostic).
+carries one account action: the join door for guests, swapping to the cabinet
+link client-side once signed in (the cached shell stays session-agnostic).
 Dashboard rank reuses lib/ranking over public_delegates,
 so it can never disagree with the leaderboard.
 

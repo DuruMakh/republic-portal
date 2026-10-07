@@ -9,6 +9,7 @@ import {
   signOutViaNav,
 } from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
+import { FINANCES_PUBLIC } from "./finances-switch";
 import {
   cleanupCommunityContent,
   memberRpcClient,
@@ -138,6 +139,16 @@ test("vote once, results per the visibility rule, transparency derives from the 
 
   // 4) transparency equals the register (derived, never stored)
   //
+  // ADR-034: the public finance page is hidden unless SHOW_PUBLIC_FINANCES=true, so this step
+  // can only run when the switch is on. Annotated rather than silently skipped.
+  if (!FINANCES_PUBLIC) {
+    test.info().annotations.push({
+      type: "finances hidden",
+      description: "step 4 (the public finance page) runs only with SHOW_PUBLIC_FINANCES=true",
+    });
+    return;
+  }
+
   // Staging has 1663+ live payment rows — above PostgREST's server-side
   // max-rows cap (confirmed: even an explicit .range(0, 49999) still comes
   // back truncated at exactly 1000 rows on this project), so a single
