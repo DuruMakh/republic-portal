@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
-import { hasAnyRole, ROLE_LABELS_KA, type AdminRole } from "@/lib/admin";
+import { hasAnyRole, ROLE_LABELS_KA, roleDutiesKa, type AdminRole } from "@/lib/admin";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
+import { showEvents } from "@/lib/events-switch";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { findAdminCandidateAction, grantRoleAction, revokeRoleAction } from "./actions";
 import { GrantRoleForm } from "./GrantRoleForm";
@@ -56,7 +57,11 @@ export default async function AdminAdminsPage() {
 
       <div className="flex flex-col gap-6">
         <Card title="როლის მინიჭება">
-          <GrantRoleForm find={findAdminCandidateAction} grant={grantRoleAction} />
+          <GrantRoleForm
+            find={findAdminCandidateAction}
+            grant={grantRoleAction}
+            duties={roleDutiesKa(showEvents())}
+          />
         </Card>
 
         <Card title="მიმდინარე ადმინები" padded={false}>

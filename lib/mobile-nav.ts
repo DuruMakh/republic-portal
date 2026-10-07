@@ -107,20 +107,26 @@ import type { CabinetNavItem } from "./cabinet";
 
 type CabinetRole = "registered" | "member" | "delegate";
 
+/** The bar holds at most this many tabs; everything else goes to the sheet. */
+const TAB_LIMIT = 4;
+
 /**
- * The four hrefs that earn a permanent slot, per role, in render order
- * (spec §4.6). Chosen by how often people return, NOT by cabinetNavItems()
- * order — a plain slice(0, 4) would put billing on the bar and bury polls.
+ * The hrefs that may earn a permanent slot, per role, in priority (and render)
+ * order (spec §4.6): the first TAB_LIMIT present in the nav take the bar.
+ * Chosen by how often people return, NOT by cabinetNavItems() order — a plain
+ * slice(0, 4) would put billing on the bar and bury polls.
  *
  * A single global priority list cannot serve both registered (profile last)
- * and member (profile first), which is why this is keyed by role.
+ * and member (profile first), which is why this is keyed by role. The fifth
+ * entry fills the slot events leave while they are hidden (ADR-038); with
+ * events shown it never reaches the bar.
  *
- * Anything not listed — including /admin — lands in the „მეტი“ sheet.
+ * Anything not on the bar — including /admin — lands in the „მეტი“ sheet.
  */
 const TAB_HREFS: Record<CabinetRole, ReadonlyArray<string>> = {
   registered: ["/me", "/me/events", "/me/news", "/me/profile"],
-  member: ["/me/profile", "/me/polls", "/me/events", "/me/news"],
-  delegate: ["/delegate", "/me/polls", "/me/events", "/me/news"],
+  member: ["/me/profile", "/me/polls", "/me/events", "/me/news", "/me/delegate"],
+  delegate: ["/delegate", "/me/polls", "/me/events", "/me/news", "/me/profile"],
 };
 
 /**
@@ -129,13 +135,15 @@ const TAB_HREFS: Record<CabinetRole, ReadonlyArray<string>> = {
  * so the bar uses the singular while page headings keep the plural. Shortening
  * the font instead would break the accessibility floor (spec §4.7).
  *
- * „პანელი“ is the second word of lib/cabinet.ts's „დელეგატის პანელი“.
+ * „პანელი“ is the second word of lib/cabinet.ts's „დელეგატის პანელი“, and
+ * „დელეგატი“ the second word of its „ჩემი დელეგატი“.
  */
 const TAB_LABELS: Readonly<Record<string, string>> = {
   "/me/events": "ღონისძიება",
   "/me/news": "სიახლე",
   "/me/polls": "გამოკითხვა",
   "/delegate": "პანელი",
+  "/me/delegate": "დელეგატი",
 };
 
 /**
@@ -151,12 +159,14 @@ export function mobileTabs(
   role: CabinetRole,
 ): { tabs: CabinetNavItem[]; more: CabinetNavItem[] } {
   const byHref = new Map(items.map((item) => [item.href, item]));
-  const tabs = TAB_HREFS[role].flatMap((href) => {
-    const item = byHref.get(href);
-    if (!item) return [];
-    const short = TAB_LABELS[href];
-    return [short ? { ...item, label: short } : item];
-  });
+  const tabs = TAB_HREFS[role]
+    .flatMap((href) => {
+      const item = byHref.get(href);
+      if (!item) return [];
+      const short = TAB_LABELS[href];
+      return [short ? { ...item, label: short } : item];
+    })
+    .slice(0, TAB_LIMIT);
   const onBar = new Set(tabs.map((tab) => tab.href));
   return { tabs, more: items.filter((item) => !onBar.has(item.href)) };
 }

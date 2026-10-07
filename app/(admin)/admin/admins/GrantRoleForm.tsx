@@ -5,15 +5,18 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
 import { Select } from "@/components/Select";
-import { ADMIN_ROLE_VALUES, ROLE_DUTIES_KA, ROLE_LABELS_KA, type AdminRole } from "@/lib/admin";
+import { ADMIN_ROLE_VALUES, ROLE_LABELS_KA, type AdminRole } from "@/lib/admin";
 import type { AdminCandidateResult, AdminRoleActionResult } from "./actions";
 
 export function GrantRoleForm({
   find,
   grant,
+  duties,
 }: {
   find: (phone: string) => Promise<AdminCandidateResult>;
   grant: (userId: string, role: AdminRole) => Promise<AdminRoleActionResult>;
+  /** roleDutiesKa(showEvents()), read on the server: the events switch is server-only. */
+  duties: Record<AdminRole, string>;
 }) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
@@ -90,7 +93,7 @@ export function GrantRoleForm({
             >
               {ADMIN_ROLE_VALUES.map((r) => (
                 <option key={r} value={r}>
-                  {ROLE_LABELS_KA[r]} — {ROLE_DUTIES_KA[r]}
+                  {ROLE_LABELS_KA[r]} — {duties[r]}
                 </option>
               ))}
             </Select>

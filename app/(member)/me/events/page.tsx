@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa, rsvpOpen, splitEvents } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { EventRsvp } from "./EventRsvp";
 
 export const metadata: Metadata = { title: "ღონისძიებები — ქართული რესპუბლიკა" };
 
 export default async function MemberEventsPage() {
+  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  if (!showEvents()) notFound();
   const supabase = await createServerSupabase();
   const [eventsRes, countsRes, mineRes] = await Promise.all([
     supabase.from("public_events").select("*"),

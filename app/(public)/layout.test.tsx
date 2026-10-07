@@ -30,6 +30,7 @@ beforeEach(() => {
   // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
   // flip these tests. The public-mode tests below stub it to "true" themselves.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
+  vi.stubEnv("SHOW_EVENTS", undefined);
 });
 
 afterEach(() => {
@@ -76,5 +77,30 @@ describe("public layout — finances public (SHOW_PUBLIC_FINANCES=true)", () => 
     expect(
       within(screen.getByRole("contentinfo")).getByRole("link", { name: FINANCES }),
     ).toHaveAttribute("href", "/transparency");
+  });
+});
+
+describe("public layout — events (ADR-038)", () => {
+  const EVENTS = "ღონისძიებები";
+
+  it("lists no ღონისძიებები link in the header, the footer or the phone menu while hidden", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).queryByRole("link", { name: EVENTS }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("link", { name: EVENTS }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("restores the header link once SHOW_EVENTS=true", () => {
+    vi.stubEnv("SHOW_EVENTS", "true");
+    renderLayout();
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: EVENTS })).toHaveAttribute(
+      "href",
+      "/events",
+    );
   });
 });

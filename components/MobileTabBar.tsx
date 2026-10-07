@@ -16,8 +16,8 @@ const MORE = "მეტი";
 const TABBAR_LABEL = "კაბინეტის ნავიგაცია";
 
 /**
- * The cabinet bottom bar (spec §4.6): four destinations plus „მეტი“, for every
- * role. Text only — no icons, which is what keeps it inside the Kronika
+ * The cabinet bottom bar (spec §4.6): up to four destinations plus „მეტი“, for
+ * every role (three for a registered visitor while events are hidden, ADR-038). Text only — no icons, which is what keeps it inside the Kronika
  * rules-and-type system.
  *
  * Labels arrive already shortened by mobileTabs(); this component never

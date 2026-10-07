@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { contentIdSchema, eventFormSchema } from "@/lib/content-schemas";
 import { tbilisiLocalToIso } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { resolvePublishSlug } from "@/lib/publish-slug";
 import { takenSlugsFetcher } from "@/lib/supabase/slugs";
@@ -11,6 +12,10 @@ import { createServerSupabase } from "@/lib/supabase/server";
 export type SaveEventResult = { ok: true; id: string } | { ok: false; error: string };
 export type EventActionResult = { ok: true } | { ok: false; error: string };
 
+// Events hidden (the default, ADR-038): the editor pages are gone, and every action below
+// refuses a direct call before touching the database. The RPCs themselves are unchanged.
+const EVENTS_HIDDEN = { ok: false, error: GENERIC_FUNNEL_ERROR } as const;
+
 function revalidateEvents(slug: string | null) {
   revalidatePath("/events");
   revalidatePath("/me/events");
@@ -18,6 +23,7 @@ function revalidateEvents(slug: string | null) {
 }
 
 export async function saveEventAction(input: unknown): Promise<SaveEventResult> {
+  if (!showEvents()) return EVENTS_HIDDEN;
   const parsed = eventFormSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR };
@@ -46,6 +52,7 @@ export async function saveEventAction(input: unknown): Promise<SaveEventResult> 
 }
 
 export async function publishEventAction(id: unknown): Promise<EventActionResult> {
+  if (!showEvents()) return EVENTS_HIDDEN;
   const parsed = contentIdSchema.safeParse({ id });
   if (!parsed.success) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const supabase = await createServerSupabase();
@@ -81,6 +88,7 @@ export async function publishEventAction(id: unknown): Promise<EventActionResult
 }
 
 export async function cancelEventAction(id: unknown): Promise<EventActionResult> {
+  if (!showEvents()) return EVENTS_HIDDEN;
   const parsed = contentIdSchema.safeParse({ id });
   if (!parsed.success) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const supabase = await createServerSupabase();
@@ -96,6 +104,7 @@ export async function cancelEventAction(id: unknown): Promise<EventActionResult>
 }
 
 export async function deleteEventAction(id: unknown): Promise<EventActionResult> {
+  if (!showEvents()) return EVENTS_HIDDEN;
   const parsed = contentIdSchema.safeParse({ id });
   if (!parsed.success) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const supabase = await createServerSupabase();

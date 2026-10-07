@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { ADMIN_PHONES, loginAs, signOutViaNav } from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
+import { EVENTS_SHOWN } from "./events-switch";
 import {
   cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
@@ -169,6 +170,7 @@ test("referral binding survives to completion and shows as the current delegate"
 });
 
 test("a registered member RSVPs to a published event", async ({ page }) => {
+  test.skip(!EVENTS_SHOWN, "events are hidden (ADR-038)");
   // editor publishes a future event (canonical admin — audit actor stays permanent)
   await loginAs(page, ADMIN_PHONES.editor);
   await page.goto("/admin/content/events/new");

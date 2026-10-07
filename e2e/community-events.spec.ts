@@ -11,12 +11,19 @@ import {
 import { approveOwnDelegate, seedCompletedMember, seedPendingDelegate } from "./funnel-helpers";
 import { runCleanups } from "./cleanup-helpers";
 import { cleanupCommunityContent } from "./community-helpers";
+import { EVENTS_SHOWN } from "./events-switch";
 
 const DELEGATE = 6; // phase4Phone(6) — seeded delegate, service-approved
 const SUPPORTER = 7; // phase4Phone(7) — seeded onto the delegate's team, RSVPs
 const RUN = `e2e-event-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
+
+// ADR-038: events are hidden unless SHOW_EVENTS=true; this journey runs only with the switch on.
+test.skip(
+  !EVENTS_SHOWN,
+  "events are hidden (ADR-038) — see the events hidden group in public.spec.ts",
+);
 
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the
 // other, or a content failure strands this run's users where no later run looks.

@@ -14,6 +14,8 @@ import {
   reconcileCityFilter,
   ROLE_LABELS_KA,
   sanitizeSearch,
+  ROLE_DUTIES_KA,
+  roleDutiesKa,
 } from "./admin";
 import { SUPPORT_ADMIN_TAB_LABEL } from "./support-copy";
 
@@ -258,5 +260,24 @@ describe("Phase 5: audit labels + content pills", () => {
     expect(contentPill("cancelled")).toEqual({ status: "rejected", label: "გაუქმებული" });
     expect(contentPill("open")).toEqual({ status: "approved", label: "ღია" });
     expect(contentPill("closed")).toEqual({ status: "draft", label: "დახურული" });
+  });
+});
+
+describe("roleDutiesKa (ADR-038: events hidden by default)", () => {
+  it("names news and polls, but no events, as the editor's duties while events are hidden", () => {
+    expect(roleDutiesKa(false).editor).toBe("სიახლეები და გამოკითხვები");
+  });
+
+  it("restores events to the editor's duties once they are shown", () => {
+    expect(roleDutiesKa(true).editor).toBe("სიახლეები, ღონისძიებები და გამოკითხვები");
+  });
+
+  it("leaves every other role's duties as they are", () => {
+    for (const shown of [false, true]) {
+      const duties = roleDutiesKa(shown);
+      expect(duties.super_admin).toBe(ROLE_DUTIES_KA.super_admin);
+      expect(duties.verifier).toBe(ROLE_DUTIES_KA.verifier);
+      expect(duties.finance).toBe(ROLE_DUTIES_KA.finance);
+    }
   });
 });

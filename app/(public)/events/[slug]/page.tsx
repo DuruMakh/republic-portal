@@ -4,13 +4,17 @@ import { notFound } from "next/navigation";
 import { ballotButtonClasses } from "@/components/Ballot";
 import { ContentBody } from "@/components/ContentBody";
 import { Eyebrow } from "@/components/Eyebrow";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import { excerpt } from "@/lib/content-render";
 import { eventEndIso, formatEventTimeKa } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { fetchPublicEventBySlug, fetchPublicEvents } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
 export async function generateStaticParams() {
+  // Hidden (ADR-038): build no event pages; any address falls through to the not-found below.
+  if (!showEvents()) return [];
   const events = await fetchPublicEvents();
   return events.map((e) => ({ slug: e.slug }));
 }
@@ -20,6 +24,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  // While hidden, a real event's address must not leak its title through the 404's metadata.
+  if (!showEvents()) return NOT_FOUND_METADATA;
   const { slug } = await params;
   const event = await fetchPublicEventBySlug(slug);
   if (!event) return { title: "ღონისძიება ვერ მოიძებნა — ქართული რესპუბლიკა" };
@@ -35,6 +41,8 @@ export async function generateMetadata({
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Hidden by owner decision (ADR-038): not-found before the event is read.
+  if (!showEvents()) notFound();
   const { slug } = await params;
   const event = await fetchPublicEventBySlug(slug);
   if (!event) notFound();

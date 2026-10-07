@@ -5,6 +5,7 @@ import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { isoToTbilisiLocal } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { EventActions } from "../EventActions";
 import { EventForm } from "../EventForm";
@@ -12,6 +13,8 @@ import { EventForm } from "../EventForm";
 export const metadata: Metadata = { title: "ღონისძიების რედაქტირება — ქართული რესპუბლიკა" };
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  if (!showEvents()) notFound();
   const { id } = await params;
   const supabase = await createServerSupabase();
   const { data: event, error } = await supabase
