@@ -91,7 +91,7 @@ export default async function DelegateDashboardPage() {
         {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
             team, the same figure the ranking counts — is the headline. „გუნდის წევრი“
             keeps it apart from the referral card's წევრი row, which counts the link's
-            sign-ups instead (ADR-038); the card's supporter row replaced the old
+            sign-ups instead (ADR-039); the card's supporter row replaced the old
             delegate-link-only supporter box. */}
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard

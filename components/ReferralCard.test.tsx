@@ -13,7 +13,7 @@ describe("ReferralCard", () => {
     );
   });
 
-  it("counts supporters and members apart (ADR-038)", () => {
+  it("counts supporters and members apart (ADR-039)", () => {
     render(<ReferralCard code="M-ABC234" supporters={7} members={1234} />);
     expect(screen.getByTestId("referral-supporters")).toHaveTextContent("7");
     expect(screen.getByTestId("referral-members")).toHaveTextContent("1 234");

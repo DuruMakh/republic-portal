@@ -178,7 +178,7 @@ export interface DelegatePanelData {
    * delegate code alone — owner fix #12.
    */
   referralCount: number;
-  /** ADR-038: referralCount split — not yet through the membership form… */
+  /** ADR-039: referralCount split — not yet through the membership form… */
   referralSupporters: number;
   /** …and through it. Together they make referralCount. */
   referralMembers: number;
