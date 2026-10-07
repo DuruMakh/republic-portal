@@ -22,7 +22,8 @@ describe("BoardRoster", () => {
       "id",
       "roster",
     );
-    expect(container.querySelector(".animate-pulse")).toBeNull();
+    // Any variant (e.g. motion-safe:animate-pulse): the spec lets only the council seats move.
+    expect(container.querySelector('[class*="animate-pulse"]')).toBeNull();
     expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(5);
     expect(screen.queryAllByRole("article")).toHaveLength(0);
   });

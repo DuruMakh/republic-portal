@@ -137,7 +137,7 @@ set (2026-10-07); more networks only on request.
 naming the network (its Latin brand name) and the person, e.g. `Facebook: <name>`.
 
 **Navigation.** Add `{ href: "/structure", label: "სტრუქტურა" }` to the public
-`navItems` (after ღონისძიებები, before the hidden-by-default finance link) and to
+`navItems` (after რეიტინგი, before the hidden-by-default finance link; news and events left the header in the same PR, ADR-036) and to
 `footerLinks`. `MobileMenu` already renders `navItems`, so phones get it too. Add
 `/structure` to `app/sitemap.ts`.
 
