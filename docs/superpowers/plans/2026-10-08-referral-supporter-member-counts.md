@@ -37,15 +37,20 @@ ADR-038.
 
 ## PR A steps (TDD: failing check first)
 
-1. `scripts/verify-schema.mjs`: a staging check that both functions return the two new keys
-   as non-negative integers and that `referralSupporters + referralMembers = referralCount`
-   for a seeded referrer — fails before the migration.
+1. `e2e/referral-split.spec.ts` (runs in CI against staging on every PR): a referrer with a
+   pending delegacy; a friend signs up through their `M-` link (1 supporter); the friend
+   finishes the membership form (0 / 1); the referrer is approved and a second friend signs
+   up through the delegate link (1 / 1, total 2) — asserted on both `cabinet_state()` and
+   `delegate_panel()`. Fails before the migration. (`scripts/verify-schema.mjs` was the
+   first choice, but it stops at its first probe since the Google sign-in change and is
+   not run anywhere; fixing it is out of scope.) Helpers: `otpSession`/`clientFor` split
+   out of `loginAs`, `seedRegisteredMember` takes an optional `signupRefCode`.
 2. Migration `2026100812xxxx_referral_supporters_and_members.sql`: `create or replace` of both
    functions, bodies copied verbatim from 20260729120000 (the live definitions; no later
    migration redefines either), with only the two keys added. Same signatures, so grants
    carry over; `cabinet_state()` restates its grants as house style.
 3. Migration baseline 34 → 35: `production-db.yml` and its two tests.
-4. Apply to staging (`supabase db push`, additive only), run `verify-schema`, CI green,
+4. Apply to staging (`supabase db push`, additive only), the new spec goes green, CI green,
    Claude review, PR, owner merges, owner dispatches the production-db workflow.
 
 ## PR B steps (TDD)

@@ -346,6 +346,8 @@ export async function seedRegisteredMember(opts: {
   firstName: string;
   lastName: string;
   personalId: string;
+  /** The referral link code this person signed up through (profiles.signup_ref_code). */
+  signupRefCode?: string;
 }): Promise<{ id: string }> {
   assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
@@ -360,6 +362,7 @@ export async function seedRegisteredMember(opts: {
     phone: authPhone,
     personal_id: opts.personalId,
     status: "registered",
+    ...(opts.signupRefCode ? { signup_ref_code: opts.signupRefCode } : {}),
   });
   if (pErr) throw new Error(`seedRegisteredMember profile insert failed: ${pErr.message}`);
   return { id: opts.userId };
