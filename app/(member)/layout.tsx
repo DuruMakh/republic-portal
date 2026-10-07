@@ -5,6 +5,7 @@ import { Masthead } from "@/components/Masthead";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageSheet } from "@/components/PageSheet";
 import { cabinetNavItems, cabinetRole } from "@/lib/cabinet";
+import { filterBillingLinks, showMembershipDues } from "@/lib/membership-dues";
 import { mobileTabs } from "@/lib/mobile-nav";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
@@ -53,8 +54,9 @@ export default async function MemberLayout({ children }: { children: React.React
   ]);
   if (!state.exists) redirect("/join");
   const role = cabinetRole(state);
-  const items = cabinetNavItems(role, state.admin).map((item) =>
-    item.href === "/me/polls" ? { ...item, count: openPollsCount || undefined } : item,
+  // No payments tab while dues are hidden (ADR-037).
+  const items = filterBillingLinks(cabinetNavItems(role, state.admin), showMembershipDues()).map(
+    (item) => (item.href === "/me/polls" ? { ...item, count: openPollsCount || undefined } : item),
   );
   const { tabs, more } = mobileTabs(items, role);
   return (

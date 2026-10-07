@@ -94,16 +94,15 @@ test("full upgrade: register → wizard → application sent and member nav", as
   await expect(page).toHaveURL(/\/me\/profile/);
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "გადახდები" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "გადახდები" })).toHaveCount(0); // dues hidden
   // membership pill — exact text, pinned to the Pill's <span>: TEAM_STATUS_LABELS.
-  // profile_completed in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“ (owner fix #16).
-  // Both guards still matter: the wrapping <p> concatenates the reference code and
-  // the member-since text after the Pill's own label, so a non-exact match would
-  // also hit the <p>; and the member-since span is itself a <span>, so pinning to
-  // <span> alone isn't enough either — only the Pill satisfies both.
+  // profile_completed in lib/cabinet.ts, plainly „წევრი“ (ADR-037). Both guards still
+  // matter: the wrapping <p> concatenates the member-since text after the Pill's own
+  // label, so a non-exact match would also hit the <p>; and the member-since span is
+  // itself a <span>, so pinning to <span> alone isn't enough either.
   const memberPill = page
     .locator("main")
-    .getByText("წევრი (გადახდის გარეშე)", { exact: true })
+    .getByText("წევრი", { exact: true })
     .and(page.locator("span"));
   await expect(memberPill).toHaveCount(1);
   await expect(memberPill).toBeVisible();

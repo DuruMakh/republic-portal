@@ -42,7 +42,7 @@ export default async function DelegateDashboardPage() {
   let rankValue: string = "—";
   let rankSub: string | undefined;
   const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
-    supabase.from("public_delegates").select("id, first_name, last_name, active_supporters"),
+    supabase.from("public_delegates").select("id, first_name, last_name, members"),
     supabase.auth.getUser(),
   ]);
   if (rankError) {
@@ -79,14 +79,10 @@ export default async function DelegateDashboardPage() {
         {panel.referralCode != null ? (
           <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            value={panel.activeCount}
-            label="აქტიური წევრი"
-            sub="ლიმიტის გარეშე"
-            accent="brand"
-          />
-          <StatCard value={panel.totalCount} label="სულ გუნდში" />
+        {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
+            team, the same figure the ranking counts — is the headline. */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard value={panel.totalCount} label="წევრი" sub="ლიმიტის გარეშე" accent="brand" />
           <StatCard value={panel.registeredCount} label="მხარდამჭერი" />
           <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
         </div>

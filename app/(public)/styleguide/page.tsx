@@ -250,7 +250,7 @@ export default function StyleguidePage() {
         {/* 5. StatCard */}
         <div className="grid grid-cols-2 gap-4">
           <StatCard label="დამტკიცებული დელეგატი" value={112} accent="brand" />
-          <StatCard label="აქტიური წევრი" value={1700} accent="brand" />
+          <StatCard label="წევრი" value={1700} accent="brand" />
         </div>
 
         {/* 6. Badge */}
@@ -350,7 +350,7 @@ export default function StyleguidePage() {
               name="გიორგი მაისურაძე"
               meta="თბილისი — დამტკიცებული · იან 2026"
               figure={342}
-              figureLabel="აქტიური წევრი"
+              figureLabel="წევრი"
               href="/leaderboard"
             />
             <IndexRow
@@ -358,7 +358,7 @@ export default function StyleguidePage() {
               name="თამარ ქავთარაძე"
               meta="აჭარა — დამტკიცებული · იან 2026"
               figure={287}
-              figureLabel="აქტიური წევრი"
+              figureLabel="წევრი"
               href="/leaderboard"
             />
             <IndexRow
@@ -366,7 +366,7 @@ export default function StyleguidePage() {
               name="ლევან ჩხეიძე"
               meta="იმერეთი — დამტკიცებული · თებ 2026"
               figure={256}
-              figureLabel="აქტიური წევრი"
+              figureLabel="წევრი"
             />
           </div>
         </Card>
@@ -493,7 +493,7 @@ export default function StyleguidePage() {
           <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
         </Card>
 
-        {/* 17. /structure pieces (ADR-037): the condensed display heading, the
+        {/* 17. /structure pieces (ADR-038): the condensed display heading, the
             pebble rule card, the membership path, the tally and the roster's
             launch (empty) state. Copy and counts come from lib/, never hand-typed. */}
         <Card title={STRUCTURE_TITLE}>

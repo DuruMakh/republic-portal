@@ -19,14 +19,14 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
-    // Since ADR-037 the header carries neither page: these homepage links are the way in
+    // Since ADR-038 the header carries neither page: these homepage links are the way in
     // (news is also in the footer; events is reachable only from here).
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
     await expect(page.getByRole("main").locator('a[href="/events"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toBeVisible();
-    let active = 0;
-    for (const id of ["stat-approved-delegates", "stat-active-members"]) {
+    let members = 0;
+    for (const id of ["stat-approved-delegates", "stat-members-total"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
       // CountUp's (components/CountUp.tsx) animation effect short-circuits on its
       // matchMedia check and the SSR-rendered, already-settled value is what's
@@ -34,7 +34,7 @@ test.describe("home", () => {
       const text = await page.getByTestId(id).innerText();
       const n = Number(text.replace(/[^\d]/g, ""));
       expect(n).toBeGreaterThan(0);
-      if (id === "stat-active-members") active = n;
+      if (id === "stat-members-total") members = n;
     }
 
     // registered_total is cumulative — every profile, ever (D5/R2-5) — and the home
@@ -51,8 +51,8 @@ test.describe("home", () => {
       await page.goto("/");
       const text = await page.getByTestId("stat-registered-total").innerText();
       expect(Number(text.replace(/[^\d]/g, ""))).toBe(registeredTotal);
-      // registered is the whole register; active is a subset of it (D5/R2-5)
-      expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(active);
+      // registered is the whole register; members are a subset of it (D5/R2-5, ADR-037)
+      expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(members);
     }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
 
     await page.getByRole("navigation").first().getByRole("link", { name: "რეიტინგი" }).click();
@@ -126,7 +126,7 @@ test.describe("delegate page", () => {
     await expect(page.getByText("პოზიცია რეიტინგში")).toBeVisible();
     // .first() keeps the locator on the StatCard label (the active-member stat under
     // test) should the wording ever repeat on the page, without loosening the check.
-    await expect(page.getByText("აქტიური წევრი").first()).toBeVisible(); // active-member stat present
+    await expect(page.getByText("წევრი", { exact: true }).first()).toBeVisible(); // member stat present (ADR-037)
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
     expect(ogTitle).toContain("გიორგი მაისურაძე");
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute("content");

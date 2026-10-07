@@ -21,11 +21,11 @@ export default async function MyDelegatePage() {
     await Promise.all([
       supabase
         .from("public_delegates")
-        .select("id, first_name, last_name, region_id, region_name_ka, active_supporters"),
+        .select("id, first_name, last_name, region_id, region_name_ka, members"),
       supabase.from("regions").select("id, name_ka").order("id"),
     ]);
   if (delegatesError) {
-    // a transient failure must not show „0 აქტიური წევრი" for a real delegate
+    // a transient failure must not show „0 წევრი" for a real delegate
     throw new Error(`public_delegates query failed: ${delegatesError.message}`);
   }
   if (regionsError) {
@@ -77,9 +77,9 @@ export default async function MyDelegatePage() {
               </div>
               {current ? (
                 <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-sm">
-                  <span className="text-muted-fg">აქტიური წევრი</span>
+                  <span className="text-muted-fg">წევრი</span>
                   <strong className="font-serif text-lg text-ink">
-                    {formatCountKa(current.active_supporters)}
+                    {formatCountKa(current.members)}
                   </strong>
                 </div>
               ) : null}

@@ -173,14 +173,14 @@ describe("vocabulary and bars", () => {
   it("member statuses cover all three values", () => {
     expect(MEMBER_STATUS_LABELS_KA).toEqual({
       registered: "მხარდამჭერი",
-      profile_completed: "წევრი (გადახდის გარეშე)",
-      active_member: "აქტიური წევრი",
+      profile_completed: "წევრი",
+      active_member: "წევრი",
     });
   });
-  it("status labels distinguish paying members from unpaid ones (owner fix #16)", () => {
+  it("status labels name the supporter and the member — no active tier (ADR-037)", () => {
     expect(MEMBER_STATUS_LABELS_KA.registered).toBe("მხარდამჭერი");
-    expect(MEMBER_STATUS_LABELS_KA.profile_completed).toBe("წევრი (გადახდის გარეშე)");
-    expect(MEMBER_STATUS_LABELS_KA.active_member).toBe("აქტიური წევრი");
+    expect(MEMBER_STATUS_LABELS_KA.profile_completed).toBe("წევრი");
+    expect(MEMBER_STATUS_LABELS_KA.active_member).toBe("წევრი");
   });
   it("role labels exist for every role", () => {
     for (const role of ADMIN_ROLE_VALUES) expect(ROLE_LABELS_KA[role]).toBeTruthy();

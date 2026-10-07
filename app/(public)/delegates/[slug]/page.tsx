@@ -78,8 +78,8 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
       </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard
-          label="აქტიური წევრი"
-          value={formatCountKa(delegate.active_supporters)}
+          label="წევრი"
+          value={formatCountKa(delegate.members)}
           accent="brand"
           sub="ღია რეიტინგში"
         />

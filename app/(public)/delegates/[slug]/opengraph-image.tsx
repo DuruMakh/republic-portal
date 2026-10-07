@@ -53,7 +53,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           {`${delegate.first_name} ${delegate.last_name}`}
         </div>
         <div style={{ display: "flex", fontSize: 36, color: "#9F1D35" }}>
-          აქტიური წევრი: {formatCountKa(delegate.active_supporters)}
+          წევრი: {formatCountKa(delegate.members)}
         </div>
       </div>
       <div style={{ display: "flex", height: 10, width: 260 }}>
