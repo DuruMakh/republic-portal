@@ -61,18 +61,7 @@ describe("deriveDestination", () => {
   it("member → /me/profile", () => {
     expect(deriveDestination(cab({ standing: "member", completed: true }))).toBe("/me/profile");
   });
-  it("approved delegate → /delegate (R2: pending/rejected stay in the member cabinet — see the dedicated describe block below)", () => {
-    expect(
-      deriveDestination(
-        cab({
-          standing: "member",
-          completed: true,
-          role: "delegate",
-          delegateStatus: "approved",
-        }),
-      ),
-    ).toBe("/delegate");
-  });
+  // delegate routing (approved / pending / rejected): "approved-gated delegacy routing (R2)" below
 });
 
 describe("cabinetRole + nav", () => {

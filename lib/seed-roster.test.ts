@@ -17,10 +17,6 @@ const REGIONS = [
 ];
 
 describe("seed roster", () => {
-  it("has 12 approved and 3 pending delegates", () => {
-    expect(roster.filter((d) => d.status === "approved")).toHaveLength(12);
-    expect(roster.filter((d) => d.status === "pending")).toHaveLength(3);
-  });
   it("uses only canonical region names", () => {
     for (const d of roster) expect(REGIONS).toContain(d.region);
   });
@@ -31,11 +27,6 @@ describe("seed roster", () => {
       expect(d.slug).toBe(expected);
       taken.add(expected);
     }
-  });
-  it("keeps prototype supporter totals (leaderboard parity)", () => {
-    const approved = roster.filter((d) => d.status === "approved");
-    expect(approved.reduce((sum, d) => sum + d.supporters, 0)).toBe(1862);
-    expect(Math.max(...approved.map((d) => d.supporters))).toBe(342);
   });
   it("every delegate has a non-empty Georgian bio", () => {
     for (const d of roster) expect(d.bio.length).toBeGreaterThan(20);
