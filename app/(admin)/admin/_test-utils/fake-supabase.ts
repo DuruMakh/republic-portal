@@ -1,0 +1,136 @@
+/**
+ * Test doubles for the admin server-action and route tests. NOT production code:
+ * imported only by `*.test.ts` files under app/(admin)/admin. The leading
+ * underscore keeps the folder out of Next's routing.
+ *
+ * The fake session client records every call the code under test makes, so a
+ * test can assert WHAT was asked of the database (which RPC, which arguments,
+ * which table) rather than what the fake handed back. Results are produced by
+ * the test's handlers; anything unhandled resolves to `{ data: null, error: null }`.
+ */
+
+export interface DbError {
+  message: string;
+  code?: string;
+}
+export interface DbResult {
+  data: unknown;
+  error: DbError | null;
+}
+export interface ChainStep {
+  method: string;
+  args: unknown[];
+}
+export interface DbCall {
+  kind: "rpc" | "from";
+  /** RPC name or table/view name */
+  name: string;
+  /** RPC arguments (undefined for table reads) */
+  args: unknown;
+  /** the query-builder chain after `.from()` (select/eq/insert/...) */
+  chain: ChainStep[];
+}
+
+export interface FakeHandlers {
+  rpc?: (name: string, args: unknown) => DbResult | undefined;
+  from?: (table: string, chain: readonly ChainStep[]) => DbResult | undefined;
+}
+
+const EMPTY: DbResult = { data: null, error: null };
+
+/** What PostgREST returns when a plpgsql function runs `raise exception '<token>'`. */
+export function raised(token: string, code = "P0001"): DbResult {
+  return { data: null, error: { message: token, code } };
+}
+
+export const ok = (data: unknown = null): DbResult => ({ data, error: null });
+
+/**
+ * A chainable, awaitable stand-in for a PostgREST builder. Every method records
+ * itself and returns the same builder; awaiting resolves the handler's result,
+ * computed only then so it sees the whole chain.
+ */
+function chainable(call: DbCall, resolve: () => DbResult): unknown {
+  const builder: unknown = new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === "then") {
+          return (onFulfilled: (v: DbResult) => unknown, onRejected?: (e: unknown) => unknown) =>
+            Promise.resolve(resolve()).then(onFulfilled, onRejected);
+        }
+        return (...args: unknown[]) => {
+          call.chain.push({ method: String(prop), args });
+          return builder;
+        };
+      },
+    },
+  );
+  return builder;
+}
+
+export interface FakeSession {
+  /** hand this to the mocked createServerSupabase */
+  client: unknown;
+  calls: DbCall[];
+  rpcCalls(): DbCall[];
+  tableCalls(): DbCall[];
+}
+
+export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
+  const calls: DbCall[] = [];
+  const client = {
+    rpc(name: string, args?: unknown) {
+      calls.push({ kind: "rpc", name, args, chain: [] });
+      return Promise.resolve(handlers.rpc?.(name, args) ?? EMPTY);
+    },
+    from(table: string) {
+      const call: DbCall = { kind: "from", name: table, args: undefined, chain: [] };
+      calls.push(call);
+      return chainable(call, () => handlers.from?.(table, call.chain) ?? EMPTY);
+    },
+  };
+  return {
+    client,
+    calls,
+    rpcCalls: () => calls.filter((c) => c.kind === "rpc"),
+    tableCalls: () => calls.filter((c) => c.kind === "from"),
+  };
+}
+
+export interface StorageCall {
+  bucket: string;
+  method: string;
+  args: unknown[];
+}
+
+/** Service-role client double: storage only (the one thing admin actions use it for). */
+export function fakeAdminClient(opts: { uploadError?: DbError } = {}): {
+  client: unknown;
+  storageCalls: StorageCall[];
+} {
+  const storageCalls: StorageCall[] = [];
+  const client = {
+    storage: {
+      from(bucket: string) {
+        const record = (method: string, args: unknown[]) =>
+          storageCalls.push({ bucket, method, args });
+        return {
+          upload: (...args: unknown[]) => {
+            record("upload", args);
+            return Promise.resolve({ data: {}, error: opts.uploadError ?? null });
+          },
+          getPublicUrl: (...args: unknown[]) => {
+            record("getPublicUrl", args);
+            return { data: { publicUrl: `https://cdn.test/${bucket}/${String(args[0])}` } };
+          },
+          remove: (...args: unknown[]) => {
+            record("remove", args);
+            return Promise.resolve({ data: [], error: null });
+          },
+        };
+      },
+    },
+  };
+  return { client, storageCalls };
+}
