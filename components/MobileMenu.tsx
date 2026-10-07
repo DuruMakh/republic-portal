@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { BrandLockup } from "@/components/BrandLockup";
 import { buttonClasses } from "@/components/Button";
+import { useChromePathname } from "@/components/ChromePathname";
 import { useCloseAboveMd } from "@/components/useCloseAboveMd";
 import { useFocusTrap } from "@/components/useFocusTrap";
 
@@ -36,7 +36,7 @@ export function MobileMenu({
   cta?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = useChromePathname();
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 

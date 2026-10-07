@@ -21,6 +21,9 @@ const DUES_LABEL = "შეგროვებული საწევრო შ�
 const DUES_FIGURE = `${formatCountKa(24840)}₾`.replace(/\s+/g, " ");
 
 beforeEach(() => {
+  // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
+  // flip these tests. The public-mode test below stubs it to "true" itself.
+  vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
   for (const fetcher of Object.values(data)) fetcher.mockReset();
   data.fetchPublicStats.mockResolvedValue({
     approved_delegates: 12,

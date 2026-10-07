@@ -85,3 +85,18 @@ test("anonymous visitors land on /login", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+// Last on purpose: the file runs serially, so a failure here cannot mask the checks above.
+test("a missing admin page shows the notice inside the admin chrome, not a second site header", async ({
+  page,
+}) => {
+  await loginAs(page, ADMIN_PHONES.editor);
+  // an absent but well-formed id: the editor's lookup finds no row and raises not-found
+  const response = await page.goto("/admin/content/news/00000000-0000-4000-8000-000000000000");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { level: 1, name: "გვერდი ვერ მოიძებნა." })).toBeVisible();
+  // the admin layout's own header only: the public header and footer would nest a second one
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("contentinfo")).toHaveCount(0);
+  await signOutViaNav(page);
+});

@@ -19,17 +19,27 @@ describe("showPublicFinances", () => {
   });
 
   it.each(["1", "TRUE", "True", "yes", "false", ""])(
-    "stays hidden for %j — only the exact string true turns finances on",
+    "stays hidden for %j — only the word true turns finances on",
     (value) => {
       process.env[SWITCH] = value;
       expect(showPublicFinances()).toBe(false);
     },
   );
 
-  it("is public only when the switch is exactly true", () => {
+  it("is public when the switch is true", () => {
     process.env[SWITCH] = "true";
     expect(showPublicFinances()).toBe(true);
   });
+
+  // `echo true | vercel env add` stores "true\n"; padding must not leave finances hidden after
+  // someone believes they switched them back on.
+  it.each([" true", "true ", "true\n", "true\r\n"])(
+    "is public for %j — whitespace around the word is ignored",
+    (value) => {
+      process.env[SWITCH] = value;
+      expect(showPublicFinances()).toBe(true);
+    },
+  );
 });
 
 describe("filterFinanceLinks", () => {

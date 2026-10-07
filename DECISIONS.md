@@ -805,11 +805,15 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   everyone, even with the exact address. Every link to it is gone (header menu, phone
   menu, footer), and so is the homepage collected-dues figure, which is the same number.
   All of the code stays, behind `showPublicFinances()` in `lib/public-finances.ts`, which is
-  true only when the server-side variable `SHOW_PUBLIC_FINANCES` is exactly `true`. To bring
-  everything back, set that variable in Vercel and redeploy: the page, the links, the
-  homepage figure and their tests return together. Unset, or any other value, stays hidden,
-  so a typo can never expose finances. The variable is server-only on purpose (no
-  `NEXT_PUBLIC_` prefix).
+  true only when the server-side variable `SHOW_PUBLIC_FINANCES` is the word `true`
+  (whitespace around it is ignored, because a value piped in from a shell ends in a newline).
+  To bring everything back, set that variable in Vercel and redeploy: the page, the links and
+  the homepage figure return together. Several of those pages are built ahead of time, so the
+  value is read at build time and the redeploy is required, not optional. Unset, or any other
+  value, stays hidden, so a typo can never expose finances. The variable is server-only on
+  purpose (no `NEXT_PUBLIC_` prefix). The unit tests pin both the hidden default and the
+  public mode, but CI runs no leg with the switch on, so after switching it on, run the
+  finance e2e specs once with `SHOW_PUBLIC_FINANCES=true` set for the build and the runner.
 - **What the switch does not cover.** The admin finance tools and members' own billing are
   not public surfaces and are unchanged. The aggregate views `transparency_stats` and
   `transparency_regions` stay readable by `anon` through the public data API, as ADR-030
@@ -822,7 +826,11 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   this also ends the old pairing of a cabinet link and a join button for signed-in members.
   It works because `/join` and `/login` both continue with Google and send a registered
   member straight to their cabinet (ADR-031 and the 2026-08-12 auth-entry design), so one
-  button serves new and returning people. `/login` stays routable: the member-area
+  button serves new and returning people. That holds only in `NEXT_PUBLIC_AUTH_MODE=google`,
+  which production runs. In `phone` mode (the Google plan's rollback, and the `.env.example`
+  default) `/join` is the phone registration and the header would offer a returning member no
+  way to `/login`, so restoring `phone` mode means restoring the sign-in button with it.
+  `/login` stays routable: the member-area
   redirect, the OAuth failure redirect and bookmarks still land there. This amends
   ADR-020's header description (a sign-in button beside the join CTA) and supersedes the
   sentence in section 2 of the 2026-08-12 auth-entry design that says `/login` is reached
@@ -831,9 +839,18 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the public header.
   framework's English "This page could not be found" a visible part of the product, and CLAUDE.md
   requires Georgian user-facing text. `components/NotFoundNotice.tsx` is the one notice (built
   from `CenteredNotice`, reusing the delegate page's "link may be outdated" sentence, one button
-  home). `app/(public)/not-found.tsx` shows it inside the public header and footer, as the default
-  page already did for a missing article, event or the hidden finance page. `app/not-found.tsx`
-  handles every other 404 (unknown URLs, and not-found raised in the member and admin areas) and
-  wraps the notice in the same public chrome, where the old default was a bare page with no
-  header. Next ignores a not-found file's own metadata when a page raises the 404, so the hidden
-  finance page itself returns the generic Georgian not-found title, never its own.
+  home). Each of the four route groups owns a `not-found.tsx` that shows it inside that group's
+  own layout: `app/(public)/not-found.tsx` inside the public header and footer (as the default
+  page already did for a missing article, event or the hidden finance page), and the member,
+  admin and delegate groups inside their own chrome. A group without its own file renders the
+  root `app/not-found.tsx` inside its layout, which would nest the public header and footer in
+  the cabinet's or the admin's, so `app/route-groups.test.tsx` fails for any group that lacks
+  one. `app/not-found.tsx` itself handles only unknown URLs and wraps the notice in the public
+  chrome, where the old default was a bare page with no header. That page is prerendered once,
+  for `/_not-found`, but opened at whatever address was mistyped, so its chrome reads a pinned
+  path (`components/ChromePathname.tsx`): left on the live address, a deep one such as
+  `/news/a/b` adds the phone back header on the client only and hydration fails. Every route's
+  not-found boundary carries that file, so `PublicLayout` must stay static (no `cookies()`,
+  `headers()` or database reads) or every route would turn dynamic. Next ignores a not-found file's own
+  metadata when a page raises the 404, so the hidden finance page itself returns the generic
+  Georgian not-found title, never its own.

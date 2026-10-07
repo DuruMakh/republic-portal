@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 vi.mock("@/lib/supabase/client", () => ({
@@ -25,6 +25,12 @@ function renderLayout() {
     </PublicLayout>,
   );
 }
+
+beforeEach(() => {
+  // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
+  // flip these tests. The public-mode tests below stub it to "true" themselves.
+  vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();

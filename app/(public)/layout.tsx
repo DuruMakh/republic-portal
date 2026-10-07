@@ -5,7 +5,7 @@ import { Masthead } from "@/components/Masthead";
 import { MobileJoinCta } from "@/components/MobileJoinCta";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
-import { filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
+import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
@@ -23,13 +23,13 @@ const navItems: { href: string; label: string }[] = [
   { href: "/leaderboard", label: "რეიტინგი" },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: "/events", label: "ღონისძიებები" },
-  { href: "/transparency", label: NAV_TRANSPARENCY_LABEL },
+  { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
 ];
 
 const footerLinks: { href: string; label: string }[] = [
   { href: "/join/terms", label: FOOTER_TERMS_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
-  { href: "/transparency", label: NAV_TRANSPARENCY_LABEL },
+  { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
   // Footer, not top nav (spec §8): contact is a destination people go looking
   // for, not a section of the publication.
   { href: "/support", label: SUPPORT_FOOTER_LABEL },

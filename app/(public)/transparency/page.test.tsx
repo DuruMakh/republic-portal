@@ -17,6 +17,9 @@ import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import TransparencyPage, { generateMetadata } from "./page";
 
 beforeEach(() => {
+  // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
+  // flip these tests. The public-mode tests below stub it to "true" themselves.
+  vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
   data.fetchTransparencyStats.mockReset();
   data.fetchTransparencyRegions.mockReset();
   data.fetchPublicStats.mockReset();
