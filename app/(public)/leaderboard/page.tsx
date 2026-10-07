@@ -11,7 +11,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "დელეგატების რეიტინგი — ქართული რესპუბლიკა",
-  description: "ავტომატურად ლაგდება აქტიური წევრების მიხედვით.",
+  description: "ავტომატურად ლაგდება წევრების რაოდენობის მიხედვით.",
 };
 
 // Reused byte-exact from the shipped Card `header` heading (git history) -- spliced by
@@ -29,7 +29,7 @@ export default async function LeaderboardPage() {
         <Eyebrow>ლიდერბორდი</Eyebrow>
       </div>
       <h1 className="font-serif text-4xl font-bold text-ink">დელეგატების რეიტინგი</h1>
-      <p className="mt-3 text-muted-fg">ავტომატურად ლაგდება აქტიური წევრების მიხედვით.</p>
+      <p className="mt-3 text-muted-fg">ავტომატურად ლაგდება წევრების რაოდენობის მიხედვით.</p>
       <div className="mt-8">
         <SectionRule
           label={SECTION_HEADING}
@@ -38,7 +38,7 @@ export default async function LeaderboardPage() {
         <LeaderboardDirectory delegates={ranked} regions={regions} />
       </div>
       <p className="mt-4 text-center text-xs text-muted-fg/80">
-        რეიტინგი ახლდება ავტომატურად ყოველი ახალი აქტიური წევრის დამატებისას.
+        რეიტინგი ახლდება ავტომატურად ყოველი ახალი წევრის დამატებისას.
       </p>
     </main>
   );

@@ -892,3 +892,44 @@ Owner decisions, taken in chat on 2026-10-07 while reviewing the homepage ladder
 - **Known mismatch left open.** The member column still links to the sign-up ("start by
   registering"), while the structure says the board admits members. Building that admission
   path is separate work.
+
+## ADR-036 (2026-10-07): No dues for now — every member is simply a member; payments hidden behind one switch
+
+Owner decisions, taken in chat on 2026-10-07: dues are dropped for now and nobody will pay at
+this stage, so the "active member" idea disappears and a member is simply a member,
+everywhere. Payment is hidden, not deleted (owner chose hide over delete). Plan:
+`docs/superpowers/plans/2026-10-07-member-without-dues.md`. This finishes what ADR-035 left
+for the dues-removal work.
+
+- **One word for members.** Both member statuses (`profile_completed`, `active_member`) read
+  `წევრი` on the status pill, in the admin member list and the delegate team table, and every
+  "აქტიური წევრი" label is now `წევრი`. The pill looks the same for both. The delegate team
+  table drops its status filter, since both options would read the same. The admin member list
+  drops its active option for the same reason: its audited export filters on a single status
+  value, so the two statuses cannot share one option without changing that function; members
+  who once paid appear under "all statuses".
+- **The counts count every member.** Migration `20261007120000_member_counts_without_dues.sql`
+  appends `public_stats.members_total` and `public_delegates.members` (a delegate's open
+  memberships, which only completed members hold), keeping every existing column, the
+  definer-style execution and the grants. The homepage counter, the ranking order, the
+  leaderboard, the delegate page and its share image, both cabinets' delegate cards and the
+  wizard's delegate order read them. The delegate cabinet's headline is its existing
+  `totalCount`, labelled `წევრი`; the admin overview drops its paying-member card. The old
+  active columns stay for the finance tooling. The production migration baseline is now 34
+  files (`production-db.yml` and its two tests).
+- **Payments behind `SHOW_MEMBERSHIP_DUES`.** Server-only, shown only for the word `true`
+  (whitespace ignored), `lib/membership-dues.ts`, the same shape as ADR-034's finance switch.
+  Hidden (the default) means: no `გადახდები` tab in either cabinet; `/me/billing` answers
+  not-found, even by its address; the membership wizard's second step is `წევრობის
+დადასტურება` with no fee, price or bank sentence (it still completes with the fixed tier the
+  schema requires, which nobody is asked to pay); the done page shows no payment code, transfer
+  details or payment sentence; the cabinet invitation drops "monthly dues 10₾"; the profile
+  header drops the payment code; the admin overview drops the dues total. To bring dues back,
+  set the variable in Vercel and redeploy. That restores the payment surfaces only: the labels
+  and counts above stay as they are, and an "active" tier would need its own design.
+- **Not covered.** The admin finances tab, payment recording and the active-member settings
+  page are staff tooling and unchanged. The hidden public finance page is untouched.
+- **Release order.** The new columns must exist before code that reads them is served. The
+  migration was applied to the staging database (additive) before the preview build. The real
+  site's database must get it through the gated production-db workflow before this code is
+  released there.

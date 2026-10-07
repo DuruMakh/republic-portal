@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { rankDelegates } from "./ranking";
 
-const d = (first: string, last: string, sup: number) => ({
+const d = (first: string, last: string, members: number) => ({
   first_name: first,
   last_name: last,
-  active_supporters: sup,
+  members,
 });
 
 describe("rankDelegates", () => {
-  it("orders by active supporters descending and assigns 1-based ranks", () => {
+  it("orders by members descending and assigns 1-based ranks (ADR-036)", () => {
     const ranked = rankDelegates([d("ეკა", "მელაძე", 98), d("გიორგი", "მაისურაძე", 342)]);
     expect(ranked.map((r) => [r.first_name, r.rank])).toEqual([
       ["გიორგი", 1],

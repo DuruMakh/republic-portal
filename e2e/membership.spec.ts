@@ -65,25 +65,20 @@ test("full upgrade: register → wizard → member with a reference code and mem
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
 
-  // tier phase → confirm the fixed fee and complete (owner fix #9: no more picker).
-  // Assert the AMOUNT, not just the heading: the heading alone would keep passing if
-  // the displayed fee regressed away from 10 GEL. The amount span renders
-  // MEMBERSHIP_FEE_GEL followed by a <small> lari sign, so its exact text is `10₾`;
-  // exact:true keeps this off the wrapping div, whose text also carries the
-  // per-month caption rendered below it.
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
-  await expect(page.getByText("10₾", { exact: true })).toBeVisible();
+  // second phase: dues are hidden by default (SHOW_MEMBERSHIP_DUES, ADR-036), so it only
+  // confirms membership — no fee, no price
+  await expect(page.getByRole("heading", { name: "წევრობის დადასტურება" })).toBeVisible();
+  await expect(page.getByText("₾")).toHaveCount(0);
   await page.getByRole("button", { name: "რეგისტრაციის დასრულება" }).click();
 
-  // done phase, now its own route: a GR- code and the central binding
+  // done phase, now its own route: the central binding, and no payment code or bank
+  // details while dues are hidden
   await expect(page).toHaveURL(/\/me\/membership\/done/);
-  await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
+  await expect(page.getByText(/GR-[A-HJKMNP-Z2-9]{6}/)).toHaveCount(0);
   await expect(page.getByTestId("chosen-delegate")).toHaveText("არ მყავს დელეგატი");
-  // the done screen's own pill has no label override, so it falls through to
-  // Pill's own default for profile_completed — TEAM_STATUS_LABELS.profile_completed
-  // in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“, owner fix #16
-  // (exact: pins the match to this literal label, not a substring hit elsewhere on the page)
-  await expect(page.getByText("წევრი (გადახდის გარეშე)", { exact: true })).toBeVisible();
+  // the done screen's own pill has no label override, so it falls through to Pill's own
+  // default for profile_completed — plainly „წევრი“ (ADR-036)
+  await expect(page.locator("main").getByText("წევრი", { exact: true })).toBeVisible();
 
   // into the member cabinet — the nav now carries the member-only pages, with NO reload:
   // completeMembershipAction revalidates the (member) layout server-side, so the router
@@ -92,16 +87,15 @@ test("full upgrade: register → wizard → member with a reference code and mem
   await expect(page).toHaveURL(/\/me\/profile/);
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "გადახდები" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "გადახდები" })).toHaveCount(0); // dues hidden
   // membership pill — exact text, pinned to the Pill's <span>: TEAM_STATUS_LABELS.
-  // profile_completed in lib/cabinet.ts, „წევრი (გადახდის გარეშე)“ (owner fix #16).
-  // Both guards still matter: the wrapping <p> concatenates the reference code and
-  // the member-since text after the Pill's own label, so a non-exact match would
-  // also hit the <p>; and the member-since span is itself a <span>, so pinning to
-  // <span> alone isn't enough either — only the Pill satisfies both.
+  // profile_completed in lib/cabinet.ts, plainly „წევრი“ (ADR-036). Both guards still
+  // matter: the wrapping <p> concatenates the member-since text after the Pill's own
+  // label, so a non-exact match would also hit the <p>; and the member-since span is
+  // itself a <span>, so pinning to <span> alone isn't enough either.
   const memberPill = page
     .locator("main")
-    .getByText("წევრი (გადახდის გარეშე)", { exact: true })
+    .getByText("წევრი", { exact: true })
     .and(page.locator("span"));
   await expect(memberPill).toHaveCount(1);
   await expect(memberPill).toBeVisible();
@@ -124,7 +118,7 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
     personalId: journeyPersonalId(JOURNEY.membResume),
   });
   await page.getByRole("button", { name: "გაგრძელება →" }).click();
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "წევრობის დადასტურება" })).toBeVisible();
 
   // the overview CTA now reads „continue…"
   await page.goto("/me");
@@ -132,7 +126,7 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
 
   // reopening resumes straight on the tier phase — the saved region survived
   await page.goto("/me/membership");
-  await expect(page.getByRole("heading", { name: "საწევრო შენატანი" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "წევრობის დადასტურება" })).toBeVisible();
   await page.getByRole("button", { name: "← პროფილის შესწორება" }).click();
   await expect(page.getByLabel("მხარე")).toHaveValue(/^[1-9]\d*$/); // real region id, not placeholder
   const selected = (await page.getByLabel("მხარე").locator("option:checked").innerText()).trim();

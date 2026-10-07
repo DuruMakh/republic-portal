@@ -9,6 +9,7 @@ import { StatCard } from "@/components/StatCard";
 import { barPct, conversionPct, hasAnyRole, isStaff } from "@/lib/admin";
 import { formatAmountGel, formatDateKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
+import { showMembershipDues } from "@/lib/membership-dues";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "ადმინისტრირება — ქართული რესპუბლიკა" };
@@ -82,11 +83,6 @@ export default async function AdminOverviewPage() {
           sub="რეგისტრაციიდან წევრობამდე"
         />
         <StatCard
-          value={formatCountKa(overview.active_members)}
-          label="აქტიური წევრი"
-          sub="↑ გადამხდელი წევრები"
-        />
-        <StatCard
           value={formatCountKa(overview.approved_delegates)}
           label="დამტკიცებული დელეგატი"
           sub="↑ აქტიური რეგიონული ქსელი"
@@ -103,11 +99,15 @@ export default async function AdminOverviewPage() {
           <div className="text-[0.74rem] text-muted-fg">ვერიფიკაციის მოლოდინში</div>
           <div className="text-[0.74rem] text-warn mt-0.5">საჭიროებს გადახედვას</div>
         </div>
-        <StatCard
-          value={`${formatCountKa(overview.mrr_gel)} ₾`}
-          label="სავარაუდო MRR"
-          sub="აქტიური წევრების საწევროების ჯამი"
-        />
+        {/* No "active" tier while dues are dropped (ADR-036): the paying-member card is
+            gone, and the dues total shows only with SHOW_MEMBERSHIP_DUES. */}
+        {showMembershipDues() ? (
+          <StatCard
+            value={`${formatCountKa(overview.mrr_gel)} ₾`}
+            label="სავარაუდო MRR"
+            sub="აქტიური წევრების საწევროების ჯამი"
+          />
+        ) : null}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">

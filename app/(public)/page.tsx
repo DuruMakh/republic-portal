@@ -37,9 +37,9 @@ const TOP = "რეიტინგი — ხუთეული";
 const FULL = "სრულად →";
 
 // Ladder columns and the supporter wording: the owner's 2026-10-07 copy round (ADR-035) —
-// supporter is the free tier, so the registry counter says it too and a delegate's ranked
-// figure (active members) says so instead of supporter. The collected-dues label matches
-// app/(public)/transparency/page.tsx.
+// supporter is the free tier, so the registry counter says it too. With dues dropped there
+// is no "active" tier (ADR-036): the member counter and a delegate's ranked figure count
+// every member. The collected-dues label matches app/(public)/transparency/page.tsx.
 const LADDER_1_TITLE = "მხარდამჭერი";
 const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით.";
 const LADDER_1_LINK = "გახდი მხარდამჭერი →";
@@ -50,10 +50,10 @@ const LADDER_3_TITLE = "დელეგატი";
 const LADDER_3_DESC = "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.";
 const LADDER_3_LINK = "გაეცანი წესებს →";
 const STAT_REGISTERED_LABEL = "მხარდამჭერი";
-const STAT_ACTIVE_LABEL = "აქტიური წევრი";
+const STAT_MEMBERS_LABEL = "წევრი";
 const STAT_APPROVED_LABEL = "დამტკიცებული დელეგატი";
 const TOTAL_GEL_LABEL = "შეგროვებული საწევრო შენატანები";
-const RANK_FIGURE_LABEL = "აქტიური წევრი";
+const RANK_FIGURE_LABEL = "წევრი";
 const NEWS_LABEL = "სიახლეები";
 const EVENTS_LABEL = "ღონისძიებები";
 const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
@@ -171,9 +171,9 @@ export default async function HomePage() {
                 </span>
               </div>
               <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">{STAT_ACTIVE_LABEL}</span>
-                <span className="font-serif text-xl font-bold" data-testid="stat-active-members">
-                  <CountUp value={stats.active_members} />
+                <span className="text-[0.85rem] text-muted-fg">{STAT_MEMBERS_LABEL}</span>
+                <span className="font-serif text-xl font-bold" data-testid="stat-members-total">
+                  <CountUp value={stats.members_total} />
                 </span>
               </div>
               <div className="flex justify-between border-b border-hairline py-2.5">
@@ -201,7 +201,7 @@ export default async function HomePage() {
                   rank={d.rank}
                   name={`${d.first_name} ${d.last_name}`}
                   meta={d.region_name_ka ?? "—"}
-                  figure={formatCountKa(d.active_supporters)}
+                  figure={formatCountKa(d.members)}
                   figureLabel={RANK_FIGURE_LABEL}
                   href={`/delegates/${d.slug}`}
                 />

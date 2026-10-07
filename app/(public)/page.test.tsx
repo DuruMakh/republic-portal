@@ -29,6 +29,7 @@ beforeEach(() => {
     approved_delegates: 12,
     active_members: 1636,
     registered_total: 1906,
+    members_total: 1774,
   });
   data.fetchPublicDelegates.mockResolvedValue([]);
   data.fetchPublicNews.mockResolvedValue([]);
@@ -57,7 +58,7 @@ describe("homepage counters while finances are hidden (the default)", () => {
     render(await HomePage());
 
     expect(screen.getByTestId("stat-approved-delegates")).toBeInTheDocument();
-    expect(screen.getByTestId("stat-active-members")).toBeInTheDocument();
+    expect(screen.getByTestId("stat-members-total")).toBeInTheDocument();
     expect(screen.getByTestId("stat-registered-total")).toBeInTheDocument();
   });
 });
@@ -87,7 +88,7 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
     expect(screen.queryByText("რეგისტრირებული")).not.toBeInTheDocument();
   });
 
-  it("labels a delegate's ranking figure as active members, not supporters", async () => {
+  it("counts and labels plain members in the registry and the ranking (ADR-036)", async () => {
     data.fetchPublicDelegates.mockResolvedValue([
       {
         id: "00000000-0000-0000-0000-000000000001",
@@ -98,14 +99,20 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
         region_name_ka: "გურია",
         bio: null,
         photo_url: null,
-        active_supporters: 84,
+        active_supporters: 3,
+        members: 84,
       },
     ]);
 
     render(await HomePage());
 
-    // the registry counter's active-member label plus the one ranked row's figure label
-    expect(screen.getAllByText("აქტიური წევრი", { exact: true })).toHaveLength(2);
+    // the registry counter's member label plus the one ranked row's figure label
+    expect(screen.getAllByText("წევრი", { exact: true }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("აქტიური წევრი")).toBeNull();
+    expect(screen.getByTestId("stat-members-total")).toHaveTextContent(
+      formatCountKa(1774).replace(/\s+/g, " "),
+    );
+    expect(screen.getByText("84")).toBeInTheDocument();
     expect(screen.getAllByText("მხარდამჭერი", { exact: true })).toHaveLength(2);
   });
 });

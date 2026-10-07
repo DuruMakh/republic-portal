@@ -4,6 +4,7 @@ import { Masthead } from "@/components/Masthead";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageSheet } from "@/components/PageSheet";
 import { cabinetNavItems, deriveDestination, isApprovedDelegate } from "@/lib/cabinet";
+import { filterBillingLinks, showMembershipDues } from "@/lib/membership-dues";
 import { mobileTabs } from "@/lib/mobile-nav";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
@@ -37,7 +38,8 @@ export default async function DelegateLayout({ children }: { children: React.Rea
   if (!state.exists || !isApprovedDelegate(state)) {
     redirect(deriveDestination(state));
   }
-  const items = cabinetNavItems("delegate", state.admin);
+  // No payments tab while dues are hidden (ADR-036).
+  const items = filterBillingLinks(cabinetNavItems("delegate", state.admin), showMembershipDues());
   const { tabs, more } = mobileTabs(items, "delegate");
   return (
     <PageSheet>

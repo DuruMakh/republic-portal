@@ -106,9 +106,7 @@ export default async function AdminVerifyPage({
                       "—"
                     )}
                   </td>
-                  <td className={tableCellClass}>
-                    {d.active_supporters} აქტიური · {d.total_supporters} სულ
-                  </td>
+                  <td className={tableCellClass}>{d.total_supporters} წევრი</td>
                   <td className={tableCellClass}>
                     {d.bio ? "ბიო ✓" : "ბიო —"} · {d.photo_url ? "ფოტო ✓" : "ფოტო —"}
                   </td>

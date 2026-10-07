@@ -5,6 +5,7 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { isApprovedDelegate } from "@/lib/cabinet";
+import { showMembershipDues } from "@/lib/membership-dues";
 import { getCabinetState } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "რეგისტრაცია დასრულებულია — ქართული რესპუბლიკა" };
@@ -15,6 +16,8 @@ export default async function MembershipDonePage() {
   // approved-only: pending/rejected requesters keep their member surfaces (R2 §3.1)
   if (isApprovedDelegate(state)) redirect("/delegate");
   if (!state.completed) redirect("/me/membership"); // nothing to show until the wizard finishes
+  // The GR- code is the bank-transfer reference: shown only with the dues (ADR-036).
+  const duesShown = showMembershipDues();
 
   return (
     <main className="mx-auto max-w-xl">
@@ -23,7 +26,7 @@ export default async function MembershipDonePage() {
       </div>
       <div className="mx-auto max-w-lg border-y-2 border-ink py-10 text-center">
         <h1 className="font-serif text-4xl font-bold text-ink">რეგისტრაცია დასრულებულია ✓</h1>
-        {state.referenceCode ? (
+        {duesShown && state.referenceCode ? (
           <p className="mt-4 font-serif text-3xl font-bold tracking-[.08em]">
             {state.referenceCode}
           </p>
@@ -32,7 +35,7 @@ export default async function MembershipDonePage() {
           <Pill status="profile_completed" />
         </div>
       </div>
-      <TransferInstructions referenceCode={state.referenceCode} />
+      {duesShown ? <TransferInstructions referenceCode={state.referenceCode} /> : null}
       <p className="mt-4 text-sm text-muted-fg">
         დელეგატი:{" "}
         <strong className="text-ink" data-testid="chosen-delegate">
@@ -41,9 +44,11 @@ export default async function MembershipDonePage() {
             : "არ მყავს დელეგატი"}
         </strong>
       </p>
-      <p className="mt-2 text-sm text-muted-fg">
-        აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
-      </p>
+      {duesShown ? (
+        <p className="mt-2 text-sm text-muted-fg">
+          აქტიური წევრის სტატუსი გააქტიურდება პირველი შენატანის დადასტურების შემდეგ.
+        </p>
+      ) : null}
       <div className="mt-6 flex flex-col gap-2">
         <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
       </div>

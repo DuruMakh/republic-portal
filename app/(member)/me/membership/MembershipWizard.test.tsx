@@ -110,13 +110,13 @@ describe("MembershipWizard — phase derivation", () => {
   it("starts on the profile phase when wizard fields are incomplete", async () => {
     render(<MembershipWizard initialState={cab({})} />);
     expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
-    expect(screen.queryByText("საწევრო შენატანი")).toBeNull();
+    expect(screen.queryByText("წევრობის დადასტურება")).toBeNull();
     await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
   });
 
   it("starts on the tier phase directly when the profile is already saved", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.getByText("წევრობის დადასტურება")).toBeInTheDocument();
     expect(screen.queryByText("იურიდიული პროფილი")).toBeNull();
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" })).toBeInTheDocument(),
@@ -151,7 +151,7 @@ describe("MembershipWizard — profile phase", () => {
       employment: "სტუდენტი",
       delegateId: null,
     });
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის დადასტურება")).toBeInTheDocument();
   });
 
   it("shows the Georgian error message when the save action fails", async () => {
@@ -306,7 +306,7 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
       target: { value: "1990-05-20" },
     });
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის დადასტურება")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
     expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
@@ -315,13 +315,21 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
 });
 
 describe("MembershipWizard — tier phase", () => {
-  it("shows the fixed fee as a confirmation, not a picker (owner fix #9)", () => {
-    render(<MembershipWizard initialState={cab(PROFILED)} />);
+  it("shows the fixed fee as a confirmation, not a picker, when dues are on (owner fix #9)", () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} showDues />);
     expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     expect(screen.getByText(/10/)).toBeInTheDocument();
     expect(screen.getByText("თვეში")).toBeInTheDocument();
+  });
+
+  it("asks only to confirm membership while dues are hidden — no fee, no bank, no price (ADR-036)", () => {
+    render(<MembershipWizard initialState={cab(PROFILED)} />);
+    expect(screen.getByText("წევრობის დადასტურება")).toBeInTheDocument();
+    expect(screen.queryByText("საწევრო შენატანი")).toBeNull();
+    expect(screen.queryByText(/₾|თვეში|გადარიცხვ|შენატან|საწევრო/)).toBeNull();
+    expect(screen.getByText("დადასტურება")).toBeInTheDocument(); // the stepper's second step
   });
 
   it("navigates to the done screen on successful completion", async () => {
@@ -352,7 +360,7 @@ describe("MembershipWizard — tier phase", () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
     fireEvent.click(screen.getByRole("button", { name: "რეგისტრაციის დასრულება" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.getByText("წევრობის დადასტურება")).toBeInTheDocument();
   });
 
   it("shows a Georgian error, re-enables the button, and does not navigate when completion rejects", async () => {
@@ -368,7 +376,7 @@ describe("MembershipWizard — tier phase", () => {
 
   it("returns to the profile phase with fields intact via the back button", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(screen.getByText("წევრობის დადასტურება")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
     expect(screen.getByText("იურიდიული პროფილი")).toBeInTheDocument();
     await waitFor(() =>
@@ -386,7 +394,7 @@ describe("MembershipWizard — tier phase", () => {
     fireEvent.click(screen.getByRole("button", { name: "← პროფილის შესწორება" }));
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
-    expect(await screen.findByText("საწევრო შენატანი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის დადასტურება")).toBeInTheDocument();
     expect(screen.queryByText("აირჩიე საწევრო პაკეტი.")).toBeNull();
   });
 });

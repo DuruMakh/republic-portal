@@ -20,6 +20,7 @@ import {
   type TeamMemberStatus,
 } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
+import { showMembershipDues } from "@/lib/membership-dues";
 import { rankDelegates } from "@/lib/ranking";
 import { fetchPublicDelegates } from "@/lib/supabase/public";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -30,7 +31,7 @@ export const metadata: Metadata = { title: "ჩემი პროფილი �
 
 // Same label as components/LeaderRow.tsx's RANK_FIGURE_LABEL (ADR-035) — the my-delegate rail
 // card shows the same rank/region/supporters shape as the public registry.
-const RANK_FIGURE_LABEL = "აქტიური წევრი";
+const RANK_FIGURE_LABEL = "წევრი";
 // Spliced (never hand-retyped) from prototype/kronika-d3/kronika-d3-template.html's
 // member-cabinet poll teaser (S4); verified against the Georgian (Mkhedruli,
 // U+10A0-U+10FF) Unicode block before commit — see the georgian-quote-
@@ -159,7 +160,10 @@ export default async function ProfilePage() {
         </h1>
         <p className="flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-fg">
           <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
-          {state.referenceCode ? <span>· {state.referenceCode}</span> : null}
+          {/* the GR- code is the bank-transfer reference: only with the dues (ADR-036) */}
+          {showMembershipDues() && state.referenceCode ? (
+            <span>· {state.referenceCode}</span>
+          ) : null}
           {since ? <span>· წევრი {since}</span> : null}
         </p>
       </div>
@@ -257,7 +261,7 @@ export default async function ProfilePage() {
                     rank={myDelegateRanked.rank}
                     name={`${myDelegateRanked.first_name} ${myDelegateRanked.last_name}`}
                     meta={myDelegateRanked.region_name_ka ?? "—"}
-                    figure={formatCountKa(myDelegateRanked.active_supporters)}
+                    figure={formatCountKa(myDelegateRanked.members)}
                     figureLabel={RANK_FIGURE_LABEL}
                     href={`/delegates/${myDelegateRanked.slug}`}
                   />

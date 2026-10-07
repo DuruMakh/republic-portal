@@ -6,6 +6,7 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { ReferralCard } from "@/components/ReferralCard";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { deriveMembershipPhase } from "@/lib/funnel";
+import { showMembershipDues } from "@/lib/membership-dues";
 import { getCabinetState } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "ჩემი კაბინეტი — ქართული რესპუბლიკა" };
@@ -35,7 +36,9 @@ export default async function CabinetOverviewPage() {
         <Eyebrow>შემდეგი ნაბიჯი</Eyebrow>
         <h2 className="mt-1 font-serif text-xl font-bold text-ink">გახდი წევრი</h2>
         <p className="mt-1 text-sm text-muted-fg">
-          წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 10₾.
+          {showMembershipDues()
+            ? "წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს — ყოველთვიური საწევრო 10₾."
+            : "წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს."}
         </p>
         <ul className="mt-4 flex flex-col gap-2">
           {PERKS.map((perk) => (

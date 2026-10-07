@@ -70,14 +70,14 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await page.getByRole("button", { name: "დელეგატის შეცვლა" }).click();
   await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
 
-  // billing: permanent code + placeholder-marked details + the fixed fee, no change
-  // control (owner fix #9: the tier picker/change flow is retired)
-  await page.goto("/me/billing");
+  // „ჩემი დელეგატი“ lives in the „მეტი“ sheet (no payments tab while dues are hidden,
+  // ADR-036), so this page marks the sheet's button as current
   const moreButton = mobileNav.getByRole("button", { name: "მეტი" });
   await expect(moreButton).toHaveAttribute("aria-current", "page");
   await moreButton.click();
   const sheet = page.getByRole("dialog");
-  await expect(sheet.locator('a[href="/me/billing"]')).toHaveAttribute("aria-current", "page");
+  await expect(sheet.locator('a[href="/me/delegate"]')).toHaveAttribute("aria-current", "page");
+  await expect(sheet.locator('a[href="/me/billing"]')).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -88,12 +88,12 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   await expect(moreButton).toBeFocused();
-  await expect(page.getByTestId("reference-code")).toHaveText(/^GR-[A-HJKMNP-Z2-9]{6}$/);
-  await expect(page.getByTestId("bank-placeholder")).toBeVisible();
-  await expect(page.getByText("თვეში")).toBeVisible();
-  await expect(page.getByRole("button", { name: "შეცვლა" })).toHaveCount(0);
-  await expect(page.getByText("გადმორიცხე")).toContainText("10 ₾");
-  await expect(page.getByTestId("billing-empty")).toBeVisible();
+
+  // dues are hidden by default (SHOW_MEMBERSHIP_DUES, ADR-036): the payments page itself
+  // answers not-found, even by its address
+  await page.goto("/me/billing");
+  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
+  await page.goto("/me/delegate");
 
   // Desktop keeps the established CabinetNav and suppresses the mobile bar.
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -102,7 +102,7 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
     page
       .getByRole("navigation", { name: "კაბინეტის ნავიგაცია" })
       .getByRole("link", { name: "გადახდები" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await page.goto("/me/membership");
   await expect(page).toHaveURL(/\/me\/membership\/done$/);
   await expect(page.getByRole("banner")).toHaveCount(1);

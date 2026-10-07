@@ -39,15 +39,14 @@ test("join requires Google before showing registration fields", async ({ page })
 test("styleguide renders design system", async ({ page }) => {
   await page.goto("/styleguide");
   await expect(page.getByRole("button", { name: "ძირითადი" })).toBeVisible();
-  // Pill's active_member default (lib/cabinet TEAM_STATUS_LABELS.active_member =
-  // „აქტიური წევრი“, owner fix #16). Scoped to the "სტატუსები" demo card and
-  // exact-matched: the styleguide also has an unrelated StatCard demo labeled the
-  // very same „აქტიური წევრი“ outside any <section>, so an unscoped lookup
-  // would prove nothing about which one actually rendered.
+  // Pill's member default (both member statuses read „წევრი“, ADR-036). Scoped to the
+  // "სტატუსები" demo card and exact-matched: the styleguide also has an unrelated StatCard
+  // demo labeled the very same word outside any <section>, so an unscoped lookup would
+  // prove nothing about which one actually rendered. Two pills carry it, hence toHaveCount.
   const statusesCard = page
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "სტატუსები", exact: true }) });
-  await expect(statusesCard.getByText("აქტიური წევრი", { exact: true })).toBeVisible();
+  await expect(statusesCard.getByText("წევრი", { exact: true })).toHaveCount(2);
 });
 
 test("member area redirects anonymous users to login", async ({ page }) => {

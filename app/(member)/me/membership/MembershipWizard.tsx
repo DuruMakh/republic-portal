@@ -31,7 +31,18 @@ function isFieldKey(key: unknown): key is FieldKey {
 // reaches this component (the page gate redirects to /me/membership/done first).
 type WizardPhase = "profile" | "tier";
 
-export function MembershipWizard({ initialState }: { initialState: CabinetStatePresent }) {
+/**
+ * `showDues` (SHOW_MEMBERSHIP_DUES, read by the server page): while dues are hidden (the
+ * default, ADR-036) the second step only confirms membership — no fee, no bank sentence.
+ * It still completes with the fixed tier the schema requires; nobody is asked to pay it.
+ */
+export function MembershipWizard({
+  initialState,
+  showDues = false,
+}: {
+  initialState: CabinetStatePresent;
+  showDues?: boolean;
+}) {
   const router = useRouter();
   const [phase, setPhase] = useState<WizardPhase>(() =>
     deriveMembershipPhase(initialState) === "tier" ? "tier" : "profile",
@@ -122,7 +133,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
         .from("public_delegates")
         .select("id, first_name, last_name, region_name_ka")
         .eq("region_id", regionId)
-        .order("active_supporters", { ascending: false })
+        .order("members", { ascending: false })
         .then(({ data }) =>
           setDelegateOptions(
             (data ?? []).map((d) => ({
@@ -340,25 +351,33 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   } else {
     phaseContent = (
       <>
-        <h2 className="font-serif font-bold border-b-2 border-ink pb-2">საწევრო შენატანი</h2>
-        <p className="mb-5 mt-1 text-sm text-muted-fg">
-          შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
-        </p>
-        <div className="border border-ink bg-paper-bright p-4 text-center">
-          <span className="block font-serif text-3xl font-bold text-ink">
-            {MEMBERSHIP_FEE_GEL}
-            <small className="text-lg font-bold">₾</small>
-          </span>
-          <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
-        </div>
+        {showDues ? (
+          <>
+            <h2 className="font-serif font-bold border-b-2 border-ink pb-2">საწევრო შენატანი</h2>
+            <p className="mb-5 mt-1 text-sm text-muted-fg">
+              შენატანი ამყარებს მოძრაობის დამოუკიდებლობას.
+            </p>
+            <div className="border border-ink bg-paper-bright p-4 text-center">
+              <span className="block font-serif text-3xl font-bold text-ink">
+                {MEMBERSHIP_FEE_GEL}
+                <small className="text-lg font-bold">₾</small>
+              </span>
+              <span className="mt-1 block text-[0.74rem] font-bold text-muted-fg">თვეში</span>
+            </div>
+          </>
+        ) : (
+          <h2 className="font-serif font-bold border-b-2 border-ink pb-2">წევრობის დადასტურება</h2>
+        )}
         {tierError ? <p className="mt-3 text-sm text-danger">{tierError}</p> : null}
         <div className="mt-5 flex flex-col gap-3">
           <Button onClick={completeTier} disabled={tierBusy} size="lg">
             რეგისტრაციის დასრულება
           </Button>
-          <p className="text-center text-xs text-muted-fg">
-            გადახდა ხდება საბანკო გადარიცხვით — ბარათის მონაცემები არ გჭირდება.
-          </p>
+          {showDues ? (
+            <p className="text-center text-xs text-muted-fg">
+              გადახდა ხდება საბანკო გადარიცხვით — ბარათის მონაცემები არ გჭირდება.
+            </p>
+          ) : null}
           <Button variant="ghost" onClick={() => setPhase("profile")} disabled={tierBusy}>
             ← პროფილის შესწორება
           </Button>
@@ -373,7 +392,10 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
         <Eyebrow>წევრობის გაფორმება</Eyebrow>
       </div>
       <div className="mb-6 flex justify-center">
-        <Stepper steps={["პროფილი", "საწევრო"]} current={phase === "profile" ? 1 : 2} />
+        <Stepper
+          steps={["პროფილი", showDues ? "საწევრო" : "დადასტურება"]}
+          current={phase === "profile" ? 1 : 2}
+        />
       </div>
       <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
         {phaseContent}
