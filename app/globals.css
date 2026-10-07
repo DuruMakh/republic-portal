@@ -60,3 +60,33 @@
     }
   }
 }
+
+/* /structure (ADR-035): condensed display headings and the pebble shape. */
+@utility display-heading {
+  font-family: var(--font-sans);
+  font-stretch: 68%;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+@utility pebble {
+  border-radius: 48% 52% 55% 45% / 50% 46% 54% 50%;
+}
+
+@keyframes council-seat-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.council-seat {
+  animation: council-seat-in 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .council-seat {
+    animation: none;
+  }
+}
