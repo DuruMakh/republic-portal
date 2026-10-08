@@ -3,11 +3,13 @@ import { runCleanups } from "./cleanup-helpers";
 import {
   cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
+  createGoogleBackedTestUser,
   getSeededReferral,
   JOURNEY,
   journeyPhone,
   passRegistration,
 } from "./funnel-helpers";
+import { clientFor, serviceClient } from "./otp-helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -24,6 +26,49 @@ const cleanupRegistrationUsers = () =>
 test.beforeAll(cleanupRegistrationUsers);
 test.afterAll(cleanupRegistrationUsers);
 
+// Privacy consent (spec 2026-10-08 sections 4 and 6). Runs first in serial mode on the
+// regHappy slot and frees it again for the happy path below.
+test("no code is sent and no account is created without the privacy consent tick", async ({
+  page,
+}) => {
+  const phone = journeyPhone(JOURNEY.regHappy);
+  const { id, session } = await createGoogleBackedTestUser(page, phone);
+  try {
+    await page.goto("/join");
+    await expect(page.getByRole("link", { name: "კონფიდენციალურობის პოლიტიკის" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    await page.getByLabel("სახელი").fill("ნინო");
+    await page.getByLabel("გვარი").fill("ტესტი");
+    await page.getByLabel("ტელეფონის ნომერი").fill(phone);
+    await page.getByRole("button", { name: "კოდის მიღება" }).click();
+    await expect(page.getByText("გასაგრძელებლად მონიშნე თანხმობა.")).toBeVisible();
+    await expect(page.getByTestId("otp-0")).toHaveCount(0);
+
+    // Bypassing the page does not help: the database refuses a version that is not the
+    // current policy. (A missing version is refused only from 20261008150000, which reaches
+    // staging after this PR merges, so every open PR's CI keeps working until then; that
+    // case is covered by lib/privacy.test.ts and checked live when the migration lands.)
+    const client = await clientFor(session);
+    const { error } = await client.rpc("register", {
+      p_first_name: "ნინო",
+      p_last_name: "ტესტი",
+      p_ref_code: null,
+      p_privacy_version: "2000-01-v0",
+    });
+    expect(error?.message).toBe("privacy_consent_required");
+    const { data: profile } = await serviceClient()
+      .from("profiles")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+    expect(profile).toBeNull();
+  } finally {
+    await cleanupGoogleBackedTestUsers([phone]);
+  }
+});
+
 test("registers through Google and lands in the registered cabinet", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.regHappy);
   const firstName = "ნინო";
@@ -32,6 +77,16 @@ test("registers through Google and lands in the registered cabinet", async ({ pa
     firstName,
     lastName: "ტესტი",
   });
+
+  // consent is recorded with the policy version (spec 2026-10-08 section 6)
+  const { data: consent, error: consentError } = await serviceClient()
+    .from("profiles")
+    .select("privacy_version, privacy_accepted_at")
+    .eq("phone", `+995${phone}`)
+    .single();
+  expect(consentError).toBeNull();
+  expect(consent?.privacy_version).toBe("2026-10-v1");
+  expect(consent?.privacy_accepted_at).not.toBeNull();
 
   // registered overview greets them by name
   await expect(page.getByRole("heading", { name: `გამარჯობა, ${firstName}!` })).toBeVisible();
@@ -81,4 +136,13 @@ test("a referral link is captured at registration and bound in the wizard", asyn
   await expect(page.getByText(fullName)).toBeVisible();
   await expect(page.getByText(/რეფერალური ბმულით/)).toBeVisible();
   await expect(page.getByLabel("დელეგატი")).toHaveCount(0);
+});
+
+test("the privacy policy is public and linked from the footer", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "კონფიდენციალურობა" }).click();
+  await expect(page).toHaveURL(/\/privacy$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "კონფიდენციალურობის პოლიტიკა" }),
+  ).toBeVisible();
 });

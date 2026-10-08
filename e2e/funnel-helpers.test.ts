@@ -95,7 +95,8 @@ describe("createGoogleBackedTestUser", () => {
       password,
     });
     expect(installSupabaseSession).toHaveBeenCalledWith(page, createdSession);
-    expect(result).toEqual({ id: "google-user-1" });
+    // the session lets a spec call RPCs as this user (registration.spec consent refusal)
+    expect(result).toEqual({ id: "google-user-1", session: createdSession });
     expect(JSON.stringify(result)).not.toContain(password);
     expect(log).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
@@ -288,10 +289,11 @@ describe("passRegistration", () => {
     const goto = vi.fn().mockResolvedValue(undefined);
     const fill = vi.fn().mockResolvedValue(undefined);
     const click = vi.fn().mockResolvedValue(undefined);
+    const check = vi.fn().mockResolvedValue(undefined);
     const page = {
       goto,
       getByLabel: vi.fn().mockReturnValue({ fill }),
-      getByRole: vi.fn().mockReturnValue({ click }),
+      getByRole: vi.fn().mockReturnValue({ click, check }),
       getByTestId: vi.fn().mockReturnValue({ fill }),
     };
 
@@ -305,6 +307,9 @@ describe("passRegistration", () => {
     expect(createUser.mock.invocationCallOrder[0]).toBeLessThan(goto.mock.invocationCallOrder[0]!);
     expect(goto).toHaveBeenCalledWith("/join?ref=ABC123");
     expect(page.getByRole).toHaveBeenCalledWith("button", { name: "კოდის მიღება" });
+    // the privacy consent box is ticked before the code is requested (spec 2026-10-08 section 4)
+    expect(page.getByRole).toHaveBeenCalledWith("checkbox", { name: expect.any(RegExp) });
+    expect(check.mock.invocationCallOrder[0]).toBeLessThan(click.mock.invocationCallOrder[0]!);
     expect(page.getByTestId).toHaveBeenCalledWith("otp-0");
     expect(fill).toHaveBeenCalledWith("123456");
   });

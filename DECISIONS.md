@@ -1015,3 +1015,31 @@ fewer supporter and one more member.
   design without answering the label question; this was the recommended default.)
 - **Release order.** Two PRs: the additive migration first (nothing visible), then the card,
   after the real site's database has the migration.
+
+## ADR-041 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
+
+- **What.** One required box on registration (18+ and personal-data processing, one sentence),
+  linking a new `/privacy` page; a one-line notice under the Google button. Spec:
+  `docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md`.
+- **Why.** Georgian Law No. 3144 (2023) treats political opinions as special-category data,
+  needing written consent (an electronic tick counts), separate from other terms. Registering
+  with the movement reveals support for it. The Art. 6(k) exception for political associations
+  does not apply: the movement is not registered.
+- **Enforcement.** `register()` (reached by both sign-up routes) refuses a missing or stale
+  `p_privacy_version` with `privacy_consent_required` and stamps `profiles.privacy_accepted_at` /
+  `privacy_version`; both columns are server-managed. The SMS send action refuses without the
+  tick, so no number goes to the provider unconsented. The version lives in `lib/privacy.ts`
+  and the migration; `lib/privacy.test.ts` keeps them equal.
+- **Two-step release.** `20261008140000` (accepts an optional version) shipped and was applied
+  first; `20261008150000` (refuses a missing one) ships with the code. Merging to `main`
+  deploys before the production migration can run, so the database had to accept both shapes
+  first. Step 2 reaches **staging** only after the code PR merges too: every PR's CI runs e2e
+  against staging, and an open PR built on older `main` sends no version.
+- **Owner decisions.** Controller named only as the movement; recipients by category, no
+  company names; minimum age 18; no political-views explainer section; the two founders'
+  accounts keep empty consent fields (no hand edits).
+- **Deferred (owner: later).** A channel for data requests and self-service deletion or
+  withdrawal (the law's 10-working-day rights); general rules of use; re-consent on a new
+  policy version; consent date in the admin panel; legal review of the copy before launch.
+- **Numbering.** ADR-038 is claimed by two open PRs (#30, #32) and 039 has merged, so this
+  takes 041.

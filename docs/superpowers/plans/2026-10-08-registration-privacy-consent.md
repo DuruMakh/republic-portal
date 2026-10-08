@@ -1315,12 +1315,14 @@ test("the privacy policy is public and linked from the footer", async ({ page })
 });
 ```
 
-- [ ] **Step 4: Apply to staging and run e2e**
+- [ ] **Step 4: Run e2e against staging (still on step 1)**
 
-Apply `20261008150000` to staging (the same staging push as Task 1). Note: from this moment the
-demo site's current `main` code (which sends no version) cannot register on staging until PR B
-merges. Accepted; the demo has no real registrations. Then run the full e2e suite against the
-local build with the copied `.env.local` (see the worktree e2e memory: absolute Playwright CLI
+**Amended during execution:** do NOT apply `20261008150000` to staging yet. Every PR's CI runs
+e2e against staging, and open PRs built on older `main` send no version, so applying step 2 early
+would break their registration tests. The e2e therefore asserts only that a **stale** version is
+refused (true under step 1 too); the missing-version refusal is covered statically by
+`lib/privacy.test.ts` and checked live in Release B right after merge. Run the registration e2e
+against the local build with the copied `.env.local` (see the worktree e2e memory: absolute Playwright CLI
 path; do not trust a wrapper's exit code, read the summary line).
 Expected: all pass, including the three new/changed registration tests.
 
@@ -1369,13 +1371,14 @@ Message: `feat(db): registration refuses without privacy consent (step 2 of 2), 
 ### Release B
 
 - [ ] Whole-branch review of PR B.
-- [ ] Push, open PR B, bind with ccd_pr, CI green (it includes e2e against staging, which now has
-      both migrations).
+- [ ] Push, open PR B, bind with ccd_pr, CI green (e2e against staging, which still has only step 1).
 - [ ] `/qa` on the Vercel preview.
 - [ ] Owner evidence, plain language: preview URL; screenshots of `/privacy` (desktop + mobile),
       the Google step with its notice, step 2 with the unticked error, step 2 ticked, and the
       footer link.
-- [ ] Owner sign-off. Merge. Then the production-db workflow (dry run → owner approves → apply).
+- [ ] Owner sign-off. Merge. Then apply `20261008150000` to staging and check live, as a
+      signed-in test user without a profile, that `register` without a version is refused with
+      `privacy_consent_required`. Then the production-db workflow (dry run → owner approves → apply).
       Until it is applied, the real site runs the new code against step-1's function, which
       accepts and stamps the version. Nothing breaks in between.
 - [ ] After apply: check georgia-republic's `/privacy`, the footer link, and that `/join` shows
