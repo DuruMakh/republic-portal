@@ -12,6 +12,7 @@ export default defineConfig({
       "components/**/*.test.tsx",
       "app/**/*.test.{ts,tsx}",
       "e2e/**/*.test.ts",
+      "proxy.test.ts",
     ],
   },
   resolve: { alias: { "@": path.resolve(__dirname, ".") } },
