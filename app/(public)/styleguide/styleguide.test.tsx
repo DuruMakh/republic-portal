@@ -15,4 +15,15 @@ describe("StyleguidePage", () => {
     expect(screen.getByRole("list", { name: "რეგისტრაციის ნაბიჯები" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeInTheDocument();
   });
+
+  it("shows the structure-page pieces: rule card, tally legend and empty roster", () => {
+    render(<StyleguidePage />);
+
+    expect(screen.getByRole("img", { name: "5-დან 4 ხმა" })).toBeInTheDocument();
+    expect(screen.getByText("წინააღმდეგი")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "ბორდის შემადგენლობა" }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-placeholder="true"]').length).toBeGreaterThan(0);
+  });
 });
