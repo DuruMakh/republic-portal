@@ -58,3 +58,33 @@ describe("legacy register() (security audit C1)", () => {
     expect(check).toContain("superseded_at");
   });
 });
+
+describe("personal-ID conflicts at the membership step (security audit H1)", () => {
+  const body = () => latestDefinition("become_member_save_profile");
+
+  it("resolves the delegate before it looks at the personal ID", () => {
+    const b = body();
+    expect(b.indexOf("raise exception 'invalid_delegate'")).toBeGreaterThan(-1);
+    expect(b.indexOf("raise exception 'invalid_delegate'")).toBeLessThan(
+      b.indexOf("pr.personal_id = p_personal_id"),
+    );
+  });
+
+  it("caps conflicts at three per account for good, counted from the audit log (D2)", () => {
+    const b = body();
+    expect(b).toContain("action = 'member.personal_id_conflict'");
+    expect(b).toContain("target_id = v_uid::text");
+    // no daily reset: a time window would let a patient prober keep asking
+    expect(b).not.toContain("interval '24 hours'");
+    expect(b).toMatch(/v_conflicts >= 3 then\s+raise exception 'personal_id_attempts_exceeded'/);
+  });
+
+  it("returns the refusal so the audit row commits, and never stores the tried ID", () => {
+    const b = body();
+    expect(b).toContain("return jsonb_build_object('error', 'duplicate_personal_id')");
+    expect(b).not.toContain("raise exception 'duplicate_personal_id'");
+    expect(b).toMatch(
+      /values \(null, 'member\.personal_id_conflict', 'profile', v_uid::text, null\)/,
+    );
+  });
+});
