@@ -145,3 +145,18 @@ describe("public layout on an old event address (ADR-042)", () => {
     expect(document.querySelector('a[href="/events"]')).toBeNull();
   });
 });
+
+describe("public layout — privacy policy link", () => {
+  it("links the privacy policy from the footer, right after the rules", () => {
+    renderLayout();
+    const footer = screen.getByRole("contentinfo");
+    const labels = within(footer)
+      .getAllByRole("link")
+      .map((l) => l.textContent);
+    expect(labels.indexOf("კონფიდენციალურობა")).toBe(labels.indexOf("წესები") + 1);
+    expect(within(footer).getByRole("link", { name: "კონფიდენციალურობა" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+  });
+});

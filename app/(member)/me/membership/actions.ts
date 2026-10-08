@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import {
   GENERIC_FUNNEL_ERROR,
   mapFunnelError,
@@ -9,6 +10,13 @@ import {
 } from "@/lib/funnel";
 import { membershipProfileSchema, tierSchema } from "@/lib/funnel-schemas";
 import { createServerSupabase } from "@/lib/supabase/server";
+
+/**
+ * become_member_save_profile RETURNS {"error": token} for a refused personal ID (security
+ * audit H1), so the audit row it writes commits instead of rolling back with a raise. Strict:
+ * an object holding exactly one `error` key — a cabinet state always carries `exists`.
+ */
+const returnedRefusalSchema = z.object({ error: z.string() }).strict();
 
 export async function saveMembershipProfileAction(input: unknown): Promise<ActionResult> {
   const parsed = membershipProfileSchema.safeParse(input);
@@ -25,6 +33,8 @@ export async function saveMembershipProfileAction(input: unknown): Promise<Actio
     p_personal_id: parsed.data.personalId,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
+  const refused = returnedRefusalSchema.safeParse(data);
+  if (refused.success) return { ok: false, error: mapFunnelError(refused.data.error) };
   return { ok: true, state: data as unknown as CabinetState };
 }
 

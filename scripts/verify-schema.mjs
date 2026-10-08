@@ -1,7 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { randomBytes, randomUUID } from "node:crypto";
 
+import { assertStagingTarget } from "./staging-guard.mjs";
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Security audit M6: staging only.
+assertStagingTarget(url);
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const db = createClient(url, key);
 

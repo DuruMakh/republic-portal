@@ -267,13 +267,21 @@ const FIXTURE_BIRTH_DATE = "1990-06-15";
 const FIXTURE_EMPLOYMENT = "უსაფრთხოების აუდიტის ფიქსტურა";
 const FIXTURE_TIER = 10; // one of (5, 10, 20); payment amount below matches it 1:1
 
-/** register(): idempotent by itself (a state read once a profile exists) — always safe to call. */
+/**
+ * A registered-standing profile, written with the service role: register() is no longer callable
+ * by signed-in clients (security audit C1, 20261008160000) and register_google() needs a Google
+ * identity these phone fixtures do not have. The personal ID is set here so the membership step
+ * skips its ID block. Idempotent: an existing profile is left alone.
+ */
 async function ensureRegistered(actorOut, firstName, lastName) {
-  const client = actorClient(actorOut.accessToken);
-  const { error } = await client.rpc("register", {
-    p_first_name: firstName,
-    p_last_name: lastName,
-    p_personal_id: personalIdFor(actorOut.phone),
+  if (await readProfile(actorOut.userId)) return;
+  const { error } = await db.from("profiles").insert({
+    id: actorOut.userId,
+    first_name: firstName,
+    last_name: lastName,
+    phone: `+995${actorOut.phone}`,
+    status: "registered",
+    personal_id: personalIdFor(actorOut.phone),
   });
   if (error) throw new Error(`register failed for ${actorOut.phone}: ${error.message}`);
 }

@@ -76,6 +76,14 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain('test "$APPROVED_RUN_CONCLUSION" = "success"');
   });
 
+  it("pins every action to a full commit SHA (security audit H3)", () => {
+    // the jobs carry the production database password and the Supabase access token;
+    // a moved tag must not be able to swap the code that sees them
+    const uses = [...workflow.matchAll(/^\s*(?:-\s*)?uses:\s*(\S+)/gm)].map((m) => m[1]);
+    expect(uses.length).toBeGreaterThan(0);
+    for (const ref of uses) expect(ref).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+  });
+
   it("expects exactly the committed number of migration files in every database phase", () => {
     const committed = readdirSync(resolve(process.cwd(), "supabase/migrations")).filter((name) =>
       name.endsWith(".sql"),

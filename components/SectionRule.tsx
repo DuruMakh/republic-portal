@@ -20,7 +20,7 @@ export function SectionRule({
   label: ReactNode;
   action?: ReactNode;
   as?: "h2" | "h3" | "div";
-  /** `teal` marks an informational box (the homepage registry, ADR-045). Default ink. */
+  /** `teal` marks an informational box (the homepage registry, ADR-046). Default ink. */
   tone?: "ink" | "teal";
   className?: string;
 }) {

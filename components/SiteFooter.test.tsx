@@ -7,7 +7,7 @@ const LINKS = [
   { href: "/support", label: "Contact" },
 ];
 
-describe("SiteFooter (ADR-045)", () => {
+describe("SiteFooter (ADR-046)", () => {
   it("is a solid teal band with paper text and no ink top rule", () => {
     render(<SiteFooter copyright="(c) 2026" links={LINKS} />);
     const footer = screen.getByRole("contentinfo");

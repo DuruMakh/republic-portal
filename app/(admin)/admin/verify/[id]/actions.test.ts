@@ -32,8 +32,17 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+// the 2–3 byte fixtures are not real images: the sanitizer is mocked here and proven in
+// lib/image-sanitize.test.ts
+const sanitize = vi.hoisted(() => ({
+  run: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+}));
+vi.mock("@/lib/image-sanitize", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/image-sanitize")>()),
+  sanitizeUploadedImage: sanitize.run,
+}));
 
-const { updateDelegateProfileAction } = await import("./actions");
+const { updateDelegateProfileAction, updateDelegateNameAction } = await import("./actions");
 
 const delegateId = "77777777-7777-4777-8777-777777777777";
 const OLD_URL = "https://cdn.test/storage/v1/object/public/delegate-photos/old.jpg";
@@ -140,5 +149,82 @@ describe("updateDelegateProfileAction", () => {
       args: [[uploaded]],
     });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateDelegateNameAction (security audit M2)", () => {
+  const input = { delegateId, firstName: "  ნინო ", lastName: " ბერიძე  " };
+
+  it("rejects a malformed request before reading roles", async () => {
+    await expect(
+      updateDelegateNameAction({ delegateId: "x", firstName: "", lastName: "" }),
+    ).resolves.toMatchObject({ ok: false });
+    expect(mocks.getAdminRoles).not.toHaveBeenCalled();
+    expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+  });
+
+  it.each([[[]], [["finance", "editor"]]])(
+    "refuses roles %j before any client exists",
+    async (roles) => {
+      mocks.getAdminRoles.mockResolvedValue(roles);
+      await expect(updateDelegateNameAction(input)).resolves.toEqual({
+        ok: false,
+        error: mapFunnelError("missing_role"),
+      });
+      expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+      expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    },
+  );
+
+  it("renames only through the audited RPC, trimmed, then refreshes both pages", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    const s = session({ rpc: () => ok(), from: () => ok({ slug: "nino-beridze" }) });
+    await expect(updateDelegateNameAction(input)).resolves.toEqual({ ok: true });
+    expect(s.rpcCalls()).toEqual([
+      {
+        kind: "rpc",
+        name: "admin_update_delegate_name",
+        args: { p_delegate_id: delegateId, p_first_name: "ნინო", p_last_name: "ბერიძე" },
+        chain: [],
+      },
+    ]);
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/admin/verify/${delegateId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/delegates/nino-beridze");
+  });
+
+  it("maps a database refusal and revalidates nothing", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["super_admin"]);
+    session({ rpc: () => raised("invalid_target") });
+    await expect(updateDelegateNameAction(input)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("invalid_target"),
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateDelegateProfileAction — photo metadata (security audit M4)", () => {
+  it("stores the sanitized bytes, never the uploaded ones", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    sanitize.run.mockResolvedValueOnce(new Uint8Array([9, 9, 9]));
+    approvedTarget();
+    await expect(updateDelegateProfileAction(form({ delegateId, photo: jpeg() }))).resolves.toEqual(
+      { ok: true },
+    );
+    expect(sanitize.run).toHaveBeenCalledWith(expect.any(ArrayBuffer), "image/jpeg");
+    const upload = admin.storageCalls.find((c) => c.method === "upload");
+    expect(upload?.args[1]).toEqual(new Uint8Array([9, 9, 9]));
+  });
+
+  it("refuses an undecodable photo without uploading anything", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    const { ImageSanitizeError } = await import("@/lib/image-sanitize");
+    sanitize.run.mockRejectedValueOnce(new ImageSanitizeError());
+    approvedTarget();
+    await expect(updateDelegateProfileAction(form({ delegateId, photo: jpeg() }))).resolves.toEqual(
+      { ok: false, error: "ფოტოს წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი." },
+    );
+    expect(admin.storageCalls.find((c) => c.method === "upload")).toBeUndefined();
   });
 });

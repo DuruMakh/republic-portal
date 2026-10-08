@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ADMIN_ROLE_VALUES } from "./admin";
 import { TBILISI_OFFSET_MS } from "./cabinet";
 import { isReferenceCode } from "./funnel";
+import { nameSchema } from "./funnel-schemas";
 
 /** Georgia is UTC+4 year-round — same fixed-offset trick as lib/cabinet.ts. */
 export function todayTbilisiIso(): string {
@@ -49,6 +50,13 @@ export const rejectDelegateSchema = z.object({
 export const delegateProfileSchema = z.object({
   delegateId: uuid,
   bio: z.string().trim().max(1000, "ბიოგრაფია ძალიან გრძელია (მაქს. 1000).").default(""),
+});
+
+/** Security audit M2: an approved delegate's public name is corrected by an admin only. */
+export const delegateNameSchema = z.object({
+  delegateId: uuid,
+  firstName: nameSchema,
+  lastName: nameSchema,
 });
 
 export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;

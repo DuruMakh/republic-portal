@@ -27,6 +27,7 @@ const EVENTS_INDEX = "ღონისძიებები";
 const BOARD_INDEX = "რეიტინგი";
 const JOIN_LABEL = "რეგისტრაცია";
 const TERMS_LABEL = "წესები";
+const PRIVACY_LABEL = "კონფიდენციალურობა";
 const LOGIN_LABEL = "შესვლა";
 const MEMBERSHIP_LABEL = "წევრობა";
 
@@ -34,6 +35,7 @@ const MEMBERSHIP_LABEL = "წევრობა";
 const STATIC_BACK: Record<string, BackTarget> = {
   "/join": { href: "/", label: JOIN_LABEL },
   "/join/terms": { href: "/join", label: TERMS_LABEL },
+  "/privacy": { href: "/join", label: PRIVACY_LABEL },
   "/login": { href: "/", label: LOGIN_LABEL },
   "/me/membership": { href: "/me/profile", label: MEMBERSHIP_LABEL },
   "/me/membership/done": { href: "/me/profile", label: MEMBERSHIP_LABEL },
@@ -52,7 +54,7 @@ const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
 ];
 
 /** Routes that ARE the call to action, so a join bar under them is noise. */
-const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/login"]);
+const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/privacy", "/login"]);
 
 /**
  * The parent a „← უკან“ header links to, or null when the route is not a detail

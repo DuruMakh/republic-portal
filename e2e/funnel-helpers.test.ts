@@ -95,7 +95,8 @@ describe("createGoogleBackedTestUser", () => {
       password,
     });
     expect(installSupabaseSession).toHaveBeenCalledWith(page, createdSession);
-    expect(result).toEqual({ id: "google-user-1" });
+    // the session lets a spec call RPCs as this user (registration.spec consent refusal)
+    expect(result).toEqual({ id: "google-user-1", session: createdSession });
     expect(JSON.stringify(result)).not.toContain(password);
     expect(log).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();

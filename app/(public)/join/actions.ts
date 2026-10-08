@@ -7,6 +7,7 @@ import {
   type CabinetState,
 } from "@/lib/funnel";
 import { registerActionSchema } from "@/lib/funnel-schemas";
+import { PRIVACY_POLICY_VERSION } from "@/lib/privacy";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function registerAction(input: unknown): Promise<ActionResult> {
@@ -19,6 +20,7 @@ export async function registerAction(input: unknown): Promise<ActionResult> {
     p_first_name: parsed.data.firstName,
     p_last_name: parsed.data.lastName,
     p_ref_code: parsed.data.refCode ?? null,
+    p_privacy_version: PRIVACY_POLICY_VERSION,
   });
   if (error) return { ok: false, error: mapFunnelError(error.message) };
   return { ok: true, state: data as unknown as CabinetState };

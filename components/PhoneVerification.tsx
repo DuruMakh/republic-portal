@@ -93,7 +93,8 @@ export function PhoneVerification({
     inFlightRef.current = true;
     setBusy(true);
     try {
-      const result = await sendPhoneVerificationAction({ phone });
+      // The code screen is only reachable after the join form's consent tick.
+      const result = await sendPhoneVerificationAction({ phone, privacyConsent: true });
       if (!mountedRef.current) return;
       if (!result.ok) {
         setError(result.message);

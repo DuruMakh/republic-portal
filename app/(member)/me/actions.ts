@@ -44,7 +44,9 @@ export async function updateProfileAction(input: unknown): Promise<CabinetAction
   if (error) {
     // 23503 = composite (city_id, region_id) FK — the city isn't in the chosen region
     if (error.code === "23503") return { ok: false, error: mapFunnelError("invalid_city") };
-    return { ok: false, error: GENERIC_FUNNEL_ERROR };
+    // trigger tokens (name_locked for an approved delegate, invalid_name) map to their
+    // message; anything unrecognised stays generic
+    return { ok: false, error: mapFunnelError(error.message) };
   }
   return { ok: true };
 }
@@ -66,7 +68,7 @@ export async function updateRegisteredNameAction(input: unknown): Promise<Cabine
     .from("profiles")
     .update({ first_name: parsed.data.firstName, last_name: parsed.data.lastName })
     .eq("id", user.id);
-  if (error) return { ok: false, error: GENERIC_FUNNEL_ERROR };
+  if (error) return { ok: false, error: mapFunnelError(error.message) };
   return { ok: true };
 }
 

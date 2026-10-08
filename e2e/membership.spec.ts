@@ -4,6 +4,7 @@ import { EVENTS_SHOWN } from "./events-switch";
 import {
   cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
+  createGoogleBackedTestUser,
   fillMembershipProfile,
   getSeededReferral,
   JOURNEY,
@@ -12,6 +13,7 @@ import {
   passRegistration,
   seedCompletedMember,
 } from "./funnel-helpers";
+import { clientFor, serviceClient } from "./otp-helpers";
 
 // the application step sends only once both consents are ticked (ADR-036)
 async function agreeAndSend(page: Page) {
@@ -50,6 +52,57 @@ test.afterAll(() =>
   ]),
 );
 
+// Privacy consent (spec 2026-10-08 sections 4 and 6). Uses the otherwise idle regHappy
+// slot (still swept) and frees it again itself.
+test("no code is sent and no account is created without the privacy consent tick", async ({
+  page,
+}) => {
+  const phone = journeyPhone(JOURNEY.regHappy);
+  const { id, session } = await createGoogleBackedTestUser(page, phone);
+  try {
+    await page.goto("/join");
+    // the form renders once the client has read the session (a cold dev compile is slow)
+    await expect(page.getByLabel("სახელი")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("link", { name: "კონფიდენციალურობის პოლიტიკის" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    await page.getByLabel("სახელი").fill("ნინო");
+    await page.getByLabel("გვარი").fill("ტესტი");
+    await page.getByLabel("ტელეფონის ნომერი").fill(phone);
+    await page.getByRole("button", { name: "კოდის მიღება" }).click();
+    await expect(page.getByText("გასაგრძელებლად მონიშნე თანხმობა.")).toBeVisible();
+    await expect(page.getByTestId("otp-0")).toHaveCount(0);
+
+    // Bypassing the page does not help. The legacy register() is closed to every client
+    // (security audit C1, 20261008160000), and register_google() refuses this account before
+    // it ever reaches the consent check inside register(), which lib/privacy.test.ts pins.
+    const client = await clientFor(session);
+    const { error } = await client.rpc("register", {
+      p_first_name: "ნინო",
+      p_last_name: "ტესტი",
+      p_ref_code: null,
+      p_privacy_version: "2000-01-v0",
+    });
+    expect(error?.code).toBe("42501");
+    const { error: googleError } = await client.rpc("register_google", {
+      p_first_name: "ნინო",
+      p_last_name: "ტესტი",
+      p_ref_code: null,
+      p_privacy_version: "2000-01-v0",
+    });
+    expect(googleError?.message).toBe("phone_required");
+    const { data: profile } = await serviceClient()
+      .from("profiles")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+    expect(profile).toBeNull();
+  } finally {
+    await cleanupGoogleBackedTestUsers([phone]);
+  }
+});
+
 test("full upgrade: register → wizard → application sent and member nav", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.membFull);
   const firstName = "ვატესტ";
@@ -58,6 +111,16 @@ test("full upgrade: register → wizard → application sent and member nav", as
     firstName,
     lastName: "წევრობას",
   });
+
+  // consent is recorded with the policy version (spec 2026-10-08 section 6)
+  const { data: consent, error: consentError } = await serviceClient()
+    .from("profiles")
+    .select("privacy_version, privacy_accepted_at")
+    .eq("phone", `+995${phone}`)
+    .single();
+  expect(consentError).toBeNull();
+  expect(consent?.privacy_version).toBe("2026-10-v1");
+  expect(consent?.privacy_accepted_at).not.toBeNull();
 
   // registered overview greets them by name
   await expect(page.getByRole("heading", { name: `გამარჯობა, ${firstName}!` })).toBeVisible();

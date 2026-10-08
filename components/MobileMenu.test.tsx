@@ -30,7 +30,7 @@ describe("MobileMenu", () => {
     }
   });
 
-  it("draws the overlay header with the same masthead rule as the site header (ADR-045)", () => {
+  it("draws the overlay header with the same masthead rule as the site header (ADR-046)", () => {
     render(<MobileMenu navItems={NAV} />);
     fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
     const bar = screen.getByRole("dialog").firstElementChild as HTMLElement;

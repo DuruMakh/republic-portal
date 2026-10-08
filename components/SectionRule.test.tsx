@@ -31,7 +31,7 @@ describe("SectionRule", () => {
     expect(screen.getByText("Default tone")).not.toHaveClass("text-teal");
   });
 
-  it("draws a teal rule and a teal label with tone=teal (ADR-045)", () => {
+  it("draws a teal rule and a teal label with tone=teal (ADR-046)", () => {
     const { container } = render(<SectionRule label="Registry" tone="teal" />);
     expect(container.firstElementChild).toHaveClass("border-teal");
     expect(container.firstElementChild).not.toHaveClass("border-ink");

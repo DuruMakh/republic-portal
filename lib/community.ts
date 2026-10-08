@@ -61,7 +61,7 @@ export function percentages(votes: readonly number[]): number[] {
 }
 
 /**
- * Which answers lead (ADR-045: leading bars stay red, the rest teal). Decided on raw votes,
+ * Which answers lead (ADR-046: leading bars stay red, the rest teal). Decided on raw votes,
  * never on `percentages()`: largest-remainder rounding turns a 1/1/1 tie into 34/33/33 and
  * 1001 vs 1000 into 50/50. Every answer tied for the most votes leads; with no votes, none do.
  */

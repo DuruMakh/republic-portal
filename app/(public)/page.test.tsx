@@ -140,7 +140,7 @@ describe("homepage events section (ADR-042)", () => {
   });
 });
 
-describe("registry box (ADR-045)", () => {
+describe("registry box (ADR-046)", () => {
   it("draws the registry heading rule and its three counters in teal", async () => {
     render(await HomePage());
 

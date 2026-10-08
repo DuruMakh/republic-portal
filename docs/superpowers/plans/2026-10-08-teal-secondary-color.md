@@ -50,7 +50,7 @@ The worktree has no `node_modules`. `npx --no-install` resolves the parent repo'
 | `components/Button.tsx` | `dark` restyled teal | 5 |
 | `components/design-system.test.tsx` | Pill, Card, Button tests | 4, 5 |
 | `app/(public)/styleguide/page.tsx` | Gallery entries | 6 |
-| `DESIGN.md`, `DECISIONS.md`, `CHANGELOG.md` | Docs, ADR-045, changelog | 6 |
+| `DESIGN.md`, `DECISIONS.md`, `CHANGELOG.md` | Docs, ADR-046, changelog | 6 |
 
 ---
 
@@ -77,7 +77,7 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");
 
-describe("theme tokens (ADR-045)", () => {
+describe("theme tokens (ADR-046)", () => {
   it("defines the teal second colour and its hover shade", () => {
     expect(css).toMatch(/--color-teal:\s*#235b59;/i);
     expect(css).toMatch(/--color-teal-dark:\s*#1a4644;/i);
@@ -103,7 +103,7 @@ describe("theme tokens (ADR-045)", () => {
 Append inside the `describe("Masthead", …)` block of `components/Masthead.test.tsx`:
 
 ```tsx
-  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-045)", () => {
+  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-046)", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     const header = screen.getByRole("banner");
@@ -115,7 +115,7 @@ Append inside the `describe("Masthead", …)` block of `components/Masthead.test
 Append inside the `describe("MobileBackHeader", …)` block of `components/MobileBackHeader.test.tsx`:
 
 ```tsx
-  it("uses the same masthead rule as the Masthead (ADR-045)", () => {
+  it("uses the same masthead rule as the Masthead (ADR-046)", () => {
     const { container } = render(<MobileBackHeader href="/news" label="News" />);
     const header = container.firstElementChild as HTMLElement;
     expect(header).toHaveClass("masthead-rule");
@@ -140,7 +140,7 @@ In `app/globals.css`, inside `@theme`, directly after `--color-danger: #9f1d35;`
 After the `@utility pebble { … }` block, add:
 
 ```css
-/* Masthead rule (ADR-045): 2px ink, a 2px paper gap, 1px teal, drawn as the header's own
+/* Masthead rule (ADR-046): 2px ink, a 2px paper gap, 1px teal, drawn as the header's own
    bottom border so its position and stickiness stay untouched (e2e pins both). The gradient
    runs to top, so its stops are measured from the bottom edge. */
 @utility masthead-rule {
@@ -165,7 +165,7 @@ with
 In the docstring above `export function Masthead`, replace
 `vertically centered with the logo, over a single` / `2px rule.`
 with
-`vertically centered with the logo, over the masthead rule` / `(2px ink, 2px paper, 1px teal; ADR-045).`
+`vertically centered with the logo, over the masthead rule` / `(2px ink, 2px paper, 1px teal; ADR-046).`
 Keep the rest of the comment.
 
 In `components/MobileBackHeader.tsx`, in the header `className`, replace
@@ -215,7 +215,7 @@ Append inside `describe("SectionRule", …)` in `components/SectionRule.test.tsx
     expect(screen.getByText("Default tone")).not.toHaveClass("text-teal");
   });
 
-  it("draws a teal rule and a teal label with tone=teal (ADR-045)", () => {
+  it("draws a teal rule and a teal label with tone=teal (ADR-046)", () => {
     const { container } = render(<SectionRule label="Registry" tone="teal" />);
     expect(container.firstElementChild).toHaveClass("border-teal");
     expect(container.firstElementChild).not.toHaveClass("border-ink");
@@ -228,7 +228,7 @@ Append inside `describe("SectionRule", …)` in `components/SectionRule.test.tsx
 Append to `app/(public)/page.test.tsx` (top level, after the existing `describe` blocks):
 
 ```tsx
-describe("registry box (ADR-045)", () => {
+describe("registry box (ADR-046)", () => {
   it("draws the registry heading rule and its three counters in teal", async () => {
     render(await HomePage());
 
@@ -261,7 +261,7 @@ export function SectionRule({
   label: ReactNode;
   action?: ReactNode;
   as?: "h2" | "h3" | "div";
-  /** `teal` marks an informational box (the homepage registry, ADR-045). Default ink. */
+  /** `teal` marks an informational box (the homepage registry, ADR-046). Default ink. */
   tone?: "ink" | "teal";
   className?: string;
 }) {
@@ -333,7 +333,7 @@ const LINKS = [
   { href: "/support", label: "Contact" },
 ];
 
-describe("SiteFooter (ADR-045)", () => {
+describe("SiteFooter (ADR-046)", () => {
   it("is a solid teal band with paper text and no ink top rule", () => {
     render(<SiteFooter copyright="(c) 2026" links={LINKS} />);
     const footer = screen.getByRole("contentinfo");
@@ -374,7 +374,7 @@ In `components/SiteFooter.tsx`:
   `Cream (paper-toned) site footer (spec §3.2): copyright left, link row right,`
   `over a 2px ink rule matching the masthead's own rule weight.`
   with
-  `Teal site footer (spec §3.2, ADR-045): copyright left, link row right, on the one solid`
+  `Teal site footer (spec §3.2, ADR-046): copyright left, link row right, on the one solid`
   `teal band. Links take a paper focus outline because red on teal is invisible (1.00:1).`
   Leave the `aria-label` on `<nav>` exactly as it is.
 
@@ -413,7 +413,7 @@ git commit -m "Turn the public footer into a teal band" -m "Co-Authored-By: Clau
 In `components/design-system.test.tsx`, append inside `describe("Pill", …)`:
 
 ```tsx
-  it("shows the supporter chip in teal, in the chip system's own /10 tint (ADR-045)", () => {
+  it("shows the supporter chip in teal, in the chip system's own /10 tint (ADR-046)", () => {
     const { container } = render(<Pill status="registered" />);
     const chip = container.firstElementChild;
     expect(chip).toHaveClass("bg-teal/10", "text-teal");
@@ -435,7 +435,7 @@ In `components/Ballot.test.tsx`, add a row to the `it.each` table so it reads:
 In `app/(member)/me/polls/PollCard.test.tsx`, append inside `describe("PollCard", …)`:
 
 ```tsx
-  it("results: the leading answer's bar is brand red, the others teal (ADR-045)", () => {
+  it("results: the leading answer's bar is brand red, the others teal (ADR-046)", () => {
     const { container } = render(
       <PollCard
         pollId={POLL_ID}
@@ -506,7 +506,7 @@ In `app/(admin)/admin/page.tsx`, change `tone={i === 0 ? "brand" : "ink"}` to `t
 In `app/(member)/me/polls/PollCard.tsx`, directly above `return (`, add:
 
 ```tsx
-  // ADR-045: the leading answer (every answer tied for the top share) stays red; the rest teal.
+  // ADR-046: the leading answer (every answer tied for the top share) stays red; the rest teal.
   const leadPct = Math.max(0, ...options.map((o) => o.pct));
 ```
 
@@ -549,7 +549,7 @@ git commit -m "Show supporters and non-leading poll answers in teal" -m "Co-Auth
 In `components/design-system.test.tsx`, add `import { Card } from "./Card";` next to the other component imports. Then append inside `describe("Button", …)`:
 
 ```tsx
-  it("renders dark as the teal secondary button (ADR-045)", () => {
+  it("renders dark as the teal secondary button (ADR-046)", () => {
     render(<Button variant="dark">Find</Button>);
     const btn = screen.getByRole("button", { name: "Find" });
     expect(btn).toHaveClass("bg-teal", "border-teal", "text-paper", "hover:bg-teal-dark");
@@ -571,7 +571,7 @@ describe("Card", () => {
     expect(container.firstElementChild).toHaveClass("border-ink", "bg-paper-bright");
   });
 
-  it("callout-teal is the same surface with a teal border (ADR-045)", () => {
+  it("callout-teal is the same surface with a teal border (ADR-046)", () => {
     const { container } = render(<Card variant="callout-teal">x</Card>);
     expect(container.firstElementChild).toHaveClass("border-teal", "bg-paper-bright");
     expect(container.firstElementChild).not.toHaveClass("border-ink");
@@ -589,7 +589,7 @@ Expected: FAIL on the `dark` test (`bg-teal` missing) and on `callout-teal` (fal
 In `components/Card.tsx`, below `const cardSkinCallout = …`, add:
 
 ```tsx
-// Teal call-out (ADR-045): the same bright surface with a teal border, for informational
+// Teal call-out (ADR-046): the same bright surface with a teal border, for informational
 // call-outs such as the my-delegate card. Never a teal fill.
 const cardSkinCalloutTeal = "border border-teal bg-paper-bright";
 ```
@@ -639,7 +639,7 @@ git commit -m "Add the teal call-out and make the dark button teal" -m "Co-Autho
 
 ---
 
-### Task 6: Styleguide, DESIGN.md, ADR-045, changelog
+### Task 6: Styleguide, DESIGN.md, ADR-046, changelog
 
 **Files:**
 - Modify: `app/(public)/styleguide/page.tsx` (`PALETTE`, `CONTRAST_PAIRS`, `BUTTON_VARIANTS`, the SectionRule card, the registry card, the poll card)
@@ -712,7 +712,7 @@ drawn as one border by the `masthead-rule` utility, never a shadow), 2px
 insert this paragraph (followed by a blank line):
 
 ```text
-**Red acts, teal informs (ADR-045).** There is no teal tint token: teal never fills a panel. The
+**Red acts, teal informs (ADR-046).** There is no teal tint token: teal never fills a panel. The
 footer is the one solid teal area; the supporter chip uses the chip system's `/10` tint like
 every other chip. Red and teal are equally dark (1.00:1), so never let red-versus-teal alone
 carry meaning: a leading poll answer is also the longest bar and shows its percentage.
@@ -750,24 +750,24 @@ paper/brand 7.0:1 · teal/paper 6.9:1 · paper/teal 6.9:1 · paper/teal-dark 9.4
 
 | Row | Find | Replace with |
 | --- | ---- | ------------ |
-| `Button` | `` `dark` renders identically to `primary` (ink); `` | `` `dark` is the teal secondary button (ADR-045); `` |
+| `Button` | `` `dark` renders identically to `primary` (ink); `` | `` `dark` is the teal secondary button (ADR-046); `` |
 | `Card` | `comes from the component, not ad-hoc styling.` | ``comes from the component, not ad-hoc styling. `variant="callout-teal"`: the same surface with a teal border (the my-delegate card).`` |
 | `Pill` | `` Mapping: ok→`ok`, warn→`warn`, danger/rejected→`brand`, info/profile_completed→**neutral ink**, muted→muted. `` | `` Mapping: draft→muted; registered (supporter)→`teal`; profile_completed/active_member/approved→`ok`; pending→`warn`; rejected→`brand`. `` |
-| `Masthead` | `Double rule under (2px ink).` | ``The `masthead-rule` under it: 2px ink, 2px paper, 1px teal (ADR-045).`` |
-| `SiteFooter` | `Ruled footer:` | `Solid teal band (paper text and links, paper focus outline; ADR-045):` |
+| `Masthead` | `Double rule under (2px ink).` | ``The `masthead-rule` under it: 2px ink, 2px paper, 1px teal (ADR-046).`` |
+| `SiteFooter` | `Ruled footer:` | `Solid teal band (paper text and links, paper focus outline; ADR-046):` |
 | `SectionRule` | `{ label, action?, className? }` | `{ label, action?, as?, tone?, className? }` |
 | `SectionRule` | `when the content is a bare label, not a form.` | ``when the content is a bare label, not a form. `tone="teal"` (teal rule and label) marks the homepage registry box.`` |
 | `Ballot` | `` `ink` for others `` | `` `teal` for others (`ink` still accepted) `` |
 | `MobileBackHeader` | `2px ink rule.` | ``the `masthead-rule`.`` |
 
-- [ ] **Step 4: ADR-045**
+- [ ] **Step 4: ADR-046**
 
-First check that ADR-045 is still free: `git fetch origin && git show origin/main:DECISIONS.md | grep -n "^## ADR-04"`. If main already has ADR-045, use the next free number here and in every `ADR-045` reference added by Tasks 1–6 (`grep -rn "ADR-045" app components DESIGN.md CHANGELOG.md docs`).
+First check that ADR-046 is still free: `git fetch origin && git show origin/main:DECISIONS.md | grep -n "^## ADR-04"`. If main already has ADR-046, use the next free number here and in every `ADR-046` reference added by Tasks 1–6 (`grep -rn "ADR-046" app components DESIGN.md CHANGELOG.md docs`).
 
 Append to `DECISIONS.md`:
 
 ```markdown
-## ADR-045 (2026-10-08): Teal is Kronika's second colour
+## ADR-046 (2026-10-08): Teal is Kronika's second colour
 
 Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
 `docs/superpowers/plans/2026-10-08-teal-secondary-color.md`. No migration, no new variable.
@@ -849,7 +849,7 @@ Run the whole-branch review (CLAUDE.md: independent per-task reviews plus a whol
 
 ```bash
 git push -u origin claude/platform-branding-design-5f4d1c
-gh pr create --base main --title "Teal second colour (ADR-045)" --body-file "$SCRATCHPAD/pr-body.md"
+gh pr create --base main --title "Teal second colour (ADR-046)" --body-file "$SCRATCHPAD/pr-body.md"
 ```
 
 `$SCRATCHPAD` is the session's scratchpad directory. Write the body there first; never commit it. The PR body: a plain-language summary (from the CHANGELOG entry), the spec and plan paths, "no migration, no new env var; merging ships to both sites", and `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Then bind the PR with the ccd_pr tools and wait for CI (`quality`, including e2e) to go green. Never merge red.
@@ -890,3 +890,5 @@ The whole-branch review found no critical issues. These changes followed it, eac
   painting paper over a bright card (the styleguide demo).
 - **Docs:** call-out sentence in DESIGN.md Materials, the CSV export as a `dark` call site, the e2e
   count (eight `position` checks, not three), CHANGELOG wording, and two stale code comments.
+- **Renumbered to ADR-046.** PR #46 (security hardening) merged first and took ADR-045; every
+  reference in this work now reads ADR-046.

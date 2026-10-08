@@ -1165,7 +1165,115 @@ variable, nothing visible changes except the tab title.
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
 
-## ADR-045 (2026-10-08): Teal is Kronika's second colour
+## ADR-041 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
+
+- **What.** One required box on registration (18+ and personal-data processing, one sentence),
+  linking a new `/privacy` page; a one-line notice under the Google button. Spec:
+  `docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md`.
+- **Why.** Georgian Law No. 3144 (2023) treats political opinions as special-category data,
+  needing written consent (an electronic tick counts), separate from other terms. Registering
+  with the movement reveals support for it. The Art. 6(k) exception for political associations
+  does not apply: the movement is not registered.
+- **Enforcement.** `register()` (reached by both sign-up routes) refuses a missing or stale
+  `p_privacy_version` with `privacy_consent_required` and stamps `profiles.privacy_accepted_at` /
+  `privacy_version`; both columns are server-managed. The SMS send action refuses without the
+  tick, so no number goes to the provider unconsented. The version lives in `lib/privacy.ts`
+  and the migration; `lib/privacy.test.ts` keeps them equal.
+- **Two-step release.** `20261008140000` (accepts an optional version) shipped and was applied
+  first; `20261008150000` (refuses a missing one) ships with the code. Merging to `main`
+  deploys before the production migration can run, so the database had to accept both shapes
+  first. Step 2 reaches **staging** only after the code PR merges too: every PR's CI runs e2e
+  against staging, and an open PR built on older `main` sends no version.
+- **Owner decisions.** Controller named only as the movement; recipients by category, no
+  company names; minimum age 18; no political-views explainer section; the two founders'
+  accounts keep empty consent fields (no hand edits).
+- **Policy text corrected before release (2026-10-08 launch audit).** The first draft never
+  named the personal ID number, said data leaves Georgia only for the EU, and gave no way to
+  reach the movement. The released text names the ID number and the Google profile data,
+  says the database is in the EU while some providers (Google sign-in, hosting) also process
+  data in the US, lists technical logs, says a delegate's ranking is public, and points
+  questions and data requests to the contact page with a 10-working-day answer. Version stays
+  `2026-10-v1`: nobody had accepted the earlier wording on the real site.
+- **No draft banner (owner, 2026-10-08).** The policy page no longer carries the "working
+  draft, subject to legal review" banner; the delegate rules keep theirs.
+- **Deferred.** Self-service account deletion is the next feature (owner, 2026-10-08), and the
+  rights section will mention it once it ships; general rules of use; re-consent on a new
+  policy version; consent date in the admin panel; legal review of the copy.
+- **Numbering.** Reserved as 041 while 038-040 were claimed by parallel PRs the same day; it
+  sits after 042, 043 and 044 here because it merged later.
+
+## ADR-045 (2026-10-08): Security hardening release after the 8 October audit
+
+One release by owner order ("one big work on security"). Spec
+`docs/superpowers/specs/2026-10-08-security-audit-fixes-design.md`; plans
+`docs/superpowers/plans/2026-10-08-security-*.md` (the single-release file overrides the others'
+release steps). Decisions D1–D5 were delegated to the agent by the owner and are recorded in the
+spec, section 7. Four migrations: `20261008160000` (phone verification), `20261008160100`
+(membership), `20261008160200` (delegate names), `20261008160300` (the register() revoke repeated
+after privacy step 2).
+
+- **C1, phone proof (critical).** A superseded challenge was marked
+  `consumed_at = expires_at + 1µs`; `readOwnedChallenge` compared with `Date.parse`, which drops
+  microseconds, so after expiry the challenge read as a valid proof and the verify action attached
+  the phone with no code. Now: `lib/phone-verification/timestamps.ts` compares ledger timestamps
+  in bigint microseconds (an unreadable timestamp fails closed); supersede sets a new explicit
+  `superseded_at` and never touches `consumed_at`; attempts and consumption refuse a superseded
+  challenge; old markers are backfilled. The legacy `register()` is revoked from
+  `authenticated` (and from `service_role`, which never called it) — `register_google()`
+  (owner-run, exact proof check) is the only path. The
+  retired legacy phone form can no longer register; `.env.example` now says `google`.
+- **H1, personal-ID probing.** `become_member_save_profile` resolves the delegate before it looks
+  at the ID; a conflict is RETURNED (`{"error":"duplicate_personal_id"}`) so its audit row
+  (`member.personal_id_conflict`) commits; three conflicts stop the step for the account for good
+  (D2). The audit row's `actor_id` is NULL on purpose: `audit_log.actor_id` is a plain FK, and a
+  non-null actor would make the account undeletable (e2e cleanup, future deletion). The tried ID is
+  never stored. A read-only call is refused first (`read_only_transaction`): PostgREST runs a GET
+  RPC read-only, where the audit insert and the profile update fail with different errors — an
+  untraced answer (review finding). A partial index serves the conflict count.
+- **M1, SMS abuse (D4).** Per account 60 s / 5 per hour / 10 per day / 3 numbers per day; per
+  number 60 s and 10 per day across accounts, except that each account always gets its first three
+  codes for a number today (review finding: with only one, a flood by others left the real owner
+  one lost SMS from a day-long lockout); 1,000 per hour site-wide — one shared budget, so an
+  account farm of about 200 accounts an hour could pause sign-ups for that hour, which D4 accepts.
+  Both live-challenge lookups in `complete_phone_verification_send` also skip superseded rows. A send cancels only the sender's own codes. No rule looks at whether a
+  profile owns the number. `scripts/security/sms-limits-scenario.sql` proves the rules on staging
+  inside a rolled-back transaction.
+- **M2, delegate names (D3).** `protect_profile_columns()` raises `name_locked` when a client
+  changes an approved delegate's name; the approval check is a SECURITY DEFINER helper
+  (`is_approved_delegate()`) because clients cannot read `delegates` and the trigger must stay
+  invoker-run to tell clients apart. Admins correct names on `/admin/verify/[id]` through the
+  audited `admin_update_delegate_name` (`delegate.update_name`).
+- **M3, offline cache.** The service worker never caches cross-origin (Supabase) or signed-in
+  responses, `/join` and `/auth` included (`lib/sw-routes.ts`), and drops the `cross-origin` cache
+  older workers filled. Sign-out — the member, delegate AND admin navigation, now one shared
+  `useSignOut` — empties the caches that can hold personal data and keeps code, styles, fonts and
+  the precache, so the offline page stays styled.
+- **M4, photo metadata.** `lib/image-sanitize.ts` re-encodes every delegate photo and news cover
+  with sharp — orientation applied, all metadata (GPS, time, device) dropped. **sharp becomes a
+  runtime dependency** (`^0.35.5`, which also clears its advisories); the alternative, a
+  hand-written metadata stripper, would lose the orientation and turn phone photos sideways.
+- **M6, scripts.** `scripts/staging-guard.mjs` allow-lists the staging ref in every destructive or
+  probing script; its refusal names no ref.
+- **H2, Next.js 16.3.8** (and eslint-config-next). On our Vercel setup the advisories that applied
+  were the server-action CPU DoS, the server-action id disclosure and cache confusion; the next/og
+  RCE, Windows, AVIF/remotePatterns and i18n-proxy ones did not. `npm audit fix` (no `--force`)
+  took the total from 18 to 8. **Accepted and left:** the 8 that remain are lint and test tooling
+  only (eslint-config-next's glob chain, vitest/tinypool), whose fixes are major downgrades or
+  upgrades and never reach the site. Side effect: from 16.3, `next dev` run by a coding agent writes a
+  managed "Next.js agent rules" block into `AGENTS.md`; it is committed so working trees stay
+  clean (removing it only re-creates the change).
+- **H3.** The `production-db` GitHub environment accepts deployments from `main` only (D1, applied
+  2026-10-08; no required reviewers — the owner only chats). Every action in `production-db.yml`
+  is pinned to a commit SHA, tag kept as a comment; a test enforces it.
+- **Release order inside the one release.** The code goes live at merge, before the production
+  apply; everything is written to work against the old schema for that window (the admin rename
+  form shows the generic error until its RPC exists). Privacy step 2 (`20261008150000`, ADR-041)
+  merged to main first and restates `register()` with a grant to `authenticated`; in filename order
+  this release's revoke comes later and wins. Staging got this release's migrations before 150000,
+  so `20261008160300` repeats the revoke after every file that touches `register()` — the end state
+  is the same everywhere, and `lib/security/registration-hardening.test.ts` keeps it that way.
+
+## ADR-046 (2026-10-08): Teal is Kronika's second colour
 
 Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
 `docs/superpowers/plans/2026-10-08-teal-secondary-color.md`. No migration, no new variable.
