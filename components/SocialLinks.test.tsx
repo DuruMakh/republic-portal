@@ -14,6 +14,7 @@ describe("SocialLinks", () => {
         ]}
       />,
     );
+    const shapes = new Set<string>();
     for (const [name, href, network] of [
       ["Facebook: Test Member", "https://www.facebook.com/t", "facebook"],
       ["TikTok: Test Member", "https://www.tiktok.com/@t", "tiktok"],
@@ -29,9 +30,13 @@ describe("SocialLinks", () => {
       expect(logo, network).not.toBeNull();
       expect(logo).toHaveAttribute("aria-hidden", "true");
       expect(logo).toHaveAttribute("data-network", network);
-      expect(logo!.querySelector("path")?.getAttribute("d")).toBeTruthy();
+      const shape = logo!.querySelector("path")?.getAttribute("d");
+      expect(shape).toBeTruthy();
+      shapes.add(shape!);
       expect(link).toHaveTextContent(/^$/);
     }
+    // three different logos: a pasted-over path would show one network's mark on another
+    expect(shapes.size).toBe(3);
   });
 
   it("renders nothing when the person has no links", () => {
