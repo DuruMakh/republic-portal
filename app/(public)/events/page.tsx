@@ -18,6 +18,8 @@ const EVENTS_METADATA: Metadata = {
 
 // While hidden the page presents the generic not-found title, never its own — the same reason
 // as the hidden finance page (ADR-034): a page-raised 404 still streams this page's metadata.
+// While hidden, visitors normally never reach this branch: proxy.ts answers /events and every
+// address below it with the site-wide not-found page first (ADR-040). It stays as a second line.
 export function generateMetadata(): Metadata {
   return showEvents() ? EVENTS_METADATA : NOT_FOUND_METADATA;
 }
