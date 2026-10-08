@@ -74,3 +74,16 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+/**
+ * Security audit M3: workers before this release cached Supabase responses (including
+ * /auth/v1/user) under defaultCache's "cross-origin" name. The never-cache rule stops new
+ * entries, but nothing would ever evict the old ones, so the cache is dropped once, when this
+ * worker takes over.
+ */
+const LEGACY_CROSS_ORIGIN_CACHE = "cross-origin";
+addEventListener("activate", (event) => {
+  (event as Event & { waitUntil(promise: Promise<unknown>): void }).waitUntil(
+    caches.delete(LEGACY_CROSS_ORIGIN_CACHE),
+  );
+});
