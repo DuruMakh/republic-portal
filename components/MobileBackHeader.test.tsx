@@ -14,6 +14,13 @@ describe("MobileBackHeader", () => {
     expect(screen.getByText("სიახლეები")).toBeInTheDocument();
   });
 
+  it("uses the same masthead rule as the Masthead (ADR-045)", () => {
+    const { container } = render(<MobileBackHeader href="/news" label="News" />);
+    const header = container.firstElementChild as HTMLElement;
+    expect(header).toHaveClass("masthead-rule");
+    expect(header).not.toHaveClass("border-b-2");
+  });
+
   it("renders a header landmark", () => {
     const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
     expect((container.firstElementChild as HTMLElement).tagName).toBe("HEADER");
