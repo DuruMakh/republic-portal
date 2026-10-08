@@ -16,7 +16,7 @@ vi.mock("@supabase/supabase-js", () => ({ createClient }));
 vi.mock("@supabase/ssr", () => ({ createServerClient }));
 vi.mock("@playwright/test", () => ({ expect: playwrightExpect }));
 
-import { installSupabaseSession, loginAs, readFreshInboxOtp } from "./otp-helpers";
+import { installSupabaseSession, loginAs, serviceClient } from "./otp-helpers";
 
 const session = {
   access_token: "access-token-that-must-stay-private",
@@ -30,6 +30,74 @@ function fakePage() {
     addCookies,
   };
 }
+
+function fakeNavigablePage() {
+  const { page, addCookies } = fakePage();
+  const goto = vi.fn().mockResolvedValue(undefined);
+  Object.assign(page, { goto });
+  return { page, addCookies, goto };
+}
+
+type FakeAuthUser = { id: string; email?: string };
+type FixtureCredentials = { email: string; password: string; email_confirm: boolean };
+
+/**
+ * A staging stand-in: profiles maps stored phones to auth ids, auth users hold an
+ * optional email, and the password grant accepts only the credentials last set
+ * through the admin API (or pre-seeded via `passwords`). The anon client has no
+ * OTP method at all, so a stray SMS request would crash the test.
+ */
+function fakeStaging(opts: {
+  profiles: Record<string, string>;
+  users: Record<string, FakeAuthUser>;
+  passwords?: Record<string, string>;
+  signInError?: { code: string; message: string };
+}) {
+  const passwords = new Map(Object.entries(opts.passwords ?? {}));
+  const signInWithPassword = vi.fn(
+    async ({ email, password }: { email: string; password: string }) => {
+      if (opts.signInError) return { data: { session: null }, error: opts.signInError };
+      if (passwords.get(email) === password) {
+        return {
+          data: { session: { access_token: `at-${email}`, refresh_token: `rt-${email}` } },
+          error: null,
+        };
+      }
+      return {
+        data: { session: null },
+        error: { code: "invalid_credentials", message: "Invalid login credentials" },
+      };
+    },
+  );
+  const updateUserById = vi.fn(async (id: string, attrs: FixtureCredentials) => {
+    opts.users[id] = { id, email: attrs.email };
+    passwords.set(attrs.email, attrs.password);
+    return { data: { user: opts.users[id] }, error: null };
+  });
+  const getUserById = vi.fn(async (id: string) => ({
+    data: { user: opts.users[id] ?? null },
+    error: opts.users[id] ? null : { message: "User not found" },
+  }));
+  const phonesQueried: string[][] = [];
+  const query = {
+    select: () => query,
+    in: async (_column: string, values: string[]) => {
+      phonesQueried.push(values);
+      const data = Object.entries(opts.profiles)
+        .filter(([phone]) => values.includes(phone))
+        .map(([, id]) => ({ id }));
+      return { data, error: null };
+    },
+  };
+  createClient.mockImplementation((_url: string, key: string) =>
+    key === "anon-key"
+      ? { auth: { signInWithPassword } }
+      : { from: () => query, auth: { admin: { getUserById, updateUserById } } },
+  );
+  return { signInWithPassword, updateUserById, phonesQueried };
+}
+
+const FIXTURE_PASSWORD = /^E2e-[0-9a-f]{32}!Aa1$/;
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
@@ -57,7 +125,7 @@ beforeEach(() => {
 
 describe("loginAs", () => {
   test.each([undefined, "test", "staging", "production", "Preview"])(
-    "cannot request staging OTPs when NEXT_PUBLIC_APP_ENV is %s",
+    "cannot sign anyone in when NEXT_PUBLIC_APP_ENV is %s",
     async (appEnv) => {
       vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
 
@@ -67,53 +135,165 @@ describe("loginAs", () => {
     },
   );
 
-  test("uses the staging OTP APIs, installs the returned session, and opens the target", async () => {
-    const signInWithOtp = vi.fn().mockResolvedValue({ data: {}, error: null });
-    const signedInSession = {
-      access_token: "signed-in-access-token",
-      refresh_token: "signed-in-refresh-token",
-    };
-    const verifyOtp = vi.fn().mockResolvedValue({
-      data: { session: signedInSession },
-      error: null,
+  test.each([
+    "599123456",
+    "509000005",
+    "50900000",
+    "5500012390",
+    "+995550001239",
+    // the owner's kept smoke accounts (scripts/sweep-staging-e2e.mjs) sit in the 55 block
+    "551234567",
+    "551234568",
+    "551234569",
+  ])("refuses %s (not an e2e fixture phone) before touching staging", async (phone) => {
+    await expect(loginAs({} as Page, phone)).rejects.toThrow(/fixture/i);
+
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("first sign-in gives the fixture a password and installs the session, no SMS", async () => {
+    const staging = fakeStaging({
+      profiles: { "+995550001239": "user-1" },
+      users: { "user-1": { id: "user-1" } },
     });
-    const inboxQuery = {
-      select: vi.fn(),
-      in: vi.fn(),
-      order: vi.fn(),
-      limit: vi.fn().mockResolvedValue({
-        data: [{ otp: "654321", created_at: new Date().toISOString() }],
-        error: null,
-      }),
-    };
-    inboxQuery.select.mockReturnValue(inboxQuery);
-    inboxQuery.in.mockReturnValue(inboxQuery);
-    inboxQuery.order.mockReturnValue(inboxQuery);
-    createClient.mockImplementation((_url: string, key: string) =>
-      key === "anon-key"
-        ? { auth: { signInWithOtp, verifyOtp } }
-        : { from: vi.fn().mockReturnValue(inboxQuery) },
-    );
-    const { page, addCookies } = fakePage();
-    const goto = vi.fn().mockResolvedValue(undefined);
-    Object.assign(page, { goto });
+    const { page, addCookies, goto } = fakeNavigablePage();
     const landing = /\/me(\/|$)/;
 
     await loginAs(page, "550001239", landing);
 
-    expect(signInWithOtp).toHaveBeenCalledWith({
-      phone: "+995550001239",
-      options: { shouldCreateUser: false },
+    expect(staging.phonesQueried).toEqual([["+995550001239", "995550001239"]]);
+    expect(staging.updateUserById).toHaveBeenCalledOnce();
+    const [id, attrs] = staging.updateUserById.mock.calls[0]!;
+    expect(id).toBe("user-1");
+    expect(attrs).toEqual({
+      email: "e2e-login+550001239@example.invalid",
+      password: expect.stringMatching(FIXTURE_PASSWORD),
+      email_confirm: true,
     });
-    expect(verifyOtp).toHaveBeenCalledWith({
-      phone: "+995550001239",
-      token: "654321",
-      type: "sms",
+    expect(staging.signInWithPassword).toHaveBeenLastCalledWith({
+      email: "e2e-login+550001239@example.invalid",
+      password: attrs.password,
     });
-    expect(setSession).toHaveBeenCalledWith(signedInSession);
+    expect(setSession).toHaveBeenCalledWith({
+      access_token: "at-e2e-login+550001239@example.invalid",
+      refresh_token: "rt-e2e-login+550001239@example.invalid",
+    });
     expect(addCookies).toHaveBeenCalledOnce();
     expect(goto).toHaveBeenCalledWith("/me");
     expect(toHaveURL).toHaveBeenCalledWith(landing, { timeout: 15_000 });
+  });
+
+  test("a fixture that already has its password is signed in without being changed", async () => {
+    // Setting a password ends the account's other sessions, so an overlapping CI run
+    // signed in as the same seeded admin must not be logged out by this one.
+    const first = fakeStaging({
+      profiles: { "+995509000004": "editor" },
+      users: { editor: { id: "editor" } },
+    });
+    await loginAs(fakeNavigablePage().page, "509000004");
+    const password = first.updateUserById.mock.calls[0]![1].password;
+
+    const second = fakeStaging({
+      profiles: { "+995509000004": "editor" },
+      users: { editor: { id: "editor", email: "e2e-login+509000004@example.invalid" } },
+      passwords: { "e2e-login+509000004@example.invalid": password },
+    });
+    await loginAs(fakeNavigablePage().page, "509000004");
+
+    expect(second.signInWithPassword).toHaveBeenCalledOnce();
+    expect(second.signInWithPassword).toHaveBeenCalledWith({
+      email: "e2e-login+509000004@example.invalid",
+      password,
+    });
+    expect(second.updateUserById).not.toHaveBeenCalled();
+  });
+
+  test("each fixture phone gets its own password", async () => {
+    const staging = fakeStaging({
+      profiles: { "+995509000001": "super", "+995509000002": "verifier" },
+      users: { super: { id: "super" }, verifier: { id: "verifier" } },
+    });
+
+    await loginAs(fakeNavigablePage().page, "509000001");
+    await loginAs(fakeNavigablePage().page, "509000002");
+
+    const [a, b] = staging.updateUserById.mock.calls.map(([, attrs]) => attrs.password);
+    expect(a).toMatch(FIXTURE_PASSWORD);
+    expect(b).toMatch(FIXTURE_PASSWORD);
+    expect(a).not.toBe(b);
+  });
+
+  test("the password depends on the service-role key, not on the phone alone", async () => {
+    const passwordUnder = async (serviceKey: string) => {
+      vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", serviceKey);
+      const staging = fakeStaging({
+        profiles: { "+995509000003": "finance" },
+        users: { finance: { id: "finance" } },
+      });
+      await loginAs(fakeNavigablePage().page, "509000003");
+      return staging.updateUserById.mock.calls[0]![1].password;
+    };
+
+    expect(await passwordUnder("service-role-key")).not.toBe(
+      await passwordUnder("another-service-role-key"),
+    );
+  });
+
+  test("refuses when more than one profile holds the phone", async () => {
+    const staging = fakeStaging({
+      profiles: { "+995550001239": "user-1", "995550001239": "user-2" },
+      users: { "user-1": { id: "user-1" }, "user-2": { id: "user-2" } },
+    });
+
+    await expect(loginAs(fakeNavigablePage().page, "550001239")).rejects.toThrow(/rows=2/);
+
+    expect(staging.updateUserById).not.toHaveBeenCalled();
+  });
+
+  test("keeps an existing e2e email (a Google fixture) and only resets the password", async () => {
+    const staging = fakeStaging({
+      profiles: { "995550001231": "google-user" },
+      users: { "google-user": { id: "google-user", email: "e2e+550001231@example.invalid" } },
+      passwords: { "e2e+550001231@example.invalid": "random-password-from-the-fixture" },
+    });
+
+    await loginAs(fakeNavigablePage().page, "550001231");
+
+    expect(staging.updateUserById).toHaveBeenCalledWith("google-user", {
+      email: "e2e+550001231@example.invalid",
+      password: expect.stringMatching(FIXTURE_PASSWORD),
+      email_confirm: true,
+    });
+  });
+
+  test("refuses an account carrying a real email address", async () => {
+    const staging = fakeStaging({
+      profiles: { "+995509000001": "super" },
+      users: { super: { id: "super", email: "someone@gmail.com" } },
+    });
+
+    await expect(loginAs(fakeNavigablePage().page, "509000001")).rejects.toThrow(/real email/i);
+
+    expect(staging.signInWithPassword).not.toHaveBeenCalled();
+    expect(staging.updateUserById).not.toHaveBeenCalled();
+  });
+
+  test("a sign-in failure other than wrong credentials is reported, not papered over", async () => {
+    const staging = fakeStaging({
+      profiles: { "+995550001239": "user-1" },
+      users: { "user-1": { id: "user-1", email: "e2e-login+550001239@example.invalid" } },
+      signInError: { code: "over_request_rate_limit", message: "Request rate limit reached" },
+    });
+
+    await expect(loginAs(fakeNavigablePage().page, "550001239")).rejects.toThrow(/could not sign/i);
+
+    expect(staging.updateUserById).not.toHaveBeenCalled();
+  });
+
+  test("names the phone when no profile holds it", async () => {
+    fakeStaging({ profiles: {}, users: {} });
+
+    await expect(loginAs(fakeNavigablePage().page, "550001239")).rejects.toThrow(/550001239/);
   });
 });
 
@@ -193,12 +373,10 @@ describe("installSupabaseSession", () => {
 describe("service-role fixture boundary", () => {
   test.each([undefined, "test", "staging", "production", "Preview"])(
     "rejects before creating a service client when NEXT_PUBLIC_APP_ENV is %s",
-    async (appEnv) => {
+    (appEnv) => {
       vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
 
-      await expect(readFreshInboxOtp("550001239", Date.now())).rejects.toThrow(
-        /development|preview/i,
-      );
+      expect(() => serviceClient()).toThrow(/development|preview/i);
 
       expect(createClient).not.toHaveBeenCalled();
     },

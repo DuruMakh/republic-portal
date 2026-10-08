@@ -8,7 +8,7 @@ import {
   serviceClient,
 } from "./admin-helpers";
 import { approveOwnDelegate, seedPendingDelegate, seedRegisteredMember } from "./funnel-helpers";
-import { clientFor, otpSession } from "./otp-helpers";
+import { clientFor, fixtureSession } from "./otp-helpers";
 
 // ADR-039: the referral figures split into supporters (signed up through the link,
 // membership form not finished) and members (finished it). Nothing is stored: a
@@ -94,7 +94,7 @@ test("supporters move to members, and earlier sign-ups survive delegate approval
     .eq("id", referrerId)
     .single();
   if (ownErr || !own) throw new Error(`own code lookup failed: ${ownErr?.message}`);
-  const referrer = await clientFor(await otpSession(phase4Phone(REFERRER)));
+  const referrer = await clientFor(await fixtureSession(phase4Phone(REFERRER)));
 
   // someone signs up through the link: one supporter
   const friendA = await seedReferred(FRIEND_A, own.referral_code as string);

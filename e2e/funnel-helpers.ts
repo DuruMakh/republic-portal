@@ -375,11 +375,11 @@ export async function seedRegisteredMember(opts: {
 }
 
 /**
- * /login flow that signs the BROWSER in as a seeded user (spec §7). Reads the code
- * straight from dev_otp_inbox via the service client — the /api/dev/otp UI element is
- * withheld for ANY existing profile (R1 hardening), so this path works for members AND
- * delegates AND registered-standing users alike. The broad landing regex admits the
- * registered cabinet (/me), the member/delegate cabinets, and /admin.
+ * Signs the BROWSER in as a seeded user (spec §7) by email + password set through the
+ * service client (otp-helpers fixtureSession) — no SMS, so overlapping CI runs cannot
+ * exhaust staging's OTP budget. Works for members AND delegates AND registered-standing
+ * users alike. The broad landing regex admits the registered cabinet (/me), the
+ * member/delegate cabinets, and /admin.
  */
 export { loginAs }; // spec imports stay untouched
 

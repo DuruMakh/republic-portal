@@ -14,7 +14,7 @@ import { loginAs, seedCompletedMember, seedPendingDelegate } from "./funnel-help
 
 // The whole delegacy review in one journey (formerly delegacy.spec + admin-approval.spec).
 // Every actor keeps its own browser context, so each signs in exactly once: the requester,
-// ONE verifier session for every decision, and the rejectee. Three SMS logins in all.
+// ONE verifier session for every decision, and the rejectee. Three sign-ins in all.
 //
 // The canonical seed keeps 3 PENDING roster delegates in the queue, so every interaction
 // is scoped to this run's applicants via verify-card-<id> testids -- a bare .first() would
@@ -53,7 +53,7 @@ test.beforeAll(async () => {
 test.afterAll(() => cleanupPhase4Users([REQUESTER, REJECTEE, REAPPROVED]));
 
 test("request, review and both outcomes: approve, reject, re-approve", async ({ browser }) => {
-  // three sign-ins in one test; each may wait out an OTP resend (otp-helpers)
+  // three sign-ins and both review outcomes in one test
   test.setTimeout(300_000);
   const db = serviceClient();
   const requesterId = await profileIdByPhone(db, phase4Phone(REQUESTER));
