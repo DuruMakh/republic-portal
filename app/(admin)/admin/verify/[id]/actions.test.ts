@@ -32,6 +32,15 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+// the 2–3 byte fixtures are not real images: the sanitizer is mocked here and proven in
+// lib/image-sanitize.test.ts
+const sanitize = vi.hoisted(() => ({
+  run: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+}));
+vi.mock("@/lib/image-sanitize", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/image-sanitize")>()),
+  sanitizeUploadedImage: sanitize.run,
+}));
 
 const { updateDelegateProfileAction, updateDelegateNameAction } = await import("./actions");
 
@@ -192,5 +201,30 @@ describe("updateDelegateNameAction (security audit M2)", () => {
       error: mapFunnelError("invalid_target"),
     });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateDelegateProfileAction — photo metadata (security audit M4)", () => {
+  it("stores the sanitized bytes, never the uploaded ones", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    sanitize.run.mockResolvedValueOnce(new Uint8Array([9, 9, 9]));
+    approvedTarget();
+    await expect(updateDelegateProfileAction(form({ delegateId, photo: jpeg() }))).resolves.toEqual(
+      { ok: true },
+    );
+    expect(sanitize.run).toHaveBeenCalledWith(expect.any(ArrayBuffer), "image/jpeg");
+    const upload = admin.storageCalls.find((c) => c.method === "upload");
+    expect(upload?.args[1]).toEqual(new Uint8Array([9, 9, 9]));
+  });
+
+  it("refuses an undecodable photo without uploading anything", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    const { ImageSanitizeError } = await import("@/lib/image-sanitize");
+    sanitize.run.mockRejectedValueOnce(new ImageSanitizeError());
+    approvedTarget();
+    await expect(updateDelegateProfileAction(form({ delegateId, photo: jpeg() }))).resolves.toEqual(
+      { ok: false, error: "ფოტოს წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი." },
+    );
+    expect(admin.storageCalls.find((c) => c.method === "upload")).toBeUndefined();
   });
 });

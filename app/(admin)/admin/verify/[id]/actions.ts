@@ -9,6 +9,7 @@ import {
   PHOTO_TYPES,
 } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
+import { ImageSanitizeError, isUploadMime, sanitizeUploadedImage } from "@/lib/image-sanitize";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
@@ -49,16 +50,29 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
   const photo = formData.get("photo");
   if (photo instanceof File && photo.size > 0) {
     const ext = PHOTO_TYPES[photo.type];
-    if (!ext) return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP ფოტო." };
+    if (!ext || !isUploadMime(photo.type)) {
+      return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP ფოტო." };
+    }
     if (photo.size > PHOTO_MAX_BYTES) {
       return { ok: false, error: "ფოტო არ უნდა აღემატებოდეს 5 MB-ს." };
+    }
+    // Security audit M4: the bucket is public — store the photo without its hidden
+    // location/time/device data, upright.
+    let clean: Uint8Array;
+    try {
+      clean = await sanitizeUploadedImage(await photo.arrayBuffer(), photo.type);
+    } catch (caught) {
+      if (caught instanceof ImageSanitizeError) {
+        return { ok: false, error: "ფოტოს წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი." };
+      }
+      throw caught;
     }
     const admin = createAdminClient();
     // versioned filename: an updated photo must never serve stale from CDN caches
     newPath = `${parsed.data.delegateId}-${Date.now()}.${ext}`;
     const { error: uploadError } = await admin.storage
       .from("delegate-photos")
-      .upload(newPath, await photo.arrayBuffer(), { contentType: photo.type });
+      .upload(newPath, clean, { contentType: photo.type });
     if (uploadError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
     photoUrl = admin.storage.from("delegate-photos").getPublicUrl(newPath).data.publicUrl;
     const marker = "/delegate-photos/";
