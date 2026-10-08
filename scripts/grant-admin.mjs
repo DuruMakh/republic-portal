@@ -1,6 +1,8 @@
 /**
  * Grants an admin role to a REGISTERED, COMPLETED member — the bootstrap path
  * for the very first super_admin (spec §3.7); after that, use /admin/admins.
+ * Staging only in practice: production grants go through the dispatched
+ * .github/workflows/production-admin.yml (ADR-045).
  *
  * Run: node --env-file=.env.local scripts/grant-admin.mjs \
  *        --phone +995509000001 --role super_admin --confirm-ref <project-ref>

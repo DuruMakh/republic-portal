@@ -1164,3 +1164,22 @@ variable, nothing visible changes except the tab title.
   the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
+
+## ADR-045 (2026-10-08): Production admin roles are granted by a dispatched, main-only workflow
+
+- **Problem.** The only way to create the first super_admin was `scripts/grant-admin.mjs`, run on
+  someone's machine with the production service-role key in a local env file. Agents work from
+  staging keys only, and the owner runs nothing outside chat (CLAUDE.md), so the real site had no
+  sanctioned way to get its first administrator (launch audit, 2026-10-08).
+- **Decision.** `.github/workflows/production-admin.yml`: manual dispatch with the member's
+  Google sign-in email, a role from the four, and the typed production project ref. It runs only
+  from `main`, in the `production-db` environment (main-only branch policy), in the same
+  concurrency group as migrations. It validates the email as a plain address, then runs
+  `scripts/production-grant-admin.sql`, which mirrors `admin_grant_role()`: exactly one sign-in
+  account with that email, a completed member, no-op when the role is held, otherwise one
+  `admin.grant_role` audit row with actor null and `via: production-admin.yml`. A last step
+  confirms the role is held. `lib/production-admin-workflow.test.ts` pins the guards.
+- **Scope.** A bootstrap tool. After the first super_admin exists, roles are granted in the app
+  at `/admin/admins`, where the granter is recorded as the actor. `scripts/grant-admin.mjs`
+  stays for staging.
+- **First use.** The owner (durumakh@gmail.com) as super_admin, at the owner's request in chat.
