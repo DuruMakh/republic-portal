@@ -7,9 +7,10 @@ import { updateSession } from "@/lib/supabase/middleware";
 export async function proxy(request: NextRequest) {
   // A switch-hidden page gets the exact response a mistyped address gets: the site-wide not-found
   // page (404, Georgian title in the HTML itself), never the page's own cached 404 (ADR-040).
+  // The status is set outright: Vercel answers a bare rewrite to /_not-found with 200.
   const switches = { financesPublic: showPublicFinances(), eventsShown: showEvents() };
   if (hiddenBySwitch(request.nextUrl.pathname, switches)) {
-    return NextResponse.rewrite(new URL("/_not-found", request.url));
+    return NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404 });
   }
   return await updateSession(request);
 }

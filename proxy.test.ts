@@ -31,6 +31,8 @@ describe("proxy", () => {
     async (path) => {
       const response = await call(path);
       expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost:3000/_not-found");
+      // said outright: on Vercel a bare rewrite to /_not-found answers 200 (probe, ADR-040)
+      expect(response.status).toBe(404);
       expect(updateSession).not.toHaveBeenCalled();
     },
   );

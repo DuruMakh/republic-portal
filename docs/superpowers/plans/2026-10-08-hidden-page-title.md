@@ -38,8 +38,9 @@ Answer hidden addresses before the page cache is consulted: `proxy.ts` rewrites 
 - `lib/hidden-routes.ts` — pure `hiddenBySwitch(pathname, switches)`: `/transparency` while finances
   are hidden, `/events` and `/events/<anything>` while events are hidden. Prefix match on a path
   segment boundary (`/eventsx` is not hidden).
-- `proxy.ts` — if hidden, `NextResponse.rewrite(new URL("/_not-found", request.url))`, skipping the
-  session refresh; otherwise unchanged.
+- `proxy.ts` — if hidden, `NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404 })`,
+  skipping the session refresh; otherwise unchanged. The explicit status matters on Vercel only: a
+  probe preview answered the bare rewrite with 200, while `next start` gives 404 either way.
 - Member and admin events pages (`/me/events`, `/admin/content/events`) stay as PR #32 left them:
   they render per request, so the probe's request-time column applies and their titles are right.
 

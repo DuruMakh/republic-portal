@@ -1030,8 +1030,10 @@ No migration, no new variable.
   in the HTML `<head>`; the page's title reached the tab only once scripts ran. A
   request-time render keeps the page's metadata; the site-wide `/_not-found` page has the
   not-found title in its HTML and never regenerates.
-- **Decision.** `proxy.ts` rewrites a switch-hidden address to `/_not-found` before the page
-  cache is consulted, and skips the session refresh for it. The rules live in
+- **Decision.** `proxy.ts` rewrites a switch-hidden address to `/_not-found` with status 404
+  before the page cache is consulted, and skips the session refresh for it. The status must be
+  given: a probe preview showed Vercel answering a bare rewrite to `/_not-found` with 200 (right
+  page, wrong status), although `next start` answers 404 either way. The rules live in
   `lib/hidden-routes.ts`: `/transparency` while `SHOW_PUBLIC_FINANCES` is off, `/events` and
   every `/events/<…>` while `SHOW_EVENTS` is off. A hidden page now returns exactly what a
   mistyped address returns: 404, the Georgian notice, the exact title in the HTML and the tab.
