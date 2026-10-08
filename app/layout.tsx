@@ -7,6 +7,8 @@ import "./globals.css";
 const notoSans = Noto_Sans_Georgian({
   subsets: ["georgian"],
   variable: "--font-noto-sans-georgian",
+  // The condensed display headings on /structure (ADR-038) need the width axis.
+  axes: ["wdth"],
 });
 const notoSerif = Noto_Serif_Georgian({
   subsets: ["georgian"],
