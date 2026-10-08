@@ -32,8 +32,8 @@ if (!url || !serviceKey) {
   console.error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
   process.exit(1);
 }
-// Security audit M6: staging allow-list first — a production URL never gets further.
-assertStagingTarget(url);
+// Security audit M6: test-database allow-list first — a production URL never gets further.
+const target = assertStagingTarget(url);
 // Canonical production detection lives in lib/env.ts (isProductionEnv). This .mjs guard mirrors
 // the env-flag half; the --confirm-ref check below pins the exact target project, which is the
 // stronger guard for this destructive script.
@@ -41,7 +41,8 @@ if (process.env.NEXT_PUBLIC_APP_ENV === "production") {
   console.error("Refusing to seed: NEXT_PUBLIC_APP_ENV=production");
   process.exit(1);
 }
-const ref = new URL(url).hostname.split(".")[0];
+// The local CI stack (spec 2026-10-08 4.1) is confirmed with the literal word "local".
+const ref = target === "local" ? "local" : new URL(url).hostname.split(".")[0];
 const flagIdx = process.argv.indexOf("--confirm-ref");
 if (flagIdx < 0 || process.argv[flagIdx + 1] !== ref) {
   console.error(
