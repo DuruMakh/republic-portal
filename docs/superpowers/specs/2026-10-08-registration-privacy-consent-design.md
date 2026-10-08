@@ -200,15 +200,28 @@ unticked-error and ticked states, desktop and mobile.
 
 ## 8. Release
 
-- The migration goes to the staging database before the preview build.
-- `production-db.yml` migration baseline goes from 34 to 35 (the workflow and its two
-  tests).
-- Merge releases to **both** sites (demo and real). The real site's database must receive
-  the migration through the gated production-db workflow **before** the code is served
-  there; otherwise registration on the real site fails closed (no consent version accepted
-  by an old function) until it lands.
+A merge to `main` deploys **both** sites (demo and real) at once, and the real site's
+database can only be migrated afterwards, through the gated production-db workflow. So the
+feature ships as two PRs and two migrations (found while planning; same pattern as
+PR #28 → PR #27):
+
+1. **PR A, expand.** `20261008140000_registration_privacy_consent.sql` adds the two columns
+   and a `register()` / `register_google()` that **accept** an optional `p_privacy_version`:
+   a wrong one is refused, a missing one is still allowed, so the code already live keeps
+   working. Nothing visible changes. After merge, the workflow applies it.
+2. **PR B, the feature.** The forms, actions, `/privacy` page, and
+   `20261008150000_require_privacy_consent.sql`, which makes a missing version refuse. On
+   merge the new code is served first and works against PR A's function. The workflow then
+   applies the tightening.
+
+- Each migration reaches the staging database before its preview build. While PR B is in
+  review, the demo site (which shares staging) cannot register, because its code sends no
+  version. Accepted: the demo holds no real registrations.
+- Migration baseline: 35 → 36 (PR A) → 37 (PR B), in `production-db.yml` and its two tests.
+- The signature change also moves `scripts/production-db-schema-check.sql` and
+  `lib/supabase/types.ts` to the four-argument functions.
 - No new environment variables.
-- ADR-038 in `DECISIONS.md` records the consent model and the deferrals in §9.
+- ADR-041 in `DECISIONS.md` records the consent model and the deferrals in §9.
 
 ## 9. Out of scope (owner: later)
 

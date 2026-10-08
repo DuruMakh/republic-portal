@@ -237,9 +237,11 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // `phone_verification_completion_failed`: the first increases refusal
     // tokens 6 -> 7; the internal service-only state token increases the
     // deliberately unclassified set 4 -> 5. Post-gate tokens remain 39.
-    expect(live.size).toBe(51);
+    // 51 -> 52 and 39 -> 40 when registration privacy consent added
+    // `privacy_consent_required` (register(), classified POST_GATE_TOKENS above).
+    expect(live.size).toBe(52);
     expect(REFUSAL_TOKENS.size).toBe(7);
-    expect(POST_GATE_TOKENS.size).toBe(39);
+    expect(POST_GATE_TOKENS.size).toBe(40);
     expect(DELIBERATELY_UNCLASSIFIED.size).toBe(5);
   });
 });

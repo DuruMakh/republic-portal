@@ -53,12 +53,12 @@ after that merge. If one PR shipped code that sends the new argument together wi
 that adds it, the real site would run the new code against the old database until the workflow
 ran, and registration would fail. So:
 
-1. **PR A (Task 1):** migration `20261008120000_registration_privacy_consent.sql` adds the two
+1. **PR A (Task 1):** migration `20261008140000_registration_privacy_consent.sql` adds the two
    columns and a `register()` / `register_google()` that **accept** an optional
    `p_privacy_version`. A missing version is still allowed, so the code already live keeps
    working. Merge, then run the production-db workflow (owner approves the dry run, then apply).
 2. **PR B (Tasks 2–5):** the forms, server actions, `/privacy` page, and migration
-   `20261008130000_require_privacy_consent.sql`, which makes a missing version refuse. On merge,
+   `20261008150000_require_privacy_consent.sql`, which makes a missing version refuse. On merge,
    the new code is served first; it works against PR A's function. Then the production-db
    workflow applies the tightening.
 
@@ -74,14 +74,14 @@ to say so.
 **Files:**
 - Create: `lib/privacy.ts`
 - Create: `lib/privacy.test.ts`
-- Create: `supabase/migrations/20261008120000_registration_privacy_consent.sql`
+- Create: `supabase/migrations/20261008140000_registration_privacy_consent.sql`
 - Modify: `lib/supabase/types.ts` (profiles Row; `register` and `register_google` Args)
 - Modify: `lib/security/verdict.ts` (POST_GATE_TOKENS)
 - Modify: `lib/security/verdict.tokens-drift.test.ts` (token counts)
 - Modify: `scripts/production-db-schema-check.sql` (four-argument signatures)
-- Modify: `.github/workflows/production-db.yml` (two `EXPECTED_MIGRATION_FILE_COUNT: 34` → `35`)
-- Modify: `lib/production-db-security-gate.test.ts:151` (`toHaveLength(34)` → `35`)
-- Modify: `lib/production-db-workflow.test.ts:112,115` (`34` → `35`, title and string)
+- Modify: `.github/workflows/production-db.yml` (two `EXPECTED_MIGRATION_FILE_COUNT: 35` → `36`)
+- Modify: `lib/production-db-security-gate.test.ts:151` (`toHaveLength(35)` → `36`)
+- Modify: `lib/production-db-workflow.test.ts:112,115` (`35` → `36`, title and string)
 - Modify: `docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md` §8
 
 **Interfaces:**
@@ -200,20 +200,20 @@ Expected: the constants test passes; every `register()` test fails (no fourth ar
 
 - [ ] **Step 5: Write the migration**
 
-Create `supabase/migrations/20261008120000_registration_privacy_consent.sql`. The bodies of
+Create `supabase/migrations/20261008140000_registration_privacy_consent.sql`. The bodies of
 `protect_profile_columns()`, `register()` and `register_google()` are restated **verbatim** from
 their live definitions (`20260728142000_member_referral_codes.sql` for the first two,
 `20260811182202_google_verify_phone.sql` for `register_google`). Splice the existing text from
 those files; only the marked lines are new.
 
 ```sql
--- Registration privacy consent, step 1 of 2 (spec 2026-10-08 §6, ADR-038).
+-- Registration privacy consent, step 1 of 2 (spec 2026-10-08 §6, ADR-041).
 --
 -- Additive and backward compatible. register() and register_google() gain an optional
 -- p_privacy_version. When it is sent it must be the current policy version, and the new
 -- profile is stamped with the date and version. When it is missing the call still works,
 -- so the code already live on the real site keeps registering people until step 2
--- (20261008130000_require_privacy_consent.sql) ships with the code that sends it and makes
+-- (20261008150000_require_privacy_consent.sql) ships with the code that sends it and makes
 -- a missing version refuse. The version literal must equal PRIVACY_POLICY_VERSION in
 -- lib/privacy.ts (lib/privacy.test.ts checks it).
 
@@ -332,9 +332,9 @@ Expected: PASS (7 tests).
 In `lib/security/verdict.ts`, append to `POST_GATE_TOKENS` after `"too_many_requests",`:
 
 ```ts
-  // Registration privacy consent (20261008120000_registration_privacy_consent.sql):
+  // Registration privacy consent (20261008140000_registration_privacy_consent.sql):
   // register() refuses a policy version other than the current one (and, from
-  // 20261008130000, a missing one). Payload validation behind register()'s
+  // 20261008150000, a missing one). Payload validation behind register()'s
   // not_authenticated gate, the same standing as invalid_name next to it.
   "privacy_consent_required",
 ```
@@ -363,12 +363,12 @@ and to both `register.Args` and `register_google.Args` after `p_ref_code?: strin
           p_privacy_version?: string | null;
 ```
 
-- [ ] **Step 10: Move the migration baseline 34 → 35**
+- [ ] **Step 10: Move the migration baseline 35 → 36**
 
-`.github/workflows/production-db.yml` (both `EXPECTED_MIGRATION_FILE_COUNT: 34` lines),
-`lib/production-db-security-gate.test.ts:151` (`toHaveLength(35)`),
-`lib/production-db-workflow.test.ts:112` (title says `35-file`) and `:115`
-(`"EXPECTED_MIGRATION_FILE_COUNT: 35"`).
+`.github/workflows/production-db.yml` (both `EXPECTED_MIGRATION_FILE_COUNT: 35` lines),
+`lib/production-db-security-gate.test.ts:151` (`toHaveLength(36)`),
+`lib/production-db-workflow.test.ts:112` (title says `36-file`) and `:115`
+(`"EXPECTED_MIGRATION_FILE_COUNT: 36"`).
 
 Run: `npx vitest run lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts`
 Expected: PASS.
@@ -377,7 +377,7 @@ Expected: PASS.
 
 Replace the body of §8 "Release" in the spec with a short statement of the two-PR order from
 "Release order" above. Keep the remaining bullets (staging first, no new environment variables,
-ADR-038). Change the baseline line to "34 → 35 (PR A) → 36 (PR B)". Mention
+ADR-041). Change the baseline line to "35 → 36 (PR A) → 37 (PR B)". Mention
 `scripts/production-db-schema-check.sql` and `lib/supabase/types.ts`.
 
 - [ ] **Step 12: Full gates**
@@ -408,12 +408,12 @@ version, and that is still accepted.
 - [ ] **Step 14: Commit**
 
 ```bash
-git add lib/privacy.ts lib/privacy.test.ts supabase/migrations/20261008120000_registration_privacy_consent.sql lib/supabase/types.ts lib/security/verdict.ts lib/security/verdict.tokens-drift.test.ts scripts/production-db-schema-check.sql .github/workflows/production-db.yml lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md
+git add lib/privacy.ts lib/privacy.test.ts supabase/migrations/20261008140000_registration_privacy_consent.sql lib/supabase/types.ts lib/security/verdict.ts lib/security/verdict.tokens-drift.test.ts scripts/production-db-schema-check.sql .github/workflows/production-db.yml lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md
 git commit -F <message-file>
 ```
 
 Message: `feat(db): consent columns and a version-checking register(), ahead of the code that sends it`,
-a body explaining the expand step and the baseline 34 → 35, and the Co-Authored-By line.
+a body explaining the expand step and the baseline 35 → 36, and the Co-Authored-By line.
 
 ### Release A
 
@@ -1203,12 +1203,12 @@ Message: `feat(public): the privacy policy page, linked from the footer and the 
 ### Task 5: Make consent mandatory in the database, e2e, ADR
 
 **Files:**
-- Create: `supabase/migrations/20261008130000_require_privacy_consent.sql`
+- Create: `supabase/migrations/20261008150000_require_privacy_consent.sql`
 - Modify: `lib/privacy.test.ts`
-- Modify: migration baseline 35 → 36 (same four places as Task 1 Step 10)
+- Modify: migration baseline 36 → 37 (same four places as Task 1 Step 10)
 - Modify: `e2e/funnel-helpers.ts` (`passRegistration` ticks the box)
 - Modify: `e2e/registration.spec.ts`
-- Modify: `DECISIONS.md` (ADR-038)
+- Modify: `DECISIONS.md` (ADR-041)
 
 **Interfaces:**
 - Consumes: Task 1's `register()`; Task 3's forms (the e2e drives them).
@@ -1230,7 +1230,7 @@ Run: `npx vitest run lib/privacy.test.ts`. Expected: FAIL.
 
 - [ ] **Step 2: The tightening migration**
 
-`supabase/migrations/20261008130000_require_privacy_consent.sql`: header comment (step 2 of 2;
+`supabase/migrations/20261008150000_require_privacy_consent.sql`: header comment (step 2 of 2;
 ships with the code that always sends the version; grants restated per house shape), then
 `create or replace function register(...)` with the same four-argument signature, restating
 Task 1's body verbatim except:
@@ -1252,7 +1252,7 @@ revoke execute on function register(text, text, text, text) from public, anon;
 
 `register_google()` is unchanged: it already passes the version through.
 
-Move the baseline 35 → 36 in the four places. Run:
+Move the baseline 36 → 37 in the four places. Run:
 `npx vitest run lib/privacy.test.ts lib/security lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts`
 Expected: PASS (the token count is unchanged; the token already exists).
 
@@ -1317,19 +1317,19 @@ test("the privacy policy is public and linked from the footer", async ({ page })
 
 - [ ] **Step 4: Apply to staging and run e2e**
 
-Apply `20261008130000` to staging (the same staging push as Task 1). Note: from this moment the
+Apply `20261008150000` to staging (the same staging push as Task 1). Note: from this moment the
 demo site's current `main` code (which sends no version) cannot register on staging until PR B
 merges. Accepted; the demo has no real registrations. Then run the full e2e suite against the
 local build with the copied `.env.local` (see the worktree e2e memory: absolute Playwright CLI
 path; do not trust a wrapper's exit code, read the summary line).
 Expected: all pass, including the three new/changed registration tests.
 
-- [ ] **Step 5: ADR-038**
+- [ ] **Step 5: ADR-041**
 
 Append to `DECISIONS.md`:
 
 ```markdown
-## ADR-038 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
+## ADR-041 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
 
 - **What.** One required box on registration (18+ and personal-data processing, one sentence),
   linking a new `/privacy` page; a notice under the Google button. Spec:
@@ -1343,8 +1343,8 @@ Append to `DECISIONS.md`:
   `privacy_version`; both columns are server-managed. The SMS send action refuses without the
   tick, so no number goes to the provider unconsented. The version lives in `lib/privacy.ts` and the
   migration; `lib/privacy.test.ts` keeps them equal.
-- **Two-step release.** `20261008120000` (accepts an optional version) shipped and was applied
-  before the code; `20261008130000` (refuses a missing one) ships with it. Merging to `main`
+- **Two-step release.** `20261008140000` (accepts an optional version) shipped and was applied
+  before the code; `20261008150000` (refuses a missing one) ships with it. Merging to `main`
   deploys before the production migration can run, so the database had to accept both shapes first.
 - **Owner decisions.** Controller named only as the movement; recipients by category, no company
   names; minimum age 18; no political-views explainer section; the two founders' accounts keep
@@ -1360,11 +1360,11 @@ Run the five CI gates, `node scripts/ka-gate.mjs --diff main` over every changed
 Georgian text, and `npm run ka:scan`. Expected: green.
 
 ```bash
-git add supabase/migrations/20261008130000_require_privacy_consent.sql lib/privacy.test.ts .github/workflows/production-db.yml lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts e2e/funnel-helpers.ts e2e/registration.spec.ts DECISIONS.md
+git add supabase/migrations/20261008150000_require_privacy_consent.sql lib/privacy.test.ts .github/workflows/production-db.yml lib/production-db-security-gate.test.ts lib/production-db-workflow.test.ts e2e/funnel-helpers.ts e2e/registration.spec.ts DECISIONS.md
 git commit -F <message-file>
 ```
 
-Message: `feat(db): registration refuses without privacy consent (step 2 of 2), e2e, ADR-038`.
+Message: `feat(db): registration refuses without privacy consent (step 2 of 2), e2e, ADR-041`.
 
 ### Release B
 
