@@ -26,7 +26,7 @@ const BASE = LOGIN_PHONE.slice(0, 8);
 // cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
-  regHappy: 0, // unused since registration.spec folded into membership.spec (still swept)
+  secProber: 0, // security-hardening.spec: registered account probing personal IDs
   membFull: 1, // membership.spec: full upgrade
   // review fix (owner fix #10 wave 1): the duplicate-ID check moved from /join to
   // the wizard, so this slot no longer seeds a REGISTRANT attempting a dup'd ID —
@@ -37,7 +37,7 @@ export const JOURNEY = {
   regReferral: 4, // membership.spec: referral capture → completion
   cabinet: 5, // cabinet.spec (ported setup)
   membRsvp: 6, // community-events.spec: RSVP as registered
-  spare: 7, // unused since delegate-panel.spec folded into community-events.spec (still swept)
+  secDelegate: 7, // security-hardening.spec: approved delegate holding the probed personal ID
   membDupId: 8, // membership.spec: fresh registrant colliding with regDupId's seeded ID
 } as const;
 
