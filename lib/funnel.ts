@@ -147,6 +147,10 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   not_a_delegate: "დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.",
   invalid_role: "დაფიქსირდა შეცდომა — სცადე თავიდან.",
   invalid_name: "შეავსე სახელი და გვარი.",
+  // Security audit M2 (decision D3): an approved delegate's public name changes only through
+  // the admins.
+  name_locked:
+    "დამტკიცებული დელეგატის სახელსა და გვარს ცვლის მხოლოდ ადმინისტრაცია — მოგვწერე მხარდაჭერის გვერდიდან.",
   // Phase 4 admin tokens (spec §5)
   missing_role: "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",
   invalid_target: "ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.",

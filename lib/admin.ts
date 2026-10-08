@@ -72,6 +72,7 @@ export const AUDIT_ACTION_LABELS_KA: Record<string, string> = {
   "delegate.approve": "დელეგატის დამტკიცება",
   "delegate.reject": "დელეგატის უარყოფა",
   "delegate.update_profile": "დელეგატის პროფილის რედაქტირება",
+  "delegate.update_name": "დელეგატის სახელის შესწორება",
   "delegate.reveal_personal_id": "განმცხადებლის პირადი ნომრის ნახვა",
   "member.reveal_personal_id": "წევრის პირადი ნომრის ნახვა",
   "member.export": "წევრების ექსპორტი",
