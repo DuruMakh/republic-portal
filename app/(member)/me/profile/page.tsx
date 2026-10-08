@@ -298,7 +298,8 @@ export default async function ProfilePage() {
           {state.referralCode != null ? (
             <ReferralCard
               code={state.referralCode}
-              count={state.referralCount ?? 0}
+              supporters={state.referralSupporters ?? 0}
+              members={state.referralMembers ?? 0}
               // true only for the approved-delegate case reaching this page directly
               // (see isMemberRole above): their referralCode IS the delegate code,
               // which binds a team same as /delegate's default; false (member) is

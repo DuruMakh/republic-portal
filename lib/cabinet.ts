@@ -178,6 +178,10 @@ export interface DelegatePanelData {
    * delegate code alone — owner fix #12.
    */
   referralCount: number;
+  /** ADR-039: referralCount split — not yet through the membership form… */
+  referralSupporters: number;
+  /** …and through it. Together they make referralCount. */
+  referralMembers: number;
 }
 
 export type TeamMemberStatus = "profile_completed" | "active_member";

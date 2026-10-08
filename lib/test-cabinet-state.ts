@@ -15,6 +15,8 @@ export function cabinetStateFixture(
     hasPersonalId: true,
     referralCode: null,
     referralCount: 0,
+    referralSupporters: 0,
+    referralMembers: 0,
     birthDate: null,
     regionId: 1,
     cityId: null,
