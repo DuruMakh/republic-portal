@@ -213,6 +213,12 @@ Workflow and checks, in the same PR:
 
 ## 8. Sequencing and constraints
 
+> **Superseded by owner order (2026-10-08):** everything ships as ONE release: one branch, one PR,
+> one merge, one production apply. See
+> `docs/superpowers/plans/2026-10-08-security-hardening-single-release.md`. The constraints below
+> still apply where they are not about release order: tighten rules, privacy step 2 coordination,
+> and verifying after merge.
+
 - R1 and R3 are independent code PRs.
   - Stagger the pushes: every push builds both Vercel projects, and the hobby plan has a daily deploy
     limit.

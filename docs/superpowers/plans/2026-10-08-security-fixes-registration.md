@@ -343,7 +343,7 @@ Expected: FAIL:
   // stops here for good; a real person only gets here when their ID is already taken, which
   // needs a human, so the message points to support instead of "try later".
   personal_id_attempts_exceeded:
-    "ამ პირადი ნომრით გაგრძელება ვერ ხერხდება — მოგვწერე მხარდაჭერის გვერდიდან და დაგეხმარებით.",
+    "პირადი ნომრის დადასტურება ვერ ხერხდება — მოგვწერე მხარდაჭერის გვერდიდან და დაგეხმარებით.",
 ```
 
 `app/(member)/me/membership/actions.ts`:

@@ -121,6 +121,11 @@ export function isReferralCodeCandidate(value: string): boolean {
 
 export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   duplicate_personal_id: "ეს პირადი ნომერი უკვე რეგისტრირებულია.",
+  // Security audit H1 (2026-10-08), decision D2: after three personal-ID conflicts the account
+  // stops here for good. A real person only gets here when their ID is already taken, which
+  // needs a human, so the message points to support instead of "try later".
+  personal_id_attempts_exceeded:
+    "პირადი ნომრის დადასტურება ვერ ხერხდება — მოგვწერე მხარდაჭერის გვერდიდან და დაგეხმარებით.",
   invalid_personal_id: "პირადი ნომერი უნდა იყოს 11 ციფრი.",
   invalid_birth_date: "მიუთითე დაბადების თარიღი.",
   invalid_employment: "მიუთითე საქმიანობა.",
