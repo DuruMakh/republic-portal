@@ -73,7 +73,9 @@ export default function PrivacyPage() {
       <div className="mb-2">
         <Eyebrow>პერსონალური მონაცემები</Eyebrow>
       </div>
-      <h1 className="mb-4 font-serif text-3xl font-bold text-ink">კონფიდენციალურობის პოლიტიკა</h1>
+      <h1 className="mb-4 break-words font-serif text-3xl font-bold text-ink">
+        კონფიდენციალურობის პოლიტიკა
+      </h1>
       <p className="mb-6 border border-warn-deep bg-warn/10 p-3 text-sm font-semibold text-warn-deep">
         სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
       </p>
