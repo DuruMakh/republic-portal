@@ -23,3 +23,23 @@ describe("CI quality job time limits", () => {
     );
   });
 });
+
+// Spec 2026-10-08 simpler dev structure 4.1: every run builds and tests against its own
+// freshly seeded local stack, so shared staging drift can no longer fail CI.
+describe("CI runs on a throwaway Supabase stack", () => {
+  const workflow = readRepoFile(".github/workflows/ci.yml");
+
+  it("never reads the staging database secrets", () => {
+    expect(workflow).not.toContain("STAGING_SUPABASE");
+  });
+
+  it("starts a pinned Supabase CLI and seeds the local stack", () => {
+    expect(workflow).toMatch(/uses: supabase\/setup-cli@[0-9a-f]{40} # v/);
+    expect(workflow).toContain("supabase start");
+    expect(workflow).toContain("scripts/seed-staging.mjs --confirm-ref local");
+  });
+
+  it("caps the stack start at 10 minutes", () => {
+    expect(workflow).toMatch(/run: supabase start[^\n]*\n\s+timeout-minutes: 10\n/);
+  });
+});

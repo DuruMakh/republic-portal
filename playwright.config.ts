@@ -8,7 +8,7 @@ export default defineConfig({
   // Keep the established 210s cap until the complete hosted suite proves a lower bound.
   timeout: 210_000,
   retries: process.env.CI ? 1 : 0,
-  // shared staging state (per-run users + seed-count assertions) — spec files must never overlap
+  // one seeded database per run (per-run users + seed-count assertions) — spec files must never overlap
   workers: 1,
   use: {
     baseURL: "http://localhost:3000",
