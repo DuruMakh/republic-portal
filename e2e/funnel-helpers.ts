@@ -338,7 +338,7 @@ export async function seedPendingDelegate(opts: {
 /**
  * Service-role: a REGISTERED-standing user — the light registration only
  * (name+phone+personal_id, status registered, NO membership; the new invariant is that
- * only members hold a membership). No spec uses it since login.spec retired.
+ * only members hold a membership). Used by referral-split.spec.
  */
 export async function seedRegisteredMember(opts: {
   userId: string;

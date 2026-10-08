@@ -20,8 +20,9 @@ import { loginAs, seedCompletedMember, seedPendingDelegate } from "./funnel-help
 // is scoped to this run's applicants via verify-card-<id> testids -- a bare .first() would
 // land on (and MUTATE) seeded data.
 //
-// phase4Phone slots 0/1/4 are this file's alone (admin-payments 2, community-news 5,
-// community-events 6/7, community-polls 8).
+// phase4Phone slots 0/1/4 (admin-payments 2, community-news 5, community-events 6/7,
+// community-polls 8). referral-split.spec borrows the same three: safe because files never
+// overlap (workers=1) and both clean these phones before and after.
 const REQUESTER = 0; // asks through the page, approved straight from the pending tab
 const REJECTEE = 1; // seeded pending, rejected, stays final
 const REAPPROVED = 4; // seeded pending, rejected with a note, re-approved from the rejected tab
