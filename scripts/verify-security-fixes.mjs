@@ -35,8 +35,11 @@ import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { assertStagingTarget } from "./staging-guard.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Security audit M6: staging only.
+assertStagingTarget(url);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const dbPassword = process.env.SUPABASE_DB_PASSWORD;
