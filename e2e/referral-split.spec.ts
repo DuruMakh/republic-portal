@@ -9,7 +9,7 @@ import {
 } from "./admin-helpers";
 import { approveOwnDelegate, seedPendingDelegate, seedRegisteredMember } from "./funnel-helpers";
 import type { DelegatePanelData } from "../lib/cabinet";
-import { clientFor, installSupabaseSession, otpSession } from "./otp-helpers";
+import { clientFor, fixtureSession, installSupabaseSession } from "./otp-helpers";
 
 // ADR-039: the referral figures split into supporters (signed up through the link,
 // membership form not finished) and members (finished it). Nothing is stored: a
@@ -102,7 +102,7 @@ test("supporters move to members, and earlier sign-ups survive delegate approval
     .eq("id", referrerId)
     .single();
   if (ownErr || !own) throw new Error(`own code lookup failed: ${ownErr?.message}`);
-  const session = await otpSession(phase4Phone(REFERRER));
+  const session = await fixtureSession(phase4Phone(REFERRER));
   const referrer = await clientFor(session);
 
   // someone signs up through the link: one supporter

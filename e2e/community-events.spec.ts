@@ -23,13 +23,13 @@ import { EVENTS_SHOWN } from "./events-switch";
 
 // Events, RSVPs and the delegate's own panel in one journey (formerly also
 // delegate-panel.spec and membership.spec's RSVP test). Every actor keeps its own
-// browser context and signs in once: editor, delegate and supporter use the SMS login;
-// the registered attendee signs in through the Google fixture (password, no SMS).
+// browser context and signs in once: editor, delegate and supporter through loginAs;
+// the registered attendee through the Google fixture. Neither sends an SMS.
 //
 // ADR-042: events are hidden unless SHOW_EVENTS=true (CI sets nothing). The delegate
-// panel is not an event feature, so its steps always run (one SMS sign-in); every event
+// panel is not an event feature, so its steps always run (one sign-in); every event
 // step -- editor, supporter RSVPs, the team-RSVP card, the registered attendee, the
-// cancellation -- runs only with the switch on (three SMS sign-ins then). The events
+// cancellation -- runs only with the switch on (three sign-ins then). The events
 // hidden group in public.spec.ts covers the hidden mode itself.
 const DELEGATE = 6; // phase4Phone(6) -- seeded delegate, service-approved
 const SUPPORTER = 7; // phase4Phone(7) -- seeded onto the delegate's team, RSVPs
@@ -72,8 +72,7 @@ test("the delegate panel shows the team; with events shown, members RSVP and can
   page,
   browser,
 }) => {
-  // up to three SMS sign-ins plus a Google-fixture registration in one test; each SMS
-  // sign-in may wait out an OTP resend (otp-helpers)
+  // up to three sign-ins plus a Google-fixture registration in one test
   test.setTimeout(300_000);
   // `page` is the supporter; every other actor gets its own context
   const editorContext = await browser.newContext();
