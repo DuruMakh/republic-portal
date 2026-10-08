@@ -1,10 +1,17 @@
 // Live probe for account deletion (plan 2026-10-08-account-deletion, Task 2). STAGING ONLY.
 // Run: node --env-file=.env.local scripts/verify-account-deletion.mjs
 //
-// Proves migration 20261009140000_account_deletion.sql against the real staging database:
-// the member / delegate / staff paths through the client RPCs, the closed doors (anon, direct
-// erase_account, non-super-admin), the audit-log lock, the audit scrub, the admin wrapper and
-// the anonymous poll vote. Everything it creates is removed again, on failure too.
+// Proves migrations 20261009140000_account_deletion.sql and
+// 20261009150000_account_deletion_hardening.sql against the real staging database: the member /
+// delegate / staff paths through the client RPCs, the closed doors (anon, direct erase_account
+// for a client and for service_role, non-super-admin), the audit-log lock, the audit scrub, the
+// admin wrapper, former staff refused with the blocking key named, votes (deleted in a running
+// poll, kept anonymously in a closed or past-deadline one), SMS send reservations kept without
+// the account, and Supabase auth's own log scrubbed. Everything it creates is removed again, on
+// failure too.
+//
+// Pass sentinels are assembled by the database at run time ('PROBE-' || 'NAME'), so an error
+// that echoes the SQL text back can never contain one and pass a check by accident.
 //
 // Anything that would leave a row behind that cannot be removed (audit_log is append-only) is
 // run inside a single `do` block that ends in a deliberate `raise exception`, so Postgres rolls
@@ -14,7 +21,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { randomBytes, randomInt } from "node:crypto";
+import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -42,6 +49,8 @@ const PNG = Buffer.from(
 const created = []; // auth user ids
 const objects = []; // storage paths
 const voteIds = []; // poll_votes.id
+const pollIds = []; // throwaway polls (their options and votes cascade)
+const reservationIds = []; // phone_verification_send_reservations.id
 let cities = null;
 
 // ---------------------------------------------------------------------------------------------
@@ -88,6 +97,27 @@ function uuid(value) {
     throw new Error("refusing to build SQL from a value that is not a UUID");
   }
   return `'${value}'::uuid`;
+}
+
+/** SQL for a pass sentinel, joined by the database: `PROBE-<name>` never appears in the text. */
+const pass = (name) => `'PROBE-' || '${name}'`;
+
+/** Runs one read-only statement and returns its rows (the CLI's JSON output). */
+function sqlRows(text) {
+  const file = join(scratch, `q-${randomBytes(6).toString("hex")}.sql`);
+  writeFileSync(file, text);
+  try {
+    const out = execFileSync(
+      process.execPath,
+      [SUPABASE_CLI, "db", "query", "-f", file, "--db-url", DB_URL, "--output-format", "json"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 32 * 1024 * 1024 },
+    );
+    return JSON.parse(out.slice(out.indexOf("{"))).rows ?? [];
+  } catch (err) {
+    throw new Error(`query failed: ${redact(err.stdout || err.stderr || err.message)}`);
+  } finally {
+    rmSync(file, { force: true });
+  }
 }
 
 function expectSql(text, token, what) {
@@ -180,6 +210,36 @@ try {
   );
   console.log("OK: delete_my_account exists and is closed to anon");
 
+  // 0b. the hardening migration is on this database too (catalog, read-only)
+  const [catalog] = sqlRows(`
+select
+  has_function_privilege('service_role', 'public.erase_account(uuid)', 'EXECUTE') as service_role_erase,
+  has_sequence_privilege('anon', 'public.poll_votes_id_seq', 'USAGE, SELECT, UPDATE') as anon_seq,
+  has_sequence_privilege('authenticated', 'public.poll_votes_id_seq', 'USAGE, SELECT, UPDATE') as authenticated_seq,
+  (select attnotnull from pg_catalog.pg_attribute
+    where attrelid = 'public.phone_verification_send_reservations'::regclass
+      and attname = 'user_id') as reservation_user_not_null,
+  (select confdeltype from pg_catalog.pg_constraint
+    where conname = 'phone_verification_send_reservations_user_id_fkey') as reservation_fk_on_delete`);
+  if (
+    catalog?.service_role_erase !== false ||
+    catalog.anon_seq !== false ||
+    catalog.authenticated_seq !== false ||
+    catalog.reservation_user_not_null !== false ||
+    catalog.reservation_fk_on_delete !== "n"
+  ) {
+    throw new Error(`hardening not in place: ${JSON.stringify(catalog)}`);
+  }
+  await expectError(
+    db.rpc("erase_account", { p_user_id: randomUUID() }),
+    "permission denied",
+    "service_role calling erase_account",
+  );
+  console.log(
+    "OK: hardening applied: erase_account closed to service_role (catalog and API), vote id " +
+      "sequence closed to anon/authenticated, SMS reservations' user_id nullable and set null",
+  );
+
   // A. wrong word refused; right word erases the member and the sign-in account
   const a = await person("member");
   await expectError(
@@ -200,6 +260,61 @@ try {
   console.log(
     "OK: wrong word refused; erase_account closed to clients; admin wrapper needs a role",
   );
+
+  // A1. former staff: an audit row with the person as actor blocks the erasure, which is refused
+  // as staff_history naming the foreign key, and nothing is half-erased. Rolled back, so the
+  // append-only audit row never persists.
+  const formerStaff = sqlError(`
+do $probe$
+declare
+  x constant uuid := ${uuid(a.id)};
+  v_msg text;
+  v_detail text;
+begin
+  insert into public.audit_log (actor_id, action, target_type) values (x, 'probe.actor', 'probe');
+  begin
+    perform public.erase_account(x);
+  exception when others then
+    get stacked diagnostics v_msg = message_text, v_detail = pg_exception_detail;
+  end;
+  if v_msg is distinct from 'staff_history' then
+    raise exception 'PROBE-ASSERT former staff: %', coalesce(v_msg, 'erased');
+  end if;
+  if v_detail is null or v_detail not like '%audit_log_actor_id_fkey%' then
+    raise exception 'PROBE-ASSERT staff_history detail: %', coalesce(v_detail, 'none');
+  end if;
+  if not exists (select 1 from public.profiles where id = x)
+     or not exists (select 1 from auth.users where id = x) then
+    raise exception 'PROBE-ASSERT a refused erasure removed the person';
+  end if;
+  raise exception '%: %', ${pass("HISTORY-OK")}, v_detail;
+end $probe$;`);
+  if (!formerStaff || !formerStaff.includes("PROBE-HISTORY-OK")) {
+    throw new Error(
+      `former staff: ${formerStaff === null ? "no error raised (not rolled back)" : formerStaff}`,
+    );
+  }
+  console.log(
+    `OK: former staff refused as staff_history, detail "${formerStaff.split("PROBE-HISTORY-OK: ")[1]}"`,
+  );
+
+  // A2. an SMS send reservation of the person, and Supabase auth's own log about them
+  const { data: reservation, error: rErr } = await db
+    .from("phone_verification_send_reservations")
+    .insert({
+      user_id: a.id,
+      phone: `+99555${randomInt(1000000, 9999999)}`,
+      idempotency_key: randomBytes(32).toString("hex"),
+    })
+    .select("id")
+    .single();
+  if (rErr) throw new Error(`reservation insert: ${rErr.message}`);
+  reservationIds.push(reservation.id);
+  const authLog = () =>
+    sqlRows(`select count(*)::int as n from auth.audit_log_entries
+              where payload ->> 'actor_id' = ${uuid(a.id)}::text`)[0]?.n;
+  const authLogBefore = authLog();
+
   const { data: memberRes, error: delErr } = await a.client.rpc("delete_my_account", {
     p_confirm: CONFIRM,
   });
@@ -208,11 +323,38 @@ try {
   if (!memberRes || memberRes.photoUrl !== null) {
     throw new Error(`member result should be { photoUrl: null }: ${JSON.stringify(memberRes)}`);
   }
-  const { data: gone } = await db.from("profiles").select("id").eq("id", a.id).maybeSingle();
+  const { data: gone, error: goneErr } = await db
+    .from("profiles")
+    .select("id")
+    .eq("id", a.id)
+    .maybeSingle();
+  if (goneErr) throw new Error(`profile read: ${goneErr.message}`);
   if (gone) throw new Error("profile survived");
   const { data: authUser } = await db.auth.admin.getUserById(a.id);
   if (authUser?.user) throw new Error("auth user survived");
   console.log("OK: member erased with the sign-in account (result { photoUrl: null })");
+
+  const { data: kept, error: keptErr } = await db
+    .from("phone_verification_send_reservations")
+    .select("id, user_id")
+    .eq("id", reservation.id)
+    .maybeSingle();
+  if (keptErr) throw new Error(`reservation read: ${keptErr.message}`);
+  if (!kept || kept.user_id !== null) {
+    throw new Error(`reservation should survive without the account: ${JSON.stringify(kept)}`);
+  }
+  console.log(
+    "OK: SMS send reservation kept after erasure, user_id null (send limits keep counting)",
+  );
+
+  const authLogAfter = authLog();
+  if (authLogAfter !== 0) throw new Error(`auth log rows of the member left: ${authLogAfter}`);
+  console.log(
+    `OK: auth log rows with the member as actor: ${authLogBefore} before, ${authLogAfter} after` +
+      (authLogBefore === 0
+        ? " (this auth server wrote none; the rolled-back check below proves the delete)"
+        : ""),
+  );
 
   // B. delegate WITH a photo erased: team member lands on central with the note
   const d = await person("delegate");
@@ -304,12 +446,57 @@ begin
   if v_row.details->>'name' is distinct from 'keep' or v_row.details ? 'erased' then
     raise exception 'PROBE-ASSERT an unrelated row was touched: %', v_row.details;
   end if;
-  raise exception 'PROBE-SCRUB-OK';
+  raise exception '%', ${pass("SCRUB-OK")};
 end $probe$;`);
   if (!scrub || !scrub.includes("PROBE-SCRUB-OK")) {
     throw new Error(`audit scrub: ${scrub === null ? "no error raised (not rolled back)" : scrub}`);
   }
   console.log("OK: audit scrub strips every personal key, marks rows erased, keeps the rest");
+
+  // B1b. Supabase auth's own log: rows with the person as actor go, other actors' rows stay.
+  // Two made-up entries, rolled back, so the check holds even when the auth server writes none.
+  const authScrub = sqlError(`
+do $probe$
+declare
+  d constant uuid := ${uuid(d.id)};
+  other constant uuid := gen_random_uuid();
+  v_can boolean := has_table_privilege(
+    (select pg_catalog.pg_get_userbyid(proowner) from pg_catalog.pg_proc
+      where oid = 'public.erase_account(uuid)'::pg_catalog.regprocedure),
+    'auth.audit_log_entries', 'DELETE');
+begin
+  insert into auth.audit_log_entries (id, payload, created_at, ip_address) values
+    (gen_random_uuid(), json_build_object('actor_id', d::text, 'action', 'login'), now(), ''),
+    (gen_random_uuid(), json_build_object('actor_id', other::text, 'action', 'login'), now(), '');
+  perform public.erase_account(d);
+  if v_can and exists (select 1 from auth.audit_log_entries where payload ->> 'actor_id' = d::text) then
+    raise exception 'PROBE-ASSERT auth log rows of the person survived';
+  end if;
+  if not v_can and not exists (select 1 from auth.audit_log_entries where payload ->> 'actor_id' = d::text) then
+    raise exception 'PROBE-ASSERT auth log rows vanished without the privilege';
+  end if;
+  if not exists (select 1 from auth.audit_log_entries where payload ->> 'actor_id' = other::text) then
+    raise exception 'PROBE-ASSERT another actor''s auth log row was deleted';
+  end if;
+  if exists (select 1 from public.profiles where id = d) then
+    raise exception 'PROBE-ASSERT the erasure did not finish';
+  end if;
+  raise exception '%', ${pass("AUTHLOG-")} || case when v_can then 'SCRUBBED' else 'NO-PRIVILEGE' end;
+end $probe$;`);
+  if (authScrub?.includes("PROBE-AUTHLOG-SCRUBBED")) {
+    console.log(
+      "OK: auth log scrub had privilege: yes (the person's rows deleted, another actor's kept)",
+    );
+  } else if (authScrub?.includes("PROBE-AUTHLOG-NO-PRIVILEGE")) {
+    console.log(
+      "OK: auth log scrub had privilege: NO (erasure still finished; the rows wait for the " +
+        "auth log's own retention)",
+    );
+  } else {
+    throw new Error(
+      `auth log scrub: ${authScrub === null ? "no error raised (not rolled back)" : authScrub}`,
+    );
+  }
 
   // B2. staff: a non-super-admin editor is refused by the wrapper
   const s = await person("staff");
@@ -375,7 +562,7 @@ begin
   if exists (select 1 from public.profiles where id = d) or exists (select 1 from auth.users where id = d) then
     raise exception 'PROBE-ASSERT the person survived';
   end if;
-  raise exception 'PROBE-ADMIN-OK';
+  raise exception '%', ${pass("ADMIN-OK")};
 end $probe$;`);
   if (!wrapper || !wrapper.includes("PROBE-ADMIN-OK")) {
     throw new Error(
@@ -461,7 +648,7 @@ begin
   exception when others then v_msg := sqlerrm;
   end;
   if v_msg is null then raise exception 'PROBE-ASSERT % inserted an audit row', '${role}'; end if;
-  raise exception 'PROBE-CLIENT-CLOSED';
+  raise exception '%', ${pass("CLIENT-CLOSED")};
 end $probe$;`);
     if (!closed || !closed.includes("PROBE-CLIENT-CLOSED")) {
       throw new Error(`audit_log open to ${role}: ${closed === null ? "no error raised" : closed}`);
@@ -482,7 +669,7 @@ begin
   ${setting ? "perform set_config('app.erasing', 'on', true);" : ""}
   ${role ? `set local role ${role};` : ""}
   ${change};
-  raise exception '${ending}';
+  raise exception '%', ${pass(ending)};
 end $probe$;`;
   const one = "where id = v_id";
   expectSql(
@@ -490,38 +677,28 @@ end $probe$;`;
       true,
       "service_role",
       `update public.audit_log set details = details ${one}`,
-      "PROBE-LOCK-OPEN",
+      "LOCK-OPEN",
     ),
     "audit_log is append-only",
     "service_role with app.erasing on",
   );
   expectSql(
-    touch(false, null, `update public.audit_log set details = details ${one}`, "PROBE-LOCK-OPEN"),
+    touch(false, null, `update public.audit_log set details = details ${one}`, "LOCK-OPEN"),
     "audit_log is append-only",
     "owner without app.erasing",
   );
   expectSql(
-    touch(
-      true,
-      null,
-      `update public.audit_log set action = action || 'x' ${one}`,
-      "PROBE-LOCK-OPEN",
-    ),
+    touch(true, null, `update public.audit_log set action = action || 'x' ${one}`, "LOCK-OPEN"),
     "audit_log is append-only",
     "owner with app.erasing changing action",
   );
   expectSql(
-    touch(true, null, `delete from public.audit_log ${one}`, "PROBE-LOCK-OPEN"),
+    touch(true, null, `delete from public.audit_log ${one}`, "LOCK-OPEN"),
     "audit_log is append-only",
     "owner with app.erasing deleting",
   );
   expectSql(
-    touch(
-      true,
-      null,
-      `update public.audit_log set details = details ${one}`,
-      "PROBE-OWNER-ALLOWED",
-    ),
+    touch(true, null, `update public.audit_log set details = details ${one}`, "OWNER-ALLOWED"),
     "PROBE-OWNER-ALLOWED",
     "control: owner with app.erasing, details only",
   );
@@ -530,67 +707,114 @@ end $probe$;`;
       "action and owner deleting refused; owner + setting + details-only allowed (control)",
   );
 
-  // F. a deleted member's vote keeps counting, anonymously (needs an open poll)
-  const { data: polls, error: pollErr } = await db
-    .from("polls")
-    .select("id, ends_at")
-    .eq("status", "open");
-  if (pollErr) throw new Error(`polls: ${pollErr.message}`);
-  const poll = (polls ?? []).find((p) => !p.ends_at || new Date(p.ends_at) > new Date());
-  if (!poll) {
-    console.log("vote check skipped: no open poll on staging");
-  } else {
-    const { data: option, error: optErr } = await db
+  // F. votes. Three throwaway polls (direct inserts, no audit row): one still running, one that
+  // closes after the votes, one whose deadline passes after the votes. The erasure deletes the
+  // running poll's vote (a re-registered person must not vote twice) and keeps the other two
+  // anonymously, so finished results never change.
+  const voter = await person("voter");
+  const reader = await person("reader");
+  async function throwawayPoll(label) {
+    const { data: poll, error } = await db
+      .from("polls")
+      .insert({
+        question: `probe: account deletion, ${label} (removed automatically)`,
+        status: "open",
+        opened_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`poll ${label}: ${error.message}`);
+    pollIds.push(poll.id);
+    const { data: options, error: oErr } = await db
       .from("poll_options")
+      .insert([
+        { poll_id: poll.id, position: 1, label: "A" },
+        { poll_id: poll.id, position: 2, label: "B" },
+      ])
+      .select("id, position");
+    if (oErr) throw new Error(`poll options ${label}: ${oErr.message}`);
+    const option = options.find((o) => o.position === 1).id;
+    for (const who of [voter, reader]) {
+      const { error: vErr } = await who.client.rpc("member_cast_vote", {
+        p_poll_id: poll.id,
+        p_option_id: option,
+      });
+      if (vErr) throw new Error(`member_cast_vote ${label}: ${vErr.message}`);
+    }
+    const { data: row, error: rowErr } = await db
+      .from("poll_votes")
       .select("id")
       .eq("poll_id", poll.id)
-      .order("position")
-      .limit(1)
+      .eq("member_id", voter.id)
       .single();
-    if (optErr) throw new Error(`poll option: ${optErr.message}`);
-    const voter = await person("voter");
-    const reader = await person("reader");
-    for (const who of [voter, reader]) {
-      const { error } = await who.client.rpc("member_cast_vote", {
-        p_poll_id: poll.id,
-        p_option_id: option.id,
-      });
-      if (error) throw new Error(`member_cast_vote: ${error.message}`);
-      const { data: row, error: rowErr } = await db
-        .from("poll_votes")
-        .select("id")
-        .eq("poll_id", poll.id)
-        .eq("member_id", who.id)
-        .single();
-      if (rowErr) throw new Error(`vote row: ${rowErr.message}`);
-      voteIds.push(row.id);
-    }
-    await expectError(
-      voter.client.rpc("member_cast_vote", { p_poll_id: poll.id, p_option_id: option.id }),
-      "already_voted",
-      "second vote",
+    if (rowErr) throw new Error(`vote row ${label}: ${rowErr.message}`);
+    voteIds.push(row.id);
+    return { label, id: poll.id, option, voteId: row.id };
+  }
+  const running = await throwawayPoll("running");
+  const closed = await throwawayPoll("closed");
+  const pastDeadline = await throwawayPoll("past deadline");
+  await expectError(
+    voter.client.rpc("member_cast_vote", { p_poll_id: running.id, p_option_id: running.option }),
+    "already_voted",
+    "second vote",
+  );
+  const { error: closeErr } = await db
+    .from("polls")
+    .update({ status: "closed", closed_at: new Date().toISOString() })
+    .eq("id", closed.id);
+  if (closeErr) throw new Error(`close poll: ${closeErr.message}`);
+  const { error: deadlineErr } = await db
+    .from("polls")
+    .update({ ends_at: new Date(Date.now() - 60 * 1000).toISOString() })
+    .eq("id", pastDeadline.id);
+  if (deadlineErr) throw new Error(`past deadline: ${deadlineErr.message}`);
+
+  const before = {};
+  for (const p of [running, closed, pastDeadline]) {
+    const table = await voteCount(p.id, p.option);
+    const view = await viewVotes(reader.client, p.id, p.option);
+    if (table !== 2 || view !== 2)
+      throw new Error(`${p.label} before: table ${table}, view ${view}`);
+    before[p.label] = table;
+  }
+  const { error: voterErr } = await voter.client.rpc("delete_my_account", { p_confirm: CONFIRM });
+  if (voterErr) throw new Error(`voter delete: ${voterErr.message}`);
+
+  const { data: runningRow, error: runningErr } = await db
+    .from("poll_votes")
+    .select("id")
+    .eq("id", running.voteId)
+    .maybeSingle();
+  if (runningErr) throw new Error(`running vote row: ${runningErr.message}`);
+  const runningTable = await voteCount(running.id, running.option);
+  const runningView = await viewVotes(reader.client, running.id, running.option);
+  if (runningRow || runningTable !== 1 || runningView !== 1) {
+    throw new Error(
+      `running poll vote should be gone: row ${runningRow ? "kept" : "gone"}, ` +
+        `table 2->${runningTable}, view 2->${runningView}`,
     );
-    const before = await voteCount(poll.id, option.id);
-    const viewBefore = await viewVotes(reader.client, poll.id, option.id);
-    if (viewBefore !== before) throw new Error(`view ${viewBefore} vs table ${before} before`);
-    const { error: voterErr } = await voter.client.rpc("delete_my_account", { p_confirm: CONFIRM });
-    if (voterErr) throw new Error(`voter delete: ${voterErr.message}`);
-    const after = await voteCount(poll.id, option.id);
-    const viewAfter = await viewVotes(reader.client, poll.id, option.id);
+  }
+  console.log("OK: vote in a running poll deleted with its member (table and results view 2 -> 1)");
+  for (const p of [closed, pastDeadline]) {
     const { data: orphan, error: orphanErr } = await db
       .from("poll_votes")
       .select("id, member_id")
-      .eq("id", voteIds[voteIds.length - 2])
+      .eq("id", p.voteId)
       .single();
-    if (orphanErr) throw new Error(`orphan vote row: ${orphanErr.message}`);
-    if (after !== before || viewAfter !== before || orphan.member_id !== null) {
+    if (orphanErr) throw new Error(`${p.label} vote row: ${orphanErr.message}`);
+    const table = await voteCount(p.id, p.option);
+    const view = await viewVotes(reader.client, p.id, p.option);
+    if (orphan.member_id !== null || table !== before[p.label] || view !== before[p.label]) {
       throw new Error(
-        `vote not kept anonymously: table ${before}->${after}, view ${viewBefore}->${viewAfter}, ` +
-          `member_id ${orphan.member_id}`,
+        `${p.label} poll vote not kept anonymously: table ${before[p.label]}->${table}, ` +
+          `view ${before[p.label]}->${view}, member_id ${orphan.member_id}`,
       );
     }
     console.log(
-      `OK: vote kept after its member was erased (table and results view ${before} -> ${after}, member_id null)`,
+      `OK: vote in a ${p.label} poll kept anonymously (table and results view ` +
+        `${before[p.label]} -> ${table}, member_id null)`,
     );
   }
 } catch (err) {
@@ -606,8 +830,15 @@ end $probe$;`;
       console.error(`cleanup ${what}: ${err instanceof Error ? err.message : err}`);
     }
   };
+  // the throwaway polls take their options and every vote on them along (cascade)
+  if (pollIds.length) await step("polls", () => db.from("polls").delete().in("id", pollIds));
   if (voteIds.length)
     await step("poll_votes", () => db.from("poll_votes").delete().in("id", voteIds));
+  if (reservationIds.length) {
+    await step("sms reservations", () =>
+      db.from("phone_verification_send_reservations").delete().in("id", reservationIds),
+    );
+  }
   if (objects.length) await step("photo", () => db.storage.from(BUCKET).remove(objects));
   if (created.length) {
     await step("memberships (member)", () =>
@@ -650,12 +881,18 @@ end $probe$;`;
       if (data?.user) left.push(`auth user ${id}`);
     }
   }
-  if (voteIds.length) {
-    const { count } = await db
-      .from("poll_votes")
+  for (const [table, ids] of [
+    ["poll_votes", voteIds],
+    ["polls", pollIds],
+    ["phone_verification_send_reservations", reservationIds],
+  ]) {
+    if (!ids.length) continue;
+    const { count, error } = await db
+      .from(table)
       .select("id", { count: "exact", head: true })
-      .in("id", voteIds);
-    if (count) left.push(`poll_votes: ${count}`);
+      .in("id", ids);
+    if (error) left.push(`${table}: ${error.message}`);
+    else if (count) left.push(`${table}: ${count}`);
   }
   if (left.length) {
     failed = true;
