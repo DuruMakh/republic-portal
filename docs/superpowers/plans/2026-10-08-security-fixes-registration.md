@@ -310,7 +310,7 @@ describe("saveMembershipProfileAction", () => {
     });
   });
 
-  it("explains the daily cap on personal-ID tries", async () => {
+  it("explains the cap on personal-ID tries and points to support", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { message: "personal_id_attempts_exceeded" } });
     await expect(saveMembershipProfileAction(input)).resolves.toEqual({
       ok: false,
@@ -332,16 +332,18 @@ describe("saveMembershipProfileAction", () => {
 Run: `npx vitest run "app/(member)/me/membership/actions.test.ts"`
 Expected: FAIL:
 - "RETURNED duplicate" resolves `{ ok: true, ... }`;
-- "daily cap" maps to the generic error and `ERROR_MESSAGES[...]` is undefined.
+- "cap on personal-ID tries" maps to the generic error and `ERROR_MESSAGES[...]` is undefined.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `lib/funnel.ts`, directly after the `duplicate_personal_id` entry:
 
 ```ts
-  // Security audit H1 (2026-10-08): three personal-ID conflicts in 24 h pause the step.
+  // Security audit H1 (2026-10-08), decision D2: after three personal-ID conflicts the account
+  // stops here for good; a real person only gets here when their ID is already taken, which
+  // needs a human, so the message points to support instead of "try later".
   personal_id_attempts_exceeded:
-    "ძალიან ბევრი მცდელობა — სცადე 24 საათის შემდეგ ან მოგვწერე მხარდაჭერის გვერდიდან.",
+    "ამ პირადი ნომრით გაგრძელება ვერ ხერხდება — მოგვწერე მხარდაჭერის გვერდიდან და დაგეხმარებით.",
 ```
 
 `app/(member)/me/membership/actions.ts`:
@@ -922,7 +924,8 @@ git commit -m "Mark superseded phone challenges explicitly and revoke legacy reg
   - R1's returned-refusal contract and the `personal_id_attempts_exceeded` token (Task 3).
 - Produces:
   - `become_member_save_profile` returns `{"error":"duplicate_personal_id"}` on a conflict;
-  - it raises `personal_id_attempts_exceeded` after 3 conflicts in 24 h;
+  - it raises `personal_id_attempts_exceeded` once the account has 3 conflicts in total (no time
+    window, decision D2);
   - it writes audit action `member.personal_id_conflict` (`actor_id` null,
     `target_type 'profile'`, `target_id` = the caller's id).
 
@@ -942,11 +945,12 @@ describe("personal-ID conflicts at the membership step (security audit H1)", () 
     );
   });
 
-  it("caps conflicts at three a day per account, counted from the audit log", () => {
+  it("caps conflicts at three per account for good, counted from the audit log (D2)", () => {
     const b = body();
     expect(b).toContain("action = 'member.personal_id_conflict'");
     expect(b).toContain("target_id = v_uid::text");
-    expect(b).toContain("interval '24 hours'");
+    // no daily reset: a time window would let a patient prober keep asking
+    expect(b).not.toContain("interval '24 hours'");
     expect(b).toMatch(/v_conflicts >= 3 then\s+raise exception 'personal_id_attempts_exceeded'/);
   });
 
@@ -980,7 +984,9 @@ Run: `npx vitest run lib/security/registration-hardening.test.ts lib/admin.test.
 -- Now:
 --   (a) every non-ID validation, delegate included, runs first;
 --   (b) a conflict is RETURNED as {"error": "duplicate_personal_id"}, so its audit row commits;
---   (c) three conflicts in 24 hours pause the step for that account.
+--   (c) three conflicts stop the step for that account for good (decision D2: no daily reset,
+--       because a reset lets a patient prober keep asking; a real person only conflicts when
+--       their ID is already taken, which needs support anyway).
 -- The audit row's actor_id stays NULL on purpose: audit_log.actor_id is a plain FK to profiles,
 -- and a non-null actor would make the account undeletable. The tried ID is never stored.
 -- Body restated from 20260728100000_personal_id_at_membership.sql; only the marked parts change.
@@ -1041,12 +1047,11 @@ begin
     if p_personal_id is null or p_personal_id !~ '^\d{11}$' then
       raise exception 'invalid_personal_id';
     end if;
-    -- H1 (c): three conflicts in 24 hours pause this step for the account.
+    -- H1 (c): three conflicts, ever, stop this step for the account (decision D2).
     select count(*) into v_conflicts
       from public.audit_log a
      where a.action = 'member.personal_id_conflict'
-       and a.target_id = v_uid::text
-       and a.created_at > now() - interval '24 hours';
+       and a.target_id = v_uid::text;
     if v_conflicts >= 3 then
       raise exception 'personal_id_attempts_exceeded';
     end if;
@@ -1200,8 +1205,8 @@ Then:
 Plain language:
 - "The old back-door registration is switched off."
 - "A cancelled SMS code can never be reused."
-- "Someone checking personal IDs gets 3 tries a day, and each try shows in the admin log as
-  'პირადი ნომრის დამთხვევა'."
+- "Someone checking personal IDs gets 3 tries per account, in total; each try shows in the admin
+  log as 'პირადი ნომრის დამთხვევა', and after the third the person is sent to the support page."
 - "Real people see no change."
 
 Then: preview URL, the e2e duplicate-ID journey passing, and a screenshot of the duplicate message.

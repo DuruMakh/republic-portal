@@ -1,6 +1,7 @@
 # Security audit fixes — design
 
-**Date:** 2026-10-08 · **Status:** draft for owner sign-off · **Source:** the static security audit of
+**Date:** 2026-10-08 · **Status:** decisions D1–D5 made (the owner delegated them to the agent,
+2026-10-08: "made desitions best suitable in your opininon") · **Source:** the static security audit of
 8 October 2026 (main @ 98923ca) and its same-day re-verification. The full audit report is kept outside
 the repository; this document carries everything an implementer needs.
 
@@ -14,8 +15,8 @@ releases, most urgent first:
    sites.
 2. **Release 2, the database half.** The old back-door registration function is switched off. The
    "cancelled code" trick is made impossible at the root. The unlimited "is this personal ID a
-   member?" check gets a limit of 3 tries a day, and each try shows up in the admin audit log. The
-   production database also gets these changes, after your yes on the dry run.
+   member?" check gets a limit of 3 tries per account, in total, and each try shows up in the admin
+   audit log. The production database also gets these changes, after your yes on the dry run.
 3. **Release 3, the website framework upgrade** (Next.js 16.3.8). It can run in parallel with
    release 1.
 4. **Release 4, before-launch hardening:**
@@ -24,10 +25,10 @@ releases, most urgent first:
    - the test-data script can only ever touch the test database;
    - approved delegates can no longer rename themselves; admins correct names instead.
 5. **Release 5, SMS abuse limits.** Nobody can block a chosen person from joining or spam them with
-   codes. This one needs your numbers (section 7, D4).
+   codes (section 7, D4).
 
-Plus one GitHub setting that takes a minute, with your yes: the production-database password can only
-be used by the main code line.
+Plus one GitHub setting: the production-database password can only be used by the main code line
+(D1, applied 2026-10-08).
 
 Not in this plan, unchanged by owner decision:
 - personal-ID squatting (LB-1, deferred);
@@ -93,9 +94,10 @@ Migration 2, `<ts+1>_membership_personal_id_probe_cap.sql`:
 - `become_member_save_profile` is restated from the live body (`20260728100000`) with these changes:
   - order: auth, profile state, birth date, employment, city, **delegate resolution**, then the
     personal-ID block;
-  - in the personal-ID block, before the duplicate check: count `audit_log` rows with
-    `action = 'member.personal_id_conflict' and target_id = v_uid::text` in the last 24 h. At 3 or
-    more, `raise exception 'personal_id_attempts_exceeded'`;
+  - in the personal-ID block, before the duplicate check: count **all** `audit_log` rows with
+    `action = 'member.personal_id_conflict' and target_id = v_uid::text`, with no time window (D2).
+    At 3 or more, `raise exception 'personal_id_attempts_exceeded'`, and the message sends the
+    person to the support page;
   - on a duplicate (pre-check or the unique-violation race), insert an audit row and **return**
     `jsonb_build_object('error', 'duplicate_personal_id')` instead of raising, so the row commits;
   - the audit row is `(actor_id null, action 'member.personal_id_conflict', target_type 'profile',
@@ -136,7 +138,8 @@ Workflow and checks, in the same PR:
   - used by both upload actions before `storage.upload`;
   - `sharp` moves from devDependencies to dependencies at `^0.35.5`, which also clears its advisories.
 - **M3.** `lib/sw-routes.ts` → `isNeverCached(url, sameOrigin)`:
-  - true for the protected same-origin prefixes and for any `*.supabase.co` host;
+  - true for every cross-origin request (in practice Supabase auth, data and storage) and for the
+    protected same-origin prefixes;
   - `app/sw.ts` uses it for its NetworkOnly rule;
   - sign-out deletes every runtime cache whose name does not contain `precache`.
 - **M6.** `scripts/staging-guard.mjs` → `assertStagingTarget(url)`:
@@ -153,7 +156,7 @@ Workflow and checks, in the same PR:
   - Unpublishing an approved delegate stays out of scope. It touches memberships and referral codes
     and needs its own design.
 
-## 6. Release 5 — SMS abuse limits (numbers are owner decision D4)
+## 6. Release 5 — SMS abuse limits (numbers decided in D4)
 
 - A send never cancels another account's live code: supersede scope becomes `user_id = p_user_id`
   only.
@@ -163,19 +166,50 @@ Workflow and checks, in the same PR:
   - at most 10 per day across all accounts, **except** that an account which has not yet asked for
     this number today always gets its first code. Nobody can lock a person out; spam costs one fresh
     Google account per extra SMS.
-- Site-wide: 300 sends per hour. Above that, sends answer "too many requests". There is no alert,
+- Site-wide: 1,000 sends per hour. Above that, sends answer "too many requests". There is no alert,
   because no mail is provisioned.
 - No new "is this number a member?" signal: sends behave the same for member and non-member numbers.
 
-## 7. Owner decisions
+## 7. Decisions (made by the agent on the owner's delegation, 2026-10-08)
 
-| # | Decision | Proposed |
-|---|---|---|
-| D1 | GitHub `production-db` environment usable from `main` only | Yes. No required-approval click, because the owner only chats. |
-| D2 | Personal-ID tries before a 24 h pause | 3 |
-| D3 | Approved delegates' names: who changes them | Admins (super_admin, verifier) only, recorded in the audit log |
-| D4 | SMS numbers in section 6 | As written |
-| D5 | Order with privacy-consent step 2 | See section 8 |
+**D1 — GitHub `production-db` environment: `main` only. Yes, applied 2026-10-08.**
+- Deployment branch policy: custom, one rule `main`.
+- No required reviewers. The owner only chats, so an approval click in GitHub would either never
+  happen or be clicked by the agent, which protects nothing.
+- What the setting does buy: a branch other than `main`, for example one pushed by a tricked coding
+  agent, can no longer read the production database password or the Supabase access token.
+- Actions pinned to commit SHAs ship in R2.
+
+**D2 — personal-ID conflicts: 3 per account, in total, with no daily reset.**
+- The threat model ranks confirming a named person's membership near the top. A daily allowance
+  lets a patient prober keep asking, at 3 answers a day per account, indefinitely.
+- A real person only hits a conflict when their ID is already taken (LB-1 squatting). That needs a
+  human to resolve it, so the third conflict sends them to the support page instead of "try again
+  tomorrow".
+- Admins have no reset tool yet. That is acceptable for the same reason.
+
+**D3 — approved delegates' names change only through super_admin or verifier, audited.**
+- A delegate who needs a correction writes through the support page.
+- Unpublishing a delegate stays out of scope.
+
+**D4 — SMS limits as in section 6, with the site-wide ceiling raised from 300 to 1,000 an hour.**
+- 300 an hour could turn real people away during a sign-up surge, such as a launch day or a
+  televised moment, which is the worst time to fail.
+- The per-account and per-number limits already bound abuse. The site-wide ceiling is only a
+  backstop for the SMS bill.
+- The automated tests are unaffected: each registration journey uses a fresh account and sends one
+  code, so the "first code today" exception always applies.
+
+**D5 — order of releases.**
+1. R1 (critical fix) first, at once.
+2. R3 (Next.js) alongside it, pushed after R1 so the two builds don't land at once.
+3. R2 next, **without waiting** for privacy step 2. Security fixes outrank it, and adapting step 2
+   afterwards is small: rename its migration file and replace its re-grant with the revoke. R2's
+   static test enforces this.
+4. Privacy step 1 (`20261008140000`, additive, accepts a missing consent version) goes live in
+   production together with R2's apply. Its own apply had been waiting for a go, and this decision
+   gives it.
+5. Then R4, then R5. Both before launch.
 
 ## 8. Sequencing and constraints
 

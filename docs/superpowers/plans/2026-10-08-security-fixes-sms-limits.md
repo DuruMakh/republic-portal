@@ -40,7 +40,7 @@ the constants in Task 1 and the matching test expectations.
 | per account: different numbers per day | 3 |
 | per number: gap across all accounts | 60 s |
 | per number: per day across all accounts | 10, except an account's first send to that number today |
-| site-wide per hour | 300 |
+| site-wide per hour | 1,000 (raised from 300 so a real sign-up surge is never turned away) |
 
 ---
 
@@ -88,7 +88,7 @@ describe("SMS send limits (security audit M1)", () => {
   });
 
   it("caps the whole site per hour", () => {
-    expect(reserve()).toContain("v_site_hour >= 300");
+    expect(reserve()).toContain("v_site_hour >= 1000");
     expect(orderedMigrationSql()).toMatch(
       /create index phone_verification_send_by_created\s+on public\.phone_verification_send_reservations \(created_at\)/,
     );
@@ -119,7 +119,7 @@ Run: `npx vitest run lib/security/sms-limits.test.ts`
 --   per account: 1 per 60 s, 5 per hour, 10 per day, at most 3 different numbers per day;
 --   per number:  1 per 60 s across accounts, 10 per day across accounts — except that an account
 --                that has not asked for this number today always gets its first code (no lockout);
---   site-wide:   300 per hour.
+--   site-wide:   1,000 per hour (a backstop for the SMS bill, high enough for a sign-up surge).
 -- No rule looks at whether a profile owns the number (no membership signal).
 
 create index phone_verification_send_by_created
@@ -170,7 +170,7 @@ begin
   select pg_catalog.count(*) into v_site_hour
     from public.phone_verification_send_reservations
    where created_at >= v_now - interval '1 hour';
-  if v_site_hour >= 300 then
+  if v_site_hour >= 1000 then
     return pg_catalog.jsonb_build_object('status', 'limited');
   end if;
 
