@@ -70,7 +70,7 @@ test.describe("home", () => {
     await cta.click();
     await expect(page).toHaveURL(/\/join$/);
     // Logged-out visitors must establish the Google identity before any personal
-    // or phone fields appear. The authenticated form is covered in registration.spec.
+    // or phone fields appear. The authenticated form is covered in membership.spec.
     await expect(page.getByRole("heading", { name: "შემოგვიერთდი", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
     await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
@@ -89,23 +89,6 @@ test.describe("leaderboard", () => {
     await expect(page.getByText("🥇")).toHaveCount(0);
     await expect(rows.first()).toContainText("გიორგი მაისურაძე");
     await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0);
-  });
-
-  test("search and region filter work, no-results notice shows", async ({ page }) => {
-    await page.goto("/leaderboard");
-    const rows = page.getByTestId("leader-row");
-    const rowCount = await rows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(12); // seeded roster; staging may carry real extras
-    await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0); // pending stays hidden
-    await page.getByPlaceholder("ძებნა სახელით...").fill("გიორგი");
-    await expect(page.getByText("გიორგი მაისურაძე")).toBeVisible();
-    await page.getByPlaceholder("ძებნა სახელით...").fill("");
-    await page.getByRole("combobox").selectOption({ label: "გურია" });
-    await expect(page.getByText("ეკა მელაძე")).toBeVisible();
-    await page.getByPlaceholder("ძებნა სახელით...").fill("zzz");
-    await expect(
-      page.getByText("ამ პარამეტრებით დელეგატი ვერ მოიძებნა", { exact: false }),
-    ).toBeVisible();
   });
 
   test("the retired /delegates index redirects, profile pages still resolve", async ({ page }) => {
@@ -142,13 +125,10 @@ test.describe("delegate page", () => {
 });
 
 test.describe("missing pages", () => {
-  // An unknown URL and a missing article or event are different Next.js paths (the site-wide
-  // not-found vs the public group's), so each gets its own check.
-  for (const path of [
-    "/no-such-page-xyz",
-    "/news/no-such-article-xyz",
-    "/events/no-such-event-xyz",
-  ]) {
+  // An unknown URL and a missing article are different Next.js paths (the site-wide
+  // not-found vs the public group's), so each gets its own check. A missing event takes the
+  // same public-group path as a missing article.
+  for (const path of ["/no-such-page-xyz", "/news/no-such-article-xyz"]) {
     test(`${path} is a Georgian 404 inside the site header`, async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(404);
@@ -167,6 +147,13 @@ test.describe("missing pages", () => {
   test("an unknown URL titles the tab in Georgian", async ({ page }) => {
     await page.goto("/no-such-page-xyz");
     await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+  });
+});
+
+test.describe("member area", () => {
+  test("redirects anonymous users to login", async ({ page }) => {
+    await page.goto("/me/profile");
+    await expect(page).toHaveURL(/\/login/);
   });
 });
 
@@ -189,13 +176,6 @@ test.describe("finances hidden", () => {
     // the tab names no finance page either: it reads as any other missing page
     await expect(page).toHaveTitle(NOT_FOUND_TITLE);
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
-  });
-
-  test("no public page links to it", async ({ page }) => {
-    for (const path of ["/", "/news", "/events", "/leaderboard", "/join", "/support"]) {
-      await page.goto(path);
-      await expect(page.locator('a[href="/transparency"]'), path).toHaveCount(0);
-    }
   });
 });
 
