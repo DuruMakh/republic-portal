@@ -85,7 +85,9 @@ describe("phone verification server actions", () => {
 
   it("rejects missing or non-Google sessions before privileged dependencies", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
+    await expect(
+      sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true }),
+    ).resolves.toMatchObject({
       ok: false,
       code: "not_authenticated",
     });
@@ -93,16 +95,33 @@ describe("phone verification server actions", () => {
     vi.clearAllMocks();
     authenticate(["email"]);
     mocks.createServerSupabase.mockResolvedValue({ auth: { getUser: mocks.getUser } });
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toMatchObject({
+    await expect(
+      sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true }),
+    ).resolves.toMatchObject({
       ok: false,
       code: "google_required",
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
+  it("refuses an unconsented send before any privileged work or SMS", async () => {
+    authenticate();
+    for (const input of [{ phone: "555123456" }, { phone: "555123456", privacyConsent: false }]) {
+      await expect(sendPhoneVerificationAction(input)).resolves.toEqual({
+        ok: false,
+        code: "privacy_consent_required",
+        message: PHONE_VERIFICATION_MESSAGES.privacy_consent_required,
+      });
+    }
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+
   it("rejects malformed phone input before privileged work", async () => {
     authenticate();
-    await expect(sendPhoneVerificationAction({ phone: "bad" })).resolves.toEqual({
+    await expect(
+      sendPhoneVerificationAction({ phone: "bad", privacyConsent: true }),
+    ).resolves.toEqual({
       ok: false,
       code: "invalid_phone",
       message: PHONE_VERIFICATION_MESSAGES.invalid_phone,
@@ -112,7 +131,9 @@ describe("phone verification server actions", () => {
 
   it("atomically reserves the send before provider work and completes one canonical challenge", async () => {
     authenticate();
-    await expect(sendPhoneVerificationAction({ phone: "555 12 34 56" })).resolves.toEqual({
+    await expect(
+      sendPhoneVerificationAction({ phone: "555 12 34 56", privacyConsent: true }),
+    ).resolves.toEqual({
       ok: true,
       challengeId,
       phone,
@@ -138,7 +159,9 @@ describe("phone verification server actions", () => {
   it("returns the atomic send limit without constructing or calling the provider", async () => {
     authenticate();
     mocks.reserveSend.mockResolvedValue(null);
-    await expect(sendPhoneVerificationAction({ phone: "555123456" })).resolves.toEqual({
+    await expect(
+      sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true }),
+    ).resolves.toEqual({
       ok: false,
       code: "too_many_requests",
       message: PHONE_VERIFICATION_MESSAGES.too_many_requests,
@@ -156,7 +179,7 @@ describe("phone verification server actions", () => {
       });
       const result =
         action === "send"
-          ? await sendPhoneVerificationAction({ phone: "555123456" })
+          ? await sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true })
           : await verifyPhoneVerificationAction({ challengeId, code: "123456" });
       expect(result).toEqual({
         ok: false,
@@ -282,7 +305,7 @@ describe("phone verification server actions", () => {
     [
       "provider send",
       () => mocks.send.mockRejectedValue(new Error("secret provider details")),
-      () => sendPhoneVerificationAction({ phone: "555123456" }),
+      () => sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true }),
     ],
     [
       "provider verify",
@@ -296,7 +319,7 @@ describe("phone verification server actions", () => {
         mocks.createProvider.mockImplementation(() => {
           throw new Error("missing secret");
         }),
-      () => sendPhoneVerificationAction({ phone: "555123456" }),
+      () => sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true }),
     ],
   ])("redacts a %s failure", async (_name, arrange, act) => {
     authenticate();

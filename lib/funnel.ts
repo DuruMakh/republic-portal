@@ -1,3 +1,5 @@
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
+
 /** Membership is a fixed monthly fee (owner fix #9) — the 5/10/20 choice is retired. */
 export const MEMBERSHIP_FEE_GEL = 10;
 export type Tier = typeof MEMBERSHIP_FEE_GEL;
@@ -141,6 +143,7 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   not_a_member: "ეს მოქმედება მხოლოდ წევრებისთვისაა.",
   not_a_delegate: "დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.",
   invalid_role: "დაფიქსირდა შეცდომა — სცადე თავიდან.",
+  privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
   invalid_name: "შეავსე სახელი და გვარი.",
   // Phase 4 admin tokens (spec §5)
   missing_role: "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",

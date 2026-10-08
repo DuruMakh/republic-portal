@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { FUNNEL_CODE_ALPHABET, MEMBERSHIP_FEE_GEL } from "../lib/funnel";
 import {
   assertE2ePhones,
@@ -26,7 +26,7 @@ const BASE = LOGIN_PHONE.slice(0, 8);
 // cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
-  regHappy: 0, // unused since registration.spec folded into membership.spec (still swept)
+  regHappy: 0, // membership.spec: privacy consent refusal (no account is created)
   membFull: 1, // membership.spec: full upgrade
   // review fix (owner fix #10 wave 1): the duplicate-ID check moved from /join to
   // the wizard, so this slot no longer seeds a REGISTRANT attempting a dup'd ID —
@@ -61,7 +61,7 @@ function googleFixtureEmail(phoneSlot: string): string {
 export async function createGoogleBackedTestUser(
   page: Page,
   phoneSlot: string,
-): Promise<{ id: string }> {
+): Promise<{ id: string; session: Session }> {
   assertE2eFixtureEnvironment();
   const email = googleFixtureEmail(phoneSlot);
   const password = `E2e-${randomBytes(24).toString("hex")}!Aa1`;
@@ -86,7 +86,7 @@ export async function createGoogleBackedTestUser(
     const { data, error } = await anon.auth.signInWithPassword({ email, password });
     if (error || !data.session) throw new Error("Google e2e fixture sign-in failed");
     await installSupabaseSession(page, data.session);
-    return { id: created.user.id };
+    return { id: created.user.id, session: data.session };
   } catch (error) {
     const { error: cleanupError } = await admin.auth.admin.deleteUser(created.user.id);
     if (cleanupError) {
@@ -178,6 +178,7 @@ export async function passRegistration(
   await page.getByLabel("სახელი").fill(opts.firstName);
   await page.getByLabel("გვარი").fill(opts.lastName);
   await page.getByLabel("ტელეფონის ნომერი").fill(opts.phone);
+  await page.getByRole("checkbox", { name: /^ვადასტურებ, რომ 18 წლის ან უფროსი ვარ/ }).check();
   await page.getByRole("button", { name: "კოდის მიღება" }).click();
   await expect(page.getByTestId("otp-0")).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("otp-0").fill("123456");

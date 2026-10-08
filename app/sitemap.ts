@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/structure`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/join`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/join/terms`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${base}/privacy`, changeFrequency: "monthly", priority: 0.3 },
     ...delegates.map((d) => ({
       url: `${base}/delegates/${d.slug}`,
       changeFrequency: "daily" as const,

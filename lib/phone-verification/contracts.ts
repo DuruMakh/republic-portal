@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "../privacy";
 
 export const PHONE_VERIFICATION_TTL_SECONDS = 300;
 export const PHONE_VERIFICATION_CODE_LENGTH = 6;
@@ -15,7 +16,8 @@ export type PhoneVerificationFailureCode =
   | "invalid_code"
   | "expired_code"
   | "phone_in_use"
-  | "service_unavailable";
+  | "service_unavailable"
+  | "privacy_consent_required";
 
 export const PHONE_VERIFICATION_MESSAGES = {
   not_authenticated: "სესია ამოიწურა — შედი Google-ით თავიდან.",
@@ -26,6 +28,7 @@ export const PHONE_VERIFICATION_MESSAGES = {
   expired_code: "კოდის მოქმედების დრო ამოიწურა — მოითხოვე ახალი.",
   phone_in_use: "ეს ნომერი უკვე გამოყენებულია სხვა ანგარიშზე.",
   service_unavailable: "კოდის სერვისი დროებით მიუწვდომელია — სცადე თავიდან.",
+  privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
 } satisfies Record<PhoneVerificationFailureCode, string>;
 
 export type PhoneVerificationFailure = {

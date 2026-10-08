@@ -1164,3 +1164,40 @@ variable, nothing visible changes except the tab title.
   the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
+
+## ADR-041 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
+
+- **What.** One required box on registration (18+ and personal-data processing, one sentence),
+  linking a new `/privacy` page; a one-line notice under the Google button. Spec:
+  `docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md`.
+- **Why.** Georgian Law No. 3144 (2023) treats political opinions as special-category data,
+  needing written consent (an electronic tick counts), separate from other terms. Registering
+  with the movement reveals support for it. The Art. 6(k) exception for political associations
+  does not apply: the movement is not registered.
+- **Enforcement.** `register()` (reached by both sign-up routes) refuses a missing or stale
+  `p_privacy_version` with `privacy_consent_required` and stamps `profiles.privacy_accepted_at` /
+  `privacy_version`; both columns are server-managed. The SMS send action refuses without the
+  tick, so no number goes to the provider unconsented. The version lives in `lib/privacy.ts`
+  and the migration; `lib/privacy.test.ts` keeps them equal.
+- **Two-step release.** `20261008140000` (accepts an optional version) shipped and was applied
+  first; `20261008150000` (refuses a missing one) ships with the code. Merging to `main`
+  deploys before the production migration can run, so the database had to accept both shapes
+  first. Step 2 reaches **staging** only after the code PR merges too: every PR's CI runs e2e
+  against staging, and an open PR built on older `main` sends no version.
+- **Owner decisions.** Controller named only as the movement; recipients by category, no
+  company names; minimum age 18; no political-views explainer section; the two founders'
+  accounts keep empty consent fields (no hand edits).
+- **Policy text corrected before release (2026-10-08 launch audit).** The first draft never
+  named the personal ID number, said data leaves Georgia only for the EU, and gave no way to
+  reach the movement. The released text names the ID number and the Google profile data,
+  says the database is in the EU while some providers (Google sign-in, hosting) also process
+  data in the US, lists technical logs, says a delegate's ranking is public, and points
+  questions and data requests to the contact page with a 10-working-day answer. Version stays
+  `2026-10-v1`: nobody had accepted the earlier wording on the real site.
+- **No draft banner (owner, 2026-10-08).** The policy page no longer carries the "working
+  draft, subject to legal review" banner; the delegate rules keep theirs.
+- **Deferred.** Self-service account deletion is the next feature (owner, 2026-10-08), and the
+  rights section will mention it once it ships; general rules of use; re-consent on a new
+  policy version; consent date in the admin panel; legal review of the copy.
+- **Numbering.** Reserved as 041 while 038-040 were claimed by parallel PRs the same day; it
+  sits after 042, 043 and 044 here because it merged later.

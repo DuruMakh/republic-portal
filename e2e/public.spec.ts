@@ -418,3 +418,12 @@ test.describe("not-found titles after the 60-second refresh", () => {
     await visitAll();
   });
 });
+
+test("the privacy policy is public and linked from the footer", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "კონფიდენციალურობა" }).click();
+  await expect(page).toHaveURL(/\/privacy$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "კონფიდენციალურობის პოლიტიკა" }),
+  ).toBeVisible();
+});
