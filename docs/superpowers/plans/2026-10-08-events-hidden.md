@@ -3,7 +3,7 @@
 Owner direction, in chat on 2026-10-08: remove ღონისძიებები from everything. Asked to choose
 between hiding (one switch, nothing deleted) and deleting for good (code, tables, data), the
 owner chose **hide**, the same shape as ADR-034 (finances) and ADR-037 (dues). Recorded as
-ADR-038. No migration: the events tables, views and RPCs stay as they are.
+ADR-042. No migration: the events tables, views and RPCs stay as they are.
 
 ## Decisions
 
@@ -37,4 +37,4 @@ ADR-038. No migration: the events tables, views and RPCs stay as they are.
 5. Delegate panel card; admin content nav, pages, actions, roles page duty line; tests.
 6. e2e: `community-events.spec.ts` runs only with the switch on; hidden-mode checks in
    `public.spec.ts`; registration nav labels. `.env.example` documents `SHOW_EVENTS`.
-7. All five gates + ka gates, ADR-038, PR with preview evidence for owner sign-off.
+7. All five gates + ka gates, ADR-042, PR with preview evidence for owner sign-off.

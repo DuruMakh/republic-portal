@@ -24,7 +24,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("/events while events are hidden (the default, ADR-038)", () => {
+describe("/events while events are hidden (the default, ADR-042)", () => {
   it("answers not-found and never reads the events", async () => {
     await expect(EventsPage()).rejects.toThrow("NEXT_NOT_FOUND");
     expect(data.fetchPublicEvents).not.toHaveBeenCalled();

@@ -49,7 +49,7 @@ describe("cabinet invitation to membership", () => {
   });
 });
 
-describe("cabinet overview cards (ADR-038)", () => {
+describe("cabinet overview cards (ADR-042)", () => {
   it("shows the news card but no events card while events are hidden", async () => {
     render(await CabinetOverviewPage());
 

@@ -13,7 +13,7 @@ import { EventRsvp } from "./EventRsvp";
 export const metadata: Metadata = { title: "ღონისძიებები — ქართული რესპუბლიკა" };
 
 export default async function MemberEventsPage() {
-  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  // Events hidden (the default, ADR-042): the page does not exist, even by its address.
   if (!showEvents()) notFound();
   const supabase = await createServerSupabase();
   const [eventsRes, countsRes, mineRes] = await Promise.all([

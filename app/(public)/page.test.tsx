@@ -130,7 +130,7 @@ describe("homepage counters once finances are public (SHOW_PUBLIC_FINANCES=true)
   });
 });
 
-describe("homepage events section (ADR-038)", () => {
+describe("homepage events section (ADR-042)", () => {
   const EVENTS_HEADING = "ღონისძიებები";
 
   it("has no events section, no link to /events and no events fetch while hidden", async () => {

@@ -39,7 +39,7 @@ test("registers through Google and lands in the registered cabinet", async ({ pa
 
   // nav is exactly the registered set — no member-only pages
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
-  // ADR-038: no events tab while SHOW_EVENTS is off.
+  // ADR-042: no events tab while SHOW_EVENTS is off.
   const registeredLabels = [
     "მთავარი",
     ...(EVENTS_SHOWN ? ["ღონისძიებები"] : []),

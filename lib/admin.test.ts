@@ -263,7 +263,7 @@ describe("Phase 5: audit labels + content pills", () => {
   });
 });
 
-describe("roleDutiesKa (ADR-038: events hidden by default)", () => {
+describe("roleDutiesKa (ADR-042: events hidden by default)", () => {
   it("names news and polls, but no events, as the editor's duties while events are hidden", () => {
     expect(roleDutiesKa(false).editor).toBe("სიახლეები და გამოკითხვები");
   });

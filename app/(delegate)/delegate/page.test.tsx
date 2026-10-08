@@ -52,7 +52,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("delegate panel — team RSVP card (ADR-038)", () => {
+describe("delegate panel — team RSVP card (ADR-042)", () => {
   it("has no team-RSVP card and never asks for the team's sign-ups while events are hidden", async () => {
     render(await DelegateDashboardPage());
 

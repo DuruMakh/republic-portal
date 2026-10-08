@@ -29,7 +29,7 @@ describe("ContentNav", () => {
     expect(inactive!.className).toContain("text-ink");
   });
 
-  it("leaves out the events section while events are hidden (ADR-038)", () => {
+  it("leaves out the events section while events are hidden (ADR-042)", () => {
     const { container } = render(<ContentNav eventsShown={false} />);
     expect(screen.queryByRole("link", { name: "ღონისძიებები" })).not.toBeInTheDocument();
     expect(container.querySelector('a[href="/admin/content/events"]')).toBeNull();

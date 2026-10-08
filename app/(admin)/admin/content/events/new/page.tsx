@@ -6,7 +6,7 @@ import { EventForm } from "../EventForm";
 export const metadata: Metadata = { title: "ახალი ღონისძიება — ქართული რესპუბლიკა" };
 
 export default function NewEventPage() {
-  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  // Events hidden (the default, ADR-042): the page does not exist, even by its address.
   if (!showEvents()) notFound();
   return (
     <div>

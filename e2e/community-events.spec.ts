@@ -19,10 +19,10 @@ const RUN = `e2e-event-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
 
-// ADR-038: events are hidden unless SHOW_EVENTS=true; this journey runs only with the switch on.
+// ADR-042: events are hidden unless SHOW_EVENTS=true; this journey runs only with the switch on.
 test.skip(
   !EVENTS_SHOWN,
-  "events are hidden (ADR-038) — see the events hidden group in public.spec.ts",
+  "events are hidden (ADR-042) — see the events hidden group in public.spec.ts",
 );
 
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the

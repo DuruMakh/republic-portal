@@ -71,7 +71,7 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await page.getByRole("button", { name: "დელეგატის შეცვლა" }).click();
   await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
 
-  // While events are hidden (ADR-038) „ჩემი დელეგატი“ takes the freed fourth tab, so the
+  // While events are hidden (ADR-042) „ჩემი დელეგატი“ takes the freed fourth tab, so the
   // bar marks it current; with events shown it lives in the „მეტი“ sheet and the sheet's
   // button is current instead. No payments link either way while dues are hidden (ADR-037).
   const moreButton = mobileNav.getByRole("button", { name: "მეტი" });

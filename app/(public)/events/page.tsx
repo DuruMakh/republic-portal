@@ -23,7 +23,7 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function EventsPage() {
-  // Hidden by owner decision (ADR-038): not-found for everyone, before any data is fetched.
+  // Hidden by owner decision (ADR-042): not-found for everyone, before any data is fetched.
   // Set SHOW_EVENTS=true and redeploy to bring the page back as it was.
   if (!showEvents()) notFound();
   const events = await fetchPublicEvents();

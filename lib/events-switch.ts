@@ -9,7 +9,7 @@ const EVENT_HREFS: ReadonlySet<string> = new Set([
  * Whether events are shown: the public /events pages and their header link, the homepage events
  * section, the cabinet events tab, page and card, the delegate panel's team-RSVP card and the
  * admin events editor. Hidden unless SHOW_EVENTS is the word "true" (owner decision 2026-10-08,
- * ADR-038), so an unset or mistyped value keeps them hidden. Nothing is deleted: the events
+ * ADR-042), so an unset or mistyped value keeps them hidden. Nothing is deleted: the events
  * tables stay as they are, and setting the switch brings every surface back unchanged.
  * Whitespace around the word is ignored, as for SHOW_PUBLIC_FINANCES.
  *

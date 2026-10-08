@@ -6,7 +6,7 @@ const PAGES = [
   "/",
   "/leaderboard",
   "/news",
-  // ADR-038: /events is a 404 while events are hidden.
+  // ADR-042: /events is a 404 while events are hidden.
   ...(EVENTS_SHOWN ? ["/events"] : []),
   // ADR-034: /transparency is a 404 while finances are hidden, so it joins the sweep only
   // when the switch is on.

@@ -38,7 +38,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("delegate cabinet nav — events (ADR-038)", () => {
+describe("delegate cabinet nav — events (ADR-042)", () => {
   it("offers no events destination while hidden; the phone bar gains the profile", async () => {
     await renderLayout();
     expect(document.querySelector('a[href="/me/events"]')).toBeNull();

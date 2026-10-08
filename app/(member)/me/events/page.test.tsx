@@ -19,7 +19,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("cabinet events page while events are hidden (the default, ADR-038)", () => {
+describe("cabinet events page while events are hidden (the default, ADR-042)", () => {
   it("answers not-found before reading any event", async () => {
     await expect(MemberEventsPage()).rejects.toThrow("not-found");
     expect(server.createServerSupabase).not.toHaveBeenCalled();

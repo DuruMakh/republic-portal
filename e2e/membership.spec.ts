@@ -170,7 +170,7 @@ test("referral binding survives to completion and shows as the current delegate"
 });
 
 test("a registered member RSVPs to a published event", async ({ page }) => {
-  test.skip(!EVENTS_SHOWN, "events are hidden (ADR-038)");
+  test.skip(!EVENTS_SHOWN, "events are hidden (ADR-042)");
   // editor publishes a future event (canonical admin — audit actor stays permanent)
   await loginAs(page, ADMIN_PHONES.editor);
   await page.goto("/admin/content/events/new");

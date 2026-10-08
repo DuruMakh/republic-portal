@@ -17,7 +17,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("rsvpAction (ADR-038)", () => {
+describe("rsvpAction (ADR-042)", () => {
   it("refuses while events are hidden, before touching the database", async () => {
     expect(await rsvpAction(VALID)).toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
     expect(server.createServerSupabase).not.toHaveBeenCalled();

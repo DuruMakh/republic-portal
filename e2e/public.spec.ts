@@ -22,7 +22,7 @@ test.describe("home", () => {
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
-    // ADR-038: the events section is there only while SHOW_EVENTS=true.
+    // ADR-042: the events section is there only while SHOW_EVENTS=true.
     await expect(page.getByRole("main").locator('a[href="/events"]')).toHaveCount(
       EVENTS_SHOWN ? 1 : 0,
     );
@@ -217,7 +217,7 @@ test.describe("transparency", () => {
   });
 });
 
-// ADR-038: events are hidden unless SHOW_EVENTS=true. With the switch on, community-events.spec.ts
+// ADR-042: events are hidden unless SHOW_EVENTS=true. With the switch on, community-events.spec.ts
 // and the homepage check above cover the visible pages.
 test.describe("events hidden", () => {
   test.skip(EVENTS_SHOWN, "events are shown — see community-events.spec.ts");
