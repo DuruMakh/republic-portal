@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { Eyebrow } from "@/components/Eyebrow";
 import { ReferralCard } from "@/components/ReferralCard";
 import { isApprovedDelegate } from "@/lib/cabinet";
+import { showEvents } from "@/lib/events-switch";
 import { deriveMembershipPhase } from "@/lib/funnel";
 import { showMembershipDues } from "@/lib/membership-dues";
 import { getCabinetState } from "@/lib/supabase/server";
@@ -24,6 +25,7 @@ export default async function CabinetOverviewPage() {
   if (state.standing === "member") redirect("/me/profile");
 
   const phase = deriveMembershipPhase(state);
+  const eventsShown = showEvents();
   return (
     <main>
       <div className="mb-8 border-b-2 border-ink pb-4">
@@ -63,18 +65,21 @@ export default async function CabinetOverviewPage() {
           />
         </div>
       ) : null}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Card>
-          <h3 className="font-serif text-lg font-bold text-ink">ღონისძიებები</h3>
-          <p className="mt-1 text-sm text-muted-fg">
-            ნახე მომავალი შეხვედრები და დაარეგისტრირე დასწრება.
-          </p>
-          <div className="mt-3">
-            <ButtonLink href="/me/events" variant="ghost">
-              ნახვა
-            </ButtonLink>
-          </div>
-        </Card>
+      {/* No events card while events are hidden (ADR-042); news then spans the row. */}
+      <div className={`mt-6 grid gap-4 ${eventsShown ? "sm:grid-cols-2" : ""}`}>
+        {eventsShown ? (
+          <Card>
+            <h3 className="font-serif text-lg font-bold text-ink">ღონისძიებები</h3>
+            <p className="mt-1 text-sm text-muted-fg">
+              ნახე მომავალი შეხვედრები და დაარეგისტრირე დასწრება.
+            </p>
+            <div className="mt-3">
+              <ButtonLink href="/me/events" variant="ghost">
+                ნახვა
+              </ButtonLink>
+            </div>
+          </Card>
+        ) : null}
         <Card>
           <h3 className="font-serif text-lg font-bold text-ink">სიახლეები</h3>
           <p className="mt-1 text-sm text-muted-fg">მოძრაობის საჯარო განცხადებები და ამბები.</p>

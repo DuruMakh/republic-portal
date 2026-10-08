@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { filterEventLinks } from "@/lib/events-switch";
 
 const SECTIONS = [
   { href: "/admin/content/news", label: "სიახლეები" },
@@ -9,14 +10,15 @@ const SECTIONS = [
   { href: "/admin/content/polls", label: "გამოკითხვები" },
 ] as const;
 
-export function ContentNav() {
+/** `eventsShown` is showEvents(), read by the server layout: the switch is server-only (ADR-042). */
+export function ContentNav({ eventsShown }: { eventsShown: boolean }) {
   const pathname = usePathname();
   return (
     <nav
       aria-label="შიგთავსის ნავიგაცია"
       className="mb-6 flex gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold"
     >
-      {SECTIONS.map((s) => {
+      {filterEventLinks(SECTIONS, eventsShown).map((s) => {
         const active = pathname === s.href || pathname.startsWith(`${s.href}/`);
         return (
           <Link

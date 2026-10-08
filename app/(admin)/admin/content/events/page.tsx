@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
@@ -7,11 +8,14 @@ import { Pill } from "@/components/Pill";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "შიგთავსი: ღონისძიებები — ქართული რესპუბლიკა" };
 
 export default async function AdminEventsListPage() {
+  // Events hidden (the default, ADR-042): the page does not exist, even by its address.
+  if (!showEvents()) notFound();
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("admin_events")

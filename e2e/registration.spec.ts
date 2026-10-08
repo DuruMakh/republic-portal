@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { EVENTS_SHOWN } from "./events-switch";
 import { runCleanups } from "./cleanup-helpers";
 import {
   cleanupGoogleBackedTestUsers,
@@ -38,15 +39,23 @@ test("registers through Google and lands in the registered cabinet", async ({ pa
 
   // nav is exactly the registered set — no member-only pages
   const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
-  for (const label of ["მთავარი", "ღონისძიებები", "სიახლეები", "პროფილი"]) {
+  // ADR-042: no events tab while SHOW_EVENTS is off.
+  const registeredLabels = [
+    "მთავარი",
+    ...(EVENTS_SHOWN ? ["ღონისძიებები"] : []),
+    "სიახლეები",
+    "პროფილი",
+  ];
+  for (const label of registeredLabels) {
     await expect(nav.getByRole("link", { name: label })).toBeVisible();
   }
+  await expect(nav.getByRole("link", { name: "ღონისძიებები" })).toHaveCount(EVENTS_SHOWN ? 1 : 0);
   await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toHaveCount(0); // members-only
 
   // The same registered role must expose its four destinations plus utilities
   // through the real mobile cabinet chrome, not only the desktop CabinetNav.
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(nav.getByRole("link")).toHaveCount(4);
+  await expect(nav.getByRole("link")).toHaveCount(EVENTS_SHOWN ? 4 : 3);
   await expect(nav.locator('a[href="/me"]')).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("button", { name: "მეტი" })).toBeVisible();
   await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);

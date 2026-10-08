@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+const nav = vi.hoisted(() => ({ pathname: "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -30,6 +31,8 @@ beforeEach(() => {
   // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
   // flip these tests. The public-mode tests below stub it to "true" themselves.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
+  vi.stubEnv("SHOW_EVENTS", undefined);
+  nav.pathname = "/";
 });
 
 afterEach(() => {
@@ -76,5 +79,38 @@ describe("public layout — finances public (SHOW_PUBLIC_FINANCES=true)", () => 
     expect(
       within(screen.getByRole("contentinfo")).getByRole("link", { name: FINANCES }),
     ).toHaveAttribute("href", "/transparency");
+  });
+});
+
+describe("public layout — events (ADR-042)", () => {
+  const EVENTS = "ღონისძიებები";
+
+  it("lists no ღონისძიებები link in the header, the footer or the phone menu while hidden", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).queryByRole("link", { name: EVENTS }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("link", { name: EVENTS }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("restores the header link once SHOW_EVENTS=true", () => {
+    vi.stubEnv("SHOW_EVENTS", "true");
+    renderLayout();
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: EVENTS })).toHaveAttribute(
+      "href",
+      "/events",
+    );
+  });
+});
+
+describe("public layout on an old event address (ADR-042)", () => {
+  it("gives the not-found page no back link to the hidden events index", () => {
+    nav.pathname = "/events/tbilisi-meeting";
+    renderLayout();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
   });
 });
