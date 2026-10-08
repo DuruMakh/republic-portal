@@ -1164,3 +1164,24 @@ variable, nothing visible changes except the tab title.
   the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
+
+## ADR-045 (2026-10-08): Teal is Kronika's second colour
+
+Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
+`docs/superpowers/plans/2026-10-08-teal-secondary-color.md`. No migration, no new variable.
+
+- **Decision.** The owner compared three brand directions and chose to keep Kronika and add
+  teal `#235B59` (hover `#1A4644`) as a second colour. Red acts (links, active nav, №1, focus,
+  primary hover, danger); teal informs (homepage registry figures and rule, supporter chip,
+  non-leading poll bars, the my-delegate call-out border, `dark` buttons, a 1px line in the
+  masthead rule, the footer band).
+- **No tinted panels.** The exploration board's light-teal registry panel was rejected; there is
+  no teal tint token. The footer is the one solid teal area.
+- **Masthead rule as a border.** `masthead-rule` paints 2px ink, 2px paper, 1px teal as one
+  gradient border image. A positioned overlay would have changed the header's `position`, which
+  three e2e checks pin; a box-shadow would hide under any following sibling with a background.
+- **Accessibility.** Teal/paper 6.9:1 both ways. Red and teal are equally dark (1.00:1), so the
+  footer's links use a paper focus outline, and a leading poll answer is never shown by colour
+  alone (longest bar, percentage).
+- **Rejected.** Directions 2 (Agora) and 3 (Republic 1918) from the board: full re-skins, kept
+  for later. A teal tint for information panels: owner preference.
