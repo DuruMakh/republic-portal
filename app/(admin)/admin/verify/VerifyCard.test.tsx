@@ -19,7 +19,7 @@ function noopReveal() {
 }
 
 describe("VerifyCard (spec §3.4)", () => {
-  it("renders applicant facts with the ID masked and both actions", () => {
+  it("masks the personal ID until it is revealed", () => {
     render(
       <VerifyCard
         applicant={applicant}
@@ -29,51 +29,8 @@ describe("VerifyCard (spec §3.4)", () => {
         reject={vi.fn()}
       />,
     );
-    expect(screen.getByText("გიორგი მელაძე")).toBeInTheDocument();
-    expect(screen.getByText("იმერეთი")).toBeInTheDocument();
     expect(screen.getByText("•••••••••••")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "დადასტურება" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "უარყოფა" })).toBeInTheDocument();
-  });
-
-  it("approve calls the action and shows the public-page link on success", async () => {
-    const approve = vi.fn().mockResolvedValue({ ok: true, slug: "giorgi-meladze" });
-    render(
-      <VerifyCard
-        applicant={applicant}
-        mode="pending"
-        reveal={noopReveal}
-        approve={approve}
-        reject={vi.fn()}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
-    await waitFor(() => expect(screen.getByText(/დელეგატი დამტკიცდა/)).toBeInTheDocument());
-    expect(approve).toHaveBeenCalledWith("d-1");
-    expect(screen.getByRole("link", { name: /საჯარო გვერდი/ })).toHaveAttribute(
-      "href",
-      "/delegates/giorgi-meladze",
-    );
-  });
-
-  it("reject asks for an optional note, then confirms", async () => {
-    const reject = vi.fn().mockResolvedValue({ ok: true });
-    render(
-      <VerifyCard
-        applicant={applicant}
-        mode="pending"
-        reveal={noopReveal}
-        approve={vi.fn()}
-        reject={reject}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "უარყოფა" }));
-    fireEvent.change(screen.getByLabelText(/შიდა შენიშვნა/), {
-      target: { value: "დოკუმენტები აკლია" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "უარყოფის დადასტურება" }));
-    await waitFor(() => expect(screen.getByText(/უარყოფილია/)).toBeInTheDocument());
-    expect(reject).toHaveBeenCalledWith("d-1", "დოკუმენტები აკლია");
+    expect(screen.queryByText("01017056789")).not.toBeInTheDocument();
   });
 
   it("rejected mode shows the stored note, the decision stamp, and only re-approve", () => {

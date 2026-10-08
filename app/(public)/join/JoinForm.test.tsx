@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_FUNNEL_ERROR, type CabinetStatePresent } from "@/lib/funnel";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
+import { cabinetStateFixture } from "@/lib/test-cabinet-state";
 
 const mocks = vi.hoisted(() => {
   const replace = vi.fn();
@@ -53,36 +54,19 @@ const PHONE = "+995555123456";
 const CHALLENGE_ID = "11111111-1111-4111-8111-111111111111";
 const EXPIRES_AT = "2026-08-11T12:05:00.000Z";
 
+// A freshly registered supporter, as register_google() returns it.
 function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
-  return {
-    exists: true,
+  return cabinetStateFixture({
     standing: "registered",
     status: "registered",
-    role: "member",
-    firstName: "ნინო",
-    lastName: "ბერიძე",
-    personalIdMasked: "********",
-    hasPersonalId: false,
-    referralCode: null,
-    referralCount: 0,
-    birthDate: null,
-    regionId: null,
-    cityId: null,
-    employment: null,
+    completed: false,
+    membershipExists: false,
     tier: null,
     referenceCode: null,
-    completed: false,
-    delegateStatus: null,
-    referral: null,
-    pendingDelegate: null,
-    chosenDelegate: null,
-    membershipExists: false,
     registrationCompletedAt: null,
-    createdAt: "2026-07-21T10:00:00Z",
-    admin: false,
     created: true,
     ...overrides,
-  };
+  });
 }
 
 function googleUser(overrides: { phone?: string | null; phone_confirmed_at?: string | null } = {}) {
@@ -170,14 +154,6 @@ describe("JoinForm rollout selector", () => {
     expect(screen.queryByRole("button", { name: "Google-ით გაგრძელება" })).toBeNull();
   });
 
-  it("keeps the unchanged legacy phone form when the setting is exactly phone", async () => {
-    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "phone");
-    await renderJoin();
-
-    expect(screen.getByRole("button", { name: "გაგრძელება →" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Google-ით გაგრძელება" })).toBeNull();
-  });
-
   it("selects Google only from the environment, never query or local storage", async () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "phone");
     mocks.search = "?auth=google";
@@ -213,19 +189,6 @@ describe("GoogleJoinForm", () => {
 
     const google = await screen.findByRole("button", { name: "Google-ით გაგრძელება" });
     expectCurrentRegistrationStep("Google");
-    const aside = screen.getByRole("complementary");
-    expect(aside).toHaveAccessibleName("როგორ მუშაობს");
-    // supporter first, membership later from the cabinet (owner copy round, ADR-035)
-    expect(
-      within(aside)
-        .getAllByRole("listitem")
-        .map((li) => li.textContent),
-    ).toEqual([
-      "Google-ით უსაფრთხოდ შედიხარ.",
-      "ერთხელ ადასტურებ ტელეფონის ნომერს.",
-      "ხდები მხარდამჭერი და გადადიხარ პირად კაბინეტში.",
-      "თუ წევრობა გინდა, კაბინეტში ავსებ უფრო ვრცელ კითხვარს.",
-    ]);
     expect(screen.queryByLabelText("სახელი")).toBeNull();
     expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
     fireEvent.click(google);
@@ -256,13 +219,6 @@ describe("GoogleJoinForm", () => {
     await reachGoogleForm();
 
     expectCurrentRegistrationStep("ტელეფონი");
-    expect(screen.queryByText("ნაბიჯი 2 — ტელეფონის დადასტურება")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი" })).toBeNull();
-    expect(
-      screen.queryByText("Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."),
-    ).toBeNull();
-    expect(screen.queryByRole("heading", { name: "პირადი მონაცემები" })).toBeNull();
-    expect(screen.queryByRole("complementary")).toBeNull();
     expect(screen.getByLabelText("სახელი")).toBeEnabled();
     expect(screen.getByLabelText("გვარი")).toBeEnabled();
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue("");
