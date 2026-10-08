@@ -15,7 +15,7 @@ import { deriveDestination } from "@/lib/cabinet";
 import { GENERIC_FUNNEL_ERROR, isReferralCodeCandidate, type CabinetState } from "@/lib/funnel";
 import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
-import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE, PRIVACY_POLICY_PATH } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeGeorgianPhone } from "@/lib/validation";
 import {
@@ -143,7 +143,12 @@ export function GoogleJoinForm() {
       if (isGoogleSessionError(result.code)) {
         returnToGoogle(result.error);
       } else {
-        setFormError(result.error);
+        // a consent refusal belongs under the box, where ticking clears it
+        if (result.error === PRIVACY_CONSENT_REQUIRED_MESSAGE) {
+          setErrors({ privacyConsent: result.error });
+        } else {
+          setFormError(result.error);
+        }
         setPhase("retry");
       }
       return;

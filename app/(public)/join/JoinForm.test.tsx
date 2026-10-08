@@ -516,6 +516,24 @@ describe("GoogleJoinForm", () => {
     expect(screen.getByRole("checkbox", { name: CONSENT })).toHaveAttribute("aria-invalid", "true");
   });
 
+  it("shows a database consent refusal under the box, and ticking clears it", async () => {
+    mocks.registerGoogle.mockResolvedValueOnce({
+      ok: false,
+      code: "invalid_input",
+      error: PRIVACY_CONSENT_REQUIRED_MESSAGE,
+    });
+    await sendGoogleCode();
+    fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+
+    const box = await screen.findByRole("checkbox", { name: CONSENT });
+    await waitFor(() => expect(box).toHaveAttribute("aria-invalid", "true"));
+    expect(screen.getAllByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toHaveLength(1);
+    fireEvent.click(box);
+    fireEvent.click(box);
+    expect(screen.queryByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeNull();
+  });
+
   it("plainly discloses Verify.ge's one-time use of the phone number", async () => {
     await reachGoogleForm();
 

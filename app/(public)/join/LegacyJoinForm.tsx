@@ -17,6 +17,7 @@ import {
   type CabinetState,
 } from "@/lib/funnel";
 import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/client";
 import { registerAction } from "./actions";
 
@@ -96,8 +97,13 @@ export function LegacyJoinForm() {
         setPhase("form");
       } else {
         // every other failure (transient/RPC) keeps the proven session: resubmit
-        // registration from the retry phase — never a second SMS (finding V10)
-        setFormError(result.error);
+        // registration from the retry phase — never a second SMS (finding V10). A consent
+        // refusal belongs under the box, where ticking clears it.
+        if (result.error === PRIVACY_CONSENT_REQUIRED_MESSAGE) {
+          setErrors({ privacyConsent: result.error });
+        } else {
+          setFormError(result.error);
+        }
         setPhase("retry");
       }
       return;
