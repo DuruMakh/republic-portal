@@ -399,7 +399,7 @@ export default function StyleguidePage() {
         </Card>
 
         <Card title="რეფერალური ბმული">
-          <ReferralCard code="M-ABC234" count={12} teamNote={false} />
+          <ReferralCard code="M-ABC234" supporters={12} members={5} teamNote={false} />
         </Card>
 
         <Card title="შენატანების დავთარი">

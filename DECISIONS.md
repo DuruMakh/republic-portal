@@ -1042,6 +1042,40 @@ fewer supporter and one more member.
 - **Release order.** Two PRs: the additive migration first (nothing visible), then the card,
   after the real site's database has the migration.
 
+## ADR-040 (2026-10-08): Hidden pages are answered in proxy.ts, so the not-found title holds
+
+Closes the "known quirk" in ADR-042 (and the same defect on the hidden finance page, ADR-034).
+Plan and probe table: `docs/superpowers/plans/2026-10-08-hidden-page-title.md`. Stacked on PR #32.
+No migration, no new variable.
+
+- **Cause, from a probe on `next build` + `next start` (Next 16.2.10).** For a 404 raised by a
+  prerendered page (`notFound()` with `revalidate`), Next renders the page's own metadata at
+  build time, but its background ISR regeneration keeps only the root layout's, so from the
+  second minute the tab read "ქართული რესპუბლიკა". Even the build-time copy put the root title
+  in the HTML `<head>`; the page's title reached the tab only once scripts ran. A
+  request-time render keeps the page's metadata; the site-wide `/_not-found` page has the
+  not-found title in its HTML and never regenerates.
+- **Decision.** `proxy.ts` rewrites a switch-hidden address to `/_not-found` with status 404
+  before the page cache is consulted, and skips the session refresh for it. The status must be
+  given: a probe preview showed Vercel answering a bare rewrite to `/_not-found` with 200 (right
+  page, wrong status), although `next start` answers 404 either way. The rules live in
+  `lib/hidden-routes.ts`: `/transparency` while `SHOW_PUBLIC_FINANCES` is off, `/events` and
+  every `/events/<…>` while `SHOW_EVENTS` is off. A hidden page now returns exactly what a
+  mistyped address returns: 404, the Georgian notice, the exact title in the HTML and the tab.
+  The pages' own `notFound()` and `NOT_FOUND_METADATA` stay as a second line of defence.
+- **Not listed.** `/me/events` and the admin events pages render per request (their own
+  metadata holds) and keep their cabinet and admin chrome, as ADR-042 left them.
+- **Rejected.** Making the hidden branch render per request: `revalidate` is fixed per route,
+  so the shown pages would stop being prerendered, or a runtime switch to dynamic would error.
+  Relaxing the tests (PR #32's first answer): it accepted a tab that does not match a
+  mistyped address.
+- **Tests.** e2e asserts the exact title again, in the served HTML as well as the tab, and one
+  check visits every hidden address three times across the 60-second window (now, stale, and
+  regenerated), so it no longer depends on test order. It adds about a minute to the e2e run.
+- **Still open, out of scope.** Ordinary not-found pages raised by prerendered pages (a missing
+  article, delegate or, with events shown, event) have the same regeneration defect: their own
+  Georgian "not found" title gives way to the site name after a minute.
+
 ## ADR-042 (2026-10-08): Events hidden behind one switch
 
 Owner decision, taken in chat on 2026-10-08: remove ღონისძიებები from everything. Offered
@@ -1071,3 +1105,29 @@ ADR-037 (dues). Plan: `docs/superpowers/plans/2026-10-08-events-hidden.md`. No m
   regenerates the tab shows the plain site name. Status, heading and content stay the
   not-found page, and the tab never names the hidden section; the e2e check asserts exactly
   that.
+
+## ADR-043 (2026-10-08): e2e signs seeded accounts in by password, not SMS
+
+On 2026-10-08 three PRs' CI runs (#33, #35, #37) failed together with "e2e could not request
+the staging login OTP": every browser test signed its seeded users in by phone code, all runs
+share one staging Supabase, and staging allows only so many code messages an hour. Overlapping
+runs used the allowance up, and then every sign-in in every run failed.
+
+- **`loginAs` no longer asks for a code.** `fixtureSession` in `e2e/otp-helpers.ts` gives the
+  seeded account a placeholder email (`e2e-login+<phone>@example.invalid`, or keeps an
+  `@example.invalid` one it already has) and a password, then signs in with them. The
+  password is derived from the service-role key and the phone, so every run computes the same
+  one. It is set only when signing in with it fails: setting a password ends the account's
+  other sessions, and overlapping runs sign in as the same canonical admins.
+- **Who it may touch.** Only the per-run e2e numbers (the 55 block, minus the owner's three kept smoke accounts) and the four canonical
+  admins `scripts/seed-staging.mjs` creates for e2e (+99550900000{1..4}); any other phone, or
+  an account with a real email address, is refused before staging is touched. The owner's real
+  staging account is never in either range. Phone sign-in keeps working for every account;
+  the admins just gain a second way in, visible only to holders of the service-role key.
+- **When a password does get set, other sessions of that account end.** That happens the
+  first time an account is used, and whenever the runner's service-role key differs from the
+  one that set it (a local run with a different key, or after a key rotation). A CI run signed
+  in as the same canonical admin at that moment can fail once; rerun it. Staging sessions of
+  the security-audit actors or anyone QA-ing as a canonical admin are signed out the same way.
+- **Not changed.** The app's own sign-in, the `dev_otp_inbox` table and
+  `scripts/security/*` (they still request real codes; run them sparingly).

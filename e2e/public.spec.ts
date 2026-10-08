@@ -3,7 +3,7 @@
 // owner is now an approved delegate too, so roster/leaderboard counts are floors (>=)
 // anchored on seeded names/ranks, not exact totals. CI never seeds — if these fail on
 // a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { formatCountKa } from "../lib/format";
 import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
@@ -13,6 +13,19 @@ const DEMO_BANNER = "სადემონსტრაციო გარემ�
 const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა.";
 const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
 const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
+
+/**
+ * A page hidden by a switch (ADR-034, ADR-042) must be indistinguishable from a mistyped address:
+ * 404, the Georgian notice, and the exact not-found title both in the served HTML (what a link
+ * preview or a browser without scripts sees) and in the tab once the page has loaded (ADR-040).
+ */
+async function expectHiddenPage(page: Page, path: string) {
+  const response = await page.goto(path);
+  expect(response?.status(), path).toBe(404);
+  expect(await response?.text(), path).toContain(`<title>${NOT_FOUND_TITLE}</title>`);
+  await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+  await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+}
 
 test.describe("home", () => {
   test("hero, live counters and nav work", async ({ page }) => {
@@ -179,12 +192,8 @@ test.describe("finances hidden", () => {
   test.skip(FINANCES_PUBLIC, "finances are public — see the transparency group");
 
   test("/transparency answers 404 even with the exact address", async ({ page }) => {
-    const response = await page.goto("/transparency");
-    expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
-    // Not the exact not-found title: ADR-042's known ISR quirk, shared with the hidden events page.
-    await expect(page).toHaveTitle(/ქართული რესპუბლიკა$/);
-    await expect(page).not.toHaveTitle(/გამჭვირვალობ/);
+    // the tab names no finance page either: it reads as any other missing page
+    await expectHiddenPage(page, "/transparency");
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
   });
 });
@@ -344,15 +353,7 @@ test.describe("events hidden", () => {
   test("/events answers 404 even with the exact address, and the tab never names events", async ({
     page,
   }) => {
-    const response = await page.goto("/events");
-    expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
-    // Not the exact not-found title: on a production server the page's first render carries it,
-    // but once its 60-second ISR entry regenerates the tab shows the plain site name instead
-    // (/transparency behaves the same; the finances test passes only while nothing earlier in
-    // the run has visited that page). Either way the tab must not name the hidden section.
-    await expect(page).toHaveTitle(/ქართული რესპუბლიკა$/);
-    await expect(page).not.toHaveTitle(/ღონისძიებ/);
+    await expectHiddenPage(page, "/events");
   });
 
   test("an old event address on a phone has no back link to the hidden index", async ({ page }) => {
@@ -370,5 +371,28 @@ test.describe("events hidden", () => {
       await expect(page.locator('a[href="/events"]'), path).toHaveCount(0);
       await expect(page.locator('a[href^="/events/"]'), path).toHaveCount(0);
     }
+  });
+});
+
+// ADR-040: Next regenerates a hidden page's 60-second ISR entry without the page's own metadata,
+// so the tab used to fall back to the plain site name from the second minute on. Each address is
+// visited three times: now, after the entry has gone stale (that visit starts the regeneration)
+// and once more after it (the regenerated copy). None may differ from a mistyped address.
+test.describe("hidden pages after the 60-second refresh", () => {
+  const hidden = [
+    ...(FINANCES_PUBLIC ? [] : ["/transparency"]),
+    // a real seeded event's address too: hiding events must not leak its title
+    ...(EVENTS_SHOWN ? [] : ["/events", "/events/saerto-kreba-tbilisshi"]),
+  ];
+  test.skip(hidden.length === 0, "every switch is on: nothing is hidden");
+  // Only a production server (CI's `npm run start`) regenerates pages; `next dev` has no ISR.
+  test.skip(!process.env.CI, "needs the production server CI runs");
+
+  test("keep the exact not-found title on every visit", async ({ page }) => {
+    for (const path of hidden) await expectHiddenPage(page, path);
+    await page.waitForTimeout(61_000);
+    for (const path of hidden) await expectHiddenPage(page, path);
+    await page.waitForTimeout(3_000);
+    for (const path of hidden) await expectHiddenPage(page, path);
   });
 });

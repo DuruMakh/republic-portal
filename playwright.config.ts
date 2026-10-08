@@ -5,8 +5,7 @@ export default defineConfig({
   // Journeys are *.spec.ts. Pinning this (Playwright's default also matches *.test.ts)
   // keeps the helpers' vitest suite — e2e/*.test.ts — out of the browser runner.
   testMatch: "**/*.spec.ts",
-  // Keep the established 210s cap until the complete hosted suite proves a lower
-  // bound. Programmatic seeded-account login can still ride Supabase OTP throttling.
+  // Keep the established 210s cap until the complete hosted suite proves a lower bound.
   timeout: 210_000,
   retries: process.env.CI ? 1 : 0,
   // shared staging state (per-run users + seed-count assertions) — spec files must never overlap
