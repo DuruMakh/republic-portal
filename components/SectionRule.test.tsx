@@ -25,6 +25,19 @@ describe("SectionRule", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Subsection" }).tagName).toBe("H3");
   });
 
+  it("draws an ink rule and leaves the label uncoloured by default", () => {
+    const { container } = render(<SectionRule label="Default tone" />);
+    expect(container.firstElementChild).toHaveClass("border-ink");
+    expect(screen.getByText("Default tone")).not.toHaveClass("text-teal");
+  });
+
+  it("draws a teal rule and a teal label with tone=teal (ADR-045)", () => {
+    const { container } = render(<SectionRule label="Registry" tone="teal" />);
+    expect(container.firstElementChild).toHaveClass("border-teal");
+    expect(container.firstElementChild).not.toHaveClass("border-ink");
+    expect(screen.getByText("Registry")).toHaveClass("text-teal");
+  });
+
   it("renders a non-heading label when `as` is div (decorative escape hatch)", () => {
     render(<SectionRule label="Decorative" as="div" />);
     expect(screen.queryByRole("heading", { name: "Decorative" })).not.toBeInTheDocument();

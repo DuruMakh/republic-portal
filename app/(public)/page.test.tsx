@@ -139,3 +139,15 @@ describe("homepage events section (ADR-042)", () => {
     expect(data.fetchPublicEvents).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("registry box (ADR-045)", () => {
+  it("draws the registry heading rule and its three counters in teal", async () => {
+    render(await HomePage());
+
+    const registry = screen.getByTestId("registry");
+    expect(registry.firstElementChild).toHaveClass("border-teal");
+    for (const id of ["stat-approved-delegates", "stat-members-total", "stat-registered-total"]) {
+      expect(screen.getByTestId(id)).toHaveClass("text-teal");
+    }
+  });
+});
