@@ -72,21 +72,17 @@ export async function readFreshInboxOtp(phoneNational: string, sentAt: number): 
   throw new Error(`no fresh OTP in dev_otp_inbox for ${phoneNational}`);
 }
 
-/**
- * Programmatic seeded-account login: ask staging Auth for an OTP, read the sealed
- * staging inbox, install the returned cookie session, and open the cabinet. No
- * removed phone-login controls are involved.
- */
-export async function loginAs(
-  page: Page,
-  phoneNational: string,
-  landing: RegExp = /\/(me|delegate|admin)(\/|\?|#|$)/,
-): Promise<void> {
-  assertE2eFixtureEnvironment();
+function sessionlessClient(): SupabaseClient {
   const { url, key } = publicSupabaseConfig();
-  const auth = createClient(url, key, {
+  return createClient(url, key, {
     auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
   });
+}
+
+/** A seeded account's staging session: ask Auth for an OTP and read the sealed inbox. */
+export async function otpSession(phoneNational: string): Promise<Session> {
+  assertE2eFixtureEnvironment();
+  const auth = sessionlessClient();
   const phone = `+995${phoneNational}`;
   let sentAt = 0;
   let sent = false;
@@ -106,7 +102,29 @@ export async function loginAs(
   const otp = await readFreshInboxOtp(phoneNational, sentAt);
   const { data, error } = await auth.auth.verifyOtp({ phone, token: otp, type: "sms" });
   if (error || !data.session) throw new Error("e2e could not verify the staging login OTP");
-  await installSupabaseSession(page, data.session);
+  return data.session;
+}
+
+/** A Supabase client acting as the signed-in account, for calling its RPCs directly. */
+export async function clientFor(session: Session): Promise<SupabaseClient> {
+  assertE2eFixtureEnvironment();
+  const client = sessionlessClient();
+  const { error } = await client.auth.setSession(session);
+  if (error) throw new Error("e2e could not start a client session");
+  return client;
+}
+
+/**
+ * Programmatic seeded-account login: an OTP session (otpSession), installed as the
+ * browser's cookie session, then the cabinet. No removed phone-login controls are
+ * involved.
+ */
+export async function loginAs(
+  page: Page,
+  phoneNational: string,
+  landing: RegExp = /\/(me|delegate|admin)(\/|\?|#|$)/,
+): Promise<void> {
+  await installSupabaseSession(page, await otpSession(phoneNational));
   await page.goto("/me");
   await expect(page).toHaveURL(landing, { timeout: 15_000 });
 }
