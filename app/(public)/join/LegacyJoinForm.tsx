@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Field } from "@/components/Field";
 import { OtpVerification } from "@/components/OtpVerification";
+import { PrivacyConsentField } from "@/components/PrivacyConsentField";
 import { deriveDestination } from "@/lib/cabinet";
 import {
   GENERIC_FUNNEL_ERROR,
@@ -21,7 +22,7 @@ import { registerAction } from "./actions";
 
 type JoinPhase = "form" | "otp" | "retry";
 
-const FIELD_KEYS = ["firstName", "lastName", "phone"] as const;
+const FIELD_KEYS = ["firstName", "lastName", "phone", "privacyConsent"] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
@@ -39,6 +40,7 @@ export function LegacyJoinForm() {
   const [lastName, setLastName] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
+  const [privacyConsent, setPrivacyConsent] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [notice, setNotice] = useState<string>();
@@ -122,6 +124,7 @@ export function LegacyJoinForm() {
       lastName,
       phone: phoneInput,
       refCode,
+      privacyConsent,
     });
     if (!parsed.success) {
       applyValidationErrors(parsed.error.issues);
@@ -146,6 +149,7 @@ export function LegacyJoinForm() {
       firstName,
       lastName,
       refCode,
+      privacyConsent,
     });
     if (!parsed.success) {
       applyValidationErrors(parsed.error.issues);
@@ -171,6 +175,7 @@ export function LegacyJoinForm() {
         firstName,
         lastName,
         refCode,
+        privacyConsent,
       });
       handleRegisterResult(result);
     } catch {
@@ -234,6 +239,14 @@ export function LegacyJoinForm() {
                     : "ამ ნომერზე მოგივა ერთჯერადი SMS კოდი დასადასტურებლად."}
                 </p>
               </div>
+              <PrivacyConsentField
+                checked={privacyConsent}
+                onChange={(checked) => {
+                  setPrivacyConsent(checked);
+                  if (checked) setErrors((prev) => ({ ...prev, privacyConsent: undefined }));
+                }}
+                error={errors.privacyConsent}
+              />
               {formError ? <p className="text-sm text-danger">{formError}</p> : null}
               <Button
                 onClick={phase === "retry" ? submitRetry : submitForm}

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "@/lib/privacy";
 
 const mocks = vi.hoisted(() => ({
   createServerSupabase: vi.fn(),
@@ -18,7 +19,12 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import { registerGoogleAction } from "./google-actions";
 
-const VALID_INPUT = { firstName: "ნინო", lastName: "ბერიძე", refCode: "D00101" };
+const VALID_INPUT = {
+  firstName: "ნინო",
+  lastName: "ბერიძე",
+  refCode: "D00101",
+  privacyConsent: true,
+};
 
 beforeEach(() => {
   mocks.createServerSupabase.mockReset();
@@ -38,6 +44,16 @@ describe("registerGoogleAction", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
+  it("refuses an unconsented registration before opening Supabase", async () => {
+    const unticked = { firstName: VALID_INPUT.firstName, lastName: VALID_INPUT.lastName };
+    await expect(registerGoogleAction(unticked)).resolves.toEqual({
+      ok: false,
+      code: "invalid_input",
+      error: PRIVACY_CONSENT_REQUIRED_MESSAGE,
+    });
+    expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+  });
+
   it("calls only register_google with validated names and referral", async () => {
     await registerGoogleAction(VALID_INPUT);
 
@@ -46,6 +62,7 @@ describe("registerGoogleAction", () => {
       p_first_name: "ნინო",
       p_last_name: "ბერიძე",
       p_ref_code: "D00101",
+      p_privacy_version: "2026-10-v1",
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
@@ -68,6 +85,12 @@ describe("registerGoogleAction", () => {
       error: { code: "P0001", message: "phone_required", details: null, hint: null },
       stableCode: "phone_required",
       expected: "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
+    },
+    {
+      token: "privacy_consent_required",
+      error: { code: "P0001", message: "privacy_consent_required", details: null, hint: null },
+      stableCode: "invalid_input",
+      expected: PRIVACY_CONSENT_REQUIRED_MESSAGE,
     },
   ])(
     "maps exact P0001 exception $token to stable code $stableCode",

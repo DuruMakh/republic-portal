@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "../privacy";
 import {
   buildPhoneVerificationIdempotencyKey,
   PHONE_VERIFICATION_CODE_LENGTH,
@@ -51,6 +52,7 @@ describe("phone verification contract", () => {
       expired_code: "კოდის მოქმედების დრო ამოიწურა — მოითხოვე ახალი.",
       phone_in_use: "ეს ნომერი უკვე გამოყენებულია სხვა ანგარიშზე.",
       service_unavailable: "კოდის სერვისი დროებით მიუწვდომელია — სცადე თავიდან.",
+      privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
     });
   });
 });
