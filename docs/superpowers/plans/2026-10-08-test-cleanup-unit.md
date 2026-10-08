@@ -114,3 +114,19 @@ mandatory (DESIGN.md) but never runs in CI. Nothing else in the workflow changes
 
 typecheck, lint, format:check, full vitest (before/after counts + wall time), `next build`,
 ka:scan, ka-gate on touched files. Push branch; no PR (coordinator staggers PRs).
+
+## Deviations found while applying (audit claims checked against origin/main)
+
+- **Not on main, skipped:** `Pebble`, `PebbleCouncil`, `PebbleTally`, `BoardMemberCard`,
+  `BoardRoster`, `MembershipPath`, `DecisionRuleCard`, `lib/pebbles`, and
+  `app/(public)/structure/page.test.tsx` exist only on the unmerged organization-structure
+  branch. Their trims belong with that branch (or a follow-up after it merges).
+- **NotFoundNotice / root not-found:** deleting NotFoundNotice tests 1 and 4 _and_ the root
+  page's copies would leave the Georgian 404 heading and tab title untested in the unit suite;
+  the root page keeps one merged notice + title test.
+- **Done page:** its two tests cover different branches (fresh applicant vs member); no
+  duplicate found, only the fixture was swapped.
+- **PollCard / SupportForm `:166`:** no duplicate identifiable in the main versions of these
+  files (line numbers in the audit do not match); left as is.
+- **Production gate:** the single CLI subprocess test is the malformed-input one (proves the
+  workflow step fails without echoing input); the accept path is tested directly.
