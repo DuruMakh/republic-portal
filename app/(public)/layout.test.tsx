@@ -82,7 +82,7 @@ describe("public layout — finances public (SHOW_PUBLIC_FINANCES=true)", () => 
   });
 });
 
-describe("public layout — events (ADR-038)", () => {
+describe("public layout — events (ADR-042)", () => {
   const EVENTS = "ღონისძიებები";
 
   it("lists no ღონისძიებები link in the header, the footer or the phone menu while hidden", () => {
@@ -107,7 +107,7 @@ describe("public layout — events (ADR-038)", () => {
   });
 });
 
-describe("public layout on an old event address (ADR-038)", () => {
+describe("public layout on an old event address (ADR-042)", () => {
   it("gives the not-found page no back link to the hidden events index", () => {
     nav.pathname = "/events/tbilisi-meeting";
     renderLayout();

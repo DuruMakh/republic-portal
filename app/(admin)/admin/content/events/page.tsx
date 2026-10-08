@@ -14,7 +14,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "შიგთავსი: ღონისძიებები — ქართული რესპუბლიკა" };
 
 export default async function AdminEventsListPage() {
-  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  // Events hidden (the default, ADR-042): the page does not exist, even by its address.
   if (!showEvents()) notFound();
   const supabase = await createServerSupabase();
   const { data, error } = await supabase

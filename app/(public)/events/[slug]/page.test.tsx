@@ -37,7 +37,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("/events/[slug] while events are hidden (the default, ADR-038)", () => {
+describe("/events/[slug] while events are hidden (the default, ADR-042)", () => {
   it("answers not-found, even for a real event's address, without reading it", async () => {
     await expect(EventPage({ params })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(data.fetchPublicEventBySlug).not.toHaveBeenCalled();

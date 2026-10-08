@@ -24,7 +24,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("admin event actions while events are hidden (the default, ADR-038)", () => {
+describe("admin event actions while events are hidden (the default, ADR-042)", () => {
   it("refuses to save, publish, cancel or delete, before touching the database", async () => {
     const form = {
       title: "შეხვედრა",

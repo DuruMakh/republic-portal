@@ -21,7 +21,7 @@ describe("GrantRoleForm (spec §3.7)", () => {
     await waitFor(() => expect(screen.getByText(/როლი მიენიჭა/)).toBeInTheDocument());
     expect(grant).toHaveBeenCalledWith("u-1", "finance");
   });
-  it("describes each role with the duty lines the page hands it (ADR-038)", async () => {
+  it("describes each role with the duty lines the page hands it (ADR-042)", async () => {
     const find = vi.fn().mockResolvedValue({
       ok: true,
       candidate: { id: "u-1", name: "ნინო ბერიძე", phone: "+995509000009" },

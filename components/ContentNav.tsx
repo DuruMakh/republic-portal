@@ -10,7 +10,7 @@ const SECTIONS = [
   { href: "/admin/content/polls", label: "გამოკითხვები" },
 ] as const;
 
-/** `eventsShown` is showEvents(), read by the server layout: the switch is server-only (ADR-038). */
+/** `eventsShown` is showEvents(), read by the server layout: the switch is server-only (ADR-042). */
 export function ContentNav({ eventsShown }: { eventsShown: boolean }) {
   const pathname = usePathname();
   return (

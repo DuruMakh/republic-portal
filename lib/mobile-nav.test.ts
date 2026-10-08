@@ -162,7 +162,7 @@ describe("mobileTabs", () => {
   });
 });
 
-describe("mobileTabs while events are hidden (ADR-038)", () => {
+describe("mobileTabs while events are hidden (ADR-042)", () => {
   const noEvents = (role: "registered" | "member" | "delegate") =>
     filterEventLinks(cabinetNavItems(role), false);
 
@@ -199,7 +199,7 @@ describe("mobileTabs while events are hidden (ADR-038)", () => {
   });
 });
 
-describe("mobileBackTarget while events are hidden (ADR-038)", () => {
+describe("mobileBackTarget while events are hidden (ADR-042)", () => {
   it("gives an old event address no back header, so a 404 never links to the hidden index", () => {
     expect(mobileBackTarget("/events/tbilisi-meeting", false)).toBeNull();
     expect(mobileChrome("/events/tbilisi-meeting", false)).toBe("public");

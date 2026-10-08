@@ -12,7 +12,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 export type SaveEventResult = { ok: true; id: string } | { ok: false; error: string };
 export type EventActionResult = { ok: true } | { ok: false; error: string };
 
-// Events hidden (the default, ADR-038): the editor pages are gone, and every action below
+// Events hidden (the default, ADR-042): the editor pages are gone, and every action below
 // refuses a direct call before touching the database. The RPCs themselves are unchanged.
 const EVENTS_HIDDEN = { ok: false, error: GENERIC_FUNNEL_ERROR } as const;
 

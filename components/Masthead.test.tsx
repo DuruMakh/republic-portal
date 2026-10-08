@@ -110,7 +110,7 @@ describe("Masthead", () => {
   });
 });
 
-describe("Masthead on an old event address (ADR-038)", () => {
+describe("Masthead on an old event address (ADR-042)", () => {
   it("shows no back link to the events index while events are hidden", () => {
     vi.mocked(usePathname).mockReturnValue("/events/tbilisi-meeting");
     render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} eventsShown={false} />);

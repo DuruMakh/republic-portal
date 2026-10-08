@@ -37,7 +37,7 @@ export function Masthead({
   /**
    * showEvents(), read by the server layout (the switch is server-only). Only the public
    * layout passes it: while events are hidden an old event address gets no back header
-   * pointing at the hidden index (ADR-038).
+   * pointing at the hidden index (ADR-042).
    */
   eventsShown?: boolean;
 }) {

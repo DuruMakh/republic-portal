@@ -24,7 +24,7 @@ export const ROLE_DUTIES_KA: Record<AdminRole, string> = {
   editor: "სიახლეები, ღონისძიებები და გამოკითხვები",
 };
 
-/** The duties as an admin sees them: no events in the editor's line while events are hidden (ADR-038). */
+/** The duties as an admin sees them: no events in the editor's line while events are hidden (ADR-042). */
 export function roleDutiesKa(eventsShown: boolean): Record<AdminRole, string> {
   return eventsShown ? ROLE_DUTIES_KA : { ...ROLE_DUTIES_KA, editor: "სიახლეები და გამოკითხვები" };
 }

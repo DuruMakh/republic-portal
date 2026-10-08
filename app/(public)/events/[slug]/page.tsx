@@ -13,7 +13,7 @@ import { fetchPublicEventBySlug, fetchPublicEvents } from "@/lib/supabase/public
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  // Hidden (ADR-038): build no event pages; any address falls through to the not-found below.
+  // Hidden (ADR-042): build no event pages; any address falls through to the not-found below.
   if (!showEvents()) return [];
   const events = await fetchPublicEvents();
   return events.map((e) => ({ slug: e.slug }));
@@ -41,7 +41,7 @@ export async function generateMetadata({
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
-  // Hidden by owner decision (ADR-038): not-found before the event is read.
+  // Hidden by owner decision (ADR-042): not-found before the event is read.
   if (!showEvents()) notFound();
   const { slug } = await params;
   const event = await fetchPublicEventBySlug(slug);

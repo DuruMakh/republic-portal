@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { EVENTS_SHOWN } from "./events-switch";
 import {
   cleanupJourneyUsers,
   JOURNEY,
@@ -70,13 +71,24 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await page.getByRole("button", { name: "დელეგატის შეცვლა" }).click();
   await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
 
-  // „ჩემი დელეგატი“ lives in the „მეტი“ sheet (no payments tab while dues are hidden,
-  // ADR-037), so this page marks the sheet's button as current
+  // While events are hidden (ADR-042) „ჩემი დელეგატი“ takes the freed fourth tab, so the
+  // bar marks it current; with events shown it lives in the „მეტი“ sheet and the sheet's
+  // button is current instead. No payments link either way while dues are hidden (ADR-037).
   const moreButton = mobileNav.getByRole("button", { name: "მეტი" });
-  await expect(moreButton).toHaveAttribute("aria-current", "page");
-  await moreButton.click();
   const sheet = page.getByRole("dialog");
-  await expect(sheet.locator('a[href="/me/delegate"]')).toHaveAttribute("aria-current", "page");
+  if (EVENTS_SHOWN) {
+    await expect(moreButton).toHaveAttribute("aria-current", "page");
+    await moreButton.click();
+    await expect(sheet.locator('a[href="/me/delegate"]')).toHaveAttribute("aria-current", "page");
+  } else {
+    await expect(mobileNav.locator('a[href="/me/delegate"]')).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(moreButton).not.toHaveAttribute("aria-current", "page");
+    await moreButton.click();
+    await expect(sheet.locator('a[href="/me/delegate"]')).toHaveCount(0);
+  }
   await expect(sheet.locator('a[href="/me/billing"]')).toHaveCount(0);
   await expect
     .poll(() =>

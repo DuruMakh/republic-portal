@@ -73,7 +73,7 @@ function inCabinet(pathname: string): boolean {
  * opened from a shared link has no history behind it, and back() would leave
  * the site entirely (spec §4.8).
  *
- * While events are hidden (ADR-038) an old event address is a 404 with no
+ * While events are hidden (ADR-042) an old event address is a 404 with no
  * events index to return to, so it gets no back header — the plain public
  * header instead. Only the public layout reads the switch; the cabinet and
  * admin chrome never sit on an event address, hence the default.
@@ -124,7 +124,7 @@ const TAB_LIMIT = 4;
  *
  * A single global priority list cannot serve both registered (profile last)
  * and member (profile first), which is why this is keyed by role. The fifth
- * entry fills the slot events leave while they are hidden (ADR-038); with
+ * entry fills the slot events leave while they are hidden (ADR-042); with
  * events shown it never reaches the bar.
  *
  * Anything not on the bar — including /admin — lands in the „მეტი“ sheet.

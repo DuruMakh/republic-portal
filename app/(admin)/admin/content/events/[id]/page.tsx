@@ -13,7 +13,7 @@ import { EventForm } from "../EventForm";
 export const metadata: Metadata = { title: "ღონისძიების რედაქტირება — ქართული რესპუბლიკა" };
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
-  // Events hidden (the default, ADR-038): the page does not exist, even by its address.
+  // Events hidden (the default, ADR-042): the page does not exist, even by its address.
   if (!showEvents()) notFound();
   const { id } = await params;
   const supabase = await createServerSupabase();

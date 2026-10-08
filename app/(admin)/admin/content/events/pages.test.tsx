@@ -22,7 +22,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("admin events pages while events are hidden (the default, ADR-038)", () => {
+describe("admin events pages while events are hidden (the default, ADR-042)", () => {
   it("the list answers not-found before reading any event", async () => {
     await expect(AdminEventsListPage()).rejects.toThrow("not-found");
     expect(server.createServerSupabase).not.toHaveBeenCalled();

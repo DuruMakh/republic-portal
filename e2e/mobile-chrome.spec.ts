@@ -36,7 +36,7 @@ const NEWS_INDEX_LABEL = "სიახლეები";
 const PUBLIC_CHROME_ROUTES = [
   "/",
   "/news",
-  // ADR-038: /events is a 404 too while events are hidden.
+  // ADR-042: /events is a 404 too while events are hidden.
   ...(EVENTS_SHOWN ? ["/events"] : []),
   "/leaderboard",
   ...(FINANCES_PUBLIC ? ["/transparency"] : []),

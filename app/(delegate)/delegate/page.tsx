@@ -32,7 +32,7 @@ export default async function DelegateDashboardPage() {
   // no RPC demotes an approved row — the old pending/rejected branches below were
   // unreachable dead weight and were removed with the R2 gate move.
 
-  // Events hidden (the default, ADR-038): no team-RSVP card, so no read for it either.
+  // Events hidden (the default, ADR-042): no team-RSVP card, so no read for it either.
   const eventsShown = showEvents();
   const { data: teamRsvpsRaw, error: teamRsvpsError } = eventsShown
     ? await supabase.rpc("delegate_team_rsvps")

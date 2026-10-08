@@ -65,7 +65,7 @@ export default async function CabinetOverviewPage() {
           />
         </div>
       ) : null}
-      {/* No events card while events are hidden (ADR-038); news then spans the row. */}
+      {/* No events card while events are hidden (ADR-042); news then spans the row. */}
       <div className={`mt-6 grid gap-4 ${eventsShown ? "sm:grid-cols-2" : ""}`}>
         {eventsShown ? (
           <Card>

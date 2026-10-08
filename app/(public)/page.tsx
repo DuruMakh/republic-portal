@@ -64,7 +64,7 @@ export default async function HomePage() {
   // The collected-dues figure is part of the hidden finance surface (ADR-034): no fetch,
   // no row, until SHOW_PUBLIC_FINANCES=true.
   const financesPublic = showPublicFinances();
-  // Events are hidden by default too (ADR-038): no fetch and no section until SHOW_EVENTS=true.
+  // Events are hidden by default too (ADR-042): no fetch and no section until SHOW_EVENTS=true.
   const eventsShown = showEvents();
   const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),

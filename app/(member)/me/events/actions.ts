@@ -9,7 +9,7 @@ export type RsvpResult = { ok: true } | { ok: false; error: string };
 
 /** Thin action in front of member_rsvp (ADR-009 envelope: the RPC re-validates everything). */
 export async function rsvpAction(input: unknown): Promise<RsvpResult> {
-  // Events hidden (the default, ADR-038): the page is gone, so a direct call is refused too.
+  // Events hidden (the default, ADR-042): the page is gone, so a direct call is refused too.
   if (!showEvents()) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const parsed = rsvpInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: GENERIC_FUNNEL_ERROR };

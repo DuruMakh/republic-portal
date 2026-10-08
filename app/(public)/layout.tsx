@@ -44,7 +44,7 @@ const footerLinks: { href: string; label: string }[] = [
  * The header carries ONE account action (HeaderSessionAction): the join door for guests,
  * the cabinet link once signed in. The finance link stays in the nav and footer arrays above
  * but only renders while showPublicFinances() is true (hidden by default, ADR-034); the events
- * link likewise only while showEvents() is true (hidden by default, ADR-038).
+ * link likewise only while showEvents() is true (hidden by default, ADR-042).
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const financesPublic = showPublicFinances();
