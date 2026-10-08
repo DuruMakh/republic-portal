@@ -45,16 +45,35 @@ describe("/privacy", () => {
     for (const company of ["Supabase", "Vercel", "Verify.ge"]) expect(text).not.toContain(company);
   });
 
-  it("states the 18+ rule and the transfer to the EU", () => {
+  it("states the 18+ rule and that processing happens in the EU and the US", () => {
     const { container } = render(<PrivacyPage />);
     const text = container.textContent ?? "";
     expect(text).toContain("მხოლოდ 18 წლის ან უფროს პირს");
     expect(text).toContain("ევროკავშირში");
+    expect(text).toContain("აშშ-შიც");
+  });
+
+  it("names the personal ID number among the membership data", () => {
+    const { container } = render(<PrivacyPage />);
+    expect(container.textContent).toContain("წევრობის განაცხადისას: პირადი ნომერი,");
+  });
+
+  it("says a delegate's place in the ranking is public", () => {
+    const { container } = render(<PrivacyPage />);
+    expect(container.textContent).toContain("ადგილი რეიტინგში");
+  });
+
+  it("says where to send requests and how fast they are answered", () => {
+    render(<PrivacyPage />);
+    const links = screen.getAllByRole("link", { name: "დაგვიკავშირდი →" });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute("href", "/support");
+    expect(screen.getByText(/10 სამუშაო დღისა/)).toBeInTheDocument();
   });
 
   it("lists what is collected and who sees it as bullet points", () => {
     render(<PrivacyPage />);
     const lists = screen.getAllByRole("list");
-    expect(lists.map((l) => l.querySelectorAll("li").length)).toEqual([4, 5]);
+    expect(lists.map((l) => l.querySelectorAll("li").length)).toEqual([5, 5]);
   });
 });

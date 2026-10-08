@@ -1187,8 +1187,15 @@ variable, nothing visible changes except the tab title.
 - **Owner decisions.** Controller named only as the movement; recipients by category, no
   company names; minimum age 18; no political-views explainer section; the two founders'
   accounts keep empty consent fields (no hand edits).
-- **Deferred (owner: later).** A channel for data requests and self-service deletion or
-  withdrawal (the law's 10-working-day rights); general rules of use; re-consent on a new
-  policy version; consent date in the admin panel; legal review of the copy before launch.
+- **Policy text corrected before release (2026-10-08 launch audit).** The first draft never
+  named the personal ID number, said data leaves Georgia only for the EU, and gave no way to
+  reach the movement. The released text names the ID number and the Google profile data,
+  says the database is in the EU while some providers (Google sign-in, hosting) also process
+  data in the US, lists technical logs, says a delegate's ranking is public, and points
+  questions and data requests to the contact page with a 10-working-day answer. Version stays
+  `2026-10-v1`: nobody had accepted the earlier wording on the real site.
+- **Deferred.** Self-service account deletion is the next feature (owner, 2026-10-08), and the
+  rights section will mention it once it ships; general rules of use; re-consent on a new
+  policy version; consent date in the admin panel; legal review of the copy.
 - **Numbering.** Reserved as 041 while 038-040 were claimed by parallel PRs the same day; it
   sits after 042, 043 and 044 here because it merged later.
