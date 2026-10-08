@@ -486,11 +486,27 @@ git commit -m "test(db): staging probe for account deletion"
 
 - [ ] **Step 1:** `npm run typecheck && npm run lint && npm run format:check && npm run test && npm run ka:scan`; all green.
 - [ ] **Step 2:** Open the PR "Account deletion, step 1: database only (nothing visible)"; CI green; owner OK in chat (nothing visible changes); merge with `gh pr merge --merge --match-head-commit <sha>`; recheck the last ADR number on `main` first.
-- [ ] **Step 3:** Production: `production-db.yml` dry-run from `main`; confirm the only pending files are `20261009140000_account_deletion.sql` and `20261009150000_account_deletion_hardening.sql`; apply with the dry-run's run id; the workflow's schema checks pass. The grants are not checked by hand in the dry-run evidence: `scripts/production-db-schema-check.sql` (run by the apply job) fails the apply if anon can execute any of the three functions, if authenticated can execute `erase_account` or cannot execute the two wrappers, if service_role can execute `erase_account`, or if `postgres` may not delete from `auth.users`.
+- [ ] **Step 3:** Production: `production-db.yml` dry-run from `main`; confirm the only pending files are `20261009140000_account_deletion.sql` and `20261009150000_account_deletion_hardening.sql`; apply with the dry-run's run id; the workflow's schema checks pass. The grants are not checked by hand in the dry-run evidence: `scripts/production-db-schema-check.sql` (run by the apply job after `supabase db push`, so it fails the job but cannot prevent the apply) fails if anon can execute any of the three functions, if authenticated can execute `erase_account` or cannot execute the two wrappers, if service_role can execute `erase_account`, or if `postgres` may not delete from `auth.users`.
 
 ---
 
 ## Release B — application (branch `claude/account-deletion`, after Release A is on production)
+
+### Task 3a: Release B migration (ships first)
+
+Added after the whole-branch re-review (2026-10-08): the re-review found the points below in
+Release A's two migrations, and the rulings moved their fixes here. They go in one new migration
+file; no existing migration is edited. Release B therefore ships in two merges again: this
+migration first (migration-only PR, production dry-run and apply as in Task 3), then the code
+(Tasks 4-12).
+
+- [ ] `erase_account` deletes the person's `phone_verification_send_reservations` older than 24 hours.
+- [ ] A daily purge of anonymized reservations (`user_id` null) older than 24 hours. Use pg_cron, or make the security session's 24-hour cleanup global; coordinate with that session.
+- [ ] FOUND checks after the UPDATE in `admin_approve_delegate`, `admin_reject_delegate` and `admin_update_delegate_name`. Each raises `invalid_target` when the delegate is gone.
+- [ ] Build the departing delegate's team via `update ... returning member_id`, to remove the 23505 race.
+- [ ] Lock the person's own open membership row `FOR UPDATE` right after the profile lock.
+- [ ] Pin the hardened `v_personal_keys` list and the staff / `invalid_target` conditions in `lib/account-deletion-migration.test.ts`.
+- [ ] Add a probe reservation that has a `challenge_id` to `scripts/verify-account-deletion.mjs`.
 
 ### Task 4: Copy, schemas, error messages
 
@@ -1098,7 +1114,8 @@ The admin copy (Task 4, `ADMIN_DELETE_REASON_LABEL` or a hint under the reason f
   > their own retention (spec §2, §7). It must also not say that every vote stays: a vote in a
   > poll that is still running is removed, only votes in finished polls stay without the person.
   > Rework both sentences (and the test's expected strings) to say so, with the owner reviewing
-  > the Georgian, before Step 1.
+  > the Georgian, before Step 1. It must also say that the phone number kept in the anonymized
+  > SMS rate-limit records is purged within about a day (Task 3a's purge).
 - [ ] **Step 4: Run, expect PASS**; ka-gate on the file.
 - [ ] **Step 5: Commit** — `git commit -m "docs(privacy): self-service deletion in the policy"`
 

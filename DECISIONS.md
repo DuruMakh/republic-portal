@@ -1288,8 +1288,9 @@ row action, `/account-deleted`, the policy sentence).
   default privileges had granted service_role; 150000 revokes it). The two ways in are
   `delete_my_account(confirm word)` for the signed-in person and `admin_delete_member(user,
 reason)` for a super_admin, which writes its `member.delete` audit row first (ADR-014). The
-  post-apply schema check (`scripts/production-db-schema-check.sql`) fails the production apply if
-  any of those grants drift or if `postgres` loses DELETE on `auth.users`.
+  schema check (`scripts/production-db-schema-check.sql`) runs after `supabase db push`, so it fails
+  the production-db job if any of those grants drift or if `postgres` loses DELETE on
+  `auth.users`, but it cannot prevent the apply.
 - **Erased:** the sign-in account (identities, sessions), the profile (names, phone, personal ID,
   birth date, region, city, job, consent stamp, referral code), own memberships, the delegate row
   and its photo (the photo file through Storage in Release B), RSVPs, payments (none exist while
@@ -1300,8 +1301,11 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
 - **Kept, without the person:** votes in closed or past-deadline polls (member set null, so
   finished results never change; owner decision c; the member results view now counts options,
   not members); SMS send reservations (user set null, so deleting and re-registering cannot reset
-  the per-number and site-wide send limits; the phone number stays in those rows until the existing
-  24-hour cleanup removes them, which runs the next time that number asks for a code); audit rows
+  the per-number and site-wide send limits; the phone number stays in those rows: the existing
+  24-hour cleanup removes them only when that number next asks for a code, so a number that never
+  asks again keeps its row until Release B's first migration adds a purge — `erase_account`
+  deleting the person's reservations older than 24 hours plus a daily purge of anonymized ones
+  older than 24 hours — after which the phone number is gone within about a day); audit rows
   about the person (below); other members' memberships that pointed at a departing delegate (open
   ones are closed and replaced by a central membership with `note = 'delegate_left'`, closed ones
   lose the link).
@@ -1328,8 +1332,13 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
   still referenced (they wrote audit rows, recorded payments, approved delegates) are refused as
   `staff_history`; the error detail names the blocking foreign key. The trail stays intact.
 - **Races.** The erasure locks the person's profile and delegate rows first, and the polls they
-  voted in `FOR SHARE`, so a concurrent reassignment, delegate change, approval or poll close
-  either finishes first or waits.
+  voted in `FOR SHARE`, so a concurrent reassignment or delegate change to the departing person,
+  or a poll close, either finishes first or waits (and fails on the foreign key once the person is
+  gone). That does not cover `admin_approve_delegate`, `admin_reject_delegate`,
+  `admin_update_delegate_name` and `admin_reveal_personal_id`: they take no lock and have no FOUND
+  check, so one running at the same moment can still commit an audit row with the person's name
+  after the scrub. Release B's first migration closes that (plan Task 3a), together with the
+  membership 23505 race when the departing delegate's team is built.
 - **Staging proof (2026-10-08, `scripts/verify-account-deletion.mjs`).** A function owned by
   `postgres` may `delete from auth.users` on the hosted platform, so the spec's fallback (deleting
   the auth user with the service-role admin API) is not needed. The probe also proves the audit
@@ -1343,4 +1352,5 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
   retention rules (decide with a lawyer before dues return).
 - **Window between the releases.** Once A is applied, any signed-in person can call
   `delete_my_account` directly; a delegate who does so before B ships leaves their public photo
-  file in Storage until it is removed by hand.
+  file in Storage until it is removed by hand, and the phone number stays in an anonymized SMS
+  rate-limit row until Release B's purge.

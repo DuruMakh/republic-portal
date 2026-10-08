@@ -6,11 +6,14 @@
 -- phone_verification_send_reservations the same way as before.
 --
 -- 1. erase_account() is restated in full (same signature, result and definer settings) with:
---    a) the person's profile and delegate rows locked first. A concurrent reassignment, delegate
---       change or delegate approval then either finishes before the erasure reads anything, or
---       waits and finds the person gone: no false staff_history from a membership row added
---       mid-erasure, no team member moved to central without the note, no name-bearing
---       delegate.approve audit row committed after the scrub.
+--    a) the person's profile and delegate rows locked first. A concurrent reassignment or
+--       delegate change TO the departing person then either finishes before the erasure reads
+--       anything, or waits and fails on the foreign key once the person is gone: no false
+--       staff_history from a membership row added mid-erasure, no team member moved to central
+--       without the note. These locks do NOT stop admin_approve_delegate(),
+--       admin_reject_delegate(), admin_update_delegate_name() or admin_reveal_personal_id() from
+--       committing a name-bearing audit row after the scrub: they take no lock and have no FOUND
+--       check on their UPDATE. Release B (the application release) fixes that in a new migration.
 --    b) the person's votes in polls that are still running (open, deadline not passed) deleted.
 --       The erasure frees the phone number and the personal ID, so a person who deleted their
 --       account and registered again could otherwise vote twice in the same poll. Votes in
@@ -35,8 +38,10 @@
 --    ever look rows up by `user_id = p_user_id` (never null for a live account), so an
 --    anonymous row never matches a per-account rule or a completion; it still counts for its
 --    phone number and for the site-wide hour, and the existing 24-hour cleanup removes it the
---    next time that number asks for a code. The unique (user_id, phone, purpose,
---    idempotency_key) constraint treats nulls as distinct, so anonymous rows never collide.
+--    next time that number asks for a code. If that number never asks again, the anonymized row
+--    keeps the phone number: nothing purges it until Release B adds a purge. The unique
+--    (user_id, phone, purpose, idempotency_key) constraint treats nulls as distinct, so
+--    anonymous rows never collide.
 --    The security session that owns these tables confirmed nothing assumes user_id not null.
 
 -- 1. The erasure --------------------------------------------------------------------------------
