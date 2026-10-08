@@ -76,15 +76,6 @@ export async function getReferenceCode(phoneNational: string): Promise<string> {
   return data.reference_code as string;
 }
 
-export async function getReferralCode(phoneNational: string): Promise<string> {
-  assertE2eFixtureEnvironment();
-  const db = serviceClient();
-  const id = await profileIdByPhone(db, phoneNational);
-  const { data, error } = await db.from("delegates").select("referral_code").eq("id", id).single();
-  if (error || !data?.referral_code) throw new Error(`no referral code for ${phoneNational}`);
-  return data.referral_code as string;
-}
-
 /** The permanent public slug, stamped by admin_approve_delegate — read post-approval. */
 export async function getDelegateSlug(phoneNational: string): Promise<string> {
   assertE2eFixtureEnvironment();

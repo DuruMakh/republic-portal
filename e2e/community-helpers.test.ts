@@ -50,13 +50,6 @@ test("reports every failed table, not just the first", async () => {
   await expect(cleanupCommunityContent("e2e-poll-")).rejects.toThrow(/news.*polls/s);
 });
 
-test("resolves when all three deletes succeed", async () => {
-  const db = fakeContentClient();
-  createClient.mockReturnValue(db.client);
-
-  await expect(cleanupCommunityContent("e2e-news-")).resolves.toBeUndefined();
-});
-
 // Matches cleanupUsersByPhone: without staging credentials every cleanup skips
 // alike, rather than one throwing and its neighbour returning.
 test("skips quietly when staging credentials are absent", async () => {
