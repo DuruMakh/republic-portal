@@ -9,6 +9,7 @@ import { excerpt } from "@/lib/content-render";
 import { eventEndIso, formatEventTimeKa } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
 import { fetchPublicEventBySlug, fetchPublicEvents } from "@/lib/supabase/public";
+import { generateMetadata as notFoundMetadata } from "./not-found";
 
 export const revalidate = 60;
 
@@ -28,7 +29,7 @@ export async function generateMetadata({
   if (!showEvents()) return NOT_FOUND_METADATA;
   const { slug } = await params;
   const event = await fetchPublicEventBySlug(slug);
-  if (!event) return { title: "ღონისძიება ვერ მოიძებნა — ქართული რესპუბლიკა" };
+  if (!event) return notFoundMetadata();
   return {
     title: `${event.title} — ქართული რესპუბლიკა`,
     description: `${formatEventTimeKa(event.starts_at, event.ends_at)} · ${event.location}`,

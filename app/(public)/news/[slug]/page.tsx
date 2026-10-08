@@ -6,6 +6,7 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { excerpt } from "@/lib/content-render";
 import { formatDateKa } from "@/lib/cabinet";
 import { fetchPublicNews, fetchPublicNewsBySlug } from "@/lib/supabase/public";
+import { metadata as notFoundMetadata } from "./not-found";
 
 export const revalidate = 60;
 
@@ -21,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const article = await fetchPublicNewsBySlug(slug);
-  if (!article) return { title: "სიახლე ვერ მოიძებნა — ქართული რესპუბლიკა" };
+  if (!article) return notFoundMetadata;
   return {
     title: `${article.title} — ქართული რესპუბლიკა`,
     description: excerpt(article.body),

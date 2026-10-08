@@ -13,6 +13,11 @@ const DEMO_BANNER = "სადემონსტრაციო გარემ�
 const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა.";
 const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
 const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
+// A missing article, delegate or event names what is missing (ADR-044).
+const ARTICLE_NOT_FOUND_TITLE = "სიახლე ვერ მოიძებნა — ქართული რესპუბლიკა";
+const DELEGATE_NOT_FOUND_TITLE = "დელეგატი ვერ მოიძებნა — ქართული რესპუბლიკა";
+const DELEGATE_NOT_FOUND_HEADING = "დელეგატი ვერ მოიძებნა.";
+const EVENT_NOT_FOUND_TITLE = "ღონისძიება ვერ მოიძებნა — ქართული რესპუბლიკა";
 
 /**
  * A page hidden by a switch (ADR-034, ADR-042) must be indistinguishable from a mistyped address:
@@ -20,11 +25,16 @@ const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა �
  * preview or a browser without scripts sees) and in the tab once the page has loaded (ADR-040).
  */
 async function expectHiddenPage(page: Page, path: string) {
+  await expectNotFound(page, path, NOT_FOUND_TITLE, NOT_FOUND_HEADING);
+}
+
+/** A 404 with its notice, and the given title in the served HTML and in the tab. */
+async function expectNotFound(page: Page, path: string, title: string, heading: string) {
   const response = await page.goto(path);
   expect(response?.status(), path).toBe(404);
-  expect(await response?.text(), path).toContain(`<title>${NOT_FOUND_TITLE}</title>`);
-  await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
-  await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+  expect(await response?.text(), path).toContain(`<title>${title}</title>`);
+  await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+  await expect(page).toHaveTitle(title);
 }
 
 test.describe("home", () => {
@@ -374,25 +384,37 @@ test.describe("events hidden", () => {
   });
 });
 
-// ADR-040: Next regenerates a hidden page's 60-second ISR entry without the page's own metadata,
-// so the tab used to fall back to the plain site name from the second minute on. Each address is
-// visited three times: now, after the entry has gone stale (that visit starts the regeneration)
-// and once more after it (the regenerated copy). None may differ from a mistyped address.
-test.describe("hidden pages after the 60-second refresh", () => {
-  const hidden = [
+// ADR-040, ADR-044: Next regenerates a prerendered page's 60-second ISR entry without the page's
+// own metadata, so a page-raised 404's tab used to fall back to the plain site name from the
+// second minute on. Each address is visited three times: now, after the entry has gone stale
+// (that visit starts the regeneration) and once more after it (the regenerated copy). A hidden
+// page must match a mistyped address every time; a missing article, delegate or event keeps its
+// own title.
+test.describe("not-found titles after the 60-second refresh", () => {
+  const pages: [path: string, title: string, heading: string][] = [
     ...(FINANCES_PUBLIC ? [] : ["/transparency"]),
     // a real seeded event's address too: hiding events must not leak its title
     ...(EVENTS_SHOWN ? [] : ["/events", "/events/saerto-kreba-tbilisshi"]),
-  ];
-  test.skip(hidden.length === 0, "every switch is on: nothing is hidden");
+  ].map((path): [string, string, string] => [path, NOT_FOUND_TITLE, NOT_FOUND_HEADING]);
+  pages.push(
+    ["/news/no-such-article-xyz", ARTICLE_NOT_FOUND_TITLE, NOT_FOUND_HEADING],
+    ["/delegates/no-such-delegate", DELEGATE_NOT_FOUND_TITLE, DELEGATE_NOT_FOUND_HEADING],
+  );
+  // while events are hidden, proxy.ts answers every /events address like the hidden ones above
+  if (EVENTS_SHOWN) {
+    pages.push(["/events/no-such-event-xyz", EVENT_NOT_FOUND_TITLE, NOT_FOUND_HEADING]);
+  }
   // Only a production server (CI's `npm run start`) regenerates pages; `next dev` has no ISR.
   test.skip(!process.env.CI, "needs the production server CI runs");
 
-  test("keep the exact not-found title on every visit", async ({ page }) => {
-    for (const path of hidden) await expectHiddenPage(page, path);
+  test("keep their exact title on every visit", async ({ page }) => {
+    const visitAll = async () => {
+      for (const [path, title, heading] of pages) await expectNotFound(page, path, title, heading);
+    };
+    await visitAll();
     await page.waitForTimeout(61_000);
-    for (const path of hidden) await expectHiddenPage(page, path);
+    await visitAll();
     await page.waitForTimeout(3_000);
-    for (const path of hidden) await expectHiddenPage(page, path);
+    await visitAll();
   });
 });
