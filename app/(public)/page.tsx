@@ -7,6 +7,7 @@ import { SectionRule } from "@/components/SectionRule";
 import { formatDateKa } from "@/lib/cabinet";
 import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
+import { showEvents } from "@/lib/events-switch";
 import { formatCountKa } from "@/lib/format";
 import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
@@ -63,12 +64,14 @@ export default async function HomePage() {
   // The collected-dues figure is part of the hidden finance surface (ADR-034): no fetch,
   // no row, until SHOW_PUBLIC_FINANCES=true.
   const financesPublic = showPublicFinances();
+  // Events are hidden by default too (ADR-042): no fetch and no section until SHOW_EVENTS=true.
+  const eventsShown = showEvents();
   const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),
     fetchPublicDelegates(),
     financesPublic ? fetchTransparencyStats() : Promise.resolve(null),
     fetchPublicNews(),
-    fetchPublicEvents(),
+    eventsShown ? fetchPublicEvents() : Promise.resolve([]),
   ]);
   const ranked = rankDelegates(delegates);
   const { upcoming } = splitEvents(events, new Date().toISOString());
@@ -144,18 +147,20 @@ export default async function HomePage() {
               </div>
             )}
           </div>
-          <div className="mt-10">
-            <SectionRule label={EVENTS_LABEL} action={<Link href="/events">{FULL}</Link>} />
-            {upcoming.length === 0 ? (
-              <p className="mt-4 text-muted-fg">{EVENTS_EMPTY}</p>
-            ) : (
-              <div className="mt-6 flex flex-col gap-3">
-                {upcoming.slice(0, 3).map((e) => (
-                  <EventRow key={e.id} event={e} />
-                ))}
-              </div>
-            )}
-          </div>
+          {eventsShown ? (
+            <div className="mt-10">
+              <SectionRule label={EVENTS_LABEL} action={<Link href="/events">{FULL}</Link>} />
+              {upcoming.length === 0 ? (
+                <p className="mt-4 text-muted-fg">{EVENTS_EMPTY}</p>
+              ) : (
+                <div className="mt-6 flex flex-col gap-3">
+                  {upcoming.slice(0, 3).map((e) => (
+                    <EventRow key={e.id} event={e} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
         <aside className="mt-8 flex flex-col gap-6 lg:mt-0 lg:pl-7">
           <div>
