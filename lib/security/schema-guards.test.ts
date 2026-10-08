@@ -709,6 +709,7 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
     admin_update_delegate_profile: { roles: SV, audit: "delegate.update_profile" },
     admin_update_delegate_name: { roles: SV, audit: "delegate.update_name" },
     admin_reassign_member: { roles: SV, audit: "member.reassign" },
+    admin_delete_member: { roles: S, audit: "member.delete" },
     admin_save_news: { roles: SE, audit: "news.save" },
     admin_publish_news: { roles: SE, audit: "news.publish" },
     admin_unpublish_news: { roles: SE, audit: "news.unpublish" },
