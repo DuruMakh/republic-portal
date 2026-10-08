@@ -10,6 +10,7 @@ function run(args: string[]) {
     encoding: "utf8",
     timeout: 30_000,
     env: {
+      NODE_ENV: "test",
       PATH: process.env.PATH ?? "",
       NEXT_PUBLIC_SUPABASE_URL: PRODUCTION_LOOKALIKE,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-only",

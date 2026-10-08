@@ -7,9 +7,9 @@ describe("service-worker never-cache rule (security audit M3)", () => {
   it("never caches anything from another origin, Supabase above all", () => {
     expect(isNeverCached(at("https://abc.supabase.co/auth/v1/user"), false)).toBe(true);
     expect(isNeverCached(at("https://abc.supabase.co/rest/v1/cities?select=*"), false)).toBe(true);
-    expect(
-      isNeverCached(at("https://abc.supabase.co/storage/v1/object/public/x.jpg"), false),
-    ).toBe(true);
+    expect(isNeverCached(at("https://abc.supabase.co/storage/v1/object/public/x.jpg"), false)).toBe(
+      true,
+    );
   });
 
   it("never caches signed-in or API pages on our own origin", () => {

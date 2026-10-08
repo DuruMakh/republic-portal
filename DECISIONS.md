@@ -1164,3 +1164,62 @@ variable, nothing visible changes except the tab title.
   the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
+
+## ADR-045 (2026-10-08): Security hardening release after the 8 October audit
+
+One release by owner order ("one big work on security"). Spec
+`docs/superpowers/specs/2026-10-08-security-audit-fixes-design.md`; plans
+`docs/superpowers/plans/2026-10-08-security-*.md` (the single-release file overrides the others'
+release steps). Decisions D1–D5 were delegated to the agent by the owner and are recorded in the
+spec, section 7. Three migrations: `20261008160000` (phone verification), `20261008160100`
+(membership), `20261008160200` (delegate names).
+
+- **C1, phone proof (critical).** A superseded challenge was marked
+  `consumed_at = expires_at + 1µs`; `readOwnedChallenge` compared with `Date.parse`, which drops
+  microseconds, so after expiry the challenge read as a valid proof and the verify action attached
+  the phone with no code. Now: `lib/phone-verification/timestamps.ts` compares ledger timestamps
+  in bigint microseconds (an unreadable timestamp fails closed); supersede sets a new explicit
+  `superseded_at` and never touches `consumed_at`; attempts and consumption refuse a superseded
+  challenge; old markers are backfilled. The legacy `register()` is revoked from
+  `authenticated` — `register_google()` (owner-run, exact proof check) is the only path. The
+  retired legacy phone form can no longer register; `.env.example` now says `google`.
+- **H1, personal-ID probing.** `become_member_save_profile` resolves the delegate before it looks
+  at the ID; a conflict is RETURNED (`{"error":"duplicate_personal_id"}`) so its audit row
+  (`member.personal_id_conflict`) commits; three conflicts stop the step for the account for good
+  (D2). The audit row's `actor_id` is NULL on purpose: `audit_log.actor_id` is a plain FK, and a
+  non-null actor would make the account undeletable (e2e cleanup, future deletion). The tried ID is
+  never stored.
+- **M1, SMS abuse (D4).** Per account 60 s / 5 per hour / 10 per day / 3 numbers per day; per
+  number 60 s and 10 per day across accounts, except an account's first code for a number today;
+  1,000 per hour site-wide. A send cancels only the sender's own codes. No rule looks at whether a
+  profile owns the number. `scripts/security/sms-limits-scenario.sql` proves the rules on staging
+  inside a rolled-back transaction.
+- **M2, delegate names (D3).** `protect_profile_columns()` raises `name_locked` when a client
+  changes an approved delegate's name; the approval check is a SECURITY DEFINER helper
+  (`is_approved_delegate()`) because clients cannot read `delegates` and the trigger must stay
+  invoker-run to tell clients apart. Admins correct names on `/admin/verify/[id]` through the
+  audited `admin_update_delegate_name` (`delegate.update_name`).
+- **M3, offline cache.** The service worker never caches cross-origin (Supabase) or signed-in
+  responses (`lib/sw-routes.ts`); sign-out empties the runtime caches, keeping the precache.
+- **M4, photo metadata.** `lib/image-sanitize.ts` re-encodes every delegate photo and news cover
+  with sharp — orientation applied, all metadata (GPS, time, device) dropped. **sharp becomes a
+  runtime dependency** (`^0.35.5`, which also clears its advisories); the alternative, a
+  hand-written metadata stripper, would lose the orientation and turn phone photos sideways.
+- **M6, scripts.** `scripts/staging-guard.mjs` allow-lists the staging ref in every destructive or
+  probing script; its refusal names no ref.
+- **H2, Next.js 16.3.8** (and eslint-config-next). On our Vercel setup the advisories that applied
+  were the server-action CPU DoS, the server-action id disclosure and cache confusion; the next/og
+  RCE, Windows, AVIF/remotePatterns and i18n-proxy ones did not. `npm audit fix` (no `--force`)
+  took the total from 18 to 8. **Accepted and left:** the 8 that remain are lint and test tooling
+  only (eslint-config-next's glob chain, vitest/tinypool), whose fixes are major downgrades or
+  upgrades and never reach the site.
+- **H3.** The `production-db` GitHub environment accepts deployments from `main` only (D1, applied
+  2026-10-08; no required reviewers — the owner only chats). Every action in `production-db.yml`
+  is pinned to a commit SHA, tag kept as a comment; a test enforces it.
+- **Release order inside the one release.** The code goes live at merge, before the production
+  apply; everything is written to work against the old schema for that window (the admin rename
+  form shows the generic error until its RPC exists). The production apply also applies privacy
+  step 1 (`20261008140000`, D5). Privacy step 2 (`20261008150000`) restates `register()` with a
+  grant to `authenticated`: if it merges after this release it must be renamed past
+  `20261008160200` and its grant replaced by the revoke — `lib/security/registration-hardening.test.ts`
+  fails until then.
