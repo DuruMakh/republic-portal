@@ -239,6 +239,11 @@ begin
      set details = (details - v_personal_keys) || jsonb_build_object('erased', true)
    where target_id = p_user_id::text
      and details ?| v_personal_keys;
+  -- delegate.update_name (20261008160200) names the delegate under from/to
+  update public.audit_log
+     set details = (details - array['from', 'to']) || jsonb_build_object('erased', true)
+   where target_id = p_user_id::text
+     and action = 'delegate.update_name';
   perform set_config('app.erasing', 'off', true);
 
   delete from auth.users where id = p_user_id;
@@ -282,7 +287,7 @@ grant execute on function public.admin_delete_member(uuid, text) to authenticate
 revoke execute on function public.admin_delete_member(uuid, text) from public, anon;
 ```
 
-Before committing, re-grep the audit inserts for any other key that carries a person's name (`grep -n "insert into public.audit_log" -A4 supabase/migrations/*.sql`). Known today: `name`, `memberName`; `member.reassign` may also name delegates (check its `jsonb_build_object` in `20260726121500_reassign_guard_approved_only.sql:84`). Add any such key to `v_personal_keys`, and if a key names a person other than the row's target (e.g. a delegate's name inside a member's reassign row), add a second `update` for rows where that key's companion id equals `p_user_id`. Record what you found in the migration comment.
+Before committing, re-grep the audit inserts for any other key that carries a person's name (`grep -n "insert into public.audit_log" -A4 supabase/migrations/*.sql`). Known today: `name`, `memberName`, and `from`/`to` on `delegate.update_name` (handled by its own update above); `member.reassign` may also name delegates (check its `jsonb_build_object` in `20260726121500_reassign_guard_approved_only.sql:84`). Add any such key to `v_personal_keys`, and if a key names a person other than the row's target (e.g. a delegate's name inside a member's reassign row), add a second `update` for rows where that key's companion id equals `p_user_id`. Record what you found in the migration comment.
 
 - [ ] **Step 4: Labels, types, baseline count**
 
@@ -324,7 +329,7 @@ In `Functions`, next to `member_cast_vote`:
       admin_delete_member: { Args: { p_user_id: string; p_reason: string }; Returns: Json };
 ```
 
-`.github/workflows/production-db.yml`: set both `EXPECTED_MIGRATION_FILE_COUNT` lines to the number of files in `supabase/migrations` (38 if the security release has not merged first; recount at merge time either way).
+`.github/workflows/production-db.yml`: set both `EXPECTED_MIGRATION_FILE_COUNT` lines to the number of files in `supabase/migrations` (42 now that the security release is on main; recount at merge time either way).
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
