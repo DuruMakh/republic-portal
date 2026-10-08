@@ -7,6 +7,7 @@ import { ReferralCard } from "@/components/ReferralCard";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -31,7 +32,11 @@ export default async function DelegateDashboardPage() {
   // no RPC demotes an approved row — the old pending/rejected branches below were
   // unreachable dead weight and were removed with the R2 gate move.
 
-  const { data: teamRsvpsRaw, error: teamRsvpsError } = await supabase.rpc("delegate_team_rsvps");
+  // Events hidden (the default, ADR-042): no team-RSVP card, so no read for it either.
+  const eventsShown = showEvents();
+  const { data: teamRsvpsRaw, error: teamRsvpsError } = eventsShown
+    ? await supabase.rpc("delegate_team_rsvps")
+    : { data: null, error: null };
   // A failure here must stay scoped to the team-RSVP card — render a degraded
   // card in its slot below instead of throwing, so it can never take down the
   // whole delegate panel (unlike delegate_panel's failure above, which must).
@@ -99,7 +104,7 @@ export default async function DelegateDashboardPage() {
             </ButtonLink>
           </div>
         </Card>
-        {teamRsvpsError ? (
+        {!eventsShown ? null : teamRsvpsError ? (
           <Card title="გუნდის RSVP">
             <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
           </Card>

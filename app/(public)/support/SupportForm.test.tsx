@@ -34,21 +34,13 @@ describe("SupportForm", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
-  it("submits with only a phone and shows the success line", async () => {
+  it("submits with only a phone, then replaces the form with the success line so a message cannot be double-sent", async () => {
     const submit = vi.fn().mockResolvedValue({ ok: true });
     render(<SupportForm submit={submit} />);
     fill({ phone: "+995555123456" });
     fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
     expect(await screen.findByText(SUPPORT_SUCCESS)).toBeInTheDocument();
     expect(submit).toHaveBeenCalledTimes(1);
-  });
-
-  it("replaces the form with the success line so a message cannot be double-sent", async () => {
-    const submit = vi.fn().mockResolvedValue({ ok: true });
-    render(<SupportForm submit={submit} />);
-    fill({ email: "someone@example.com" });
-    fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
-    await screen.findByText(SUPPORT_SUCCESS);
     expect(screen.queryByRole("button", { name: SUPPORT_SUBMIT_LABEL })).not.toBeInTheDocument();
   });
 

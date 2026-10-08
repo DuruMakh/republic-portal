@@ -24,6 +24,11 @@ export const ROLE_DUTIES_KA: Record<AdminRole, string> = {
   editor: "სიახლეები, ღონისძიებები და გამოკითხვები",
 };
 
+/** The duties as an admin sees them: no events in the editor's line while events are hidden (ADR-042). */
+export function roleDutiesKa(eventsShown: boolean): Record<AdminRole, string> {
+  return eventsShown ? ROLE_DUTIES_KA : { ...ROLE_DUTIES_KA, editor: "სიახლეები და გამოკითხვები" };
+}
+
 /** Overview/member-list gate: every admin role except editor (spec §4.2 „staff“). */
 export function isStaff(roles: readonly AdminRole[]): boolean {
   return roles.some((r) => r === "super_admin" || r === "verifier" || r === "finance");

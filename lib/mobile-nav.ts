@@ -12,8 +12,6 @@
  * the same set of routes, and both are consumed by the same components.
  */
 
-export type MobileChrome = "public" | "back" | "cabinet";
-
 export interface BackTarget {
   href: string;
   label: string;
@@ -45,9 +43,7 @@ const STATIC_BACK: Record<string, BackTarget> = {
  * Dynamic detail routes. Matched by prefix because [slug] values are unbounded.
  * The trailing slash is load-bearing: it keeps "/news" (an index, no back
  * header) from matching the article rule. It is not what keeps "/delegates/"
- * from colliding with the "/delegate" cabinet root — that's the "s"; the
- * load-bearing check for that collision is inCabinet's own
- * startsWith("/delegate/").
+ * from colliding with the "/delegate" cabinet root — that's the "s".
  */
 const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
   { prefix: "/news/", target: { href: "/news", label: NEWS_INDEX } },
@@ -58,41 +54,25 @@ const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
 /** Routes that ARE the call to action, so a join bar under them is noise. */
 const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/login"]);
 
-function inCabinet(pathname: string): boolean {
-  return (
-    pathname === "/me" ||
-    pathname.startsWith("/me/") ||
-    pathname === "/delegate" ||
-    pathname.startsWith("/delegate/")
-  );
-}
-
 /**
  * The parent a „← უკან“ header links to, or null when the route is not a detail
  * screen. Deliberately a fixed parent rather than router.back(): an article
  * opened from a shared link has no history behind it, and back() would leave
  * the site entirely (spec §4.8).
+ *
+ * While events are hidden (ADR-042) an old event address is a 404 with no
+ * events index to return to, so it gets no back header — the plain public
+ * header instead. Only the public layout reads the switch; the cabinet and
+ * admin chrome never sit on an event address, hence the default.
  */
-export function mobileBackTarget(pathname: string): BackTarget | null {
+export function mobileBackTarget(pathname: string, eventsShown = true): BackTarget | null {
   const exact = STATIC_BACK[pathname];
   if (exact) return exact;
   for (const { prefix, target } of PREFIX_BACK) {
+    if (!eventsShown && prefix === "/events/") continue;
     if (pathname.startsWith(prefix) && pathname.length > prefix.length) return target;
   }
   return null;
-}
-
-/**
- * Which of the three headers a route gets. The back header wins over the
- * cabinet header, which is what takes the tab bar off the membership wizard.
- * Never called for /admin — admin chrome is out of scope and unchanged.
- */
-export function mobileChrome(pathname: string): MobileChrome {
-  if (mobileBackTarget(pathname) !== null) return "back";
-  if (inCabinet(pathname)) return "cabinet";
-  // Public chrome is the deliberate fallback for any route that is neither a
-  // back-target nor in-cabinet (including an unclassified or future route).
-  return "public";
 }
 
 export function showsJoinCta(pathname: string): boolean {
@@ -107,20 +87,26 @@ import type { CabinetNavItem } from "./cabinet";
 
 type CabinetRole = "registered" | "member" | "delegate";
 
+/** The bar holds at most this many tabs; everything else goes to the sheet. */
+const TAB_LIMIT = 4;
+
 /**
- * The four hrefs that earn a permanent slot, per role, in render order
- * (spec §4.6). Chosen by how often people return, NOT by cabinetNavItems()
- * order — a plain slice(0, 4) would put billing on the bar and bury polls.
+ * The hrefs that may earn a permanent slot, per role, in priority (and render)
+ * order (spec §4.6): the first TAB_LIMIT present in the nav take the bar.
+ * Chosen by how often people return, NOT by cabinetNavItems() order — a plain
+ * slice(0, 4) would put billing on the bar and bury polls.
  *
  * A single global priority list cannot serve both registered (profile last)
- * and member (profile first), which is why this is keyed by role.
+ * and member (profile first), which is why this is keyed by role. The fifth
+ * entry fills the slot events leave while they are hidden (ADR-042); with
+ * events shown it never reaches the bar.
  *
- * Anything not listed — including /admin — lands in the „მეტი“ sheet.
+ * Anything not on the bar — including /admin — lands in the „მეტი“ sheet.
  */
 const TAB_HREFS: Record<CabinetRole, ReadonlyArray<string>> = {
   registered: ["/me", "/me/events", "/me/news", "/me/profile"],
-  member: ["/me/profile", "/me/polls", "/me/events", "/me/news"],
-  delegate: ["/delegate", "/me/polls", "/me/events", "/me/news"],
+  member: ["/me/profile", "/me/polls", "/me/events", "/me/news", "/me/delegate"],
+  delegate: ["/delegate", "/me/polls", "/me/events", "/me/news", "/me/profile"],
 };
 
 /**
@@ -129,13 +115,15 @@ const TAB_HREFS: Record<CabinetRole, ReadonlyArray<string>> = {
  * so the bar uses the singular while page headings keep the plural. Shortening
  * the font instead would break the accessibility floor (spec §4.7).
  *
- * „პანელი“ is the second word of lib/cabinet.ts's „დელეგატის პანელი“.
+ * „პანელი“ is the second word of lib/cabinet.ts's „დელეგატის პანელი“, and
+ * „დელეგატი“ the second word of its „ჩემი დელეგატი“.
  */
 const TAB_LABELS: Readonly<Record<string, string>> = {
   "/me/events": "ღონისძიება",
   "/me/news": "სიახლე",
   "/me/polls": "გამოკითხვა",
   "/delegate": "პანელი",
+  "/me/delegate": "დელეგატი",
 };
 
 /**
@@ -151,12 +139,14 @@ export function mobileTabs(
   role: CabinetRole,
 ): { tabs: CabinetNavItem[]; more: CabinetNavItem[] } {
   const byHref = new Map(items.map((item) => [item.href, item]));
-  const tabs = TAB_HREFS[role].flatMap((href) => {
-    const item = byHref.get(href);
-    if (!item) return [];
-    const short = TAB_LABELS[href];
-    return [short ? { ...item, label: short } : item];
-  });
+  const tabs = TAB_HREFS[role]
+    .flatMap((href) => {
+      const item = byHref.get(href);
+      if (!item) return [];
+      const short = TAB_LABELS[href];
+      return [short ? { ...item, label: short } : item];
+    })
+    .slice(0, TAB_LIMIT);
   const onBar = new Set(tabs.map((tab) => tab.href));
   return { tabs, more: items.filter((item) => !onBar.has(item.href)) };
 }

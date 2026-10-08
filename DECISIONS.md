@@ -987,6 +987,32 @@ ADR-036.
   site's database must get it through the gated production-db workflow before this code is
   released there.
 
+## ADR-038 (2026-10-07): The structure page's condensed display type and pebble motif
+
+Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
+
+- **Information only.** The page explains the board, members and general vote in owner-approved
+  short text (spec `docs/superpowers/specs/2026-10-07-organization-structure-page-design.md` §2);
+  it changes no flow on the site. The board roster lives in code (`lib/board-members.ts`),
+  launches empty with a coming-soon notice, and each roster change ships through a preview for
+  owner sign-off. Social links are Facebook, TikTok and LinkedIn, each optional per person; no
+  email or phone.
+- **A deliberate departure from Kronika, scoped to this page.** The owner asked for a more
+  visual page and approved a concept with condensed display headings and a pebble motif
+  (კენჭისყრა is literally casting pebbles). The page keeps the public chrome and the existing
+  colour tokens; the concept's cooler ground became the site's paper so it sits in the sheet.
+- **Cost.** The condensed headings load the `wdth` axis of Noto Sans Georgian for the whole
+  site (next/font serves one variable file), so every page's font download is slightly
+  heavier. No new dependency.
+- **A shorter header.** In the same session the owner removed სიახლეები and ღონისძიებები from
+  the public header and phone menu: both are reached from the homepage, and სიახლეები stays in
+  the footer. The header now reads მთავარი, რეიტინგი, სტრუქტურა (plus ფინანსები only when
+  finances are public, ADR-034).
+- **With events switched back on (ADR-042, `SHOW_EVENTS=true`).** ADR-042 was written against
+  the older header and expected the header link to return with the switch. Reconciled when the
+  two met: switching events on restores the homepage section, the cabinets and the event pages,
+  but not a public-header link, because the owner's request here was specific to the header.
+
 ## ADR-039 (2026-10-08): The referral card counts supporters and members apart
 
 The referral card showed one figure labelled `მხარდამჭერი`, but it counted every sign-up through
@@ -1015,3 +1041,33 @@ fewer supporter and one more member.
   design without answering the label question; this was the recommended default.)
 - **Release order.** Two PRs: the additive migration first (nothing visible), then the card,
   after the real site's database has the migration.
+
+## ADR-042 (2026-10-08): Events hidden behind one switch
+
+Owner decision, taken in chat on 2026-10-08: remove ღონისძიებები from everything. Offered
+hiding (one switch, nothing deleted) or deleting for good (pages, code, the events and RSVP
+tables and their data), the owner chose hide, the same shape as ADR-034 (finances) and
+ADR-037 (dues). Plan: `docs/superpowers/plans/2026-10-08-events-hidden.md`. No migration.
+
+- **Switch `SHOW_EVENTS`.** Server-only, shown only for the word `true` (whitespace ignored),
+  `lib/events-switch.ts`. Hidden (the default) means: no ღონისძიებები link in the public
+  header; no events section on the homepage (and no events read); `/events` and every
+  `/events/<slug>` answer not-found, and no event page is built ahead of time; no events tab in
+  either cabinet's desktop nav or phone bar; no events card on the supporter's cabinet home;
+  `/me/events` answers not-found and the RSVP action refuses before reaching the database; no
+  team-RSVP card (and no read for it) on the delegate panel; no events tab in the admin content
+  nav, the three admin event pages answer not-found and the four event actions refuse; the
+  editor role reads "სიახლეები და გამოკითხვები" in the role picker.
+- **The phone bar keeps four tabs where it can.** Its per-role list became a priority list
+  (the first four present win). With events hidden a member's fourth tab is their delegate
+  (short label "დელეგატი") and a delegate's is their profile; a supporter has three tabs. With
+  events shown every bar is exactly as before.
+- **Kept.** The events tables, views and RPCs; existing events and RSVPs; the audit-log labels
+  for `event.*` actions, so old entries still read in Georgian; the style guide's EventRow
+  sample. To bring events back, set the variable in Vercel (for the build too, since the
+  public pages are built ahead of time) and redeploy.
+- **Known quirk, shared with the hidden finance page.** On a production server a hidden page's
+  first render carries the generic not-found tab title, but after its 60-second ISR entry
+  regenerates the tab shows the plain site name. Status, heading and content stay the
+  not-found page, and the tab never names the hidden section; the e2e check asserts exactly
+  that.

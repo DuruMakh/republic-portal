@@ -113,7 +113,7 @@ elements (paragraphs + auto-links, lib/content-render) — no HTML round-trips.
 
 Derived values are never stored as editable state. Since Phase 4 the
 active-member computation itself lives in the database engine functions
-(ADR-015); `lib/active.ts` mirrors the same math for previews and tests, and
+(ADR-015); `lib/active.ts` keeps only the date helpers the app previews with, and
 `profiles.status` is written only by the engine (plus `register()`'s initial
 'registered' insert and `become_member_complete()`'s registered→profile_completed
 step).

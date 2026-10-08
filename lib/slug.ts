@@ -71,16 +71,3 @@ export function makeSlugFrom(text: string, fallback: string, taken: ReadonlySet<
     if (!taken.has(candidate)) return candidate;
   }
 }
-
-/**
- * Slug base for a delegate name. Names with no Georgian/Latin characters
- * (Cyrillic, Armenian, …) romanize to nothing — fall back to "delegati" so
- * every applicant stays approvable (the RPC rejects empty slugs outright).
- */
-export function slugBase(fullName: string): string {
-  return slugFrom(fullName, "delegati");
-}
-
-export function makeSlug(fullName: string, taken: ReadonlySet<string>): string {
-  return makeSlugFrom(fullName, "delegati", taken);
-}

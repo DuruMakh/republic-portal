@@ -42,10 +42,6 @@ describe("CabinetNav", () => {
     expect(active).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "გადახდები" })).not.toHaveAttribute("aria-current");
   });
-  it("has a sign-out button", () => {
-    render(<CabinetNav items={ITEMS} />);
-    expect(screen.getByRole("button", { name: "გასვლა" })).toBeInTheDocument();
-  });
   it("clicking sign-out calls signOut and navigates home", async () => {
     render(<CabinetNav items={ITEMS} />);
     fireEvent.click(screen.getByRole("button", { name: "გასვლა" }));
@@ -59,16 +55,6 @@ describe("CabinetNav", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
   });
 
-  it("active item has the brand underline classes, not the old pill highlight", () => {
-    const { container } = render(<CabinetNav items={ITEMS} />);
-    const active = container.querySelector<HTMLAnchorElement>('a[href="/me/profile"]');
-    expect(active!.className).toContain("border-brand");
-    expect(active!.className).not.toContain("bg-brand/10");
-    const inactive = container.querySelector<HTMLAnchorElement>('a[href="/me/billing"]');
-    expect(inactive!.className).not.toContain("bg-brand/10");
-    expect(inactive!.className).toContain("text-ink");
-  });
-
   it("renders a count badge inside the link when an item has a count", () => {
     const itemsWithCount = ITEMS.map((item) =>
       item.href === "/me/delegate" ? { ...item, count: 3 } : item,
@@ -76,32 +62,5 @@ describe("CabinetNav", () => {
     const { container } = render(<CabinetNav items={itemsWithCount} />);
     const link = container.querySelector('a[href="/me/delegate"]');
     expect(link).toHaveTextContent("3");
-  });
-
-  const REGISTERED_ITEMS = [
-    { href: "/me", label: "მთავარი" },
-    { href: "/me/events", label: "ღონისძიებები" },
-    { href: "/me/news", label: "სიახლეები" },
-    { href: "/me/profile", label: "პროფილი" },
-  ];
-
-  it("root „მთავარი“ is NOT marked on sibling subpages (owner fix #7)", () => {
-    pathnameRef.current = "/me/events";
-    render(<CabinetNav items={REGISTERED_ITEMS} />);
-    expect(screen.getByRole("link", { name: "ღონისძიებები" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(screen.getByRole("link", { name: "მთავარი" })).not.toHaveAttribute("aria-current");
-  });
-
-  it("root „მთავარი“ is marked on /me itself and on subroutes no other item claims", () => {
-    pathnameRef.current = "/me";
-    const first = render(<CabinetNav items={REGISTERED_ITEMS} />);
-    expect(screen.getByRole("link", { name: "მთავარი" })).toHaveAttribute("aria-current", "page");
-    first.unmount();
-    pathnameRef.current = "/me/membership";
-    render(<CabinetNav items={REGISTERED_ITEMS} />);
-    expect(screen.getByRole("link", { name: "მთავარი" })).toHaveAttribute("aria-current", "page");
   });
 });

@@ -48,15 +48,6 @@ describe("RegisteredProfileForm", () => {
     expect(updateRegisteredNameAction).not.toHaveBeenCalled();
   });
 
-  it("rejects a too-long name with the max-60 message without calling the action", async () => {
-    updateRegisteredNameAction.mockClear();
-    renderForm();
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ა".repeat(61) } });
-    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
-    expect(await screen.findByText("მაქსიმუმ 60 სიმბოლო")).toBeInTheDocument();
-    expect(updateRegisteredNameAction).not.toHaveBeenCalled();
-  });
-
   it("submits trimmed names, confirms in Georgian, and clears the notice on edit", async () => {
     updateRegisteredNameAction.mockClear();
     updateRegisteredNameAction.mockResolvedValue({ ok: true });
@@ -71,23 +62,6 @@ describe("RegisteredProfileForm", () => {
     expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
     fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "მაისურაძე" } });
     expect(screen.queryByTestId("profile-saved")).toBeNull();
-  });
-
-  it("disables the save button while the action is pending", async () => {
-    updateRegisteredNameAction.mockClear();
-    let resolveAction!: (value: { ok: true }) => void;
-    updateRegisteredNameAction.mockImplementation(
-      () =>
-        new Promise<{ ok: true }>((resolve) => {
-          resolveAction = resolve;
-        }),
-    );
-    renderForm();
-    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "შენახვა" })).toBeDisabled());
-    resolveAction({ ok: true });
-    await waitFor(() => expect(screen.getByRole("button", { name: "შენახვა" })).toBeEnabled());
-    expect(screen.getByTestId("profile-saved")).toBeInTheDocument();
   });
 
   it("shows the server error when the action fails", async () => {

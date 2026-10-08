@@ -33,8 +33,8 @@ describe("PollForm", () => {
     render(<PollForm poll={null} />);
     fireEvent.change(screen.getByLabelText("კითხვა"), { target: { value: "სად?" } });
     const options = screen.getAllByLabelText(/^პასუხი \d+$/);
-    fireEvent.change(options[0]!, { target: { value: "თბილისი" } });
-    fireEvent.change(options[1]!, { target: { value: "ბათუმი" } });
+    fireEvent.change(options[0]!, { target: { value: "  თბილისი " } });
+    fireEvent.change(options[1]!, { target: { value: "  ბათუმი " } });
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
       expect(saveMock).toHaveBeenCalledWith({

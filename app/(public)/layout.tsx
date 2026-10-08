@@ -5,7 +5,9 @@ import { Masthead } from "@/components/Masthead";
 import { MobileJoinCta } from "@/components/MobileJoinCta";
 import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
+import { filterEventLinks, showEvents } from "@/lib/events-switch";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
+import { STRUCTURE_HREF, STRUCTURE_NAV_LABEL } from "@/lib/structure-copy";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
@@ -18,17 +20,19 @@ const HEADER_CTA_LABEL = "შემოგვიერთდი";
 const FOOTER_TERMS_LABEL = "წესები";
 const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი";
 
+// News and events are reached from the homepage (and news from the footer), not the header:
+// owner decision 2026-10-07, ADR-038.
 const navItems: { href: string; label: string }[] = [
   { href: "/", label: "მთავარი" },
   { href: "/leaderboard", label: "რეიტინგი" },
-  { href: "/news", label: NAV_NEWS_LABEL },
-  { href: "/events", label: "ღონისძიებები" },
+  { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
 ];
 
 const footerLinks: { href: string; label: string }[] = [
   { href: "/join/terms", label: FOOTER_TERMS_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
+  { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
   // Footer, not top nav (spec §8): contact is a destination people go looking
   // for, not a section of the publication.
@@ -42,17 +46,21 @@ const footerLinks: { href: string; label: string }[] = [
  *
  * The header carries ONE account action (HeaderSessionAction): the join door for guests,
  * the cabinet link once signed in. The finance link stays in the nav and footer arrays above
- * but only renders while showPublicFinances() is true (hidden by default, ADR-034).
+ * but only renders while showPublicFinances() is true (hidden by default, ADR-034). The header
+ * has no events link at all (ADR-038); filterEventLinks stays as a guard in case one is added
+ * back, so it would still honour SHOW_EVENTS (ADR-042).
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const financesPublic = showPublicFinances();
+  const eventsShown = showEvents();
 
   return (
     <>
       <DemoBanner />
       <PageSheet>
         <Masthead
-          navItems={filterFinanceLinks(navItems, financesPublic)}
+          navItems={filterEventLinks(filterFinanceLinks(navItems, financesPublic), eventsShown)}
+          eventsShown={eventsShown}
           cta={<HeaderSessionAction joinLabel={HEADER_CTA_LABEL} />}
         />
         {/* FOOTER-PIN: PageSheet is min-h-screen flex flex-col; a growing plain

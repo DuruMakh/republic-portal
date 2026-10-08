@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  mobileBackTarget,
-  mobileChrome,
-  mobileTabs,
-  showsJoinCta,
-  showsTabBar,
-} from "./mobile-nav";
+import { mobileBackTarget, mobileTabs, showsJoinCta, showsTabBar } from "./mobile-nav";
 import { cabinetNavItems } from "./cabinet";
+import { filterEventLinks } from "./events-switch";
 
 describe("mobileBackTarget", () => {
   it("maps a news article to the news index", () => {
@@ -36,31 +31,6 @@ describe("mobileBackTarget", () => {
   it("does not confuse the public /delegates/ prefix with the /delegate cabinet", () => {
     expect(mobileBackTarget("/delegate")).toBeNull();
     expect(mobileBackTarget("/delegate/team")).toBeNull();
-  });
-});
-
-describe("mobileChrome", () => {
-  it("gives public routes the public header", () => {
-    for (const p of ["/", "/leaderboard", "/news", "/events", "/transparency", "/support"]) {
-      expect(mobileChrome(p), p).toBe("public");
-    }
-  });
-  it("gives detail and flow routes the back header", () => {
-    for (const p of ["/news/x", "/events/x", "/delegates/x", "/join", "/join/terms", "/login"]) {
-      expect(mobileChrome(p), p).toBe("back");
-    }
-  });
-  it("gives cabinet routes the cabinet header", () => {
-    for (const p of ["/me", "/me/profile", "/me/polls", "/delegate", "/delegate/team"]) {
-      expect(mobileChrome(p), p).toBe("cabinet");
-    }
-  });
-  it("lets the back header win over the cabinet header in the membership wizard", () => {
-    expect(mobileChrome("/me/membership")).toBe("back");
-    expect(mobileChrome("/me/membership/done")).toBe("back");
-  });
-  it("falls back to public chrome for an unclassified route", () => {
-    expect(mobileChrome("/some-unmapped-route")).toBe("public");
   });
 });
 
@@ -149,9 +119,69 @@ describe("mobileTabs", () => {
     expect(tabs.map((t) => t.href)).toEqual(["/me/profile", "/me/polls", "/me/events", "/me/news"]);
   });
 
-  it("drops a tab rather than throwing when an expected href is absent", () => {
+  it("fills a missing tab from the next destination in line rather than throwing", () => {
     const withoutPolls = cabinetNavItems("member").filter((i) => i.href !== "/me/polls");
     const { tabs } = mobileTabs(withoutPolls, "member");
-    expect(tabs.map((t) => t.href)).toEqual(["/me/profile", "/me/events", "/me/news"]);
+    expect(tabs.map((t) => t.href)).toEqual([
+      "/me/profile",
+      "/me/events",
+      "/me/news",
+      "/me/delegate",
+    ]);
+  });
+});
+
+describe("mobileTabs while events are hidden (ADR-042)", () => {
+  const noEvents = (role: "registered" | "member" | "delegate") =>
+    filterEventLinks(cabinetNavItems(role), false);
+
+  it("gives a member their delegate in the freed slot, under its short label", () => {
+    const { tabs, more } = mobileTabs(noEvents("member"), "member");
+    expect(tabs.map((t) => t.href)).toEqual([
+      "/me/profile",
+      "/me/polls",
+      "/me/news",
+      "/me/delegate",
+    ]);
+    expect(tabs.find((t) => t.href === "/me/delegate")?.label).toBe("დელეგატი");
+    expect(more.map((m) => m.href)).toEqual(["/me/billing"]);
+  });
+
+  it("gives a delegate their profile in the freed slot", () => {
+    const { tabs, more } = mobileTabs(noEvents("delegate"), "delegate");
+    expect(tabs.map((t) => t.href)).toEqual(["/delegate", "/me/polls", "/me/news", "/me/profile"]);
+    expect(more.map((m) => m.href)).toEqual(["/me/billing"]);
+  });
+
+  it("leaves a registered visitor three tabs and nothing in the sheet", () => {
+    const { tabs, more } = mobileTabs(noEvents("registered"), "registered");
+    expect(tabs.map((t) => t.href)).toEqual(["/me", "/me/news", "/me/profile"]);
+    expect(more).toEqual([]);
+  });
+
+  it("keeps every tab label at or under ten characters", () => {
+    for (const role of ["registered", "member", "delegate"] as const) {
+      for (const tab of mobileTabs(noEvents(role), role).tabs) {
+        expect(tab.label.length, `${role} ${tab.href}`).toBeLessThanOrEqual(10);
+      }
+    }
+  });
+});
+
+describe("mobileBackTarget while events are hidden (ADR-042)", () => {
+  it("gives an old event address no back header, so a 404 never links to the hidden index", () => {
+    expect(mobileBackTarget("/events/tbilisi-meeting", false)).toBeNull();
+  });
+
+  it("leaves every other back target as it is", () => {
+    expect(mobileBackTarget("/news/some-article", false)).toEqual({
+      href: "/news",
+      label: "სიახლეები",
+    });
+    expect(mobileBackTarget("/join", false)?.href).toBe("/");
+  });
+
+  it("keeps the events back header by default, when events are shown", () => {
+    expect(mobileBackTarget("/events/tbilisi-meeting")?.href).toBe("/events");
   });
 });
