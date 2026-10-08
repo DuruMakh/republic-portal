@@ -1306,5 +1306,7 @@ after privacy step 2).
   card's shape) and re-encoded as JPEG; the three 1 MB PNGs shrink to about 50 KB each, the
   two small originals keep their native size (no upscaling). Nukri's TikTok link drops its
   `?lang=en` suffix.
-- **Known limit.** გიორგი მჭედლიშვილი's original is 180×180 px, so his card is soft on large
-  screens until the owner sends a bigger copy.
+- **Known limit.** Two originals are small: გიორგი მჭედლიშვილი's is 180×180 px (crop 144×180,
+  visibly soft) and გიორგი თავართქილაძე's 404×404 px (crop 323×404, slightly soft on sharp
+  phone screens). Both stay until the owner sends larger copies; a replacement gets a new
+  filename so cached copies of the old photo cannot linger.

@@ -324,7 +324,9 @@ test.describe("structure page", () => {
     const photo = roster.getByRole("img", { name: "დურუ მახარაძე" });
     await photo.scrollIntoViewIfNeeded();
     await expect(photo).toHaveJSProperty("complete", true);
-    expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
     await expect(roster.getByRole("link", { name: "LinkedIn: დურუ მახარაძე" })).toHaveAttribute(
       "href",
       "https://www.linkedin.com/in/duru-makharadze-2b35a4205/",

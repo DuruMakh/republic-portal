@@ -6,9 +6,10 @@ import { z } from "zod";
  * "coming soon" notice instead of cards.
  *
  * To add a member: put the photo at public/board/<slug>.jpg (portrait, 4:5) and append
- *   { name, photo: "/board/<slug>.jpg", bio, socials: [{ network, url }] }
+ *   { name, photo: "/board/<slug>.jpg", bio (optional), socials: [{ network, url }] }
  * Networks are facebook, tiktok, linkedin (owner-confirmed); each is optional per person.
  * The bio is optional too: the owner sent the first roster without bios (2026-10-08).
+ * To replace a photo, use a new filename: image caches key on the path, not the content.
  */
 export const SOCIAL_NETWORKS = ["facebook", "tiktok", "linkedin"] as const;
 export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
