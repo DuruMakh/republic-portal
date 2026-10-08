@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 // with TEAM_STATUS_LABELS" test below. Pill itself must not import from lib/cabinet.
 import { TEAM_STATUS_LABELS } from "@/lib/cabinet";
 import { Button } from "./Button";
+import { Card } from "./Card";
 import { CheckboxField, Field } from "./Field";
 import { Pill } from "./Pill";
 import { StatCard } from "./StatCard";
@@ -16,6 +17,18 @@ describe("Button", () => {
     const btn = screen.getByRole("button", { name: "წაშლა" });
     expect(btn.classList.contains("border-brand")).toBe(true);
     expect(btn.classList.contains("text-brand")).toBe(true);
+  });
+
+  it("renders dark as the teal secondary button (ADR-045)", () => {
+    render(<Button variant="dark">Find</Button>);
+    const btn = screen.getByRole("button", { name: "Find" });
+    expect(btn).toHaveClass("bg-teal", "border-teal", "text-paper", "hover:bg-teal-dark");
+    expect(btn).not.toHaveClass("bg-ink");
+  });
+
+  it("keeps primary on ink with the red hover", () => {
+    render(<Button>Save</Button>);
+    expect(screen.getByRole("button", { name: "Save" })).toHaveClass("bg-ink", "hover:bg-brand");
   });
 });
 
@@ -93,5 +106,18 @@ describe("Stepper", () => {
     // Roman-numeral marker furniture (spec §3.1) replaces the old plain "1" —
     // aria-current still lands on the current step's marker element.
     expect(screen.getByText(/^I\./).getAttribute("aria-current")).toBe("step");
+  });
+});
+
+describe("Card", () => {
+  it("callout keeps the ink border on bright paper", () => {
+    const { container } = render(<Card variant="callout">x</Card>);
+    expect(container.firstElementChild).toHaveClass("border-ink", "bg-paper-bright");
+  });
+
+  it("callout-teal is the same surface with a teal border (ADR-045)", () => {
+    const { container } = render(<Card variant="callout-teal">x</Card>);
+    expect(container.firstElementChild).toHaveClass("border-teal", "bg-paper-bright");
+    expect(container.firstElementChild).not.toHaveClass("border-ink");
   });
 });
