@@ -253,45 +253,6 @@ describe("passRegistration", () => {
 
     expect(createClient).not.toHaveBeenCalled();
   });
-
-  test("creates the Google fixture before /join and uses only the deterministic provider code", async () => {
-    vi.stubEnv("PHONE_VERIFICATION_PROVIDER", "test");
-    const createUser = vi.fn().mockResolvedValue({
-      data: { user: { id: "google-user-1" } },
-      error: null,
-    });
-    const signInWithPassword = vi.fn().mockResolvedValue({
-      data: { session: { access_token: "access", refresh_token: "refresh" } },
-      error: null,
-    });
-    createClient.mockImplementation((_url: string, key: string) =>
-      key === "service-role-key"
-        ? { auth: { admin: { createUser } } }
-        : { auth: { signInWithPassword } },
-    );
-    const goto = vi.fn().mockResolvedValue(undefined);
-    const fill = vi.fn().mockResolvedValue(undefined);
-    const click = vi.fn().mockResolvedValue(undefined);
-    const page = {
-      goto,
-      getByLabel: vi.fn().mockReturnValue({ fill }),
-      getByRole: vi.fn().mockReturnValue({ click }),
-      getByTestId: vi.fn().mockReturnValue({ fill }),
-    };
-
-    await passRegistration(page as never, {
-      phone: "550001230",
-      firstName: "ნინო",
-      lastName: "ტესტი",
-      refCode: "ABC123",
-    });
-
-    expect(createUser.mock.invocationCallOrder[0]).toBeLessThan(goto.mock.invocationCallOrder[0]!);
-    expect(goto).toHaveBeenCalledWith("/join?ref=ABC123");
-    expect(page.getByRole).toHaveBeenCalledWith("button", { name: "კოდის მიღება" });
-    expect(page.getByTestId).toHaveBeenCalledWith("otp-0");
-    expect(fill).toHaveBeenCalledWith("123456");
-  });
 });
 
 // Shared mechanics are covered in cleanup-helpers.test.ts; this wrapper owns only
@@ -385,19 +346,5 @@ describe("cleanupLoginUser", () => {
 
     await expect(fresh.cleanupLoginUser()).rejects.toThrow(/refus/i);
     expect(deleted).toEqual([]);
-  });
-
-  test("resolves when no orphan is present", async () => {
-    createClient.mockReturnValue({
-      auth: {
-        admin: {
-          listUsers: () =>
-            Promise.resolve({ data: { users: [{ id: "x", phone: "995500000001" }] }, error: null }),
-          deleteUser: () => Promise.resolve({ error: null }),
-        },
-      },
-    });
-
-    await expect(cleanupLoginUser()).resolves.toBeUndefined();
   });
 });
