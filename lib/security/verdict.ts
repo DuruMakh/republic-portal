@@ -201,6 +201,9 @@ export const POST_GATE_TOKENS = new Set([
   // caller has collided, not WHO they are — the same standing as
   // too_many_requests above.
   "personal_id_attempts_exceeded",
+  // Same migration: become_member_save_profile() refuses a read-only (GET)
+  // call right after its not_authenticated gate — HOW it was called, not WHO.
+  "read_only_transaction",
 ]);
 
 /**

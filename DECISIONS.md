@@ -1181,17 +1181,23 @@ spec, section 7. Three migrations: `20261008160000` (phone verification), `20261
   in bigint microseconds (an unreadable timestamp fails closed); supersede sets a new explicit
   `superseded_at` and never touches `consumed_at`; attempts and consumption refuse a superseded
   challenge; old markers are backfilled. The legacy `register()` is revoked from
-  `authenticated` — `register_google()` (owner-run, exact proof check) is the only path. The
+  `authenticated` (and from `service_role`, which never called it) — `register_google()`
+  (owner-run, exact proof check) is the only path. The
   retired legacy phone form can no longer register; `.env.example` now says `google`.
 - **H1, personal-ID probing.** `become_member_save_profile` resolves the delegate before it looks
   at the ID; a conflict is RETURNED (`{"error":"duplicate_personal_id"}`) so its audit row
   (`member.personal_id_conflict`) commits; three conflicts stop the step for the account for good
   (D2). The audit row's `actor_id` is NULL on purpose: `audit_log.actor_id` is a plain FK, and a
   non-null actor would make the account undeletable (e2e cleanup, future deletion). The tried ID is
-  never stored.
+  never stored. A read-only call is refused first (`read_only_transaction`): PostgREST runs a GET
+  RPC read-only, where the audit insert and the profile update fail with different errors — an
+  untraced answer (review finding). A partial index serves the conflict count.
 - **M1, SMS abuse (D4).** Per account 60 s / 5 per hour / 10 per day / 3 numbers per day; per
-  number 60 s and 10 per day across accounts, except an account's first code for a number today;
-  1,000 per hour site-wide. A send cancels only the sender's own codes. No rule looks at whether a
+  number 60 s and 10 per day across accounts, except that each account always gets its first three
+  codes for a number today (review finding: with only one, a flood by others left the real owner
+  one lost SMS from a day-long lockout); 1,000 per hour site-wide — one shared budget, so an
+  account farm of about 200 accounts an hour could pause sign-ups for that hour, which D4 accepts.
+  Both live-challenge lookups in `complete_phone_verification_send` also skip superseded rows. A send cancels only the sender's own codes. No rule looks at whether a
   profile owns the number. `scripts/security/sms-limits-scenario.sql` proves the rules on staging
   inside a rolled-back transaction.
 - **M2, delegate names (D3).** `protect_profile_columns()` raises `name_locked` when a client
@@ -1200,7 +1206,10 @@ spec, section 7. Three migrations: `20261008160000` (phone verification), `20261
   invoker-run to tell clients apart. Admins correct names on `/admin/verify/[id]` through the
   audited `admin_update_delegate_name` (`delegate.update_name`).
 - **M3, offline cache.** The service worker never caches cross-origin (Supabase) or signed-in
-  responses (`lib/sw-routes.ts`); sign-out empties the runtime caches, keeping the precache.
+  responses, `/join` and `/auth` included (`lib/sw-routes.ts`), and drops the `cross-origin` cache
+  older workers filled. Sign-out — the member, delegate AND admin navigation, now one shared
+  `useSignOut` — empties the caches that can hold personal data and keeps code, styles, fonts and
+  the precache, so the offline page stays styled.
 - **M4, photo metadata.** `lib/image-sanitize.ts` re-encodes every delegate photo and news cover
   with sharp — orientation applied, all metadata (GPS, time, device) dropped. **sharp becomes a
   runtime dependency** (`^0.35.5`, which also clears its advisories); the alternative, a

@@ -17,8 +17,9 @@ describe("SMS send limits (security audit M1)", () => {
     expect(body).toMatch(/v_user_phone_day = 0\s+and v_user_numbers_day >= 3/);
   });
 
-  it("caps a number per day across accounts, but never an account's first code today", () => {
-    expect(reserve()).toMatch(/v_phone_day >= 10\s+and v_user_phone_day > 0/);
+  it("caps a number per day across accounts, but never an account's first three codes today", () => {
+    // the owner keeps a small allowance even when others push the number to its cap
+    expect(reserve()).toMatch(/v_phone_day >= 10\s+and v_user_phone_day >= 3/);
     // the old shared hourly per-number cap (the lockout lever) is gone
     expect(reserve()).not.toContain("v_phone_count >= 5");
   });

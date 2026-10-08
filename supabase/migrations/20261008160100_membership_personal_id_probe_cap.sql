@@ -8,6 +8,9 @@
 --   (c) three conflicts stop the step for that account for good (decision D2: no daily reset,
 --       because a reset lets a patient prober keep asking; a real person only conflicts when
 --       their ID is already taken, which needs support anyway).
+--   (d) a read-only call is refused before any lookup: PostgREST runs a GET RPC in a READ ONLY
+--       transaction, where the audit insert and the profile update would fail with different
+--       errors — an untraced answer to "is this ID taken?".
 -- The audit row's actor_id stays NULL on purpose: audit_log.actor_id is a plain FK to profiles,
 -- and a non-null actor would make the account undeletable. The tried ID is never stored.
 -- Body restated from 20260728100000_personal_id_at_membership.sql; only the marked parts change.
@@ -28,6 +31,10 @@ declare
   v_conflicts int;
 begin
   if v_uid is null then raise exception 'not_authenticated'; end if;
+  -- H1 (d): writes are this function's whole point; a read-only call could only probe.
+  if pg_catalog.current_setting('transaction_read_only') = 'on' then
+    raise exception 'read_only_transaction';
+  end if;
   select * into v_profile from public.profiles where id = v_uid;
   if not found then raise exception 'profile_incomplete'; end if;
   if v_profile.registration_completed_at is not null
@@ -112,6 +119,11 @@ begin
 
   return public.cabinet_state();
 end $$;
+
+-- The cap's count runs on every save; keep it off a full audit_log scan.
+create index audit_log_personal_id_conflicts
+  on public.audit_log (target_id)
+  where action = 'member.personal_id_conflict';
 
 grant execute on function become_member_save_profile(date, int, int, text, uuid, text) to authenticated;
 revoke execute on function become_member_save_profile(date, int, int, text, uuid, text) from public, anon;

@@ -11,8 +11,9 @@
 -- M1 (decision D4): sends are limited per account, per number and site-wide, and a send only
 --   ever cancels the sender's own codes — so nobody can lock a chosen person out:
 --     per account: 1 per 60 s, 5 per hour, 10 per day, at most 3 different numbers per day;
---     per number:  1 per 60 s across accounts, 10 per day across accounts, EXCEPT that an
---                  account that has not asked for this number today always gets its first code;
+--     per number:  1 per 60 s across accounts, 10 per day across accounts, EXCEPT that each
+--                  account always gets its first three codes for a number today (so a flood
+--                  by other accounts cannot lock the real owner out);
 --     site-wide:   1,000 per hour (a backstop for the SMS bill, high enough for a sign-up surge).
 --   No rule looks at whether a profile owns the number (no membership signal).
 
@@ -106,7 +107,7 @@ begin
    where phone = p_phone
      and created_at >= v_now - interval '24 hours';
   if v_phone_day >= 10
-     and v_user_phone_day > 0 then
+     and v_user_phone_day >= 3 then
     return pg_catalog.jsonb_build_object('status', 'limited');
   end if;
 
@@ -126,7 +127,8 @@ revoke execute on function public.reserve_phone_verification_send(uuid, text, te
 grant execute on function public.reserve_phone_verification_send(uuid, text, text) to service_role;
 
 -- 3) complete_phone_verification_send(): restated verbatim from
---    20260811182202_google_verify_phone.sql apart from the final supersede UPDATE.
+--    20260811182202_google_verify_phone.sql apart from the final supersede UPDATE and the
+--    `superseded_at is null` added to both live-challenge lookups.
 create or replace function public.complete_phone_verification_send(
   p_reservation_id uuid,
   p_user_id uuid,
@@ -174,6 +176,7 @@ begin
        and challenge.provider = p_provider
        and challenge.provider_request_id = p_provider_request_id
        and challenge.consumed_at is null
+       and challenge.superseded_at is null
        and challenge.expires_at > v_now
      for update;
     if not found then
@@ -196,6 +199,7 @@ begin
            and challenge.phone = v_phone
            and challenge.purpose = 'registration'
            and challenge.consumed_at is null
+           and challenge.superseded_at is null
            and challenge.expires_at > v_now
       ) then
         raise exception 'phone_verification_completion_failed';
@@ -285,5 +289,6 @@ $$;
 revoke execute on function public.consume_phone_verification_challenge(uuid, uuid) from public, anon, authenticated;
 grant execute on function public.consume_phone_verification_challenge(uuid, uuid) to service_role;
 
--- 5) Legacy register(): clients go through register_google() only.
-revoke execute on function public.register(text, text, text, text) from public, anon, authenticated;
+-- 5) Legacy register(): clients go through register_google() only. service_role is closed too:
+--    register() reads auth.uid(), so nothing ever called it with the service key.
+revoke execute on function public.register(text, text, text, text) from public, anon, authenticated, service_role;

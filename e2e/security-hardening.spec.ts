@@ -84,6 +84,26 @@ test("hardening rules hold for signed-in clients", async () => {
   const legacy = await prober.rpc("register", { p_first_name: "ა", p_last_name: "ბ" });
   expect(legacy.error?.code).toBe("42501");
 
+  // H1 (d): a read-only (GET) call answers the same for a taken and a free ID, and records
+  // nothing — PostgREST runs GET RPCs read-only, which once made an untraced probe
+  const readOnly = (personalId: string) =>
+    prober.rpc(
+      "become_member_save_profile",
+      {
+        p_birth_date: "1990-05-20",
+        p_region_id: regionId,
+        p_city_id: cityId,
+        p_employment: "სტუდენტი",
+        p_delegate_id: null,
+        p_personal_id: personalId,
+      },
+      { get: true },
+    );
+  const takenGet = await readOnly(heldPersonalId);
+  const freeGet = await readOnly("90000000000");
+  expect(takenGet.error).not.toBeNull();
+  expect(freeGet.error?.message).toBe(takenGet.error?.message);
+
   // H1 (a): a made-up delegate is refused BEFORE the personal ID is looked at, and nothing
   // is saved — so it can no longer be used to probe IDs for free
   const bogus = await save(heldPersonalId, randomUUID());

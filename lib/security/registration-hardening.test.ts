@@ -9,6 +9,8 @@ describe("phone proof supersede (security audit C1)", () => {
     expect(body).toContain("set superseded_at = v_now");
     expect(body).not.toContain("interval '1 microsecond'");
     expect(body).toContain("and superseded_at is null");
+    // every lookup of a live challenge (linked, found, and the supersede itself) skips superseded
+    expect(body.match(/superseded_at is null/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
   it("refuses attempts and consumption on a superseded challenge", () => {
@@ -31,7 +33,8 @@ describe("phone proof supersede (security audit C1)", () => {
 });
 
 describe("legacy register() (security audit C1)", () => {
-  const sql = orderedMigrationSql();
+  // comments stripped, so a commented-out revoke cannot satisfy these checks
+  const sql = orderedMigrationSql().replace(/--[^\n]*/g, "");
   const signature = String.raw`(?:public\.)?register\(text, ?text, ?text, ?text\)`;
 
   it("ends revoked from authenticated, after every grant and every (re)definition", () => {
@@ -39,9 +42,13 @@ describe("legacy register() (security audit C1)", () => {
       sql,
       new RegExp(`revoke execute on function ${signature} from [^;]*\\bauthenticated\\b`, "g"),
     );
+    // a grant to PUBLIC reaches authenticated too, and so does a schema-wide grant
     const lastGrant = lastMatchIndex(
       sql,
-      new RegExp(`grant execute on function ${signature} to [^;]*\\bauthenticated\\b`, "g"),
+      new RegExp(
+        `grant execute on (?:function ${signature}|all functions in schema public) to [^;]*\\b(?:authenticated|public)\\b`,
+        "g",
+      ),
     );
     const lastCreate = lastMatchIndex(
       sql,
@@ -49,6 +56,14 @@ describe("legacy register() (security audit C1)", () => {
     );
     expect(lastRevoke).toBeGreaterThan(lastGrant);
     expect(lastRevoke).toBeGreaterThan(lastCreate);
+  });
+
+  it("is closed to every API role, service_role included (nothing calls it directly)", () => {
+    expect(sql).toMatch(
+      new RegExp(
+        `revoke execute on function ${signature} from public, anon, authenticated, service_role;`,
+      ),
+    );
   });
 
   it("is checked as revoked by the production schema check", () => {
@@ -61,6 +76,21 @@ describe("legacy register() (security audit C1)", () => {
 
 describe("personal-ID conflicts at the membership step (security audit H1)", () => {
   const body = () => latestDefinition("become_member_save_profile");
+
+  it("refuses a read-only call before any lookup (a GET would otherwise probe without a trace)", () => {
+    const b = body();
+    const guard = b.indexOf("current_setting('transaction_read_only')");
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(b.indexOf("from public.audit_log"));
+    expect(guard).toBeLessThan(b.indexOf("pr.personal_id = p_personal_id"));
+    expect(b).toContain("raise exception 'read_only_transaction'");
+  });
+
+  it("counts conflicts through a partial index", () => {
+    expect(orderedMigrationSql()).toMatch(
+      /create index audit_log_personal_id_conflicts\s+on public\.audit_log \(target_id\)\s+where action = 'member\.personal_id_conflict'/,
+    );
+  });
 
   it("resolves the delegate before it looks at the personal ID", () => {
     const b = body();

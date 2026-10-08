@@ -163,9 +163,10 @@ Workflow and checks, in the same PR:
 - Per account: one send per 60 s, 5 per hour, 10 per day, and at most 3 different numbers per day.
 - Per number:
   - one send per 60 s across all accounts;
-  - at most 10 per day across all accounts, **except** that an account which has not yet asked for
-    this number today always gets its first code. Nobody can lock a person out; spam costs one fresh
-    Google account per extra SMS.
+  - at most 10 per day across all accounts, **except** that each account always gets its first
+    three codes for a number today (review change: with only one, the real owner was one lost SMS
+    away from a day-long lockout). Nobody can lock a person out; spam costs a fresh Google account
+    per three extra SMS.
 - Site-wide: 1,000 sends per hour. Above that, sends answer "too many requests". There is no alert,
   because no mail is provisioned.
 - No new "is this number a member?" signal: sends behave the same for member and non-member numbers.
@@ -198,7 +199,7 @@ Workflow and checks, in the same PR:
 - The per-account and per-number limits already bound abuse. The site-wide ceiling is only a
   backstop for the SMS bill.
 - The automated tests are unaffected: each registration journey uses a fresh account and sends one
-  code, so the "first code today" exception always applies.
+  code, so the per-account allowance always applies.
 
 **D5 — order of releases.**
 1. R1 (critical fix) first, at once.
