@@ -188,6 +188,11 @@ export const POST_GATE_TOKENS = new Set([
   // made the rate limit opt-in.)
   "invalid_support_message",
   "too_many_requests",
+  // Registration privacy consent (20261008140000_registration_privacy_consent.sql):
+  // register() refuses a policy version other than the current one (and, from
+  // 20261008150000, a missing one). Payload validation behind register()'s
+  // not_authenticated gate, the same standing as invalid_name next to it.
+  "privacy_consent_required",
 ]);
 
 /**

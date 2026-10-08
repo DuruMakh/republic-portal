@@ -107,7 +107,7 @@ begin
      or to_regprocedure('public.complete_phone_verification_send(uuid,uuid,text,text,timestamp with time zone)') is null
      or to_regprocedure('public.reserve_phone_verification_attempt(uuid,uuid)') is null
      or to_regprocedure('public.consume_phone_verification_challenge(uuid,uuid)') is null
-     or to_regprocedure('public.register_google(text,text,text)') is null then
+     or to_regprocedure('public.register_google(text,text,text,text)') is null then
     raise exception 'required phone verification function is missing';
   end if;
 
@@ -150,20 +150,20 @@ begin
     raise exception 'internal phone verification function privileges drifted';
   end if;
 
-  if has_function_privilege('anon', 'public.register_google(text,text,text)', 'EXECUTE')
+  if has_function_privilege('anon', 'public.register_google(text,text,text,text)', 'EXECUTE')
      or not has_function_privilege(
-       'authenticated', 'public.register_google(text,text,text)', 'EXECUTE'
+       'authenticated', 'public.register_google(text,text,text,text)', 'EXECUTE'
      )
      or not has_function_privilege(
-       'service_role', 'public.register_google(text,text,text)', 'EXECUTE'
+       'service_role', 'public.register_google(text,text,text,text)', 'EXECUTE'
      ) then
     raise exception 'register_google function privileges drifted';
   end if;
 
   -- Additive rollout: the legacy phone registration RPC remains available to
   -- authenticated users until the separately reviewed hardening migration.
-  if has_function_privilege('anon', 'public.register(text,text,text)', 'EXECUTE')
-     or not has_function_privilege('authenticated', 'public.register(text,text,text)', 'EXECUTE') then
+  if has_function_privilege('anon', 'public.register(text,text,text,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.register(text,text,text,text)', 'EXECUTE') then
     raise exception 'legacy register function privileges changed before hardening';
   end if;
 

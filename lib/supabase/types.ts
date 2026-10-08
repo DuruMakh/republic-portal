@@ -43,6 +43,8 @@ export interface Database {
           membership_tier: number | null;
           reference_code: string | null;
           registration_completed_at: string | null;
+          privacy_accepted_at: string | null;
+          privacy_version: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -584,6 +586,7 @@ export interface Database {
           p_first_name: string;
           p_last_name: string;
           p_ref_code?: string | null;
+          p_privacy_version?: string | null;
         };
         Returns: Json;
       };
@@ -592,6 +595,7 @@ export interface Database {
           p_first_name: string;
           p_last_name: string;
           p_ref_code?: string | null;
+          p_privacy_version?: string | null;
         };
         Returns: Json;
       };
