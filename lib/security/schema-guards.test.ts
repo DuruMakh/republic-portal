@@ -18,37 +18,22 @@ import { describe, expect, it } from "vitest";
  * CI on every commit and catches a re-grant the moment it is written; the
  * live one proves the database really is in the state the migrations claim.
  */
-const MIGRATIONS_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "supabase",
-  "migrations",
-);
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const MIGRATIONS_DIR = join(REPO_ROOT, "supabase", "migrations");
 
 /**
- * The live catalog as introspected in Task 3 (scripts/security/introspect.mjs).
- * The supabase CLI's JSON output is `{ boundary, rows, warning }`, never a
- * bare array — the rows are UNTRUSTED database content and are used here only
- * as object names, never as instructions.
+ * The reviewed production view-access list (the production DB security gate's
+ * input, scripts/verify-production-security-advisors.mjs). F5 covers its views
+ * as well as every view the migrations create, so a view known to production
+ * but missing from the migrations still gets checked — and fails closed.
  */
-const LIVE_OBJECTS = (
-  JSON.parse(
-    readFileSync(
-      join(
-        dirname(fileURLToPath(import.meta.url)),
-        "..",
-        "..",
-        "scripts",
-        "security",
-        "live-objects.json",
-      ),
-      "utf8",
-    ),
-  ) as { rows: ReadonlyArray<{ kind: string; name: string }> }
-).rows;
-
-const LIVE_VIEWS = LIVE_OBJECTS.filter((o) => o.kind === "view").map((o) => o.name);
+const REVIEWED_VIEW_ACCESS = JSON.parse(
+  readFileSync(join(REPO_ROOT, "scripts", "production-security-view-access.json"), "utf8"),
+) as { public_read: string[]; signed_in_read: string[] };
+const REVIEWED_VIEWS = [
+  ...REVIEWED_VIEW_ACCESS.public_read,
+  ...REVIEWED_VIEW_ACCESS.signed_in_read,
+];
 
 type Priv = "select" | "insert" | "update" | "delete" | "truncate" | "references" | "trigger";
 const ALL_PRIVS: readonly Priv[] = [
@@ -69,7 +54,12 @@ type ClientRole = (typeof CLIENT_ROLES)[number];
  * Every migration, in the order Postgres applied them (filenames are
  * timestamp-prefixed, so lexical order IS application order).
  */
-function migrationsInOrder(): { file: string; sql: string }[] {
+interface Migration {
+  readonly file: string;
+  readonly sql: string;
+}
+
+function migrationsInOrder(): Migration[] {
   return readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith(".sql"))
     .sort()
@@ -142,6 +132,56 @@ function parsePrivChange(stmt: string): PrivChange | null {
 }
 
 /**
+ * A view's lifecycle event, if `stmt` is one. Privileges belong to the OBJECT,
+ * so they are only as old as the view itself:
+ * - `create view v` makes a new object, born with Supabase's default ALL;
+ * - `create or replace view v` on an EXISTING view keeps its privileges
+ *   (PostgreSQL replaces the query, not the ACL) — on a missing one it is a
+ *   plain create;
+ * - `drop view v` (any list, `if exists`, `cascade`) destroys the object and
+ *   its privileges with it.
+ * A revoke that ran before a drop/recreate therefore protects nothing.
+ */
+type ViewEvent =
+  { kind: "create"; view: string; orReplace: boolean } | { kind: "drop"; views: string[] };
+
+function parseViewEvent(stmt: string): ViewEvent | null {
+  const create = /^create\s+(or\s+replace\s+)?view\s+(?:public\.)?([a-z_][a-z0-9_]*)\b/i.exec(stmt);
+  if (create) {
+    return { kind: "create", view: create[2]!.toLowerCase(), orReplace: Boolean(create[1]) };
+  }
+  const drop = /^drop\s+view\s+(?:if\s+exists\s+)?([\s\S]+?)(?:\s+(?:cascade|restrict))?$/i.exec(
+    stmt,
+  );
+  if (drop) {
+    const views = drop[1]!
+      .split(",")
+      .map((v) =>
+        v
+          .trim()
+          .replace(/^public\./i, "")
+          .toLowerCase(),
+      )
+      .filter((v) => /^[a-z_][a-z0-9_]*$/.test(v));
+    return { kind: "drop", views };
+  }
+  return null;
+}
+
+/** Every view that exists after replaying `migrations` (created and not dropped). */
+function viewsCreatedBy(migrations: readonly Migration[]): string[] {
+  const live = new Set<string>();
+  for (const { sql } of migrations) {
+    for (const stmt of statements(sql)) {
+      const event = parseViewEvent(stmt);
+      if (event?.kind === "create") live.add(event.view);
+      else if (event?.kind === "drop") for (const v of event.views) live.delete(v);
+    }
+  }
+  return [...live].sort();
+}
+
+/**
  * Replays every grant/revoke in migration order and returns the table-wide
  * privileges each client role ends up holding on `object`.
  *
@@ -150,21 +190,44 @@ function parsePrivChange(stmt: string): PrivChange | null {
  * anything created in `public` (confirmed live in Pass 2/Pass 4 — see
  * .superpowers/sdd/progress.md CF1, and the standing comment at
  * 20260719150000_community.sql:248). Assuming an empty starting state would
- * make every guard here pass vacuously.
+ * make every guard here pass vacuously. A view is reset to that state every
+ * time it is (re)born — see parseViewEvent.
  *
  * Column-scoped grants are recorded separately: `grant select (a, b) on t`
  * confers no table-wide privilege, and treating it as one would hide exactly
  * the CF4 shape this file exists to pin.
+ *
+ * `migrations` defaults to the real ones; the guard-the-guard tests pass
+ * in-memory variants so no real migration is ever edited to prove a point.
  */
-function effectivePrivileges(object: string): Record<ClientRole, Set<Priv>> {
+function effectivePrivileges(
+  object: string,
+  migrations: readonly Migration[] = migrationsInOrder(),
+): Record<ClientRole, Set<Priv>> {
   const held: Record<ClientRole, Set<Priv>> = {
     anon: new Set(ALL_PRIVS),
     authenticated: new Set(ALL_PRIVS),
   };
   const columns: Record<ClientRole, Set<Priv>> = { anon: new Set(), authenticated: new Set() };
+  let viewExists = false;
 
-  for (const { sql } of migrationsInOrder()) {
+  for (const { sql } of migrations) {
     for (const stmt of statements(sql)) {
+      const event = parseViewEvent(stmt);
+      if (event?.kind === "create" && event.view === object) {
+        if (!event.orReplace || !viewExists) {
+          for (const role of CLIENT_ROLES) {
+            held[role] = new Set(ALL_PRIVS);
+            columns[role] = new Set();
+          }
+        }
+        viewExists = true;
+        continue;
+      }
+      if (event?.kind === "drop" && event.views.includes(object)) {
+        viewExists = false;
+        continue;
+      }
       const change = parsePrivChange(stmt);
       if (!change) continue;
       if (!change.objects.includes(object)) continue;
@@ -231,23 +294,109 @@ describe("F5 / LB-5 — no view in schema public is writable by a client role", 
   // a routine refactor — and anonymous writes land in app_settings /
   // admin_roles past RLS, because the views are owner-executed with no
   // security_invoker and no WITH CHECK OPTION.
-  it.each(LIVE_VIEWS)(
+  //
+  // The view list is DERIVED, not frozen: every view the migrations leave in
+  // place, plus the reviewed production list. (It used to be a 24-view
+  // introspection snapshot, which a view added later — admin_support_messages —
+  // was invisible to; a weaker follow-up guard then only checked that SOME
+  // revoke named each new view, blind to statement order.)
+  const MIGRATION_VIEWS = viewsCreatedBy(migrationsInOrder());
+  const F5_VIEWS = [...new Set([...MIGRATION_VIEWS, ...REVIEWED_VIEWS])].sort();
+
+  function writableBy(held: Record<ClientRole, Set<Priv>>): string[] {
+    return CLIENT_ROLES.flatMap((role) =>
+      WRITE_PRIVS.filter((p) => held[role].has(p)).map((p) => `${role}:${p}`),
+    );
+  }
+
+  it.each(F5_VIEWS)(
     "%s grants no INSERT/UPDATE/DELETE/TRUNCATE to anon or authenticated",
     (view) => {
-      const held = effectivePrivileges(view);
-      for (const role of CLIENT_ROLES) {
-        const writable = WRITE_PRIVS.filter((p) => held[role].has(p));
-        expect(writable, `${role} may still ${writable.join("/")} through view ${view}`).toEqual(
-          [],
-        );
-      }
+      const writable = writableBy(effectivePrivileges(view));
+      expect(writable, `client roles may still write through view ${view}`).toEqual([]);
     },
   );
 
-  it("covers every view the live catalog knows about", () => {
-    // Guards the guard: if introspection ever returns nothing, it.each above
-    // would silently run zero cases and this file would prove nothing.
-    expect(LIVE_VIEWS.length).toBe(24);
+  it("covers every view the migrations create, including the support inbox", () => {
+    // Guards the guard: a parse that silently matched nothing would run zero
+    // cases above and prove nothing.
+    expect(MIGRATION_VIEWS.length).toBeGreaterThan(20);
+    expect(F5_VIEWS).toContain("admin_support_messages");
+  });
+
+  it("every view on the reviewed production list exists in the migrations", () => {
+    // A reviewed name the migrations never create would still be checked above
+    // (and fail closed, starting from default ALL) — this names the real cause.
+    expect(REVIEWED_VIEWS.filter((v) => !MIGRATION_VIEWS.includes(v))).toEqual([]);
+  });
+
+  describe("guarding the guard — in-memory migrations, real ones untouched", () => {
+    const REAL = migrationsInOrder();
+    const plus = (sql: string): Migration[] => [
+      ...REAL,
+      { file: "99999999999999_scratch.sql", sql },
+    ];
+
+    it("catches a late `grant insert ... to anon` on a view", () => {
+      expect(writableBy(effectivePrivileges("admin_support_messages", REAL))).toEqual([]);
+      const late = plus("grant insert on admin_support_messages to anon;");
+      expect(writableBy(effectivePrivileges("admin_support_messages", late))).toEqual([
+        "anon:insert",
+      ]);
+    });
+
+    it("would have caught the support view shipping without its revoke (the 2026-08-02 miss)", () => {
+      // Both later normalizations must go too: 20260811101122 re-revokes every
+      // reviewed view, which is the defence-in-depth this test is not about.
+      const withoutRevokes = REAL.map((m) => ({
+        ...m,
+        sql: m.sql.replace(/revoke\s+all\s+on\s+admin_support_messages\s+from[^;]*;/gi, ""),
+      })).map((m) =>
+        m.file.includes("normalize_production_view_grants")
+          ? { ...m, sql: m.sql.replace(/revoke\s+all\s+on[^;]*;/gi, "") }
+          : m,
+      );
+      expect(withoutRevokes.map((m) => m.sql)).not.toEqual(REAL.map((m) => m.sql));
+      expect(writableBy(effectivePrivileges("admin_support_messages", withoutRevokes))).toEqual(
+        expect.arrayContaining(["anon:insert", "authenticated:insert"]),
+      );
+    });
+
+    it("catches a view dropped and recreated after its revoke (statement order matters)", () => {
+      const reborn = plus(
+        "drop view admin_support_messages;\n" +
+          "create view admin_support_messages as select id from support_messages;\n" +
+          "grant select on admin_support_messages to authenticated;",
+      );
+      expect(writableBy(effectivePrivileges("admin_support_messages", reborn))).toEqual(
+        expect.arrayContaining(["anon:insert", "authenticated:update", "anon:delete"]),
+      );
+    });
+
+    it("does not count a revoke written before the view exists", () => {
+      const early: Migration[] = [
+        {
+          file: "1_scratch.sql",
+          sql:
+            "revoke all on scratch_view from anon, authenticated;\n" +
+            "create view scratch_view as select 1 as x;",
+        },
+      ];
+      expect(writableBy(effectivePrivileges("scratch_view", early))).toContain("anon:insert");
+    });
+
+    it("keeps privileges across `create or replace` of an existing view (no false alarm)", () => {
+      const replaced = plus(
+        "create or replace view admin_support_messages as select id from support_messages;",
+      );
+      expect(writableBy(effectivePrivileges("admin_support_messages", replaced))).toEqual([]);
+    });
+
+    it("derives a view created only by a later migration", () => {
+      expect(viewsCreatedBy(plus("create view scratch_view as select 1;"))).toContain(
+        "scratch_view",
+      );
+    });
   });
 });
 
@@ -397,52 +546,114 @@ describe("L3-2 — payments carries append-only protection", () => {
 });
 
 /**
- * Added 2026-08-02 after code review. The F5 guard above iterates LIVE_VIEWS —
- * a frozen introspection snapshot — so a view created by a NEW migration is
- * invisible to it and inherits whatever default privileges grant. That is not
- * hypothetical: the support page's admin view shipped without its `revoke all`
- * and the whole suite stayed green, because the snapshot predates it.
- *
- * This guard reads the migrations instead, so it covers every view the repo
- * will ever add. It encodes the rule the migrations already state in prose
- * (20260719150000_community.sql: "views are born with ALL granted to client
- * roles ... revoke everything before granting exactly SELECT").
+ * ADR-014: every admin mutation is a SECURITY DEFINER RPC that checks the
+ * session, then the role, BEFORE it changes anything, and writes its audit_log
+ * row in the same transaction — "an unaudited admin action is unrepresentable".
+ * The server actions under app/(admin) rely on exactly that: they pass the
+ * caller's session straight to these RPCs (pinned in their actions.test.ts
+ * files), so the in-DB check IS the authorization. This pins it on the LAST
+ * definition of each function the app calls.
  */
-describe("every view created by a migration revokes client-role privileges", () => {
-  const created: { view: string; file: string }[] = [];
-  const revoked = new Set<string>();
-  for (const { file, sql: raw } of migrationsInOrder()) {
-    // Strip `--` comments first. These migrations discuss revoking at length in
-    // prose ("the 13 already-revoked views"), and a pattern that spans newlines
-    // will happily start inside a comment and swallow the statement after it.
-    const sql = raw.replace(/--[^\n]*/g, " ");
-    for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?view\s+([a-z_][a-z0-9_]*)/gi)) {
-      created.push({ view: m[1]!, file });
-    }
-    // Two spellings are in use and both satisfy the invariant:
-    //   revoke all on a, b from anon, authenticated;                (community.sql)
-    //   revoke insert, update, delete, truncate on a, b from ...;   (20260726120000)
-    // The second is what the F5 fix wave used, so matching only `all` would
-    // report eleven long-fixed views as violations.
-    for (const m of sql.matchAll(/revoke\s+([\s\S]*?)\s+on\s+([\s\S]*?)\s+from\s+([^;]+);/gi)) {
-      const privileges = (m[1] ?? "").toLowerCase();
-      const roles = (m[3] ?? "").toLowerCase();
-      const removesWrites = privileges.includes("all") || privileges.includes("insert");
-      if (!removesWrites) continue;
-      if (!roles.includes("anon") && !roles.includes("public")) continue;
-      for (const name of (m[2] ?? "").split(",")) {
-        const cleaned = name.replace(/\bsequence\b|\btable\b|\bfunction\b/gi, "").trim();
-        if (cleaned) revoked.add(cleaned);
-      }
-    }
-  }
+describe("ADR-014 — every admin RPC the app calls re-checks the role first and audits", () => {
+  const SE = ["super_admin", "editor"];
+  const SV = ["super_admin", "verifier"];
+  const SF = ["super_admin", "finance"];
+  const S = ["super_admin"];
+  const ADMIN_RPCS: Record<string, { roles: string[]; audit: string }> = {
+    admin_grant_role: { roles: S, audit: "admin.grant_role" },
+    admin_revoke_role: { roles: S, audit: "admin.revoke_role" },
+    admin_update_setting: { roles: S, audit: "settings.update" },
+    admin_reveal_personal_id: { roles: S, audit: "member.reveal_personal_id" },
+    admin_record_payment: { roles: SF, audit: "payment.record" },
+    admin_record_payments_bulk: { roles: SF, audit: "payment.bulk_record" },
+    admin_void_payment: { roles: SF, audit: "payment.void" },
+    admin_export_members: { roles: SF, audit: "member.export" },
+    admin_reveal_applicant_personal_id: { roles: SV, audit: "delegate.reveal_personal_id" },
+    admin_approve_delegate: { roles: SV, audit: "delegate.approve" },
+    admin_reject_delegate: { roles: SV, audit: "delegate.reject" },
+    admin_update_delegate_profile: { roles: SV, audit: "delegate.update_profile" },
+    admin_reassign_member: { roles: SV, audit: "member.reassign" },
+    admin_save_news: { roles: SE, audit: "news.save" },
+    admin_publish_news: { roles: SE, audit: "news.publish" },
+    admin_unpublish_news: { roles: SE, audit: "news.unpublish" },
+    admin_delete_news: { roles: SE, audit: "news.delete" },
+    admin_set_news_image: { roles: SE, audit: "news.set_image" },
+    admin_save_event: { roles: SE, audit: "event.save" },
+    admin_publish_event: { roles: SE, audit: "event.publish" },
+    admin_cancel_event: { roles: SE, audit: "event.cancel" },
+    admin_delete_event: { roles: SE, audit: "event.delete" },
+    admin_save_poll: { roles: SE, audit: "poll.save" },
+    admin_open_poll: { roles: SE, audit: "poll.open" },
+    admin_close_poll: { roles: SE, audit: "poll.close" },
+    admin_delete_poll: { roles: SE, audit: "poll.delete" },
+  };
 
-  it("finds the views this guard was written against", () => {
-    // Tripwire: a parse that silently matched nothing would pass every case.
-    expect(created.length).toBeGreaterThan(20);
+  const SESSION_CHECK = /if\s+v_uid\s+is\s+null\s+then\s+raise\s+exception\s+'not_authenticated'/i;
+  const ROLE_CHECK =
+    /if\s+not\s+public\.has_(?:any_)?admin_role\s*\(([^)]*)\)\s+then\s+raise\s+exception\s+'missing_role'/i;
+  const FIRST_WRITE =
+    /\binsert\s+into\s+public\.|\bupdate\s+public\.|\bdelete\s+from\s+public\.|\bperform\s+public\.recompute/i;
+
+  it.each(Object.entries(ADMIN_RPCS))(
+    "%s: session check, then the role check, before any write; audited",
+    (name, { roles, audit }) => {
+      const body = lastFunctionBody(name);
+      expect(body, `${name} is not defined by any migration`).not.toBe("");
+      expect(body).toMatch(/v_uid\s+uuid\s*:=\s*auth\.uid\(\)/i);
+      const session = SESSION_CHECK.exec(body);
+      const role = ROLE_CHECK.exec(body);
+      const write = FIRST_WRITE.exec(body);
+      expect(session, `${name} has no not_authenticated check`).not.toBeNull();
+      expect(role, `${name} has no missing_role check`).not.toBeNull();
+      expect(write, `${name} writes nothing — not even its audit row`).not.toBeNull();
+      const checkedRoles = [...role![1]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+      expect(checkedRoles).toEqual([...roles].sort());
+      expect(session!.index).toBeLessThan(role!.index);
+      expect(role!.index, `${name} changes data before checking the role`).toBeLessThan(
+        write!.index,
+      );
+      expect(body).toMatch(/insert\s+into\s+public\.audit_log\b/i);
+      expect(body).toContain(`'${audit}'`);
+    },
+  );
+
+  it("admin_revoke_role keeps the serialized last-super_admin guard ahead of the delete", () => {
+    const body = lastFunctionBody("admin_revoke_role");
+    expect(body).toMatch(
+      /pg_advisory_xact_lock\([\s\S]*?count\(\*\)[\s\S]*?role\s*=\s*'super_admin'[\s\S]*?=\s*1\s+then\s+raise\s+exception\s+'last_super_admin'[\s\S]*?delete\s+from\s+public\.admin_roles/i,
+    );
   });
 
-  it.each(created)("$view (added in $file) is revoked from client roles", ({ view }) => {
-    expect(revoked.has(view)).toBe(true);
+  it("admin_export_members returns personal IDs only after a super_admin-only check", () => {
+    const body = lastFunctionBody("admin_export_members");
+    const gate =
+      /if\s+coalesce\(p_include_ids,\s*false\)\s+and\s+not\s+public\.has_admin_role\('super_admin'\)\s+then\s+raise\s+exception\s+'missing_role'/i.exec(
+        body,
+      );
+    expect(gate, "the super_admin-only ID gate is gone").not.toBeNull();
+    expect(gate!.index).toBeLessThan(body.indexOf("'personalId'"));
+  });
+
+  it("covers every admin RPC the app calls", () => {
+    // Guards the table: an action that starts calling a new admin_* function
+    // must bring that function under the checks above.
+    const defined = new Set(
+      migrationsInOrder().flatMap(({ sql }) =>
+        [
+          ...sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?(admin_[a-z_]+)/gi),
+        ].map((m) => m[1]!.toLowerCase()),
+      ),
+    );
+    const appDir = join(REPO_ROOT, "app");
+    const called = new Set<string>();
+    for (const rel of readdirSync(appDir, { recursive: true }) as string[]) {
+      if (!/\.(ts|tsx)$/.test(rel) || /\.test\.(ts|tsx)$/.test(rel)) continue;
+      const src = readFileSync(join(appDir, rel), "utf8");
+      for (const m of src.matchAll(/"(admin_[a-z_]+)"/g)) {
+        if (defined.has(m[1]!)) called.add(m[1]!);
+      }
+    }
+    expect(called.size).toBeGreaterThan(20);
+    expect([...called].filter((n) => !(n in ADMIN_RPCS)).sort()).toEqual([]);
   });
 });
