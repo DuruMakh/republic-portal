@@ -68,11 +68,6 @@ test("full upgrade: register → wizard → application sent and member nav", as
   }
   await expect(registeredNav.getByRole("link", { name: "გამოკითხვები" })).toHaveCount(0); // members-only
 
-  // the payments page does not exist while dues are hidden (ADR-037), for anyone
-  await page.goto("/me/billing");
-  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
-  await page.goto("/me");
-
   // the overview CTA opens the wizard's profile phase
   await page.getByTestId("become-member-cta").click();
   await expect(page).toHaveURL(/\/me\/membership/);
@@ -118,6 +113,10 @@ test("full upgrade: register → wizard → application sent and member nav", as
     .and(page.locator("span"));
   await expect(memberPill).toHaveCount(1);
   await expect(memberPill).toBeVisible();
+
+  // the payments page does not exist while dues are hidden (ADR-037), for anyone
+  await page.goto("/me/billing");
+  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
 });
 
 test("resume: a saved profile lands straight on the tier phase, fields intact", async ({
