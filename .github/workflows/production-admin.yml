@@ -1,7 +1,7 @@
 name: Production admin role
 
 # Grants an admin role on the PRODUCTION database to a completed member, found by the email of
-# their Google sign-in (ADR-045). This is the bootstrap path for the first super_admin; after that,
+# their Google sign-in (ADR-046). This is the bootstrap path for the first super_admin; after that,
 # super_admins grant roles in the app (/admin/admins). Manual and main-only; the grant writes the
 # same audit row as the in-app grant, with a via marker.
 

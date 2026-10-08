@@ -1165,7 +1165,7 @@ variable, nothing visible changes except the tab title.
   runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
   that case rests on the unit test.
 
-## ADR-045 (2026-10-08): Production admin roles are granted by a dispatched, main-only workflow
+## ADR-046 (2026-10-08): Production admin roles are granted by a dispatched, main-only workflow
 
 - **Problem.** The only way to create the first super_admin was `scripts/grant-admin.mjs`, run on
   someone's machine with the production service-role key in a local env file. Agents work from

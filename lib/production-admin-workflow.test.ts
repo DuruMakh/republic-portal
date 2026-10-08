@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// ADR-045: the first production super_admin is granted by a dispatched, main-only workflow,
+// ADR-046: the first production super_admin is granted by a dispatched, main-only workflow,
 // not by a script run with production keys on someone's machine. These tests pin its guards.
 const readRepoFile = (path: string): string => readFileSync(resolve(process.cwd(), path), "utf8");
 const workflow = readRepoFile(".github/workflows/production-admin.yml");

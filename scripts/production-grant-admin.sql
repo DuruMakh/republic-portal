@@ -1,4 +1,4 @@
--- Grants an admin role on PRODUCTION (ADR-045). A template: .github/workflows/production-admin.yml
+-- Grants an admin role on PRODUCTION (ADR-046). A template: .github/workflows/production-admin.yml
 -- validates the dispatch inputs and fills __EMAIL__ (a plain address, no quotes possible) and
 -- __ROLE__ (one of the four roles) before running it. Mirrors admin_grant_role()
 -- (20260717150000_admin_crm.sql): only completed members, no-op when the role is already held,
