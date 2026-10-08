@@ -871,3 +871,67 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
     });
   });
 });
+
+/**
+ * ADR-047: the audit log's one exception (the erasure scrub) is opened by the
+ * transaction-local setting `app.erasing`. Only erase_account() may set it and
+ * only audit_log_immutable() may read it; anything else touching it is a new
+ * door into an append-only table. Comments are stripped first, so prose that
+ * names the setting is not a use of it.
+ */
+describe("ADR-047 — app.erasing belongs to erase_account and the audit trigger alone", () => {
+  const FUNCTION_DEF =
+    /create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\([\s\S]*?\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\2\$/gi;
+
+  /** For each `app.erasing` in the migrations: the function around it, or where it stands bare. */
+  function erasingSites(migrations: readonly Migration[] = migrationsInOrder()): string[] {
+    const sites: string[] = [];
+    for (const { file, sql } of migrations) {
+      const code = stripSqlComments(sql);
+      const fns = [...code.matchAll(FUNCTION_DEF)].map((m) => ({
+        name: m[1]!.toLowerCase(),
+        start: m.index!,
+        end: m.index! + m[0].length,
+      }));
+      for (const hit of code.matchAll(/app\.erasing/gi)) {
+        const fn = fns.find((f) => hit.index! >= f.start && hit.index! < f.end);
+        sites.push(fn ? fn.name : `${file}: outside any function`);
+      }
+    }
+    return sites;
+  }
+
+  it("appears only inside erase_account and audit_log_immutable", () => {
+    expect(new Set(erasingSites())).toEqual(new Set(["erase_account", "audit_log_immutable"]));
+  });
+
+  describe("guarding the guard — in-memory migrations, real ones untouched", () => {
+    const REAL = migrationsInOrder();
+    const plus = (sql: string): Migration[] => [
+      ...REAL,
+      { file: "99999999999999_scratch.sql", sql },
+    ];
+
+    it("flags a third function that sets it", () => {
+      const sites = erasingSites(
+        plus(
+          "create function scratch_fn() returns void language sql as $fn$\n" +
+            "  select set_config('app.erasing', 'on', true);\n$fn$;",
+        ),
+      );
+      expect(sites).toContain("scratch_fn");
+    });
+
+    it("flags a bare statement outside any function", () => {
+      expect(erasingSites(plus("select set_config('app.erasing', 'on', false);"))).toContain(
+        "99999999999999_scratch.sql: outside any function",
+      );
+    });
+
+    it("is not tripped by a comment that names it", () => {
+      expect(erasingSites(plus("-- app.erasing is documented here\nselect 1;"))).toEqual(
+        erasingSites(REAL),
+      );
+    });
+  });
+});

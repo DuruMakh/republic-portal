@@ -38,8 +38,12 @@ alter table public.memberships add column note text
 -- 3. Append-only, except the erasure scrub (spec §4.3). Two locks on the one exception:
 --    the transaction-local setting that only erase_account() sets, AND the current role
 --    being the owner of erase_account(), looked up in the catalog when the trigger runs
---    (so the function only has to exist by then, not when this one is created). Clients hold
---    no privilege on audit_log at all; service_role can run SQL but is not that owner.
+--    (so the function only has to exist by then, not when this one is created). The client
+--    roles do hold the platform's default table grants on audit_log (measured on staging), but
+--    row level security with no policy shows them no row and lets them change none, and the
+--    owner lock means no role but the owner of erase_account() can use this exception:
+--    service_role can run SQL but is not that owner. (Comment corrected after staging apply,
+--    no statement changed; 20261009150000 carries the review's fixes.)
 create or replace function public.audit_log_immutable() returns trigger language plpgsql as $$
 begin
   if tg_op = 'UPDATE'

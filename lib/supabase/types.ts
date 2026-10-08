@@ -172,7 +172,7 @@ export interface Database {
       phone_verification_send_reservations: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
           phone: string;
           purpose: "registration";
           idempotency_key: string;
@@ -181,7 +181,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          user_id: string;
+          user_id?: string | null;
           phone: string;
           purpose?: "registration";
           idempotency_key: string;
@@ -190,7 +190,7 @@ export interface Database {
         };
         Update: {
           id?: string;
-          user_id?: string;
+          user_id?: string | null;
           phone?: string;
           purpose?: "registration";
           idempotency_key?: string;
