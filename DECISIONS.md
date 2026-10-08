@@ -1008,3 +1008,32 @@ Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
   the public header and phone menu: both are reached from the homepage, and სიახლეები stays in
   the footer. The header now reads მთავარი, რეიტინგი, სტრუქტურა (plus ფინანსები only when
   finances are public, ADR-034).
+
+## ADR-039 (2026-10-08): The referral card counts supporters and members apart
+
+The referral card showed one figure labelled `მხარდამჭერი`, but it counted every sign-up through
+the person's links, members included. The owner asked for two figures: someone who signs up
+through the link is a supporter; when they finish the membership form they move across, one
+fewer supporter and one more member.
+
+- **What makes a member.** Finishing the membership form (status `profile_completed` or
+  `active_member`), the same rule as the public member count (ADR-037). The board's review
+  changes no status today and does not affect the figures.
+- **Nothing is stored.** Both figures are counted from each referred person's current status on
+  every read, so the move happens by itself when the status changes.
+- **Earlier sign-ups carry over.** Both figures sum the person's own `M-` link and, once
+  approved, their delegate link (the 2026-07-29 rule for `referralCount`). Becoming a delegate
+  drops nothing; new sign-ups add.
+- **Referral statistics only.** Not part of the ranking and unrelated to which delegate a member
+  chooses; members choose and change their delegate freely. The team figures are untouched.
+- **Database.** Migration `20261008120000_referral_supporters_and_members.sql` adds
+  `referralSupporters` and `referralMembers` to `cabinet_state()` and `delegate_panel()`,
+  keeping every existing key. It was applied to staging before this decision was renumbered
+  (ADR-038 went to the structure page, PR #30), so its comments cite ADR-038. Production
+  migration baseline: 35 files.
+- **Delegate cabinet.** The supporter box under the card goes: it counted only the delegate link
+  and would have repeated the card's figure without the earlier sign-ups. The team box is
+  labelled `გუნდის წევრი` so it is not read as the card's `წევრი` row. (The owner approved the
+  design without answering the label question; this was the recommended default.)
+- **Release order.** Two PRs: the additive migration first (nothing visible), then the card,
+  after the real site's database has the migration.
