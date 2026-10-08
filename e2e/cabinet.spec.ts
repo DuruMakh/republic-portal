@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signOutViaNav } from "./admin-helpers";
 import {
   cleanupJourneyUsers,
   JOURNEY,
@@ -33,6 +34,26 @@ test("member cabinet: profile edit, delegate change, one-way funnel, no admin", 
   await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
   await expect(page.getByText("წევრი").first()).toBeVisible();
   await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
+
+  // signed-in phone chrome at layout level: exactly one bottom tab bar, a header that stays
+  // pinned, and the More sheet opening as a dialog (focus and Escape are its unit tests)
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileNav = page.locator("div.sticky.bottom-0 nav");
+  await expect(mobileNav).toBeVisible();
+  await expect(mobileNav.getByRole("link")).toHaveCount(4);
+  await expect(mobileNav.locator('a[href="/me/profile"]')).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
+  const mobileHeader = page.getByRole("banner");
+  await expect(mobileHeader).toHaveCSS("position", "sticky");
+  await page.evaluate(() => window.scrollTo(0, 500));
+  await expect.poll(async () => (await mobileHeader.boundingBox())?.y).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await mobileNav.getByRole("button", { name: "მეტი" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(mobileNav).toBeHidden();
 
   // profile edit persists across reload
   await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 2 });
@@ -79,4 +100,10 @@ test("member cabinet: profile edit, delegate change, one-way funnel, no admin", 
   await expect(page.getByRole("heading", { level: 1, name: "გვერდი ვერ მოიძებნა." })).toBeVisible();
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("contentinfo")).toHaveCount(0);
+
+  // the real sign-out control ends the session: home, and the cabinet asks for a login again
+  await page.goto("/me/profile");
+  await signOutViaNav(page);
+  await page.goto("/me/profile");
+  await expect(page).toHaveURL(/\/login/);
 });

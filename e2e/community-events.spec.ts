@@ -65,6 +65,9 @@ test("members RSVP and cancel; the delegate panel shows the team; cancellation l
   page,
   browser,
 }) => {
+  // three SMS sign-ins plus a Google-fixture registration in one test; each SMS sign-in
+  // may wait out an OTP resend (otp-helpers)
+  test.setTimeout(300_000);
   // `page` is the supporter; every other actor gets its own context
   const editorContext = await browser.newContext();
   const delegateContext = await browser.newContext();
@@ -171,8 +174,17 @@ test("members RSVP and cancel; the delegate panel shows the team; cancellation l
       // the supporter's own name (seedCompletedMember, above) appears in the expanded list
       await expect(overview.getByText("მხარდამჭერი პირველი")).toBeVisible();
 
-      // the delegate's team reflects the new member
+      // the delegate's team reflects the new member — on a phone: the delegate cabinet
+      // mounts exactly one bottom tab bar, whose home tab stays current on the team page
+      await dPage.setViewportSize({ width: 390, height: 844 });
       await dPage.goto("/delegate/team");
+      const mobileNav = dPage.locator("div.sticky.bottom-0 nav");
+      await expect(mobileNav).toBeVisible();
+      await expect(dPage.locator("div.sticky.bottom-0")).toHaveCount(1);
+      await expect(mobileNav.locator('a[href="/delegate"]')).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
       await expect(dPage.getByTestId("team-count")).toHaveText("1");
       await expect(dPage.getByTestId("team-rows").getByText("მხარდამჭერი პირველი")).toBeVisible();
       // the row pill reads plainly as a member (TEAM_STATUS_LABELS, ADR-037); scoped to the
