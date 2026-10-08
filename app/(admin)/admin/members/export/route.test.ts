@@ -54,7 +54,10 @@ const get = (query = "") => GET(new Request(`http://localhost/admin/members/expo
 
 /** CSV lines without the BOM. */
 async function lines(res: Response): Promise<string[]> {
-  return (await res.text()).replace(/^﻿/, "").trimEnd().split("\r\n");
+  return (await res.text())
+    .replace(/^\uFEFF/, "")
+    .trimEnd()
+    .split("\r\n");
 }
 
 beforeEach(() => {
@@ -142,10 +145,16 @@ describe("GET /admin/members/export — CSV formula injection", () => {
 });
 
 describe("GET /admin/members/export — failures", () => {
-  it("answers 500 without leaking the database's message", async () => {
-    exportAs(["finance"], { data: null, error: { message: "permission denied for relation x" } });
-    const res = await get();
-    expect(res.status).toBe(500);
-    expect(await res.text()).not.toContain("permission denied");
+  it("answers 500 without leaking the database's message, which stays in the server log", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      exportAs(["finance"], { data: null, error: { message: "permission denied for relation x" } });
+      const res = await get();
+      expect(res.status).toBe(500);
+      expect(await res.text()).not.toContain("permission denied");
+      expect(log).toHaveBeenCalledWith(expect.stringContaining("permission denied for relation x"));
+    } finally {
+      log.mockRestore();
+    }
   });
 });

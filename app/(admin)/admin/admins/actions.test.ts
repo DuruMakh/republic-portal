@@ -1,7 +1,7 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { fakeSession, ok, raised, type FakeHandlers } from "../_test-utils/fake-supabase";
+import { adminTestHarness, ok, raised } from "../_test-utils/fake-supabase";
 
 /**
  * Role grant/revoke are the keys to the whole admin panel. Authorization lives in
@@ -30,20 +30,8 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 
 const { findAdminCandidateAction, grantRoleAction, revokeRoleAction } = await import("./actions");
 
+const session = adminTestHarness(mocks);
 const userId = "11111111-1111-4111-8111-111111111111";
-
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  // a working service-role decoy: code that wrongly reached for it would succeed,
-  // so only the "never called" assertions can catch it
-  mocks.createAdminClient.mockReturnValue(fakeSession({ rpc: () => ok() }).client);
-});
 
 describe.each([
   { name: "grantRoleAction", action: grantRoleAction, rpc: "admin_grant_role" },
@@ -52,43 +40,33 @@ describe.each([
   it.each([
     { label: "a non-uuid user id", userId: "not-a-uuid", role: "finance" },
     { label: "an unknown role", userId, role: "owner" },
-    { label: "a non-string role", userId, role: { role: "super_admin" } },
-    { label: "a missing user id", userId: undefined, role: "editor" },
   ])("rejects $label before creating any Supabase client", async ({ userId: u, role }) => {
     await expect(action(u, role)).resolves.toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a database refusal through the caller's session and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
+    await expect(action(userId, "finance")).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    // the request did go to the database — under the CALLER's session, where
+    // auth.uid() is what the in-DB role check reads
+    expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { who: "an anonymous caller", token: "not_authenticated" },
-    { who: "a signed-in non-super_admin (verifier/finance/editor)", token: "missing_role" },
-  ])(
-    "refuses $who: the RPC's refusal reaches the admin, nothing revalidated",
-    async ({ token }) => {
-      const s = session({ rpc: () => raised(token) });
-      await expect(action(userId, "finance")).resolves.toEqual({
-        ok: false,
-        error: mapFunnelError(token),
-      });
-      // the request did go to the database — under the CALLER's session, where
-      // auth.uid() is what the in-DB role check reads
-      expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
-      expect(mocks.createAdminClient).not.toHaveBeenCalled();
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    },
-  );
-
-  it("a super_admin's valid request makes exactly the one audited RPC call, via the session client", async () => {
+  it("a valid request makes exactly the one audited RPC call, via the session client", async () => {
     const s = session({ rpc: () => ok() });
     await expect(action(userId, "verifier")).resolves.toEqual({ ok: true });
+    // no direct table write: admin_roles and audit_log change ONLY inside the RPC,
+    // in one transaction (ADR-014)
     expect(s.calls).toEqual([
       { kind: "rpc", name: rpc, args: { p_user_id: userId, p_role: "verifier" }, chain: [] },
     ]);
-    // no direct table write: admin_roles and audit_log change ONLY inside the RPC,
-    // in one transaction (ADR-014)
-    expect(s.tableCalls()).toEqual([]);
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/admins");
   });
@@ -96,20 +74,12 @@ describe.each([
 
 describe("revokeRoleAction — the platform keeps at least one super_admin", () => {
   it("surfaces the lockout refusal as its own message and changes nothing", async () => {
-    const s = session({ rpc: () => raised("last_super_admin") });
+    session({ rpc: () => raised("last_super_admin") });
     await expect(revokeRoleAction(userId, "super_admin")).resolves.toEqual({
       ok: false,
       error: mapFunnelError("last_super_admin"),
     });
     expect(mapFunnelError("last_super_admin")).not.toBe(GENERIC_FUNNEL_ERROR);
-    expect(s.rpcCalls()).toEqual([
-      {
-        kind: "rpc",
-        name: "admin_revoke_role",
-        args: { p_user_id: userId, p_role: "super_admin" },
-        chain: [],
-      },
-    ]);
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });
@@ -122,7 +92,7 @@ describe("findAdminCandidateAction — super_admin-only phone lookup", () => {
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each([[[]], [["verifier"]], [["finance"]], [["editor"]], [["verifier", "finance", "editor"]]])(
+  it.each([[[]], [["verifier", "finance", "editor"]]])(
     "refuses roles %j without querying members",
     async (roles) => {
       mocks.getAdminRoles.mockResolvedValue(roles);

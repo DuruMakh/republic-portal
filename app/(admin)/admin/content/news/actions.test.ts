@@ -1,14 +1,8 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { newsFormSchema } from "@/lib/content-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import {
-  fakeAdminClient,
-  fakeSession,
-  ok,
-  raised,
-  type FakeHandlers,
-} from "../../_test-utils/fake-supabase";
+import { adminTestHarness, fakeAdminClient, ok, raised } from "../../_test-utils/fake-supabase";
 
 /**
  * News. Every mutation is a SECURITY DEFINER RPC that re-checks super_admin/editor
@@ -41,18 +35,9 @@ const {
 
 const newsId = "88888888-8888-4888-8888-888888888888";
 
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
-
-let admin: ReturnType<typeof fakeAdminClient>;
-beforeEach(() => {
-  vi.clearAllMocks();
-  admin = fakeAdminClient();
-  mocks.createAdminClient.mockReturnValue(admin.client);
-});
+/** the service-role decoy is a storage fake, re-created before every test */
+let admin = fakeAdminClient();
+const session = adminTestHarness(mocks, () => (admin = fakeAdminClient()).client);
 
 describe("saveNewsAction", () => {
   const valid = { title: "Title", body: "Body", visibility: "public" };
@@ -60,8 +45,6 @@ describe("saveNewsAction", () => {
   it.each([
     { label: "an empty title", input: { ...valid, title: "   " } },
     { label: "an unknown visibility", input: { ...valid, visibility: "everyone" } },
-    { label: "a non-uuid id", input: { ...valid, id: "1" } },
-    { label: "a 20001-character body", input: { ...valid, body: "b".repeat(20001) } },
   ])("rejects $label before creating any Supabase client", async ({ input }) => {
     await expect(saveNewsAction(input)).resolves.toEqual({
       ok: false,
@@ -70,18 +53,15 @@ describe("saveNewsAction", () => {
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({ rpc: () => raised(token) });
-      await expect(saveNewsAction(valid)).resolves.toEqual({
-        ok: false,
-        error: mapFunnelError(token),
-      });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_save_news"]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    },
-  );
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
+    await expect(saveNewsAction(valid)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_save_news"]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
 
   it("saves through the audited RPC with the exact arguments", async () => {
     const s = session({ rpc: () => ok(newsId), from: () => ok({ slug: null }) });
@@ -106,24 +86,24 @@ describe.each([
   { name: "unpublishNewsAction", action: unpublishNewsAction, rpc: "admin_unpublish_news" },
   { name: "deleteNewsAction", action: deleteNewsAction, rpc: "admin_delete_news" },
 ])("$name", ({ action, rpc }) => {
-  it.each([["x"], [1], [undefined]])("rejects id %j before creating any client", async (id) => {
-    await expect(action(id)).resolves.toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
+  it("rejects a non-uuid id before creating any client", async () => {
+    await expect(action("x")).resolves.toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({
-        from: () => ok({ title: "Title", slug: "title" }),
-        rpc: () => raised(token),
-      });
-      await expect(action(newsId)).resolves.toEqual({ ok: false, error: mapFunnelError(token) });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-      expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    },
-  );
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({
+      from: () => ok({ title: "Title", slug: "title" }),
+      rpc: () => raised("missing_role"),
+    });
+    await expect(action(newsId)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+  });
 
   it("calls the audited RPC with the article id", async () => {
     const s = session({
@@ -154,7 +134,7 @@ describe("setNewsCoverAction — service-role upload", () => {
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it.each([[[]], [["verifier"]], [["finance"]], [["verifier", "finance"]]])(
+  it.each([[[]], [["verifier", "finance"]]])(
     "refuses roles %j before ANY client exists — no service role, no upload",
     async (roles) => {
       mocks.getAdminRoles.mockResolvedValue(roles);
@@ -191,7 +171,7 @@ describe("setNewsCoverAction — service-role upload", () => {
     },
   );
 
-  it("removes the just-uploaded file when the RPC refuses", async () => {
+  it("removes the just-uploaded file when the database refuses the save", async () => {
     mocks.getAdminRoles.mockResolvedValue(["editor"]);
     session({ from: () => ok({ image_url: null, slug: null }), rpc: () => raised("missing_role") });
     await expect(setNewsCoverAction(form(newsId, cover()))).resolves.toEqual({

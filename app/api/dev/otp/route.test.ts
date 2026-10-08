@@ -213,24 +213,19 @@ describe("GET /api/dev/otp — closed outside development/preview", () => {
     vi.unstubAllEnvs();
   });
 
+  // The route reads ONLY the flag (never the database URL), and the contract is an
+  // EXACT match on "development" / "preview": a differently-cased or padded value
+  // is not an alias, it is a closed gate.
   it.each([
-    { label: "production, pointed at a production database", appEnv: "production", db: "prod" },
-    { label: "production, still pointed at staging", appEnv: "production", db: "staging" },
-    { label: "staging", appEnv: "staging", db: "staging" },
-    { label: "test", appEnv: "test", db: "staging" },
-    { label: "an empty flag", appEnv: "", db: "prod" },
-    { label: "no flag at all", appEnv: undefined, db: "prod" },
-    { label: "a differently-cased Preview", appEnv: "Preview", db: "staging" },
-    { label: "a differently-cased DEVELOPMENT", appEnv: "DEVELOPMENT", db: "staging" },
-    { label: "a padded ' preview'", appEnv: " preview", db: "staging" },
-  ])("answers 404 for $label without creating a service-role client", async ({ appEnv, db }) => {
+    { label: "production", appEnv: "production" },
+    { label: "staging", appEnv: "staging" },
+    { label: "an empty flag", appEnv: "" },
+    { label: "no flag at all", appEnv: undefined },
+    { label: "not exactly 'preview' (exact match is the contract): Preview", appEnv: "Preview" },
+    { label: "not exactly 'development': DEVELOPMENT", appEnv: "DEVELOPMENT" },
+    { label: "not exactly 'preview': padded ' preview'", appEnv: " preview" },
+  ])("answers 404 for $label without creating a service-role client", async ({ appEnv }) => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", appEnv);
-    vi.stubEnv(
-      "NEXT_PUBLIC_SUPABASE_URL",
-      db === "prod"
-        ? "https://prodrefabcdefgh.supabase.co"
-        : "https://orcxtbedkexoclbfgvzd.supabase.co",
-    );
     // a working client that WOULD serve the code — only the gate can withhold it
     createAdminClientMock.mockReturnValue(makeAdmin({ profile: noProfile, otp: freshOtp }));
 

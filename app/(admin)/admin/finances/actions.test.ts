@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordPaymentSchema, voidPaymentSchema } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { fakeSession, ok, raised, type FakeHandlers } from "../_test-utils/fake-supabase";
+import { adminTestHarness, ok, raised } from "../_test-utils/fake-supabase";
 
 /**
  * Money. Recording and voiding a payment change a member's status and every
@@ -12,7 +12,8 @@ import { fakeSession, ok, raised, type FakeHandlers } from "../_test-utils/fake-
  * any client exists, call the RPC through the caller's own session, never write
  * payments directly, and report a refusal without revalidating as if it worked.
  * The read-side helpers (member lookup, bulk preview) gate on the role app-side
- * before querying.
+ * before querying. The schemas' own edge cases live in lib/admin-schemas.test.ts;
+ * here one or two invalid inputs prove "rejected before any client exists".
  */
 
 const mocks = vi.hoisted(() => ({
@@ -37,61 +38,38 @@ const {
   voidPaymentAction,
 } = await import("./actions");
 
+const session = adminTestHarness(mocks);
 const memberId = "22222222-2222-4222-8222-222222222222";
 
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
-
 beforeEach(() => {
-  vi.clearAllMocks();
   // Tbilisi "today" is 2026-10-08 — the paid-at window is 2026-01-01..today
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-10-08T08:00:00Z"));
-  mocks.createAdminClient.mockReturnValue(fakeSession({ rpc: () => ok() }).client);
 });
 afterEach(() => {
   vi.useRealTimers();
 });
 
-const refusals = [
-  { who: "an anonymous caller", token: "not_authenticated" },
-  { who: "a verifier or editor (not finance/super_admin)", token: "missing_role" },
-];
-
 describe("recordPaymentAction", () => {
   const valid = { memberId, amountGel: 20, paidAt: "2026-10-01", bankReference: "" };
 
   it.each([
-    { label: "a zero amount", input: { ...valid, amountGel: 0 } },
-    { label: "a negative amount", input: { ...valid, amountGel: -20 } },
-    { label: "an amount over 10000", input: { ...valid, amountGel: 10000.01 } },
-    { label: "fractions of a tetri", input: { ...valid, amountGel: 20.005 } },
-    { label: "an amount sent as a string", input: { ...valid, amountGel: "20" } },
     { label: "a date in the future", input: { ...valid, paidAt: "2026-10-09" } },
-    { label: "a date before 2026", input: { ...valid, paidAt: "2025-12-31" } },
-    { label: "an impossible calendar date", input: { ...valid, paidAt: "2026-02-31" } },
-    { label: "a non-uuid member", input: { ...valid, memberId: "GR-ABCDEF" } },
-    { label: "a 65-character bank reference", input: { ...valid, bankReference: "R".repeat(65) } },
-    { label: "no input at all", input: undefined },
+    { label: "fractions of a tetri", input: { ...valid, amountGel: 20.005 } },
   ])("rejects $label before creating any Supabase client", async ({ input }) => {
-    const expected = recordPaymentSchema.safeParse(input);
-    expect(expected.success).toBe(false);
     await expect(recordPaymentAction(input)).resolves.toEqual({
       ok: false,
-      error: expected.error?.issues[0]?.message ?? GENERIC_FUNNEL_ERROR,
+      error: recordPaymentSchema.safeParse(input).error?.issues[0]?.message ?? GENERIC_FUNNEL_ERROR,
     });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it.each(refusals)("refuses $who: refusal surfaced, nothing revalidated", async ({ token }) => {
-    const s = session({ rpc: () => raised(token) });
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
     await expect(recordPaymentAction(valid)).resolves.toEqual({
       ok: false,
-      error: mapFunnelError(token),
+      error: mapFunnelError("missing_role"),
     });
     expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_record_payment"]);
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
@@ -132,26 +110,21 @@ describe("recordPaymentAction", () => {
 describe("voidPaymentAction", () => {
   it.each([
     { label: "a payment id sent as a string", paymentId: "42", reason: "duplicate entry" },
-    { label: "a fractional payment id", paymentId: 4.2, reason: "duplicate entry" },
-    { label: "a zero payment id", paymentId: 0, reason: "duplicate entry" },
     { label: "a two-character reason", paymentId: 42, reason: "ab" },
-    { label: "a reason that is only padding", paymentId: 42, reason: "   a   " },
-    { label: "a 501-character reason", paymentId: 42, reason: "x".repeat(501) },
-    { label: "a missing reason", paymentId: 42, reason: undefined },
   ])("rejects $label before creating any Supabase client", async ({ paymentId, reason }) => {
-    const expected = voidPaymentSchema.safeParse({ paymentId, reason });
-    expect(expected.success).toBe(false);
     await expect(voidPaymentAction(paymentId, reason)).resolves.toEqual({
       ok: false,
-      error: expected.error?.issues[0]?.message ?? GENERIC_FUNNEL_ERROR,
+      error:
+        voidPaymentSchema.safeParse({ paymentId, reason }).error?.issues[0]?.message ??
+        GENERIC_FUNNEL_ERROR,
     });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it.each([...refusals, { who: "an already-voided payment", token: "already_voided" }])(
-    "refuses $who: refusal surfaced, nothing revalidated",
-    async ({ token }) => {
+  it.each(["missing_role", "already_voided"])(
+    "surfaces a database refusal (%s) and does not revalidate",
+    async (token) => {
       const s = session({ rpc: () => raised(token) });
       await expect(voidPaymentAction(42, "duplicate entry")).resolves.toEqual({
         ok: false,
@@ -181,22 +154,16 @@ describe("voidPaymentAction", () => {
 describe("confirmBulkAction", () => {
   const row = { referenceCode: "GR-ABCDEF", amountGel: 20, paidAt: "2026-10-01" };
 
-  it.each([
-    { label: "an empty batch", rows: [] },
-    { label: "a malformed reference code", rows: [{ ...row, referenceCode: "XX-1" }] },
-    { label: "a future date", rows: [{ ...row, paidAt: "2026-10-09" }] },
-    { label: "a non-array", rows: "GR-ABCDEF,20" },
-  ])("rejects $label before creating any Supabase client", async ({ rows }) => {
-    const res = await confirmBulkAction(rows);
-    expect(res).toMatchObject({ ok: false, rowIndex: null });
+  it("rejects an empty batch before creating any Supabase client", async () => {
+    await expect(confirmBulkAction([])).resolves.toMatchObject({ ok: false, rowIndex: null });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(refusals)("refuses $who: refusal surfaced, nothing revalidated", async ({ token }) => {
-    const s = session({ rpc: () => raised(token) });
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
     await expect(confirmBulkAction([row])).resolves.toEqual({
       ok: false,
-      error: mapFunnelError(token),
+      error: mapFunnelError("missing_role"),
       rowIndex: null,
     });
     expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_record_payments_bulk"]);
@@ -226,7 +193,7 @@ describe.each([
   { name: "lookupMemberAction", call: () => lookupMemberAction("Beridze") },
   { name: "previewBulkAction", call: () => previewBulkAction("GR-ABCDEF 20.00 2026-10-01") },
 ])("$name — finance/super_admin only, gated before any query", ({ call }) => {
-  it.each([[[]], [["verifier"]], [["editor"]], [["verifier", "editor"]]])(
+  it.each([[[]], [["verifier", "editor"]]])(
     "refuses roles %j without creating a Supabase client",
     async (roles) => {
       mocks.getAdminRoles.mockResolvedValue(roles);

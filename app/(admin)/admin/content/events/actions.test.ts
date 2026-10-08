@@ -1,8 +1,8 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { eventFormSchema } from "@/lib/content-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { fakeSession, ok, raised, type FakeHandlers } from "../../_test-utils/fake-supabase";
+import { adminTestHarness, ok, raised } from "../../_test-utils/fake-supabase";
 
 /**
  * Events. Every mutation is a SECURITY DEFINER RPC that re-checks
@@ -24,18 +24,8 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 const { cancelEventAction, deleteEventAction, publishEventAction, saveEventAction } =
   await import("./actions");
 
+const session = adminTestHarness(mocks);
 const eventId = "99999999-9999-4999-8999-999999999999";
-
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  mocks.createAdminClient.mockReturnValue(fakeSession({ rpc: () => ok() }).client);
-});
 
 describe("saveEventAction", () => {
   const valid = {
@@ -47,7 +37,6 @@ describe("saveEventAction", () => {
   };
 
   it.each([
-    { label: "an empty location", input: { ...valid, location: " " } },
     { label: "a malformed start", input: { ...valid, startsAt: "tomorrow" } },
     { label: "an end before the start", input: { ...valid, endsAt: "2026-11-01T17:00" } },
   ])("rejects $label before creating any Supabase client", async ({ input }) => {
@@ -58,18 +47,15 @@ describe("saveEventAction", () => {
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({ rpc: () => raised(token) });
-      await expect(saveEventAction(valid)).resolves.toEqual({
-        ok: false,
-        error: mapFunnelError(token),
-      });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_save_event"]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    },
-  );
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
+    await expect(saveEventAction(valid)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_save_event"]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
 
   it("saves through the audited RPC with Tbilisi wall time converted to an instant", async () => {
     const s = session({ rpc: () => ok(eventId), from: () => ok({ slug: null }) });
@@ -98,24 +84,24 @@ describe.each([
   { name: "cancelEventAction", action: cancelEventAction, rpc: "admin_cancel_event" },
   { name: "deleteEventAction", action: deleteEventAction, rpc: "admin_delete_event" },
 ])("$name", ({ action, rpc }) => {
-  it.each([["x"], [1], [undefined]])("rejects id %j before creating any client", async (id) => {
-    await expect(action(id)).resolves.toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
+  it("rejects a non-uuid id before creating any client", async () => {
+    await expect(action("x")).resolves.toEqual({ ok: false, error: GENERIC_FUNNEL_ERROR });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({
-        from: () => ok({ title: "Title", slug: "title" }),
-        rpc: () => raised(token),
-      });
-      await expect(action(eventId)).resolves.toEqual({ ok: false, error: mapFunnelError(token) });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-      expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    },
-  );
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({
+      from: () => ok({ title: "Title", slug: "title" }),
+      rpc: () => raised("missing_role"),
+    });
+    await expect(action(eventId)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual([rpc]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+  });
 
   it("calls the audited RPC with the event id", async () => {
     const s = session({

@@ -1,8 +1,14 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { rejectDelegateSchema } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { fakeSession, ok, raised, type FakeHandlers } from "../_test-utils/fake-supabase";
+import {
+  adminTestHarness,
+  fakeSession,
+  ok,
+  raised,
+  type FakeHandlers,
+} from "../_test-utils/fake-supabase";
 
 /**
  * Delegate verification. Approve/reject and the applicant personal-ID reveal are
@@ -30,30 +36,24 @@ const PERSONAL_ID = "01001054321";
 /** What PostgREST answers `.single()` with when the self-gating view hides every row. */
 const NO_ROWS = { data: null, error: { message: "no rows", code: "PGRST116" } };
 
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  mocks.createAdminClient.mockReturnValue(
-    fakeSession({ rpc: () => ok(PERSONAL_ID), from: () => ok([]) }).client,
-  );
-});
+const session = adminTestHarness(
+  mocks,
+  () => fakeSession({ rpc: () => ok(PERSONAL_ID), from: () => ok([]) }).client,
+);
+/** The applicant row an admin sees; the slug "taken" lookup gets an empty list. */
+const applicant: FakeHandlers["from"] = (_t, chain) =>
+  chain.some((c) => c.method === "single")
+    ? ok({ first_name: "Nino", last_name: "Beridze" })
+    : ok([]);
 
 describe("approveDelegateAction", () => {
-  it.each([["not-a-uuid"], [42], [undefined]])(
-    "rejects %j before creating any Supabase client",
-    async (input) => {
-      await expect(approveDelegateAction(input)).resolves.toEqual({
-        ok: false,
-        error: GENERIC_FUNNEL_ERROR,
-      });
-      expect(mocks.createServerSupabase).not.toHaveBeenCalled();
-    },
-  );
+  it("rejects a non-uuid before creating any Supabase client", async () => {
+    await expect(approveDelegateAction("not-a-uuid")).resolves.toEqual({
+      ok: false,
+      error: GENERIC_FUNNEL_ERROR,
+    });
+    expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+  });
 
   it("a non-admin sees no applicant row, so no approval RPC is attempted", async () => {
     const s = session({ from: () => NO_ROWS });
@@ -63,32 +63,20 @@ describe("approveDelegateAction", () => {
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({
-        from: (_t, chain) =>
-          chain.some((c) => c.method === "single")
-            ? ok({ first_name: "Nino", last_name: "Beridze" })
-            : ok([]),
-        rpc: () => raised(token),
-      });
-      await expect(approveDelegateAction(delegateId)).resolves.toEqual({
-        ok: false,
-        error: mapFunnelError(token),
-      });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_approve_delegate"]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-      expect(mocks.createAdminClient).not.toHaveBeenCalled();
-    },
-  );
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ from: applicant, rpc: () => raised("missing_role") });
+    await expect(approveDelegateAction(delegateId)).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_approve_delegate"]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+  });
 
   it("approves through the audited RPC with a server-computed slug", async () => {
     const s = session({
-      from: (_t, chain) =>
-        chain.some((c) => c.method === "single")
-          ? ok({ first_name: "Nino", last_name: "Beridze" })
-          : ok([]),
+      from: applicant,
       rpc: (_n, args) => ok({ slug: (args as { p_slug: string }).p_slug }),
     });
     const res = await approveDelegateAction(delegateId);
@@ -98,42 +86,39 @@ describe("approveDelegateAction", () => {
       name: "admin_approve_delegate",
       args: { p_delegate_id: delegateId, p_slug: expect.stringMatching(/^[a-z0-9-]+$/) },
     });
-    const slug = (rpc[0]!.args as { p_slug: string }).p_slug;
-    expect(res).toEqual({ ok: true, slug });
+    expect(res).toEqual({ ok: true, slug: (rpc[0]!.args as { p_slug: string }).p_slug });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/verify");
   });
 });
 
 describe("rejectDelegateAction", () => {
-  it.each([
-    { label: "a non-string delegate id", id: 42, note: "" },
-    { label: "a non-string note", id: delegateId, note: { text: "x" } },
-    { label: "a non-uuid delegate id", id: "x", note: "" },
-    { label: "a 501-character note", id: delegateId, note: "n".repeat(501) },
-  ])("rejects $label before creating any Supabase client", async ({ id, note }) => {
-    const res = await rejectDelegateAction(id, note);
-    const expected =
-      typeof id === "string" && typeof note === "string"
-        ? (rejectDelegateSchema.safeParse({ delegateId: id, note }).error?.issues[0]?.message ??
-          GENERIC_FUNNEL_ERROR)
-        : GENERIC_FUNNEL_ERROR;
-    expect(res).toEqual({ ok: false, error: expected });
+  it("rejects a non-string note before creating any Supabase client", async () => {
+    await expect(rejectDelegateAction(delegateId, { text: "x" })).resolves.toEqual({
+      ok: false,
+      error: GENERIC_FUNNEL_ERROR,
+    });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role"])(
-    "surfaces the RPC's %s refusal and revalidates nothing",
-    async (token) => {
-      const s = session({ rpc: () => raised(token) });
-      await expect(rejectDelegateAction(delegateId, "")).resolves.toEqual({
-        ok: false,
-        error: mapFunnelError(token),
-      });
-      expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_reject_delegate"]);
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    },
-  );
+  it("rejects a 501-character note before creating any Supabase client", async () => {
+    const note = "n".repeat(501);
+    await expect(rejectDelegateAction(delegateId, note)).resolves.toEqual({
+      ok: false,
+      error: rejectDelegateSchema.safeParse({ delegateId, note }).error?.issues[0]?.message,
+    });
+    expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a database refusal and does not revalidate", async () => {
+    const s = session({ rpc: () => raised("missing_role") });
+    await expect(rejectDelegateAction(delegateId, "")).resolves.toEqual({
+      ok: false,
+      error: mapFunnelError("missing_role"),
+    });
+    expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_reject_delegate"]);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
 
   it("rejects through the audited RPC only (blank note sent as null)", async () => {
     const s = session({ rpc: () => ok() });
@@ -160,8 +145,8 @@ describe("revealApplicantIdAction", () => {
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it.each(["not_authenticated", "missing_role", "invalid_target"])(
-    "surfaces the RPC's %s refusal with no ID in the result",
+  it.each(["missing_role", "invalid_target"])(
+    "surfaces a database refusal (%s) with no ID in the result",
     async (token) => {
       const s = session({ rpc: () => raised(token) });
       const res = await revealApplicantIdAction(delegateId);

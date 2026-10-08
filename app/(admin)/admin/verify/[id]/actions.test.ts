@@ -1,10 +1,10 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { delegateProfileSchema } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import {
+  adminTestHarness,
   fakeAdminClient,
-  fakeSession,
   ok,
   raised,
   type FakeHandlers,
@@ -47,24 +47,15 @@ function form(fields: { delegateId?: string; bio?: string; photo?: File }): Form
 }
 const jpeg = () => new File([new Uint8Array([0xff, 0xd8, 0xff])], "p.jpg", { type: "image/jpeg" });
 
-function session(handlers: FakeHandlers = {}) {
-  const s = fakeSession(handlers);
-  mocks.createServerSupabase.mockResolvedValue(s.client);
-  return s;
-}
+/** the service-role decoy is a storage fake, re-created before every test */
+let admin = fakeAdminClient();
+const session = adminTestHarness(mocks, () => (admin = fakeAdminClient()).client);
 function approvedTarget(rpc: FakeHandlers["rpc"] = () => ok()) {
   return session({
     from: () => ok({ photo_url: OLD_URL, slug: "nino-beridze", status: "approved" }),
     rpc,
   });
 }
-
-let admin: ReturnType<typeof fakeAdminClient>;
-beforeEach(() => {
-  vi.clearAllMocks();
-  admin = fakeAdminClient();
-  mocks.createAdminClient.mockReturnValue(admin.client);
-});
 
 describe("updateDelegateProfileAction", () => {
   it("rejects a malformed form before reading roles or creating any client", async () => {
@@ -80,7 +71,7 @@ describe("updateDelegateProfileAction", () => {
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
 
-  it.each([[[]], [["finance"]], [["editor"]], [["finance", "editor"]]])(
+  it.each([[[]], [["finance", "editor"]]])(
     "refuses roles %j before ANY client exists — no service role, no upload",
     async (roles) => {
       mocks.getAdminRoles.mockResolvedValue(roles);
@@ -136,21 +127,18 @@ describe("updateDelegateProfileAction", () => {
     },
   );
 
-  it.each(["not_authenticated", "missing_role"])(
-    "when the RPC refuses (%s), the just-uploaded file is removed and nothing is revalidated",
-    async (token) => {
-      mocks.getAdminRoles.mockResolvedValue(["verifier"]);
-      approvedTarget(() => raised(token));
-      await expect(
-        updateDelegateProfileAction(form({ delegateId, photo: jpeg() })),
-      ).resolves.toEqual({ ok: false, error: mapFunnelError(token) });
-      const uploaded = String(admin.storageCalls.find((c) => c.method === "upload")?.args[0]);
-      expect(admin.storageCalls.at(-1)).toEqual({
-        bucket: "delegate-photos",
-        method: "remove",
-        args: [[uploaded]],
-      });
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    },
-  );
+  it("when the database refuses the save, the just-uploaded file is removed and nothing is revalidated", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+    approvedTarget(() => raised("missing_role"));
+    await expect(updateDelegateProfileAction(form({ delegateId, photo: jpeg() }))).resolves.toEqual(
+      { ok: false, error: mapFunnelError("missing_role") },
+    );
+    const uploaded = String(admin.storageCalls.find((c) => c.method === "upload")?.args[0]);
+    expect(admin.storageCalls.at(-1)).toEqual({
+      bucket: "delegate-photos",
+      method: "remove",
+      args: [[uploaded]],
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
 });

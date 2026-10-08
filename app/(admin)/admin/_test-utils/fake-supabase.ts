@@ -8,6 +8,7 @@
  * which table) rather than what the fake handed back. Results are produced by
  * the test's handlers; anything unhandled resolves to `{ data: null, error: null }`.
  */
+import { beforeEach, vi, type Mock } from "vitest";
 
 export interface DbError {
   message: string;
@@ -95,6 +96,29 @@ export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
     calls,
     rpcCalls: () => calls.filter((c) => c.kind === "rpc"),
     tableCalls: () => calls.filter((c) => c.kind === "from"),
+  };
+}
+
+/**
+ * Per-file wiring for the admin tests (the vi.mock calls stay in each file,
+ * because vitest hoists them per module). Registers a beforeEach that clears
+ * every mock and installs a WORKING service-role decoy — code that wrongly
+ * reached for the service role would succeed, so only the tests' "never
+ * called" assertions can catch it. Returns `session(handlers)`, which installs
+ * a fresh fake session client and hands it back for assertions.
+ */
+export function adminTestHarness(
+  mocks: { createServerSupabase: Mock; createAdminClient: Mock },
+  serviceRoleDecoy: () => unknown = () => fakeSession({ rpc: () => ok() }).client,
+): (handlers?: FakeHandlers) => FakeSession {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.createAdminClient.mockReturnValue(serviceRoleDecoy());
+  });
+  return (handlers = {}) => {
+    const s = fakeSession(handlers);
+    mocks.createServerSupabase.mockResolvedValue(s.client);
+    return s;
   };
 }
 
