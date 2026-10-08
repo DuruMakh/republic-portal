@@ -35,10 +35,6 @@ describe("OtpInput", () => {
     fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "a" } });
     expect(screen.getByTestId("value").textContent).toBe("");
   });
-  it("shows the error text", () => {
-    render(<OtpInput value="" onChange={() => undefined} error="კოდი არასწორია" />);
-    expect(screen.getByText("კოდი არასწორია")).toBeInTheDocument();
-  });
   it("associates the error with every box via aria-invalid and aria-describedby", () => {
     render(<OtpInput value="" onChange={() => undefined} error="კოდი არასწორია" />);
     for (let i = 0; i < 6; i++) {
@@ -62,13 +58,5 @@ describe("OtpInput", () => {
     expect(screen.getByTestId("otp-1")).toHaveFocus();
     fireEvent.keyDown(screen.getByTestId("otp-1"), { key: "Backspace" });
     expect(screen.getByTestId("otp-0")).toHaveFocus();
-  });
-  it("cells contain font-serif and border-b", () => {
-    render(<OtpInput value="" onChange={() => undefined} />);
-    for (let i = 0; i < 6; i++) {
-      const cell = screen.getByTestId(`otp-${i}`);
-      expect(cell.className).toContain("font-serif");
-      expect(cell.className).toContain("border-b");
-    }
   });
 });

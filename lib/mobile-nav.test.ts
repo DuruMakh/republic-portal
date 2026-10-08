@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  mobileBackTarget,
-  mobileChrome,
-  mobileTabs,
-  showsJoinCta,
-  showsTabBar,
-} from "./mobile-nav";
+import { mobileBackTarget, mobileTabs, showsJoinCta, showsTabBar } from "./mobile-nav";
 import { cabinetNavItems } from "./cabinet";
 import { filterEventLinks } from "./events-switch";
 
@@ -37,31 +31,6 @@ describe("mobileBackTarget", () => {
   it("does not confuse the public /delegates/ prefix with the /delegate cabinet", () => {
     expect(mobileBackTarget("/delegate")).toBeNull();
     expect(mobileBackTarget("/delegate/team")).toBeNull();
-  });
-});
-
-describe("mobileChrome", () => {
-  it("gives public routes the public header", () => {
-    for (const p of ["/", "/leaderboard", "/news", "/events", "/transparency", "/support"]) {
-      expect(mobileChrome(p), p).toBe("public");
-    }
-  });
-  it("gives detail and flow routes the back header", () => {
-    for (const p of ["/news/x", "/events/x", "/delegates/x", "/join", "/join/terms", "/login"]) {
-      expect(mobileChrome(p), p).toBe("back");
-    }
-  });
-  it("gives cabinet routes the cabinet header", () => {
-    for (const p of ["/me", "/me/profile", "/me/polls", "/delegate", "/delegate/team"]) {
-      expect(mobileChrome(p), p).toBe("cabinet");
-    }
-  });
-  it("lets the back header win over the cabinet header in the membership wizard", () => {
-    expect(mobileChrome("/me/membership")).toBe("back");
-    expect(mobileChrome("/me/membership/done")).toBe("back");
-  });
-  it("falls back to public chrome for an unclassified route", () => {
-    expect(mobileChrome("/some-unmapped-route")).toBe("public");
   });
 });
 
@@ -202,7 +171,6 @@ describe("mobileTabs while events are hidden (ADR-042)", () => {
 describe("mobileBackTarget while events are hidden (ADR-042)", () => {
   it("gives an old event address no back header, so a 404 never links to the hidden index", () => {
     expect(mobileBackTarget("/events/tbilisi-meeting", false)).toBeNull();
-    expect(mobileChrome("/events/tbilisi-meeting", false)).toBe("public");
   });
 
   it("leaves every other back target as it is", () => {

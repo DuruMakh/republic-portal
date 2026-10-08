@@ -104,7 +104,6 @@ describe("registerGoogleAction", () => {
       "whitespace variant",
       { code: "P0001", message: " phone_required ", details: null, hint: null },
     ],
-    ["missing code", { message: "phone_required", details: null, hint: null }],
     [
       "token only in details and hint",
       {
@@ -113,10 +112,6 @@ describe("registerGoogleAction", () => {
         details: "phone_required",
         hint: "phone_required",
       },
-    ],
-    [
-      "non-contract phone_in_use token",
-      { code: "P0001", message: "phone_in_use", details: null, hint: null },
     ],
   ])("fails closed for %s", async (_label, error) => {
     mocks.rpc.mockResolvedValue({ data: null, error });

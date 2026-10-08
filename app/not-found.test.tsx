@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const nav = vi.hoisted(() => ({ pathname: "/no-such-page" }));
@@ -19,7 +19,8 @@ afterEach(() => {
 });
 
 describe("site-wide not-found page (unknown URLs)", () => {
-  it("shows the Georgian notice", () => {
+  it("shows the Georgian notice and titles the tab in Georgian", () => {
+    expect(metadata.title).toBe("გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა");
     render(<RootNotFound />);
     expect(
       screen.getByRole("heading", { level: 1, name: "გვერდი ვერ მოიძებნა." }),
@@ -28,16 +29,6 @@ describe("site-wide not-found page (unknown URLs)", () => {
       "href",
       "/",
     );
-  });
-
-  it("keeps the site header, with its one account action, and the footer around it", () => {
-    render(<RootNotFound />);
-    const header = screen.getByRole("banner");
-    expect(within(header).getByRole("link", { name: "შემოგვიერთდი" })).toHaveAttribute(
-      "href",
-      "/join",
-    );
-    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
 
   // This page is prerendered once, for /_not-found, but opened at whatever address was mistyped.
@@ -56,9 +47,5 @@ describe("site-wide not-found page (unknown URLs)", () => {
     nav.pathname = "/admin/a";
     render(<RootNotFound />);
     expect(screen.getByRole("banner").className).toContain("sticky");
-  });
-
-  it("titles the tab in Georgian instead of the framework's English default", () => {
-    expect(metadata.title).toBe("გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა");
   });
 });

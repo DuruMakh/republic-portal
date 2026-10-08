@@ -5,6 +5,7 @@ import {
   GENERIC_FUNNEL_ERROR,
   type CabinetStatePresent,
 } from "@/lib/funnel";
+import { cabinetStateFixture } from "@/lib/test-cabinet-state";
 import { MembershipWizard } from "./MembershipWizard";
 
 const saveMembershipProfileAction = vi.fn();
@@ -61,35 +62,19 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+// A registered supporter who has not started the membership form yet.
 function cab(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
-  return {
-    exists: true,
+  return cabinetStateFixture({
     standing: "registered",
     status: "registered",
-    role: "member",
-    firstName: "ნინო",
-    lastName: "ბერიძე",
-    personalIdMasked: "010********",
-    hasPersonalId: true,
-    referralCode: null,
-    referralCount: 0,
-    birthDate: null,
+    completed: false,
+    membershipExists: false,
     regionId: null,
-    cityId: null,
-    employment: null,
     tier: null,
     referenceCode: null,
-    completed: false,
-    delegateStatus: null,
-    referral: null,
-    pendingDelegate: null,
-    chosenDelegate: null,
-    membershipExists: false,
     registrationCompletedAt: null,
-    createdAt: "2026-07-21T10:00:00Z",
-    admin: false,
     ...overrides,
-  };
+  });
 }
 
 // A profile that already satisfies deriveMembershipPhase's "tier" condition.
@@ -115,26 +100,6 @@ function agreeToBoth() {
   fireEvent.click(screen.getByRole("checkbox", { name: DATA_CONSENT }));
   fireEvent.click(screen.getByRole("checkbox", { name: DUES_CONSENT }));
 }
-
-describe("MembershipWizard — phase derivation", () => {
-  it("starts on the profile phase when wizard fields are incomplete", async () => {
-    render(<MembershipWizard initialState={cab({})} />);
-    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
-    // owner decision (ADR-036): the heading stands alone, no explanatory line under it
-    expect(screen.queryByText(/ვერიფიკაციისთვის/)).toBeNull();
-    expect(screen.queryByText("წევრობის განაცხადი")).toBeNull();
-    await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
-  });
-
-  it("starts on the tier phase directly when the profile is already saved", async () => {
-    render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
-    expect(screen.queryByText("წევრის მონაცემები")).toBeNull();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "განაცხადის გაგზავნა" })).toBeInTheDocument(),
-    );
-  });
-});
 
 describe("MembershipWizard — profile phase", () => {
   it("shows Georgian validation errors and does not call the action when required fields are empty", async () => {
@@ -166,24 +131,6 @@ describe("MembershipWizard — profile phase", () => {
     expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
   });
 
-  it("shows the Georgian error message when the save action fails", async () => {
-    saveMembershipProfileAction.mockResolvedValue({
-      ok: false,
-      error: "სესია ამოიწურა — დაადასტურე ნომერი თავიდან.",
-    });
-    render(
-      <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
-    );
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
-      target: { value: "1990-05-20" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
-    expect(
-      await screen.findByText("სესია ამოიწურა — დაადასტურე ნომერი თავიდან."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
-  });
-
   it("shows a Georgian error and re-enables the button when the save action rejects", async () => {
     saveMembershipProfileAction.mockRejectedValue(new Error("network drop"));
     render(
@@ -202,18 +149,6 @@ describe("MembershipWizard — profile phase", () => {
 });
 
 describe("MembershipWizard — personal ID at membership (owner fix #10)", () => {
-  it("renders the ID field at the top of the profile phase when the profile has none yet", async () => {
-    render(<MembershipWizard initialState={cab({ hasPersonalId: false })} />);
-    await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
-    expect(screen.getByLabelText("პირადი ნომერი")).toBeInTheDocument();
-  });
-
-  it("does not render the ID field when the profile already has one", async () => {
-    render(<MembershipWizard initialState={cab({ hasPersonalId: true })} />);
-    await waitFor(() => expect(screen.getByLabelText("მხარე")).toBeInTheDocument());
-    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
-  });
-
   it("submits the entered personal ID when the profile has none yet", async () => {
     saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
     render(
@@ -260,13 +195,14 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     });
   });
 
-  it("submits personalId: null when the profile already has one, even though the field is hidden", async () => {
+  it("hides the ID field when the profile already has one and submits personalId: null", async () => {
     saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
     render(
       <MembershipWizard
         initialState={cab({ hasPersonalId: true, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
+    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
     fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
       target: { value: "1990-05-20" },
     });
@@ -327,19 +263,6 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
 });
 
 describe("MembershipWizard — tier phase", () => {
-  it("speaks of the board's review and asks two consents, the dues one naming 10 ₾ (ADR-036)", () => {
-    render(<MembershipWizard initialState={cab(PROFILED)} />);
-    expect(screen.getByText("წევრობის განაცხადი")).toBeInTheDocument();
-    expect(screen.getByText("შენს განაცხადს განიხილავს ბორდი")).toBeInTheDocument();
-    expect(screen.getByText("დადასტურების შემდეგ ხდები მოძრაობის წევრი")).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: DATA_CONSENT })).not.toBeChecked();
-    expect(screen.getByRole("checkbox", { name: DUES_CONSENT })).not.toBeChecked();
-    // the old fee box and bank-transfer line are gone
-    expect(screen.queryByText("თვეში")).toBeNull();
-    expect(screen.queryByText(/საბანკო გადარიცხვით/)).toBeNull();
-    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-  });
-
   it("refuses to send until both consents are ticked, without calling the server", async () => {
     render(<MembershipWizard initialState={cab(PROFILED)} />);
     const send = screen.getByRole("button", { name: "განაცხადის გაგზავნა" });

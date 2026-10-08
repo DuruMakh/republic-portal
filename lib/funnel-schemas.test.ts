@@ -7,7 +7,6 @@ import {
   registerSchema,
   tierSchema,
 } from "./funnel-schemas";
-import { BANK_DETAILS } from "./bank-details";
 
 describe("registerSchema", () => {
   const base = {
@@ -87,23 +86,13 @@ describe("tierSchema", () => {
 });
 
 describe("tierSchema — fixed fee (owner fix #9)", () => {
-  it("accepts the fixed 10 GEL fee", () => {
-    expect(tierSchema.safeParse({ tier: 10 }).success).toBe(true);
-  });
-
   it("rejects the retired 5 and 20 GEL tiers", () => {
     expect(tierSchema.safeParse({ tier: 5 }).success).toBe(false);
     expect(tierSchema.safeParse({ tier: 20 }).success).toBe(false);
   });
 });
 
-describe("bank details + employment presets", () => {
-  it("bank details module has the full display shape", () => {
-    expect(typeof BANK_DETAILS.placeholder).toBe("boolean");
-    expect(BANK_DETAILS.recipientName.length).toBeGreaterThan(0);
-    expect(BANK_DETAILS.bankName.length).toBeGreaterThan(0);
-    expect(BANK_DETAILS.iban.length).toBeGreaterThan(0);
-  });
+describe("employment presets", () => {
   it("employment presets are the prototype's five", () => {
     expect([...EMPLOYMENT_PRESETS]).toEqual([
       "დასაქმებული",

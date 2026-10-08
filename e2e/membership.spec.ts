@@ -1,7 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ADMIN_PHONES, loginAs, signOutViaNav } from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
-import { cleanupCommunityContent } from "./community-helpers";
 import { EVENTS_SHOWN } from "./events-switch";
 import {
   cleanupGoogleBackedTestUsers,
@@ -15,8 +13,6 @@ import {
   seedCompletedMember,
 } from "./funnel-helpers";
 
-const RUN = `e2e-memb-${Date.now().toString(36)}`;
-
 // the application step sends only once both consents are ticked (ADR-036)
 async function agreeAndSend(page: Page) {
   await page
@@ -28,8 +24,8 @@ async function agreeAndSend(page: Page) {
   await page.getByRole("button", { name: "განაცხადის გაგზავნა" }).click();
 }
 
-// Journeys share the per-run journey phones; journey 4 also creates an event as the
-// canonical editor (audit actor stays permanent) — run serially.
+// Journeys share the per-run journey phones -- run serially. (The registration-only
+// checks that used to live in registration.spec are folded into journeys 1 and 3.)
 test.describe.configure({ mode: "serial" });
 
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the
@@ -38,7 +34,6 @@ const googleJourneyPhones = [
   JOURNEY.membFull,
   JOURNEY.membResume,
   JOURNEY.regReferral,
-  JOURNEY.membRsvp,
   JOURNEY.membDupId,
 ].map(journeyPhone);
 
@@ -46,12 +41,10 @@ test.beforeAll(() =>
   runCleanups([
     () => cleanupJourneyUsers(),
     () => cleanupGoogleBackedTestUsers(googleJourneyPhones),
-    () => cleanupCommunityContent("e2e-memb-"),
   ]),
 );
 test.afterAll(() =>
   runCleanups([
-    () => cleanupCommunityContent("e2e-memb-"),
     () => cleanupJourneyUsers(),
     () => cleanupGoogleBackedTestUsers(googleJourneyPhones),
   ]),
@@ -59,15 +52,39 @@ test.afterAll(() =>
 
 test("full upgrade: register → wizard → application sent and member nav", async ({ page }) => {
   const phone = journeyPhone(JOURNEY.membFull);
+  const firstName = "ვატესტ";
   await passRegistration(page, {
     phone,
-    firstName: "ვატესტ",
+    firstName,
     lastName: "წევრობას",
   });
+
+  // registered overview greets them by name
+  await expect(page.getByRole("heading", { name: `გამარჯობა, ${firstName}!` })).toBeVisible();
+
+  // nav is exactly the registered set — no member-only pages
+  const registeredNav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
+  // ADR-042: no events tab while SHOW_EVENTS is off.
+  const registeredLabels = [
+    "მთავარი",
+    ...(EVENTS_SHOWN ? ["ღონისძიებები"] : []),
+    "სიახლეები",
+    "პროფილი",
+  ];
+  for (const label of registeredLabels) {
+    await expect(registeredNav.getByRole("link", { name: label })).toBeVisible();
+  }
+  await expect(registeredNav.getByRole("link", { name: "ღონისძიებები" })).toHaveCount(
+    EVENTS_SHOWN ? 1 : 0,
+  );
+  await expect(registeredNav.getByRole("link", { name: "გამოკითხვები" })).toHaveCount(0); // members-only
 
   // the overview CTA opens the wizard's profile phase
   await page.getByTestId("become-member-cta").click();
   await expect(page).toHaveURL(/\/me\/membership/);
+  // The in-progress wizard keeps the established desktop Masthead.
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("banner")).toHaveCSS("position", "static");
   await expect(page.getByLabel("დელეგატი")).toBeVisible(); // no referral → the picker shows
   await fillMembershipProfile(page, {
     regionLabel: "თბილისი",
@@ -107,6 +124,10 @@ test("full upgrade: register → wizard → application sent and member nav", as
     .and(page.locator("span"));
   await expect(memberPill).toHaveCount(1);
   await expect(memberPill).toBeVisible();
+
+  // the payments page does not exist while dues are hidden (ADR-037), for anyone
+  await page.goto("/me/billing");
+  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
 });
 
 test("resume: a saved profile lands straight on the tier phase, fields intact", async ({
@@ -154,8 +175,11 @@ test("referral binding survives to completion and shows as the current delegate"
   });
 
   // complete the wizard — the referral card replaces the picker; binding is region-independent
+  // (a read-only card, captured at registration, spec D1)
   await page.goto("/me/membership");
   await expect(page.getByText(fullName)).toBeVisible();
+  await expect(page.getByText(/რეფერალური ბმულით/)).toBeVisible();
+  await expect(page.getByLabel("დელეგატი")).toHaveCount(0);
   await fillMembershipProfile(page, {
     regionLabel: "აჭარა",
     personalId: journeyPersonalId(JOURNEY.regReferral),
@@ -167,41 +191,6 @@ test("referral binding survives to completion and shows as the current delegate"
   // the member cabinet shows the referral delegate as current
   await page.goto("/me/delegate");
   await expect(page.getByTestId("current-delegate")).toContainText(fullName);
-});
-
-test("a registered member RSVPs to a published event", async ({ page }) => {
-  test.skip(!EVENTS_SHOWN, "events are hidden (ADR-042)");
-  // editor publishes a future event (canonical admin — audit actor stays permanent)
-  await loginAs(page, ADMIN_PHONES.editor);
-  await page.goto("/admin/content/events/new");
-  await page.getByLabel("დასახელება").fill(`შეხვედრა ${RUN}`);
-  await page.getByLabel("ადგილმდებარეობა").fill("თბილისი");
-  const in7d = new Date(Date.now() + 7 * 86_400_000);
-  await page.getByLabel("დაწყება").fill(`${in7d.toISOString().slice(0, 10)}T19:00`);
-  await page.getByLabel("აღწერა").fill("დღის წესრიგი.");
-  await page.getByRole("button", { name: "შენახვა" }).click();
-  await expect(page).toHaveURL(/\/admin\/content\/events\/[0-9a-f-]{36}$/);
-  await page.getByRole("button", { name: "გამოქვეყნება" }).click();
-  await expect(page.getByText("გამოქვეყნებული")).toBeVisible();
-  await signOutViaNav(page);
-
-  // a REGISTERED (not member) user RSVPs — the gate is registered-level (spec §4.2, D3)
-  const phone = journeyPhone(JOURNEY.membRsvp);
-  await passRegistration(page, {
-    phone,
-    firstName: "ვატესტ",
-    lastName: "დასწრებას",
-  });
-  await page.goto("/me/events");
-  const eventCard = page.locator("section", { hasText: `შეხვედრა ${RUN}` });
-  await eventCard.getByRole("button", { name: "მოვალ" }).click();
-  await expect(eventCard.getByText("✓ შენ მოდიხარ")).toBeVisible();
-  await expect(eventCard.getByText(/სულ მოდის 1 მონაწილე/)).toBeVisible();
-
-  // state + count survive a reload
-  await page.reload();
-  await expect(eventCard.getByText("✓ შენ მოდიხარ")).toBeVisible();
-  await expect(eventCard.getByText(/სულ მოდის 1 მონაწილე/)).toBeVisible();
 });
 
 test("a personal ID already claimed by another member is rejected inline, staying on the profile phase", async ({

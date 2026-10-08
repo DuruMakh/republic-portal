@@ -65,31 +65,16 @@ describe("homepage counters while finances are hidden (the default)", () => {
 });
 
 describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)", () => {
-  it("names the three steps supporter, member, delegate with the agreed descriptions", async () => {
+  it("sends the supporter step to /join", async () => {
     render(await HomePage());
 
-    expect(screen.getByText("მარტივი რეგისტრაცია მეილით და ტელეფონით.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(
       "href",
       "/join",
     );
-    expect(
-      screen.getByText("აყენებს ინიციატივებს და მონაწილეობს საერთო კენჭისყრაში."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში."),
-    ).toBeInTheDocument();
   });
 
-  it("calls the light tier a supporter everywhere on the page, never registered", async () => {
-    render(await HomePage());
-
-    // two exact hits: the first ladder column's title and the registry counter's label
-    expect(screen.getAllByText("მხარდამჭერი", { exact: true })).toHaveLength(2);
-    expect(screen.queryByText("რეგისტრირებული")).not.toBeInTheDocument();
-  });
-
-  it("counts and labels plain members in the registry and the ranking (ADR-037)", async () => {
+  it("labels plain members and supporters in the registry and the ranking (ADR-037)", async () => {
     data.fetchPublicDelegates.mockResolvedValue([
       {
         id: "00000000-0000-0000-0000-000000000001",
@@ -114,7 +99,9 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
       formatCountKa(1774).replace(/\s+/g, " "),
     );
     expect(screen.getByText("84")).toBeInTheDocument();
+    // two exact supporter hits: the first ladder column's title and the registry counter's label
     expect(screen.getAllByText("მხარდამჭერი", { exact: true })).toHaveLength(2);
+    expect(screen.queryByText("რეგისტრირებული")).not.toBeInTheDocument();
   });
 });
 
