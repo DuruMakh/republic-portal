@@ -117,10 +117,13 @@ ka:scan, ka-gate on touched files. Push branch; no PR (coordinator staggers PRs)
 
 ## Deviations found while applying (audit claims checked against origin/main)
 
-- **Not on main, skipped:** `Pebble`, `PebbleCouncil`, `PebbleTally`, `BoardMemberCard`,
-  `BoardRoster`, `MembershipPath`, `DecisionRuleCard`, `lib/pebbles`, and
-  `app/(public)/structure/page.test.tsx` exist only on the unmerged organization-structure
-  branch. Their trims belong with that branch (or a follow-up after it merges).
+- **Structure page (applied after PR #30 merged):** `MembershipPath.test` deleted (steps
+  rendered by `structure/page.test`); `PebbleTally` / `PebbleCouncil` drop the counts and
+  viewBox that `lib/pebbles.test` owns, and the stagger-delay test (the width-class bug
+  guard stays); `Pebble` trimmed to one test; `BoardMemberCard.test` merged into
+  `BoardRoster.test`; `structure/page.test` is one render (metadata title dropped).
+  `lib/pebbles.test` and `lib/structure-copy.test` unchanged. `DecisionRuleCard.test` was not
+  in the audit list and is untouched. #30's addition to `styleguide.test` goes with that file.
 - **NotFoundNotice / root not-found:** deleting NotFoundNotice tests 1 and 4 _and_ the root
   page's copies would leave the Georgian 404 heading and tab title untested in the unit suite;
   the root page keeps one merged notice + title test.

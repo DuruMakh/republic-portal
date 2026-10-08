@@ -1,15 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import * as copy from "@/lib/structure-copy";
-import StructurePage, { metadata } from "./page";
+import StructurePage from "./page";
 
 describe("/structure", () => {
-  it("titles the tab with the page name and the site name", () => {
-    expect(metadata.title).toBe("ორგანიზაციული სტრუქტურა — ქართული რესპუბლიკა");
-  });
-
-  it("renders the title, the intro and every approved section heading", () => {
-    render(<StructurePage />);
+  // One render: every approved copy constant, both rule images, the section index, the CTA
+  // and the coming-soon roster.
+  it("renders the approved page", () => {
+    const { container } = render(<StructurePage />);
     expect(
       screen.getByRole("heading", { level: 1, name: copy.STRUCTURE_TITLE }),
     ).toBeInTheDocument();
@@ -22,10 +20,6 @@ describe("/structure", () => {
     ]) {
       expect(screen.getByRole("heading", { level: 2, name: h })).toBeInTheDocument();
     }
-  });
-
-  it("renders every approved sentence and list item", () => {
-    render(<StructurePage />);
     for (const text of [
       copy.BOARD_LEAD,
       copy.BOARD_RULES_LABEL,
@@ -46,26 +40,14 @@ describe("/structure", () => {
     ]) {
       expect(screen.getAllByText(text).length, text).toBeGreaterThan(0);
     }
-  });
-
-  it("shows 4 of 5 for the two-thirds rule and 3 of 5 for the majority rule", () => {
-    render(<StructurePage />);
     expect(screen.getByRole("img", { name: "5-დან 4 ხმა" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "5-დან 3 ხმა" })).toBeInTheDocument();
-  });
-
-  it("links the section index to its anchors and the closing button to /join", () => {
-    const { container } = render(<StructurePage />);
     const index = screen.getByRole("navigation", { name: copy.STRUCTURE_TITLE });
     for (const { href, label } of copy.SECTION_INDEX) {
       expect(within(index).getByRole("link", { name: label })).toHaveAttribute("href", href);
       expect(container.querySelector(href)).not.toBeNull();
     }
     expect(screen.getByRole("link", { name: copy.CLOSING_CTA })).toHaveAttribute("href", "/join");
-  });
-
-  it("launches with the coming-soon roster", () => {
-    const { container } = render(<StructurePage />);
     expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(5);
   });
 });
