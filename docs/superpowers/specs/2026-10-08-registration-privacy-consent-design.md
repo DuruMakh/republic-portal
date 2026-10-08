@@ -150,15 +150,17 @@ drift test reads the migration text and asserts the two match.
   roles cannot change them).
 - `register(p_first_name, p_last_name, p_ref_code, p_privacy_version text default null)`:
   the old three-argument function is dropped and recreated with the extra argument, so there
-  is exactly one overload. Before creating a profile it raises `privacy_consent_required`
-  unless `p_privacy_version` equals the current version literal, then stamps
+  is exactly one overload. End state (after step 2, §8): before creating a profile it raises
+  `privacy_consent_required` unless `p_privacy_version` equals the current version literal
+  (step 1 refuses only a wrong version and lets a missing one through), then stamps
   `privacy_accepted_at = now()` and `privacy_version`. The duplicate-registration branch
   (profile already exists) is unchanged and does not touch consent.
 - `register_google(..., p_privacy_version text default null)` likewise, passing it through.
 - Grants on both functions are restored exactly as before (`register_google`: authenticated
   + service_role only).
-- The `default null` keeps an old client calling with three arguments resolvable, and it
-  **fails closed** with `privacy_consent_required`.
+- The `default null` keeps an old client calling with three arguments resolvable. In step 1
+  that call still registers (no consent stamped); after step 2 it **fails closed** with
+  `privacy_consent_required`.
 
 **App side.**
 
