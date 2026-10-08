@@ -267,6 +267,8 @@ test.describe("hidden pages after the 60-second refresh", () => {
     ...(EVENTS_SHOWN ? [] : ["/events", "/events/saerto-kreba-tbilisshi"]),
   ];
   test.skip(hidden.length === 0, "every switch is on: nothing is hidden");
+  // Only a production server (CI's `npm run start`) regenerates pages; `next dev` has no ISR.
+  test.skip(!process.env.CI, "needs the production server CI runs");
 
   test("keep the exact not-found title on every visit", async ({ page }) => {
     for (const path of hidden) await expectHiddenPage(page, path);
