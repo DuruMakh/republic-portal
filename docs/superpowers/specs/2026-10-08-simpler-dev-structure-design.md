@@ -86,7 +86,7 @@ production), and the owner can open it.
 
 ### 4.3 Preview test sign-in
 
-On preview builds only, `/login` (and `/join`) shows a small panel, „სატესტო შესვლა", with one button per
+On preview builds only, `/login` shows a small panel, „სატესტო შესვლა", with one button per
 test person:
 
 | Button | Signs in as |
@@ -94,16 +94,19 @@ test person:
 | ადმინი | canonical super_admin fixture (`+995509000001`) |
 | დელეგატი | one approved delegate from the canonical seed |
 | წევრი | one active member from the canonical seed |
-| ახალი მომხმარებელი | a fixture account reset to "signed in, not yet registered" before each sign-in |
+| ახალი მომხმარებელი | a brand-new made-up Google-style account (`preview-visitor+<uuid>@example.invalid`), created on each click |
 
 Behaviour:
 
 - A server action signs the chosen fixture in and sets the normal Supabase session cookies. It reuses the
   fixture sign-in mechanism the e2e suite already uses (`fixtureSession` in `e2e/otp-helpers.ts`: placeholder
   `@example.invalid` email + password derived from the service-role key). That logic moves into a shared
-  server-only module so the app and e2e use one implementation (no copy-paste).
-- The fixed persona list is the whole surface: no free-text phone, no account creation. The only write it
-  does is the "new visitor" reset of its own fixture account.
+  module with no React/Next imports (`lib/fixture-auth.ts`) so the app and e2e use one implementation (no
+  copy-paste).
+- The fixed persona list is the whole surface: no free-text phone. Admin, delegate and member sign in to
+  existing seed accounts. "New visitor" creates a fresh account each click, marked Google-provided the same
+  way the e2e Google fixtures are (registration requires a Google provider assertion, so a reset email account
+  could not register). These accounts live only in the test database and vanish at the next reseed.
 - The panel and the server action are enabled only when the build is connected to an allow-listed test
   database (the staging ref or the local CI stack) AND `NEXT_PUBLIC_APP_ENV` is not `production`. It is an
   allow-list on the database, not a check of an env flag alone, so a mis-set flag on the real site cannot turn
@@ -154,12 +157,13 @@ Each step ships as its own PR (or dashboard change), is proven before the next s
 4.5:
 
 1. CI on the throwaway database (4.1).
-2. Previews on the real project (4.2) and the test sign-in (4.3). These ship together: a preview on the real
-   project without test sign-in would leave the owner unable to check admin changes.
-3. Staging cleanup (4.4), after the owner's yes.
-4. Demo retirement (4.5), after the owner's yes.
+2. The test sign-in (4.3), as its own PR. Its preview still comes from the demo project, which is
+   connected to staging as a preview build, so the owner can sign off on the panel there.
+3. Previews on the real project (4.2), a settings change on Vercel, proven on the next PR.
+4. Staging cleanup (4.4), after the owner's yes.
+5. Demo retirement (4.5), after the owner's yes.
 
-Budget note: until step 4, every push still builds both projects, so PRs in this work are pushed sparingly.
+Budget note: until step 5, every push still builds both projects, so PRs in this work are pushed sparingly.
 
 ## 7. Risks
 
