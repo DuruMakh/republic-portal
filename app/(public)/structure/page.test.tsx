@@ -1,11 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { BOARD_MEMBERS } from "@/lib/board-members";
 import * as copy from "@/lib/structure-copy";
 import StructurePage from "./page";
 
 describe("/structure", () => {
   // One render: every approved copy constant, both rule images, the section index, the CTA
-  // and the coming-soon roster.
+  // and the board roster.
   it("renders the approved page", () => {
     const { container } = render(<StructurePage />);
     expect(
@@ -33,7 +34,6 @@ describe("/structure", () => {
       copy.VOTE_LEAD,
       copy.VOTE_FOR,
       copy.VOTE_AGAINST,
-      copy.ROSTER_NOTICE,
       ...copy.BOARD_DUTIES,
       ...copy.MEMBERS_PATH_STEPS,
       ...copy.MEMBERS_RIGHTS,
@@ -48,6 +48,11 @@ describe("/structure", () => {
       expect(container.querySelector(href)).not.toBeNull();
     }
     expect(screen.getByRole("link", { name: copy.CLOSING_CTA })).toHaveAttribute("href", "/join");
-    expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(5);
+    // The roster is filled (owner list, 2026-10-08): one card per member, no coming-soon notice.
+    const roster = screen.getByRole("region", { name: copy.ROSTER_HEADING });
+    expect(within(roster).getAllByRole("article")).toHaveLength(BOARD_MEMBERS.length);
+    expect(BOARD_MEMBERS.length).toBeGreaterThan(0);
+    expect(screen.queryByText(copy.ROSTER_NOTICE)).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(0);
   });
 });
