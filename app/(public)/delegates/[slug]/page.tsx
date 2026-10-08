@@ -7,6 +7,7 @@ import { StatCard } from "@/components/StatCard";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
 import { fetchDelegateBySlug, fetchPublicDelegates } from "@/lib/supabase/public";
+import { metadata as notFoundMetadata } from "./not-found";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -23,7 +24,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const delegate = await fetchDelegateBySlug(slug);
-  if (!delegate) return { title: "დელეგატი ვერ მოიძებნა — ქართული რესპუბლიკა" };
+  if (!delegate) return notFoundMetadata;
   const name = `${delegate.first_name} ${delegate.last_name}`;
   return {
     title: `${name} — ქართული რესპუბლიკა`,
