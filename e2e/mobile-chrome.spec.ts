@@ -133,8 +133,8 @@ test.describe("mobile chrome at 390x844", () => {
     // The label on the right names the section the article belongs to --
     // confirms mobileBackTarget() picked the /news rule, not a different one.
     // Scoped to the visible banner landmark: a page-wide getByText also
-    // matches the (CSS-hidden) desktop nav link and the article's own
-    // "← სიახლეები" byline, both containing the same substring.
+    // matches the article's own "← სიახლეები" byline, which contains the
+    // same substring. (The header has no news link since ADR-038.)
     await expect(
       page.getByRole("banner").getByText(NEWS_INDEX_LABEL, { exact: true }),
     ).toBeVisible();
