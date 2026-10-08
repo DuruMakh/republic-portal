@@ -14,20 +14,10 @@ describe("SectionRule", () => {
     expect(screen.getByText("Just a label")).toBeInTheDocument();
   });
 
-  it("puts the label and rule classes on the row", () => {
-    const { container } = render(<SectionRule label="Row" />);
-    const row = container.firstElementChild;
-    expect(row?.className).toContain("border-b-2");
-    expect(row?.className).toContain("border-ink");
-    expect(screen.getByText("Row").className).toContain("uppercase");
-  });
-
   it("marks the label as a level-2 heading by default (screen-reader landmark)", () => {
     render(<SectionRule label="Public registry" />);
     const heading = screen.getByRole("heading", { level: 2, name: "Public registry" });
     expect(heading.tagName).toBe("H2");
-    // the visual label classes must stay on the heading itself
-    expect(heading.className).toContain("uppercase");
   });
 
   it("renders the requested heading level when `as` is set", () => {

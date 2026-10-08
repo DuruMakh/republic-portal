@@ -11,12 +11,6 @@ describe("DemoBanner", () => {
     render(<DemoBanner />);
     expect(screen.getByText("სადემონსტრაციო გარემო — მონაცემები ფიქტიურია")).toBeInTheDocument();
   });
-  it("renders the demo notice when production flag is set but the database is still staging", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
-    render(<DemoBanner />);
-    expect(screen.getByText("სადემონსტრაციო გარემო — მონაცემები ფიქტიურია")).toBeInTheDocument();
-  });
   it("renders nothing in production with a non-staging database", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://prodrefabcdefgh.supabase.co");

@@ -12,8 +12,6 @@
  * the same set of routes, and both are consumed by the same components.
  */
 
-export type MobileChrome = "public" | "back" | "cabinet";
-
 export interface BackTarget {
   href: string;
   label: string;
@@ -45,9 +43,7 @@ const STATIC_BACK: Record<string, BackTarget> = {
  * Dynamic detail routes. Matched by prefix because [slug] values are unbounded.
  * The trailing slash is load-bearing: it keeps "/news" (an index, no back
  * header) from matching the article rule. It is not what keeps "/delegates/"
- * from colliding with the "/delegate" cabinet root — that's the "s"; the
- * load-bearing check for that collision is inCabinet's own
- * startsWith("/delegate/").
+ * from colliding with the "/delegate" cabinet root — that's the "s".
  */
 const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
   { prefix: "/news/", target: { href: "/news", label: NEWS_INDEX } },
@@ -57,15 +53,6 @@ const PREFIX_BACK: ReadonlyArray<{ prefix: string; target: BackTarget }> = [
 
 /** Routes that ARE the call to action, so a join bar under them is noise. */
 const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/login"]);
-
-function inCabinet(pathname: string): boolean {
-  return (
-    pathname === "/me" ||
-    pathname.startsWith("/me/") ||
-    pathname === "/delegate" ||
-    pathname.startsWith("/delegate/")
-  );
-}
 
 /**
  * The parent a „← უკან“ header links to, or null when the route is not a detail
@@ -86,19 +73,6 @@ export function mobileBackTarget(pathname: string, eventsShown = true): BackTarg
     if (pathname.startsWith(prefix) && pathname.length > prefix.length) return target;
   }
   return null;
-}
-
-/**
- * Which of the three headers a route gets. The back header wins over the
- * cabinet header, which is what takes the tab bar off the membership wizard.
- * Never called for /admin — admin chrome is out of scope and unchanged.
- */
-export function mobileChrome(pathname: string, eventsShown = true): MobileChrome {
-  if (mobileBackTarget(pathname, eventsShown) !== null) return "back";
-  if (inCabinet(pathname)) return "cabinet";
-  // Public chrome is the deliberate fallback for any route that is neither a
-  // back-target nor in-cabinet (including an unclassified or future route).
-  return "public";
 }
 
 export function showsJoinCta(pathname: string): boolean {

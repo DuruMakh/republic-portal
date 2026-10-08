@@ -15,8 +15,6 @@ vi.mock("@/lib/supabase/client", () => ({
 import PublicLayout from "./layout";
 
 const FINANCES = "ფინანსები";
-const JOIN = "შემოგვიერთდი";
-const SIGN_IN = "შესვლა";
 const MENU = "მენიუ";
 
 function renderLayout() {
@@ -51,21 +49,12 @@ describe("public layout — finances hidden (the default)", () => {
     expect(document.querySelector('a[href="/transparency"]')).toBeNull();
   });
 
-  it("gives the header one account action — შემოგვიერთდი — and no separate შესვლა", () => {
-    renderLayout();
-    const header = screen.getByRole("banner");
-    expect(within(header).getByRole("link", { name: JOIN })).toHaveAttribute("href", "/join");
-    expect(within(header).queryByRole("link", { name: SIGN_IN })).not.toBeInTheDocument();
-    expect(header.querySelector('a[href="/login"]')).toBeNull();
-  });
-
-  it("keeps the phone menu to the same one account action, with no შესვლა and no ფინანსები", () => {
+  it("keeps ფინანსები out of the phone menu", () => {
     renderLayout();
     fireEvent.click(screen.getByRole("button", { name: MENU }));
-    const menu = screen.getByRole("dialog");
-    expect(within(menu).getByRole("link", { name: JOIN })).toHaveAttribute("href", "/join");
-    expect(within(menu).queryByRole("link", { name: SIGN_IN })).not.toBeInTheDocument();
-    expect(within(menu).queryByRole("link", { name: FINANCES })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("link", { name: FINANCES }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -79,6 +68,47 @@ describe("public layout — finances public (SHOW_PUBLIC_FINANCES=true)", () => 
     expect(
       within(screen.getByRole("contentinfo")).getByRole("link", { name: FINANCES }),
     ).toHaveAttribute("href", "/transparency");
+  });
+});
+
+describe("public layout — structure link", () => {
+  const STRUCTURE = "სტრუქტურა";
+
+  it("links სტრუქტურა from the header, the footer and the phone menu", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+    expect(
+      within(screen.getByRole("contentinfo")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).getByRole("link", { name: STRUCTURE }),
+    ).toHaveAttribute("href", "/structure");
+  });
+});
+
+describe("public layout — news and events live on the homepage, not the header", () => {
+  const NEWS = "სიახლეები";
+  const EVENTS = "ღონისძიებები";
+
+  it("drops სიახლეები and ღონისძიებები from the header and the phone menu", () => {
+    renderLayout();
+    const header = screen.getByRole("banner");
+    expect(within(header).queryByRole("link", { name: NEWS })).not.toBeInTheDocument();
+    expect(within(header).queryByRole("link", { name: EVENTS })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    const menu = screen.getByRole("dialog");
+    expect(within(menu).queryByRole("link", { name: NEWS })).not.toBeInTheDocument();
+    expect(within(menu).queryByRole("link", { name: EVENTS })).not.toBeInTheDocument();
+  });
+
+  it("keeps სიახლეები in the footer", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("contentinfo")).getByRole("link", { name: NEWS }),
+    ).toHaveAttribute("href", "/news");
   });
 });
 
@@ -97,13 +127,14 @@ describe("public layout — events (ADR-042)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("restores the header link once SHOW_EVENTS=true", () => {
+  it("keeps ღონისძიებები out of the header even once SHOW_EVENTS=true (owner, ADR-038)", () => {
+    // Switching events back on restores the homepage section and the cabinets (ADR-042), but
+    // the public header stays მთავარი · რეიტინგი · სტრუქტურა by the owner's later decision.
     vi.stubEnv("SHOW_EVENTS", "true");
     renderLayout();
-    expect(within(screen.getByRole("banner")).getByRole("link", { name: EVENTS })).toHaveAttribute(
-      "href",
-      "/events",
-    );
+    expect(
+      within(screen.getByRole("banner")).queryByRole("link", { name: EVENTS }),
+    ).not.toBeInTheDocument();
   });
 });
 

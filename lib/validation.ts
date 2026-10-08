@@ -1,7 +1,3 @@
-export function validatePersonalId(value: string): boolean {
-  return /^\d{11}$/.test(value);
-}
-
 /**
  * Georgian mobile numbers: 9 digits starting with 5 (e.g. 5XX XXX XXX).
  * Accepts local, 995-prefixed, and +995-prefixed input with any spacing.

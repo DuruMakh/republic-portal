@@ -1,5 +1,6 @@
 import { AdminNav } from "@/components/AdminNav";
 import { AuthProgress } from "@/components/AuthProgress";
+import { BoardRoster } from "@/components/BoardRoster";
 import { BallotBar, ballotButtonClasses } from "@/components/Ballot";
 import { Badge } from "@/components/Badge";
 import { Button, type ButtonVariant } from "@/components/Button";
@@ -9,15 +10,17 @@ import { Card } from "@/components/Card";
 import { ContentBody } from "@/components/ContentBody";
 import { ContentNav } from "@/components/ContentNav";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { DecisionRuleCard } from "@/components/DecisionRuleCard";
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
 import { adminControlClasses, CheckboxField, Field, TextareaField } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
+import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
 import { PageSheet } from "@/components/PageSheet";
-import { PhotoFigure } from "@/components/PhotoFigure";
+import { PebbleTally } from "@/components/PebbleTally";
 import { Pill } from "@/components/Pill";
 import { ReferralCard } from "@/components/ReferralCard";
 import { SectionRule } from "@/components/SectionRule";
@@ -26,6 +29,17 @@ import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
 import { adminTabs } from "@/lib/admin";
+import { BOARD_SIZE, votesNeeded } from "@/lib/board-rules";
+import {
+  MEMBERS_PATH_LABEL,
+  MEMBERS_PATH_STEPS,
+  ROSTER_HEADING,
+  ROSTER_NOTICE,
+  RULE_TWO_THIRDS,
+  STRUCTURE_TITLE,
+  VOTE_AGAINST,
+  VOTE_FOR,
+} from "@/lib/structure-copy";
 import {
   cabinetNavItems,
   formatAmountGel,
@@ -380,16 +394,6 @@ export default function StyleguidePage() {
           </div>
         </Card>
 
-        <Card title="ფოტო">
-          <PhotoFigure
-            src="/brand/emblem-roundel-red-notext.png"
-            alt="ქართული რესპუბლიკა"
-            caption="ქართული რესპუბლიკა"
-            width={160}
-            height={160}
-          />
-        </Card>
-
         <Card title="გადარიცხვა">
           <TransferInstructions referenceCode="GR-ABC234" />
         </Card>
@@ -478,7 +482,30 @@ export default function StyleguidePage() {
           <AdminNav tabs={ADMIN_NAV_DEMO_TABS} />
         </Card>
 
-        {/* 17. Mobile chrome. Every one of these carries `md:hidden`, a viewport
+        {/* 17. /structure pieces (ADR-038): the condensed display heading, the
+            pebble rule card, the membership path, the tally and the roster's
+            launch (empty) state. Copy and counts come from lib/, never hand-typed. */}
+        <Card title={STRUCTURE_TITLE}>
+          <div className="flex flex-col gap-6">
+            <p className="display-heading text-[2.4rem] text-ink">{STRUCTURE_TITLE}</p>
+            <DecisionRuleCard
+              headline={RULE_TWO_THIRDS.headline}
+              body={RULE_TWO_THIRDS.body}
+              needed={votesNeeded("twoThirds", BOARD_SIZE)}
+              total={BOARD_SIZE}
+            />
+            <MembershipPath label={MEMBERS_PATH_LABEL} steps={MEMBERS_PATH_STEPS} />
+            <PebbleTally forLabel={VOTE_FOR} againstLabel={VOTE_AGAINST} />
+            <BoardRoster
+              members={[]}
+              heading={ROSTER_HEADING}
+              notice={ROSTER_NOTICE}
+              placeholders={2}
+            />
+          </div>
+        </Card>
+
+        {/* 18. Mobile chrome. Every one of these carries `md:hidden`, a viewport
             media query -- a narrow wrapper div cannot reveal them, so each
             sample is an iframe with its own viewport, pointed at a real route.
             That also keeps the gallery from drifting: it shows the shipped

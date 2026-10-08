@@ -1,41 +1,20 @@
 import { expect, test } from "@playwright/test";
-import {
-  ADMIN_PHONES,
-  cleanupPhase4Users,
-  loginAs,
-  phase4PersonalId,
-  phase4Phone,
-  signOutViaNav,
-} from "./admin-helpers";
-import { seedCompletedMember } from "./funnel-helpers";
+import { ADMIN_PHONES, loginAs } from "./admin-helpers";
 
-// k=3 is reserved for this spec (spec §7 isolation) — phase4Phone(3) ends in 8, a
-// slot no other admin spec touches (admin-approval uses 0/1/4, admin-payments uses
-// 2). CIVILIAN only ever runs the ordinary member funnel and is NEVER granted an
-// admin role. The four canonical seed admins (ADMIN_PHONES) are actors here only to
-// authenticate — this smoke is read/navigation only, no audited mutations.
-const CIVILIAN = 3; // phase4Phone(3) — ordinary member for the bounce check
+// The four canonical seed admins (ADMIN_PHONES) are actors here only to authenticate —
+// this smoke is read/navigation only, no audited mutations. One sign-in per role. The
+// ordinary-member bounce from /admin lives in cabinet.spec's member session.
 
-test.describe.configure({ mode: "serial" });
-test.beforeAll(() => cleanupPhase4Users([CIVILIAN]));
-test.afterAll(() => cleanupPhase4Users([CIVILIAN]));
-
-// R2 (spec §5): admin_overview grew the registered-total + conversion figures; the
-// super-admin is the canonical isStaff role with no narrower gate, so it's the
-// baseline check that the overview cards render at all.
-test("super-admin sees the supporter + conversion overview cards", async ({ page }) => {
-  await loginAs(page, ADMIN_PHONES.super);
-  await page.goto("/admin");
-  await expect(page.getByText("მხარდამჭერი", { exact: true })).toBeVisible();
-  await expect(page.getByText("კონვერსია")).toBeVisible();
-  await signOutViaNav(page);
-});
-
-test("verifier is blocked from finance surfaces server-side, not just hidden tabs", async ({
+test("verifier sees the overview but is blocked from finance surfaces server-side", async ({
   page,
 }) => {
   await loginAs(page, ADMIN_PHONES.verifier);
   await page.goto("/admin");
+
+  // R2 (spec §5): admin_overview grew the registered-total + conversion figures; any
+  // staff role (the verifier included) gets the overview cards.
+  await expect(page.getByText("მხარდამჭერი", { exact: true })).toBeVisible();
+  await expect(page.getByText("კონვერსია")).toBeVisible();
 
   // Scoped to AdminNav itself: the overview page also renders a "გადადი
   // ვერიფიკაციაზე →" button for this same role (lib/admin.ts hasAnyRole check), and
@@ -49,48 +28,18 @@ test("verifier is blocked from finance surfaces server-side, not just hidden tab
   await expect(page).toHaveURL(/\/admin$/); // server redirect, not a rendered page
   await page.goto("/admin/admins");
   await expect(page).toHaveURL(/\/admin$/);
-  await signOutViaNav(page);
 });
 
-test("editor-only admin lands on the content hub with no staff tabs", async ({ page }) => {
+test("editor-only admin lands on the content hub; a missing admin page keeps the admin chrome", async ({
+  page,
+}) => {
   await loginAs(page, ADMIN_PHONES.editor);
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/content\/news$/); // editor lands on the hub
   await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "ადმინისტრირების ნავიგაცია" });
   await expect(nav.getByRole("link", { name: "წევრები" })).not.toBeVisible();
-  await signOutViaNav(page);
-});
 
-test("an ordinary member is bounced from /admin to their cabinet", async ({ page }) => {
-  // CIVILIAN is an ordinary completed member — admin_roles stays empty — so the admin
-  // layout gate (roles.length === 0) sends it through deriveDestination(), landing on
-  // its own cabinet. Seeded directly; the registration journey lives in the
-  // registration/membership specs.
-  const phone = phase4Phone(CIVILIAN);
-  await seedCompletedMember({
-    phone,
-    firstName: "რიგითი",
-    lastName: "წევრი",
-    personalId: phase4PersonalId(CIVILIAN),
-  });
-  await loginAs(page, phone);
-
-  await page.goto("/admin");
-  await expect(page).toHaveURL(/\/me\/profile$/);
-});
-
-test("anonymous visitors land on /login", async ({ page }) => {
-  await page.context().clearCookies();
-  await page.goto("/admin");
-  await expect(page).toHaveURL(/\/login$/);
-});
-
-// Last on purpose: the file runs serially, so a failure here cannot mask the checks above.
-test("a missing admin page shows the notice inside the admin chrome, not a second site header", async ({
-  page,
-}) => {
-  await loginAs(page, ADMIN_PHONES.editor);
   // an absent but well-formed id: the editor's lookup finds no row and raises not-found
   const response = await page.goto("/admin/content/news/00000000-0000-4000-8000-000000000000");
   expect(response?.status()).toBe(404);
@@ -98,5 +47,10 @@ test("a missing admin page shows the notice inside the admin chrome, not a secon
   // the admin layout's own header only: the public header and footer would nest a second one
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("contentinfo")).toHaveCount(0);
-  await signOutViaNav(page);
+});
+
+test("anonymous visitors land on /login", async ({ page }) => {
+  await page.context().clearCookies();
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/login$/);
 });

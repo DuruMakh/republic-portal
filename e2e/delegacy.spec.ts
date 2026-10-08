@@ -3,128 +3,176 @@ import {
   ADMIN_PHONES,
   cleanupPhase4Users,
   getAuditRows,
+  getDelegateSlug,
   loginAs as adminLoginAs,
   phase4PersonalId,
   phase4Phone,
   profileIdByPhone,
   serviceClient,
-  signOutViaNav,
 } from "./admin-helpers";
-import { loginAs, seedCompletedMember } from "./funnel-helpers";
+import { loginAs, seedCompletedMember, seedPendingDelegate } from "./funnel-helpers";
 
-// phase4Phone's single-digit domain (0-9 — the format is ^5\d{8}$, so k must stay one
-// digit) is already claimed one-owner-per-file: admin-approval (0/1/4), admin-payments
-// (2), admin-rbac (3), community-news (5), community-events (6/7), community-polls
-// (8/9) — grep confirmed zero slots are free. Reusing 5/6 here is safe by the suite's
-// own design: playwright.config.ts pins workers:1 with "spec files must never
-// overlap", every phase4Phone owner's beforeAll/afterAll self-heals by phone LOOKUP
-// (not by which file created the row), and alphabetical file scheduling runs this spec
-// after both community-news.spec.ts and community-events.spec.ts, so their rows are
-// already gone by the time our own beforeAll runs regardless.
-const REQUESTER = 5; // approved end-to-end
-const REJECTEE = 6; // rejected, stays final
+// The whole delegacy review in one journey (formerly delegacy.spec + admin-approval.spec).
+// Every actor keeps its own browser context, so each signs in exactly once: the requester,
+// ONE verifier session for every decision, and the rejectee. Three SMS logins in all.
+//
+// The canonical seed keeps 3 PENDING roster delegates in the queue, so every interaction
+// is scoped to this run's applicants via verify-card-<id> testids -- a bare .first() would
+// land on (and MUTATE) seeded data.
+//
+// phase4Phone slots 0/1/4 (admin-payments 2, community-news 5, community-events 6/7,
+// community-polls 8). referral-split.spec borrows the same three: safe because files never
+// overlap (workers=1) and both clean these phones before and after.
+const REQUESTER = 0; // asks through the page, approved straight from the pending tab
+const REJECTEE = 1; // seeded pending, rejected, stays final
+const REAPPROVED = 4; // seeded pending, rejected with a note, re-approved from the rejected tab
 
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
-  await cleanupPhase4Users([REQUESTER, REJECTEE]);
+  await cleanupPhase4Users([REQUESTER, REJECTEE, REAPPROVED]);
   await seedCompletedMember({
     phone: phase4Phone(REQUESTER),
     firstName: "დელეგატობის",
     lastName: "მსურველი",
     personalId: phase4PersonalId(REQUESTER),
   });
-  await seedCompletedMember({
+  await seedPendingDelegate({
     phone: phase4Phone(REJECTEE),
     firstName: "უარყოფილი",
     lastName: "კანდიდატი",
     personalId: phase4PersonalId(REJECTEE),
   });
+  await seedPendingDelegate({
+    phone: phase4Phone(REAPPROVED),
+    firstName: "აკაკი",
+    lastName: "წერეთელი",
+    personalId: phase4PersonalId(REAPPROVED),
+  });
 });
-test.afterAll(async () => {
-  await cleanupPhase4Users([REQUESTER, REJECTEE]);
-});
+test.afterAll(() => cleanupPhase4Users([REQUESTER, REJECTEE, REAPPROVED]));
 
-test("member requests delegacy -> pending card, member life intact", async ({ page }) => {
-  await loginAs(page, phase4Phone(REQUESTER));
-  // the profile card advertises the ladder
-  await page.goto("/me/profile");
-  await page.getByRole("link", { name: "გაიგე მეტი →" }).click();
-  await expect(page).toHaveURL(/\/me\/delegacy/);
-  await page.getByRole("button", { name: "მოთხოვნის გაგზავნა" }).click();
-  await expect(page.getByText("მოთხოვნა გაგზავნილია")).toBeVisible();
-  // member life untouched: member nav still carries polls (and no payments while dues
-  // are hidden, ADR-037)
-  const nav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
-  await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "გადახდები" })).toHaveCount(0);
-  await signOutViaNav(page);
-});
-
-test("verifier approves -> delegate cabinet + public page live + membership closed", async ({
-  page,
-}) => {
+test("request, review and both outcomes: approve, reject, re-approve", async ({ browser }) => {
+  // three sign-ins in one test; each may wait out an OTP resend (otp-helpers)
+  test.setTimeout(300_000);
   const db = serviceClient();
   const requesterId = await profileIdByPhone(db, phase4Phone(REQUESTER));
-  await adminLoginAs(page, ADMIN_PHONES.verifier);
-  await page.goto("/admin/verify");
-  const card = page.getByTestId(`verify-card-${requesterId}`);
-  await expect(card).toBeVisible();
-  // drive the approve control inside the card (admin-approval.spec's exact locator)
-  await card.getByRole("button", { name: "დადასტურება" }).click();
-  // approve revalidates the route (to publish /delegates/<slug>), which unmounts the
-  // card before its inline done-state can be asserted — assert the OUTCOME instead,
-  // exactly as admin-approval.spec does: the card leaves the pending queue.
-  await expect(card).toHaveCount(0, { timeout: 15_000 });
-  expect(await getAuditRows("delegate.approve", requesterId)).toBeGreaterThan(0);
-  await signOutViaNav(page);
-
-  // approval closed the requester's own membership (spec §3.1 rider)
-  const { data: open } = await db
-    .from("memberships")
-    .select("id")
-    .eq("member_id", requesterId)
-    .is("ended_at", null);
-  expect(open ?? []).toHaveLength(0);
-
-  // the new delegate lands in the delegate cabinet; public page live
-  await loginAs(page, phase4Phone(REQUESTER));
-  await expect(page).toHaveURL(/\/delegate(\/|\?|#|$)/);
-  const { data: dRow } = await db.from("delegates").select("slug").eq("id", requesterId).single();
-  const res = await page.goto(`/delegates/${dRow!.slug as string}`);
-  expect(res!.status()).toBe(200);
-  await expect(page.getByRole("heading", { name: "დელეგატობის მსურველი" })).toBeVisible();
-  // the public page has no CabinetNav/AdminNav — back to an authenticated page first
-  // (admin-approval.spec's exact idiom: `goto("/admin")` before its own signOutViaNav)
-  await page.goto("/delegate");
-  await signOutViaNav(page);
-});
-
-test("rejection is a calm final state", async ({ page }) => {
-  const db = serviceClient();
   const rejecteeId = await profileIdByPhone(db, phase4Phone(REJECTEE));
-  await loginAs(page, phase4Phone(REJECTEE));
-  await page.goto("/me/delegacy");
-  await page.getByRole("button", { name: "მოთხოვნის გაგზავნა" }).click();
-  await expect(page.getByText("მოთხოვნა გაგზავნილია")).toBeVisible();
-  await signOutViaNav(page);
+  const reapprovedId = await profileIdByPhone(db, phase4Phone(REAPPROVED));
 
-  await adminLoginAs(page, ADMIN_PHONES.verifier);
-  await page.goto("/admin/verify");
-  const card = page.getByTestId(`verify-card-${rejecteeId}`);
-  await card.getByRole("button", { name: "უარყოფა" }).click();
-  // rejection needs the note flow — admin-approval.spec's exact reject steps
-  await card.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
-  await card.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
-  // reject revalidates the route too, unmounting the card — assert the OUTCOME: the
-  // card leaves the pending queue.
-  await expect(card).toHaveCount(0, { timeout: 15_000 });
-  await signOutViaNav(page);
+  const requesterContext = await browser.newContext();
+  const verifierContext = await browser.newContext();
+  const rejecteeContext = await browser.newContext();
+  try {
+    const rPage = await requesterContext.newPage();
+    const vPage = await verifierContext.newPage();
+    const xPage = await rejecteeContext.newPage();
 
-  await loginAs(page, phase4Phone(REJECTEE));
-  await expect(page).toHaveURL(/\/me\/profile/); // NOT /delegate
-  await page.goto("/me/delegacy");
-  await expect(page.getByText("მოთხოვნა არ დამტკიცდა")).toBeVisible();
-  await expect(page.getByRole("button", { name: "მოთხოვნის გაგზავნა" })).toHaveCount(0);
-  await signOutViaNav(page);
+    await test.step("verifier rejects two applicants with a note, re-approves one from the rejected tab", async () => {
+      // the seeded applicants first, so a failure in the requester's UI below cannot
+      // skip these admin decisions; this is the verifier's only sign-in
+      await adminLoginAs(vPage, ADMIN_PHONES.verifier);
+      await vPage.goto("/admin/verify");
+      for (const id of [rejecteeId, reapprovedId]) {
+        const card = vPage.getByTestId(`verify-card-${id}`);
+        await expect(card).toBeVisible();
+        await card.getByRole("button", { name: "უარყოფა" }).click();
+        await card.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
+        await card.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
+        // reject revalidates the route too, unmounting the card -- assert the OUTCOME:
+        // the card leaves the pending queue.
+        await expect(card).toBeHidden({ timeout: 15_000 });
+      }
+
+      // rejected tab: the stored note + the decision stamp; re-approve from there
+      await vPage.goto("/admin/verify?tab=rejected");
+      const rejectedB = vPage.getByTestId(`verify-card-${reapprovedId}`);
+      await expect(rejectedB.getByText(/დოკუმენტები გადასამოწმებელია/)).toBeVisible();
+      await expect(
+        rejectedB.getByText(/უარყოფილია \d{2}\.\d{2}\.\d{4} · ვერიფიკატორი გუნდი/),
+      ).toBeVisible();
+      await rejectedB.getByRole("button", { name: "დადასტურება" }).click();
+      // re-approve from the rejected tab -- assert the OUTCOME: B leaves the rejected list.
+      await expect(rejectedB).toBeHidden({ timeout: 15_000 });
+      // the final rejection is still listed there
+      await expect(vPage.getByTestId(`verify-card-${rejecteeId}`)).toBeVisible();
+    });
+
+    await test.step("member requests delegacy -> pending card, member life intact", async () => {
+      await loginAs(rPage, phase4Phone(REQUESTER));
+      // the profile card advertises the ladder
+      await rPage.goto("/me/profile");
+      await rPage.getByRole("link", { name: "გაიგე მეტი →" }).click();
+      await expect(rPage).toHaveURL(/\/me\/delegacy/);
+      await rPage.getByRole("button", { name: "მოთხოვნის გაგზავნა" }).click();
+      await expect(rPage.getByText("მოთხოვნა გაგზავნილია")).toBeVisible();
+      // member life untouched: member nav still carries polls (and no payments while dues
+      // are hidden, ADR-037)
+      const nav = rPage.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
+      await expect(nav.getByRole("link", { name: "გამოკითხვები" })).toBeVisible();
+      await expect(nav.getByRole("link", { name: "გადახდები" })).toHaveCount(0);
+    });
+
+    await test.step("verifier reveals + approves the requester from the pending queue", async () => {
+      await vPage.goto("/admin/verify");
+      const card = vPage.getByTestId(`verify-card-${requesterId}`);
+      await expect(card).toBeVisible();
+
+      // audited reveal: masked -> full personal ID
+      await card.getByRole("button", { name: "ჩვენება" }).click();
+      await expect(card.getByText(phase4PersonalId(REQUESTER))).toBeVisible();
+
+      await card.getByRole("button", { name: "დადასტურება" }).click();
+      // approve revalidates the route (to publish /delegates/<slug>), which unmounts the
+      // card before its inline done-state can be asserted -- so assert the OUTCOME instead:
+      // the card leaves the pending queue.
+      await expect(card).toHaveCount(0, { timeout: 15_000 });
+
+      // the public page is live
+      const slug = await getDelegateSlug(phase4Phone(REQUESTER));
+      const res = await vPage.goto(`/delegates/${slug}`);
+      expect(res!.status()).toBe(200);
+      await expect(vPage.getByRole("heading", { name: "დელეგატობის მსურველი" })).toBeVisible();
+    });
+
+    await test.step("approval closed the membership; the requester's cabinet is now the delegate one", async () => {
+      // approval closed the requester's own membership (spec §3.1 rider)
+      const { data: open } = await db
+        .from("memberships")
+        .select("id")
+        .eq("member_id", requesterId)
+        .is("ended_at", null);
+      expect(open ?? []).toHaveLength(0);
+      // the requester's session (still open since the request) now routes to /delegate
+      await rPage.goto("/me");
+      await expect(rPage).toHaveURL(/\/delegate(\/|\?|#|$)/, { timeout: 15_000 });
+    });
+
+    await test.step("audit trail holds the reveal, approve, reject and re-approve rows", async () => {
+      expect(await getAuditRows("delegate.reveal_personal_id", requesterId)).toBeGreaterThan(0);
+      expect(await getAuditRows("delegate.approve", requesterId)).toBe(1);
+      expect(await getAuditRows("delegate.reject", rejecteeId)).toBe(1);
+      expect(await getAuditRows("delegate.approve", rejecteeId)).toBe(0);
+      expect(await getAuditRows("delegate.reject", reapprovedId)).toBe(1);
+      expect(await getAuditRows("delegate.approve", reapprovedId)).toBe(1);
+      const { data } = await db
+        .from("delegates")
+        .select("id, status")
+        .in("id", [requesterId, rejecteeId, reapprovedId]);
+      const status = new Map((data ?? []).map((d) => [d.id as string, d.status as string]));
+      expect(status.get(requesterId)).toBe("approved");
+      expect(status.get(rejecteeId)).toBe("rejected");
+      expect(status.get(reapprovedId)).toBe("approved");
+    });
+
+    await test.step("rejection is a calm final state", async () => {
+      await loginAs(xPage, phase4Phone(REJECTEE));
+      await expect(xPage).toHaveURL(/\/me\/profile/); // NOT /delegate
+      await xPage.goto("/me/delegacy");
+      await expect(xPage.getByText("მოთხოვნა არ დამტკიცდა")).toBeVisible();
+      await expect(xPage.getByRole("button", { name: "მოთხოვნის გაგზავნა" })).toHaveCount(0);
+    });
+  } finally {
+    await Promise.all([requesterContext.close(), verifierContext.close(), rejecteeContext.close()]);
+  }
 });

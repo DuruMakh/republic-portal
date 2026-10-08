@@ -115,7 +115,7 @@ export function isReferralCodeCandidate(value: string): boolean {
   return /^[A-Za-z0-9-]{1,32}$/.test(value);
 }
 
-const ERROR_MESSAGES: Readonly<Record<string, string>> = {
+export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   duplicate_personal_id: "ეს პირადი ნომერი უკვე რეგისტრირებულია.",
   invalid_personal_id: "პირადი ნომერი უნდა იყოს 11 ციფრი.",
   invalid_birth_date: "მიუთითე დაბადების თარიღი.",

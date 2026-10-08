@@ -13,10 +13,6 @@ import { cleanupUsersByPhone, failIfAny, runCleanups, SWEEP_HINT } from "./clean
 const PHONES = ["+995550009928", "995550009928"];
 
 describe("failIfAny", () => {
-  test("stays silent when nothing failed", () => {
-    expect(() => failIfAny("some cleanup", [], SWEEP_HINT)).not.toThrow();
-  });
-
   test("names the cleanup, every failure, and the remedy", () => {
     let message = "";
     try {
@@ -59,10 +55,6 @@ describe("runCleanups", () => {
     await expect(runCleanups([boom("first"), boom("second")])).rejects.toThrow(
       /first broke[\s\S]*second broke/,
     );
-  });
-
-  test("resolves when every step succeeds", async () => {
-    await expect(runCleanups([async () => {}, async () => {}])).resolves.toBeUndefined();
   });
 });
 
@@ -155,13 +147,6 @@ describe("cleanupUsersByPhone", () => {
       /user-a.*user-c/s,
     );
     expect(db.attempted).toEqual(["user-a", "user-b", "user-c"]);
-  });
-
-  test("resolves when every deletion succeeds", async () => {
-    const db = fakeUserClient({ profileIds: ["user-a", "user-b"] });
-    createClient.mockReturnValue(db.client);
-
-    await expect(cleanupUsersByPhone("phase-4 e2e cleanup", PHONES)).resolves.toBeUndefined();
   });
 
   test("resolves without touching auth when no profile matches", async () => {

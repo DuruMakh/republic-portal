@@ -16,7 +16,7 @@ import { clientFor, otpSession } from "./otp-helpers";
 // earned before delegate approval stay counted after it.
 //
 // Phase-4 slots are borrowed per spec (workers=1, cleanup before and after), the
-// same way delegacy.spec reuses 5 and 6.
+// same way delegacy.spec does; it uses these same three (0/1/4).
 const REFERRER = 0;
 const FRIEND_A = 1; // signs up through the referrer's own M- link, then finishes the form
 const FRIEND_B = 4; // signs up through the delegate link after approval

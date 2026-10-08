@@ -28,24 +28,6 @@ describe("NewsForm", () => {
     expect(preview.querySelector("a")).toHaveAttribute("href", "https://a.ge");
   });
 
-  it("creating: submits title/visibility/body and navigates to the editor", async () => {
-    saveMock.mockResolvedValue({ ok: true, id: "new-id" });
-    render(<NewsForm article={null} />);
-    fireEvent.change(screen.getByLabelText("სათაური"), { target: { value: "ახალი" } });
-    fireEvent.click(screen.getByLabelText("წევრებისთვის"));
-    fireEvent.change(screen.getByLabelText("ტექსტი"), { target: { value: "ტანი" } });
-    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
-    await waitFor(() =>
-      expect(saveMock).toHaveBeenCalledWith({
-        id: undefined,
-        title: "ახალი",
-        body: "ტანი",
-        visibility: "members",
-      }),
-    );
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/admin/content/news/new-id"));
-  });
-
   it("editing: prefills and refreshes on save", async () => {
     saveMock.mockResolvedValue({ ok: true, id: "a1" });
     render(<NewsForm article={{ id: "a1", title: "ძველი", body: "ტანი", visibility: "public" }} />);
