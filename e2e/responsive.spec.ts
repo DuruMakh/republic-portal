@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
 
 const PAGES = [
   "/",
   "/leaderboard",
   "/news",
-  "/events",
+  // ADR-042: /events is a 404 while events are hidden.
+  ...(EVENTS_SHOWN ? ["/events"] : []),
   // ADR-034: /transparency is a 404 while finances are hidden, so it joins the sweep only
   // when the switch is on.
   ...(FINANCES_PUBLIC ? ["/transparency"] : []),

@@ -1,19 +1,31 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { EventRow } from "@/components/EventRow";
 import { Eyebrow } from "@/components/Eyebrow";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import { SectionRule } from "@/components/SectionRule";
 import { splitEvents } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { fetchPublicEvents } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+const EVENTS_METADATA: Metadata = {
   title: "ღონისძიებები — ქართული რესპუბლიკა",
   description: "მოძრაობის შეხვედრები და ღონისძიებები.",
   openGraph: { images: ["/og-default.png"] },
 };
 
+// While hidden the page presents the generic not-found title, never its own — the same reason
+// as the hidden finance page (ADR-034): a page-raised 404 still streams this page's metadata.
+export function generateMetadata(): Metadata {
+  return showEvents() ? EVENTS_METADATA : NOT_FOUND_METADATA;
+}
+
 export default async function EventsPage() {
+  // Hidden by owner decision (ADR-042): not-found for everyone, before any data is fetched.
+  // Set SHOW_EVENTS=true and redeploy to bring the page back as it was.
+  if (!showEvents()) notFound();
   const events = await fetchPublicEvents();
   const { upcoming, past } = splitEvents(events, new Date().toISOString());
   return (

@@ -477,7 +477,7 @@ export default function StyleguidePage() {
                 <EventRow key={e.id} event={e} />
               ))}
             </div>
-            <ContentNav />
+            <ContentNav eventsShown />
           </div>
         </Card>
 

@@ -1008,6 +1008,10 @@ Owner decisions, taken in chat on 2026-10-07 while designing `/structure`.
   the public header and phone menu: both are reached from the homepage, and სიახლეები stays in
   the footer. The header now reads მთავარი, რეიტინგი, სტრუქტურა (plus ფინანსები only when
   finances are public, ADR-034).
+- **With events switched back on (ADR-042, `SHOW_EVENTS=true`).** ADR-042 was written against
+  the older header and expected the header link to return with the switch. Reconciled when the
+  two met: switching events on restores the homepage section, the cabinets and the event pages,
+  but not a public-header link, because the owner's request here was specific to the header.
 
 ## ADR-039 (2026-10-08): The referral card counts supporters and members apart
 
@@ -1037,3 +1041,33 @@ fewer supporter and one more member.
   design without answering the label question; this was the recommended default.)
 - **Release order.** Two PRs: the additive migration first (nothing visible), then the card,
   after the real site's database has the migration.
+
+## ADR-042 (2026-10-08): Events hidden behind one switch
+
+Owner decision, taken in chat on 2026-10-08: remove ღონისძიებები from everything. Offered
+hiding (one switch, nothing deleted) or deleting for good (pages, code, the events and RSVP
+tables and their data), the owner chose hide, the same shape as ADR-034 (finances) and
+ADR-037 (dues). Plan: `docs/superpowers/plans/2026-10-08-events-hidden.md`. No migration.
+
+- **Switch `SHOW_EVENTS`.** Server-only, shown only for the word `true` (whitespace ignored),
+  `lib/events-switch.ts`. Hidden (the default) means: no ღონისძიებები link in the public
+  header; no events section on the homepage (and no events read); `/events` and every
+  `/events/<slug>` answer not-found, and no event page is built ahead of time; no events tab in
+  either cabinet's desktop nav or phone bar; no events card on the supporter's cabinet home;
+  `/me/events` answers not-found and the RSVP action refuses before reaching the database; no
+  team-RSVP card (and no read for it) on the delegate panel; no events tab in the admin content
+  nav, the three admin event pages answer not-found and the four event actions refuse; the
+  editor role reads "სიახლეები და გამოკითხვები" in the role picker.
+- **The phone bar keeps four tabs where it can.** Its per-role list became a priority list
+  (the first four present win). With events hidden a member's fourth tab is their delegate
+  (short label "დელეგატი") and a delegate's is their profile; a supporter has three tabs. With
+  events shown every bar is exactly as before.
+- **Kept.** The events tables, views and RPCs; existing events and RSVPs; the audit-log labels
+  for `event.*` actions, so old entries still read in Georgian; the style guide's EventRow
+  sample. To bring events back, set the variable in Vercel (for the build too, since the
+  public pages are built ahead of time) and redeploy.
+- **Known quirk, shared with the hidden finance page.** On a production server a hidden page's
+  first render carries the generic not-found tab title, but after its 60-second ISR entry
+  regenerates the tab shows the plain site name. Status, heading and content stay the
+  not-found page, and the tab never names the hidden section; the e2e check asserts exactly
+  that.
