@@ -38,8 +38,9 @@ describe.each([
   ["(delegate)", DelegateNotFound],
   ["(member)", MemberNotFound],
 ])("%s not-found page", (_group, NotFound) => {
-  it("shows none of the public site chrome (its group layout has its own)", () => {
+  it("shows its own notice and none of the public site chrome (its group layout has its own)", () => {
     render(<NotFound />);
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     expect(screen.queryByRole("banner")).not.toBeInTheDocument();
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
   });

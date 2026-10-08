@@ -59,6 +59,9 @@ function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStat
   return cabinetStateFixture({
     standing: "registered",
     status: "registered",
+    personalIdMasked: "********",
+    hasPersonalId: false,
+    regionId: null,
     completed: false,
     membershipExists: false,
     tier: null,

@@ -15,6 +15,8 @@ describe("production database delivery contract", () => {
     expect(workflow).toContain("environment: production-db");
     expect(workflow).toContain("group: production-db-migrations");
     expect(workflow).toContain("cancel-in-progress: false");
+    // least-privilege job token: read actions (to verify the approved dry run) and contents only
+    expect(workflow).toContain("permissions:\n  actions: read\n  contents: read");
     expect(workflow).toContain("EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws");
   });
 
@@ -82,7 +84,9 @@ describe("production database delivery contract", () => {
       Number(m[1]),
     );
 
-    expect(expected.length).toBeGreaterThan(0);
+    // dry_run and apply each pin the count and each run the baseline step
+    expect(expected).toHaveLength(2);
+    expect(workflow.match(/Migration file baseline/g)).toHaveLength(2);
     for (const count of expected) expect(count).toBe(committed);
     expect(workflow).toContain(
       'test "$ACTUAL_MIGRATION_FILE_COUNT" = "$EXPECTED_MIGRATION_FILE_COUNT"',
@@ -103,12 +107,18 @@ describe("production database delivery contract", () => {
     const lintIndex = workflow.indexOf("- name: Lint public schema");
     const advisorCaptureIndex = workflow.indexOf("- name: Capture security advisors");
     const advisorVerifyIndex = workflow.indexOf("- name: Verify reviewed security advisor set");
+    const roleProbeStep = workflow.slice(roleProbeIndex, lintIndex);
     const lintStep = workflow.slice(lintIndex, advisorCaptureIndex);
     const advisorStep = workflow.slice(advisorCaptureIndex, advisorVerifyIndex);
 
     expect(applyIndex).toBeLessThan(schemaCheckIndex);
     expect(schemaCheckIndex).toBeLessThan(roleProbeIndex);
     expect(roleProbeIndex).toBeLessThan(lintIndex);
+    // f891014: the probes need the CLI's JSON agent output; --output-format is not a db query flag
+    expect(
+      roleProbeStep.match(/supabase db query --linked --output json --agent yes/g) ?? [],
+    ).toHaveLength(3);
+    expect(roleProbeStep).not.toContain("--output-format");
     expect(lintStep).toContain("--fail-on error");
     expect(lintStep).not.toContain("--fail-on none");
     expect(advisorStep).toContain("--fail-on none");
@@ -123,6 +133,19 @@ describe("production database delivery contract", () => {
       public_read: string[];
       signed_in_read: string[];
     };
+
+    // Policy, independent of the JSON: only these six views are anonymous-readable, and no
+    // admin_/member_ view may ever be (moving one into public_read must fail here).
+    expect([...access.public_read].sort()).toEqual([
+      "public_delegates",
+      "public_events",
+      "public_news",
+      "public_stats",
+      "transparency_regions",
+      "transparency_stats",
+    ]);
+    expect(access.public_read.filter((name) => /^(admin_|member_)/.test(name))).toEqual([]);
+    expect(access.public_read.filter((name) => access.signed_in_read.includes(name))).toEqual([]);
 
     expect(sql).toContain("relrowsecurity");
     expect(sql).toContain("production view set drifted");

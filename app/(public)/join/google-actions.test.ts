@@ -97,6 +97,14 @@ describe("registerGoogleAction", () => {
       },
     ],
     [
+      "extended token",
+      { code: "P0001", message: "phone_required_extra", details: null, hint: null },
+    ],
+    [
+      "whitespace variant",
+      { code: "P0001", message: " phone_required ", details: null, hint: null },
+    ],
+    [
       "token only in details and hint",
       {
         code: "P0001",

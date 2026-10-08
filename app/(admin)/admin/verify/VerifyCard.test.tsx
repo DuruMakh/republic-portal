@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { VerifyCard } from "./VerifyCard";
 
@@ -19,7 +19,7 @@ function noopReveal() {
 }
 
 describe("VerifyCard (spec §3.4)", () => {
-  it("masks the personal ID until it is revealed", () => {
+  it("masks the personal ID until it is revealed", async () => {
     render(
       <VerifyCard
         applicant={applicant}
@@ -29,6 +29,8 @@ describe("VerifyCard (spec §3.4)", () => {
         reject={vi.fn()}
       />,
     );
+    // let any mount-time effect (e.g. an eager reveal) settle before asserting absence
+    await act(async () => {});
     expect(screen.getByText("•••••••••••")).toBeInTheDocument();
     expect(screen.queryByText("01017056789")).not.toBeInTheDocument();
   });

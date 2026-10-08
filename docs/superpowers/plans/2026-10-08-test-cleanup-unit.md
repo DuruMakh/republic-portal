@@ -130,3 +130,17 @@ ka:scan, ka-gate on touched files. Push branch; no PR (coordinator staggers PRs)
   files (line numbers in the audit do not match); left as is.
 - **Production gate:** the single CLI subprocess test is the malformed-input one (proves the
   workflow step fails without echoing input); the accept path is tested directly.
+- **Accepted loss (review):** deleting `migration-contract.test` also removed its weak
+  name-presence pin that `scripts/production-db-schema-check.sql` mentions the
+  phone-verification objects (send reservations and the three reserve/complete functions).
+  The live schema check itself is unchanged; only the text pin is gone.
+
+## Review fixes (independent review of ddff28b)
+
+Restored, each proven red by a mutation: the public-vs-signed-in view policy as an invariant
+independent of the JSON (explicit six-view `public_read` list, no `admin_`/`member_` view
+public); the f891014 role-probe flag guard (`--output json --agent yes` ×3, no
+`--output-format`); exactly two migration-count pins and two baseline steps; the
+least-privilege `permissions:` pin. Also: a level-1 heading per group not-found; the
+whitespace and extended-token fail-closed cases; a flush before VerifyCard's absence check;
+the supporter fixture's `hasPersonalId: false` / masked ID / `regionId: null`.
