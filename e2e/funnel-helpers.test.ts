@@ -190,6 +190,22 @@ describe("seedRegisteredMember", () => {
       status: "registered",
     });
   });
+
+  test("records the referral code the person signed up through, when given", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    createClient.mockReturnValue({ from: () => ({ insert }) });
+
+    await seedRegisteredMember({
+      userId: "google-user-1",
+      phone: "550001230",
+      firstName: "ნინო",
+      lastName: "ტესტი",
+      personalId: "95500012300",
+      signupRefCode: "M-ABCDEF",
+    });
+
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ signup_ref_code: "M-ABCDEF" }));
+  });
 });
 
 describe("suite-wide fixture environment guard", () => {
