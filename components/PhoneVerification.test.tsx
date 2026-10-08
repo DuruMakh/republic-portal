@@ -117,7 +117,7 @@ describe("PhoneVerification", () => {
       await Promise.resolve();
     });
 
-    expect(mocks.send).toHaveBeenCalledWith({ phone: PHONE });
+    expect(mocks.send).toHaveBeenCalledWith({ phone: PHONE, privacyConsent: true });
     expect(onChallengeChanged).toHaveBeenCalledWith({
       challengeId: NEW_CHALLENGE_ID,
       expiresAt: NEW_EXPIRES_AT,

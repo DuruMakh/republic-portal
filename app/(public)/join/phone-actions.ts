@@ -26,6 +26,9 @@ import {
 import { PhoneVerificationProviderError } from "@/lib/phone-verification/verify-ge";
 
 const sendSchema = z.object({ phone: z.string() });
+// Sending the number to the SMS provider is processing, so consent comes first
+// (spec 2026-10-08 §4). Checked after the identity gates, before any privileged work.
+const consentSchema = z.object({ privacyConsent: z.literal(true) });
 const verifySchema = z.object({
   challengeId: z.string().uuid(),
   code: z.string().regex(/^\d{6}$/),
@@ -72,6 +75,7 @@ export async function sendPhoneVerificationAction(
   if (error || !user) return failure("not_authenticated");
   const providers = Array.isArray(user.app_metadata.providers) ? user.app_metadata.providers : [];
   if (!providers.includes("google")) return failure("google_required");
+  if (!consentSchema.safeParse(input).success) return failure("privacy_consent_required");
 
   const parsed = sendSchema.safeParse(input);
   if (!parsed.success) return failure("invalid_phone");

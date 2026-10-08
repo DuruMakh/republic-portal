@@ -5,6 +5,7 @@ import { hasAnyRole } from "@/lib/admin";
 import { PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
 import { contentIdSchema, newsFormSchema } from "@/lib/content-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
+import { ImageSanitizeError, isUploadMime, sanitizeUploadedImage } from "@/lib/image-sanitize";
 import { resolvePublishSlug } from "@/lib/publish-slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { takenSlugsFetcher } from "@/lib/supabase/slugs";
@@ -129,9 +130,22 @@ export async function setNewsCoverAction(formData: FormData): Promise<NewsAction
     return { ok: false, error: mapFunnelError("invalid_image") };
   }
   const ext = PHOTO_TYPES[cover.type];
-  if (!ext) return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP სურათი." };
+  if (!ext || !isUploadMime(cover.type)) {
+    return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP სურათი." };
+  }
   if (cover.size > PHOTO_MAX_BYTES) {
     return { ok: false, error: "სურათი არ უნდა აღემატებოდეს 5 MB-ს." };
+  }
+  // Security audit M4: the bucket is public — store the cover without its hidden
+  // location/time/device data, upright.
+  let clean: Uint8Array;
+  try {
+    clean = await sanitizeUploadedImage(await cover.arrayBuffer(), cover.type);
+  } catch (caught) {
+    if (caught instanceof ImageSanitizeError) {
+      return { ok: false, error: "სურათის წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი." };
+    }
+    throw caught;
   }
 
   const admin = createAdminClient();
@@ -139,7 +153,7 @@ export async function setNewsCoverAction(formData: FormData): Promise<NewsAction
   const newPath = `${parsed.data.id}-${Date.now()}.${ext}`;
   const { error: uploadError } = await admin.storage
     .from("news-images")
-    .upload(newPath, await cover.arrayBuffer(), { contentType: cover.type });
+    .upload(newPath, clean, { contentType: cover.type });
   if (uploadError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
   const imageUrl = admin.storage.from("news-images").getPublicUrl(newPath).data.publicUrl;
 

@@ -3,6 +3,7 @@
 import { GENERIC_FUNNEL_ERROR, mapFunnelError, type CabinetState } from "@/lib/funnel";
 import { registerActionSchema } from "@/lib/funnel-schemas";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE, PRIVACY_POLICY_VERSION } from "@/lib/privacy";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type GoogleRegistrationFailureCode =
@@ -36,6 +37,8 @@ function mapGoogleRegistrationError(
         return { ok: false, code: "google_required", error: mapFunnelError(error.message) };
       case "phone_required":
         return { ok: false, code: "phone_required", error: mapFunnelError(error.message) };
+      case "privacy_consent_required":
+        return { ok: false, code: "invalid_input", error: PRIVACY_CONSENT_REQUIRED_MESSAGE };
     }
   }
   return { ok: false, code: "service_unavailable", error: GENERIC_FUNNEL_ERROR };
@@ -59,6 +62,7 @@ export async function registerGoogleAction(
       p_first_name: parsed.data.firstName,
       p_last_name: parsed.data.lastName,
       p_ref_code: parsed.data.refCode ?? null,
+      p_privacy_version: PRIVACY_POLICY_VERSION,
     });
     if (error) return mapGoogleRegistrationError(error);
     return { ok: true, state: data as unknown as CabinetState };

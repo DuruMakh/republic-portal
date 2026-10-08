@@ -24,6 +24,15 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+// the 2–3 byte fixtures are not real images: the sanitizer is mocked here and proven in
+// lib/image-sanitize.test.ts
+const sanitize = vi.hoisted(() => ({
+  run: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+}));
+vi.mock("@/lib/image-sanitize", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/image-sanitize")>()),
+  sanitizeUploadedImage: sanitize.run,
+}));
 
 const {
   deleteNewsAction,
@@ -170,6 +179,28 @@ describe("setNewsCoverAction — service-role upload", () => {
       ]);
     },
   );
+
+  it("stores the sanitized bytes, never the uploaded ones (security audit M4)", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["editor"]);
+    sanitize.run.mockResolvedValueOnce(new Uint8Array([7, 7, 7]));
+    session({ from: () => ok({ image_url: null, slug: "title" }), rpc: () => ok() });
+    await expect(setNewsCoverAction(form(newsId, cover()))).resolves.toEqual({ ok: true });
+    expect(sanitize.run).toHaveBeenCalledWith(expect.any(ArrayBuffer), "image/png");
+    const upload = admin.storageCalls.find((c) => c.method === "upload");
+    expect(upload?.args[1]).toEqual(new Uint8Array([7, 7, 7]));
+  });
+
+  it("refuses an undecodable cover without uploading anything", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["editor"]);
+    const { ImageSanitizeError } = await import("@/lib/image-sanitize");
+    sanitize.run.mockRejectedValueOnce(new ImageSanitizeError());
+    session({ from: () => ok({ image_url: null, slug: null }) });
+    await expect(setNewsCoverAction(form(newsId, cover()))).resolves.toEqual({
+      ok: false,
+      error: "სურათის წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი.",
+    });
+    expect(admin.storageCalls.find((c) => c.method === "upload")).toBeUndefined();
+  });
 
   it("removes the just-uploaded file when the database refuses the save", async () => {
     mocks.getAdminRoles.mockResolvedValue(["editor"]);

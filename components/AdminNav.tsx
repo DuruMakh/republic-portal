@@ -1,24 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Badge } from "@/components/Badge";
 import type { AdminTab } from "@/lib/admin";
-import { createClient } from "@/lib/supabase/client";
+import { useSignOut } from "@/components/useSignOut";
 
 export function AdminNav({ tabs }: { tabs: AdminTab[] }) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  async function signOut() {
-    try {
-      await createClient().auth.signOut({ scope: "local" });
-    } catch {
-      // best-effort — the layout gate re-checks the server truth next request
-    }
-    router.push("/");
-    router.refresh();
-  }
+  // the shared sign-out: it also empties the offline caches (security audit M3)
+  const signOut = useSignOut();
 
   return (
     // The register tag this row used to carry as its own Eyebrow (see AdminLayout's

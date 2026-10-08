@@ -22,6 +22,12 @@ describe("production admin grant workflow", () => {
     expect(workflow).toContain('test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"');
   });
 
+  it("pins every action to a full commit SHA, like production-db.yml (security audit H3)", () => {
+    const uses = [...workflow.matchAll(/^\s*(?:-\s*)?uses:\s*(\S+)/gm)].map((m) => m[1]);
+    expect(uses.length).toBeGreaterThan(0);
+    for (const ref of uses) expect(ref).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+  });
+
   it("never runs alongside a migration", () => {
     expect(workflow).toContain("group: production-db-migrations");
     expect(workflow).toContain("cancel-in-progress: false");

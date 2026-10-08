@@ -9,8 +9,11 @@
  * otp.mjs depends only on db.mjs, actors.mjs depends on both.
  */
 import { createClient } from "@supabase/supabase-js";
+import { assertStagingTarget } from "../staging-guard.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Security audit M6: staging only, before anything else (even with every key present).
+assertStagingTarget(url);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !anonKey || !serviceKey) {

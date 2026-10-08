@@ -52,6 +52,7 @@ const baseRow: ChallengeRow = {
   verify_attempts: 0,
   expires_at: "2026-08-11T12:05:00.000Z",
   consumed_at: null,
+  superseded_at: null,
   created_at: "2026-08-11T12:00:00.000Z",
 };
 
@@ -194,6 +195,51 @@ describe("phone verification challenge store", () => {
     await expect(readOwnedChallenge(failed.admin, input)).rejects.toThrow(
       "phone verification store failed",
     );
+  });
+
+  it("rejects a superseded challenge stamped one microsecond after expiry (audit C1)", async () => {
+    // exactly what complete_phone_verification_send wrote for a superseded challenge
+    const superseded = {
+      ...baseRow,
+      expires_at: "2026-08-11T12:05:00.123+00:00",
+      consumed_at: "2026-08-11T12:05:00.123001+00:00",
+    };
+    const reader = makeReadAdmin({ data: superseded, error: null });
+    await expect(
+      readOwnedChallenge(reader.admin, {
+        challengeId,
+        userId,
+        nowIso: "2026-08-11T12:06:00.000Z",
+      }),
+    ).resolves.toBeNull();
+  });
+
+  it("never uses a superseded challenge, live or not", async () => {
+    const reader = makeReadAdmin({
+      data: { ...baseRow, superseded_at: "2026-08-11T12:02:00.000Z" },
+      error: null,
+    });
+    await expect(
+      readOwnedChallenge(reader.admin, {
+        challengeId,
+        userId,
+        nowIso: "2026-08-11T12:03:00.000Z",
+      }),
+    ).resolves.toBeNull();
+  });
+
+  it("fails closed on a timestamp it cannot read exactly", async () => {
+    const reader = makeReadAdmin({
+      data: { ...baseRow, expires_at: "2026-08-11 garbage" },
+      error: null,
+    });
+    await expect(
+      readOwnedChallenge(reader.admin, {
+        challengeId,
+        userId,
+        nowIso: "2026-08-11T12:01:00.000Z",
+      }),
+    ).rejects.toThrow("phone verification store failed");
   });
 
   it("consumes the proof atomically with both challenge and user IDs", async () => {

@@ -45,6 +45,14 @@ describe("register() records privacy consent", () => {
     expect(body).toContain("raise exception 'privacy_consent_required'");
   });
 
+  it("refuses a missing version too, so no registration skips consent", () => {
+    const body = latestDefinition("register");
+    expect(body).toContain(
+      `if p_privacy_version is distinct from '${PRIVACY_POLICY_VERSION}' then`,
+    );
+    expect(body).not.toContain("case when p_privacy_version is null");
+  });
+
   it("stamps the consent date and version on the new profile", () => {
     expect(latestDefinition("register")).toMatch(
       /insert into public\.profiles \([^)]*privacy_accepted_at, privacy_version\)/,

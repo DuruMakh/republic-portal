@@ -15,13 +15,15 @@
  * the schema probes as audit ACTORS (never deleted — audit_log.actor_id is a
  * plain FK and audit rows are append-only).
  *
- * Guards: refuses on NEXT_PUBLIC_APP_ENV=production; requires
+ * Guards: runs only against the staging project (scripts/staging-guard.mjs, security audit
+ * M6); refuses on NEXT_PUBLIC_APP_ENV=production; requires
  * `--confirm-ref <project-ref>` matching NEXT_PUBLIC_SUPABASE_URL.
  *
  * Run: node --env-file=.env.local scripts/seed-staging.mjs --confirm-ref <ref>
  */
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
+import { assertStagingTarget } from "./staging-guard.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,6 +32,8 @@ if (!url || !serviceKey) {
   console.error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
   process.exit(1);
 }
+// Security audit M6: staging allow-list first — a production URL never gets further.
+assertStagingTarget(url);
 // Canonical production detection lives in lib/env.ts (isProductionEnv). This .mjs guard mirrors
 // the env-flag half; the --confirm-ref check below pins the exact target project, which is the
 // stronger guard for this destructive script.
@@ -40,7 +44,9 @@ if (process.env.NEXT_PUBLIC_APP_ENV === "production") {
 const ref = new URL(url).hostname.split(".")[0];
 const flagIdx = process.argv.indexOf("--confirm-ref");
 if (flagIdx < 0 || process.argv[flagIdx + 1] !== ref) {
-  console.error(`Refusing to seed: pass --confirm-ref ${ref} to confirm the target project.`);
+  console.error(
+    "Refusing to seed: pass --confirm-ref <the staging project ref> to confirm the target project.",
+  );
   process.exit(1);
 }
 

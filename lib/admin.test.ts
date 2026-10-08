@@ -130,7 +130,7 @@ describe("isStaff (spec §4.2 gate)", () => {
 });
 
 describe("audit taxonomy (spec §4.5)", () => {
-  it("all 29 actions have Georgian labels", () => {
+  it("all 31 actions have Georgian labels", () => {
     expect(Object.keys(AUDIT_ACTION_LABELS_KA).sort()).toEqual(
       [
         "admin.grant_role",
@@ -138,6 +138,7 @@ describe("audit taxonomy (spec §4.5)", () => {
         "delegate.approve",
         "delegate.reject",
         "delegate.reveal_personal_id",
+        "delegate.update_name",
         "delegate.update_profile",
         "event.cancel",
         "event.delete",
@@ -145,6 +146,7 @@ describe("audit taxonomy (spec §4.5)", () => {
         "event.save",
         "event.update",
         "member.export",
+        "member.personal_id_conflict",
         "member.reassign",
         "member.reveal_personal_id",
         "news.delete",

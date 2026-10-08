@@ -1,3 +1,5 @@
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
+
 /** Membership is a fixed monthly fee (owner fix #9) — the 5/10/20 choice is retired. */
 export const MEMBERSHIP_FEE_GEL = 10;
 export type Tier = typeof MEMBERSHIP_FEE_GEL;
@@ -121,6 +123,11 @@ export function isReferralCodeCandidate(value: string): boolean {
 
 export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   duplicate_personal_id: "ეს პირადი ნომერი უკვე რეგისტრირებულია.",
+  // Security audit H1 (2026-10-08), decision D2: after three personal-ID conflicts the account
+  // stops here for good. A real person only gets here when their ID is already taken, which
+  // needs a human, so the message points to support instead of "try later".
+  personal_id_attempts_exceeded:
+    "პირადი ნომრის დადასტურება ვერ ხერხდება — მოგვწერე მხარდაჭერის გვერდიდან და დაგეხმარებით.",
   invalid_personal_id: "პირადი ნომერი უნდა იყოს 11 ციფრი.",
   invalid_birth_date: "მიუთითე დაბადების თარიღი.",
   invalid_employment: "მიუთითე საქმიანობა.",
@@ -141,7 +148,12 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   not_a_member: "ეს მოქმედება მხოლოდ წევრებისთვისაა.",
   not_a_delegate: "დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.",
   invalid_role: "დაფიქსირდა შეცდომა — სცადე თავიდან.",
+  privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
   invalid_name: "შეავსე სახელი და გვარი.",
+  // Security audit M2 (decision D3): an approved delegate's public name changes only through
+  // the admins.
+  name_locked:
+    "დამტკიცებული დელეგატის სახელსა და გვარს ცვლის მხოლოდ ადმინისტრაცია — მოგვწერე მხარდაჭერის გვერდიდან.",
   // Phase 4 admin tokens (spec §5)
   missing_role: "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",
   invalid_target: "ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.",

@@ -9,6 +9,7 @@ import { filterEventLinks, showEvents } from "@/lib/events-switch";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { STRUCTURE_HREF, STRUCTURE_NAV_LABEL } from "@/lib/structure-copy";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
+import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
 
 // Kept labels copied byte-exact from the prior nav array (git history,
 // pre-Task-10 app/(public)/layout.tsx). Only the /transparency label changes,
@@ -18,6 +19,7 @@ const NAV_NEWS_LABEL = "სიახლეები";
 const NAV_TRANSPARENCY_LABEL = "ფინანსები";
 const HEADER_CTA_LABEL = "შემოგვიერთდი";
 const FOOTER_TERMS_LABEL = "წესები";
+const FOOTER_PRIVACY_LABEL = "კონფიდენციალურობა";
 const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი";
 
 // News and events are reached from the homepage (and news from the footer), not the header:
@@ -31,6 +33,7 @@ const navItems: { href: string; label: string }[] = [
 
 const footerLinks: { href: string; label: string }[] = [
   { href: "/join/terms", label: FOOTER_TERMS_LABEL },
+  { href: PRIVACY_POLICY_PATH, label: FOOTER_PRIVACY_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },

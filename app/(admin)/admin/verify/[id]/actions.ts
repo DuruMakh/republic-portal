@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { hasAnyRole } from "@/lib/admin";
-import { delegateProfileSchema, PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
+import {
+  delegateNameSchema,
+  delegateProfileSchema,
+  PHOTO_MAX_BYTES,
+  PHOTO_TYPES,
+} from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
+import { ImageSanitizeError, isUploadMime, sanitizeUploadedImage } from "@/lib/image-sanitize";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
@@ -44,16 +50,29 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
   const photo = formData.get("photo");
   if (photo instanceof File && photo.size > 0) {
     const ext = PHOTO_TYPES[photo.type];
-    if (!ext) return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP ფოტო." };
+    if (!ext || !isUploadMime(photo.type)) {
+      return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP ფოტო." };
+    }
     if (photo.size > PHOTO_MAX_BYTES) {
       return { ok: false, error: "ფოტო არ უნდა აღემატებოდეს 5 MB-ს." };
+    }
+    // Security audit M4: the bucket is public — store the photo without its hidden
+    // location/time/device data, upright.
+    let clean: Uint8Array;
+    try {
+      clean = await sanitizeUploadedImage(await photo.arrayBuffer(), photo.type);
+    } catch (caught) {
+      if (caught instanceof ImageSanitizeError) {
+        return { ok: false, error: "ფოტოს წაკითხვა ვერ მოხერხდა — სცადე სხვა ფაილი." };
+      }
+      throw caught;
     }
     const admin = createAdminClient();
     // versioned filename: an updated photo must never serve stale from CDN caches
     newPath = `${parsed.data.delegateId}-${Date.now()}.${ext}`;
     const { error: uploadError } = await admin.storage
       .from("delegate-photos")
-      .upload(newPath, await photo.arrayBuffer(), { contentType: photo.type });
+      .upload(newPath, clean, { contentType: photo.type });
     if (uploadError) return { ok: false, error: GENERIC_FUNNEL_ERROR };
     photoUrl = admin.storage.from("delegate-photos").getPublicUrl(newPath).data.publicUrl;
     const marker = "/delegate-photos/";
@@ -81,5 +100,36 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
   }
   revalidatePath(`/admin/verify/${parsed.data.delegateId}`);
   if (current.slug) revalidatePath(`/delegates/${current.slug}`);
+  return { ok: true };
+}
+
+/**
+ * Security audit M2 (decision D3): an approved delegate's public name is corrected here only —
+ * the database refuses the delegate's own edit (name_locked). Role precheck first, then the
+ * re-checking, audited admin_update_delegate_name RPC. No service role.
+ */
+export async function updateDelegateNameAction(input: unknown): Promise<SaveProfileResult> {
+  const parsed = delegateNameSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR };
+  }
+  const roles = await getAdminRoles();
+  if (!hasAnyRole(roles, ["verifier", "super_admin"])) {
+    return { ok: false, error: mapFunnelError("missing_role") };
+  }
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("admin_update_delegate_name", {
+    p_delegate_id: parsed.data.delegateId,
+    p_first_name: parsed.data.firstName,
+    p_last_name: parsed.data.lastName,
+  });
+  if (error) return { ok: false, error: mapFunnelError(error.message) };
+  const { data: row } = await supabase
+    .from("admin_delegate_queue")
+    .select("slug")
+    .eq("id", parsed.data.delegateId)
+    .maybeSingle();
+  revalidatePath(`/admin/verify/${parsed.data.delegateId}`);
+  if (row?.slug) revalidatePath(`/delegates/${row.slug}`);
   return { ok: true };
 }

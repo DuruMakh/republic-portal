@@ -96,6 +96,8 @@ const DENIED_BY_PRIVILEGE = "42501";
  * was dropped in 20260721120000_progressive_registration.sql).
  * `delegate_requires_completed_member` belongs to a trigger
  * (enforce_delegate_completed), not an RPC with a caller to refuse or admit.
+ * `name_locked` likewise belongs only to the protect_profile_columns() trigger
+ * (20261008160200_delegate_name_lock.sql, security audit M2).
  * `phone_verification_completion_failed` belongs only to the service-role-only
  * complete_phone_verification_send() SECURITY INVOKER RPC and validates its
  * internal reservation/challenge ownership or state, not a browser caller's
@@ -193,6 +195,15 @@ export const POST_GATE_TOKENS = new Set([
   // 20261008150000, a missing one). Payload validation behind register()'s
   // not_authenticated gate, the same standing as invalid_name next to it.
   "privacy_consent_required",
+  // Security audit H1 (20261008160100_membership_personal_id_probe_cap.sql):
+  // become_member_save_profile() stops an account after three personal-ID
+  // conflicts. Raised behind its not_authenticated gate and about how OFTEN the
+  // caller has collided, not WHO they are — the same standing as
+  // too_many_requests above.
+  "personal_id_attempts_exceeded",
+  // Same migration: become_member_save_profile() refuses a read-only (GET)
+  // call right after its not_authenticated gate — HOW it was called, not WHO.
+  "read_only_transaction",
 ]);
 
 /**

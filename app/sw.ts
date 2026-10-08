@@ -16,15 +16,9 @@
  */
 import { defaultCache } from "@serwist/next/worker";
 import { NetworkOnly, Serwist } from "serwist";
-
-/**
- * Route prefixes that must never be served from the Cache Storage API. These cover
- * authenticated pages (/me, /delegate, /admin), the login flow (which can render
- * signed-in state transiently), and all API routes (which may return
- * per-session/per-user data). Serving any of these from cache on a shared device
- * after logout would leak the previous user's data to the next person.
- */
-const PROTECTED_PREFIXES = ["/me", "/delegate", "/admin", "/api", "/login"];
+// Relative, not "@/": scripts/build-sw.mjs bundles this file with esbuild, which does
+// not read tsconfig paths.
+import { isNeverCached } from "../lib/sw-routes";
 
 /**
  * Build revision, injected by scripts/build-sw.mjs via an esbuild `define`
@@ -56,10 +50,15 @@ const serwist = new Serwist({
     // order and first-match-wins, so these NetworkOnly entries take precedence
     // over defaultCache's generic same-origin HTML/RSC/API caching strategies
     // for any protected/authenticated route.
+    // Requests that must never be served from (or written to) the Cache Storage API
+    // (lib/sw-routes.ts): authenticated pages (/me, /delegate, /admin), the login flow
+    // (which can render signed-in state transiently), all API routes (which may return
+    // per-session/per-user data), and every cross-origin request — Supabase auth, data
+    // and storage (security audit 2026-10-08, M3: defaultCache would otherwise keep
+    // /auth/v1/user and friends for an hour, past sign-out). Serving any of these from
+    // cache on a shared device after logout would leak the previous user's data.
     {
-      matcher: ({ url, sameOrigin }) =>
-        sameOrigin &&
-        PROTECTED_PREFIXES.some((p) => url.pathname === p || url.pathname.startsWith(p + "/")),
+      matcher: ({ url, sameOrigin }) => isNeverCached(url, sameOrigin),
       handler: new NetworkOnly(),
     },
     ...defaultCache,
@@ -75,3 +74,16 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+/**
+ * Security audit M3: workers before this release cached Supabase responses (including
+ * /auth/v1/user) under defaultCache's "cross-origin" name. The never-cache rule stops new
+ * entries, but nothing would ever evict the old ones, so the cache is dropped once, when this
+ * worker takes over.
+ */
+const LEGACY_CROSS_ORIGIN_CACHE = "cross-origin";
+addEventListener("activate", (event) => {
+  (event as Event & { waitUntil(promise: Promise<unknown>): void }).waitUntil(
+    caches.delete(LEGACY_CROSS_ORIGIN_CACHE),
+  );
+});

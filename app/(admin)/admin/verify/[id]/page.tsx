@@ -4,7 +4,8 @@ import { Card } from "@/components/Card";
 import { SectionRule } from "@/components/SectionRule";
 import { hasAnyRole } from "@/lib/admin";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
-import { updateDelegateProfileAction } from "./actions";
+import { updateDelegateNameAction, updateDelegateProfileAction } from "./actions";
+import { DelegateNameForm } from "./DelegateNameForm";
 import { DelegateProfileForm } from "./DelegateProfileForm";
 
 export const metadata: Metadata = { title: "დელეგატის პროფილი — ადმინისტრირება" };
@@ -48,15 +49,26 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
           ) : null}
         </p>
       </div>
-      <Card>
-        <SectionRule label="ბიო და ფოტო" className="mb-4" />
-        <DelegateProfileForm
-          delegateId={delegate.id}
-          initialBio={delegate.bio ?? ""}
-          photoUrl={delegate.photo_url}
-          save={updateDelegateProfileAction}
-        />
-      </Card>
+      <div className="flex flex-col gap-6">
+        <Card>
+          <SectionRule label="სახელი და გვარი" className="mb-4" />
+          <DelegateNameForm
+            delegateId={delegate.id}
+            initialFirstName={delegate.first_name}
+            initialLastName={delegate.last_name}
+            save={updateDelegateNameAction}
+          />
+        </Card>
+        <Card>
+          <SectionRule label="ბიო და ფოტო" className="mb-4" />
+          <DelegateProfileForm
+            delegateId={delegate.id}
+            initialBio={delegate.bio ?? ""}
+            photoUrl={delegate.photo_url}
+            save={updateDelegateProfileAction}
+          />
+        </Card>
+      </div>
     </main>
   );
 }

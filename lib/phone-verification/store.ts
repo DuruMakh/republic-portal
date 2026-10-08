@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import type { createAdminClient } from "@/lib/supabase/admin";
+import { timestampMicros } from "./timestamps";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -15,6 +16,8 @@ export interface ChallengeRow {
   verify_attempts: number;
   expires_at: string;
   consumed_at: string | null;
+  /** Set when a newer send replaced this challenge; a superseded challenge is never usable. */
+  superseded_at: string | null;
   created_at: string;
 }
 
@@ -32,6 +35,15 @@ const consumedChallengeSchema = z.boolean();
 
 function storeError(): Error {
   return new Error("phone verification store failed");
+}
+
+/** A consumed proof stays usable for idempotent re-attachment for one day. */
+const PROOF_WINDOW_MICROS = 24n * 60n * 60n * 1_000_000n;
+
+function exactMicros(value: string): bigint {
+  const micros = timestampMicros(value);
+  if (micros === null) throw storeError();
+  return micros;
 }
 
 export async function phoneBelongsToAnotherProfile(
@@ -99,14 +111,19 @@ export async function readOwnedChallenge(
     .maybeSingle();
   if (error) throw storeError();
   if (!data) return null;
+  // `typeof` rather than `!== null`: on a database that has not received the
+  // superseded_at migration yet the field is absent, and that must not reject every row.
+  if (typeof data.superseded_at === "string") return null;
 
-  const now = Date.parse(input.nowIso);
-  const expires = Date.parse(data.expires_at);
+  // Exact to the microsecond (security audit C1): a superseded challenge was once stamped
+  // consumed_at = expires_at + 1µs, which millisecond Date math read as "in time".
+  const now = exactMicros(input.nowIso);
+  const expires = exactMicros(data.expires_at);
   if (data.consumed_at === null) return expires > now ? data : null;
 
-  const consumed = Date.parse(data.consumed_at);
+  const consumed = exactMicros(data.consumed_at);
   const consumedIsValid =
-    consumed <= expires && consumed <= now && consumed >= now - 24 * 60 * 60 * 1000;
+    consumed <= expires && consumed <= now && consumed >= now - PROOF_WINDOW_MICROS;
   return consumedIsValid ? data : null;
 }
 

@@ -7,12 +7,14 @@ import {
   registerSchema,
   tierSchema,
 } from "./funnel-schemas";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
 
 describe("registerSchema", () => {
   const base = {
     firstName: "ნინო",
     lastName: "ბერიძე",
     phone: "555 12 34 56",
+    privacyConsent: true,
   };
   it("accepts the three fields and normalizes the phone (owner fix #10: no personal ID at registration)", () => {
     const parsed = registerSchema.parse(base);
@@ -22,6 +24,16 @@ describe("registerSchema", () => {
     expect(registerSchema.safeParse({ ...base, refCode: "7K3M9Q" }).success).toBe(true);
     expect(registerSchema.safeParse({ ...base, refCode: "bad code!" }).success).toBe(false);
   });
+  it("requires the privacy consent tick, in Georgian, on the privacyConsent path", () => {
+    const unticked = { firstName: base.firstName, lastName: base.lastName, phone: base.phone };
+    for (const input of [unticked, { ...base, privacyConsent: false }]) {
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      if (result.success) continue;
+      const issue = result.error.issues.find((i) => i.path[0] === "privacyConsent");
+      expect(issue?.message).toBe(PRIVACY_CONSENT_REQUIRED_MESSAGE);
+    }
+  });
 });
 
 describe("registerActionSchema", () => {
@@ -30,8 +42,14 @@ describe("registerActionSchema", () => {
       registerActionSchema.safeParse({
         firstName: "ნინო",
         lastName: "ბერიძე",
+        privacyConsent: true,
       }).success,
     ).toBe(true);
+  });
+  it("requires the privacy consent tick too", () => {
+    expect(registerActionSchema.safeParse({ firstName: "ნინო", lastName: "ბერიძე" }).success).toBe(
+      false,
+    );
   });
 });
 
