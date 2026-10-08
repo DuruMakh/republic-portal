@@ -24,7 +24,12 @@ export default defineConfig({
           setupFiles: ["./vitest.setup.ts"],
           // e2e/**/*.test.ts unit-tests the Playwright HELPERS (not the journeys, which are
           // e2e/**/*.spec.ts and belong to `npm run e2e` — see playwright.config.ts testMatch).
-          include: ["components/**/*.test.tsx", "app/**/*.test.{ts,tsx}", "e2e/**/*.test.ts"],
+          include: [
+            "components/**/*.test.tsx",
+            "app/**/*.test.{ts,tsx}",
+            "e2e/**/*.test.ts",
+            "proxy.test.ts",
+          ],
         },
       },
     ],
