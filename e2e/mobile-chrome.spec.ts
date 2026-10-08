@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
 
 // Task 10 regression guard for the chrome Tasks 3-9 shipped (public masthead
@@ -35,7 +36,8 @@ const NEWS_INDEX_LABEL = "სიახლეები";
 const PUBLIC_CHROME_ROUTES = [
   "/",
   "/news",
-  "/events",
+  // ADR-042: /events is a 404 too while events are hidden.
+  ...(EVENTS_SHOWN ? ["/events"] : []),
   "/leaderboard",
   ...(FINANCES_PUBLIC ? ["/transparency"] : []),
   "/support",
@@ -129,7 +131,9 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
   }) => {
     const details = [
       { index: "/news", href: "a[href^='/news/']", url: /\/news\/.+/ },
-      { index: "/events", href: "a[href^='/events/']", url: /\/events\/.+/ },
+      ...(EVENTS_SHOWN
+        ? [{ index: "/events", href: "a[href^='/events/']", url: /\/events\/.+/ }]
+        : []),
       { index: "/leaderboard", href: "a[href^='/delegates/']", url: /\/delegates\/.+/ },
     ];
 

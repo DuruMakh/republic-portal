@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { runCleanups } from "./cleanup-helpers";
+import { EVENTS_SHOWN } from "./events-switch";
 import {
   cleanupGoogleBackedTestUsers,
   cleanupJourneyUsers,
@@ -63,9 +64,19 @@ test("full upgrade: register → wizard → application sent and member nav", as
 
   // nav is exactly the registered set — no member-only pages
   const registeredNav = page.getByRole("navigation", { name: "კაბინეტის ნავიგაცია" });
-  for (const label of ["მთავარი", "ღონისძიებები", "სიახლეები", "პროფილი"]) {
+  // ADR-042: no events tab while SHOW_EVENTS is off.
+  const registeredLabels = [
+    "მთავარი",
+    ...(EVENTS_SHOWN ? ["ღონისძიებები"] : []),
+    "სიახლეები",
+    "პროფილი",
+  ];
+  for (const label of registeredLabels) {
     await expect(registeredNav.getByRole("link", { name: label })).toBeVisible();
   }
+  await expect(registeredNav.getByRole("link", { name: "ღონისძიებები" })).toHaveCount(
+    EVENTS_SHOWN ? 1 : 0,
+  );
   await expect(registeredNav.getByRole("link", { name: "გამოკითხვები" })).toHaveCount(0); // members-only
 
   // the overview CTA opens the wizard's profile phase

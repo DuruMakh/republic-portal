@@ -5,6 +5,7 @@
 // a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
 import { expect, test } from "@playwright/test";
 import { formatCountKa } from "../lib/format";
+import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
 import { serviceClient } from "./otp-helpers";
 
@@ -21,9 +22,14 @@ test.describe("home", () => {
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
-    await expect(page.getByRole("main").locator('a[href="/events"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toBeVisible();
+    // ADR-042: the events section is there only while SHOW_EVENTS=true.
+    await expect(page.getByRole("main").locator('a[href="/events"]')).toHaveCount(
+      EVENTS_SHOWN ? 1 : 0,
+    );
+    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toHaveCount(
+      EVENTS_SHOWN ? 1 : 0,
+    );
     let members = 0;
     for (const id of ["stat-approved-delegates", "stat-members-total"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
@@ -272,5 +278,42 @@ test.describe("transparency", () => {
     await expect(page.getByRole("columnheader", { name: "წევრი" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: /შეგროვებული თანხა/ })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
+  });
+});
+
+// ADR-042: events are hidden unless SHOW_EVENTS=true. With the switch on, community-events.spec.ts
+// and the homepage check above cover the visible pages.
+test.describe("events hidden", () => {
+  test.skip(EVENTS_SHOWN, "events are shown — see community-events.spec.ts");
+
+  test("/events answers 404 even with the exact address, and the tab never names events", async ({
+    page,
+  }) => {
+    const response = await page.goto("/events");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+    // Not the exact not-found title: on a production server the page's first render carries it,
+    // but once its 60-second ISR entry regenerates the tab shows the plain site name instead
+    // (/transparency behaves the same; the finances test passes only while nothing earlier in
+    // the run has visited that page). Either way the tab must not name the hidden section.
+    await expect(page).toHaveTitle(/ქართული რესპუბლიკა$/);
+    await expect(page).not.toHaveTitle(/ღონისძიებ/);
+  });
+
+  test("an old event address on a phone has no back link to the hidden index", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const response = await page.goto("/events/no-such-event-xyz");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+    await expect(page.locator('a[href="/events"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /ღონისძიებ/ })).toHaveCount(0);
+  });
+
+  test("no public page links to it", async ({ page }) => {
+    for (const path of ["/", "/news", "/leaderboard", "/join", "/support"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href="/events"]'), path).toHaveCount(0);
+      await expect(page.locator('a[href^="/events/"]'), path).toHaveCount(0);
+    }
   });
 });
