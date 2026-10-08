@@ -58,7 +58,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 
 - A "Delete account" section at the bottom of the profile page (danger styling from DESIGN.md).
   It lists what is erased and what stays anonymous, and for an approved delegate adds that their
-  public page goes and how many members move to the central movement.
+  public page goes and their members move to the central movement.
 - One text field: the person types the confirmation word (Georgian, set in the copy table during
   planning). The button stays disabled until the word matches exactly. One click deletes.
 - Success: the session is signed out and the person lands on a public page, `/account-deleted`,
@@ -85,7 +85,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 - super_admin only. Each member row gets a "delete" action that opens an inline confirmation with
   a required reason (free text, 5–300 characters) and the member's name typed back as the
   confirmation. Same erasure as §3.1. Audit row: actor = the admin, action
-  `admin.delete_member`, target = the person's id, details `{ "reason": … }` with no name.
+  `member.delete`, target = the person's id, details `{ "reason": … }` with no name.
 - Refused for staff accounts (`staff_account` / `staff_history`), like self-deletion.
 
 ## 4. Database design
@@ -119,19 +119,19 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 
 ### 4.4 Functions (all `security definer`, `search_path = ''`)
 
-- `erase_account(p_user_id uuid, p_actor uuid, p_reason text) returns jsonb`: internal, no grant
-  to any client role. In one transaction: refuse staff (`staff_account`); capture the delegate
-  photo path; move the delegate's team (§2); set the audit scrub; `delete from auth.users where
-  id = p_user_id` (cascades everything in §2; a foreign-key violation here means staff history →
-  `staff_history`); when `p_actor` is not null, write the `admin.delete_member` audit row.
-  Returns `{ photoPath }` for the Storage step.
+- `erase_account(p_user_id uuid) returns jsonb`: internal, no grant to any client role. In one
+  transaction: refuse staff (`staff_account`); capture the delegate photo URL; move the delegate's
+  team (§2); scrub the audit rows (§4.3); `delete from auth.users where id = p_user_id`
+  (cascades everything in §2; a foreign-key violation here means staff history →
+  `staff_history`). Returns `{ photoUrl }` for the Storage step.
 - `delete_my_account(p_confirm text) returns jsonb`: granted to `authenticated`; checks
-  `auth.uid()` and the confirmation word, calls `erase_account(auth.uid(), null, null)`.
+  `auth.uid()` and the confirmation word, calls `erase_account(auth.uid())`.
 - `admin_delete_member(p_user_id uuid, p_reason text) returns jsonb`: granted to `authenticated`;
-  `has_admin_role('super_admin')`, the reason length, not self; calls
-  `erase_account(p_user_id, auth.uid(), p_reason)`.
+  `has_admin_role('super_admin')`, the reason length, not self; writes its own `member.delete`
+  audit row (so the ADR-014 guard finds it in this function), then calls
+  `erase_account(p_user_id)`.
 - Planning must prove on staging that a function owned by `postgres` may `delete from
-  auth.users` on the hosted platform (the probe in `scripts/verify-schema.mjs` does it with a
+  auth.users` on the hosted platform (the staging-pinned probe `scripts/verify-account-deletion.mjs` does it with a
   throwaway user). Fallback if it may not: the server action deletes the auth user with the
   service-role admin API after the RPC succeeds, and the RPC leaves the final delete to it.
 
@@ -155,7 +155,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 - Unit: zod schemas; both actions (fake Supabase, as in `_test-utils/fake-supabase.ts`); the
   danger section's states (member, delegate with team count, staff disabled); `/account-deleted`;
   the policy sentence.
-- SQL probes on staging (`scripts/verify-schema.mjs`): a throwaway member is erased; their vote
+- SQL probes on staging (`scripts/verify-account-deletion.mjs`, pinned to the staging host): a throwaway member is erased; their vote
   survives with a null member and the option count is unchanged; a throwaway delegate's member
   lands on central with the note; a staff account is refused; the audit row loses `memberName`;
   a client cannot update `audit_log` even with `app.erasing` set (no grant).
