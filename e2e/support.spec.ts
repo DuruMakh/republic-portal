@@ -7,10 +7,10 @@ import { cleanupClient, failIfAny, runCleanups, SWEEP_HINT } from "./cleanup-hel
 import {
   SUPPORT_FOOTER_LABEL,
   SUPPORT_HEADING,
-  SUPPORT_NEED_CONTACT,
   SUPPORT_SUBMIT_LABEL,
   SUPPORT_SUCCESS,
 } from "../lib/support-copy";
+import { serviceClient } from "./otp-helpers";
 
 // Georgian fixture spliced from lib/admin-schemas.test.ts:127, never retyped.
 const NAME = "ნინო";
@@ -65,15 +65,14 @@ test.describe("support", () => {
     // Needs the migration applied. Until the owner pushes it, the row cannot be
     // written and this assertion is the one that will say so.
     await expect(page.getByText(SUPPORT_SUCCESS)).toBeVisible();
-  });
 
-  test("the form refuses a message with no way to reply", async ({ page }) => {
-    await page.goto("/support");
-    await page.getByLabel(/სახელი/).fill(NAME);
-    await page.getByLabel(/შეტყობინება/).fill(MESSAGE);
-    await page.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }).click();
-
-    await expect(page.getByText(SUPPORT_NEED_CONTACT)).toBeVisible();
-    await expect(page.getByText(SUPPORT_SUCCESS)).toBeHidden();
+    // DB truth: exactly this run's one row reached the owner's inbox. (The "no way to
+    // reply" refusal is SupportForm's own unit test.)
+    const { count, error } = await serviceClient()
+      .from("support_messages")
+      .select("*", { count: "exact", head: true })
+      .like("message", `%${RUN}%`);
+    expect(error).toBeNull();
+    expect(count).toBe(1);
   });
 });

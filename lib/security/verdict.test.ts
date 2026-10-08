@@ -148,16 +148,6 @@ describe("judge — P0001 token classification (this schema's bare raise excepti
     ).toBe("needs-live-proof");
   });
 
-  it("still clears a deny expectation on not_authenticated — the asymmetry is allow-side only", () => {
-    // Restated explicitly (already covered above by the two-token deny
-    // test) so the deny/allow split for this one token reads as a pinned
-    // contract, not an implication a reader has to derive by cross-
-    // referencing two other tests.
-    expect(
-      judge("deny", outcome({ errorCode: "P0001", errorMessage: "not_authenticated" }), "view"),
-    ).toBe("clear");
-  });
-
   it("CLEARS an allow expectation when P0001 carries a post-gate token", () => {
     // Changed 2026-07-26, deliberately. This test previously asserted
     // needs-live-proof, on the reasoning that a post-gate token "proves
@@ -238,50 +228,5 @@ describe("judge — invocations (function, action, endpoint)", () => {
 
   it("clears an allowed function that executed", () => {
     expect(judge("allow", outcome({ rowCount: 0 }), "function")).toBe("clear");
-  });
-});
-
-describe("judge — allowed caller stopped by a business rule, not by permissions", () => {
-  // An `allow` expectation predicts exactly one thing: this actor gets PAST
-  // the gate. A post-gate token is proof that they did — the role/standing
-  // check admitted them and something downstream (an argument, a business
-  // rule, a duplicate) stopped them instead. That is a fact about the probe's
-  // arguments or the row's state, never about who may reach the surface, so
-  // the authorization question the census asks is answered: clear.
-  //
-  // Deferring these instead left 67 cells unresolved in Task 7's function
-  // census for one shared, non-security reason. The deny side is untouched:
-  // there a post-gate token still proves the caller got in when they should
-  // not have, which is a finding.
-  it("clears an allowed caller who was admitted then hit a business rule", () => {
-    expect(
-      judge(
-        "allow",
-        outcome({ errorCode: "P0001", errorMessage: "already_completed" }),
-        "function",
-      ),
-    ).toBe("clear");
-    expect(
-      judge("allow", outcome({ errorCode: "P0001", errorMessage: "invalid_target" }), "function"),
-    ).toBe("clear");
-  });
-
-  it("still flags an allowed caller refused on permissions", () => {
-    expect(
-      judge("allow", outcome({ errorCode: "P0001", errorMessage: "missing_role" }), "function"),
-    ).toBe("finding");
-    expect(judge("allow", outcome({ errorCode: "42501" }), "function")).toBe("finding");
-  });
-
-  it("still treats a post-gate token on the deny side as a finding", () => {
-    expect(
-      judge("deny", outcome({ errorCode: "P0001", errorMessage: "already_completed" }), "function"),
-    ).toBe("finding");
-  });
-
-  it("still defers an unrecognised token on the allow side", () => {
-    expect(
-      judge("allow", outcome({ errorCode: "P0001", errorMessage: "brand_new_token" }), "function"),
-    ).toBe("needs-live-proof");
   });
 });

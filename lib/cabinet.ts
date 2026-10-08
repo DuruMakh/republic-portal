@@ -163,10 +163,6 @@ export function formatAmountGel(amount: number): string {
   return amount.toFixed(2);
 }
 
-export function initialsKa(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`;
-}
-
 /** Mirrors the delegate_panel() RPC jsonb exactly (spec §4.4). */
 export interface DelegatePanelData {
   status: "pending" | "approved" | "rejected";

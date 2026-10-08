@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CabinetStatePresent } from "@/lib/funnel";
+import { cabinetStateFixture } from "@/lib/test-cabinet-state";
 
 const redirectMock = vi.fn((path: string) => {
   throw new Error(`redirect:${path}`);
@@ -12,36 +12,7 @@ vi.mock("@/lib/supabase/server", () => ({ getCabinetState: () => getCabinetState
 
 import MembershipDonePage from "./page";
 
-function completed(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
-  return {
-    exists: true,
-    standing: "member",
-    status: "profile_completed",
-    role: "member",
-    firstName: "ნინო",
-    lastName: "ბერიძე",
-    personalIdMasked: "010********",
-    hasPersonalId: true,
-    referralCode: null,
-    referralCount: 0,
-    birthDate: "1990-05-20",
-    regionId: 1,
-    cityId: 5,
-    employment: "სტუდენტი",
-    tier: 10,
-    referenceCode: "GR-APQ694",
-    completed: true,
-    delegateStatus: null,
-    referral: null,
-    pendingDelegate: null,
-    chosenDelegate: null,
-    membershipExists: true,
-    registrationCompletedAt: "2026-10-07T10:00:00Z",
-    createdAt: "2026-07-21T10:00:00Z",
-    admin: false,
-    ...overrides,
-  };
-}
+const completed = cabinetStateFixture;
 
 beforeEach(() => {
   redirectMock.mockClear();

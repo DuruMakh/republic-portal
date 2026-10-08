@@ -29,11 +29,6 @@ describe("TeamTable", () => {
     expect(within(rows).getAllByText("წევრი")).toHaveLength(2);
   });
 
-  it("has no status filter — both statuses are the same word now (ADR-037)", () => {
-    render(<TeamTable members={MEMBERS} />);
-    expect(screen.queryByLabelText("სტატუსის ფილტრი")).toBeNull();
-  });
-
   it("filters by search", () => {
     render(<TeamTable members={MEMBERS} />);
     fireEvent.change(screen.getByLabelText("ძებნა სახელით ან გვარით"), {

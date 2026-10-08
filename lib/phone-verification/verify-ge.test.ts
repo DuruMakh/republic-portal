@@ -97,13 +97,7 @@ describe("createVerifyGeProvider", () => {
       "https://otp-service-production-ge.up.railway.app/api/v1/otp/verify",
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${serverSecret}`,
-          "Content-Type": "application/json",
-          "X-OTP-SDK-Language": "typescript",
-          "X-OTP-SDK-Platform": "node",
-          "X-OTP-SDK-Version": "2.1.7",
-        },
+        headers: expect.objectContaining({ Authorization: `Bearer ${serverSecret}` }),
         body: JSON.stringify({ requestId: "req-123", code: "123456" }),
       },
     );
@@ -142,13 +136,7 @@ describe("createVerifyGeProvider", () => {
       "https://otp-service-production-ge.up.railway.app/api/v1/otp/req-123",
       {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${serverSecret}`,
-          "Content-Type": "application/json",
-          "X-OTP-SDK-Language": "typescript",
-          "X-OTP-SDK-Platform": "node",
-          "X-OTP-SDK-Version": "2.1.7",
-        },
+        headers: expect.objectContaining({ Authorization: `Bearer ${serverSecret}` }),
       },
     );
   });

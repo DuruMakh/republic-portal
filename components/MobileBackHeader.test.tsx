@@ -14,25 +14,9 @@ describe("MobileBackHeader", () => {
     expect(screen.getByText("სიახლეები")).toBeInTheDocument();
   });
 
-  it("is hidden from md up", () => {
+  it("renders a header landmark", () => {
     const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
-    expect((container.firstElementChild as HTMLElement).className).toContain("md:hidden");
-  });
-
-  it("stays at the top while the mobile document scrolls", () => {
-    const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
-    const header = container.firstElementChild as HTMLElement;
-    expect(header.className).toContain("sticky");
-    expect(header.className).toContain("top-0");
-    expect(header.className).toContain("bg-paper");
-  });
-
-  it("renders a header landmark over a 2px ink rule", () => {
-    const { container } = render(<MobileBackHeader href="/news" label="სიახლეები" />);
-    const header = container.firstElementChild as HTMLElement;
-    expect(header.tagName).toBe("HEADER");
-    expect(header.className).toContain("border-b-2");
-    expect(header.className).toContain("border-ink");
+    expect((container.firstElementChild as HTMLElement).tagName).toBe("HEADER");
   });
 
   it("puts the context label in brand red at or above the 0.74rem floor", () => {

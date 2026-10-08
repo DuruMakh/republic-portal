@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { EVENTS_SHOWN } from "./events-switch";
+import { signOutViaNav } from "./admin-helpers";
 import {
   cleanupJourneyUsers,
   JOURNEY,
@@ -14,11 +14,13 @@ test.describe.configure({ mode: "serial" });
 test.beforeAll(cleanupJourneyUsers);
 test.afterAll(cleanupJourneyUsers);
 
-test("member cabinet: profile edit, delegate change, billing, one-way funnel", async ({ page }) => {
+test("member cabinet: profile edit, delegate change, one-way funnel, no admin", async ({
+  page,
+}) => {
   const phone = journeyPhone(JOURNEY.cabinet);
 
   // Seed a completed member. The subject here is post-registration cabinet
-  // behavior — the UI registration journey lives in registration/membership specs. The
+  // behavior — the UI registration journey lives in the membership spec. The
   // default seed region (ქვემო ქართლი) has a real 3rd city, which the profile-edit step
   // below needs (თბილისი the region has exactly ONE city, so its index 2 never resolves).
   await seedCompletedMember({
@@ -28,23 +30,30 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
     personalId: journeyPersonalId(JOURNEY.cabinet),
   });
   await loginAs(page, phone);
-  await page.setViewportSize({ width: 390, height: 844 });
-
   await page.goto("/me/profile");
+  await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
+  await expect(page.getByText("წევრი").first()).toBeVisible();
+  await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
+
+  // signed-in phone chrome at layout level: exactly one bottom tab bar, a header that stays
+  // pinned, and the More sheet opening as a dialog (focus and Escape are its unit tests)
+  await page.setViewportSize({ width: 390, height: 844 });
   const mobileNav = page.locator("div.sticky.bottom-0 nav");
   await expect(mobileNav).toBeVisible();
   await expect(mobileNav.getByRole("link")).toHaveCount(4);
   await expect(mobileNav.locator('a[href="/me/profile"]')).toHaveAttribute("aria-current", "page");
-  await expect(mobileNav.getByRole("button", { name: "მეტი" })).toBeVisible();
   await expect(page.locator("div.sticky.bottom-0")).toHaveCount(1);
   const mobileHeader = page.getByRole("banner");
   await expect(mobileHeader).toHaveCSS("position", "sticky");
   await page.evaluate(() => window.scrollTo(0, 500));
   await expect.poll(async () => (await mobileHeader.boundingBox())?.y).toBe(0);
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page.getByText("ვატესტ კაბინეტს")).toBeVisible();
-  await expect(page.getByText("წევრი").first()).toBeVisible();
-  await expect(page.getByTestId("profile-pid")).toHaveValue("•••••••••••");
+  await mobileNav.getByRole("button", { name: "მეტი" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(mobileNav).toBeHidden();
 
   // profile edit persists across reload
   await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 2 });
@@ -66,66 +75,21 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(page.getByTestId("change-delegate-message")).toHaveText("დელეგატი შეიცვალა ✓");
   await expect(page.getByTestId("current-delegate")).toHaveText(chosenLabel);
 
-  // same-choice guard — no server call, polite Georgian refusal
-  await picker.selectOption({ label: `${chosenLabel} (მიმდინარე)` });
-  await page.getByRole("button", { name: "დელეგატის შეცვლა" }).click();
-  await expect(page.getByTestId("change-delegate-message")).toHaveText("ეს დელეგატი უკვე არჩეულია");
-
-  // While events are hidden (ADR-042) „ჩემი დელეგატი“ takes the freed fourth tab, so the
-  // bar marks it current; with events shown it lives in the „მეტი“ sheet and the sheet's
-  // button is current instead. No payments link either way while dues are hidden (ADR-037).
-  const moreButton = mobileNav.getByRole("button", { name: "მეტი" });
-  const sheet = page.getByRole("dialog");
-  if (EVENTS_SHOWN) {
-    await expect(moreButton).toHaveAttribute("aria-current", "page");
-    await moreButton.click();
-    await expect(sheet.locator('a[href="/me/delegate"]')).toHaveAttribute("aria-current", "page");
-  } else {
-    await expect(mobileNav.locator('a[href="/me/delegate"]')).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    await expect(moreButton).not.toHaveAttribute("aria-current", "page");
-    await moreButton.click();
-    await expect(sheet.locator('a[href="/me/delegate"]')).toHaveCount(0);
-  }
-  await expect(sheet.locator('a[href="/me/billing"]')).toHaveCount(0);
-  await expect
-    .poll(() =>
-      page.evaluate(() =>
-        document.querySelector('[role="dialog"]')?.contains(document.activeElement),
-      ),
-    )
-    .toBe(true);
-  await page.keyboard.press("Escape");
-  await expect(sheet).toBeHidden();
-  await expect(moreButton).toBeFocused();
-
-  // dues are hidden by default (SHOW_MEMBERSHIP_DUES, ADR-037): the payments page itself
-  // answers not-found, even by its address
-  await page.goto("/me/billing");
-  await expect(page.getByText("გვერდი ვერ მოიძებნა.")).toBeVisible();
-  await page.goto("/me/delegate");
-
-  // Desktop keeps the established CabinetNav and suppresses the mobile bar.
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(mobileNav).toBeHidden();
-  await expect(
-    page
-      .getByRole("navigation", { name: "კაბინეტის ნავიგაცია" })
-      .getByRole("link", { name: "გადახდები" }),
-  ).toHaveCount(0);
+  // a completed member has nothing left to fill in: the wizard answers with its done page
   await page.goto("/me/membership");
   await expect(page).toHaveURL(/\/me\/membership\/done$/);
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("banner")).toHaveCSS("position", "static");
-  await expect(page.locator("div.sticky.bottom-0")).toBeHidden();
 
   // the cabinet is one-way now; a signed-in member is bounced off the join/delegate doors
   await page.goto("/join");
   await expect(page).toHaveURL(/\/me\/profile/);
   await page.goto("/delegate");
   await expect(page).toHaveURL(/\/me\/profile/);
+  // an ordinary member (admin_roles empty) is bounced from /admin to their cabinet: the
+  // admin layout gate sends it through deriveDestination()
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/me\/profile$/);
   await page.goto("/");
   await expect(page.getByRole("link", { name: "კაბინეტი" })).toBeVisible();
 
@@ -136,4 +100,10 @@ test("member cabinet: profile edit, delegate change, billing, one-way funnel", a
   await expect(page.getByRole("heading", { level: 1, name: "გვერდი ვერ მოიძებნა." })).toBeVisible();
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("contentinfo")).toHaveCount(0);
+
+  // the real sign-out control ends the session: home, and the cabinet asks for a login again
+  await page.goto("/me/profile");
+  await signOutViaNav(page);
+  await page.goto("/me/profile");
+  await expect(page).toHaveURL(/\/login/);
 });
