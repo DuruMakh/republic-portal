@@ -871,3 +871,22 @@ Send the owner the preview URL, the screenshots, and a plain-language list of wh
 - [ ] **Step 6: Merge and verify**
 
 After sign-off: recheck that main's last ADR is still below 045, then merge the PR. Then verify the real site, georgia-republic.vercel.app: the commit status, and a curl or screenshot of `/` showing the teal footer. If Vercel's daily deploy limit blocks the release, say so and use the manual fallback recipe from the real-production-site notes.
+
+---
+
+## Review follow-ups (applied after the independent review, 2026-10-08)
+
+The whole-branch review found no critical issues. These changes followed it, each test-first:
+
+- **Poll leaders are decided on votes, not percentages.** New pure `leadingOptions(votes)` in
+  `lib/community.ts` (tested in `lib/community.test.ts`). `percentages()` uses largest-remainder
+  rounding, so a 1/1/1 tie became 34/33/33 and showed one false leader. `PollCard` and the admin
+  poll page (`app/(admin)/admin/content/polls/[id]/page.tsx`, previously all red) both use it.
+- **The open phone menu's header row** (`components/MobileMenu.tsx`) still had the old 2px ink
+  rule. It now uses `masthead-rule` (test in `components/MobileMenu.test.tsx`).
+- **Footer link hover** thickens the underline (`hover:decoration-2`) instead of the near-invisible
+  paper-to-surface colour change (1.09:1).
+- **The masthead rule's gap is transparent**, so it shows the header's own background instead of
+  painting paper over a bright card (the styleguide demo).
+- **Docs:** call-out sentence in DESIGN.md Materials, the CSV export as a `dark` call site, the e2e
+  count (eight `position` checks, not three), CHANGELOG wording, and two stale code comments.

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 /**
- * Teal site footer (spec §3.2, ADR-045): copyright left, link row right, on the one
- * solid teal band. Links take a paper focus outline because red on teal is invisible
- * (1.00:1). `copyright` is
+ * Teal site footer (spec §3.2, ADR-045): copyright left, link row right, on the
+ * one solid teal band. Links take a paper focus outline because red on teal is
+ * invisible (1.00:1), and thicken their underline on hover. `copyright` is
  * accepted as a plain string — the caller (Task 10) splices the actual text.
  */
 export function SiteFooter({
@@ -22,7 +22,7 @@ export function SiteFooter({
             <Link
               key={link.href}
               href={link.href}
-              className="text-paper hover:text-surface focus-visible:outline-paper"
+              className="text-paper hover:decoration-2 focus-visible:outline-paper"
             >
               {link.label}
             </Link>

@@ -1178,10 +1178,11 @@ Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
 - **No tinted panels.** The exploration board's light-teal registry panel was rejected; there is
   no teal tint token. The footer is the one solid teal area.
 - **Masthead rule as a border.** `masthead-rule` paints 2px ink, 2px paper, 1px teal as one
-  gradient border image. A positioned overlay would have changed the header's `position`, which
-  three e2e checks pin; a box-shadow would hide under any following sibling with a background.
+  gradient border image. The gap is transparent, so it shows the header's own background. A
+  positioned overlay would have changed the header's `position`, which eight e2e checks pin; a box-shadow would hide under any following sibling with a background.
 - **Accessibility.** Teal/paper 6.9:1 both ways. Red and teal are equally dark (1.00:1), so the
   footer's links use a paper focus outline, and a leading poll answer is never shown by colour
-  alone (longest bar, percentage).
+  alone (longest bar, percentage). Leading is decided on raw votes (`leadingOptions`), not on
+  rounded percentages, which can split a tie (1/1/1 becomes 34/33/33).
 - **Rejected.** Directions 2 (Agora) and 3 (Republic 1918) from the board: full re-skins, kept
   for later. A teal tint for information panels: owner preference.

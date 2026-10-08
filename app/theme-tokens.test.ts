@@ -14,11 +14,11 @@ describe("theme tokens (ADR-045)", () => {
     expect(css).not.toMatch(/--color-teal-(tint|soft|light|pale)/);
   });
 
-  it("draws the masthead rule as one bottom border: 2px ink, 2px paper, 1px teal", () => {
+  it("draws the masthead rule as one bottom border: 2px ink, a 2px see-through gap, 1px teal", () => {
     const block = css.match(/@utility masthead-rule \{[\s\S]*?\n\}/)?.[0] ?? "";
     expect(block).toContain("border-bottom: 5px solid");
     expect(block).toMatch(/var\(--color-teal\) 0 1px/);
-    expect(block).toMatch(/var\(--color-paper\) 1px 3px/);
+    expect(block).toMatch(/transparent 1px 3px/);
     expect(block).toMatch(/var\(--color-ink\) 3px 5px/);
     expect(block).toMatch(/\b0 0 5 0;/);
   });

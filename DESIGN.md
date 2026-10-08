@@ -27,7 +27,8 @@ border) on a **stone** page background; on mobile the paper is edge-to-edge (no 
 drawn as one border by the `masthead-rule` utility, never a shadow), 2px
 section-opening rules, 1px hairlines between rows. Corners are square everywhere; the only
 rounded elements are the tiny nav count badges. Call-out panels (poll card, my-delegate card,
-verification cards) use **paper-bright** with a full 1px ink border. The single permitted
+verification cards) use **paper-bright** with a full 1px ink border; the my-delegate card takes the
+teal call-out instead (ADR-045). The single permitted
 shadow is the printed edge `0 1px 0 #c9bfac` on form sheets. Selection is inverted (ink
 background, paper text).
 
@@ -60,7 +61,8 @@ roles are the contract.
 **Red acts, teal informs (ADR-045).** There is no teal tint token: teal never fills a panel. The
 footer is the one solid teal area; the supporter chip uses the chip system's `/10` tint like
 every other chip. Red and teal are equally dark (1.00:1), so never let red-versus-teal alone
-carry meaning: a leading poll answer is also the longest bar and shows its percentage.
+carry meaning: a leading poll answer is also the longest bar and shows its percentage. The leading answers are
+the ones with the most votes (`leadingOptions`), never the largest rounded percentage.
 
 Focus-visible is a 2px `brand` outline, offset 2px, on every interactive element, except on the
 teal footer, where links use a `paper` outline (red on teal is invisible).
@@ -97,8 +99,8 @@ Georgian**. `lang="ka"` throughout.
   the default button color.
 - Ghost buttons: transparent, 1px ink border; hover inverts to ink fill / paper text. The
   muted ghost (e.g. the abstain ballot option): muted text, hairline border, hover restores ink.
-- **Secondary solid buttons (`dark`): teal fill, paper text; hover `teal-dark`.** For look-up and
-  go-see actions (admin search and lookup, the delegate panel's team link).
+- **Secondary solid buttons (`dark`): teal fill, paper text; hover `teal-dark`.** For look-up,
+  export and go-see actions (admin search, lookup and CSV export, the delegate panel's team link).
 - Danger actions use the `brand`-red treatment (red border/text, or red fill for a confirmed
   destructive primary).
 - Links: `brand` red, always underlined (1px, offset 3px); hover darkens to `brand-dark`.
@@ -149,9 +151,9 @@ Unit tests changed only where they assert visuals. Status keys, `TEAM_STATUS_LAB
 
 | Component                | Props                                                                    | Contract                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Masthead`               | `{ navItems, cta, sessionSlot?, tag? }`                                  | **Unified single-row header** (see note): horizontal Georgian lockup left; nav (active item `aria-current="page"`, `brand` red) + `cta` + `sessionSlot` right; optional `tag` is a small-caps register label after the lockup (member cabinet / admin). The `masthead-rule` under it: 2px ink, 2px paper, 1px teal (ADR-045).                                                                                                                                      |
+| `Masthead`               | `{ navItems, cta, sessionSlot?, tag? }`                                  | **Unified single-row header** (see note): horizontal Georgian lockup left; nav (active item `aria-current="page"`, `brand` red) + `cta` + `sessionSlot` right; optional `tag` is a small-caps register label after the lockup (member cabinet / admin). The `masthead-rule` under it: 2px ink, 2px paper, 1px teal (ADR-045). The gap is transparent, so it shows the header's own paper background.                                                               |
 | `PageSheet`              | `{ children, className? }`                                               | The paper sheet wrapper: `max-w-[1280px]`, `bg-paper`, `sm:border-x border-frame`, `min-h-screen flex flex-col` (footer pins to bottom). Stone shows behind on desktop; edge-to-edge on mobile.                                                                                                                                                                                                                                                                    |
-| `SiteFooter`             | —                                                                        | Solid teal band (paper text and links, paper focus outline; ADR-045): © line left; right links go **only to real pages** — terms (`/join/terms`), news (`/news`), structure (`/structure`, ADR-038), transparency (`/transparency`, only while `SHOW_PUBLIC_FINANCES=true`, ADR-034), contact (`/support`). No fake doors.                                                                                                                                         |
+| `SiteFooter`             | —                                                                        | Solid teal band (paper text and links, underline thickens on hover, paper focus outline; ADR-045): © line left; right links go **only to real pages** — terms (`/join/terms`), news (`/news`), structure (`/structure`, ADR-038), transparency (`/transparency`, only while `SHOW_PUBLIC_FINANCES=true`, ADR-034), contact (`/support`). No fake doors.                                                                                                            |
 | `SectionRule`            | `{ label, action?, as?, tone?, className? }`                             | Small-caps section label over a 2px ink rule, optional right-side action (e.g. a "full →" link). Reach for this over `Card`'s `header` when the content is a bare label, not a form. `tone="teal"` (teal rule and label) marks the homepage registry box.                                                                                                                                                                                                          |
 | `IndexRow`               | `{ rank, name, meta, figure, figureLabel, href }`                        | Numbered directory row: serif № (`brand` at №1), serif name, muted meta, right-aligned serif figure + label; the whole row is one link.                                                                                                                                                                                                                                                                                                                            |
 | `EventRow`               | `{ event: PublicEventItem }`                                             | One event line: muted time, bold title, muted location, cancelled Pill when applicable. Shared by `/events` and the homepage events section — never re-declare it locally.                                                                                                                                                                                                                                                                                         |

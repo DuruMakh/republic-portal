@@ -20,7 +20,7 @@ describe("SiteFooter (ADR-045)", () => {
     render(<SiteFooter copyright="(c) 2026" links={LINKS} />);
     for (const name of ["Terms", "Contact"]) {
       const link = screen.getByRole("link", { name });
-      expect(link).toHaveClass("text-paper", "hover:text-surface", "focus-visible:outline-paper");
+      expect(link).toHaveClass("text-paper", "hover:decoration-2", "focus-visible:outline-paper");
       expect(link).not.toHaveClass("text-ink");
     }
   });

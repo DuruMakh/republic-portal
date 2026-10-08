@@ -60,6 +60,16 @@ export function percentages(votes: readonly number[]): number[] {
   return out;
 }
 
+/**
+ * Which answers lead (ADR-045: leading bars stay red, the rest teal). Decided on raw votes,
+ * never on `percentages()`: largest-remainder rounding turns a 1/1/1 tie into 34/33/33 and
+ * 1001 vs 1000 into 50/50. Every answer tied for the most votes leads; with no votes, none do.
+ */
+export function leadingOptions(votes: readonly number[]): boolean[] {
+  const top = Math.max(0, ...votes);
+  return votes.map((v) => top > 0 && v === top);
+}
+
 const LOCAL_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 /** `<input type="datetime-local">` value (Tbilisi wall time) → ISO UTC instant. */
