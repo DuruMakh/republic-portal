@@ -38,7 +38,7 @@ pattern (`bg-teal/10`, exactly like `bg-ok/10`, `bg-warn/10` and `bg-brand/10` o
 
 | # | Surface | Today | After | Where |
 | - | ------- | ----- | ----- | ----- |
-| 1 | Masthead rule (every page) | One 2px ink rule | 2px ink rule, 2px paper gap, then a 1px teal line | `Masthead`, `MobileBackHeader`, new furniture `TealRule` |
+| 1 | Masthead rule (every page) | One 2px ink rule | 2px ink rule, 2px paper gap, then a 1px teal line | new `masthead-rule` utility in `app/globals.css`, used by `Masthead` and `MobileBackHeader` |
 | 2 | Homepage registry box ("რეესტრი — დღეს") | Ink section rule and label, ink figures | Teal 2px section rule, teal label, teal serif figures; no fill | `SectionRule` gains `tone`; `app/(public)/page.tsx` |
 | 3 | Public footer | Paper, 2px ink top rule, muted text, ink links | Solid teal band, no top rule, paper text and links, links hover to `surface`, **paper focus outline** | `SiteFooter` |
 | 4 | Supporter chip (`registered`) | `bg-surface text-muted-fg` (grey) | `bg-teal/10 text-teal` | `Pill` |
@@ -49,12 +49,14 @@ pattern (`bg-teal/10`, exactly like `bg-ok/10`, `bg-warn/10` and `bg-brand/10` o
 
 Details:
 
-- **1, the teal line.** `TealRule` is a decorative `aria-hidden` span positioned just under the
-  header's 2px bottom border: 3px tall, a 2px paper top border then 1px of teal, so the gap is
-  opaque even while the mobile header is sticky. It needs a positioned parent: the Masthead's
-  desktop `md:static` becomes `md:relative` (no visual change, since relative with no offsets
-  renders the same), and the non-sticky case (styleguide and admin) gains `relative`.
-  `MobileBackHeader` is already `sticky`. One component serves both headers, so nothing is
+- **1, the teal line.** The header's own bottom border carries it. `masthead-rule` sets a 5px
+  bottom border painted by a gradient border image, read from the bottom up: 1px teal, 2px paper,
+  2px ink. It replaces `border-b-2 border-ink` on both headers. The header's DOM, positioning and
+  stickiness are untouched. That matters: three e2e checks pin the header's `position` (sticky on
+  public mobile, static on `/styleguide`, the membership wizard and the done page), and a
+  positioned overlay would have broken them. A box-shadow would also have been hidden by any
+  following sibling that has a background. The gap is painted paper, so it stays opaque while the
+  mobile header is sticky. The header grows by 3px. One utility serves both headers, so nothing is
   copy-pasted.
 - **2, the registry.** `SectionRule` gets `tone?: "ink" | "teal"` (default `ink`, so today's
   output is unchanged for every other caller). The three counters (and the collected-dues row
@@ -110,7 +112,7 @@ Focus outlines on teal buttons sit 2px outside the button on paper, so they keep
 
 | Component | Change |
 | --------- | ------ |
-| `TealRule` (new furniture) | No props. Decorative rule under a header; the parent must be positioned. |
+| `masthead-rule` (new utility) | CSS only: the ink/paper/teal bottom rule for the two site headers. |
 | `SectionRule` | `tone?: "ink" \| "teal"`, default `ink`. |
 | `BallotBar` | `tone` union gains `"teal"` (`bg-teal`). `"ink"` stays supported. |
 | `Card` | `variant` union gains `"callout-teal"`: `border border-teal bg-paper-bright`. |
@@ -122,8 +124,10 @@ Focus outlines on teal buttons sit 2px outside the button on paper, so they keep
 
 TDD per component, each test red first:
 
-- `TealRule`: renders an `aria-hidden` element with `bg-teal`, and is present in both `Masthead`
-  and `MobileBackHeader` output.
+- Tokens and utility: a test reads `app/globals.css` and finds `--color-teal: #235b59`,
+  `--color-teal-dark: #1a4644` and a `masthead-rule` utility that uses the teal and ink tokens.
+- `Masthead` and `MobileBackHeader`: the header carries `masthead-rule` and no longer
+  `border-b-2`. The existing e2e `position` checks stay green unchanged.
 - `SectionRule`: `tone="teal"` gives a teal rule and label; the default stays ink.
 - `BallotBar`: `tone="teal"` fills with `bg-teal` (joins the existing tone table).
 - `Card`: `variant="callout-teal"` has `border-teal`; `callout` keeps `border-ink`.
@@ -139,8 +143,8 @@ No e2e test asserts colours (checked), so the e2e suite is unaffected.
 ## 8. Documentation
 
 - `DESIGN.md`: palette rows for `teal` / `teal-dark`; the red/teal role split; the contrast floors;
-  the `dark` variant; and the component-register entries for every row in §6 (plus `TealRule`
-  under Furniture).
+  the `dark` variant; the materials note on rules (the masthead rule is a border, not a shadow);
+  and the component-register entries for every row in §6.
 - `/styleguide`: palette swatches, the new contrast pairs, a teal `SectionRule`, a `callout-teal`
   card, the teal `BallotBar` tone, the restyled `dark` button row, and the supporter chip. Any new
   demo label is byte-spliced from existing source, never typed.
