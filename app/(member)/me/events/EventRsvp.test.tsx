@@ -16,17 +16,14 @@ describe("EventRsvp", () => {
     refreshMock.mockReset();
   });
 
-  it("shows მოვალ when not RSVPed and submits going=true", async () => {
+  it("submits going=true from მოვალ and going=false from the going state's cancel", async () => {
     rsvpMock.mockResolvedValue({ ok: true });
-    render(<EventRsvp eventId={EVENT_ID} status={null} open />);
+    const { rerender } = render(<EventRsvp eventId={EVENT_ID} status={null} open />);
     fireEvent.click(screen.getByRole("button", { name: "მოვალ" }));
     await waitFor(() => expect(rsvpMock).toHaveBeenCalledWith({ eventId: EVENT_ID, going: true }));
     await waitFor(() => expect(refreshMock).toHaveBeenCalled());
-  });
 
-  it("shows the going state with a cancel toggle", async () => {
-    rsvpMock.mockResolvedValue({ ok: true });
-    render(<EventRsvp eventId={EVENT_ID} status="going" open />);
+    rerender(<EventRsvp eventId={EVENT_ID} status="going" open />);
     expect(screen.getByText("✓ შენ მოდიხარ")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "გაუქმება" }));
     await waitFor(() => expect(rsvpMock).toHaveBeenCalledWith({ eventId: EVENT_ID, going: false }));

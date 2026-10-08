@@ -21,7 +21,6 @@ import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
 import { PageSheet } from "@/components/PageSheet";
 import { PebbleTally } from "@/components/PebbleTally";
-import { PhotoFigure } from "@/components/PhotoFigure";
 import { Pill } from "@/components/Pill";
 import { ReferralCard } from "@/components/ReferralCard";
 import { SectionRule } from "@/components/SectionRule";
@@ -393,16 +392,6 @@ export default function StyleguidePage() {
               </button>
             </div>
           </div>
-        </Card>
-
-        <Card title="ფოტო">
-          <PhotoFigure
-            src="/brand/emblem-roundel-red-notext.png"
-            alt="ქართული რესპუბლიკა"
-            caption="ქართული რესპუბლიკა"
-            width={160}
-            height={160}
-          />
         </Card>
 
         <Card title="გადარიცხვა">

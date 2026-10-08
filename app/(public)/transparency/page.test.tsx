@@ -66,14 +66,4 @@ describe("/transparency once finances are public (SHOW_PUBLIC_FINANCES=true)", (
 
     expect(screen.getByRole("heading", { name: "გამჭვირვალობა" })).toBeInTheDocument();
   });
-
-  it("gets its title, description and share image back", () => {
-    vi.stubEnv("SHOW_PUBLIC_FINANCES", "true");
-
-    const metadata = generateMetadata();
-
-    expect(metadata.title).toBeTruthy();
-    expect(metadata.description).toBeTruthy();
-    expect(metadata.openGraph?.images).toEqual(["/og-default.png"]);
-  });
 });

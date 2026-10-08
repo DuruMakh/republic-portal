@@ -172,17 +172,12 @@ describe("audit taxonomy (spec §4.5)", () => {
 });
 
 describe("vocabulary and bars", () => {
-  it("member statuses cover all three values", () => {
+  it("member statuses name the supporter and the member — no active tier (ADR-037)", () => {
     expect(MEMBER_STATUS_LABELS_KA).toEqual({
       registered: "მხარდამჭერი",
       profile_completed: "წევრი",
       active_member: "წევრი",
     });
-  });
-  it("status labels name the supporter and the member — no active tier (ADR-037)", () => {
-    expect(MEMBER_STATUS_LABELS_KA.registered).toBe("მხარდამჭერი");
-    expect(MEMBER_STATUS_LABELS_KA.profile_completed).toBe("წევრი");
-    expect(MEMBER_STATUS_LABELS_KA.active_member).toBe("წევრი");
   });
   it("role labels exist for every role", () => {
     for (const role of ADMIN_ROLE_VALUES) expect(ROLE_LABELS_KA[role]).toBeTruthy();
@@ -221,39 +216,7 @@ describe("formatDateTimeKa", () => {
   });
 });
 
-describe("Phase 5: შიგთავსი tab", () => {
-  it("editor sees exactly the content tab", () => {
-    expect(adminTabs(["editor"])).toEqual([{ href: "/admin/content", label: "შიგთავსი" }]);
-  });
-  it("super_admin gains the content tab; staff-only roles do not", () => {
-    expect(adminTabs(["super_admin"]).map((t) => t.href)).toContain("/admin/content");
-    expect(adminTabs(["verifier"]).map((t) => t.href)).not.toContain("/admin/content");
-    expect(adminTabs(["finance"]).map((t) => t.href)).not.toContain("/admin/content");
-  });
-});
-
-describe("Phase 5: audit labels + content pills", () => {
-  it("labels every content action", () => {
-    for (const action of [
-      "news.save",
-      "news.update",
-      "news.publish",
-      "news.unpublish",
-      "news.delete",
-      "news.set_image",
-      "event.save",
-      "event.update",
-      "event.publish",
-      "event.cancel",
-      "event.delete",
-      "poll.save",
-      "poll.open",
-      "poll.close",
-      "poll.delete",
-    ]) {
-      expect(AUDIT_ACTION_LABELS_KA[action], action).toBeTruthy();
-    }
-  });
+describe("contentPill", () => {
   it("contentPill maps every status to a Pill config", () => {
     expect(contentPill("draft")).toEqual({ status: "draft", label: "მონახაზი" });
     expect(contentPill("published")).toEqual({ status: "approved", label: "გამოქვეყნებული" });

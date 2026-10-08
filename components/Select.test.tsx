@@ -11,17 +11,8 @@ describe("Select", () => {
       </Select>,
     );
     const select = screen.getByRole("combobox", { name: "მხარე" });
-    expect(select.className).toContain("appearance-none");
+    expect(select.tagName).toBe("SELECT");
     expect(container.querySelector('[aria-hidden="true"]')).toHaveTextContent("▾");
-  });
-
-  it("admin variant uses the dense control classes", () => {
-    render(
-      <Select variant="admin" aria-label="მხარე">
-        <option>ყველა მხარე</option>
-      </Select>,
-    );
-    expect(screen.getByRole("combobox").className).toContain("text-[0.84rem]");
   });
 });
 

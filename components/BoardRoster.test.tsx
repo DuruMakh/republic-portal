@@ -6,7 +6,7 @@ const member = {
   name: "Test Member",
   photo: "/board/test-member.jpg",
   bio: "Short bio.",
-  socials: [],
+  socials: [{ network: "facebook" as const, url: "https://www.facebook.com/t" }],
 };
 
 describe("BoardRoster", () => {
@@ -38,6 +38,11 @@ describe("BoardRoster", () => {
       />,
     );
     expect(screen.getAllByRole("article")).toHaveLength(2);
+    // each card (BoardMemberCard): photo named by the member, h3 name, bio, named social link
+    expect(screen.getByRole("img", { name: "Test Member" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Test Member" })).toBeInTheDocument();
+    expect(screen.getAllByText("Short bio.")).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "Facebook: Test Member" })).toBeInTheDocument();
     expect(screen.queryByText("მალე")).not.toBeInTheDocument();
     expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(0);
   });

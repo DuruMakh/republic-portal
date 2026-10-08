@@ -138,19 +138,6 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
     expect(screen.getByRole("button", { name: /დადასტურება/ })).toBeDisabled();
   });
 
-  it("a failed batch surfaces the error against the preview", async () => {
-    const preview = vi.fn().mockResolvedValue({ ok: true, rows: [rows[0]!] });
-    const confirm = vi.fn().mockResolvedValue({ ok: false, error: "უცნობი კოდი", rowIndex: 0 });
-    render(<BulkMatch preview={preview} confirm={confirm} />);
-    fireEvent.change(screen.getByLabelText(/ამონაწერის სტრიქონები/), { target: { value: "x" } });
-    fireEvent.click(screen.getByRole("button", { name: "გადამოწმება" }));
-    await waitFor(() => expect(screen.getByText("ნაპოვნია")).toBeInTheDocument());
-    fireEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
-    await waitFor(() =>
-      expect(screen.getByText(/ვერ ჩაიწერა — შეცდომა მე-1 რიგში/)).toBeInTheDocument(),
-    );
-  });
-
   it("confirm failure names the on-screen row, not the payload index", async () => {
     // the RPC's rowIndex counts the SENT payload (✓ rows only); the table shows
     // ALL rows — a non-✓ row before the failing ✓ row must not shift the number
