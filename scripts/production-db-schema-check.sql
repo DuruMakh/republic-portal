@@ -160,11 +160,19 @@ begin
     raise exception 'register_google function privileges drifted';
   end if;
 
-  -- Additive rollout: the legacy phone registration RPC remains available to
-  -- authenticated users until the separately reviewed hardening migration.
+  -- Security audit C1: register_google() (owner-run) is the only registration path.
   if has_function_privilege('anon', 'public.register(text,text,text,text)', 'EXECUTE')
-     or not has_function_privilege('authenticated', 'public.register(text,text,text,text)', 'EXECUTE') then
-    raise exception 'legacy register function privileges changed before hardening';
+     or has_function_privilege('authenticated', 'public.register(text,text,text,text)', 'EXECUTE') then
+    raise exception 'legacy register function is still executable by authenticated';
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'phone_verification_challenges'
+       and column_name = 'superseded_at'
+  ) then
+    raise exception 'phone_verification_challenges.superseded_at is missing';
   end if;
 
   if exists (
