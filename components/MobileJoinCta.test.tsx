@@ -46,7 +46,7 @@ describe("MobileJoinCta", () => {
   });
 
   it("renders nothing on the routes that are themselves the call to action", () => {
-    for (const path of ["/join", "/join/terms", "/login"]) {
+    for (const path of ["/join", "/join/terms", "/privacy", "/login"]) {
       pathnameRef.current = path;
       const { container, unmount } = render(<MobileJoinCta />);
       expect(container, path).toBeEmptyDOMElement();

@@ -25,6 +25,9 @@ describe("mobileBackTarget", () => {
     expect(mobileBackTarget("/me/membership")?.href).toBe("/me/profile");
     expect(mobileBackTarget("/me/membership/done")?.href).toBe("/me/profile");
   });
+  it("maps the privacy policy back to registration", () => {
+    expect(mobileBackTarget("/privacy")).toEqual({ href: "/join", label: "კონფიდენციალურობა" });
+  });
   it("returns null for index routes, which are not detail screens", () => {
     expect(mobileBackTarget("/news")).toBeNull();
     expect(mobileBackTarget("/events")).toBeNull();
@@ -46,7 +49,15 @@ describe("mobileChrome", () => {
     }
   });
   it("gives detail and flow routes the back header", () => {
-    for (const p of ["/news/x", "/events/x", "/delegates/x", "/join", "/join/terms", "/login"]) {
+    for (const p of [
+      "/news/x",
+      "/events/x",
+      "/delegates/x",
+      "/join",
+      "/join/terms",
+      "/privacy",
+      "/login",
+    ]) {
       expect(mobileChrome(p), p).toBe("back");
     }
   });
@@ -72,6 +83,7 @@ describe("showsJoinCta", () => {
   it("hides on the routes that are themselves the call to action", () => {
     expect(showsJoinCta("/join")).toBe(false);
     expect(showsJoinCta("/join/terms")).toBe(false);
+    expect(showsJoinCta("/privacy")).toBe(false);
     expect(showsJoinCta("/login")).toBe(false);
   });
 });
