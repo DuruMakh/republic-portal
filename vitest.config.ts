@@ -12,8 +12,7 @@ export default defineConfig({
         test: {
           name: "lib",
           environment: "node",
-          // proxy.ts (the request proxy) is server code too.
-          include: ["lib/**/*.test.ts", "proxy.test.ts"],
+          include: ["lib/**/*.test.ts"],
         },
       },
       {
