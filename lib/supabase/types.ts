@@ -137,6 +137,7 @@ export interface Database {
           verify_attempts: number;
           expires_at: string;
           consumed_at: string | null;
+          superseded_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -149,6 +150,7 @@ export interface Database {
           verify_attempts?: number;
           expires_at: string;
           consumed_at?: string | null;
+          superseded_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -161,6 +163,7 @@ export interface Database {
           verify_attempts?: number;
           expires_at?: string;
           consumed_at?: string | null;
+          superseded_at?: string | null;
           created_at?: string;
         };
         Relationships: [];
