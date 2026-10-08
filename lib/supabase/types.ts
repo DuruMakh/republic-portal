@@ -654,6 +654,11 @@ export interface Database {
         Args: { p_delegate_id: string; p_bio: string | null; p_photo_url: string | null };
         Returns: undefined;
       };
+      admin_update_delegate_name: {
+        Args: { p_delegate_id: string; p_first_name: string; p_last_name: string };
+        Returns: undefined;
+      };
+      is_approved_delegate: { Args: Record<PropertyKey, never>; Returns: boolean };
       admin_record_payment: {
         Args: {
           p_member_id: string;
