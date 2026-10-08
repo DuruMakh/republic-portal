@@ -1,5 +1,4 @@
 import "server-only";
-import sharp from "sharp";
 
 /**
  * Uploaded photos are published as-is from public buckets, so a phone photo would carry its
@@ -32,6 +31,10 @@ export async function sanitizeUploadedImage(
   mime: UploadMime,
 ): Promise<Uint8Array> {
   try {
+    // Loaded on first use, not at import: a native-module load failure then costs only the
+    // upload (refused with ImageSanitizeError), never the rest of the admin actions that
+    // import this file.
+    const { default: sharp } = await import("sharp");
     const image = sharp(Buffer.from(bytes), { failOn: "error", limitInputPixels: MAX_INPUT_PIXELS })
       .rotate()
       .resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside", withoutEnlargement: true });
