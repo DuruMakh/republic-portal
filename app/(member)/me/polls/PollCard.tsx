@@ -47,6 +47,9 @@ export function PollCard({
     });
   }
 
+  // ADR-045: the leading answer (every answer tied for the top share) stays red; the rest teal.
+  const leadPct = Math.max(0, ...options.map((o) => o.pct));
+
   return (
     <div data-testid={`poll-${pollId}`}>
       <Card title={question}>
@@ -82,7 +85,10 @@ export function PollCard({
                   <span className="font-semibold text-muted-fg">{o.pct}%</span>
                 </div>
                 <div className="h-2 bg-surface">
-                  <div className="h-2 bg-brand" style={{ width: `${o.pct}%` }} />
+                  <div
+                    className={`h-2 ${o.pct === leadPct ? "bg-brand" : "bg-teal"}`}
+                    style={{ width: `${o.pct}%` }}
+                  />
                 </div>
               </div>
             ))}

@@ -28,6 +28,12 @@ describe("Pill", () => {
     render(<Pill status="profile_completed" />);
     expect(screen.getByText("წევრი").className).toBe(paidClass);
   });
+  it("shows the supporter chip in teal, in the chip system's own /10 tint (ADR-045)", () => {
+    const { container } = render(<Pill status="registered" />);
+    const chip = container.firstElementChild;
+    expect(chip).toHaveClass("bg-teal/10", "text-teal");
+    expect(chip).not.toHaveClass("bg-surface");
+  });
   it("Pill label override keeps status colors but swaps text (Phase 3)", () => {
     render(<Pill status="profile_completed" label="რეგისტრირებული" />);
     expect(screen.getByText("რეგისტრირებული")).toBeInTheDocument();

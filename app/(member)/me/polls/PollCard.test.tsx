@@ -76,6 +76,43 @@ describe("PollCard", () => {
     expect(screen.getByText("გამოკითხვა დასრულებულია · სულ 5 ხმა")).toBeInTheDocument();
   });
 
+  it("results: the leading answer's bar is brand red, the others teal (ADR-045)", () => {
+    const { container } = render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="results-own"
+        deadlineKa={null}
+        options={[
+          { optionId: OPT_A, label: "Yes", pct: 67, votes: 2, mine: true },
+          { optionId: OPT_B, label: "No", pct: 33, votes: 1, mine: false },
+        ]}
+        total={3}
+      />,
+    );
+    expect(container.querySelector("[style*='width: 67%']")).toHaveClass("bg-brand");
+    expect(container.querySelector("[style*='width: 33%']")).toHaveClass("bg-teal");
+  });
+
+  it("results: a tie colours every leading answer brand red", () => {
+    const { container } = render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="results-closed"
+        deadlineKa={null}
+        options={[
+          { optionId: OPT_A, label: "Yes", pct: 50, votes: 2, mine: false },
+          { optionId: OPT_B, label: "No", pct: 50, votes: 2, mine: false },
+        ]}
+        total={4}
+      />,
+    );
+    const bars = container.querySelectorAll("[style*='width: 50%']");
+    expect(bars).toHaveLength(2);
+    bars.forEach((bar) => expect(bar).toHaveClass("bg-brand"));
+  });
+
   it("surfaces the server error inline and keeps the buttons", async () => {
     voteMock.mockResolvedValue({ ok: false, error: "გამოკითხვა დახურულია." });
     render(

@@ -176,7 +176,7 @@ export default async function AdminOverviewPage() {
                   label={r.name_ka}
                   pct={barPct(r.member_count, maxRegion)}
                   value={formatCountKa(r.member_count)}
-                  tone={i === 0 ? "brand" : "ink"}
+                  tone={i === 0 ? "brand" : "teal"}
                 />
               ))}
               {restRegions.length > 0 ? (
