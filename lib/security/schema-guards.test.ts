@@ -67,15 +67,70 @@ function migrationsInOrder(): Migration[] {
 }
 
 /**
- * Statement splitter that survives function bodies. `$$ ... $$` blocks are
- * blanked before splitting on `;`, because a plpgsql body is full of
- * semicolons that are not statement terminators. Line comments go too, so a
- * commented-out grant can never satisfy a guard.
+ * Removes `--` line comments and (nestable) `/* *\/` block comments, leaving
+ * quoted text alone: '...' strings ('' escapes; E'...' backslash escapes) and
+ * "..." identifiers. Run BEFORE any guard reads SQL, so a commented-out grant,
+ * role check or audit insert can never satisfy a guard, and prose in a comment
+ * ("we update public.news later") can never trip one.
+ */
+function stripSqlComments(sql: string): string {
+  let out = "";
+  let i = 0;
+  while (i < sql.length) {
+    const c = sql[i]!;
+    const next = sql[i + 1];
+    if (c === "-" && next === "-") {
+      while (i < sql.length && sql[i] !== "\n") i++;
+      out += " ";
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      let depth = 0;
+      do {
+        if (sql[i] === "/" && sql[i + 1] === "*") {
+          depth++;
+          i += 2;
+        } else if (sql[i] === "*" && sql[i + 1] === "/") {
+          depth--;
+          i += 2;
+        } else i++;
+      } while (depth > 0 && i < sql.length);
+      out += " ";
+      continue;
+    }
+    if (c === "'" || c === '"') {
+      const backslashEscapes =
+        c === "'" && /[eE]/.test(sql[i - 1] ?? "") && !/\w/.test(sql[i - 2] ?? "");
+      let j = i + 1;
+      while (j < sql.length) {
+        if (backslashEscapes && sql[j] === "\\") j += 2;
+        else if (sql[j] === c && sql[j + 1] === c) j += 2;
+        else if (sql[j] === c) break;
+        else j++;
+      }
+      out += sql.slice(i, j + 1);
+      i = j + 1;
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+/** `$$ ... $$` and tagged `$fn$ ... $fn$` dollar-quoted bodies, tag in group 1, body in group 2. */
+const DOLLAR_BODY = /\$([A-Za-z_][A-Za-z0-9_]*)?\$([\s\S]*?)\$\1\$/g;
+
+/**
+ * Statement splitter that survives function bodies. Dollar-quoted blocks
+ * (plain `$$` or tagged `$fn$`) are blanked before splitting on `;`, because a
+ * plpgsql body is full of semicolons that are not statement terminators.
+ * Comments go first (stripSqlComments), so a commented-out grant can never
+ * satisfy a guard.
  */
 function statements(sql: string): string[] {
-  const withoutBodies = sql.replace(/\$\$[\s\S]*?\$\$/g, " BODY ");
-  const withoutComments = withoutBodies.replace(/--[^\n]*/g, " ");
-  return withoutComments
+  return stripSqlComments(sql)
+    .replace(DOLLAR_BODY, " BODY ")
     .split(";")
     .map((s) => s.replace(/\s+/g, " ").trim())
     .filter((s) => s.length > 0);
@@ -83,7 +138,7 @@ function statements(sql: string): string[] {
 
 interface PrivChange {
   readonly kind: "grant" | "revoke";
-  /** Table/view names the statement names. Empty for function/schema grants. */
+  /** Table/view names the statement names, lowercased. Empty for function/schema grants. */
   readonly objects: string[];
   readonly privileges: Priv[];
   readonly roles: string[];
@@ -111,11 +166,17 @@ function parsePrivChange(stmt: string): PrivChange | null {
     ? [...ALL_PRIVS]
     : ALL_PRIVS.filter((p) => new RegExp(`\\b${p}\\b`, "i").test(privPart));
 
+  // Unquoted identifiers fold to lower case in PostgreSQL: `ON Admin_X` IS admin_x.
   const objects = objectPart
     .replace(/\btable\b/gi, "")
     .split(",")
-    .map((o) => o.trim().replace(/^public\./i, ""))
-    .filter((o) => o.length > 0 && /^[a-z_][a-z0-9_]*$/i.test(o));
+    .map((o) =>
+      o
+        .trim()
+        .replace(/^public\./i, "")
+        .toLowerCase(),
+    )
+    .filter((o) => o.length > 0 && /^[a-z_][a-z0-9_]*$/.test(o));
 
   const roles = rolePart
     .split(",")
@@ -131,22 +192,28 @@ function parsePrivChange(stmt: string): PrivChange | null {
   };
 }
 
+const IDENT = "(?:public\\.)?([a-z_][a-z0-9_]*)";
+
 /**
- * A view's lifecycle event, if `stmt` is one. Privileges belong to the OBJECT,
- * so they are only as old as the view itself:
+ * A relation lifecycle event, if `stmt` is one. Privileges belong to the
+ * OBJECT, so they are only as old as the object itself:
  * - `create view v` makes a new object, born with Supabase's default ALL;
  * - `create or replace view v` on an EXISTING view keeps its privileges
  *   (PostgreSQL replaces the query, not the ACL) — on a missing one it is a
  *   plain create;
  * - `drop view v` (any list, `if exists`, `cascade`) destroys the object and
- *   its privileges with it.
+ *   its privileges with it;
+ * - `alter view|table a rename to b` moves the object — and its privileges —
+ *   to the new name; the old name no longer exists.
  * A revoke that ran before a drop/recreate therefore protects nothing.
  */
 type ViewEvent =
-  { kind: "create"; view: string; orReplace: boolean } | { kind: "drop"; views: string[] };
+  | { kind: "create"; view: string; orReplace: boolean }
+  | { kind: "drop"; views: string[] }
+  | { kind: "rename"; from: string; to: string };
 
 function parseViewEvent(stmt: string): ViewEvent | null {
-  const create = /^create\s+(or\s+replace\s+)?view\s+(?:public\.)?([a-z_][a-z0-9_]*)\b/i.exec(stmt);
+  const create = new RegExp(`^create\\s+(or\\s+replace\\s+)?view\\s+${IDENT}\\b`, "i").exec(stmt);
   if (create) {
     return { kind: "create", view: create[2]!.toLowerCase(), orReplace: Boolean(create[1]) };
   }
@@ -165,10 +232,17 @@ function parseViewEvent(stmt: string): ViewEvent | null {
       .filter((v) => /^[a-z_][a-z0-9_]*$/.test(v));
     return { kind: "drop", views };
   }
+  const rename = new RegExp(
+    `^alter\\s+(?:view|table)\\s+(?:if\\s+exists\\s+)?${IDENT}\\s+rename\\s+to\\s+${IDENT}$`,
+    "i",
+  ).exec(stmt);
+  if (rename) {
+    return { kind: "rename", from: rename[1]!.toLowerCase(), to: rename[2]!.toLowerCase() };
+  }
   return null;
 }
 
-/** Every view that exists after replaying `migrations` (created and not dropped). */
+/** Every view that exists after replaying `migrations` (created, not dropped, under its final name). */
 function viewsCreatedBy(migrations: readonly Migration[]): string[] {
   const live = new Set<string>();
   for (const { sql } of migrations) {
@@ -176,22 +250,37 @@ function viewsCreatedBy(migrations: readonly Migration[]): string[] {
       const event = parseViewEvent(stmt);
       if (event?.kind === "create") live.add(event.view);
       else if (event?.kind === "drop") for (const v of event.views) live.delete(v);
+      else if (event?.kind === "rename" && live.delete(event.from)) live.add(event.to);
     }
   }
   return [...live].sort();
 }
 
+interface ObjectAcl {
+  held: Record<ClientRole, Set<Priv>>;
+  columns: Record<ClientRole, Set<Priv>>;
+  exists: boolean;
+}
+
 /**
- * Replays every grant/revoke in migration order and returns the table-wide
- * privileges each client role ends up holding on `object`.
- *
  * Starting state is ALL for anon and authenticated: this is a Supabase
  * project, whose default privileges grant the client roles everything on
  * anything created in `public` (confirmed live in Pass 2/Pass 4 — see
  * .superpowers/sdd/progress.md CF1, and the standing comment at
  * 20260719150000_community.sql:248). Assuming an empty starting state would
- * make every guard here pass vacuously. A view is reset to that state every
- * time it is (re)born — see parseViewEvent.
+ * make every guard here pass vacuously.
+ */
+const bornAcl = (exists: boolean): ObjectAcl => ({
+  held: { anon: new Set(ALL_PRIVS), authenticated: new Set(ALL_PRIVS) },
+  columns: { anon: new Set(), authenticated: new Set() },
+  exists,
+});
+
+/**
+ * Replays every grant/revoke and every view lifecycle event (parseViewEvent)
+ * in migration order and returns the table-wide privileges each client role
+ * ends up holding on `object`. A view is reset to the born state every time it
+ * is (re)created, and carries its privileges across a rename.
  *
  * Column-scoped grants are recorded separately: `grant select (a, b) on t`
  * confers no table-wide privilege, and treating it as one would hide exactly
@@ -204,54 +293,56 @@ function effectivePrivileges(
   object: string,
   migrations: readonly Migration[] = migrationsInOrder(),
 ): Record<ClientRole, Set<Priv>> {
-  const held: Record<ClientRole, Set<Priv>> = {
-    anon: new Set(ALL_PRIVS),
-    authenticated: new Set(ALL_PRIVS),
+  const acls = new Map<string, ObjectAcl>();
+  const acl = (name: string): ObjectAcl => {
+    let a = acls.get(name);
+    if (!a) acls.set(name, (a = bornAcl(false)));
+    return a;
   };
-  const columns: Record<ClientRole, Set<Priv>> = { anon: new Set(), authenticated: new Set() };
-  let viewExists = false;
 
   for (const { sql } of migrations) {
     for (const stmt of statements(sql)) {
       const event = parseViewEvent(stmt);
-      if (event?.kind === "create" && event.view === object) {
-        if (!event.orReplace || !viewExists) {
-          for (const role of CLIENT_ROLES) {
-            held[role] = new Set(ALL_PRIVS);
-            columns[role] = new Set();
-          }
-        }
-        viewExists = true;
+      if (event?.kind === "create") {
+        if (!event.orReplace || !acl(event.view).exists) acls.set(event.view, bornAcl(true));
+        acl(event.view).exists = true;
         continue;
       }
-      if (event?.kind === "drop" && event.views.includes(object)) {
-        viewExists = false;
+      if (event?.kind === "drop") {
+        for (const v of event.views) acls.set(v, bornAcl(false));
+        continue;
+      }
+      if (event?.kind === "rename") {
+        acls.set(event.to, { ...acl(event.from), exists: true });
+        acls.set(event.from, bornAcl(false));
         continue;
       }
       const change = parsePrivChange(stmt);
       if (!change) continue;
-      if (!change.objects.includes(object)) continue;
-      for (const role of CLIENT_ROLES) {
-        // `public` is every role, so a grant to public reaches anon too. A
-        // REVOKE from public does NOT remove a role's own explicit grant,
-        // which is exactly the trap RF6 recorded — so revokes only count
-        // when the role is named.
-        const grantHits = change.roles.includes(role) || change.roles.includes("public");
-        const revokeHits = change.roles.includes(role);
-        if (change.kind === "grant" && grantHits) {
-          for (const p of change.privileges) {
-            (change.columnScoped ? columns[role] : held[role]).add(p);
-          }
-        } else if (change.kind === "revoke" && revokeHits) {
-          for (const p of change.privileges) {
-            held[role].delete(p);
-            if (!change.columnScoped) columns[role].delete(p);
+      for (const name of change.objects) {
+        const { held, columns } = acl(name);
+        for (const role of CLIENT_ROLES) {
+          // `public` is every role, so a grant to public reaches anon too. A
+          // REVOKE from public does NOT remove a role's own explicit grant,
+          // which is exactly the trap RF6 recorded — so revokes only count
+          // when the role is named.
+          const grantHits = change.roles.includes(role) || change.roles.includes("public");
+          const revokeHits = change.roles.includes(role);
+          if (change.kind === "grant" && grantHits) {
+            for (const p of change.privileges) {
+              (change.columnScoped ? columns[role] : held[role]).add(p);
+            }
+          } else if (change.kind === "revoke" && revokeHits) {
+            for (const p of change.privileges) {
+              held[role].delete(p);
+              if (!change.columnScoped) columns[role].delete(p);
+            }
           }
         }
       }
     }
   }
-  return held;
+  return acl(object.toLowerCase()).held;
 }
 
 /** Column-scoped privileges only (the second half of effectivePrivileges). */
@@ -273,15 +364,23 @@ function effectiveColumnPrivileges(object: string): Record<ClientRole, Set<Priv>
   return columns;
 }
 
-/** The last definition of a function wins — `create or replace` supersedes. */
-function lastFunctionBody(name: string): string {
+/**
+ * The last definition of a function wins — `create or replace` supersedes.
+ * Comments are stripped first and tagged dollar quotes (`$fn$ ... $fn$`) are
+ * read as well as `$$`, so a later redefinition can neither hide behind an
+ * unusual quote tag nor keep a commented-out check "present".
+ */
+function lastFunctionBody(
+  name: string,
+  migrations: readonly Migration[] = migrationsInOrder(),
+): string {
   let body = "";
-  for (const { sql } of migrationsInOrder()) {
+  for (const { sql } of migrations) {
     const re = new RegExp(
-      `create\\s+(?:or\\s+replace\\s+)?function\\s+(?:public\\.)?${name}\\s*\\(([\\s\\S]*?)\\$\\$([\\s\\S]*?)\\$\\$`,
+      `create\\s+(?:or\\s+replace\\s+)?function\\s+(?:public\\.)?${name}\\s*\\(([\\s\\S]*?)\\$([A-Za-z_][A-Za-z0-9_]*)?\\$([\\s\\S]*?)\\$\\2\\$`,
       "gi",
     );
-    for (const m of sql.matchAll(re)) body = m[2] ?? body;
+    for (const m of stripSqlComments(sql).matchAll(re)) body = m[3] ?? body;
   }
   return body;
 }
@@ -396,6 +495,42 @@ describe("F5 / LB-5 — no view in schema public is writable by a client role", 
       expect(viewsCreatedBy(plus("create view scratch_view as select 1;"))).toContain(
         "scratch_view",
       );
+    });
+
+    it("follows a renamed view: covered under its new name, privileges carried over", () => {
+      const renamed = plus(
+        "alter view admin_support_messages rename to admin_inbox;\n" +
+          "grant update on admin_inbox to authenticated;",
+      );
+      expect(viewsCreatedBy(renamed)).toContain("admin_inbox");
+      expect(viewsCreatedBy(renamed)).not.toContain("admin_support_messages");
+      expect(writableBy(effectivePrivileges("admin_inbox", renamed))).toEqual([
+        "authenticated:update",
+      ]);
+      const quiet = plus("alter view admin_support_messages rename to admin_inbox;");
+      expect(writableBy(effectivePrivileges("admin_inbox", quiet))).toEqual([]);
+    });
+
+    it("folds identifier case: `GRANT INSERT ON Admin_Support_Messages TO anon` is caught", () => {
+      const shouted = plus("GRANT INSERT ON public.Admin_Support_Messages TO anon;");
+      expect(writableBy(effectivePrivileges("admin_support_messages", shouted))).toEqual([
+        "anon:insert",
+      ]);
+    });
+
+    it("ignores a commented-out grant, and text inside a tagged $fn$ body", () => {
+      const inert = plus(
+        "-- grant insert on admin_support_messages to anon;\n" +
+          "/* grant update on admin_support_messages to anon; */\n" +
+          "create function scratch_fn() returns void language sql as $fn$\n" +
+          "  select 1; grant delete on admin_support_messages to anon;\n$fn$;",
+      );
+      expect(writableBy(effectivePrivileges("admin_support_messages", inert))).toEqual([]);
+      // ...while a real grant right after a comment line is still a grant
+      const afterNote = plus("-- harmless note\ngrant insert on admin_support_messages to anon;");
+      expect(writableBy(effectivePrivileges("admin_support_messages", afterNote))).toEqual([
+        "anon:insert",
+      ]);
     });
   });
 });
@@ -593,33 +728,49 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
     /if\s+not\s+public\.has_(?:any_)?admin_role\s*\(([^)]*)\)\s+then\s+raise\s+exception\s+'missing_role'/i;
   const FIRST_WRITE =
     /\binsert\s+into\s+public\.|\bupdate\s+public\.|\bdelete\s+from\s+public\.|\bperform\s+public\.recompute/i;
+  const UPDATE_HINT =
+    "If this RPC's shape changed on purpose, update ADMIN_RPCS / these checks in " +
+    "lib/security/schema-guards.test.ts; otherwise the database lost an authorization guard.";
+
+  /** Every ADR-014 rule `body` breaks; [] = compliant. Bodies come comment-stripped. */
+  function adr014Violations(
+    name: string,
+    body: string,
+    { roles, audit }: { roles: string[]; audit: string },
+  ): string[] {
+    if (body === "") return [`${name} is not defined by any migration`];
+    const problems: string[] = [];
+    if (!/v_uid\s+uuid\s*:=\s*auth\.uid\(\)/i.test(body)) problems.push("v_uid is not auth.uid()");
+    const session = SESSION_CHECK.exec(body);
+    const role = ROLE_CHECK.exec(body);
+    const write = FIRST_WRITE.exec(body);
+    if (!session) problems.push("no not_authenticated check");
+    if (!role) problems.push("no missing_role check");
+    if (!write) problems.push("writes nothing — not even its audit row");
+    if (role) {
+      const checked = [...role[1]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+      if (checked.join() !== [...roles].sort().join()) {
+        problems.push(`checks roles [${checked.join(", ")}], expected [${roles.join(", ")}]`);
+      }
+    }
+    if (session && role && session.index > role.index) problems.push("role checked before session");
+    if (role && write && write.index < role.index)
+      problems.push("changes data before the role check");
+    if (!/insert\s+into\s+public\.audit_log\b/i.test(body)) problems.push("no audit_log insert");
+    if (!body.includes(`'${audit}'`)) problems.push(`no '${audit}' audit action`);
+    return problems;
+  }
 
   it.each(Object.entries(ADMIN_RPCS))(
     "%s: session check, then the role check, before any write; audited",
-    (name, { roles, audit }) => {
-      const body = lastFunctionBody(name);
-      expect(body, `${name} is not defined by any migration`).not.toBe("");
-      expect(body).toMatch(/v_uid\s+uuid\s*:=\s*auth\.uid\(\)/i);
-      const session = SESSION_CHECK.exec(body);
-      const role = ROLE_CHECK.exec(body);
-      const write = FIRST_WRITE.exec(body);
-      expect(session, `${name} has no not_authenticated check`).not.toBeNull();
-      expect(role, `${name} has no missing_role check`).not.toBeNull();
-      expect(write, `${name} writes nothing — not even its audit row`).not.toBeNull();
-      const checkedRoles = [...role![1]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
-      expect(checkedRoles).toEqual([...roles].sort());
-      expect(session!.index).toBeLessThan(role!.index);
-      expect(role!.index, `${name} changes data before checking the role`).toBeLessThan(
-        write!.index,
-      );
-      expect(body).toMatch(/insert\s+into\s+public\.audit_log\b/i);
-      expect(body).toContain(`'${audit}'`);
+    (name, spec) => {
+      expect(adr014Violations(name, lastFunctionBody(name), spec), UPDATE_HINT).toEqual([]);
     },
   );
 
   it("admin_revoke_role keeps the serialized last-super_admin guard ahead of the delete", () => {
     const body = lastFunctionBody("admin_revoke_role");
-    expect(body).toMatch(
+    expect(body, UPDATE_HINT).toMatch(
       /pg_advisory_xact_lock\([\s\S]*?count\(\*\)[\s\S]*?role\s*=\s*'super_admin'[\s\S]*?=\s*1\s+then\s+raise\s+exception\s+'last_super_admin'[\s\S]*?delete\s+from\s+public\.admin_roles/i,
     );
   });
@@ -630,13 +781,13 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
       /if\s+coalesce\(p_include_ids,\s*false\)\s+and\s+not\s+public\.has_admin_role\('super_admin'\)\s+then\s+raise\s+exception\s+'missing_role'/i.exec(
         body,
       );
-    expect(gate, "the super_admin-only ID gate is gone").not.toBeNull();
-    expect(gate!.index).toBeLessThan(body.indexOf("'personalId'"));
+    expect(gate, `the super_admin-only ID gate is gone. ${UPDATE_HINT}`).not.toBeNull();
+    expect(gate!.index, UPDATE_HINT).toBeLessThan(body.indexOf("'personalId'"));
   });
 
-  it("covers every admin RPC the app calls", () => {
-    // Guards the table: an action that starts calling a new admin_* function
-    // must bring that function under the checks above.
+  it("covers every admin RPC the app (or lib/) calls", () => {
+    // Guards the table: code that starts calling a new admin_* function must
+    // bring that function under the checks above.
     const defined = new Set(
       migrationsInOrder().flatMap(({ sql }) =>
         [
@@ -644,16 +795,77 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
         ].map((m) => m[1]!.toLowerCase()),
       ),
     );
-    const appDir = join(REPO_ROOT, "app");
     const called = new Set<string>();
-    for (const rel of readdirSync(appDir, { recursive: true }) as string[]) {
-      if (!/\.(ts|tsx)$/.test(rel) || /\.test\.(ts|tsx)$/.test(rel)) continue;
-      const src = readFileSync(join(appDir, rel), "utf8");
-      for (const m of src.matchAll(/"(admin_[a-z_]+)"/g)) {
-        if (defined.has(m[1]!)) called.add(m[1]!);
+    for (const dir of ["app", "lib"]) {
+      const root = join(REPO_ROOT, dir);
+      for (const rel of readdirSync(root, { recursive: true }) as string[]) {
+        if (!/\.(ts|tsx)$/.test(rel) || /\.test\.(ts|tsx)$/.test(rel)) continue;
+        const src = readFileSync(join(root, rel), "utf8");
+        for (const m of src.matchAll(/["'`](admin_[a-z_]+)["'`]/g)) {
+          if (defined.has(m[1]!)) called.add(m[1]!);
+        }
       }
     }
     expect(called.size).toBeGreaterThan(20);
-    expect([...called].filter((n) => !(n in ADMIN_RPCS)).sort()).toEqual([]);
+    expect(
+      [...called].filter((n) => !(n in ADMIN_RPCS)).sort(),
+      "add these to ADMIN_RPCS with their roles and audit action",
+    ).toEqual([]);
+  });
+
+  describe("guarding the guard — in-memory bodies, real migrations untouched", () => {
+    const REVOKE = ADMIN_RPCS.admin_revoke_role!;
+    const real = lastFunctionBody("admin_revoke_role");
+    const roleLine =
+      /if\s+not\s+public\.has_admin_role\('super_admin'\)[^\n]*/i.exec(real)?.[0] ?? "";
+    const sessionLine = /if\s+v_uid\s+is\s+null[^\n]*/i.exec(real)?.[0] ?? "";
+    /** lastFunctionBody over the real migrations plus one scratch redefinition. */
+    const redefined = (sql: string) =>
+      lastFunctionBody("admin_revoke_role", [
+        ...migrationsInOrder(),
+        { file: "99999999999999_scratch.sql", sql },
+      ]);
+    const wrap = (body: string, tag = "") =>
+      `create or replace function admin_revoke_role(p_user_id uuid, p_role text) returns void\n` +
+      `language plpgsql volatile security definer set search_path = '' as $${tag}$${body}$${tag}$;`;
+
+    it("starts from a compliant real body", () => {
+      expect(roleLine).not.toBe("");
+      expect(sessionLine).not.toBe("");
+      expect(adr014Violations("admin_revoke_role", real, REVOKE)).toEqual([]);
+    });
+
+    it.each([
+      {
+        label: "a `--` commented-out role check",
+        edit: (b: string) => b.replace(roleLine, `-- ${roleLine}`),
+      },
+      {
+        label: "a /* */ commented-out role check",
+        edit: (b: string) => b.replace(roleLine, `/* ${roleLine} */`),
+      },
+      {
+        label: "a `--` commented-out session check",
+        edit: (b: string) => b.replace(sessionLine, `-- ${sessionLine}`),
+      },
+    ])("fails a redefinition with $label", ({ edit }) => {
+      const body = redefined(wrap(edit(real)));
+      expect(adr014Violations("admin_revoke_role", body, REVOKE)).not.toEqual([]);
+    });
+
+    it("reads a later redefinition quoted with a tagged $fn$ dollar quote", () => {
+      const body = redefined(wrap(real.replace(roleLine, ""), "fn"));
+      expect(body).not.toContain("has_admin_role('super_admin')");
+      expect(adr014Violations("admin_revoke_role", body, REVOKE)).toContain(
+        "no missing_role check",
+      );
+    });
+
+    it("is not tripped by a comment that mentions a write before the role check", () => {
+      const body = redefined(
+        wrap(real.replace(sessionLine, `-- we update public.admin_roles later\n  ${sessionLine}`)),
+      );
+      expect(adr014Violations("admin_revoke_role", body, REVOKE)).toEqual([]);
+    });
   });
 });
