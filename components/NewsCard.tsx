@@ -25,11 +25,10 @@ export function NewsCard({
     return (
       <Link href={href} className="group flex gap-4 border-b border-hairline pb-4 no-underline">
         {imageUrl ? (
-          // Raw <img>, not PhotoFigure/next-Image: this is Supabase Storage-hosted
+          // Raw <img>, not next/image: this is Supabase Storage-hosted
           // and not in next.config's image host allowlist (delegate-photo
           // precedent — app/(admin)/admin/verify/[id]/DelegateProfileForm.tsx);
-          // next/image would throw on an unconfigured remote host. The border
-          // mirrors PhotoFigure's own dress without routing through next/image.
+          // next/image would throw on an unconfigured remote host.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
@@ -59,7 +58,7 @@ export function NewsCard({
     >
       {imageUrl ? (
         // Same raw-<img> rationale as the row thumb (Supabase host not in the
-        // next/image allowlist); PhotoFigure's border dress, bounded by ratio.
+        // next/image allowlist); hairline border, bounded by ratio.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={imageUrl}

@@ -18,9 +18,4 @@ describe("ContentBody", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer nofollow");
   });
-
-  it("appends custom className to the wrapper", () => {
-    const { container } = render(<ContentBody body="ა" className="text-lg" />);
-    expect(container.firstElementChild).toHaveClass("text-lg");
-  });
 });

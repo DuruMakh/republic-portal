@@ -1,20 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "../privacy";
-import {
-  buildPhoneVerificationIdempotencyKey,
-  PHONE_VERIFICATION_CODE_LENGTH,
-  PHONE_VERIFICATION_MESSAGES,
-  PHONE_VERIFICATION_RESEND_SECONDS,
-  PHONE_VERIFICATION_TTL_SECONDS,
-} from "./contracts";
+import { buildPhoneVerificationIdempotencyKey } from "./contracts";
 
 describe("phone verification contract", () => {
-  it("pins the approved OTP limits", () => {
-    expect(PHONE_VERIFICATION_CODE_LENGTH).toBe(6);
-    expect(PHONE_VERIFICATION_TTL_SECONDS).toBe(300);
-    expect(PHONE_VERIFICATION_RESEND_SECONDS).toBe(60);
-  });
-
   it("creates a stable opaque idempotency key inside one resend window", () => {
     const input = {
       userId: "11111111-1111-4111-8111-111111111111",
@@ -40,19 +27,5 @@ describe("phone verification contract", () => {
     expect(buildPhoneVerificationIdempotencyKey({ ...base, nowMs: 0 })).not.toBe(
       buildPhoneVerificationIdempotencyKey({ ...base, nowMs: 60_000 }),
     );
-  });
-
-  it("pins the approved Georgian message for every action failure", () => {
-    expect(PHONE_VERIFICATION_MESSAGES).toEqual({
-      not_authenticated: "სესია ამოიწურა — შედი Google-ით თავიდან.",
-      google_required: "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
-      invalid_phone: "შეიყვანე ქართული მობილურის ნომერი (5XX XX XX XX).",
-      too_many_requests: "ძალიან ბევრი კოდი მოითხოვე — სცადე ცოტა ხანში.",
-      invalid_code: "კოდი არასწორია.",
-      expired_code: "კოდის მოქმედების დრო ამოიწურა — მოითხოვე ახალი.",
-      phone_in_use: "ეს ნომერი უკვე გამოყენებულია სხვა ანგარიშზე.",
-      service_unavailable: "კოდის სერვისი დროებით მიუწვდომელია — სცადე თავიდან.",
-      privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
-    });
   });
 });

@@ -7,6 +7,7 @@ import { ReferralCard } from "@/components/ReferralCard";
 import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
+import { showEvents } from "@/lib/events-switch";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -31,7 +32,11 @@ export default async function DelegateDashboardPage() {
   // no RPC demotes an approved row — the old pending/rejected branches below were
   // unreachable dead weight and were removed with the R2 gate move.
 
-  const { data: teamRsvpsRaw, error: teamRsvpsError } = await supabase.rpc("delegate_team_rsvps");
+  // Events hidden (the default, ADR-042): no team-RSVP card, so no read for it either.
+  const eventsShown = showEvents();
+  const { data: teamRsvpsRaw, error: teamRsvpsError } = eventsShown
+    ? await supabase.rpc("delegate_team_rsvps")
+    : { data: null, error: null };
   // A failure here must stay scoped to the team-RSVP card — render a degraded
   // card in its slot below instead of throwing, so it can never take down the
   // whole delegate panel (unlike delegate_panel's failure above, which must).
@@ -77,13 +82,24 @@ export default async function DelegateDashboardPage() {
 
       <div className="flex flex-col gap-6">
         {panel.referralCode != null ? (
-          <ReferralCard code={panel.referralCode} count={panel.referralCount ?? 0} />
+          <ReferralCard
+            code={panel.referralCode}
+            supporters={panel.referralSupporters ?? 0}
+            members={panel.referralMembers ?? 0}
+          />
         ) : null}
         {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
-            team, the same figure the ranking counts — is the headline. */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard value={panel.totalCount} label="წევრი" sub="ლიმიტის გარეშე" accent="brand" />
-          <StatCard value={panel.registeredCount} label="მხარდამჭერი" />
+            team, the same figure the ranking counts — is the headline. „გუნდის წევრი“
+            keeps it apart from the referral card's წევრი row, which counts the link's
+            sign-ups instead (ADR-039); the card's supporter row replaced the old
+            delegate-link-only supporter box. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard
+            value={panel.totalCount}
+            label="გუნდის წევრი"
+            sub="ლიმიტის გარეშე"
+            accent="brand"
+          />
           <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
         </div>
         <Card>
@@ -99,7 +115,7 @@ export default async function DelegateDashboardPage() {
             </ButtonLink>
           </div>
         </Card>
-        {teamRsvpsError ? (
+        {!eventsShown ? null : teamRsvpsError ? (
           <Card title="გუნდის RSVP">
             <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
           </Card>

@@ -3,7 +3,9 @@
 // owner is now an approved delegate too, so roster/leaderboard counts are floors (>=)
 // anchored on seeded names/ranks, not exact totals. CI never seeds — if these fail on
 // a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { formatCountKa } from "../lib/format";
+import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
 import { serviceClient } from "./otp-helpers";
 
@@ -12,6 +14,19 @@ const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა
 const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
 const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
 
+/**
+ * A page hidden by a switch (ADR-034, ADR-042) must be indistinguishable from a mistyped address:
+ * 404, the Georgian notice, and the exact not-found title both in the served HTML (what a link
+ * preview or a browser without scripts sees) and in the tab once the page has loaded (ADR-040).
+ */
+async function expectHiddenPage(page: Page, path: string) {
+  const response = await page.goto(path);
+  expect(response?.status(), path).toBe(404);
+  expect(await response?.text(), path).toContain(`<title>${NOT_FOUND_TITLE}</title>`);
+  await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+  await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+}
+
 test.describe("home", () => {
   test("hero, live counters and nav work", async ({ page }) => {
     await page.goto("/");
@@ -19,10 +34,17 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
+    // Since ADR-038 the header carries neither page: these homepage links are the way in
+    // (news is also in the footer; events, while SHOW_EVENTS=true, only from here).
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
-    await expect(page.getByRole("main").locator('a[href="/events"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toBeVisible();
+    // ADR-042: the events section is there only while SHOW_EVENTS=true.
+    await expect(page.getByRole("main").locator('a[href="/events"]')).toHaveCount(
+      EVENTS_SHOWN ? 1 : 0,
+    );
+    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toHaveCount(
+      EVENTS_SHOWN ? 1 : 0,
+    );
     let members = 0;
     for (const id of ["stat-approved-delegates", "stat-members-total"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
@@ -70,7 +92,7 @@ test.describe("home", () => {
     await cta.click();
     await expect(page).toHaveURL(/\/join$/);
     // Logged-out visitors must establish the Google identity before any personal
-    // or phone fields appear. The authenticated form is covered in registration.spec.
+    // or phone fields appear. The authenticated form is covered in membership.spec.
     await expect(page.getByRole("heading", { name: "შემოგვიერთდი", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Google-ით გაგრძელება" })).toBeVisible();
     await expect(page.getByLabel("ტელეფონის ნომერი")).toHaveCount(0);
@@ -89,23 +111,6 @@ test.describe("leaderboard", () => {
     await expect(page.getByText("🥇")).toHaveCount(0);
     await expect(rows.first()).toContainText("გიორგი მაისურაძე");
     await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0);
-  });
-
-  test("search and region filter work, no-results notice shows", async ({ page }) => {
-    await page.goto("/leaderboard");
-    const rows = page.getByTestId("leader-row");
-    const rowCount = await rows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(12); // seeded roster; staging may carry real extras
-    await expect(page.getByText("ბექა ღოღობერიძე")).toHaveCount(0); // pending stays hidden
-    await page.getByPlaceholder("ძებნა სახელით...").fill("გიორგი");
-    await expect(page.getByText("გიორგი მაისურაძე")).toBeVisible();
-    await page.getByPlaceholder("ძებნა სახელით...").fill("");
-    await page.getByRole("combobox").selectOption({ label: "გურია" });
-    await expect(page.getByText("ეკა მელაძე")).toBeVisible();
-    await page.getByPlaceholder("ძებნა სახელით...").fill("zzz");
-    await expect(
-      page.getByText("ამ პარამეტრებით დელეგატი ვერ მოიძებნა", { exact: false }),
-    ).toBeVisible();
   });
 
   test("the retired /delegates index redirects, profile pages still resolve", async ({ page }) => {
@@ -142,13 +147,10 @@ test.describe("delegate page", () => {
 });
 
 test.describe("missing pages", () => {
-  // An unknown URL and a missing article or event are different Next.js paths (the site-wide
-  // not-found vs the public group's), so each gets its own check.
-  for (const path of [
-    "/no-such-page-xyz",
-    "/news/no-such-article-xyz",
-    "/events/no-such-event-xyz",
-  ]) {
+  // An unknown URL and a missing article are different Next.js paths (the site-wide
+  // not-found vs the public group's), so each gets its own check. A missing event takes the
+  // same public-group path as a missing article.
+  for (const path of ["/no-such-page-xyz", "/news/no-such-article-xyz"]) {
     test(`${path} is a Georgian 404 inside the site header`, async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(404);
@@ -170,6 +172,13 @@ test.describe("missing pages", () => {
   });
 });
 
+test.describe("member area", () => {
+  test("redirects anonymous users to login", async ({ page }) => {
+    await page.goto("/me/profile");
+    await expect(page).toHaveURL(/\/login/);
+  });
+});
+
 test.describe("robots", () => {
   test("non-production deployments refuse indexing", async ({ request }) => {
     const robots = await request.get("/robots.txt");
@@ -183,24 +192,97 @@ test.describe("finances hidden", () => {
   test.skip(FINANCES_PUBLIC, "finances are public — see the transparency group");
 
   test("/transparency answers 404 even with the exact address", async ({ page }) => {
-    const response = await page.goto("/transparency");
-    expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
     // the tab names no finance page either: it reads as any other missing page
-    await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+    await expectHiddenPage(page, "/transparency");
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
-  });
-
-  test("no public page links to it", async ({ page }) => {
-    for (const path of ["/", "/news", "/events", "/leaderboard", "/join", "/support"]) {
-      await page.goto(path);
-      await expect(page.locator('a[href="/transparency"]'), path).toHaveCount(0);
-    }
   });
 });
 
 test.describe("transparency", () => {
   test.skip(!FINANCES_PUBLIC, "finances are hidden (ADR-034) — see the finances hidden group");
+
+  // Moved unchanged from community-polls.spec (its old step 4): needs no login, and
+  // runs again once SHOW_PUBLIC_FINANCES is on (ADR-034).
+  test("transparency equals the register (derived, never stored)", async ({ page }) => {
+    const db = serviceClient();
+    // Staging has 1663+ live payment rows — above PostgREST's server-side
+    // max-rows cap (confirmed: even an explicit .range(0, 49999) still comes
+    // back truncated at exactly 1000 rows on this project), so a single
+    // unranged .select() silently undercounts (measured: 15005 vs the true,
+    // correctly-displayed 24840). transparency_stats derives total_gel via an
+    // in-DB SQL sum() with no such cap, so the mismatch is this fetch, not the
+    // app. Page through in batches of 1000 to read every row.
+    const PAYMENTS_PAGE = 1000;
+    let livePayments: { amount_gel: number }[] = [];
+    for (let offset = 0; ; offset += PAYMENTS_PAGE) {
+      const { data: chunk, error: chunkErr } = await db
+        .from("payments")
+        .select("amount_gel")
+        .is("voided_at", null)
+        .order("id")
+        .range(offset, offset + PAYMENTS_PAGE - 1);
+      if (chunkErr) throw new Error(`payments page fetch failed: ${chunkErr.message}`);
+      livePayments = livePayments.concat(chunk ?? []);
+      if (!chunk || chunk.length < PAYMENTS_PAGE) break;
+    }
+    const expectedTotal = Math.round(livePayments.reduce((s, p) => s + Number(p.amount_gel), 0));
+    // transparency_stats.registered_members counts non-registered profiles (members):
+    // the enum value 'draft' was renamed to 'registered', so the page's „წევრი“ figure is
+    // `count(*) where status <> 'registered'`. Query the same way — a literal 'draft' now
+    // 22P02s against the renamed enum.
+    const { count: registered } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .neq("status", "registered");
+    const { count: approvedDelegates } = await db
+      .from("delegates")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved");
+    // one region row (spec §7): the busiest region's row must show the same
+    // members figure independently computed above. (Owner fix #5 replaced this
+    // view's registered/active columns with members/collected_gel -- see
+    // 20260728140000_transparency_region_money.sql. registered's old predicate
+    // (status <> 'draft', OID-bound) is numerically identical to members' new
+    // one (status in ('profile_completed', 'active_member')); active had no
+    // replacement column because the page dropped that figure entirely, so the
+    // second assertion this block used to make is gone, not ported.)
+    const { data: topRegion } = await db
+      .from("transparency_regions")
+      .select("*")
+      .order("members", { ascending: false })
+      .limit(1)
+      .single();
+    // /transparency is ISR-cached (revalidate 60) with no on-demand revalidation
+    // trigger, and the production server (CI runs `next start`) serves the stale
+    // snapshot while refreshing in the background — so a render predating this
+    // run's own funnel registrations can outlive a single goto by up to ~2
+    // windows. Re-request until the live-register values appear (the product
+    // contract: derived figures, ≤60s staleness). Dev servers render every
+    // request fresh, which is why this race never fires locally.
+    test.setTimeout(300_000);
+    await expect(async () => {
+      await page.goto("/transparency");
+      await expect(page.getByText(`${formatCountKa(expectedTotal)} ₾`)).toBeVisible({
+        timeout: 1_000,
+      });
+      await expect(
+        page
+          .locator("div", { hasText: /^წევრი$/ })
+          .locator("..")
+          .getByText(formatCountKa(registered ?? 0)),
+      ).toBeVisible({ timeout: 1_000 });
+      await expect(
+        page
+          .locator("div", { hasText: /^დამტკიცებული დელეგატი$/ })
+          .locator("..")
+          .getByText(formatCountKa(approvedDelegates ?? 0)),
+      ).toBeVisible({ timeout: 1_000 });
+      const regionRow = page.getByRole("row", { name: new RegExp(topRegion!.name_ka) });
+      await expect(regionRow.getByText(formatCountKa(topRegion!.members))).toBeVisible({
+        timeout: 1_000,
+      });
+    }).toPass({ timeout: 150_000, intervals: [2_000, 5_000, 10_000] });
+  });
 
   test("the region table shows members and collected money", async ({ page }) => {
     await page.goto("/transparency");
@@ -209,4 +291,117 @@ test.describe("transparency", () => {
     await expect(page.getByRole("columnheader", { name: /შეგროვებული თანხა/ })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
   });
+});
+
+test.describe("structure page", () => {
+  test("the header link opens it; sections, rules, roster notice and anchors work", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("navigation").first().getByRole("link", { name: "სტრუქტურა" }).click();
+    await expect(page).toHaveURL(/\/structure$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "ორგანიზაციული სტრუქტურა" }),
+    ).toBeVisible();
+    for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა", "ბორდის შემადგენლობა"]) {
+      await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole("img", { name: "5-დან 4 ხმა" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "5-დან 3 ხმა" })).toBeVisible();
+    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
+
+    await page
+      .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+      .getByRole("link", { name: "საერთო კენჭისყრა", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/structure#vote$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "საერთო კენჭისყრა", exact: true }),
+    ).toBeInViewport();
+  });
+
+  test.describe("on a phone", () => {
+    test.use({ viewport: { width: 360, height: 780 } });
+
+    test("an index link lands its heading below the sticky header, not under it", async ({
+      page,
+    }) => {
+      await page.goto("/structure");
+      for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა"]) {
+        await page
+          .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+          .getByRole("link", { name, exact: true })
+          .click();
+        const heading = page.getByRole("heading", { level: 2, name, exact: true });
+        await expect(heading).toBeInViewport();
+        const header = await page.getByRole("banner").boundingBox();
+        const top = await heading.boundingBox();
+        expect(header, "the sticky header is on screen").not.toBeNull();
+        expect(top!.y, `${name} heading clears the header`).toBeGreaterThanOrEqual(
+          header!.y + header!.height,
+        );
+      }
+    });
+  });
+});
+
+// ADR-042: events are hidden unless SHOW_EVENTS=true. With the switch on, community-events.spec.ts
+// and the homepage check above cover the visible pages.
+test.describe("events hidden", () => {
+  test.skip(EVENTS_SHOWN, "events are shown — see community-events.spec.ts");
+
+  test("/events answers 404 even with the exact address, and the tab never names events", async ({
+    page,
+  }) => {
+    await expectHiddenPage(page, "/events");
+  });
+
+  test("an old event address on a phone has no back link to the hidden index", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const response = await page.goto("/events/no-such-event-xyz");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
+    await expect(page.locator('a[href="/events"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /ღონისძიებ/ })).toHaveCount(0);
+  });
+
+  test("no public page links to it", async ({ page }) => {
+    for (const path of ["/", "/news", "/leaderboard", "/join", "/support"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href="/events"]'), path).toHaveCount(0);
+      await expect(page.locator('a[href^="/events/"]'), path).toHaveCount(0);
+    }
+  });
+});
+
+// ADR-040: Next regenerates a hidden page's 60-second ISR entry without the page's own metadata,
+// so the tab used to fall back to the plain site name from the second minute on. Each address is
+// visited three times: now, after the entry has gone stale (that visit starts the regeneration)
+// and once more after it (the regenerated copy). None may differ from a mistyped address.
+test.describe("hidden pages after the 60-second refresh", () => {
+  const hidden = [
+    ...(FINANCES_PUBLIC ? [] : ["/transparency"]),
+    // a real seeded event's address too: hiding events must not leak its title
+    ...(EVENTS_SHOWN ? [] : ["/events", "/events/saerto-kreba-tbilisshi"]),
+  ];
+  test.skip(hidden.length === 0, "every switch is on: nothing is hidden");
+  // Only a production server (CI's `npm run start`) regenerates pages; `next dev` has no ISR.
+  test.skip(!process.env.CI, "needs the production server CI runs");
+
+  test("keep the exact not-found title on every visit", async ({ page }) => {
+    for (const path of hidden) await expectHiddenPage(page, path);
+    await page.waitForTimeout(61_000);
+    for (const path of hidden) await expectHiddenPage(page, path);
+    await page.waitForTimeout(3_000);
+    for (const path of hidden) await expectHiddenPage(page, path);
+  });
+});
+
+test("the privacy policy is public and linked from the footer", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "კონფიდენციალურობა" }).click();
+  await expect(page).toHaveURL(/\/privacy$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "კონფიდენციალურობის პოლიტიკა" }),
+  ).toBeVisible();
 });

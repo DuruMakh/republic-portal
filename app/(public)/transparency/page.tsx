@@ -24,6 +24,8 @@ const FINANCES_METADATA: Metadata = {
 // While hidden the page presents the generic not-found title and never its own (ADR-034): a
 // static export would still be streamed inside the not-found response and could show up as the
 // browser tab title, and Next ignores the not-found file's own metadata for a page-raised 404.
+// While hidden, visitors normally never reach this branch: proxy.ts answers /transparency with
+// the site-wide not-found page first (ADR-040). It stays for the build and as a second line.
 export function generateMetadata(): Metadata {
   return showPublicFinances() ? FINANCES_METADATA : NOT_FOUND_METADATA;
 }

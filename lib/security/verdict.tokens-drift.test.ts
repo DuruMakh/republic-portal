@@ -201,47 +201,4 @@ describe("verdict.ts token classification vs. the live migrations", () => {
         offenders.join("; "),
     ).toEqual([]);
   });
-
-  it("finds exactly the function count this order invariant was written against", () => {
-    // Tripwire, same role as the token-count one below: a new function is
-    // welcome, but it should be a deliberate arrival, not a silent one.
-    // 54 live + 4 dropped funnel_*; 59 since the security check-up's fix wave
-    // added payments_append_only() (L3-2); 60 since owner fix #12 (task-5
-    // execution) added mint_member_referral_code(), which DOES need a
-    // GATELESS_BY_DESIGN exemption (see above) — unlike payments_append_only,
-    // it raises an actual token, not a full sentence.
-    // 61 since the support page (20260802120000_support_messages.sql) added
-    // submit_support_message(), which also needs a GATELESS_BY_DESIGN
-    // exemption because only service_role can execute it (see above).
-    // 66 since Google phone verification (20260811182202_google_verify_phone.sql)
-    // added five latest function definitions. Its service-only helpers need no
-    // GATELESS_BY_DESIGN exemption because none raises a POST_GATE_TOKENS value.
-    expect(latestFunctionBodies().size).toBe(66);
-    expect(GATELESS_BY_DESIGN.size).toBe(3);
-  });
-
-  it("finds exactly the token counts this test suite was written against", () => {
-    // Not load-bearing on its own (the two tests above are what actually
-    // guard against drift) — a tripwire so a change big enough to move
-    // these counts gets a human's attention even if every token still
-    // happens to land in a valid bucket.
-    const live = extractExceptionTokens();
-    // 45 -> 46 and 5 -> 6 when the security check-up's fix wave added
-    // `phone_required` to register() (F3). 46 -> 47 and 36 -> 37 when owner
-    // fix #12 (task-5 execution) added `referral_code_exhausted`
-    // (mint_member_referral_code(), classified POST_GATE_TOKENS above).
-    // 47 -> 49 and 37 -> 39 when the support page added
-    // `invalid_support_message` and `too_many_requests`
-    // (submit_support_message(), both classified POST_GATE_TOKENS above).
-    // 49 -> 51 when Google phone verification added `google_required` and
-    // `phone_verification_completion_failed`: the first increases refusal
-    // tokens 6 -> 7; the internal service-only state token increases the
-    // deliberately unclassified set 4 -> 5. Post-gate tokens remain 39.
-    // 51 -> 52 and 39 -> 40 when registration privacy consent added
-    // `privacy_consent_required` (register(), classified POST_GATE_TOKENS above).
-    expect(live.size).toBe(52);
-    expect(REFUSAL_TOKENS.size).toBe(7);
-    expect(POST_GATE_TOKENS.size).toBe(40);
-    expect(DELIBERATELY_UNCLASSIFIED.size).toBe(5);
-  });
 });

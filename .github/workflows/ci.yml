@@ -11,6 +11,8 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    # A hung step otherwise holds the job for GitHub's 6-hour default (lib/ci-workflow.test.ts).
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
         with: { persist-credentials: false }
@@ -18,10 +20,12 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
         if: hashFiles('playwright.config.ts') != ''
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
+      - run: npm run ka:scan
       - run: npm run test
       - run: npm run build
         env:

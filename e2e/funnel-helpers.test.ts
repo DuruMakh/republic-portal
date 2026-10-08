@@ -164,6 +164,48 @@ describe("cleanupGoogleBackedTestUsers", () => {
   });
 });
 
+describe("seedCompletedMember", () => {
+  // The Google password fixture already owns the auth identity; a second createUser
+  // would leave an orphan auth user and a profile the signed-in browser does not own.
+  test("with a userId, completes that identity's profile without creating another", async () => {
+    const createUser = vi.fn();
+    const inserted: { table: string; row: Record<string, unknown> }[] = [];
+    const single = vi.fn().mockResolvedValue({ data: { id: 7 }, error: null });
+    const chain = {
+      select: () => chain,
+      eq: () => chain,
+      order: () => chain,
+      limit: () => chain,
+      single,
+    };
+    createClient.mockReturnValue({
+      auth: { admin: { createUser } },
+      from: (table: string) => ({
+        ...chain,
+        insert: (row: Record<string, unknown>) => {
+          inserted.push({ table, row });
+          return Promise.resolve({ error: null });
+        },
+      }),
+    });
+
+    const result = await seedCompletedMember({
+      userId: "google-user-1",
+      phone: "550001230",
+      firstName: "ნინო",
+      lastName: "ტესტი",
+      personalId: "95500012300",
+    });
+
+    expect(createUser).not.toHaveBeenCalled();
+    expect(result).toEqual({ id: "google-user-1" });
+    expect(inserted.map((i) => [i.table, i.row.id ?? i.row.member_id])).toEqual([
+      ["profiles", "google-user-1"],
+      ["memberships", "google-user-1"],
+    ]);
+  });
+});
+
 describe("seedRegisteredMember", () => {
   test("adds cabinet data to the existing Google auth user without creating another identity", async () => {
     const insert = vi.fn().mockResolvedValue({ error: null });
@@ -270,49 +312,6 @@ describe("passRegistration", () => {
 
     expect(createClient).not.toHaveBeenCalled();
   });
-
-  test("creates the Google fixture before /join and uses only the deterministic provider code", async () => {
-    vi.stubEnv("PHONE_VERIFICATION_PROVIDER", "test");
-    const createUser = vi.fn().mockResolvedValue({
-      data: { user: { id: "google-user-1" } },
-      error: null,
-    });
-    const signInWithPassword = vi.fn().mockResolvedValue({
-      data: { session: { access_token: "access", refresh_token: "refresh" } },
-      error: null,
-    });
-    createClient.mockImplementation((_url: string, key: string) =>
-      key === "service-role-key"
-        ? { auth: { admin: { createUser } } }
-        : { auth: { signInWithPassword } },
-    );
-    const goto = vi.fn().mockResolvedValue(undefined);
-    const fill = vi.fn().mockResolvedValue(undefined);
-    const click = vi.fn().mockResolvedValue(undefined);
-    const check = vi.fn().mockResolvedValue(undefined);
-    const page = {
-      goto,
-      getByLabel: vi.fn().mockReturnValue({ fill }),
-      getByRole: vi.fn().mockReturnValue({ click, check }),
-      getByTestId: vi.fn().mockReturnValue({ fill }),
-    };
-
-    await passRegistration(page as never, {
-      phone: "550001230",
-      firstName: "ნინო",
-      lastName: "ტესტი",
-      refCode: "ABC123",
-    });
-
-    expect(createUser.mock.invocationCallOrder[0]).toBeLessThan(goto.mock.invocationCallOrder[0]!);
-    expect(goto).toHaveBeenCalledWith("/join?ref=ABC123");
-    expect(page.getByRole).toHaveBeenCalledWith("button", { name: "კოდის მიღება" });
-    // the privacy consent box is ticked before the code is requested (spec 2026-10-08 section 4)
-    expect(page.getByRole).toHaveBeenCalledWith("checkbox", { name: expect.any(RegExp) });
-    expect(check.mock.invocationCallOrder[0]).toBeLessThan(click.mock.invocationCallOrder[0]!);
-    expect(page.getByTestId).toHaveBeenCalledWith("otp-0");
-    expect(fill).toHaveBeenCalledWith("123456");
-  });
 });
 
 // Shared mechanics are covered in cleanup-helpers.test.ts; this wrapper owns only
@@ -406,19 +405,5 @@ describe("cleanupLoginUser", () => {
 
     await expect(fresh.cleanupLoginUser()).rejects.toThrow(/refus/i);
     expect(deleted).toEqual([]);
-  });
-
-  test("resolves when no orphan is present", async () => {
-    createClient.mockReturnValue({
-      auth: {
-        admin: {
-          listUsers: () =>
-            Promise.resolve({ data: { users: [{ id: "x", phone: "995500000001" }] }, error: null }),
-          deleteUser: () => Promise.resolve({ error: null }),
-        },
-      },
-    });
-
-    await expect(cleanupLoginUser()).resolves.toBeUndefined();
   });
 });

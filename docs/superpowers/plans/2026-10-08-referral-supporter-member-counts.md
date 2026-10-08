@@ -63,8 +63,11 @@ ADR-039.
    Test IDs `referral-supporters` and `referral-members`. Tests first.
 3. Callers: `/me`, `/me/profile`, `/delegate` pass both figures with `?? 0`.
 4. `/delegate`: drop the `registeredCount` box, relabel the team box `გუნდის წევრი`, grid of
-   two; page test.
-5. e2e: the delegate-panel spec reads the new test IDs.
+   two. *(As built: `/delegate` has no page test — it is an async server page — so the box
+   removal and relabel are covered on screen by `referral-split.spec`.)*
+5. e2e: `referral-split.spec` signs the referrer into `/delegate` and reads the new test IDs
+   (`referral-supporters`, `referral-members`); `cabinet.spec`'s member-pill check is pinned to
+   the pill so the card's `წევრი` row cannot satisfy it.
 6. `npm run ka:scan`, full gate set, `/qa` on the preview with screenshots of all three
    pages, ADR-039, PR, owner sign-off.
 

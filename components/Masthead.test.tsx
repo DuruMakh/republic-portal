@@ -64,26 +64,6 @@ describe("Masthead", () => {
     expect(screen.getByRole("navigation", { name: "მთავარი ნავიგაცია" })).toBeInTheDocument();
   });
 
-  it("keeps the mobile masthead sticky and resets positioning on desktop", () => {
-    vi.mocked(usePathname).mockReturnValue("/");
-    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
-    const header = screen.getByRole("banner");
-    expect(header.className).toContain("sticky");
-    expect(header.className).toContain("top-0");
-    expect(header.className).toContain("bg-paper");
-    expect(header.className).toContain("md:static");
-  });
-
-  it("does not add mobile sticky positioning on routes declared unchanged", () => {
-    vi.mocked(usePathname).mockReturnValue("/admin");
-    const { rerender } = render(<Masthead navItems={[]} cta={null} />);
-    expect(screen.getByRole("banner").className).not.toContain("sticky");
-
-    vi.mocked(usePathname).mockReturnValue("/styleguide");
-    rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
-    expect(screen.getByRole("banner").className).not.toContain("sticky");
-  });
-
   it("on a back route, gives the Masthead header the reciprocal hidden/md:flex pair so exactly one banner landmark is ever visible", () => {
     // MobileBackHeader is md:hidden internally. If Masthead's own <header> had
     // no complementary hide, both would render below `md` and the page would
@@ -107,5 +87,20 @@ describe("Masthead", () => {
 
     rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     expect(screen.queryByText("პირადი კაბინეტი")).not.toBeInTheDocument();
+  });
+});
+
+describe("Masthead on an old event address (ADR-042)", () => {
+  it("shows no back link to the events index while events are hidden", () => {
+    vi.mocked(usePathname).mockReturnValue("/events/tbilisi-meeting");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} eventsShown={false} />);
+    expect(screen.queryByRole("link", { name: /ღონისძიებ/ })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
+  });
+
+  it("keeps the back link while events are shown", () => {
+    vi.mocked(usePathname).mockReturnValue("/events/tbilisi-meeting");
+    render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} eventsShown />);
+    expect(document.querySelector('a[href="/events"]')).not.toBeNull();
   });
 });

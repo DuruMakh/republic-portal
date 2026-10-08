@@ -65,6 +65,10 @@ export interface CabinetStatePresent {
    * decision 2026-07-29; see supabase/migrations/20260728142000_member_referral_codes.sql).
    */
   referralCount: number;
+  /** ADR-039: referralCount's sign-ups that have not finished the membership form. */
+  referralSupporters: number;
+  /** ADR-039: referralCount's sign-ups that have (profile_completed / active_member). */
+  referralMembers: number;
   birthDate: string | null; // "YYYY-MM-DD"
   regionId: number | null;
   cityId: number | null;
@@ -117,7 +121,7 @@ export function isReferralCodeCandidate(value: string): boolean {
   return /^[A-Za-z0-9-]{1,32}$/.test(value);
 }
 
-const ERROR_MESSAGES: Readonly<Record<string, string>> = {
+export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   duplicate_personal_id: "ეს პირადი ნომერი უკვე რეგისტრირებულია.",
   invalid_personal_id: "პირადი ნომერი უნდა იყოს 11 ციფრი.",
   invalid_birth_date: "მიუთითე დაბადების თარიღი.",

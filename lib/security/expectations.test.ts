@@ -56,47 +56,26 @@ describe("defaultExpectation", () => {
   // brief's starting table was wrong or incomplete in several places; these
   // pin the corrected behaviour so it cannot silently regress.
 
-  it("denies admin_reveal_personal_id to verifier — super_admin-only in the migration, despite sharing the admin_reveal_ prefix with an applicant-scoped sibling", () => {
-    // supabase/migrations/20260717150000_admin_crm.sql:716 — single-role
-    // check (`has_admin_role('super_admin')`), no has_any_admin_role fallback.
-    expect(defaultExpectation(fn("admin_reveal_personal_id"), "A10")).toBe("deny");
-  });
-
-  it("allows admin_reveal_applicant_personal_id to verifier", () => {
-    // supabase/migrations/20260717150000_admin_crm.sql:735 —
-    // has_any_admin_role('super_admin', 'verifier').
-    expect(defaultExpectation(fn("admin_reveal_applicant_personal_id"), "A10")).toBe("allow");
-  });
-
-  it("allows admin_reassign_member to verifier, not finance", () => {
-    // supabase/migrations/20260717150000_admin_crm.sql:658 (unchanged through
-    // 20260722120000_r2_ladder_and_numbers.sql) —
-    // has_any_admin_role('super_admin', 'verifier'). Finance is NOT included,
-    // even though this is a member/payment-adjacent action.
-    expect(defaultExpectation(fn("admin_reassign_member"), "A10")).toBe("allow");
-    expect(defaultExpectation(fn("admin_reassign_member"), "A11")).toBe("deny");
-  });
-
-  it("allows admin_update_delegate_profile to verifier", () => {
-    // supabase/migrations/20260717150000_admin_crm.sql:430 —
-    // has_any_admin_role('super_admin', 'verifier').
-    expect(defaultExpectation(fn("admin_update_delegate_profile"), "A10")).toBe("allow");
-  });
-
-  it("allows admin_void_payment and admin_export_members to finance", () => {
-    // supabase/migrations/20260717150000_admin_crm.sql:617 (admin_void_payment)
-    // and :763, latest body at 20260721120000_progressive_registration.sql:266
-    // (admin_export_members) — both has_any_admin_role('super_admin', 'finance').
-    expect(defaultExpectation(fn("admin_void_payment"), "A11")).toBe("allow");
-    expect(defaultExpectation(fn("admin_export_members"), "A11")).toBe("allow");
-  });
-
-  it("allows admin_unpublish_news and admin_set_news_image to editor", () => {
-    // supabase/migrations/20260719150000_community.sql:351 (admin_unpublish_news)
-    // and :404, latest body at 20260722120000_r2_ladder_and_numbers.sql:420
-    // (admin_set_news_image) — both has_any_admin_role('super_admin', 'editor').
-    expect(defaultExpectation(fn("admin_unpublish_news"), "A12")).toBe("allow");
-    expect(defaultExpectation(fn("admin_set_news_image"), "A12")).toBe("allow");
+  // Each row cites the has_admin_role / has_any_admin_role check it mirrors.
+  // A10 = verifier, A11 = finance, A12 = editor.
+  it.each([
+    // admin_crm.sql:716 — super_admin only, despite the admin_reveal_ sibling below
+    ["admin_reveal_personal_id", "A10", "deny"],
+    // admin_crm.sql:735 — super_admin, verifier
+    ["admin_reveal_applicant_personal_id", "A10", "allow"],
+    // admin_crm.sql:658 (unchanged through r2_ladder_and_numbers) — super_admin, verifier
+    ["admin_reassign_member", "A10", "allow"],
+    ["admin_reassign_member", "A11", "deny"],
+    // admin_crm.sql:430 — super_admin, verifier
+    ["admin_update_delegate_profile", "A10", "allow"],
+    // admin_crm.sql:617; progressive_registration.sql:266 — super_admin, finance
+    ["admin_void_payment", "A11", "allow"],
+    ["admin_export_members", "A11", "allow"],
+    // community.sql:351; r2_ladder_and_numbers.sql:420 — super_admin, editor
+    ["admin_unpublish_news", "A12", "allow"],
+    ["admin_set_news_image", "A12", "allow"],
+  ] as const)("%s → %s: %s", (surface, actor, expected) => {
+    expect(defaultExpectation(fn(surface), actor)).toBe(expected);
   });
 
   it("allows the self-gating admin_ views to the roles their WHERE clause names, not just admin_ functions", () => {

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ContentNav } from "@/components/ContentNav";
 import { hasAnyRole } from "@/lib/admin";
+import { showEvents } from "@/lib/events-switch";
 import { getAdminRoles } from "@/lib/supabase/server";
 
 /**
@@ -13,7 +14,7 @@ export default async function ContentLayout({ children }: { children: React.Reac
   if (!hasAnyRole(roles, ["editor", "super_admin"])) redirect("/admin");
   return (
     <div>
-      <ContentNav />
+      <ContentNav eventsShown={showEvents()} />
       {children}
     </div>
   );

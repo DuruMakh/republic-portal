@@ -1,0 +1,341 @@
+<title>სტრუქტურის კონცეფცია</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wdth,wght@62.5..100,300..900&family=Noto+Serif+Georgian:wght@400..800&display=swap">
+<style>
+/* Layout: limestone page; pebble "council" hero; board / members / vote as three chapters marked by outlined Mkhedruli letters; roster last. */
+:root{
+  --ground:#eeede8; --raise:#f8f7f3; --ink:#18191b; --soft:#5a5d63; --line:#d3d0c7;
+  --wine:#9f1d35; --pebble:#c8c4ba; --pebble-off:#e2dfd7;
+  --display:"Noto Sans Georgian",system-ui,sans-serif;
+  --serif:"Noto Serif Georgian",Georgia,serif;
+  --ui:"Noto Sans Georgian",system-ui,sans-serif;
+  --max:1180px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#131517; --raise:#1a1d20; --ink:#ecebe5; --soft:#a3a6ab; --line:#2d3135;
+  --wine:#e0627a; --pebble:#3d4247; --pebble-off:#25292c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#131517; --raise:#1a1d20; --ink:#ecebe5; --soft:#a3a6ab; --line:#2d3135;
+  --wine:#e0627a; --pebble:#3d4247; --pebble-off:#25292c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.65;margin:0}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:clamp(16px,4vw,40px)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.disp{font-family:var(--display);font-stretch:68%;font-weight:850;letter-spacing:-.01em;line-height:.98}
+.label{font-size:.74rem;letter-spacing:.2em;font-weight:700;color:var(--soft)}
+.peb{border-radius:48% 52% 55% 45%/50% 46% 54% 50%}
+
+.concept{background:var(--ink);color:var(--ground);font-size:.78rem;text-align:center;padding:7px 16px}
+.top{border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:24px;padding-block:14px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:1.15rem;display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand i{width:16px;height:15px;background:var(--wine);display:block}
+nav{display:flex;gap:20px;font-size:.88rem;margin-left:auto;flex-wrap:wrap}
+nav a{text-decoration:none;color:var(--soft)}
+nav a[aria-current]{color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--wine)}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--ground);text-decoration:none;font-weight:700;font-size:.9rem;padding:10px 18px;transition:background .2s}
+.btn:hover{background:var(--wine)}
+
+/* hero */
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(20px,4vw,56px);align-items:center;padding-block:clamp(28px,4vw,48px)}
+.hero h1{font-size:clamp(2rem,4.6vw,3.6rem);margin-bottom:16px;line-height:1.05}
+.hero h1 span{color:var(--wine)}
+.lede{font-family:var(--serif);font-size:clamp(1.02rem,1.5vw,1.15rem);line-height:1.65;color:var(--soft);max-width:36em;margin:0}
+.council{width:clamp(150px,22vw,250px);aspect-ratio:1}
+.council svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* index strip */
+.parts{border-block:1px solid var(--line)}
+.parts .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.part{display:flex;align-items:center;gap:14px;padding:14px 20px 14px 0;text-decoration:none}
+.part + .part{padding-left:20px;border-left:1px solid var(--line)}
+.part .g{font-family:var(--serif);font-weight:800;font-size:2.4rem;line-height:.8;color:transparent;-webkit-text-stroke:1.5px var(--wine);transition:color .25s}
+.part:hover .g{color:var(--wine)}
+.part b{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:1.15rem}
+.part small{display:block;font-size:.78rem;color:var(--wine);font-weight:700}
+
+/* chapters */
+.chapter{padding-block:clamp(36px,5vw,64px)}
+.chapter + .chapter{border-top:1px solid var(--line)}
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:24px;margin-bottom:clamp(20px,3vw,32px)}
+.head h2{font-size:clamp(2rem,4vw,3.1rem)}
+.head p{font-family:var(--serif);font-size:clamp(1rem,1.4vw,1.1rem);color:var(--soft);margin:10px 0 0;max-width:40em;line-height:1.65}
+.big{font-family:var(--serif);font-weight:800;font-size:clamp(4rem,8vw,6.5rem);line-height:.7;color:transparent;-webkit-text-stroke:1.5px var(--line);user-select:none}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,4vw,60px);align-items:start}
+.plist{list-style:none;margin:14px 0 0;padding:0}
+.plist li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:1.02rem;line-height:1.5}
+.plist li:first-child{border-top:1px solid var(--line)}
+.plist li::before{content:"";width:13px;height:12px;margin-top:.5em;background:var(--wine);border-radius:48% 52% 55% 45%/50% 46% 54% 50%}
+.plist li:nth-child(2n)::before{transform:rotate(40deg)}
+
+/* decision rules */
+.rules{display:grid;gap:14px;margin-top:14px}
+.rule{background:var(--raise);border:1px solid var(--line);padding:16px 20px;display:grid;gap:12px}
+.rule .row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.rule .what{font-family:var(--serif);font-size:1.05rem;line-height:1.5;max-width:22em}
+.rule .what b{display:block;font-family:var(--display);font-stretch:75%;font-weight:800;font-size:1.5rem;line-height:1.1;color:var(--wine);margin-bottom:2px}
+.stones{display:flex;gap:7px;align-items:center}
+.stones i{width:30px;height:26px;display:block;background:var(--pebble-off);border:1.5px solid var(--line)}
+.stones i.on{background:var(--wine);border-color:var(--wine)}
+.stones i:nth-child(2){transform:rotate(25deg)}.stones i:nth-child(4){transform:rotate(-30deg)}.stones i:nth-child(5){transform:rotate(60deg)}
+.rule .hint{font-size:.8rem;color:var(--soft)}
+
+/* members: path of three steps on one line, rights beside it */
+.path{list-style:none;margin:14px 0 0;padding:0;position:relative;display:grid;gap:0}
+.path::before{content:"";position:absolute;left:14px;top:22px;bottom:22px;width:2px;background:var(--line)}
+.path li{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr);gap:16px;align-items:start;padding:12px 0}
+.path .node{width:30px;height:27px;background:var(--raise);border:2px solid var(--wine);position:relative;z-index:1;display:grid;place-items:center;font-family:var(--serif);font-weight:700;font-size:.85rem;color:var(--wine)}
+.path li:last-child .node{background:var(--wine);color:var(--ground)}
+.path strong{display:block;font-family:var(--serif);font-weight:600;font-size:1.08rem;line-height:1.4}
+.path span{display:block;font-size:.88rem;color:var(--soft);margin-top:2px}
+.path .alt{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.path .alt em{font-style:normal;font-size:.88rem;border:1px solid var(--line);background:var(--raise);padding:5px 12px}
+.path .alt i{font-style:normal;font-size:.74rem;letter-spacing:.18em;font-weight:700;color:var(--soft);align-self:center}
+
+/* vote */
+.field{background:var(--raise);border:1px solid var(--line);padding:18px 20px}
+.field svg{width:100%;max-width:640px;height:auto;display:block;margin:0 auto}
+.legend{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.85rem;color:var(--soft);margin-top:14px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:12px;height:11px;display:inline-block}
+.vflow{display:grid;gap:0;margin-top:14px}
+.vstep{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:1.08rem}
+.vstep:first-child{border-top:1px solid var(--line)}
+.vstep i{width:30px;height:27px;display:block;justify-self:center}
+
+/* roster */
+.roster-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.roster-head h2{font-size:clamp(2rem,4vw,3.1rem)}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;font-weight:700;padding:7px 14px;border:1px solid var(--line);background:var(--raise);color:var(--soft)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--wine);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.toggle{font-family:var(--ui);font-size:.85rem;background:none;border:0;color:var(--wine);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0}
+.roster{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+.person{display:grid;gap:12px;align-content:start}
+.portrait{aspect-ratio:4/5;max-width:100%;background:var(--raise);border:1px solid var(--line);position:relative;overflow:hidden;display:grid;place-items:end center}
+.portrait svg{width:78%;height:auto;display:block;color:var(--pebble)}
+.person .name{font-family:var(--serif);font-weight:700;font-size:1.08rem;line-height:1.3}
+.person .bio{font-size:.86rem;color:var(--soft);line-height:1.55;margin:0}
+.socials{display:flex;gap:8px}
+.socials a{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line);font-size:.68rem;font-weight:800;text-decoration:none;color:var(--soft);transition:all .2s}
+.socials a:hover{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.ghost .name,.ghost .bio{background:var(--line);opacity:.55}
+.ghost .name{width:70%;height:1.1em}.ghost .bio{height:3.6em}
+.ghost .socials{display:none}
+.tag{position:absolute;top:10px;left:10px;font-size:.68rem;font-weight:800;letter-spacing:.14em;background:var(--ink);color:var(--ground);padding:3px 8px}
+
+.cta{border-top:1px solid var(--line)}
+.cta .wrap{display:flex;justify-content:center;padding-block:clamp(28px,4vw,44px)}
+.cta .btn{font-size:1.05rem;padding:16px 30px}
+footer{border-top:1px solid var(--line);font-size:.8rem;color:var(--soft)}
+footer .wrap{padding-block:22px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .hero .wrap,.two{grid-template-columns:minmax(0,1fr)}
+  .council{display:none}
+  .parts .wrap{grid-template-columns:minmax(0,1fr)}
+  .part,.part + .part{padding:16px 0;border-left:0}
+  .part + .part{border-top:1px solid var(--line)}
+  .big{display:none}
+  .head{grid-template-columns:minmax(0,1fr)}
+  .roster{grid-template-columns:repeat(2,minmax(0,1fr))}
+  nav{order:3;width:100%;margin-left:0;gap:16px;overflow-x:auto}
+  .top .btn{margin-left:auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="concept">კონცეფცია · დიზაინის ნიმუში, ჯერ არ არის საიტზე</div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#"><i class="peb"></i>ქართული რესპუბლიკა</a>
+    <nav aria-label="მთავარი ნავიგაცია">
+      <a href="#">მთავარი</a><a href="#">რეიტინგი</a><a href="#">სიახლეები</a><a href="#">ღონისძიებები</a><a href="#" aria-current="page">სტრუქტურა</a>
+    </nav>
+    <a class="btn" href="#join">შემოგვიერთდი</a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1 class="disp">ორგანიზაციული <span>სტრუქტურა</span></h1>
+      <p class="lede">მოძრაობას მართავს ბორდი, მის გადაწყვეტილებებში კი ყველა წევრი მონაწილეობს.</p>
+    </div>
+    <div class="council" aria-hidden="true"><svg id="council" viewBox="-260 -260 520 520"></svg></div>
+  </div>
+</section>
+
+<nav class="parts" aria-label="გვერდის ნაწილები">
+  <div class="wrap">
+    <a class="part" href="#board"><span class="g">ბ</span><span><b>ბორდი</b><small>↓</small></span></a>
+    <a class="part" href="#members"><span class="g">წ</span><span><b>წევრები</b><small>↓</small></span></a>
+    <a class="part" href="#vote"><span class="g">კ</span><span><b>საერთო კენჭისყრა</b><small>↓</small></span></a>
+  </div>
+</nav>
+
+<section class="chapter" id="board">
+  <div class="wrap">
+    <div class="head">
+      <div><h2 class="disp">ბორდი</h2><p>ბორდი მოძრაობის მთავარი მმართველი ორგანოა და 5 წევრისგან შედგება.</p></div>
+      <div class="big" aria-hidden="true">ბ</div>
+    </div>
+    <div class="two">
+      <div>
+        <div class="label">ბორდი</div>
+        <ul class="plist">
+          <li>ამტკიცებს მოძრაობის სტრატეგიასა და სამოქმედო გეგმას</li>
+          <li>ამტკიცებს კვარტალურ ანგარიშს</li>
+          <li>იღებს ახალ წევრებს</li>
+          <li>ირჩევს ადმინისტრაციულ ხელმძღვანელს</li>
+        </ul>
+      </div>
+      <div>
+        <div class="label">როგორ იღებს ბორდი გადაწყვეტილებას</div>
+        <div class="rules">
+          <div class="rule">
+            <div class="row">
+              <div class="what"><b>არანაკლებ 2/3</b>ბორდის ახალი წევრის დამატება და მოძრაობის წესდების დამტკიცება</div>
+              <div class="stones" role="img" aria-label="5-დან 4 ხმა"><i class="peb on"></i><i class="peb on"></i><i class="peb on"></i><i class="peb on"></i><i class="peb"></i></div>
+            </div>
+          </div>
+          <div class="rule">
+            <div class="row">
+              <div class="what"><b>უბრალო უმრავლესობა</b>ყველა სხვა გადაწყვეტილება</div>
+              <div class="stones" role="img" aria-label="5-დან 3 ხმა"><i class="peb on"></i><i class="peb on"></i><i class="peb on"></i><i class="peb"></i><i class="peb"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="members">
+  <div class="wrap">
+    <div class="head">
+      <div><h2 class="disp">წევრები</h2><p>წევრად მიღება ხდება ბორდის გადაწყვეტილებით, გასაუბრების ან მოქმედი წევრის რეკომენდაციის საფუძველზე.</p></div>
+      <div class="big" aria-hidden="true">წ</div>
+    </div>
+    <div class="two">
+      <div>
+        <div class="label">როგორ ხდები წევრი</div>
+        <ol class="path">
+          <li><span class="node peb">1</span><div><strong>გასაუბრება ან მოქმედი წევრის რეკომენდაცია</strong></div></li>
+          <li><span class="node peb">2</span><div><strong>ბორდის გადაწყვეტილება</strong></div></li>
+          <li><span class="node peb">3</span><div><strong>მოძრაობის წევრი</strong></div></li>
+        </ol>
+      </div>
+      <div>
+        <div class="label">წევრს შეუძლია</div>
+        <ul class="plist">
+          <li>ბორდს წარუდგინოს ინიციატივა</li>
+          <li>დაასახელოს კანდიდატი ბორდის წევრობისთვის</li>
+          <li>რეკომენდაცია გაუწიოს ახალ წევრს</li>
+          <li>მიიღოს მონაწილეობა საერთო კენჭისყრაში</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="vote">
+  <div class="wrap">
+    <div class="head">
+      <div><h2 class="disp">საერთო კენჭისყრა</h2><p>ბორდს შეუძლია მნიშვნელოვანი საკითხი გადასაწყვეტად ყველა წევრს გადასცეს. გადაწყვეტილებას იღებს კენჭისყრის მონაწილეთა უმრავლესობა.</p></div>
+      <div class="big" aria-hidden="true">კ</div>
+    </div>
+    <div class="field">
+      <svg id="field" viewBox="0 0 600 130" role="img" aria-label="კენჭისყრის ილუსტრაცია: მომხრეთა კენჭები მეტია"></svg>
+      <div class="legend"><span><i class="peb" style="background:var(--wine)"></i>მომხრე</span><span><i class="peb" style="background:var(--pebble)"></i>წინააღმდეგი</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="roster">
+  <div class="wrap">
+    <div class="roster-head">
+      <h2 class="disp">ბორდის შემადგენლობა</h2>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        <span class="chip" id="status">ბორდის შემადგენლობა მალე გამოქვეყნდება</span>
+        <button class="toggle" type="button" id="preview-toggle" aria-pressed="false">ნახე, როგორ გამოჩნდება</button>
+      </div>
+    </div>
+    <div class="roster" id="roster-grid"></div>
+  </div>
+</section>
+
+<section class="cta" id="join"><div class="wrap"><a class="btn" href="#">შემოგვიერთდი →</a></div></section>
+</main>
+
+<footer><div class="wrap"><span>© 2026 ქართული რესპუბლიკა</span><span>წესები · სიახლეები · კონტაქტი</span></div></footer>
+
+<script>
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function rng(seed){return function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}}
+  function pebble(p,x,y,rx,ry,rot,fill,extra){
+    var e=document.createElementNS(NS,"ellipse");
+    e.setAttribute("cx",x);e.setAttribute("cy",y);e.setAttribute("rx",rx);e.setAttribute("ry",ry);
+    e.setAttribute("transform","rotate("+rot+" "+x+" "+y+")");e.setAttribute("fill",fill);
+    if(extra)for(var k in extra)e.setAttribute(k,extra[k]);
+    p.appendChild(e);return e;
+  }
+  function fadeIn(el,delay){if(reduce)return;el.style.opacity="0";el.style.transition="opacity .6s ease "+delay+"s";requestAnimationFrame(function(){requestAnimationFrame(function(){el.style.opacity="1"})})}
+
+  /* hero: the five board pebbles in a ring, members gathered around them */
+  var c=document.getElementById("council"),r=rng(7);
+  for(var i=0;i<160;i++){
+    var a=r()*Math.PI*2,d=128+Math.pow(r(),.8)*120,s=5+r()*6;
+    pebble(c,(Math.cos(a)*d).toFixed(1),(Math.sin(a)*d).toFixed(1),s.toFixed(1),(s*(.72+r()*.2)).toFixed(1),Math.round(r()*180),"var(--pebble)",{opacity:(.55+r()*.45).toFixed(2)});
+  }
+  var ring=document.createElementNS(NS,"circle");
+  ring.setAttribute("r","84");ring.setAttribute("fill","none");ring.setAttribute("stroke","var(--line)");c.appendChild(ring);
+  for(var j=0;j<5;j++){
+    var ang=-Math.PI/2+j*(Math.PI*2/5);
+    fadeIn(pebble(c,(Math.cos(ang)*84).toFixed(1),(Math.sin(ang)*84).toFixed(1),27,23,Math.round(r()*60-30),"var(--wine)"),0.15+j*0.12);
+  }
+  var t=document.createElementNS(NS,"text");
+  t.setAttribute("text-anchor","middle");t.setAttribute("y","9");t.setAttribute("fill","var(--ink)");
+  t.setAttribute("style","font-family:var(--display);font-stretch:70%;font-weight:850;font-size:28px");
+  t.textContent="ბორდი";c.appendChild(t);
+
+  /* general vote: two even piles, same height; "for" is wider. Dashed divider between them. */
+  var f=document.getElementById("field"),fr=rng(19),ROWS=4,GAP=24;
+  var mid=document.createElementNS(NS,"line");
+  mid.setAttribute("x1","300");mid.setAttribute("x2","300");mid.setAttribute("y1","8");mid.setAttribute("y2","122");
+  mid.setAttribute("stroke","var(--line)");mid.setAttribute("stroke-dasharray","3 6");f.appendChild(mid);
+  function pile(cols,dir,fill){
+    for(var c2=0;c2<cols;c2++)for(var r2=0;r2<ROWS;r2++){
+      var x=300+dir*(22+c2*GAP)+(fr()*4-2),y=104-r2*GAP+(fr()*4-2);
+      pebble(f,x.toFixed(1),y.toFixed(1),(9+fr()*1.5).toFixed(1),(7.8+fr()*1.2).toFixed(1),Math.round(fr()*180),fill);
+    }
+  }
+  pile(9,-1,"var(--wine)");pile(6,1,"var(--pebble)");
+
+  /* roster: placeholders until the board is published; toggle shows a filled sample */
+  var grid=document.getElementById("roster-grid"),sample=false;
+  var silhouette='<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="38" r="20" fill="currentColor"/><path d="M8 100c0-26 19-40 42-40s42 14 42 40z" fill="currentColor"/></svg>';
+  function draw(){
+    var h="";
+    for(var i=0;i<5;i++){
+      h+='<article class="person'+(sample?'':' ghost')+'"><div class="portrait">'+(sample?'<span class="tag">ნიმუში</span>':'')+silhouette+'</div>'+
+        '<div class="name">'+(sample?'სახელი გვარი':'')+'</div>'+
+        '<p class="bio">'+(sample?'მოკლე ბიოგრაფია: პროფესია, გამოცდილება და რას აკეთებს მოძრაობაში.':'')+'</p>'+
+        '<div class="socials"><a href="#" aria-label="Facebook">fb</a><a href="#" aria-label="X">X</a><a href="#" aria-label="Instagram">ig</a></div></article>';
+    }
+    grid.innerHTML=h;document.getElementById("status").hidden=sample;
+  }
+  document.getElementById("preview-toggle").addEventListener("click",function(){
+    sample=!sample;this.setAttribute("aria-pressed",String(sample));
+    this.textContent=sample?"დაბრუნება: მალე გამოქვეყნდება":"ნახე, როგორ გამოჩნდება";draw();
+  });
+  draw();
+})();
+</script>

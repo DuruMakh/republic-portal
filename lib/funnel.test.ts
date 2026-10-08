@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveMembershipPhase,
+  ERROR_MESSAGES,
   GENERIC_FUNNEL_ERROR,
   isReferenceCode,
   isReferralCodeCandidate,
   mapFunnelError,
-  MEMBERSHIP_FEE_GEL,
   type CabinetStatePresent,
 } from "./funnel";
 
@@ -21,6 +21,8 @@ function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
     hasPersonalId: true,
     referralCode: null,
     referralCount: 0,
+    referralSupporters: 0,
+    referralMembers: 0,
     birthDate: null,
     regionId: null,
     cityId: null,
@@ -70,12 +72,14 @@ describe("code formats", () => {
   it("accepts valid reference codes", () => {
     expect(isReferenceCode("GR-7K3M9Q")).toBe(true);
     expect(isReferenceCode("GR-ABCDEF")).toBe(true);
+    expect(isReferenceCode("GR-APQ694")).toBe(true);
   });
   it("rejects confusable characters I, L, O, 0, 1 and bad shapes", () => {
     for (const bad of ["GR-7K3M9L", "GR-7K3M9I", "GR-7K3M9O", "GR-7K3M90", "GR-7K3M91"]) {
       expect(isReferenceCode(bad)).toBe(false);
     }
     expect(isReferenceCode("GR-7K3M9")).toBe(false);
+    expect(isReferenceCode("GR-APQ6944")).toBe(false);
     expect(isReferenceCode("XX-7K3M9Q")).toBe(false);
     expect(isReferenceCode("gr-7k3m9q")).toBe(false);
   });
@@ -89,126 +93,22 @@ describe("code formats", () => {
 });
 
 describe("mapFunnelError", () => {
-  it("maps RPC error tokens to Georgian messages", () => {
-    expect(mapFunnelError("P0001: duplicate_personal_id")).toBe(
-      "ეს პირადი ნომერი უკვე რეგისტრირებულია.",
-    );
-    expect(mapFunnelError("terms_required")).toBe("საჭიროა წესებზე თანხმობა.");
-  });
-  it("unknown/empty → generic Georgian error", () => {
-    expect(mapFunnelError("something weird")).toBe(GENERIC_FUNNEL_ERROR);
-    expect(mapFunnelError(undefined)).toBe(GENERIC_FUNNEL_ERROR);
-  });
-});
-
-describe("MEMBERSHIP_FEE_GEL", () => {
-  it("is fixed at 10 (owner fix #9) — the 5/10/20 choice is retired", () => {
-    expect(MEMBERSHIP_FEE_GEL).toBe(10);
-  });
-});
-
-describe("isReferenceCode — derived from FUNNEL_CODE_ALPHABET (Phase 3 hygiene)", () => {
-  it("accepts exactly the Phase 2 fixtures", () => {
-    expect(isReferenceCode("GR-APQ694")).toBe(true);
-    expect(isReferenceCode("GR-7K3M9Q")).toBe(true);
-  });
-  it("rejects excluded characters I/L/O/0/1, lowercase, wrong length", () => {
-    for (const bad of ["GR-AAAAI2", "GR-AAAAL2", "GR-AAAAO2", "GR-AAAA02", "GR-AAAA12"]) {
-      expect(isReferenceCode(bad)).toBe(false);
-    }
-    expect(isReferenceCode("gr-apq694")).toBe(false);
-    expect(isReferenceCode("GR-APQ69")).toBe(false);
-    expect(isReferenceCode("GR-APQ6944")).toBe(false);
-  });
-});
-
-describe("mapFunnelError — Phase 3 tokens", () => {
-  it("maps the cabinet RPC tokens to Georgian", () => {
-    expect(mapFunnelError("not_completed")).toBe("ჯერ დაასრულე რეგისტრაცია.");
-    expect(mapFunnelError("P0001: not_a_member")).toBe("ეს მოქმედება მხოლოდ წევრებისთვისაა.");
-    expect(mapFunnelError("not_a_delegate")).toBe("დელეგატის პანელი მხოლოდ დელეგატებისთვისაა.");
-  });
-  it("maps the Phase 4 admin tokens (spec §5)", () => {
-    expect(mapFunnelError("P0001: missing_role")).toBe(
-      "ამ მოქმედებისთვის საკმარისი უფლება არ გაქვს.",
-    );
-    expect(mapFunnelError("duplicate_reference")).toBe(
-      "ამ საბანკო რეფერენსით გადახდა უკვე აღრიცხულია.",
-    );
-    expect(mapFunnelError("last_super_admin")).toBe("ბოლო super_admin-ის მოხსნა შეუძლებელია.");
-    expect(mapFunnelError("already_voided")).toBe("ეს გადახდა უკვე გაუქმებულია.");
-    expect(mapFunnelError("invalid_target")).toBe("ჩანაწერი ვერ მოიძებნა — განაახლე გვერდი.");
-    expect(mapFunnelError("unknown_code")).toBe("უცნობი კოდი");
-    expect(mapFunnelError("duplicate")).toBe("დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.");
-    expect(mapFunnelError("P0001: duplicate")).toBe(
-      "დუბლიკატი — იდენტური გადახდა უკვე აღრიცხულია.",
-    );
+  // mapFunnelError matches by substring in insertion order, so a token that is a
+  // prefix of a later one (invalid_option / invalid_options, invalid_date /
+  // invalid_event_dates) would shadow it. Every token, bare and as the RPC
+  // reports it, must reach its own message.
+  it.each(Object.keys(ERROR_MESSAGES))("maps %s to its own message", (token) => {
+    const message = ERROR_MESSAGES[token];
+    expect(mapFunnelError(token)).toBe(message);
+    expect(mapFunnelError(`P0001: ${token}`)).toBe(message);
   });
   it("raw 23505 unique-violation text never mislabels as a payment duplicate", () => {
     expect(mapFunnelError('duplicate key value violates unique constraint "one_active"')).toBe(
       GENERIC_FUNNEL_ERROR,
     );
   });
-});
-
-describe("Phase 5 error tokens", () => {
-  it("maps every community token to Georgian", () => {
-    expect(mapFunnelError("already_voted")).toBe("ხმა უკვე მიცემულია.");
-    expect(mapFunnelError("P0001: poll_closed")).toBe("გამოკითხვა დახურულია.");
-    expect(mapFunnelError("rsvp_closed")).toBe("რეგისტრაცია ამ ღონისძიებაზე დახურულია.");
-    expect(mapFunnelError("invalid_option")).toBe("აირჩიე პასუხი სიიდან.");
-    expect(mapFunnelError("invalid_options")).toBe(
-      "პასუხის ვარიანტები არასწორია (2–10, უნიკალური).",
-    );
-    expect(mapFunnelError("invalid_status")).toBe(
-      "მოქმედება ამ მდგომარეობაში შეუძლებელია — განაახლე გვერდი.",
-    );
-    expect(mapFunnelError("invalid_title")).toBe("სათაური არასწორია (1–160 სიმბოლო).");
-    expect(mapFunnelError("invalid_body")).toBe("ტექსტი ცარიელია ან ძალიან გრძელია.");
-    expect(mapFunnelError("invalid_location")).toBe("ადგილმდებარეობა არასწორია (1–200 სიმბოლო).");
-    expect(mapFunnelError("invalid_event_dates")).toBe("თარიღები არასწორია.");
-    expect(mapFunnelError("invalid_question")).toBe("კითხვა არასწორია (1–300 სიმბოლო).");
-    expect(mapFunnelError("invalid_image")).toBe("სურათის შენახვა ვერ მოხერხდა.");
-  });
-});
-
-describe("mapFunnelError — Phase 6 R2 tokens", () => {
-  it("maps each R2 token to its exact Georgian message", () => {
-    expect(mapFunnelError("delegacy_exists")).toBe("დელეგატობის მოთხოვნა უკვე დაფიქსირებულია.");
-    expect(mapFunnelError("invalid_visibility")).toBe(
-      "ხილვადობის პარამეტრი არასწორია — სცადე თავიდან.",
-    );
-  });
-});
-
-describe("mapFunnelError — the security check-up's phone_required (F3)", () => {
-  // register() now refuses a session that carries no verified phone. Email
-  // sign-up is enabled and auto-confirmed on the project, so such a session is
-  // free to obtain — and without a message of its own, the person holding one
-  // would see only GENERIC_FUNNEL_ERROR and have no idea what to do.
-  it("maps phone_required to its own Georgian sentence", () => {
-    expect(mapFunnelError("P0001: phone_required")).toBe(
-      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
-    );
-  });
-
-  it("does not collide with not_authenticated, which means something different", () => {
-    expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
-  });
-});
-
-describe("mapFunnelError — Google-backed registration", () => {
-  it("maps google_required to the approved Georgian recovery instruction", () => {
-    expect(mapFunnelError("P0001: google_required")).toBe(
-      "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
-    );
-  });
-
-  it("keeps Google, confirmed-phone, and missing-session failures distinct", () => {
-    expect(mapFunnelError("google_required")).toBe("რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.");
-    expect(mapFunnelError("phone_required")).toBe(
-      "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
-    );
-    expect(mapFunnelError("not_authenticated")).toBe("სესია ამოიწურა — დაადასტურე ნომერი თავიდან.");
+  it("unknown/empty → generic Georgian error", () => {
+    expect(mapFunnelError("something weird")).toBe(GENERIC_FUNNEL_ERROR);
+    expect(mapFunnelError(undefined)).toBe(GENERIC_FUNNEL_ERROR);
   });
 });

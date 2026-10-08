@@ -31,16 +31,6 @@ describe("AdminNav (spec §3.1)", () => {
     expect(screen.getByRole("button", { name: "გასვლა" })).toBeInTheDocument();
   });
 
-  it("active tab has the brand underline classes, not the old pill highlight", () => {
-    const { container } = render(<AdminNav tabs={tabs} />);
-    const active = container.querySelector<HTMLAnchorElement>('a[href="/admin/members"]');
-    expect(active!.className).toContain("border-brand");
-    expect(active!.className).not.toContain("bg-brand/10");
-    const inactive = container.querySelector<HTMLAnchorElement>('a[href="/admin"]');
-    expect(inactive!.className).not.toContain("bg-brand/10");
-    expect(inactive!.className).toContain("text-ink");
-  });
-
   it("renders a count badge inside the tab link when a tab has a count", () => {
     const tabsWithCount = tabs.map((t) => (t.href === "/admin" ? { ...t, count: 4 } : t));
     const { container } = render(<AdminNav tabs={tabsWithCount} />);

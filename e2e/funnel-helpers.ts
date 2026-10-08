@@ -22,11 +22,11 @@ export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE = LOGIN_PHONE.slice(0, 8);
 
 // Progressive registration reworked the journeys. Single digits are scarce (0–9,
-// with 9 reserved for login.spec's fixed phone), so the slots are explicit.
+// with 9 reserved for E2E_TEST_PHONE itself), so the slots are explicit.
 // cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
-  regHappy: 0, // registration.spec: happy path + duplicate-phone re-entry
+  regHappy: 0, // membership.spec: privacy consent refusal (no account is created)
   membFull: 1, // membership.spec: full upgrade
   // review fix (owner fix #10 wave 1): the duplicate-ID check moved from /join to
   // the wizard, so this slot no longer seeds a REGISTRANT attempting a dup'd ID —
@@ -34,10 +34,10 @@ export const JOURNEY = {
   // (membDupId, below) collides with.
   regDupId: 2, // membership.spec: seeded member holding an already-taken personal ID
   membResume: 3, // membership.spec: wizard resume
-  regReferral: 4, // registration.spec + membership.spec: referral capture → completion
+  regReferral: 4, // membership.spec: referral capture → completion
   cabinet: 5, // cabinet.spec (ported setup)
-  membRsvp: 6, // membership.spec: RSVP as registered
-  spare: 7, // delegate-panel.spec: VIA_LINK_MEMBER
+  membRsvp: 6, // community-events.spec: RSVP as registered
+  spare: 7, // unused since delegate-panel.spec folded into community-events.spec (still swept)
   membDupId: 8, // membership.spec: fresh registrant colliding with regDupId's seeded ID
 } as const;
 
@@ -265,6 +265,9 @@ export async function seedCompletedMember(opts: {
   lastName: string;
   personalId: string;
   delegateId?: string | null;
+  /** An existing auth identity (e.g. createGoogleBackedTestUser's) to complete instead of
+   * creating a phone user — lets a journey sign a member in without an SMS. */
+  userId?: string;
 }): Promise<{ id: string }> {
   assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
@@ -272,14 +275,17 @@ export async function seedCompletedMember(opts: {
   }
   const admin = serviceClient();
   const authPhone = `+995${opts.phone}`;
-  const { data: created, error: userErr } = await admin.auth.admin.createUser({
-    phone: authPhone,
-    phone_confirm: true,
-  });
-  if (userErr || !created?.user) {
-    throw new Error(`seedCompletedMember createUser failed: ${userErr?.message}`);
+  let id = opts.userId;
+  if (!id) {
+    const { data: created, error: userErr } = await admin.auth.admin.createUser({
+      phone: authPhone,
+      phone_confirm: true,
+    });
+    if (userErr || !created?.user) {
+      throw new Error(`seedCompletedMember createUser failed: ${userErr?.message}`);
+    }
+    id = created.user.id;
   }
-  const id = created.user.id;
   const { regionId, cityId } = await defaultLocation(admin);
   const { error: pErr } = await admin.from("profiles").insert({
     id,
@@ -339,7 +345,7 @@ export async function seedPendingDelegate(opts: {
 /**
  * Service-role: a REGISTERED-standing user — the light registration only
  * (name+phone+personal_id, status registered, NO membership; the new invariant is that
- * only members hold a membership). Used by login.spec's registered-standing case.
+ * only members hold a membership). Used by referral-split.spec.
  */
 export async function seedRegisteredMember(opts: {
   userId: string;
@@ -370,11 +376,11 @@ export async function seedRegisteredMember(opts: {
 }
 
 /**
- * /login flow that signs the BROWSER in as a seeded user (spec §7). Reads the code
- * straight from dev_otp_inbox via the service client — the /api/dev/otp UI element is
- * withheld for ANY existing profile (R1 hardening), so this path works for members AND
- * delegates AND registered-standing users alike. The broad landing regex admits the
- * registered cabinet (/me), the member/delegate cabinets, and /admin.
+ * Signs the BROWSER in as a seeded user (spec §7) by email + password set through the
+ * service client (otp-helpers fixtureSession) — no SMS, so overlapping CI runs cannot
+ * exhaust staging's OTP budget. Works for members AND delegates AND registered-standing
+ * users alike. The broad landing regex admits the registered cabinet (/me), the
+ * member/delegate cabinets, and /admin.
  */
 export { loginAs }; // spec imports stay untouched
 

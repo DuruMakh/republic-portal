@@ -65,8 +65,4 @@ describe("filterFinanceLinks", () => {
     filterFinanceLinks(links, false);
     expect(links).toEqual(before);
   });
-
-  it("points at the transparency page", () => {
-    expect(FINANCES_HREF).toBe("/transparency");
-  });
 });

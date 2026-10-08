@@ -14,6 +14,12 @@ UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kroni
   decision, 2026-07-15.)
 - Owner writes zero code and reads no code. All evidence for sign-off must be
   plain-language + screenshots + a preview URL.
+- Owner only chats (owner order, 2026-10-08). Every development and release step is the
+  agent's job, done from the session: merging after sign-off, dispatching the production
+  database workflow (dry-run, then apply), staging pushes, deploy checks. Never ask the owner
+  to click, run a command, or open a dashboard. Their part is decisions and sign-off, given
+  in chat. If a tool permission blocks a step, explain the block in plain words and ask in
+  chat how to proceed; never hand over a command to run.
 - Never merge with failing CI. Never push directly to main.
 
 ## Code rules
