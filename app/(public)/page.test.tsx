@@ -24,6 +24,7 @@ beforeEach(() => {
   // Hidden is the default: pin it, so a SHOW_PUBLIC_FINANCES exported in the caller's shell cannot
   // flip these tests. The public-mode test below stubs it to "true" itself.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
+  vi.stubEnv("SHOW_EVENTS", undefined);
   for (const fetcher of Object.values(data)) fetcher.mockReset();
   data.fetchPublicStats.mockResolvedValue({
     approved_delegates: 12,
@@ -113,5 +114,28 @@ describe("homepage counters once finances are public (SHOW_PUBLIC_FINANCES=true)
     expect(screen.getByText(DUES_LABEL)).toBeInTheDocument();
     expect(screen.getByText(DUES_FIGURE)).toBeInTheDocument();
     expect(data.fetchTransparencyStats).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("homepage events section (ADR-042)", () => {
+  const EVENTS_HEADING = "ღონისძიებები";
+
+  it("has no events section, no link to /events and no events fetch while hidden", async () => {
+    render(await HomePage());
+
+    expect(screen.queryByText(EVENTS_HEADING)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ღონისძიებ/)).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).toBeNull();
+    expect(data.fetchPublicEvents).not.toHaveBeenCalled();
+  });
+
+  it("brings the section back once SHOW_EVENTS=true", async () => {
+    vi.stubEnv("SHOW_EVENTS", "true");
+
+    render(await HomePage());
+
+    expect(screen.getByText(EVENTS_HEADING)).toBeInTheDocument();
+    expect(document.querySelector('a[href="/events"]')).not.toBeNull();
+    expect(data.fetchPublicEvents).toHaveBeenCalledTimes(1);
   });
 });
