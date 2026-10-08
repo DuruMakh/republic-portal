@@ -35,8 +35,11 @@ import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { assertStagingTarget } from "./staging-guard.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Security audit M6: staging only.
+assertStagingTarget(url);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const dbPassword = process.env.SUPABASE_DB_PASSWORD;
@@ -296,17 +299,17 @@ console.log("\nF3 — register() from a phone-less session");
     const { data: user } = await client.auth.getUser();
     if (user?.user?.phone) throw new Error("F3 probe user unexpectedly HAS a phone");
 
+    // Since the security audit (C1, 20261008160000) register() is not executable by signed-in
+    // clients at all (42501); before it, it refused a phone-less session with phone_required.
+    // Either refusal passes — what must never happen is a profile.
     const { data: state, error } = await client.rpc("register", {
       p_first_name: "პრობი",
       p_last_name: "უტელეფონო",
-      // A personal ID from the audit's own synthetic 999… band, so a probe can
-      // never squat an ID that could belong to a real citizen (F13/LB-1).
-      p_personal_id: `999${randomBytes(4).readUInt32BE(0).toString().padStart(8, "0").slice(0, 8)}`,
     });
     const { data: row } = await db.from("profiles").select("id").eq("id", probeId).maybeSingle();
     check(
-      "register() refuses a session with no verified phone (token 'phone_required')",
-      Boolean(error?.message?.includes("phone_required")),
+      "register() refuses a session with no verified phone (42501 or token 'phone_required')",
+      error?.code === "42501" || Boolean(error?.message?.includes("phone_required")),
       error
         ? `raised ${error.message}`
         : `NO ERROR — a phone-less account became '${state?.status}' with created=${state?.created}`,

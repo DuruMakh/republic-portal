@@ -51,6 +51,7 @@ const activeRow: ChallengeRow = {
   verify_attempts: 0,
   expires_at: "2026-08-11T12:05:00.000Z",
   consumed_at: null,
+  superseded_at: null,
   created_at: "2026-08-11T12:00:00.000Z",
 };
 

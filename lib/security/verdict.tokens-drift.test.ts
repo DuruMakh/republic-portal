@@ -35,6 +35,10 @@ const DELIBERATELY_UNCLASSIFIED = new Set([
   // Belongs to a trigger (enforce_delegate_completed), not an RPC with a
   // caller to refuse or admit.
   "delegate_requires_completed_member",
+  // Belongs to a trigger (protect_profile_columns, security audit M2: an
+  // approved delegate's name is admin-only), not an RPC with a caller to
+  // refuse or admit.
+  "name_locked",
   // Raised only by complete_phone_verification_send(), an internal
   // service-role-only SECURITY INVOKER RPC whose EXECUTE privilege is revoked
   // from public, anon, and authenticated. It validates reservation/challenge

@@ -74,10 +74,9 @@ test("no code is sent and no account is created without the privacy consent tick
     await expect(page.getByText("გასაგრძელებლად მონიშნე თანხმობა.")).toBeVisible();
     await expect(page.getByTestId("otp-0")).toHaveCount(0);
 
-    // Bypassing the page does not help: the database refuses a version that is not the
-    // current policy. (A missing version is refused only from 20261008150000, which reaches
-    // staging after this PR merges, so every open PR's CI keeps working until then; that
-    // case is covered by lib/privacy.test.ts and checked live when the migration lands.)
+    // Bypassing the page does not help. The legacy register() is closed to every client
+    // (security audit C1, 20261008160000), and register_google() refuses this account before
+    // it ever reaches the consent check inside register(), which lib/privacy.test.ts pins.
     const client = await clientFor(session);
     const { error } = await client.rpc("register", {
       p_first_name: "ნინო",
@@ -85,7 +84,14 @@ test("no code is sent and no account is created without the privacy consent tick
       p_ref_code: null,
       p_privacy_version: "2000-01-v0",
     });
-    expect(error?.message).toBe("privacy_consent_required");
+    expect(error?.code).toBe("42501");
+    const { error: googleError } = await client.rpc("register_google", {
+      p_first_name: "ნინო",
+      p_last_name: "ტესტი",
+      p_ref_code: null,
+      p_privacy_version: "2000-01-v0",
+    });
+    expect(googleError?.message).toBe("phone_required");
     const { data: profile } = await serviceClient()
       .from("profiles")
       .select("id")

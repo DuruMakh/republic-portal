@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AdminNav } from "./AdminNav";
 
@@ -6,9 +6,8 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/members",
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
-vi.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({ auth: { signOut: vi.fn() } }),
-}));
+const signOut = vi.hoisted(() => vi.fn());
+vi.mock("@/components/useSignOut", () => ({ useSignOut: () => signOut }));
 
 describe("AdminNav (spec §3.1)", () => {
   const tabs = [
@@ -20,6 +19,11 @@ describe("AdminNav (spec §3.1)", () => {
     expect(screen.getByRole("link", { name: "მიმოხილვა" })).toHaveAttribute("href", "/admin");
     expect(screen.getByRole("link", { name: "წევრები" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "გასვლა" })).toBeInTheDocument();
+  });
+  it("signs out through the shared useSignOut, which also clears the offline caches (audit M3)", () => {
+    render(<AdminNav tabs={tabs} />);
+    fireEvent.click(screen.getByRole("button", { name: "გასვლა" }));
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
   it("„მიმოხილვა“ is active only on the exact /admin path", () => {
     render(<AdminNav tabs={tabs} />);
