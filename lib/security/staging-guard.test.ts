@@ -67,14 +67,36 @@ describe("scripts touch only staging (security audit M6)", () => {
     expect(result.stdout.trim()).toBe(kind);
   });
 
-  it.each([["http://127.0.0.1:9999"], ["https://localhost:54321"], [PRODUCTION_LOOKALIKE]])(
-    "refuses %s",
-    (url) => {
-      const result = guard(url);
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain("only against the staging database");
-    },
-  );
+  it.each([
+    ["http://127.0.0.1:9999"],
+    ["https://localhost:54321"],
+    ["http://127.0.0.1:54321@evil.example"],
+    [PRODUCTION_LOOKALIKE],
+    // the staging ref as a first label is not enough: exact https host only (review of PR #50)
+    ["https://orcxtbedkexoclbfgvzd.evil.example"],
+    ["http://orcxtbedkexoclbfgvzd.supabase.co"],
+    ["ftp://orcxtbedkexoclbfgvzd"],
+  ])("refuses %s", (url) => {
+    const result = guard(url);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("only against the staging database");
+  });
+
+  it("refuses the local stack in a script that only works against hosted staging", () => {
+    const result = spawnSync(process.execPath, ["scripts/verify-security-fixes.mjs"], {
+      encoding: "utf8",
+      timeout: 30_000,
+      env: {
+        NODE_ENV: "test",
+        PATH: process.env.PATH ?? "",
+        NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-only",
+        SUPABASE_SERVICE_ROLE_KEY: "test-only",
+      },
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("hosted staging database");
+  });
 
   it("allows exactly the local origins that lib/env.ts names", () => {
     const guardSource = readFileSync("scripts/staging-guard.mjs", "utf8");

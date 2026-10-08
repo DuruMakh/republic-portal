@@ -37,12 +37,16 @@ jobs:
       # Loaded only after the unit tests, so they keep running with the environment they always had.
       - name: Point build and e2e at the throwaway stack
         run: |
+          set -o pipefail
+          SETTINGS='^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)='
           supabase status -o env \
             --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
             --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
-            | grep -E '^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
+            | grep -E "$SETTINGS" \
             | sed 's/"//g' >> "$GITHUB_ENV"
+          # all three or stop here: a missing anon key would otherwise surface as confusing e2e errors
+          test "$(grep -cE "$SETTINGS" "$GITHUB_ENV")" -eq 3
       - run: node scripts/seed-staging.mjs --confirm-ref local
         env:
           NEXT_PUBLIC_APP_ENV: preview

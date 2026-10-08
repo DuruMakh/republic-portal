@@ -32,8 +32,12 @@ export function isTestDatabaseUrl(url: string | undefined): boolean {
   return parsed.protocol === "https:" && parsed.hostname === `${STAGING_PROJECT_REF}.supabase.co`;
 }
 
-/** Preview test sign-in (spec 4.3): never on a production build, only on a test database. */
+/**
+ * Preview test sign-in (spec 4.3): only an explicit preview or development build, and only on a
+ * test database. Both are allow-lists, so an unset or mistyped flag keeps it off.
+ */
 export function testSignInEnabled(): boolean {
-  if (process.env.NEXT_PUBLIC_APP_ENV === "production") return false;
+  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
+  if (appEnv !== "preview" && appEnv !== "development") return false;
   return isTestDatabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 }

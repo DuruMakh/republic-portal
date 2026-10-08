@@ -65,6 +65,21 @@ describe("testSignInEnabled", () => {
     expect(testSignInEnabled()).toBe(false);
   });
 
+  it.each([[""], ["staging"], ["Preview"]])(
+    "is off when the flag is %j, not an explicit preview or development",
+    (flag) => {
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", flag);
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+      expect(testSignInEnabled()).toBe(false);
+    },
+  );
+
+  it("is on for local development against the local stack", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    expect(testSignInEnabled()).toBe(true);
+  });
+
   it("is off when the database URL is missing", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");

@@ -17,7 +17,15 @@ export function assertStagingTarget(url) {
     parsed = null;
   }
   if (parsed && LOCAL_SUPABASE_ORIGINS.includes(parsed.origin)) return "local";
-  if (parsed && parsed.hostname.split(".")[0] === STAGING_PROJECT_REF) return "staging";
+  // Exact https host, as lib/env.ts isTestDatabaseUrl: a first DNS label alone would let
+  // https://<ref>.attacker.example through and hand it the service-role key.
+  if (
+    parsed &&
+    parsed.protocol === "https:" &&
+    parsed.hostname === `${STAGING_PROJECT_REF}.supabase.co`
+  ) {
+    return "staging";
+  }
   console.error("Refusing: this script runs only against the staging database.");
   process.exit(1);
 }
