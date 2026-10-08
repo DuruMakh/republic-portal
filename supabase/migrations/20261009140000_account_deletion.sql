@@ -35,12 +35,19 @@ group by po.poll_id, po.id;
 alter table public.memberships add column note text
   constraint memberships_note_known check (note in ('delegate_left'));
 
--- 3. Append-only, except the erasure scrub (spec §4.3). Clients hold no privilege on
---    audit_log at all, so this branch is reachable only from erase_account().
+-- 3. Append-only, except the erasure scrub (spec §4.3). Two locks on the one exception:
+--    the transaction-local setting that only erase_account() sets, AND the current role
+--    being the owner of erase_account(), looked up in the catalog when the trigger runs
+--    (so the function only has to exist by then, not when this one is created). Clients hold
+--    no privilege on audit_log at all; service_role can run SQL but is not that owner.
 create or replace function public.audit_log_immutable() returns trigger language plpgsql as $$
 begin
   if tg_op = 'UPDATE'
      and current_setting('app.erasing', true) = 'on'
+     and current_user = (select r.rolname
+                           from pg_catalog.pg_proc p
+                           join pg_catalog.pg_roles r on r.oid = p.proowner
+                          where p.oid = 'public.erase_account(uuid)'::pg_catalog.regprocedure)
      and new.id = old.id
      and new.actor_id is not distinct from old.actor_id
      and new.action = old.action
@@ -61,7 +68,7 @@ declare
   v_photo_url text;
   v_team uuid[];
   v_personal_keys constant text[] :=
-    array['name', 'memberName', 'firstName', 'lastName', 'personalId', 'phone', 'email'];
+    array['name', 'memberName', 'slug', 'firstName', 'lastName', 'personalId', 'phone', 'email'];
 begin
   if p_user_id is null
      or not exists (select 1 from public.profiles where id = p_user_id) then
@@ -85,26 +92,40 @@ begin
 
   -- Audit rows about the person keep the action and lose the personal details. Every
   -- `insert into public.audit_log` in supabase/migrations was re-read for this (2026-10-08).
-  -- Personal names are stored under:
+  -- Personal data is stored under:
   --   name        delegate.approve / reject / update_profile, admin.grant_role / revoke_role
   --               (target_id = the person)
+  --   slug        delegate.approve: the delegate's full name transliterated (lib/slug.ts)
+  --   note        delegate.reject: the admin's free text about the applicant; removed from
+  --               those rows only, other actions' notes are not personal
   --   memberName  member.reassign, member.reveal_personal_id, delegate.reveal_personal_id
   --               (target_id = the person) and payment.record / payment.void (target_id is the
   --               PAYMENT; details.memberId is the person)
   --   fromName / toName   member.reassign names a DELEGATE inside another member's row, next to
   --               fromDelegateId / toDelegateId
   --   from / to   delegate.update_name: the delegate's old and new name
-  -- No other audit action stores a person's name (news, event, poll, settings, export and
+  -- Kept on purpose: member.delete's reason (the admin's stated reason, written without the
+  -- name). No other audit action stores personal data (news, event, poll, settings, export and
   -- sweep rows carry titles, counts and filters; member.personal_id_conflict has no details).
   perform set_config('app.erasing', 'on', true);
+  -- every row about the person is marked erased, with or without a personal key in it
+  update public.audit_log
+     set details = (coalesce(details, '{}'::jsonb) - v_personal_keys)
+                   || jsonb_build_object('erased', true)
+   where target_id = p_user_id::text;
+  -- payment rows target the payment; details.memberId is the person
   update public.audit_log
      set details = (details - v_personal_keys) || jsonb_build_object('erased', true)
-   where (target_id = p_user_id::text or details ->> 'memberId' = p_user_id::text)
+   where details ->> 'memberId' = p_user_id::text
      and details ?| v_personal_keys;
   update public.audit_log
      set details = (details - array['from', 'to']) || jsonb_build_object('erased', true)
    where target_id = p_user_id::text
      and action = 'delegate.update_name';
+  update public.audit_log
+     set details = (details - 'note') || jsonb_build_object('erased', true)
+   where target_id = p_user_id::text
+     and action = 'delegate.reject';
   update public.audit_log
      set details = (details - 'fromName') || jsonb_build_object('erased', true)
    where action = 'member.reassign'

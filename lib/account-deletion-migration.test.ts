@@ -13,6 +13,9 @@ const fn = (name: string): string => {
   return sql.slice(start, sql.indexOf("end $$;", start));
 };
 
+/** SQL on one line, so a statement can be pinned whatever its line breaks. */
+const flat = (text: string): string => text.replace(/\s+/g, " ");
+
 describe("account deletion migration", () => {
   it("checks the same confirmation word as the app", () => {
     expect(fn("delete_my_account")).toContain(
@@ -73,11 +76,45 @@ describe("account deletion migration", () => {
     }
   });
 
+  it("strips every key that holds a person's name, including the slug made from it", () => {
+    const decl = /v_personal_keys constant text\[\]\s*:=\s*array\[([^\]]*)\]/.exec(
+      fn("erase_account"),
+    );
+    expect(decl, "v_personal_keys is declared").not.toBeNull();
+    const keys = [...decl![1]!.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    // delegate.approve stores slug = the delegate's name transliterated (lib/slug.ts)
+    for (const key of ["name", "memberName", "slug"]) expect(keys).toContain(key);
+    // 'note' is free text in other actions; it is removed only from delegate.reject rows
+    expect(keys).not.toContain("note");
+  });
+
+  it("removes the admin's free-text note from a rejected applicant's row", () => {
+    expect(flat(fn("erase_account"))).toContain(
+      "update public.audit_log set details = (details - 'note') || jsonb_build_object('erased', true) " +
+        "where target_id = p_user_id::text and action = 'delegate.reject';",
+    );
+  });
+
+  it("marks every audit row about the person erased, even one with no personal key", () => {
+    // no `?|` filter on the target_id case: member.personal_id_conflict has null details
+    expect(flat(fn("erase_account"))).toContain(
+      "update public.audit_log set details = (coalesce(details, '{}'::jsonb) - v_personal_keys) " +
+        "|| jsonb_build_object('erased', true) where target_id = p_user_id::text;",
+    );
+  });
+
   it("opens the audit log only for the erasure scrub, never for a client", () => {
     const trigger = sql.slice(
       sql.indexOf("create or replace function public.audit_log_immutable()"),
     );
     expect(trigger).toContain("current_setting('app.erasing', true) = 'on'");
+    // the setting alone is not enough: only the owner of erase_account (looked up in the
+    // catalog when the trigger runs) may use it, so service_role setting it gets nowhere
+    expect(flat(trigger)).toContain(
+      "and current_user = (select r.rolname from pg_catalog.pg_proc p " +
+        "join pg_catalog.pg_roles r on r.oid = p.proowner " +
+        "where p.oid = 'public.erase_account(uuid)'::pg_catalog.regprocedure)",
+    );
     for (const col of ["actor_id", "target_id"]) {
       expect(trigger).toContain(`new.${col} is not distinct from old.${col}`);
     }
