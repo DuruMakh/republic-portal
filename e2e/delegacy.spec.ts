@@ -53,6 +53,8 @@ test.beforeAll(async () => {
 test.afterAll(() => cleanupPhase4Users([REQUESTER, REJECTEE, REAPPROVED]));
 
 test("request, review and both outcomes: approve, reject, re-approve", async ({ browser }) => {
+  // three sign-ins in one test; each may wait out an OTP resend (otp-helpers)
+  test.setTimeout(300_000);
   const db = serviceClient();
   const requesterId = await profileIdByPhone(db, phase4Phone(REQUESTER));
   const rejecteeId = await profileIdByPhone(db, phase4Phone(REJECTEE));
@@ -65,6 +67,36 @@ test("request, review and both outcomes: approve, reject, re-approve", async ({ 
     const rPage = await requesterContext.newPage();
     const vPage = await verifierContext.newPage();
     const xPage = await rejecteeContext.newPage();
+
+    await test.step("verifier rejects two applicants with a note, re-approves one from the rejected tab", async () => {
+      // the seeded applicants first, so a failure in the requester's UI below cannot
+      // skip these admin decisions; this is the verifier's only sign-in
+      await adminLoginAs(vPage, ADMIN_PHONES.verifier);
+      await vPage.goto("/admin/verify");
+      for (const id of [rejecteeId, reapprovedId]) {
+        const card = vPage.getByTestId(`verify-card-${id}`);
+        await expect(card).toBeVisible();
+        await card.getByRole("button", { name: "უარყოფა" }).click();
+        await card.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
+        await card.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
+        // reject revalidates the route too, unmounting the card -- assert the OUTCOME:
+        // the card leaves the pending queue.
+        await expect(card).toBeHidden({ timeout: 15_000 });
+      }
+
+      // rejected tab: the stored note + the decision stamp; re-approve from there
+      await vPage.goto("/admin/verify?tab=rejected");
+      const rejectedB = vPage.getByTestId(`verify-card-${reapprovedId}`);
+      await expect(rejectedB.getByText(/დოკუმენტები გადასამოწმებელია/)).toBeVisible();
+      await expect(
+        rejectedB.getByText(/უარყოფილია \d{2}\.\d{2}\.\d{4} · ვერიფიკატორი გუნდი/),
+      ).toBeVisible();
+      await rejectedB.getByRole("button", { name: "დადასტურება" }).click();
+      // re-approve from the rejected tab -- assert the OUTCOME: B leaves the rejected list.
+      await expect(rejectedB).toBeHidden({ timeout: 15_000 });
+      // the final rejection is still listed there
+      await expect(vPage.getByTestId(`verify-card-${rejecteeId}`)).toBeVisible();
+    });
 
     await test.step("member requests delegacy -> pending card, member life intact", async () => {
       await loginAs(rPage, phase4Phone(REQUESTER));
@@ -82,7 +114,6 @@ test("request, review and both outcomes: approve, reject, re-approve", async ({ 
     });
 
     await test.step("verifier reveals + approves the requester from the pending queue", async () => {
-      await adminLoginAs(vPage, ADMIN_PHONES.verifier);
       await vPage.goto("/admin/verify");
       const card = vPage.getByTestId(`verify-card-${requesterId}`);
       await expect(card).toBeVisible();
@@ -115,33 +146,6 @@ test("request, review and both outcomes: approve, reject, re-approve", async ({ 
       // the requester's session (still open since the request) now routes to /delegate
       await rPage.goto("/me");
       await expect(rPage).toHaveURL(/\/delegate(\/|\?|#|$)/, { timeout: 15_000 });
-    });
-
-    await test.step("verifier rejects two applicants with a note, re-approves one from the rejected tab", async () => {
-      await vPage.goto("/admin/verify");
-      for (const id of [rejecteeId, reapprovedId]) {
-        const card = vPage.getByTestId(`verify-card-${id}`);
-        await expect(card).toBeVisible();
-        await card.getByRole("button", { name: "უარყოფა" }).click();
-        await card.getByLabel(/შიდა შენიშვნა/).fill("დოკუმენტები გადასამოწმებელია");
-        await card.getByRole("button", { name: "უარყოფის დადასტურება" }).click();
-        // reject revalidates the route too, unmounting the card -- assert the OUTCOME:
-        // the card leaves the pending queue.
-        await expect(card).toBeHidden({ timeout: 15_000 });
-      }
-
-      // rejected tab: the stored note + the decision stamp; re-approve from there
-      await vPage.goto("/admin/verify?tab=rejected");
-      const rejectedB = vPage.getByTestId(`verify-card-${reapprovedId}`);
-      await expect(rejectedB.getByText(/დოკუმენტები გადასამოწმებელია/)).toBeVisible();
-      await expect(
-        rejectedB.getByText(/უარყოფილია \d{2}\.\d{2}\.\d{4} · ვერიფიკატორი გუნდი/),
-      ).toBeVisible();
-      await rejectedB.getByRole("button", { name: "დადასტურება" }).click();
-      // re-approve from the rejected tab -- assert the OUTCOME: B leaves the rejected list.
-      await expect(rejectedB).toBeHidden({ timeout: 15_000 });
-      // the final rejection is still listed there
-      await expect(vPage.getByTestId(`verify-card-${rejecteeId}`)).toBeVisible();
     });
 
     await test.step("audit trail holds the reveal, approve, reject and re-approve rows", async () => {

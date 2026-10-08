@@ -264,6 +264,9 @@ export async function seedCompletedMember(opts: {
   lastName: string;
   personalId: string;
   delegateId?: string | null;
+  /** An existing auth identity (e.g. createGoogleBackedTestUser's) to complete instead of
+   * creating a phone user — lets a journey sign a member in without an SMS. */
+  userId?: string;
 }): Promise<{ id: string }> {
   assertE2eFixtureEnvironment();
   if (!opts.phone.startsWith("55")) {
@@ -271,14 +274,17 @@ export async function seedCompletedMember(opts: {
   }
   const admin = serviceClient();
   const authPhone = `+995${opts.phone}`;
-  const { data: created, error: userErr } = await admin.auth.admin.createUser({
-    phone: authPhone,
-    phone_confirm: true,
-  });
-  if (userErr || !created?.user) {
-    throw new Error(`seedCompletedMember createUser failed: ${userErr?.message}`);
+  let id = opts.userId;
+  if (!id) {
+    const { data: created, error: userErr } = await admin.auth.admin.createUser({
+      phone: authPhone,
+      phone_confirm: true,
+    });
+    if (userErr || !created?.user) {
+      throw new Error(`seedCompletedMember createUser failed: ${userErr?.message}`);
+    }
+    id = created.user.id;
   }
-  const id = created.user.id;
   const { regionId, cityId } = await defaultLocation(admin);
   const { error: pErr } = await admin.from("profiles").insert({
     id,

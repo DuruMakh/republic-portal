@@ -1,38 +1,68 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_PHONES, cleanupPhase4Users, loginAs, serviceClient } from "./admin-helpers";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  ADMIN_PHONES,
+  cleanupPhase4Users,
+  loginAs,
+  phase4PersonalId,
+  phase4Phone,
+  serviceClient,
+} from "./admin-helpers";
 import { runCleanups } from "./cleanup-helpers";
 import {
   cleanupCommunityContent,
   memberRpcClient,
   registerCompletedMember,
 } from "./community-helpers";
+import {
+  cleanupGoogleBackedTestUsers,
+  createGoogleBackedTestUser,
+  seedCompletedMember,
+} from "./funnel-helpers";
 
 const VOTER = 8; // phase4Phone(8)
+const WATCHER = 9; // phase4Phone(9) — never votes; sees results only after close
 const RUN = `e2e-poll-${Date.now().toString(36)}`;
 
 test.describe.configure({ mode: "serial" });
 
+const cleanupUsers = () =>
+  runCleanups([
+    () => cleanupPhase4Users([VOTER, WATCHER]),
+    () => cleanupGoogleBackedTestUsers([phase4Phone(WATCHER)]),
+  ]);
+
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the
 // other, or a content failure strands this run's users where no later run looks.
-test.beforeAll(() =>
-  runCleanups([() => cleanupPhase4Users([VOTER]), () => cleanupCommunityContent("e2e-poll-")]),
-);
+test.beforeAll(() => runCleanups([cleanupUsers, () => cleanupCommunityContent("e2e-poll-")]));
 
-test.afterAll(() =>
-  runCleanups([() => cleanupCommunityContent("e2e-poll-"), () => cleanupPhase4Users([VOTER])]),
-);
+test.afterAll(() => runCleanups([() => cleanupCommunityContent("e2e-poll-"), cleanupUsers]));
 
-// Who sees results when (voter vs non-voter, open vs closed) is lib/community's poll-view
-// rule, unit-tested there; this journey proves the real vote path: one vote per member,
-// enforced by the database even against a direct second RPC call. The editor keeps its
-// own signed-in context, so each actor signs in once.
-test("vote once; a direct second vote is refused; closing shows the final results", async ({
+/** The poll's per-option counts as `client` may read them through poll_option_counts. */
+async function visibleVotes(client: SupabaseClient, pollId: string): Promise<number[]> {
+  const { data, error } = await client
+    .from("poll_option_counts")
+    .select("votes")
+    .eq("poll_id", pollId);
+  if (error) throw new Error(`poll_option_counts read failed: ${error.message}`);
+  return (data ?? []).map((row) => row.votes as number);
+}
+
+// The real vote path: one vote per member, enforced by the database even against a
+// direct second RPC call; and the database's own visibility rule (poll_option_counts:
+// counts only once the poll is closed OR the caller has voted), read directly as a voter
+// and as a non-voter. How the card renders that is lib/community's poll-view, unit-tested.
+// Every actor keeps its own context: the editor and voter sign in by SMS, the non-voter
+// through the Google password fixture (no SMS).
+test("vote once; a direct second vote is refused; counts stay hidden from non-voters until close", async ({
   page,
   browser,
 }) => {
   const editorContext = await browser.newContext();
+  const watcherContext = await browser.newContext();
   try {
     const editorPage = await editorContext.newPage();
+    const wPage = await watcherContext.newPage();
 
     // 0) editor creates + opens a poll
     await loginAs(editorPage, ADMIN_PHONES.editor);
@@ -91,7 +121,27 @@ test("vote once; a direct second vote is refused; closing shows the final result
       .eq("poll_id", pollRow!.id as string);
     expect(afterDirect).toBe(1);
 
-    // 2) editor closes (its session is still open) → the voter now sees the final results
+    // 2) a NON-voter sees buttons, not results, while open — in the UI and in the
+    // database view itself; the voter can read the counts already
+    const watcherPhone = phase4Phone(WATCHER);
+    const { id: watcherId } = await createGoogleBackedTestUser(wPage, watcherPhone);
+    await seedCompletedMember({
+      userId: watcherId,
+      phone: watcherPhone,
+      firstName: "წევრი",
+      lastName: "ტესტი",
+      personalId: phase4PersonalId(WATCHER),
+    });
+    const pollId = pollRow!.id as string;
+    const watcherDb = await memberRpcClient(wPage);
+    expect(await visibleVotes(watcherDb, pollId)).toEqual([]);
+    expect((await visibleVotes(voterRpc, pollId)).reduce((a, b) => a + b, 0)).toBe(1);
+    await wPage.goto("/me/polls");
+    const watcherCard = wPage.locator("[data-testid^='poll-']", { hasText: RUN });
+    await expect(watcherCard.getByRole("button", { name: "დიახ" })).toBeVisible();
+    await expect(watcherCard.getByText(/სულ 1 ხმა/)).not.toBeVisible();
+
+    // 3) editor closes (its session is still open) → both now see the final results
     await editorPage.goto("/admin/content/polls");
     // The list page (Tasks 18–20 sibling pattern) keeps the question cell plain
     // text — only the row's own action link navigates — so open the poll
@@ -111,7 +161,13 @@ test("vote once; a direct second vote is refused; closing shows the final result
     await page.goto("/me/polls");
     await expect(pollCard.getByText(/გამოკითხვა დასრულებულია · სულ 1 ხმა/)).toBeVisible();
     await expect(pollCard.getByRole("button", { name: "დიახ" })).not.toBeVisible();
+    const closedVotes = await visibleVotes(watcherDb, pollId);
+    expect(closedVotes).toHaveLength(2);
+    expect(closedVotes.reduce((a, b) => a + b, 0)).toBe(1);
+    await wPage.goto("/me/polls");
+    await expect(watcherCard.getByText(/გამოკითხვა დასრულებულია · სულ 1 ხმა/)).toBeVisible();
+    await expect(watcherCard.getByRole("button", { name: "დიახ" })).not.toBeVisible();
   } finally {
-    await editorContext.close();
+    await Promise.all([editorContext.close(), watcherContext.close()]);
   }
 });

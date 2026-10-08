@@ -163,6 +163,48 @@ describe("cleanupGoogleBackedTestUsers", () => {
   });
 });
 
+describe("seedCompletedMember", () => {
+  // The Google password fixture already owns the auth identity; a second createUser
+  // would leave an orphan auth user and a profile the signed-in browser does not own.
+  test("with a userId, completes that identity's profile without creating another", async () => {
+    const createUser = vi.fn();
+    const inserted: { table: string; row: Record<string, unknown> }[] = [];
+    const single = vi.fn().mockResolvedValue({ data: { id: 7 }, error: null });
+    const chain = {
+      select: () => chain,
+      eq: () => chain,
+      order: () => chain,
+      limit: () => chain,
+      single,
+    };
+    createClient.mockReturnValue({
+      auth: { admin: { createUser } },
+      from: (table: string) => ({
+        ...chain,
+        insert: (row: Record<string, unknown>) => {
+          inserted.push({ table, row });
+          return Promise.resolve({ error: null });
+        },
+      }),
+    });
+
+    const result = await seedCompletedMember({
+      userId: "google-user-1",
+      phone: "550001230",
+      firstName: "ნინო",
+      lastName: "ტესტი",
+      personalId: "95500012300",
+    });
+
+    expect(createUser).not.toHaveBeenCalled();
+    expect(result).toEqual({ id: "google-user-1" });
+    expect(inserted.map((i) => [i.table, i.row.id ?? i.row.member_id])).toEqual([
+      ["profiles", "google-user-1"],
+      ["memberships", "google-user-1"],
+    ]);
+  });
+});
+
 describe("seedRegisteredMember", () => {
   test("adds cabinet data to the existing Google auth user without creating another identity", async () => {
     const insert = vi.fn().mockResolvedValue({ error: null });
