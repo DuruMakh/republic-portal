@@ -13,7 +13,7 @@ const DEMO_BANNER = "სადემონსტრაციო გარემ�
 const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა.";
 const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
 const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
-// A missing article, delegate or event names what is missing (ADR-041).
+// A missing article, delegate or event names what is missing (ADR-044).
 const ARTICLE_NOT_FOUND_TITLE = "სიახლე ვერ მოიძებნა — ქართული რესპუბლიკა";
 const DELEGATE_NOT_FOUND_TITLE = "დელეგატი ვერ მოიძებნა — ქართული რესპუბლიკა";
 const DELEGATE_NOT_FOUND_HEADING = "დელეგატი ვერ მოიძებნა.";
@@ -384,7 +384,7 @@ test.describe("events hidden", () => {
   });
 });
 
-// ADR-040, ADR-041: Next regenerates a prerendered page's 60-second ISR entry without the page's
+// ADR-040, ADR-044: Next regenerates a prerendered page's 60-second ISR entry without the page's
 // own metadata, so a page-raised 404's tab used to fall back to the plain site name from the
 // second minute on. Each address is visited three times: now, after the entry has gone stale
 // (that visit starts the regeneration) and once more after it (the regenerated copy). A hidden

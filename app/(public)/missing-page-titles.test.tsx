@@ -32,7 +32,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-// ADR-041. A missing slug's 404 takes its HTML title from the nearest not-found file and its tab
+// ADR-044. A missing slug's 404 takes its HTML title from the nearest not-found file and its tab
 // title from the page's generateMetadata, until the 60-second ISR regeneration drops the page's
 // and the tab falls back to the not-found file's. The two must therefore be the same title.
 describe.each<[string, string, () => Promise<Metadata>, () => Metadata | Promise<Metadata>]>([

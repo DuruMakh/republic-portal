@@ -63,4 +63,4 @@ in the notice's JSX (the HTML keeps the site name), accepting the generic title.
 ## Gates
 
 typecheck, lint, format:check, test, build, ka:scan (+ ka-gate on the diff); the refresh e2e against a
-production build; the same addresses curled on the Vercel preview. ADR-041.
+production build; the same addresses curled on the Vercel preview. ADR-044.
