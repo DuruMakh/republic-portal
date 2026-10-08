@@ -31,11 +31,9 @@ describe("/privacy", () => {
     );
   });
 
-  it("is marked as a working version pending legal review", () => {
-    render(<PrivacyPage />);
-    expect(
-      screen.getByText("სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას."),
-    ).toBeInTheDocument();
+  it("carries no draft banner (owner decision, 2026-10-08)", () => {
+    const { container } = render(<PrivacyPage />);
+    expect(container.textContent).not.toContain("სამუშაო ვერსია");
   });
 
   it("names the movement and no service provider", () => {

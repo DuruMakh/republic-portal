@@ -1194,6 +1194,8 @@ variable, nothing visible changes except the tab title.
   data in the US, lists technical logs, says a delegate's ranking is public, and points
   questions and data requests to the contact page with a 10-working-day answer. Version stays
   `2026-10-v1`: nobody had accepted the earlier wording on the real site.
+- **No draft banner (owner, 2026-10-08).** The policy page no longer carries the "working
+  draft, subject to legal review" banner; the delegate rules keep theirs.
 - **Deferred.** Self-service account deletion is the next feature (owner, 2026-10-08), and the
   rights section will mention it once it ships; general rules of use; re-consent on a new
   policy version; consent date in the admin panel; legal review of the copy.

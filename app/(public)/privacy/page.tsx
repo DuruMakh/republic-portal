@@ -84,9 +84,6 @@ export default function PrivacyPage() {
       <h1 className="mb-4 break-words font-serif text-3xl font-bold text-ink">
         კონფიდენციალურობის პოლიტიკა
       </h1>
-      <p className="mb-6 border border-warn-deep bg-warn/10 p-3 text-sm font-semibold text-warn-deep">
-        სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
-      </p>
       <p className="mb-6 text-sm text-prose">
         ეს გვერდი გიხსნის, რა მონაცემებს ვაგროვებთ, რისთვის ვიყენებთ და ვინ ხედავს მათ. ვერსია 1,
         2026 წლის ოქტომბერი.

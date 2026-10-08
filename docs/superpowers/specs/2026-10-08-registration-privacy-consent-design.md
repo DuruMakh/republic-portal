@@ -37,7 +37,7 @@ abolished):
 - **Age (Art. 7):** own consent from 16; under 16 needs a parent's written consent. The
   platform sets 18+ (owner decision), so parental consent never arises.
 
-The text is marked as a working version pending legal review; a Georgian lawyer should read
+(Superseded 2026-10-08: the owner dropped the draft banner at release; see ADR-041.) The text is marked as a working version pending legal review; a Georgian lawyer should read
 it before launch.
 
 ## 3. Decisions taken in this conversation
