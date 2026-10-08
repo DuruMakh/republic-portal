@@ -20,6 +20,8 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
+    // Since ADR-038 the header carries neither page: these homepage links are the way in
+    // (news is also in the footer; events, while SHOW_EVENTS=true, only from here).
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
     // ADR-042: the events section is there only while SHOW_EVENTS=true.
@@ -214,6 +216,58 @@ test.describe("transparency", () => {
     await expect(page.getByRole("columnheader", { name: "წევრი" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: /შეგროვებული თანხა/ })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "აქტიური" })).toHaveCount(0);
+  });
+});
+
+test.describe("structure page", () => {
+  test("the header link opens it; sections, rules, roster notice and anchors work", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("navigation").first().getByRole("link", { name: "სტრუქტურა" }).click();
+    await expect(page).toHaveURL(/\/structure$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "ორგანიზაციული სტრუქტურა" }),
+    ).toBeVisible();
+    for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა", "ბორდის შემადგენლობა"]) {
+      await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole("img", { name: "5-დან 4 ხმა" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "5-დან 3 ხმა" })).toBeVisible();
+    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
+
+    await page
+      .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+      .getByRole("link", { name: "საერთო კენჭისყრა", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/structure#vote$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "საერთო კენჭისყრა", exact: true }),
+    ).toBeInViewport();
+  });
+
+  test.describe("on a phone", () => {
+    test.use({ viewport: { width: 360, height: 780 } });
+
+    test("an index link lands its heading below the sticky header, not under it", async ({
+      page,
+    }) => {
+      await page.goto("/structure");
+      for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა"]) {
+        await page
+          .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
+          .getByRole("link", { name, exact: true })
+          .click();
+        const heading = page.getByRole("heading", { level: 2, name, exact: true });
+        await expect(heading).toBeInViewport();
+        const header = await page.getByRole("banner").boundingBox();
+        const top = await heading.boundingBox();
+        expect(header, "the sticky header is on screen").not.toBeNull();
+        expect(top!.y, `${name} heading clears the header`).toBeGreaterThanOrEqual(
+          header!.y + header!.height,
+        );
+      }
+    });
   });
 });
 
