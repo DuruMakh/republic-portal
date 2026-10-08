@@ -193,6 +193,12 @@ export const POST_GATE_TOKENS = new Set([
   // 20261008150000, a missing one). Payload validation behind register()'s
   // not_authenticated gate, the same standing as invalid_name next to it.
   "privacy_consent_required",
+  // Security audit H1 (20261008160100_membership_personal_id_probe_cap.sql):
+  // become_member_save_profile() stops an account after three personal-ID
+  // conflicts. Raised behind its not_authenticated gate and about how OFTEN the
+  // caller has collided, not WHO they are — the same standing as
+  // too_many_requests above.
+  "personal_id_attempts_exceeded",
 ]);
 
 /**
