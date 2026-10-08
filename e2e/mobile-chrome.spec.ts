@@ -3,9 +3,12 @@ import { FINANCES_PUBLIC } from "./finances-switch";
 
 // Task 10 regression guard for the chrome Tasks 3-9 shipped (public masthead
 // menu, sticky join CTA, back headers, StickyBar's single-bar-per-route
-// invariant, viewport-fit=cover). The menu dialog itself and the join-CTA route
-// list are unit-tested (MobileMenu, MobileJoinCta, lib/mobile-nav); the cabinet tab
-// bar and its More sheet are unit-tested too (MobileTabBar, MobileMoreSheet).
+// invariant, viewport-fit=cover). The menu dialog's focus trap and Escape, and the
+// join-CTA route list, are unit-tested (MobileMenu, MobileJoinCta, lib/mobile-nav).
+// Signed-in phone chrome is checked at layout level inside sessions that already exist:
+// cabinet.spec (one tab bar, pinned header, the More sheet opens as a dialog) and
+// community-events.spec (the delegate cabinet's one tab bar and its current tab); the
+// tab bar's and More sheet's own behaviour are unit tests (MobileTabBar, MobileMoreSheet).
 //
 // Every Georgian literal below is copied byte-for-byte from shipped source,
 // never hand-typed (DESIGN.md's Georgian integrity gate):
@@ -59,6 +62,11 @@ test.describe("mobile chrome at 390x844", () => {
     await expect(header).toHaveCSS("position", "sticky");
     await page.evaluate(() => window.scrollTo(0, 500));
     await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
+  });
+
+  test("the unchanged styleguide masthead does not become sticky", async ({ page }) => {
+    await page.goto("/styleguide");
+    await expect(page.getByRole("banner")).toHaveCSS("position", "static");
   });
 
   test("a detail route gets the back header pointing at its index", async ({ page }) => {
