@@ -50,6 +50,12 @@ describe("saveMembershipProfileAction", () => {
     });
   });
 
+  it("never mistakes a cabinet state for a refusal, whatever else it carries", async () => {
+    const state = { exists: true, standing: "supporter", error: "unrelated" };
+    mocks.rpc.mockResolvedValue({ data: state, error: null });
+    await expect(saveMembershipProfileAction(input)).resolves.toEqual({ ok: true, state });
+  });
+
   it("passes a real cabinet state through", async () => {
     const state = { exists: true, standing: "supporter" };
     mocks.rpc.mockResolvedValue({ data: state, error: null });

@@ -13,9 +13,10 @@ import { createServerSupabase } from "@/lib/supabase/server";
 
 /**
  * become_member_save_profile RETURNS {"error": token} for a refused personal ID (security
- * audit H1), so the audit row it writes commits instead of rolling back with a raise.
+ * audit H1), so the audit row it writes commits instead of rolling back with a raise. Strict:
+ * an object holding exactly one `error` key — a cabinet state always carries `exists`.
  */
-const returnedRefusalSchema = z.object({ error: z.string() });
+const returnedRefusalSchema = z.object({ error: z.string() }).strict();
 
 export async function saveMembershipProfileAction(input: unknown): Promise<ActionResult> {
   const parsed = membershipProfileSchema.safeParse(input);

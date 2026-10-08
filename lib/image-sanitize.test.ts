@@ -47,6 +47,35 @@ describe("sanitizeUploadedImage (security audit M4)", () => {
     );
   });
 
+  it("refuses an image too large to decode safely (a small file can hide a huge canvas)", async () => {
+    const huge = await sharp({
+      create: { width: 8000, height: 6000, channels: 3, background: "#ffffff" },
+    })
+      .png()
+      .toBuffer();
+    const bytes = huge.buffer.slice(
+      huge.byteOffset,
+      huge.byteOffset + huge.byteLength,
+    ) as ArrayBuffer;
+    await expect(sanitizeUploadedImage(bytes, "image/png")).rejects.toBeInstanceOf(
+      ImageSanitizeError,
+    );
+  });
+
+  it("scales a large photo down to fit 2400 pixels, never up", async () => {
+    const wide = await sharp({
+      create: { width: 3000, height: 1000, channels: 3, background: "#000" },
+    })
+      .jpeg()
+      .toBuffer();
+    const out = await sanitizeUploadedImage(
+      wide.buffer.slice(wide.byteOffset, wide.byteOffset + wide.byteLength) as ArrayBuffer,
+      "image/jpeg",
+    );
+    const meta = await sharp(out).metadata();
+    expect([meta.width, meta.height]).toEqual([2400, 800]);
+  });
+
   it("knows exactly the three upload types", () => {
     expect(["image/jpeg", "image/png", "image/webp"].every(isUploadMime)).toBe(true);
     expect(isUploadMime("image/gif")).toBe(false);

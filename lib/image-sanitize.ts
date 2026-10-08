@@ -19,12 +19,22 @@ export function isUploadMime(value: string): value is UploadMime {
   return value === "image/jpeg" || value === "image/png" || value === "image/webp";
 }
 
+/**
+ * A 5 MB file can still declare a canvas big enough to exhaust the function's memory when
+ * decoded. 40 megapixels covers every phone camera; larger is refused before decoding.
+ */
+const MAX_INPUT_PIXELS = 40_000_000;
+/** Delegate portraits and news covers never show wider or taller than this. */
+const MAX_EDGE = 2400;
+
 export async function sanitizeUploadedImage(
   bytes: ArrayBuffer,
   mime: UploadMime,
 ): Promise<Uint8Array> {
   try {
-    const image = sharp(Buffer.from(bytes), { failOn: "error" }).rotate();
+    const image = sharp(Buffer.from(bytes), { failOn: "error", limitInputPixels: MAX_INPUT_PIXELS })
+      .rotate()
+      .resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside", withoutEnlargement: true });
     const encoded =
       mime === "image/jpeg"
         ? image.jpeg({ quality: 90, mozjpeg: true })
