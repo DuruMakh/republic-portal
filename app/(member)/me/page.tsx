@@ -60,7 +60,8 @@ export default async function CabinetOverviewPage() {
         <div className="mt-6">
           <ReferralCard
             code={state.referralCode}
-            count={state.referralCount ?? 0}
+            supporters={state.referralSupporters ?? 0}
+            members={state.referralMembers ?? 0}
             teamNote={false}
           />
         </div>
