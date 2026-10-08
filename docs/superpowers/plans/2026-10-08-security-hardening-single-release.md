@@ -16,7 +16,8 @@ D5's release order is replaced by this file.
 
 ## What changes against the four plans
 
-**Three migrations instead of five.** The timestamps are after privacy step 2's `20261008150000`:
+**Four migrations instead of five** (the fourth added at the merge with main, see below). The
+timestamps are after privacy step 2's `20261008150000`:
 
 | File | Contents (plan → task) |
 |---|---|
@@ -90,7 +91,9 @@ work against the old schema for that window:
    yes.
 6. **Merge** once `quality` passes. Check `Vercel – georgia-republic` on the merge commit.
 7. **Production dry-run at once.**
-   - Pending files: `20261008140000` (privacy step 1, D5), then the three files above.
+   - Pending files: this release's four files. Privacy steps 1 and 2 (`20261008140000`,
+     `20261008150000`) were applied to production by the launch-audit session after PR #43
+     merged (2026-10-08).
    - Tell the owner that and wait for their yes.
    - Then apply. The schema check and advisors gate must pass.
 8. **Verify the real site:** `/join`, a delegate page and its share image, and `/admin/verify/<id>`
@@ -99,3 +102,16 @@ work against the old schema for that window:
    - Rename its migration to after `20261008160200`.
    - Replace its `register()` grant to `authenticated` with the revoke.
    - Record this in its branch or session.
+
+## Merge with main (2026-10-08, privacy step 2 = PR #43)
+
+- Main gained `20261008150000_require_privacy_consent.sql`, which restates `register()` and grants it
+  to `authenticated`. In filename order this release's revoke comes later and wins.
+- Staging, however, received this release's migrations before 150000, so `20261008160300` repeats
+  the revoke after every file that touches `register()`. On staging, push 150000 and 160300 with
+  `--include-all`.
+- Main's consent e2e called `register()` directly. It now expects `42501` from `register()` and
+  `phone_required` from `register_google()`.
+- Window: from this release's staging push until it merges, CI on other PRs fails two tests,
+  because main's code meets the new staging rules: the duplicate-ID message (the returned refusal)
+  and the consent test's direct `register()` call. Both pass once this release is on main.

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_FUNNEL_ERROR, type CabinetStatePresent } from "@/lib/funnel";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "@/lib/privacy";
 import { cabinetStateFixture } from "@/lib/test-cabinet-state";
 
 const mocks = vi.hoisted(() => {
@@ -53,6 +54,7 @@ import JoinForm from "./JoinForm";
 const PHONE = "+995555123456";
 const CHALLENGE_ID = "11111111-1111-4111-8111-111111111111";
 const EXPIRES_AT = "2026-08-11T12:05:00.000Z";
+const CONSENT = /^ვადასტურებ, რომ 18 წლის ან უფროსი ვარ/;
 
 // A freshly registered supporter, as register_google() returns it.
 function presentState(overrides: Partial<CabinetStatePresent> = {}): CabinetStatePresent {
@@ -98,14 +100,19 @@ async function reachGoogleForm(user = googleUser()) {
   await screen.findByLabelText("სახელი");
 }
 
-async function sendGoogleCode() {
+async function sendGoogleCodeExpectingNoCodeScreen() {
   await reachGoogleForm();
   fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
   fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
   fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
     target: { value: "555123456" },
   });
+  fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
   fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+}
+
+async function sendGoogleCode() {
+  await sendGoogleCodeExpectingNoCodeScreen();
   await screen.findByRole("button", { name: "დადასტურება" });
 }
 
@@ -165,6 +172,24 @@ describe("JoinForm rollout selector", () => {
 
     expect(screen.getByRole("button", { name: "გაგრძელება →" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Google-ით გაგრძელება" })).toBeNull();
+  });
+
+  it("legacy mode also holds the code until the consent box is ticked", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "phone");
+    await renderJoin();
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
+    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+      target: { value: "555123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+
+    expect(await screen.findByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeInTheDocument();
+    expect(mocks.signInWithOtp).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    await waitFor(() => expect(mocks.signInWithOtp).toHaveBeenCalledWith({ phone: PHONE }));
   });
 
   it("renders the Google-first flow only in exact google mode", async () => {
@@ -233,6 +258,7 @@ describe("GoogleJoinForm", () => {
     fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
 
     expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue(PHONE);
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
     await waitFor(() => expect(mocks.registerGoogle).toHaveBeenCalledTimes(1));
@@ -240,6 +266,7 @@ describe("GoogleJoinForm", () => {
       firstName: "ნინო",
       lastName: "ბერიძე",
       refCode: null,
+      privacyConsent: true,
     });
     expect(mocks.sendPhone).not.toHaveBeenCalled();
     expect(mocks.replace).toHaveBeenCalledWith("/me");
@@ -254,11 +281,12 @@ describe("GoogleJoinForm", () => {
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
     fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
     fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
     await waitFor(() => expect(mocks.registerGoogle).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(mocks.sendPhone).toHaveBeenCalledTimes(1));
-    expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: PHONE });
+    expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: PHONE, privacyConsent: true });
     expect(await screen.findByRole("button", { name: "დადასტურება" })).toBeInTheDocument();
   });
 
@@ -271,6 +299,7 @@ describe("GoogleJoinForm", () => {
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
     fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
     fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
@@ -285,9 +314,15 @@ describe("GoogleJoinForm", () => {
     fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
       target: { value: "555654321" },
     });
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
-    await waitFor(() => expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: "+995555654321" }));
+    await waitFor(() =>
+      expect(mocks.sendPhone).toHaveBeenCalledWith({
+        phone: "+995555654321",
+        privacyConsent: true,
+      }),
+    );
     expect(mocks.registerGoogle).not.toHaveBeenCalled();
   });
 
@@ -324,6 +359,7 @@ describe("GoogleJoinForm", () => {
       firstName: "ნინო",
       lastName: "ბერიძე",
       refCode: "D00101",
+      privacyConsent: true,
     });
     expect(mocks.replace).toHaveBeenCalledWith("/me");
   });
@@ -364,6 +400,7 @@ describe("GoogleJoinForm", () => {
     fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
       target: { value: "555123456" },
     });
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
     expect(await screen.findByRole("button", { name: "Google-ით გაგრძელება" })).toBeInTheDocument();
@@ -387,6 +424,73 @@ describe("GoogleJoinForm", () => {
     expect(screen.getByRole("button", { name: "კოდის მიღება" })).toBeInTheDocument();
     expect(mocks.registerGoogle).not.toHaveBeenCalled();
     expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("tells the person at the Google step that continuing means agreeing to the policy", async () => {
+    await renderJoin();
+    await screen.findByRole("button", { name: "Google-ით გაგრძელება" });
+
+    expect(
+      screen.getByText(
+        (_, el) =>
+          el?.tagName === "P" &&
+          el.textContent === "Google-ით გაგრძელებით ეთანხმები ჩვენს კონფიდენციალურობის პოლიტიკას.",
+      ),
+    ).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "კონფიდენციალურობის პოლიტიკას" });
+    expect(link).toHaveAttribute("href", "/privacy");
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("sends no SMS and registers nothing until the consent box is ticked", async () => {
+    await reachGoogleForm();
+    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
+    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+      target: { value: "555123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+
+    expect(await screen.findByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeInTheDocument();
+    expect(mocks.sendPhone).not.toHaveBeenCalled();
+    expect(mocks.registerGoogle).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
+    expect(screen.queryByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
+    await waitFor(() =>
+      expect(mocks.sendPhone).toHaveBeenCalledWith({ phone: PHONE, privacyConsent: true }),
+    );
+  });
+
+  it("puts a server consent refusal of the SMS send under the box", async () => {
+    mocks.sendPhone.mockResolvedValue({
+      ok: false,
+      code: "privacy_consent_required",
+      message: PHONE_VERIFICATION_MESSAGES.privacy_consent_required,
+    });
+    await sendGoogleCodeExpectingNoCodeScreen();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(PRIVACY_CONSENT_REQUIRED_MESSAGE);
+    expect(screen.getByRole("checkbox", { name: CONSENT })).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("shows a database consent refusal under the box, and ticking clears it", async () => {
+    mocks.registerGoogle.mockResolvedValueOnce({
+      ok: false,
+      code: "invalid_input",
+      error: PRIVACY_CONSENT_REQUIRED_MESSAGE,
+    });
+    await sendGoogleCode();
+    fireEvent.change(screen.getByTestId("otp-0"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "დადასტურება" }));
+
+    const box = await screen.findByRole("checkbox", { name: CONSENT });
+    await waitFor(() => expect(box).toHaveAttribute("aria-invalid", "true"));
+    expect(screen.getAllByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toHaveLength(1);
+    fireEvent.click(box);
+    fireEvent.click(box);
+    expect(screen.queryByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeNull();
   });
 
   it("plainly discloses Verify.ge's one-time use of the phone number", async () => {

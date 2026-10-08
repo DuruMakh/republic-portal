@@ -207,7 +207,9 @@ Workflow and checks, in the same PR:
 3. R2 next, **without waiting** for privacy step 2. Security fixes outrank it, and adapting step 2
    afterwards is small: rename its migration file and replace its re-grant with the revoke. R2's
    static test enforces this.
-4. Privacy step 1 (`20261008140000`, additive, accepts a missing consent version) goes live in
+4. (Superseded 2026-10-08: privacy steps 1 and 2 merged and went to production first, through
+   the launch-audit session. `20261008160300` repeats the register() revoke after them.) Privacy
+   step 1 (`20261008140000`, additive, accepts a missing consent version) goes live in
    production together with R2's apply. Its own apply had been waiting for a go, and this decision
    gives it.
 5. Then R4, then R5. Both before launch.

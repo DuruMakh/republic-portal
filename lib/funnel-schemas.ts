@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
 import { normalizeGeorgianPhone } from "./validation";
 
 export const EMPLOYMENT_PRESETS = [
@@ -53,6 +54,11 @@ export const registerSchema = z.object({
   lastName: nameSchema,
   phone: phoneSchema,
   refCode: refCodeSchema.nullish(),
+  // Registration privacy consent (spec 2026-10-08 §4). zod v3's `{ message }` shorthand
+  // does not reach z.literal's issues (see tierSchema below), so an explicit errorMap.
+  privacyConsent: z.literal(true, {
+    errorMap: () => ({ message: PRIVACY_CONSENT_REQUIRED_MESSAGE }),
+  }),
 });
 
 /** Server-action variant: the phone is already proven by the OTP session. */

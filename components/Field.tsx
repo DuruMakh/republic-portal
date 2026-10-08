@@ -1,4 +1,9 @@
-import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import {
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from "react";
 
 export const inputClasses =
   "block w-full h-[38px] border-0 border-b border-ink bg-transparent px-0.5 font-serif text-[1.02rem] text-ink focus:border-b-2 focus:border-brand focus-visible:outline-none aria-[invalid=true]:border-b-2 aria-[invalid=true]:border-brand";
@@ -70,7 +75,7 @@ export function TextareaField({
 export function CheckboxField({
   label,
   ...props
-}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: string }) {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: ReactNode }) {
   return (
     <label className="flex items-start gap-3 text-sm text-prose">
       <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-ink" {...props} />

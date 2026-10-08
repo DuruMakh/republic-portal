@@ -37,7 +37,7 @@ abolished):
 - **Age (Art. 7):** own consent from 16; under 16 needs a parent's written consent. The
   platform sets 18+ (owner decision), so parental consent never arises.
 
-The text is marked as a working version pending legal review; a Georgian lawyer should read
+(Superseded 2026-10-08: the owner dropped the draft banner at release; see ADR-041.) The text is marked as a working version pending legal review; a Georgian lawyer should read
 it before launch.
 
 ## 3. Decisions taken in this conversation
@@ -216,9 +216,11 @@ PR #28 → PR #27):
    merge the new code is served first and works against PR A's function. The workflow then
    applies the tightening.
 
-- Each migration reaches the staging database before its preview build. While PR B is in
-  review, the demo site (which shares staging) cannot register, because its code sends no
-  version. Accepted: the demo holds no real registrations.
+- Step 1 reaches the staging database before PR A's preview. Step 2 reaches staging only
+  **after PR B merges** (amended during execution): every PR's CI runs e2e against staging,
+  and an open PR built on older `main` sends no version, so an early step 2 would break its
+  registration tests. Until then PR B's e2e checks that a stale version is refused; the
+  missing-version refusal is checked statically and then live right after merge.
 - Migration baseline: 35 → 36 (PR A) → 37 (PR B), in `production-db.yml` and its two tests.
 - The signature change also moves `scripts/production-db-schema-check.sql` and
   `lib/supabase/types.ts` to the four-argument functions.

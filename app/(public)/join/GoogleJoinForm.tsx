@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ZodIssue } from "zod";
 import { AuthEntryShell } from "@/components/AuthEntryShell";
@@ -9,10 +10,12 @@ import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { PhoneVerification } from "@/components/PhoneVerification";
+import { PrivacyConsentField } from "@/components/PrivacyConsentField";
 import { deriveDestination } from "@/lib/cabinet";
 import { GENERIC_FUNNEL_ERROR, isReferralCodeCandidate, type CabinetState } from "@/lib/funnel";
 import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
+import { PRIVACY_CONSENT_REQUIRED_MESSAGE, PRIVACY_POLICY_PATH } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeGeorgianPhone } from "@/lib/validation";
 import {
@@ -25,7 +28,7 @@ import { sendPhoneVerificationAction } from "./phone-actions";
 type GoogleJoinPhase = "loading" | "google" | "form" | "otp" | "retry";
 type Challenge = { challengeId: string; expiresAt: string };
 
-const FIELD_KEYS = ["firstName", "lastName", "phone"] as const;
+const FIELD_KEYS = ["firstName", "lastName", "phone", "privacyConsent"] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 
 function isFieldKey(key: unknown): key is FieldKey {
@@ -48,6 +51,7 @@ export function GoogleJoinForm() {
   const [lastName, setLastName] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState("");
+  const [privacyConsent, setPrivacyConsent] = useState(false);
   const [confirmedPhone, setConfirmedPhone] = useState<string>();
   const [challenge, setChallenge] = useState<Challenge>();
   const [verifiedPhone, setVerifiedPhone] = useState<string>();
@@ -139,7 +143,12 @@ export function GoogleJoinForm() {
       if (isGoogleSessionError(result.code)) {
         returnToGoogle(result.error);
       } else {
-        setFormError(result.error);
+        // a consent refusal belongs under the box, where ticking clears it
+        if (result.error === PRIVACY_CONSENT_REQUIRED_MESSAGE) {
+          setErrors({ privacyConsent: result.error });
+        } else {
+          setFormError(result.error);
+        }
         setPhase("retry");
       }
       return;
@@ -171,6 +180,7 @@ export function GoogleJoinForm() {
       lastName,
       phone: phoneInput,
       refCode,
+      privacyConsent,
     });
     if (!parsed.success) {
       applyValidationErrors(parsed.error.issues);
@@ -185,6 +195,7 @@ export function GoogleJoinForm() {
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           refCode: parsed.data.refCode,
+          privacyConsent: parsed.data.privacyConsent,
         });
         if (registration.ok) {
           handleRegisterResult(registration);
@@ -196,12 +207,17 @@ export function GoogleJoinForm() {
         }
       }
 
-      const result = await sendPhoneVerificationAction({ phone: parsed.data.phone });
+      const result = await sendPhoneVerificationAction({
+        phone: parsed.data.phone,
+        privacyConsent: parsed.data.privacyConsent,
+      });
       if (!result.ok) {
         if (result.code === "not_authenticated" || result.code === "google_required") {
           returnToGoogle(result.message);
         } else if (result.code === "invalid_phone") {
           setErrors({ phone: result.message });
+        } else if (result.code === "privacy_consent_required") {
+          setErrors({ privacyConsent: result.message });
         } else {
           setFormError(result.message);
         }
@@ -219,7 +235,7 @@ export function GoogleJoinForm() {
 
   async function registerVerifiedPhone() {
     try {
-      const result = await registerGoogleAction({ firstName, lastName, refCode });
+      const result = await registerGoogleAction({ firstName, lastName, refCode, privacyConsent });
       handleRegisterResult(result);
     } catch {
       setFormError(GENERIC_FUNNEL_ERROR);
@@ -252,7 +268,12 @@ export function GoogleJoinForm() {
       return;
     }
     setFormError(undefined);
-    const parsed = registerActionSchema.safeParse({ firstName, lastName, refCode });
+    const parsed = registerActionSchema.safeParse({
+      firstName,
+      lastName,
+      refCode,
+      privacyConsent,
+    });
     if (!parsed.success) {
       applyValidationErrors(parsed.error.issues);
       return;
@@ -322,6 +343,18 @@ export function GoogleJoinForm() {
       {phase === "google" ? (
         <div className="flex max-w-xl flex-col gap-4">
           <GoogleAuthButton nextPath={nextPath} label="Google-ით გაგრძელება" />
+          <p className="text-xs text-muted-fg">
+            Google-ით გაგრძელებით ეთანხმები ჩვენს{" "}
+            <Link
+              href={PRIVACY_POLICY_PATH}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-brand hover:underline"
+            >
+              კონფიდენციალურობის პოლიტიკას
+            </Link>
+            .
+          </p>
           {formError ? (
             <p role="alert" className="text-sm font-semibold text-danger">
               {formError}
@@ -382,6 +415,14 @@ export function GoogleJoinForm() {
                 : "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად."}
             </p>
           </div>
+          <PrivacyConsentField
+            checked={privacyConsent}
+            onChange={(checked) => {
+              setPrivacyConsent(checked);
+              if (checked) setErrors((prev) => ({ ...prev, privacyConsent: undefined }));
+            }}
+            error={errors.privacyConsent}
+          />
           {formError ? (
             <p role="alert" className="text-sm font-semibold text-danger">
               {formError}
