@@ -8,7 +8,8 @@ import {
   serviceClient,
 } from "./admin-helpers";
 import { approveOwnDelegate, seedPendingDelegate, seedRegisteredMember } from "./funnel-helpers";
-import { clientFor, otpSession } from "./otp-helpers";
+import type { DelegatePanelData } from "../lib/cabinet";
+import { clientFor, fixtureSession, installSupabaseSession } from "./otp-helpers";
 
 // ADR-039: the referral figures split into supporters (signed up through the link,
 // membership form not finished) and members (finished it). Nothing is stored: a
@@ -70,14 +71,21 @@ async function finishMembershipForm(id: string): Promise<void> {
 async function referralFigures(client: SupabaseClient, rpc: "cabinet_state" | "delegate_panel") {
   const { data, error } = await client.rpc(rpc);
   if (error) throw new Error(`${rpc} failed: ${error.message}`);
+  // both RPCs carry the three referral keys under the same names
+  const figures = data as Pick<
+    DelegatePanelData,
+    "referralSupporters" | "referralMembers" | "referralCount"
+  >;
   return {
-    supporters: data.referralSupporters as number,
-    members: data.referralMembers as number,
-    total: data.referralCount as number,
+    supporters: figures.referralSupporters,
+    members: figures.referralMembers,
+    total: figures.referralCount,
   };
 }
 
-test("supporters move to members, and earlier sign-ups survive delegate approval", async () => {
+test("supporters move to members, and earlier sign-ups survive delegate approval", async ({
+  page,
+}) => {
   const db = serviceClient();
   // a member who has asked to become a delegate: their own M- link is live, the
   // delegate link is not yet
@@ -94,7 +102,8 @@ test("supporters move to members, and earlier sign-ups survive delegate approval
     .eq("id", referrerId)
     .single();
   if (ownErr || !own) throw new Error(`own code lookup failed: ${ownErr?.message}`);
-  const referrer = await clientFor(await otpSession(phase4Phone(REFERRER)));
+  const session = await fixtureSession(phase4Phone(REFERRER));
+  const referrer = await clientFor(session);
 
   // someone signs up through the link: one supporter
   const friendA = await seedReferred(FRIEND_A, own.referral_code as string);
@@ -126,4 +135,14 @@ test("supporters move to members, and earlier sign-ups survive delegate approval
   const expected = { supporters: 1, members: 1, total: 2 };
   expect(await referralFigures(referrer, "cabinet_state")).toEqual(expected);
   expect(await referralFigures(referrer, "delegate_panel")).toEqual(expected);
+
+  // the delegate cabinet shows the same two figures on the referral card; its team
+  // box is „გუნდის წევრი“ and the delegate-link-only supporter box is gone
+  await installSupabaseSession(page, session);
+  await page.goto("/delegate");
+  await expect(page.getByTestId("referral-supporters")).toHaveText("1");
+  await expect(page.getByTestId("referral-members")).toHaveText("1");
+  const main = page.getByRole("main");
+  await expect(main.getByText("გუნდის წევრი", { exact: true })).toBeVisible();
+  await expect(main.getByText("მხარდამჭერი", { exact: true })).toHaveCount(1); // the card's row
 });

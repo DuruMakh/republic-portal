@@ -52,8 +52,8 @@ async function visibleVotes(client: SupabaseClient, pollId: string): Promise<num
 // direct second RPC call; and the database's own visibility rule (poll_option_counts:
 // counts only once the poll is closed OR the caller has voted), read directly as a voter
 // and as a non-voter. How the card renders that is lib/community's poll-view, unit-tested.
-// Every actor keeps its own context: the editor and voter sign in by SMS, the non-voter
-// through the Google password fixture (no SMS).
+// Every actor keeps its own context: the editor and voter sign in through loginAs, the
+// non-voter through the Google password fixture. Neither sends an SMS.
 test("vote once; a direct second vote is refused; counts stay hidden from non-voters until close", async ({
   page,
   browser,

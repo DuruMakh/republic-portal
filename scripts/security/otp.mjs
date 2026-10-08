@@ -1,11 +1,7 @@
 /**
- * The dev_otp_inbox poll, re-expressed as ESM JavaScript for scripts that run
- * outside Playwright. This is a deliberate duplicate of
- * e2e/otp-helpers.ts's readFreshInboxOtp: that file is TypeScript imported by
- * Playwright only, and this script must not reach across that boundary.
- * Consolidating every copy of this idiom is a pre-existing tidy-up already
- * tracked separately (.superpowers/sdd/progress.md, decision D-A) — out of
- * scope for the security audit.
+ * The dev_otp_inbox poll for scripts that run outside Playwright. The e2e
+ * suite no longer reads the inbox (e2e/otp-helpers.ts signs fixtures in by
+ * password), so this is the only copy.
  *
  * Imports `db` from ./db.mjs, not ./actors.mjs: actors.mjs itself imports
  * readFreshInboxOtp from this file, so importing `db` back from actors.mjs

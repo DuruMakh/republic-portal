@@ -1138,3 +1138,29 @@ ADR-037 (dues). Plan: `docs/superpowers/plans/2026-10-08-events-hidden.md`. No m
   regenerates the tab shows the plain site name. Status, heading and content stay the
   not-found page, and the tab never names the hidden section; the e2e check asserts exactly
   that.
+
+## ADR-043 (2026-10-08): e2e signs seeded accounts in by password, not SMS
+
+On 2026-10-08 three PRs' CI runs (#33, #35, #37) failed together with "e2e could not request
+the staging login OTP": every browser test signed its seeded users in by phone code, all runs
+share one staging Supabase, and staging allows only so many code messages an hour. Overlapping
+runs used the allowance up, and then every sign-in in every run failed.
+
+- **`loginAs` no longer asks for a code.** `fixtureSession` in `e2e/otp-helpers.ts` gives the
+  seeded account a placeholder email (`e2e-login+<phone>@example.invalid`, or keeps an
+  `@example.invalid` one it already has) and a password, then signs in with them. The
+  password is derived from the service-role key and the phone, so every run computes the same
+  one. It is set only when signing in with it fails: setting a password ends the account's
+  other sessions, and overlapping runs sign in as the same canonical admins.
+- **Who it may touch.** Only the per-run e2e numbers (the 55 block, minus the owner's three kept smoke accounts) and the four canonical
+  admins `scripts/seed-staging.mjs` creates for e2e (+99550900000{1..4}); any other phone, or
+  an account with a real email address, is refused before staging is touched. The owner's real
+  staging account is never in either range. Phone sign-in keeps working for every account;
+  the admins just gain a second way in, visible only to holders of the service-role key.
+- **When a password does get set, other sessions of that account end.** That happens the
+  first time an account is used, and whenever the runner's service-role key differs from the
+  one that set it (a local run with a different key, or after a key rotation). A CI run signed
+  in as the same canonical admin at that moment can fail once; rerun it. Staging sessions of
+  the security-audit actors or anyone QA-ing as a canonical admin are signed out the same way.
+- **Not changed.** The app's own sign-in, the `dev_otp_inbox` table and
+  `scripts/security/*` (they still request real codes; run them sparingly).
