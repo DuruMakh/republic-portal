@@ -1076,9 +1076,12 @@ variable, nothing visible changes except the tab title.
   keeps the site name and the page carries two titles. Accepting the generic title: it was
   fixable without cost.
 - **Tests.** `app/(public)/missing-page-titles.test.tsx` pins each title, checks page and
-  not-found file agree (events hidden and shown), and fails for any public `[slug]` folder
-  without a not-found file. ADR-040's three-visit e2e check now also visits a missing article and
-  delegate (and, with events shown, event) within the same wait, so CI time is unchanged.
+  not-found file agree (events hidden and shown), and fails for any public dynamic folder
+  (`[slug]`, `[id]`, …) without a not-found file that sets a title. ADR-040's three-visit e2e
+  check now also visits a missing article and delegate (and, with events shown, event) within
+  the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
+  runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
+  that case rests on the unit test.
 
 ## ADR-042 (2026-10-08): Events hidden behind one switch
 

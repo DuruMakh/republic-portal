@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { Metadata } from "next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -81,18 +81,25 @@ describe("the public group's not-found file", () => {
   });
 });
 
-describe("public pages with a [slug]", () => {
+// Any dynamic segment ([slug], [id], ...): a page there can raise a 404 for an address nobody listed.
+describe("public pages with a dynamic segment", () => {
   const PUBLIC_DIR = path.join(process.cwd(), "app", "(public)");
-  const slugDirs = readdirSync(PUBLIC_DIR, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name === "[slug]")
+  const dynamicDirs = readdirSync(PUBLIC_DIR, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^\[.+\]$/.test(entry.name))
     .map((entry) => path.join(entry.parentPath, entry.name));
 
   it("are found, so the check below cannot pass by matching nothing", () => {
-    expect(slugDirs.length).toBeGreaterThanOrEqual(3);
+    expect(dynamicDirs.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("each own a not-found file (its metadata is the tab title after the refresh)", () => {
-    const without = slugDirs.filter((dir) => !readdirSync(dir).includes("not-found.tsx"));
+  it("each own a not-found file with a title (the tab title after the refresh)", () => {
+    const without = dynamicDirs.filter((dir) => {
+      const file = path.join(dir, "not-found.tsx");
+      return (
+        !existsSync(file) ||
+        !/export (const metadata:|function generateMetadata\()/.test(readFileSync(file, "utf8"))
+      );
+    });
     expect(without).toEqual([]);
   });
 });
