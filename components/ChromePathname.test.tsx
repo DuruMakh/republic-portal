@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { usePathname } from "next/navigation";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/news/a/b" }));
+vi.mock("next/navigation", () => ({ usePathname: vi.fn() }));
 
 import { PinChromePathname, useChromePathname } from "./ChromePathname";
 
@@ -11,6 +12,10 @@ function Probe() {
 }
 
 describe("useChromePathname", () => {
+  beforeEach(() => {
+    vi.mocked(usePathname).mockReturnValue("/news/a/b");
+  });
+
   it("is the live path when nothing pins it", () => {
     render(<Probe />);
     expect(screen.getByTestId("path")).toHaveTextContent("/news/a/b");
@@ -23,5 +28,17 @@ describe("useChromePathname", () => {
       </PinChromePathname>,
     );
     expect(screen.getByTestId("path")).toHaveTextContent("/_not-found");
+  });
+
+  it("reads the /index alias of the root page as / (Vercel regenerates the homepage at /index)", () => {
+    vi.mocked(usePathname).mockReturnValue("/index");
+    render(<Probe />);
+    expect(screen.getByTestId("path").textContent).toBe("/");
+  });
+
+  it("leaves real paths that merely contain index alone", () => {
+    vi.mocked(usePathname).mockReturnValue("/news/index-of-things");
+    render(<Probe />);
+    expect(screen.getByTestId("path").textContent).toBe("/news/index-of-things");
   });
 });
