@@ -1132,6 +1132,39 @@ runs used the allowance up, and then every sign-in in every run failed.
 - **Not changed.** The app's own sign-in, the `dev_otp_inbox` table and
   `scripts/security/*` (they still request real codes; run them sparingly).
 
+## ADR-044 (2026-10-08): A missing article, delegate or event keeps its own tab title
+
+Closes ADR-040's "still open" item. Plan and probe table:
+`docs/superpowers/plans/2026-10-08-missing-page-title.md`. Stacked on PR #36. No migration, no new
+variable, nothing visible changes except the tab title.
+
+- **Cause, from probes on `next build` + `next start` and on a Vercel preview.** A 404 raised by a
+  prerendered page takes its HTML `<title>` from the nearest not-found file's metadata (the root
+  layout's when that file has none) and its tab title from the page's `generateMetadata`, until a
+  background ISR regeneration drops the page's and the tab falls back to the not-found file's. The
+  missing addresses (`/news/<…>`, `/delegates/<…>`, `/events/<…>`) cannot be listed in advance, so
+  ADR-040's proxy answer does not fit. ADR-040's reading that Next ignores a not-found file's
+  metadata for a page-raised 404 was wrong for the HTML.
+- **Decision.** Each `[slug]` segment keeps a `not-found.tsx` whose metadata is exactly the
+  page's missing-case metadata (the page imports it), so the HTML, the first tab and the
+  regenerated tab all agree: news and delegates export a static `metadata`; events export
+  `generateMetadata()` because while events are hidden (ADR-042) the title must be the generic
+  one. The visible notices are unchanged (news and events show the public group's notice, as
+  before). The public group's `not-found.tsx` now exports `NOT_FOUND_METADATA`, the safety net
+  for any other public page that raises a 404.
+- **Rejected.** Rendering the missing case per request: `revalidate` is fixed per route, so every
+  article would lose its prerender, and switching to dynamic at runtime errors. A slug check in
+  `proxy.ts`: a database read on every article view. A `<title>` inside the notice: the HTML
+  keeps the site name and the page carries two titles. Accepting the generic title: it was
+  fixable without cost.
+- **Tests.** `app/(public)/missing-page-titles.test.tsx` pins each title, checks page and
+  not-found file agree (events hidden and shown), and fails for any public dynamic folder
+  (`[slug]`, `[id]`, …) without a not-found file that sets a title. ADR-040's three-visit e2e
+  check now also visits a missing article and delegate (and, with events shown, event) within
+  the same wait, so CI time is unchanged. CI runs with events hidden, so the missing-event visit
+  runs only with `SHOW_EVENTS=true` (passed locally on a production build on 2026-10-08); in CI
+  that case rests on the unit test.
+
 ## ADR-041 (2026-10-08): Registration asks for privacy consent; the date and policy version are stored
 
 - **What.** One required box on registration (18+ and personal-data processing, one sentence),
@@ -1158,4 +1191,4 @@ runs used the allowance up, and then every sign-in in every run failed.
   withdrawal (the law's 10-working-day rights); general rules of use; re-consent on a new
   policy version; consent date in the admin panel; legal review of the copy before launch.
 - **Numbering.** Reserved as 041 while 038-040 were claimed by parallel PRs the same day; it
-  sits after 042 and 043 here because it merged later.
+  sits after 042, 043 and 044 here because it merged later.
