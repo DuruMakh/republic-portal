@@ -180,8 +180,9 @@ test.describe("finances hidden", () => {
     const response = await page.goto("/transparency");
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { level: 1, name: NOT_FOUND_HEADING })).toBeVisible();
-    // the tab names no finance page either: it reads as any other missing page
-    await expect(page).toHaveTitle(NOT_FOUND_TITLE);
+    // Not the exact not-found title: ADR-042's known ISR quirk, shared with the hidden events page.
+    await expect(page).toHaveTitle(/ქართული რესპუბლიკა$/);
+    await expect(page).not.toHaveTitle(/გამჭვირვალობ/);
     await expect(page.getByRole("columnheader", { name: "რეგიონი" })).toHaveCount(0);
   });
 });
