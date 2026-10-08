@@ -14,7 +14,7 @@ const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერ
 const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა";
 
 /**
- * A page hidden by a switch (ADR-034, ADR-038) must be indistinguishable from a mistyped address:
+ * A page hidden by a switch (ADR-034, ADR-042) must be indistinguishable from a mistyped address:
  * 404, the Georgian notice, and the exact not-found title both in the served HTML (what a link
  * preview or a browser without scripts sees) and in the tab once the page has loaded (ADR-040).
  */

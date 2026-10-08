@@ -1,7 +1,7 @@
 # Hidden pages keep the not-found tab title — plan
 
 **Goal:** a page hidden behind a server-only switch (`/transparency`, ADR-034; `/events` and
-`/events/<slug>`, ADR-038) shows the exact Georgian not-found title on every visit, including after
+`/events/<slug>`, ADR-042) shows the exact Georgian not-found title on every visit, including after
 its 60-second ISR entry regenerates. The shown mode is unchanged.
 
 **Stacked on PR #32** (events hidden): the events rules need `lib/events-switch.ts`, which is not on

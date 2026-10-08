@@ -11,7 +11,7 @@ const HIDDEN_ROOTS: readonly { root: string; shown: (switches: PageSwitches) => 
 ];
 
 /**
- * Whether an address belongs to a public page that a switch currently hides (ADR-034, ADR-038).
+ * Whether an address belongs to a public page that a switch currently hides (ADR-034, ADR-042).
  * proxy.ts answers such an address with the site-wide not-found page before Next consults the
  * page's cache (ADR-040): Next regenerates a page-raised 404 without the page's own metadata, so
  * the hidden page alone could not keep the not-found tab title.
