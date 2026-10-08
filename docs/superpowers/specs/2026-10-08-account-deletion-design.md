@@ -1,6 +1,6 @@
 # Spec: a member deletes their own account, and their data with it
 
-**Date:** 2026-10-08. **Status:** draft for owner review. **Origin:** launch audit (blocker 2,
+**Date:** 2026-10-08. **Status:** approved by the owner 2026-10-08. **Origin:** launch audit (blocker 2,
 findings DATA-2, ADMIN-4, LEGAL-2) and the owner's request in chat: "lets add account delete
 feature and it also deletes data".
 
@@ -10,9 +10,11 @@ feature and it also deletes data".
   confirmation word and press one button. Deletion is immediate and cannot be undone.
 - Everything that identifies them is erased: name, phone, personal ID number, birth date,
   region and city, job, membership history, delegate page and photo, sign-in account. They can
-  register again later with the same phone and ID number, as a new person.
-- Their past poll votes keep counting, with no name attached, so closed poll results never
-  change.
+  register again later with the same phone and ID number, as a new person. Database backups and
+  service logs are not erased; they expire on their own (§2, §7).
+- Their votes in finished polls keep counting, with no name attached, so closed poll results never
+  change. A vote in a poll that is still running is removed, so nobody can delete, register again
+  and vote twice.
 - If a delegate deletes their account, their public page disappears. Their members move to the
   central movement and see a note asking them to choose a new delegate.
 - Staff with an admin role cannot delete themselves; another top-level admin removes the role
@@ -43,13 +45,17 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 | delegate photo file in Storage | path inside `delegates.photo_url` | deleted through the Storage API after the database step (§5) |
 | other members' memberships pointing at this delegate | `memberships.delegate_id` (no action, would block) | open rows closed and replaced by a central membership marked `note = 'delegate_left'`; closed rows get `delegate_id = null` |
 | other profiles' `pending_delegate_id` | FK on delete set null | cleared (already the FK rule) |
-| `poll_votes` | `member_id` (cascade) | kept; `member_id` set null (§4.1) |
+| `poll_votes` in polls still running (open, deadline not passed) | `member_id` (cascade) | deleted, so a person who deletes and registers again cannot vote twice (§4.1) |
+| `poll_votes` in closed or past-deadline polls | `member_id` (cascade) | kept; `member_id` set null, results unchanged (§4.1) |
 | `event_rsvps` | `member_id` (cascade) | deleted |
 | `payments` (none exist while dues are off) | `member_id` (cascade) | deleted; revisit with the lawyer before dues return |
 | phone verification challenges and proofs | `user_id = auth.users.id` (cascade) | deleted |
-| `audit_log` rows about the person (`target_id = id`) | names in `details` (`name`, `memberName`) | `details` loses every personal key and gains `"erased": true`; action, actor, target id and time stay (§4.3) |
+| SMS send reservations (`phone_verification_send_reservations`) | `user_id` (was cascade) | kept, `user_id` set null, so deleting and registering again cannot reset the per-number and site-wide send limits; the phone number goes with the existing 24-hour cleanup, which runs when that number next asks for a code |
+| Supabase auth's own log (`auth.audit_log_entries`: sign-ins, token events, email, IP) | the person as `payload.actor_id`, no foreign key | rows with the person as actor deleted, best effort: lacking the privilege never blocks the erasure (§4.4) |
+| `audit_log` rows about the person (`target_id = id`, payment rows through `details.memberId`, other members' reassign rows through `fromDelegateId` / `toDelegateId`) | names in `details` (§4.3 lists the keys) | `details` loses every personal key and gains `"erased": true`; action, actor, target id and time stay (§4.3) |
 | `audit_log` rows the person wrote as actor | only staff write audit rows | not reachable: staff cannot self-delete (§3.3) |
-| support messages | not linked to accounts | untouched (out of scope, §7) |
+| support messages | not linked to accounts | not erased (out of scope, §7) |
+| database backups, platform logs (Supabase, Vercel) | copies and request logs | not erased; they expire on their own retention (out of scope, §7) |
 | other people who joined through the person's referral code | they store the code text only | untouched; counts are derived and simply stop including them |
 
 ## 3. Behaviour
@@ -98,8 +104,14 @@ keep the action, lose the name; (g) a super_admin can delete on request.
   collide and one vote per member stays enforced by the unique constraint: `member_cast_vote`
   still gets `unique_violation` on a second vote (planning must confirm it catches by error class,
   not by constraint name).
-- Results views count rows per option and are unaffected; "has voted" lookups by
+- The admin results views count rows per option and are unaffected. The member results view
+  `poll_option_counts` counted `member_id`, which skips an anonymous vote, so it is redefined to
+  count `option_id` (same columns and grants; `20261009140000`). "Has voted" lookups by
   `member_id = auth.uid()` never match a null.
+- Votes in polls still running (status `open` and `ends_at` null or not yet passed, exactly what
+  `member_cast_vote` still accepts) are deleted at erasure, after locking those polls `FOR SHARE`
+  as `member_cast_vote` does; only closed or past-deadline votes stay anonymously
+  (`20261009150000`).
 
 ### 4.2 `memberships.note`
 
@@ -108,32 +120,48 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 ### 4.3 Audit scrub without breaking append-only
 
 - `audit_log_immutable()` keeps refusing every update and delete, except an UPDATE when the
-  transaction-local setting `app.erasing` is `on` and the row's `id`, `actor_id`, `action`,
+  transaction-local setting `app.erasing` is `on`, the current role is the owner of
+  `erase_account()` (looked up in the catalog), and the row's `id`, `actor_id`, `action`,
   `target_type`, `target_id` and `created_at` are unchanged. Only the erasure function sets that
-  setting (`set_config('app.erasing', 'on', true)`), and clients have no grant on `audit_log`
-  at all, so the exception is reachable only from inside it.
-- Keys removed from `details`: `name`, `memberName`, `firstName`, `lastName`, `personalId`,
-  `phone`, `email`. Planning re-greps every `insert into public.audit_log` to confirm this list
-  and whether any row names a person under a different target (for example a payment row whose
-  target is the payment id).
+  setting (`set_config('app.erasing', 'on', true)`; a schema guard keeps `app.erasing` inside it
+  and the trigger). The client roles do hold the platform's default table grants on `audit_log`
+  (measured on staging), but row level security with no policy shows them no row and lets them
+  change none; the owner lock means no other role can use the exception, service_role included
+  (proven on staging).
+- Keys removed from `details` (every `insert into public.audit_log` re-read 2026-10-08): `name`,
+  `memberName`, `slug` (the delegate's name transliterated, on `delegate.approve`), `firstName`,
+  `lastName`, `personalId`, `phone`, `email`; `from` / `to` on `delegate.update_name`; the admin's
+  `note` on `delegate.reject` only; `fromName` / `toName` on another member's `member.reassign`
+  when the person was that delegate (matched through `fromDelegateId` / `toDelegateId`). Payment
+  rows target the payment id and name the person through the companion `details.memberId`; those
+  rows lose the keys above too. Kept on purpose: `member.delete`'s reason (the admin is told not
+  to write the name in it). Not scrubbed: free-text payment fields (`payment.void` reason,
+  `payment.record` bank reference) and `member.export` searches; no payments exist, revisit when
+  dues return.
 
 ### 4.4 Functions (all `security definer`, `search_path = ''`)
 
-- `erase_account(p_user_id uuid) returns jsonb`: internal, no grant to any client role. In one
-  transaction: refuse staff (`staff_account`); capture the delegate photo URL; move the delegate's
-  team (§2); scrub the audit rows (§4.3); `delete from auth.users where id = p_user_id`
-  (cascades everything in §2; a foreign-key violation here means staff history →
-  `staff_history`). Returns `{ photoUrl }` for the Storage step.
+- `erase_account(p_user_id uuid) returns jsonb`: internal. EXECUTE is revoked from public, anon,
+  authenticated and service_role (the platform's default privileges grant service_role; no
+  server code needs it, the app calls the two wrappers). In one transaction: lock the person's
+  profile and delegate rows (a concurrent reassignment, delegate change or approval finishes
+  first or waits); refuse staff (`staff_account`); capture the delegate photo URL; delete the
+  votes in polls still running (§4.1); move the delegate's team (§2); scrub the audit rows
+  (§4.3); delete the person's rows from Supabase auth's own log, best effort;
+  `delete from auth.users where id = p_user_id` (cascades everything in §2; a foreign-key
+  violation here means staff history → `staff_history`, with the blocking key in the error
+  detail). Returns `{ photoUrl }` for the Storage step.
 - `delete_my_account(p_confirm text) returns jsonb`: granted to `authenticated`; checks
   `auth.uid()` and the confirmation word, calls `erase_account(auth.uid())`.
 - `admin_delete_member(p_user_id uuid, p_reason text) returns jsonb`: granted to `authenticated`;
   `has_admin_role('super_admin')`, the reason length, not self; writes its own `member.delete`
   audit row (so the ADR-014 guard finds it in this function), then calls
   `erase_account(p_user_id)`.
-- Planning must prove on staging that a function owned by `postgres` may `delete from
-  auth.users` on the hosted platform (the staging-pinned probe `scripts/verify-account-deletion.mjs` does it with a
-  throwaway user). Fallback if it may not: the server action deletes the auth user with the
-  service-role admin API after the RPC succeeds, and the RPC leaves the final delete to it.
+- Proven on staging (2026-10-08, `scripts/verify-account-deletion.mjs` with throwaway users): a
+  function owned by `postgres` may `delete from auth.users` on the hosted platform, so the
+  fallback (the server action deleting the auth user with the service-role admin API) is not
+  needed. Production: the post-apply schema check fails the apply if `postgres` loses DELETE on
+  `auth.users` or any of the three functions' EXECUTE grants drift.
 
 ## 5. Application
 
@@ -155,19 +183,26 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 - Unit: zod schemas; both actions (fake Supabase, as in `_test-utils/fake-supabase.ts`); the
   danger section's states (member, delegate with team count, staff disabled); `/account-deleted`;
   the policy sentence.
-- SQL probes on staging (`scripts/verify-account-deletion.mjs`, pinned to the staging host): a throwaway member is erased; their vote
-  survives with a null member and the option count is unchanged; a throwaway delegate's member
-  lands on central with the note; a staff account is refused; the audit row loses `memberName`;
-  a client cannot update `audit_log` even with `app.erasing` set (no grant).
+- SQL probes on staging (`scripts/verify-account-deletion.mjs`, pinned to the staging host): a
+  throwaway member is erased; their vote in a running poll is deleted, while their votes in a
+  closed and a past-deadline poll survive with a null member and unchanged counts; their SMS send
+  reservation survives with a null user; their rows in Supabase auth's log are deleted; a
+  throwaway delegate's member lands on central with the note; a staff account is refused, and
+  former staff are refused as `staff_history` naming the key; the audit rows lose every personal
+  key; clients see and change no `audit_log` row (row level security with no policy), and
+  service_role is refused by the trigger even with `app.erasing` set (owner lock).
 - e2e (one journey, no extra SMS logins beyond the existing budget): a member deletes their
   account, lands on `/account-deleted`, and `/me` sends them to `/login`.
-- Production: the migration-only release runs the production-db workflow's schema checks.
+- Production: the migration-only release runs the production-db workflow's schema checks, which
+  assert the three functions' EXECUTE grants and `postgres`'s DELETE on `auth.users`.
 
 ## 7. Out of scope
 
 - Signed-in Google accounts that never registered (no profile): they hold only the Google email
   and possibly a phone proof; reachable later through the admin tool if needed.
 - Support messages (not linked to accounts).
+- Database backups and platform logs (Supabase, Vercel): not erased; they expire on their own
+  retention. The privacy policy must say so rather than claim they are erased.
 - A downloadable copy of one's data (the right of access goes through the contact page).
 - Payment retention rules (no payments exist; decide with a lawyer before dues return).
 

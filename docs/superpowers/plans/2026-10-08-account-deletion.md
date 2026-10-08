@@ -19,7 +19,7 @@
 - Every new Georgian string lives in `lib/account-deletion-copy.ts`, copied byte-for-byte from this plan; run `node scripts/ka-gate.mjs --diff origin/main <files>` and `npm run ka:scan` on every task that adds Georgian.
 - Register: informal singular ("შენ"), like the rest of the public and cabinet voice (ADR-025).
 - Confirmation word: `წაშლა` (exactly; trimmed input). Defined once in `lib/account-deletion.ts` and once in the migration; a test keeps them equal.
-- Migration file: `supabase/migrations/20261009140000_account_deletion.sql` (after the security release's `20261008160000`–`160300`).
+- Migration files: `supabase/migrations/20261009140000_account_deletion.sql` (after the security release's `20261008160000`–`160300`) and `supabase/migrations/20261009150000_account_deletion_hardening.sql` (the whole-branch review's fixes; it restates `erase_account`). Both ship in Release A.
 - Staging is shared with the security session until its release merges: coordinate before pushing to staging (Task 2).
 - Merge = release to both sites. Release A (Tasks 1–3) merges and is applied to production before Release B (Tasks 4–12) merges.
 
@@ -28,6 +28,7 @@
 | File | Responsibility | Task |
 |---|---|---|
 | `supabase/migrations/20261009140000_account_deletion.sql` | schema changes + the three functions | 1 |
+| `supabase/migrations/20261009150000_account_deletion_hardening.sql` | review fixes: `erase_account` restated (row locks, running-poll votes deleted, auth log scrub, `staff_history` detail), service_role and sequence revokes, SMS reservations kept without the account | final review |
 | `lib/account-deletion.ts` | confirmation word, zod schemas, photo-path helper | 1, 4 |
 | `lib/account-deletion-migration.test.ts` | static pins on the migration | 1 |
 | `lib/security/schema-guards.test.ts` | ADR-014 table gets `admin_delete_member` | 1 |
@@ -160,6 +161,15 @@ Run: `npx vitest run lib/account-deletion-migration.test.ts lib/security/schema-
 Expected: FAIL — `ENOENT ... 20261009140000_account_deletion.sql`, and the schema guard reports `admin_delete_member` has no definition.
 
 - [ ] **Step 3: Write the migration**
+
+> **Superseded (final review, 2026-10-08).** The SQL block below is the plan-time draft and is
+> kept for history only. The source of truth is the two migration files:
+> `supabase/migrations/20261009140000_account_deletion.sql` (as applied, with the `slug`,
+> reject-note, erased-marker and owner-lock fixes of review round 1) and
+> `supabase/migrations/20261009150000_account_deletion_hardening.sql`, which restates
+> `erase_account` (row locks, running-poll votes deleted, Supabase auth log scrub, the blocking key
+> in the `staff_history` detail) and adds the service_role, sequence and SMS-reservation changes.
+> Never copy from this block.
 
 `supabase/migrations/20261009140000_account_deletion.sql`:
 
@@ -476,7 +486,7 @@ git commit -m "test(db): staging probe for account deletion"
 
 - [ ] **Step 1:** `npm run typecheck && npm run lint && npm run format:check && npm run test && npm run ka:scan`; all green.
 - [ ] **Step 2:** Open the PR "Account deletion, step 1: database only (nothing visible)"; CI green; owner OK in chat (nothing visible changes); merge with `gh pr merge --merge --match-head-commit <sha>`; recheck the last ADR number on `main` first.
-- [ ] **Step 3:** Production: `production-db.yml` dry-run from `main`; confirm the only pending file is `20261009140000_account_deletion.sql`; apply with the dry-run's run id; the workflow's schema checks pass.
+- [ ] **Step 3:** Production: `production-db.yml` dry-run from `main`; confirm the only pending files are `20261009140000_account_deletion.sql` and `20261009150000_account_deletion_hardening.sql`; apply with the dry-run's run id; the workflow's schema checks pass. The grants are not checked by hand in the dry-run evidence: `scripts/production-db-schema-check.sql` (run by the apply job) fails the apply if anon can execute any of the three functions, if authenticated can execute `erase_account` or cannot execute the two wrappers, if service_role can execute `erase_account`, or if `postgres` may not delete from `auth.users`.
 
 ---
 
@@ -983,7 +993,7 @@ Render above the grid:
 ) : null}
 ```
 
-(Choosing a delegate through `member_change_delegate` opens a new row without the note, so the note disappears by itself.)
+(Choosing a delegate through `member_change_delegate` opens a new row without the note, so the note disappears by itself. Re-picking the central movement does NOT clear it: the open row already points at central, so no new row is opened. Only choosing a delegate clears the note, so its text must ask the member to choose a delegate and must not suggest that confirming central dismisses it.)
 
 - [ ] **Step 4: Run, expect PASS.**
 - [ ] **Step 5: Commit** — `git commit -m "feat(member): note when a member's delegate has left"`
@@ -1050,6 +1060,8 @@ export async function deleteMemberAction(
 
 The typed-name check is a UX guard against deleting the wrong row; authorization stays in `admin_delete_member` (ADR-014).
 
+The admin copy (Task 4, `ADMIN_DELETE_REASON_LABEL` or a hint under the reason field) must tell staff not to write the person's name in the reason: the `member.delete` audit row keeps the reason after the erasure (ADR-047), so a name written there would survive it. Pin it in `DeleteMemberButton.test.tsx`.
+
 `DeleteMemberButton.tsx`: a client component with props `{ memberId: string; memberName: string; action: typeof deleteMemberAction }`. A `Button variant="danger" size="sm"` labelled `ADMIN_DELETE_BUTTON` opens an inline panel with `TextareaField` (`ADMIN_DELETE_REASON_LABEL`), `Field` (`ADMIN_DELETE_NAME_LABEL`), a `danger` button `ADMIN_DELETE_CONFIRM` and a `ghost` button `ADMIN_DELETE_CANCEL`. Use `adminControlClasses` for the inputs as the other admin forms do.
 
 `members/page.tsx`: `const canDelete = hasAnyRole(roles, ["super_admin"]);` header `<th className={tableThClass}>წაშლა</th>` when `canDelete`, cell `<DeleteMemberButton memberId={m.id} memberName={`${m.first_name} ${m.last_name}`} action={deleteMemberAction} />`.
@@ -1080,6 +1092,13 @@ The typed-name check is a UX guard against deleting the wrong row; authorization
   The rights body gets, before `მოთხოვნა გამოგვიგზავნე…`:
   `"ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან — მონაცემები მაშინვე იშლება. "`
   Version stays `2026-10-v1` (spec §5).
+
+  > **Correction (final review, 2026-10-08), before implementing:** the Georgian above overclaims.
+  > The policy must not say that backups or service logs are erased: they are not, they expire on
+  > their own retention (spec §2, §7). It must also not say that every vote stays: a vote in a
+  > poll that is still running is removed, only votes in finished polls stay without the person.
+  > Rework both sentences (and the test's expected strings) to say so, with the owner reviewing
+  > the Georgian, before Step 1.
 - [ ] **Step 4: Run, expect PASS**; ka-gate on the file.
 - [ ] **Step 5: Commit** — `git commit -m "docs(privacy): self-service deletion in the policy"`
 

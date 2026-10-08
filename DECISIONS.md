@@ -1272,3 +1272,75 @@ after privacy step 2).
   this release's revoke comes later and wins. Staging got this release's migrations before 150000,
   so `20261008160300` repeats the revoke after every file that touches `register()` — the end state
   is the same everywhere, and `lib/security/registration-hardening.test.ts` keeps it that way.
+
+## ADR-047 (2026-10-08): Members can delete their account; data is erased
+
+Owner request in chat ("lets add account delete feature and it also deletes data"); proposals a–g
+accepted 2026-10-08 (spec `docs/superpowers/specs/2026-10-08-account-deletion-design.md` §1).
+Two releases: A is the database only (`20261009140000_account_deletion.sql` plus
+`20261009150000_account_deletion_hardening.sql`, the whole-branch review's fixes, written as a
+second file because staging already held the first); B is the app (profile danger section, admin
+row action, `/account-deleted`, the policy sentence).
+
+- **One erasure, two doors.** `erase_account(uuid)` (SECURITY DEFINER, owned by `postgres`) does
+  everything in one transaction and ends with `delete from auth.users`, which cascades the rest.
+  No API role may execute it — not anon, not authenticated, not service_role (the platform's
+  default privileges had granted service_role; 150000 revokes it). The two ways in are
+  `delete_my_account(confirm word)` for the signed-in person and `admin_delete_member(user,
+reason)` for a super_admin, which writes its `member.delete` audit row first (ADR-014). The
+  post-apply schema check (`scripts/production-db-schema-check.sql`) fails the production apply if
+  any of those grants drift or if `postgres` loses DELETE on `auth.users`.
+- **Erased:** the sign-in account (identities, sessions), the profile (names, phone, personal ID,
+  birth date, region, city, job, consent stamp, referral code), own memberships, the delegate row
+  and its photo (the photo file through Storage in Release B), RSVPs, payments (none exist while
+  dues are off), phone verification challenges, and votes in polls still running (open and before
+  their deadline). Deleting those votes closes a hole the review found: the erasure frees the
+  phone number and the personal ID, so a person could delete, register again and vote twice in
+  the same poll.
+- **Kept, without the person:** votes in closed or past-deadline polls (member set null, so
+  finished results never change; owner decision c; the member results view now counts options,
+  not members); SMS send reservations (user set null, so deleting and re-registering cannot reset
+  the per-number and site-wide send limits; the phone number stays in those rows until the existing
+  24-hour cleanup removes them, which runs the next time that number asks for a code); audit rows
+  about the person (below); other members' memberships that pointed at a departing delegate (open
+  ones are closed and replaced by a central membership with `note = 'delegate_left'`, closed ones
+  lose the link).
+- **Supabase auth's own log** (`auth.audit_log_entries`: sign-in and token events, with email and
+  IP address): rows with the person as actor are deleted, best effort — if the owner lacks the
+  privilege the erasure still finishes and raises a notice. Staging's auth server writes no rows
+  there today; the probe proves the delete with made-up rows inside a rolled-back block.
+- **Audit scrub, the one exception to append-only.** Rows about the person keep the action, actor,
+  target id and time; `details` loses every key that holds a name (`name`, `memberName`, `slug`,
+  `firstName`, `lastName`, `personalId`, `phone`, `email`, plus `from`/`to` on
+  `delegate.update_name`, the admin's `note` on `delegate.reject`, and `fromName`/`toName` when the
+  person was the delegate in someone else's `member.reassign`) and gains `"erased": true`.
+  `audit_log_immutable()` allows that UPDATE only when the transaction-local `app.erasing` is on
+  AND the current role is the owner of `erase_account()` AND id, actor, action, target type,
+  target id and time are unchanged. Only `erase_account()` sets the setting (a schema guard keeps
+  `app.erasing` inside that function and the trigger). The client roles do hold the platform's
+  default table grants on `audit_log`, but row level security with no policy shows them no row
+  and lets them change none; service_role can run SQL but is not the owner, so the trigger
+  refuses it even with the setting on (proven on staging). `member.delete` keeps the admin's
+  reason, so the admin page must tell staff not to write the person's name in it. Not scrubbed:
+  free-text payment fields (`payment.void` reason, `payment.record` bank reference) and
+  `member.export` searches — no payments exist; revisit when dues return.
+- **Staff.** Anyone holding an admin role is refused (`staff_account`). Former staff whose id is
+  still referenced (they wrote audit rows, recorded payments, approved delegates) are refused as
+  `staff_history`; the error detail names the blocking foreign key. The trail stays intact.
+- **Races.** The erasure locks the person's profile and delegate rows first, and the polls they
+  voted in `FOR SHARE`, so a concurrent reassignment, delegate change, approval or poll close
+  either finishes first or waits.
+- **Staging proof (2026-10-08, `scripts/verify-account-deletion.mjs`).** A function owned by
+  `postgres` may `delete from auth.users` on the hosted platform, so the spec's fallback (deleting
+  the auth user with the service-role admin API) is not needed. The probe also proves the audit
+  scrub, the trigger lock, the wrapper checks, former-staff refusal with its detail, running-poll
+  votes deleted, closed and past-deadline votes kept, reservations kept without the account, and
+  that it leaves nothing behind.
+- **Out of scope.** Signed-in Google accounts that never registered (no profile; reachable later
+  through the admin tool); support messages (not linked to accounts); database backups and
+  platform logs (Supabase, Vercel), which are not erased but expire on their own retention; a
+  downloadable copy of one's data (the right of access goes through the contact page); payment
+  retention rules (decide with a lawyer before dues return).
+- **Window between the releases.** Once A is applied, any signed-in person can call
+  `delete_my_account` directly; a delegate who does so before B ships leaves their public photo
+  file in Storage until it is removed by hand.
