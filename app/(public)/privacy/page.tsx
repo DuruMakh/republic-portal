@@ -17,6 +17,8 @@ type Section = ({ heading: string; body: string } | { heading: string; items: st
  * Spec docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md section 5.
  * Linked from the registration consent box (lib/privacy.ts PRIVACY_POLICY_PATH), so
  * changing the substance here means bumping PRIVACY_POLICY_VERSION and the migration.
+ * The 2026-10-09 self-service-deletion sentences deliberately kept version 2026-10-v1 (spec
+ * docs/superpowers/specs/2026-10-08-account-deletion-design.md section 5).
  */
 const SECTIONS: Section[] = [
   {

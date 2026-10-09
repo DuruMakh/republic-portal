@@ -5,7 +5,15 @@ import {
   delegatePhotoPath,
   deleteAccountSchema,
 } from "./account-deletion";
-import { mapFunnelError } from "./funnel";
+import {
+  ACCOUNT_DELETE_CONFIRM_LABEL,
+  ACCOUNT_DELETE_CONFIRM_MISMATCH,
+  ACCOUNT_DELETE_LEDE,
+  ADMIN_DELETE_NAME_MISMATCH,
+  ADMIN_DELETE_REASON_HINT,
+  ADMIN_DELETE_REASON_LENGTH,
+} from "./account-deletion-copy";
+import { ERROR_MESSAGES, GENERIC_FUNNEL_ERROR, mapFunnelError } from "./funnel";
 
 describe("deleteAccountSchema", () => {
   it("accepts the word with surrounding spaces and nothing else", () => {
@@ -14,6 +22,29 @@ describe("deleteAccountSchema", () => {
     ).toBe(true);
     expect(deleteAccountSchema.safeParse({ confirm: "delete" }).success).toBe(false);
     expect(deleteAccountSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("answers a wrong word with exactly the mismatch message", () => {
+    const result = deleteAccountSchema.safeParse({ confirm: "delete" });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toBe(ACCOUNT_DELETE_CONFIRM_MISMATCH);
+  });
+});
+
+describe("the confirmation word in the copy", () => {
+  // The word the person must type is spelled out in three places that cannot import each
+  // other's text; if the word ever changes, all three have to change with it.
+  it.each([
+    ["the label", ACCOUNT_DELETE_CONFIRM_LABEL],
+    ["the mismatch message", ACCOUNT_DELETE_CONFIRM_MISMATCH],
+    ["the invalid_confirmation error", ERROR_MESSAGES["invalid_confirmation"] ?? ""],
+  ])("names the word in %s", (_where, text) => {
+    expect(text).toContain(ACCOUNT_DELETION_CONFIRM_WORD);
+  });
+
+  it("tells the person that a running poll loses their vote, in the lede", () => {
+    expect(ACCOUNT_DELETE_LEDE).toContain("მიმდინარე გამოკითხვებში");
   });
 });
 
@@ -31,6 +62,22 @@ describe("adminDeleteMemberSchema", () => {
       adminDeleteMemberSchema.safeParse({ userId: "x", reason: "წევრის თხოვნა", typedName: "ა ბ" })
         .success,
     ).toBe(false);
+  });
+
+  it("speaks Georgian: a too-short or too-long reason, an empty name, a bad id", () => {
+    const base = { userId, reason: "წევრის თხოვნა", typedName: "ა ბ" };
+    const firstMessage = (input: Record<string, string>) => {
+      const result = adminDeleteMemberSchema.safeParse(input);
+      return result.success ? null : (result.error.issues[0]?.message ?? null);
+    };
+    expect(firstMessage({ ...base, reason: "ok" })).toBe(ADMIN_DELETE_REASON_LENGTH);
+    expect(firstMessage({ ...base, reason: "ა".repeat(301) })).toBe(ADMIN_DELETE_REASON_LENGTH);
+    expect(firstMessage({ ...base, typedName: "   " })).toBe(ADMIN_DELETE_NAME_MISMATCH);
+    expect(firstMessage({ ...base, userId: "x" })).toBe(GENERIC_FUNNEL_ERROR);
+  });
+
+  it("warns the admin to keep the member's name out of the reason, because it stays in the audit log", () => {
+    expect(ADMIN_DELETE_REASON_HINT).toContain("აუდიტის ჟურნალში");
   });
 });
 
