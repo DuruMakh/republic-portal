@@ -1291,3 +1291,28 @@ after privacy step 2).
   at `/admin/admins`, where the granter is recorded as the actor. `scripts/grant-admin.mjs`
   stays for staging.
 - **First use.** The owner (durumakh@gmail.com) as super_admin, at the owner's request in chat.
+
+## ADR-047 (2026-10-08): The board roster is filled, a member's bio is optional, and social links show logos
+
+- **Problem.** The /structure roster shipped empty, waiting for the owner's list (spec
+  2026-10-07, which planned a 1–300 character bio on every card). The owner sent five members
+  with photos and social links but no bios.
+- **Decision.** Owner's choice in chat: publish without bios for now. `boardMemberSchema.bio`
+  becomes optional (the 1–300 rule still applies when a bio is present) and `BoardMemberCard`
+  renders no bio line when there is none. `BOARD_MEMBERS` holds the five members in the order
+  sent; `lib/board-members.test.ts` pins the names.
+- **Photos.** Stored in `public/board/`, not hot-linked to the owner's image host, so the cards
+  keep working if that host drops the files. Each is a 4:5 crop centred on the face (the
+  card's shape) and re-encoded as JPEG; the three 1 MB PNGs shrink to about 50 KB each, the
+  two small originals keep their native size (no upscaling). Nukri's TikTok link drops its
+  `?lang=en` suffix.
+- **Social icons.** At the owner's request the fb / tt / in letters (spec 2026-10-07: no brand
+  artwork) become the networks' logos, in the page's muted grey inside the same 30px squares
+  (owner picked grey over brand colours, which would be the loudest thing in the section). The
+  three shapes are inline SVG paths from Font Awesome Free 6.5.2 (CC BY 4.0, credited in
+  `components/SocialLinks.tsx`); no package is added. Logos are `aria-hidden`: each link's
+  label already names the network and the person.
+- **Known limit.** Two originals are small: გიორგი მჭედლიშვილი's is 180×180 px (crop 144×180,
+  visibly soft) and გიორგი თავართქილაძე's 404×404 px (crop 323×404, slightly soft on sharp
+  phone screens). Both stay until the owner sends larger copies; a replacement gets a new
+  filename so cached copies of the old photo cannot linger.

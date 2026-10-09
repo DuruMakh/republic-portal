@@ -304,7 +304,7 @@ test.describe("transparency", () => {
 });
 
 test.describe("structure page", () => {
-  test("the header link opens it; sections, rules, roster notice and anchors work", async ({
+  test("the header link opens it; sections, rules, roster cards and anchors work", async ({
     page,
   }) => {
     await page.goto("/");
@@ -318,7 +318,20 @@ test.describe("structure page", () => {
     }
     await expect(page.getByRole("img", { name: "5-დან 4 ხმა" })).toBeVisible();
     await expect(page.getByRole("img", { name: "5-დან 3 ხმა" })).toBeVisible();
-    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
+    // The roster is filled (owner list, 2026-10-08): five cards, photos loaded, no notice.
+    const roster = page.getByRole("region", { name: "ბორდის შემადგენლობა" });
+    await expect(roster.getByRole("article")).toHaveCount(5);
+    const photo = roster.getByRole("img", { name: "დურუ მახარაძე" });
+    await photo.scrollIntoViewIfNeeded();
+    await expect(photo).toHaveJSProperty("complete", true);
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+    await expect(roster.getByRole("link", { name: "LinkedIn: დურუ მახარაძე" })).toHaveAttribute(
+      "href",
+      "https://www.linkedin.com/in/duru-makharadze-2b35a4205/",
+    );
+    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toHaveCount(0);
 
     await page
       .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
