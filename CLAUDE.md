@@ -4,7 +4,7 @@
 
 Production app for "ქართული რესპუბლიკა" (Georgian civic platform).
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
-UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kronika-redesign-design.md). Decisions log: DECISIONS.md (append-only).
+UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kronika-redesign-design.md). Decisions: DECISIONS.md (what holds today; full history in docs/decisions-history.md).
 
 ## Process (non-negotiable)
 
@@ -26,8 +26,9 @@ sign-in, roles, personal data or payments.
   marked ready. Every push to a ready PR costs a full CI run, so batch review fixes.
 - **A database change ships in the same PR as the code that uses it**, as one release. Split it
   into "database first, code later" only when live users could break in between.
-- **ADRs only for real decisions**, the kind someone could later ask "why?" about. Recheck main's
-  last ADR number right before merging.
+- **ADRs only for real decisions**, the kind someone could later ask "why?" about, written and
+  edited by the rules at the top of DECISIONS.md. Recheck main's last ADR number right before
+  merging.
 - Owner writes zero code and reads no code. Sign-off evidence is plain language and
   screenshots of the change running on the local copy (Docker + local Supabase, see README).
   There are no preview links or staging database since 2026-10-09.

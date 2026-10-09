@@ -4,7 +4,7 @@
 
 Production app for "ქართული რესპუბლიკა" (Georgian civic platform).
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
-UX contract: prototype/index.html. Decisions log: DECISIONS.md (append-only).
+UX contract: prototype/index.html. Decisions: DECISIONS.md (what holds today; full history in docs/decisions-history.md).
 
 ## Communication language
 
