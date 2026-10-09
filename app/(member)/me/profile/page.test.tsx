@@ -46,7 +46,9 @@ beforeEach(() => {
     auth: { getUser: async () => ({ data: { user: { phone: "995599123456" } } }) },
   });
   server.getCabinetState.mockResolvedValue(cabinetStateFixture());
-  server.getAdminRoles.mockResolvedValue([]);
+  // staff standing comes from cabinet_state's own admin flag; a second admin_roles read would
+  // only add a failure path (this one would take the page down)
+  server.getAdminRoles.mockRejectedValue(new Error("admin_roles read failed"));
 });
 
 describe("profile page danger section (spec 2026-10-08 §3.1)", () => {
@@ -72,8 +74,7 @@ describe("profile page danger section (spec 2026-10-08 §3.1)", () => {
     ["member", cabinetStateFixture()],
     ["registered", REGISTERED],
   ])("gives staff the explanation and no button on the %s page", async (_label, state) => {
-    server.getCabinetState.mockResolvedValue(state);
-    server.getAdminRoles.mockResolvedValue(["editor"]);
+    server.getCabinetState.mockResolvedValue({ ...state, admin: true });
 
     render(await ProfilePage());
 
@@ -81,8 +82,17 @@ describe("profile page danger section (spec 2026-10-08 §3.1)", () => {
     expect(screen.queryByRole("button", { name: ACCOUNT_DELETE_BUTTON })).toBeNull();
   });
 
+  it("never reads admin_roles itself", async () => {
+    render(await ProfilePage());
+
+    expect(server.getAdminRoles).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: ACCOUNT_DELETE_BUTTON })).toBeInTheDocument();
+  });
+
   it("tells an approved delegate their public page goes and their team moves", async () => {
-    server.getCabinetState.mockResolvedValue(cabinetStateFixture({ delegateStatus: "approved" }));
+    server.getCabinetState.mockResolvedValue(
+      cabinetStateFixture({ role: "delegate", delegateStatus: "approved" }),
+    );
 
     render(await ProfilePage());
 
