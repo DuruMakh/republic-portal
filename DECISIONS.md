@@ -235,7 +235,7 @@ were fixed pre-release. Decisions worth recording:
 News/events/polls extend the Phase 4 lock pattern instead of inventing a new
 one: zero client grants on base tables; anon → public_* views (published+public
 only) and aggregate-only transparency views; completed members → self-gating
-member_* views (registration_completed_at is the DB meaning of „წევრებისთვის");
+member_* views (registration_completed_at is the DB meaning of „წევრებისთვის“);
 editor|super_admin → self-gating admin_* views; every editor mutation a
 SECURITY DEFINER RPC with its audit row in the same transaction. Member-only
 articles render exclusively under /me/news/* — the service worker's NetworkOnly
@@ -1291,3 +1291,43 @@ after privacy step 2).
   at `/admin/admins`, where the granter is recorded as the actor. `scripts/grant-admin.mjs`
   stays for staging.
 - **First use.** The owner (durumakh@gmail.com) as super_admin, at the owner's request in chat.
+
+## ADR-047 (2026-10-09): Simpler development structure — throwaway CI database, preview test sign-in
+
+- **Problem.** Every push built two Vercel projects (the demo site and the real one), so the
+  hobby plan's 100-deployments-a-day limit blocked real-site releases twice on 2026-10-08. CI ran
+  build and e2e against the shared hosted staging database, so staging drift, the shared SMS
+  budget and the owner's real account living there caused failures that were not defects.
+  Previews needed Google sign-in, which the owner rarely wants to do just to check a change.
+- **Decision.** Spec `docs/superpowers/specs/2026-10-08-simpler-dev-structure-design.md`, plan
+  `docs/superpowers/plans/2026-10-08-simpler-dev-structure.md`.
+  - **CI on a throwaway stack.** `quality` starts a local Supabase stack with the pinned CLI
+    (`supabase start`, all migrations), seeds it with `scripts/seed-staging.mjs --confirm-ref
+local` after the unit tests, and builds + runs e2e against it. CI no longer reads the
+    `STAGING_SUPABASE_*` secrets. First run: 52 e2e in 3.6 min, whole job 12 min.
+  - **One test-database allow-list.** `lib/env.ts isTestDatabaseUrl()` and
+    `scripts/staging-guard.mjs` accept exactly `https://orcxtbedkexoclbfgvzd.supabase.co` and the
+    local stack (`http://127.0.0.1:54321`, `http://localhost:54321`). The guard used to accept any
+    URL whose first DNS label was the staging ref (`https://<ref>.attacker.example` included); a
+    test pins both lists equal. Scripts that only work against hosted staging
+    (`verify-security-fixes.mjs`) refuse the local stack.
+  - **Preview test sign-in.** On `/login`, the „სატესტო შესვლა“ card offers ადმინი, დელეგატი,
+    წევრი and ახალი მომხმარებელი. `testSignInAction` re-checks `testSignInEnabled()` on every
+    call: never on a live Vercel deployment (runtime `VERCEL_ENV=production`, which no build
+    setting overrides; the demo project's production site is built with `APP_ENV=preview` on
+    staging since 2026-07-20), AND an explicit `preview`/`development` build, AND a test database,
+    the last two allow-lists, so an unset or mistyped flag keeps it off. Seed personas sign in through the e2e fixture mechanism,
+    now shared as `lib/fixture-auth.ts`, under their own narrow phone allow-list (canonical admins
+    - seed people `500xxxxxx`); "new visitor" creates a fresh Google-marked made-up account. It
+      can never sign in an account with a real email address. This is a deliberate exception to the
+      CLAUDE.md rule against service-role reads on paths without a server-side role check: the
+      path exists only on test databases, and the environment gate above is its check.
+  - **Later steps (no code).** Previews move to the real Vercel project (Preview-scoped staging
+    settings, Ignored Build Step removed, Vercel Authentication kept); staging is reseeded with
+    made-up people only after the owner's yes; the demo project is deleted last after the
+    owner's yes.
+- **Rejected.** Supabase branching (per-PR databases): its GitHub integration applies migrations
+  and `config.toml` auth settings to production on every merge, Google sign-in needs per-branch
+  setup, and it costs about the same as the staging project.
+- **Not changed.** Merge = release to respublika.ge; production database changes still go
+  through `production-db.yml` dry-run then apply.

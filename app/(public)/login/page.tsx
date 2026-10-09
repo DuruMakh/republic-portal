@@ -1,3 +1,4 @@
+import { testSignInEnabled } from "@/lib/env";
 import { GoogleLogin } from "./GoogleLogin";
 import { LegacyPhoneLogin } from "./LegacyPhoneLogin";
 
@@ -11,5 +12,10 @@ export default async function LoginPage({
   if (process.env.NEXT_PUBLIC_AUTH_MODE !== "google") return <LegacyPhoneLogin />;
 
   const error = (await searchParams).error;
-  return <GoogleLogin error={typeof error === "string" ? error : undefined} />;
+  return (
+    <GoogleLogin
+      error={typeof error === "string" ? error : undefined}
+      testSignIn={testSignInEnabled()}
+    />
+  );
 }
