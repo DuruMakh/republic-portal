@@ -17,6 +17,8 @@ export const ACCOUNT_DELETED_TITLE = "ანგარიში წაიშა�
 export const ACCOUNT_DELETED_BODY =
   "შენი ანგარიში და პერსონალური მონაცემები წაიშალა. თუ ოდესმე დაბრუნება მოგინდება, შეგიძლია თავიდან დარეგისტრირდე.";
 export const ACCOUNT_DELETED_HOME = "მთავარ გვერდზე";
+/** The policy's own title (app/(public)/privacy/page.tsx h1), as the link to it. */
+export const ACCOUNT_DELETED_PRIVACY = "კონფიდენციალურობის პოლიტიკა";
 export const DELEGATE_LEFT_NOTE = "შენმა დელეგატმა პლატფორმა დატოვა. აირჩიე ახალი დელეგატი.";
 export const ADMIN_DELETE_BUTTON = "წაშლა";
 export const ADMIN_DELETE_REASON_LABEL = "მიზეზი (მაგ., წევრის მოთხოვნა)";

@@ -57,12 +57,13 @@ export default async function MyDelegatePage() {
       </div>
 
       {delegateLeft ? (
-        <p
-          role="status"
-          className="mb-6 border border-ink bg-paper-bright p-3 text-sm font-semibold text-ink"
-        >
-          {DELEGATE_LEFT_NOTE}
-        </p>
+        <div className="mb-6">
+          <Card variant="callout">
+            <p role="status" className="text-sm font-semibold text-ink">
+              {DELEGATE_LEFT_NOTE}
+            </p>
+          </Card>
+        </div>
       ) : null}
 
       <div className="mb-6">
