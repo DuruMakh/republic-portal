@@ -47,7 +47,7 @@ export function PollCard({
     });
   }
 
-  // ADR-047: the leading answer (every answer tied for the most votes) stays red; the rest teal.
+  // ADR-048: the leading answer (every answer tied for the most votes) stays red; the rest teal.
   const leading = leadingOptions(options.map((o) => o.votes));
 
   return (

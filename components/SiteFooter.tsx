@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 /**
- * Teal site footer (spec §3.2, ADR-047): copyright left, link row right, on the
+ * Teal site footer (spec §3.2, ADR-048): copyright left, link row right, on the
  * one solid teal band. Links take a paper focus outline because red on teal is
  * invisible (1.00:1), and thicken their underline on hover. `copyright` is
  * accepted as a plain string — the caller (Task 10) splices the actual text.

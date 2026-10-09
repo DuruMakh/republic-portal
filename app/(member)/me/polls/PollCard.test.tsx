@@ -77,7 +77,7 @@ describe("PollCard", () => {
     expect(screen.getByText("გამოკითხვა დასრულებულია · სულ 5 ხმა")).toBeInTheDocument();
   });
 
-  it("results: the leading answer's bar is brand red, the others teal (ADR-047)", () => {
+  it("results: the leading answer's bar is brand red, the others teal (ADR-048)", () => {
     const { container } = render(
       <PollCard
         pollId={POLL_ID}

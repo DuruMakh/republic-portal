@@ -78,7 +78,7 @@ describe("Masthead", () => {
     expect(mastheadHeader!.className).toContain("md:flex");
   });
 
-  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-047)", () => {
+  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-048)", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     const header = screen.getByRole("banner");

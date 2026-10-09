@@ -38,8 +38,12 @@ import { join } from "node:path";
 import { assertStagingTarget } from "./staging-guard.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Security audit M6: staging only.
-assertStagingTarget(url);
+// Security audit M6: staging only. Hosted staging specifically: the pooler URL below is built
+// from the project ref, so the local CI stack would send the DB password to a nonsense tenant.
+if (assertStagingTarget(url) !== "staging") {
+  console.error("Refusing: this script runs only against the hosted staging database.");
+  process.exit(1);
+}
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const dbPassword = process.env.SUPABASE_DB_PASSWORD;

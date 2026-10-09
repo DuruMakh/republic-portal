@@ -23,3 +23,36 @@ describe("CI quality job time limits", () => {
     );
   });
 });
+
+// Spec 2026-10-08 simpler dev structure 4.1: every run builds and tests against its own
+// freshly seeded local stack, so shared staging drift can no longer fail CI.
+describe("CI runs on a throwaway Supabase stack", () => {
+  const workflow = readRepoFile(".github/workflows/ci.yml");
+
+  it("never reads the staging database secrets", () => {
+    expect(workflow).not.toContain("STAGING_SUPABASE");
+  });
+
+  it("starts a pinned Supabase CLI and seeds the local stack", () => {
+    expect(workflow).toMatch(/uses: supabase\/setup-cli@[0-9a-f]{40} # v/);
+    expect(workflow).toContain("supabase start");
+    expect(workflow).toContain("scripts/seed-staging.mjs --confirm-ref local");
+  });
+
+  it("loads the stack settings only after the unit tests, then seeds, then builds", () => {
+    const at = (needle: string) => workflow.indexOf(needle);
+    expect(at("- run: npm run test")).toBeGreaterThan(-1);
+    expect(at("- run: npm run test")).toBeLessThan(at("supabase status -o env"));
+    expect(at("supabase status -o env")).toBeLessThan(at("scripts/seed-staging.mjs"));
+    expect(at("scripts/seed-staging.mjs")).toBeLessThan(at("- run: npm run build"));
+  });
+
+  it("fails the settings step when any of the three settings is missing", () => {
+    expect(workflow).toContain("set -o pipefail");
+    expect(workflow).toContain('test "$(grep -cE "$SETTINGS" "$GITHUB_ENV")" -eq 3');
+  });
+
+  it("caps the stack start at 10 minutes", () => {
+    expect(workflow).toMatch(/run: supabase start[^\n]*\n\s+timeout-minutes: 10\n/);
+  });
+});

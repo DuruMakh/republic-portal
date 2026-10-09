@@ -5,7 +5,7 @@ export const cardSkin = "border border-hairline bg-paper-bright";
 // hairline — the one mechanism every later call-out (news box, my-delegate card,
 // poll teaser, clipping card, verification cards) swaps to via `variant="callout"`.
 const cardSkinCallout = "border border-ink bg-paper-bright";
-// Teal call-out (ADR-047): the same bright surface with a teal border, for informational
+// Teal call-out (ADR-048): the same bright surface with a teal border, for informational
 // call-outs such as the my-delegate card. Never a teal fill.
 const cardSkinCalloutTeal = "border border-teal bg-paper-bright";
 

@@ -21,6 +21,8 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+vi.mock("./test-sign-in-actions", () => ({ testSignInAction: vi.fn() }));
+
 import LoginPage from "./page";
 
 const ROUTE_ERROR_MESSAGE = "მონაცემების წამოღება ვერ მოხერხდა — სცადე თავიდან.";
@@ -134,5 +136,53 @@ describe("LegacyPhoneLogin cabinet_state lookup failure surface", () => {
     expect(screen.queryByText(ROUTE_ERROR_MESSAGE)).toBeNull();
     expect(verifyOtpMock).toHaveBeenCalledTimes(1);
     expect(rpcMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("preview test sign-in panel (spec 2026-10-08 4.3)", () => {
+  const PANEL = "სატესტო შესვლა";
+
+  it("shows one button per persona on a preview pointed at staging", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "google");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+
+    await renderLogin();
+
+    expect(screen.getByRole("heading", { name: PANEL })).toBeInTheDocument();
+    for (const label of ["ადმინი", "დელეგატი", "წევრი", "ახალი მომხმარებელი"]) {
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it("is absent on the production site", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "google");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://uorvlshbrlbdnbauxsws.supabase.co");
+
+    await renderLogin();
+
+    expect(screen.queryByRole("heading", { name: PANEL })).toBeNull();
+    expect(screen.getByRole("button", { name: "Google-ით შესვლა" })).toBeInTheDocument();
+  });
+
+  it("is absent on a preview build pointed at the production database", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "google");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://uorvlshbrlbdnbauxsws.supabase.co");
+
+    await renderLogin();
+
+    expect(screen.queryByRole("heading", { name: PANEL })).toBeNull();
+  });
+
+  it("explains a failed test sign-in in Georgian", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "google");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+
+    await renderLogin("test_sign_in");
+
+    expect(screen.getByRole("alert")).toHaveTextContent("სატესტო შესვლა ვერ მოხერხდა");
   });
 });

@@ -22,16 +22,36 @@ jobs:
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
         if: hashFiles('playwright.config.ts') != ''
+      # Throwaway database (spec 2026-10-08 simpler dev structure 4.1): every run gets its own
+      # local Supabase stack with all migrations, seeded after the unit tests, discarded with
+      # the runner.
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with: { version: 2.109.1 }
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
+        timeout-minutes: 10
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
       - run: npm run ka:scan
       - run: npm run test
+      # Loaded only after the unit tests, so they keep running with the environment they always had.
+      - name: Point build and e2e at the throwaway stack
+        run: |
+          set -o pipefail
+          SETTINGS='^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)='
+          supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | grep -E "$SETTINGS" \
+            | sed 's/"//g' >> "$GITHUB_ENV"
+          # all three or stop here: a missing anon key would otherwise surface as confusing e2e errors
+          test "$(grep -cE "$SETTINGS" "$GITHUB_ENV")" -eq 3
+      - run: node scripts/seed-staging.mjs --confirm-ref local
+        env:
+          NEXT_PUBLIC_APP_ENV: preview
       - run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_ENV: preview
           PHONE_VERIFICATION_PROVIDER: test
           NEXT_PUBLIC_AUTH_MODE: google
@@ -42,17 +62,11 @@ jobs:
           # Digit 8 folds in the retry attempt; digit 9 (=9) is the login journey's slot;
           # funnel journeys replace that final digit (see e2e/funnel-helpers.ts).
           echo "E2E_TEST_PHONE=55$(printf '%05d' $(( ${{ github.run_number }} % 100000 )))$(( ${{ github.run_attempt }} % 10 ))9" >> "$GITHUB_ENV"
-      # e2e asserts exact facts about the CANONICAL STAGING SEED (12 approved delegates,
-      # leaderboard order, pending names absent). CI never seeds. If these fail with
-      # count/name mismatches, staging drifted — restore with:
-      # npm run seed:staging -- --confirm-ref orcxtbedkexoclbfgvzd
-      # (see scripts/seed-staging.mjs; destructive, staging-only).
+      # e2e asserts exact facts about the canonical seed (12 approved delegates, leaderboard
+      # order). Every run seeds a fresh throwaway stack, so a mismatch is a real defect, not drift.
       - run: npm run e2e
         if: hashFiles('playwright.config.ts') != ''
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_ENV: preview
           PHONE_VERIFICATION_PROVIDER: test
           NEXT_PUBLIC_AUTH_MODE: google
