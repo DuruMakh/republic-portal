@@ -3,4 +3,31 @@
  * Pure: no React, no Next. The confirmation word is duplicated in the migration's
  * delete_my_account(); lib/account-deletion-migration.test.ts keeps the two equal.
  */
+import { z } from "zod";
+import { ACCOUNT_DELETE_CONFIRM_MISMATCH } from "./account-deletion-copy";
+
 export const ACCOUNT_DELETION_CONFIRM_WORD = "წაშლა";
+
+export const deleteAccountSchema = z.object({
+  confirm: z
+    .string()
+    .trim()
+    .refine((v) => v === ACCOUNT_DELETION_CONFIRM_WORD, {
+      message: ACCOUNT_DELETE_CONFIRM_MISMATCH,
+    }),
+});
+
+export const adminDeleteMemberSchema = z.object({
+  userId: z.string().uuid(),
+  reason: z.string().trim().min(5).max(300),
+  typedName: z.string().trim().min(1).max(130),
+});
+
+const PHOTO_MARKER = "/delegate-photos/";
+
+/** Object path of a delegate photo in its bucket, from the public URL the row stores. */
+export function delegatePhotoPath(url: string | null): string | null {
+  if (!url) return null;
+  const idx = url.indexOf(PHOTO_MARKER);
+  return idx >= 0 ? url.slice(idx + PHOTO_MARKER.length) : null;
+}

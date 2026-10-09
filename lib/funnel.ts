@@ -189,6 +189,15 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   // Phase 6 R2 tokens (spec §3.1, §8.3)
   delegacy_exists: "დელეგატობის მოთხოვნა უკვე დაფიქსირებულია.",
   invalid_visibility: "ხილვადობის პარამეტრი არასწორია — სცადე თავიდან.",
+  // Account deletion tokens (spec 2026-10-08-account-deletion-design.md). `invalid_reason` is
+  // raised by admin_delete_member too, but it is already mapped above (Phase 4) and one token
+  // carries one message; a second key here would be a duplicate property.
+  staff_account:
+    "ადმინისტრატორის როლის მქონე ანგარიშის წაშლა შეუძლებელია — ჯერ როლი უნდა მოიხსნას.",
+  staff_history:
+    "ეს ანგარიში ადმინისტრატორის ჩანაწერებთანაა დაკავშირებული და ავტომატურად ვერ წაიშლება — მოგვწერე საკონტაქტო გვერდიდან.",
+  invalid_confirmation: "დასადასტურებლად ზუსტად ჩაწერე სიტყვა: წაშლა",
+  cannot_delete_self: "საკუთარი ანგარიშის წაშლა ამ გვერდიდან შეუძლებელია.",
 };
 
 export const DUPLICATE_PERSONAL_ID_MESSAGE = ERROR_MESSAGES["duplicate_personal_id"]!;
