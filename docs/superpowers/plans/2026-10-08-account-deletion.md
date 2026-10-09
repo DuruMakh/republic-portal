@@ -496,9 +496,9 @@ git commit -m "test(db): staging probe for account deletion"
 
 Added after the whole-branch re-review (2026-10-08): the re-review found the points below in
 Release A's two migrations, and the rulings moved their fixes here. They go in one new migration
-file; no existing migration is edited. Release B therefore ships in two merges again: this
-migration first (migration-only PR, production dry-run and apply as in Task 3), then the code
-(Tasks 4-12).
+file; no existing migration is edited. Owner ruling 2026-10-09 ("just build step 2"): Release A (PR #49) is not merged yet, so this
+migration joins PR #49 as `20261009160000_account_deletion_followups.sql`; the database ships as one
+release and the code (Tasks 4-12) as the second, after one owner sign-off on the preview.
 
 - [ ] `erase_account` deletes the person's `phone_verification_send_reservations` older than 24 hours.
 - [ ] A daily purge of anonymized reservations (`user_id` null) older than 24 hours. Use pg_cron, or make the security session's 24-hour cleanup global; coordinate with that session.
@@ -1103,10 +1103,10 @@ The admin copy (Task 4, `ADMIN_DELETE_REASON_LABEL` or a hint under the reason f
 ```
 
 - [ ] **Step 2: Run, expect FAIL.**
-- [ ] **Step 3: Implement** — retention body becomes:
-  `"მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი. წაშლისას შენი პერსონალური მონაცემები იშლება, ხოლო გამოკითხვებში მიცემული ხმები რჩება ისე, რომ შენი ამოცნობა შეუძლებელი იყოს."`
+- [ ] **Step 3: Implement** — retention body becomes (byte-for-byte; corrected 2026-10-09 so it does not claim backups or logs are erased):
+  `"მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი. წაშლისას შენი პერსონალური მონაცემები მაშინვე იშლება. დასრულებულ გამოკითხვებში მიცემული ხმები რჩება ისე, რომ შენი ამოცნობა შეუძლებელი იყოს. სარეზერვო ასლები და ტექნიკური ჩანაწერები, მაგალითად SMS-ების ლიმიტის აღრიცხვა, თავისით იშლება მოკლე ვადაში."`
   The rights body gets, before `მოთხოვნა გამოგვიგზავნე…`:
-  `"ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან — მონაცემები მაშინვე იშლება. "`
+  `"ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან. "`
   Version stays `2026-10-v1` (spec §5).
 
   > **Correction (final review, 2026-10-08), before implementing:** the Georgian above overclaims.
