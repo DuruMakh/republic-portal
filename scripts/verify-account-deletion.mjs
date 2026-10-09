@@ -2,15 +2,15 @@
 // Run: node --env-file=.env.local scripts/verify-account-deletion.mjs
 //
 // Proves migrations 20261009140000_account_deletion.sql,
-// 20261009150000_account_deletion_hardening.sql and 20261009160000_account_deletion_followups.sql
-// against the real staging database: the member / delegate / staff paths through the client RPCs,
-// the closed doors (anon, direct erase_account for a client and for service_role,
-// non-super-admin), the audit-log lock, the audit scrub, the admin wrapper, former staff refused
+// 20261009150000_account_deletion_hardening.sql, 20261009160000_account_deletion_followups.sql and
+// 20261009170000_account_deletion_races.sql against the real staging database: the member /
+// delegate / staff paths through the client RPCs, the closed doors (anon, direct erase_account
+// for a client and for service_role, non-super-admin), the audit-log lock, the audit scrub, the admin wrapper, former staff refused
 // with the blocking key named, votes (deleted in a running poll, kept anonymously in a closed or
 // past-deadline one), SMS send reservations (older than 24 hours deleted, newer ones kept without
-// the account, their verification challenge gone), the daily purge job and its command, the
-// follow-ups' FOUND checks and team capture in the live function bodies, and Supabase auth's own
-// log scrubbed. Everything it creates is removed again, on failure too.
+// the account, their verification challenge gone), the hourly purge job and its command, the
+// erasure guards of seven admin RPCs and the team capture in the live function bodies, and
+// Supabase auth's own log scrubbed. Everything it creates is removed again, on failure too.
 //
 // Pass sentinels are assembled by the database at run time ('PROBE-' || 'NAME'), so an error
 // that echoes the SQL text back can never contain one and pass a check by accident.
@@ -250,23 +250,41 @@ select
       "sequence closed to anon/authenticated, SMS reservations' user_id nullable and set null",
   );
 
-  // 0c. the follow-ups migration is on this database too (catalog, read-only): the live bodies
-  // carry the FOUND checks, the membership lock, the team capture and the reservation delete;
-  // the three admin RPCs keep their grants; the daily purge job is scheduled with its command.
+  // 0c. the follow-ups and races migrations are on this database too (catalog, read-only): the
+  // live bodies carry every erasure guard (a FOUND check right after the UPDATE in four admin
+  // RPCs, a FOR SHARE profile read plus not-found refusal in three), erase_account's membership
+  // lock, team capture and reservation delete; the seven admin RPCs keep their grants; the purge
+  // job is scheduled once, hourly, with its command.
+  const FOUND_GUARDED = [
+    "public.admin_approve_delegate(uuid,text)",
+    "public.admin_reject_delegate(uuid,text)",
+    "public.admin_update_delegate_name(uuid,text,text)",
+    "public.admin_update_delegate_profile(uuid,text,text)",
+  ];
+  const SHARE_GUARDED = [
+    "public.admin_reveal_personal_id(uuid)",
+    "public.admin_reveal_applicant_personal_id(uuid)",
+    "public.admin_void_payment(bigint,text)",
+  ];
+  const sqlList = (sigs) => sigs.map((s) => `'${s}'`).join(", ");
   const [followups] = sqlRows(`
+with guarded as (
+  select f, regexp_replace(p.prosrc, '\\s+', ' ', 'g') as src
+    from unnest(array[${sqlList([...FOUND_GUARDED, ...SHARE_GUARDED])}]) as f
+    join pg_catalog.pg_proc p on p.oid = f::regprocedure
+)
 select
-  (select count(*)::int from pg_catalog.pg_proc
-    where oid in ('public.admin_approve_delegate(uuid,text)'::regprocedure,
-                  'public.admin_reject_delegate(uuid,text)'::regprocedure,
-                  'public.admin_update_delegate_name(uuid,text,text)'::regprocedure)
-      and position('if not found then raise exception ''invalid_target''; end if;' in prosrc) > 0)
-    as found_checks,
+  (select array_agg(f order by f) from guarded
+    where f in (${sqlList(FOUND_GUARDED)})
+      and src ~ 'update public\\.[a-z_]+ set [^;]*; if not found then raise exception ''invalid_target''; end if;')
+    as found_guarded,
+  (select array_agg(f order by f) from guarded
+    where f in (${sqlList(SHARE_GUARDED)})
+      and src ~ 'from public\\.profiles where id = [a-z_.]+ for share; if not found then raise exception ''invalid_target''; end if;')
+    as share_guarded,
   (select bool_and(has_function_privilege('authenticated', f, 'EXECUTE')
                    and not has_function_privilege('anon', f, 'EXECUTE'))
-     from unnest(array['public.admin_approve_delegate(uuid,text)',
-                       'public.admin_reject_delegate(uuid,text)',
-                       'public.admin_update_delegate_name(uuid,text,text)']) as f)
-    as admin_grants_kept,
+     from guarded) as admin_grants_kept,
   (select regexp_replace(prosrc, '\\s+', ' ', 'g') from pg_catalog.pg_proc
     where oid = 'public.erase_account(uuid)'::regprocedure) as erase_src`);
   const eraseSrc = String(followups?.erase_src ?? "");
@@ -277,9 +295,18 @@ select
     "delete from public.phone_verification_send_reservations where user_id = p_user_id " +
       "and created_at < now() - interval '24 hours';",
   ].filter((needle) => !eraseSrc.includes(needle));
-  if (followups?.found_checks !== 3 || followups.admin_grants_kept !== true || eraseNeeds.length) {
+  const missing = (got, want) => want.filter((sig) => !(got ?? []).includes(sig));
+  const foundMissing = missing(followups?.found_guarded, FOUND_GUARDED);
+  const shareMissing = missing(followups?.share_guarded, SHARE_GUARDED);
+  if (
+    foundMissing.length ||
+    shareMissing.length ||
+    followups.admin_grants_kept !== true ||
+    eraseNeeds.length
+  ) {
     throw new Error(
-      `follow-ups not in place: found_checks ${followups?.found_checks}, admin grants kept ` +
+      `erasure guards not in place: no FOUND check ${JSON.stringify(foundMissing)}, no FOR ` +
+        `SHARE read ${JSON.stringify(shareMissing)}, admin grants kept ` +
         `${followups?.admin_grants_kept}, erase_account lacks ${JSON.stringify(eraseNeeds)}`,
     );
   }
@@ -287,17 +314,18 @@ select
                          where jobname = '${PURGE_JOB}'`);
   if (
     jobs.length !== 1 ||
-    jobs[0].schedule !== "30 1 * * *" ||
+    jobs[0].schedule !== "17 * * * *" ||
     jobs[0].command !== PURGE_COMMAND ||
     jobs[0].active !== true
   ) {
     throw new Error(`purge job wrong: ${JSON.stringify(jobs)}`);
   }
   console.log(
-    "OK: follow-ups applied: FOUND checks in approve/reject/update_name (grants unchanged), " +
-      "erase_account locks the membership row, captures the team via returning, deletes " +
-      `reservations older than 24 hours; cron job ${PURGE_JOB} scheduled once, daily 01:30 UTC, ` +
-      `active, runs as ${jobs[0].username}`,
+    "OK: erasure guards live: FOUND check after the UPDATE in approve/reject/update_name/" +
+      "update_profile, FOR SHARE profile read in reveal/reveal_applicant/void_payment (all seven " +
+      "grants unchanged); erase_account locks the membership row, captures the team via " +
+      `returning, deletes reservations older than 24 hours; cron job ${PURGE_JOB} scheduled ` +
+      `once, hourly at minute 17, active, runs as ${jobs[0].username}`,
   );
 
   // A. wrong word refused; right word erases the member and the sign-in account
@@ -682,6 +710,48 @@ end $probe$;`);
     "OK: admin_delete_member: role, reason, self, target checks; audit row kept with reason",
   );
 
+  // B3b. the guarded admin RPCs still work for a living person (their FOR SHARE read and FOUND
+  // check run as the definer) and refuse a missing one; rolled back, so their audit rows never
+  // persist. The race itself needs two sessions; the catalog check (0c) and the unit pins cover it.
+  const guarded = sqlError(`
+do $probe$
+declare
+  s constant uuid := ${uuid(s.id)};
+  d constant uuid := ${uuid(d.id)};
+  v_pid text := (select personal_id from public.profiles where id = d);
+  v_got text;
+  v_msg text;
+begin
+  perform set_config('request.jwt.claims',
+    jsonb_build_object('sub', s, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  v_got := public.admin_reveal_personal_id(d);
+  if v_got is distinct from v_pid then raise exception 'PROBE-ASSERT reveal returned the wrong id'; end if;
+  v_got := public.admin_reveal_applicant_personal_id(d);
+  if v_got is distinct from v_pid then raise exception 'PROBE-ASSERT applicant reveal returned the wrong id'; end if;
+  perform public.admin_update_delegate_profile(d, 'probe bio', null);
+  begin perform public.admin_reveal_personal_id(gen_random_uuid()); exception when others then v_msg := sqlerrm; end;
+  if v_msg is distinct from 'invalid_target' then raise exception 'PROBE-ASSERT reveal of nobody: %', coalesce(v_msg, 'accepted'); end if;
+  reset role;
+  if (select bio from public.delegates where id = d) is distinct from 'probe bio' then
+    raise exception 'PROBE-ASSERT the profile edit did not land';
+  end if;
+  if (select count(*) from public.audit_log where target_id = d::text
+       and action in ('member.reveal_personal_id', 'delegate.reveal_personal_id', 'delegate.update_profile')) <> 3 then
+    raise exception 'PROBE-ASSERT the three audit rows were not written';
+  end if;
+  raise exception '%', ${pass("GUARDED-OK")};
+end $probe$;`);
+  if (!guarded || !guarded.includes("PROBE-GUARDED-OK")) {
+    throw new Error(
+      `guarded admin RPCs: ${guarded === null ? "no error raised (not rolled back)" : guarded}`,
+    );
+  }
+  console.log(
+    "OK: reveal, applicant reveal and profile edit still work for a living person (audited, " +
+      "rolled back); reveal of a missing person refused as invalid_target",
+  );
+
   // B4. now the delegate really erases themself through the client RPC
   const { data: delegateRes, error: dErr } = await d.client.rpc("delete_my_account", {
     p_confirm: CONFIRM,
@@ -927,7 +997,7 @@ end $probe$;`;
     );
   }
 
-  // G. the daily purge: the command the cron job really stores, run here as the same role that
+  // G. the hourly purge: the command the cron job really stores, run here as the same role that
   // scheduled it, removes anonymized reservations older than 24 hours and nothing else. Three
   // made-up rows inside one rolled-back block, so nothing persists and nothing real is lost.
   const purgePhone = `+99555${randomInt(1000000, 9999999)}`;
