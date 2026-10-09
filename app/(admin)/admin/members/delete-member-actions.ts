@@ -1,30 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminDeleteMemberSchema, delegatePhotoPath, normalizeName } from "@/lib/account-deletion";
-import { ADMIN_DELETE_NAME_MISMATCH } from "@/lib/account-deletion-copy";
+import { adminDeleteMemberSchema, normalizeName } from "@/lib/account-deletion";
+import {
+  ADMIN_DELETE_NAME_MISMATCH,
+  ADMIN_DELETE_STAFF_HISTORY,
+} from "@/lib/account-deletion-copy";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { removeDelegatePhotos } from "@/lib/supabase/delegate-photos";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type DeleteMemberResult = { ok: true } | { ok: false; error: string };
 
 /**
- * The erased member's delegate photo, if any. The account is already gone when this runs, so
- * nothing here may fail the action: every failure is logged and swallowed, and the service
- * role is created only when there is a path to remove (the path is the database's, never client
- * input).
+ * The admin's wording for a database refusal. staff_history gets its own sentence: the shared
+ * mapFunnelError text speaks to the member themselves ("write to us"), not to the admin.
  */
-async function removeDelegatePhoto(result: unknown): Promise<void> {
-  try {
-    const photoUrl = (result as { photoUrl?: unknown } | null)?.photoUrl;
-    const path = typeof photoUrl === "string" ? delegatePhotoPath(photoUrl) : null;
-    if (!path) return;
-    const { error } = await createAdminClient().storage.from("delegate-photos").remove([path]);
-    if (error) console.error("member deletion: photo removal failed", error.message);
-  } catch (e) {
-    console.error("member deletion: photo removal threw", e instanceof Error ? e.message : e);
-  }
+function refusalMessage(message: string): string {
+  return message.includes("staff_history") ? ADMIN_DELETE_STAFF_HISTORY : mapFunnelError(message);
 }
 
 /**
@@ -60,9 +53,12 @@ export async function deleteMemberAction(
     p_user_id: parsed.data.userId,
     p_reason: parsed.data.reason,
   });
-  if (error) return { ok: false, error: mapFunnelError(error.message) };
+  if (error) return { ok: false, error: refusalMessage(error.message) };
 
-  await removeDelegatePhoto(data);
+  // never throws: the account is already gone, so a leftover photo must not fail the action.
+  // The sweep is keyed to the id the database just erased (zod-checked), never to free input.
+  const photoUrl = (data as { photoUrl?: unknown } | null)?.photoUrl;
+  await removeDelegatePhotos(parsed.data.userId, typeof photoUrl === "string" ? photoUrl : null);
   revalidatePath("/admin/members");
   return { ok: true };
 }

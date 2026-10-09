@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ADMIN_DELETE_NAME_MISMATCH,
   ADMIN_DELETE_REASON_LENGTH,
+  ADMIN_DELETE_STAFF_HISTORY,
 } from "@/lib/account-deletion-copy";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { adminTestHarness, fakeAdminClient, ok, raised } from "../_test-utils/fake-supabase";
@@ -194,18 +195,30 @@ describe("deleteMemberAction — a valid request", () => {
         chain: [],
       },
     ]);
-    // the service role touches Storage alone, for the path the database returned
+    // the service role touches Storage alone: the target's own objects (by the zod-checked id
+    // the database just erased) and the path the database returned
     expect(storage.storageCalls).toEqual([
+      {
+        bucket: "delegate-photos",
+        method: "list",
+        args: ["", expect.objectContaining({ search: `${userId}-` })],
+      },
       { bucket: "delegate-photos", method: "remove", args: [["p-1.jpg"]] },
     ]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/members");
   });
 
-  it("does not create a service-role client when the member had no photo", async () => {
+  it("sweeps the member's photos by id even when the row recorded none", async () => {
+    const storage = fakeAdminClient({ listed: [`${userId}-1.jpg`] });
+    mocks.createAdminClient.mockReturnValue(storage.client);
     const s = session({ rpc: () => ok({ photoUrl: null }) });
     await expect(deleteMemberAction(userId, REASON, NAME, NAME)).resolves.toEqual({ ok: true });
     expect(s.rpcCalls()).toHaveLength(1);
-    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(storage.storageCalls.at(-1)).toEqual({
+      bucket: "delegate-photos",
+      method: "remove",
+      args: [[`${userId}-1.jpg`]],
+    });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/members");
   });
 
@@ -217,10 +230,12 @@ describe("deleteMemberAction — a valid request", () => {
       label: "a photo url from another bucket",
       data: { photoUrl: "https://x.test/news-images/a.jpg" },
     },
-  ])("treats $label as nothing to remove", async ({ data }) => {
+  ])("treats $label as no recorded path: only the sweep by id runs", async ({ data }) => {
+    const storage = fakeAdminClient();
+    mocks.createAdminClient.mockReturnValue(storage.client);
     session({ rpc: () => ok(data) });
     await expect(deleteMemberAction(userId, REASON, NAME, NAME)).resolves.toEqual({ ok: true });
-    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(storage.storageCalls.map((c) => c.method)).toEqual(["list"]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/members");
   });
 });
@@ -270,24 +285,34 @@ describe("deleteMemberAction — a completed deletion is never reported as a fai
 
 describe("deleteMemberAction — database refusals", () => {
   it.each([
-    "staff_history",
-    "staff_account",
-    "cannot_delete_self",
-    "invalid_reason",
-    "missing_role",
+    { token: "staff_history", error: ADMIN_DELETE_STAFF_HISTORY },
+    { token: "staff_account", error: mapFunnelError("staff_account") },
+    { token: "cannot_delete_self", error: mapFunnelError("cannot_delete_self") },
+    { token: "invalid_reason", error: mapFunnelError("invalid_reason") },
+    { token: "invalid_target", error: mapFunnelError("invalid_target") },
+    { token: "missing_role", error: mapFunnelError("missing_role") },
   ])(
-    "maps %s to its Georgian message, touches no Storage and revalidates nothing",
-    async (token) => {
+    "maps $token to its Georgian message, touches no Storage and revalidates nothing",
+    async ({ token, error }) => {
       const s = session({ rpc: () => raised(token) });
       await expect(deleteMemberAction(userId, REASON, NAME, NAME)).resolves.toEqual({
         ok: false,
-        error: mapFunnelError(token),
+        error,
       });
       expect(s.rpcCalls().map((c) => c.name)).toEqual(["admin_delete_member"]);
       expect(mocks.createAdminClient).not.toHaveBeenCalled();
       expect(mocks.revalidatePath).not.toHaveBeenCalled();
     },
   );
+
+  it("tells the admin, not the member, about a former staff account", async () => {
+    session({ rpc: () => raised("staff_history") });
+    const result = await deleteMemberAction(userId, REASON, NAME, NAME);
+    // mapFunnelError's staff_history text asks the person to write in; the admin needs to know
+    // the account cannot be deleted at all
+    expect(result).toEqual({ ok: false, error: ADMIN_DELETE_STAFF_HISTORY });
+    expect(ADMIN_DELETE_STAFF_HISTORY).not.toBe(mapFunnelError("staff_history"));
+  });
 
   it("gives the staff refusals their own messages, not the generic one", () => {
     expect(mapFunnelError("staff_history")).not.toBe(GENERIC_FUNNEL_ERROR);
