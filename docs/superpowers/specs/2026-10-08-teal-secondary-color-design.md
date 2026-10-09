@@ -166,20 +166,3 @@ environment variable. Verify georgia-republic.vercel.app after merge.
 No new Georgian copy. Any Georgian string touched or added (styleguide demo labels) is
 byte-spliced from source. `node scripts/ka-gate.mjs --diff main <files>` and `npm run ka:scan`
 run on the touched files before each commit.
-
-## 11. Addendum (2026-10-09): the structure page
-
-Owner request after ADR-048 shipped: bring teal onto `/structure`, which was still all red. Same rule,
-red acts and teal informs. The owner approved this from a before/after simulation on the live page.
-
-- **Teal:** the council seats (`PebbleCouncil`); the list bullets and the small labels above each
-  list (page `LABEL`, `MembershipPath` label); the filled pebbles in `DecisionRuleCard`; the
-  membership path (outline steps, last step filled, a faint `teal/35` connecting line); the for pile
-  and its legend swatch in `PebbleTally`.
-- **Stays red:** the headline accent word, the section index's outlined letters (links), the
-  decision-card headlines (kickers), the active nav item, the join button's hover.
-- **Mechanism:** `Pebble` gains two additive tones, `teal` and `teal-outline`; the default stays
-  `brand`. Untouched on purpose: `BoardRoster`'s notice dot. PR #48 adds the board members, which
-  removes that notice, and it edits the roster files.
-- **Tests:** each component's test (new `MembershipPath.test.tsx`), plus `app/(public)/structure/teal.test.tsx`
-  for the page's bullets and labels. It is a separate file because PR #48 edits `page.test.tsx`.
