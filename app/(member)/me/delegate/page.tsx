@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
+import { DELEGATE_LEFT_NOTE } from "@/lib/account-deletion-copy";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -17,13 +18,20 @@ export default async function MyDelegatePage() {
   // approved-only: pending/rejected requesters keep their member surfaces (R2 §3.1)
   if (isApprovedDelegate(state)) redirect("/delegate");
 
-  const [{ data: delegates, error: delegatesError }, { data: regions, error: regionsError }] =
-    await Promise.all([
-      supabase
-        .from("public_delegates")
-        .select("id, first_name, last_name, region_id, region_name_ka, members"),
-      supabase.from("regions").select("id, name_ka").order("id"),
-    ]);
+  const [
+    { data: delegates, error: delegatesError },
+    { data: regions, error: regionsError },
+    { data: openMembership },
+  ] = await Promise.all([
+    supabase
+      .from("public_delegates")
+      .select("id, first_name, last_name, region_id, region_name_ka, members"),
+    supabase.from("regions").select("id, name_ka").order("id"),
+    // The caller's own open membership (RLS "own memberships readable"; at most one row is
+    // open). Advisory only, like the profile page's poll teaser: a failed read just hides the
+    // note rather than taking the page down.
+    supabase.from("memberships").select("note").is("ended_at", null).maybeSingle(),
+  ]);
   if (delegatesError) {
     // a transient failure must not show „0 წევრი" for a real delegate
     throw new Error(`public_delegates query failed: ${delegatesError.message}`);
@@ -34,6 +42,10 @@ export default async function MyDelegatePage() {
   const current = state.chosenDelegate
     ? ((delegates ?? []).find((d) => d.id === state.chosenDelegate?.id) ?? null)
     : null;
+  // Set when the member's delegate deleted their account and the team moved to central
+  // (spec 2026-10-08 §3.2). Choosing a delegate opens a fresh row without the note, so it
+  // goes away by itself; re-picking central opens no new row, so it stays (accepted).
+  const delegateLeft = openMembership?.note === "delegate_left";
 
   return (
     <main>
@@ -43,6 +55,15 @@ export default async function MyDelegatePage() {
           დელეგატი შენს ხმას წარადგენს მოძრაობაში. არჩევანი ყოველთვის შენზეა.
         </p>
       </div>
+
+      {delegateLeft ? (
+        <p
+          role="status"
+          className="mb-6 border border-ink bg-paper-bright p-3 text-sm font-semibold text-ink"
+        >
+          {DELEGATE_LEFT_NOTE}
+        </p>
+      ) : null}
 
       <div className="mb-6">
         <p className="text-sm font-bold text-ink">
