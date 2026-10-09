@@ -107,11 +107,12 @@ Behaviour:
   existing seed accounts. "New visitor" creates a fresh account each click, marked Google-provided the same
   way the e2e Google fixtures are (registration requires a Google provider assertion, so a reset email account
   could not register). These accounts live only in the test database and vanish at the next reseed.
-- The panel and the server action are enabled only when the build is connected to an allow-listed test
-  database (the staging ref or the local CI stack) AND `NEXT_PUBLIC_APP_ENV` is not `production`. It is an
-  allow-list on the database, not a check of an env flag alone, so a mis-set flag on the real site cannot turn
-  it on. The server action re-checks this on every call; hiding the panel is UX, the server check is the
-  security.
+- The panel and the server action are enabled only when all three hold: the deployment is not a
+  live Vercel site (runtime `VERCEL_ENV` is not `production`; the demo project's live site is built
+  as a preview on staging), `NEXT_PUBLIC_APP_ENV` is exactly `preview` or `development`, and the
+  build is connected to an allow-listed test database (the staging ref or the local CI stack).
+  The last two are allow-lists, so a missing or mistyped flag cannot turn it on. The server action
+  re-checks this on every call; hiding the panel is UX, the server check is the security.
 - Guards against regression: unit tests for the gate (production ref, unknown host, missing vars all refuse);
   an e2e test that uses the panel on the CI stack; and a post-release check that `respublika.ge/login` does
   not contain the panel.

@@ -74,6 +74,26 @@ describe("testSignInEnabled", () => {
     },
   );
 
+  // ADR-050 review: the demo project's PRODUCTION deployment is built with APP_ENV=preview on
+  // the staging database (unlocked 2026-07-20 for owner testing). Vercel's runtime VERCEL_ENV
+  // cannot be overridden by a build setting, so it is the last word on "is this a live site".
+  it("is off on any Vercel production deployment, even one built as a preview on staging", () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+    expect(testSignInEnabled()).toBe(false);
+  });
+
+  it.each([["preview"], [""]])(
+    "stays on with VERCEL_ENV %j (Vercel previews, CI, local)",
+    (vercelEnv) => {
+      vi.stubEnv("VERCEL_ENV", vercelEnv);
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");
+      expect(testSignInEnabled()).toBe(true);
+    },
+  );
+
   it("is on for local development against the local stack", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");

@@ -1313,11 +1313,15 @@ local` after the unit tests, and builds + runs e2e against it. CI no longer read
     (`verify-security-fixes.mjs`) refuse the local stack.
   - **Preview test sign-in.** On `/login`, the „სატესტო შესვლა“ card offers ადმინი, დელეგატი,
     წევრი and ახალი მომხმარებელი. `testSignInAction` re-checks `testSignInEnabled()` on every
-    call: an explicit `preview`/`development` build AND a test database, both allow-lists, so an
-    unset or mistyped flag keeps it off. Seed personas sign in through the e2e fixture mechanism,
+    call: never on a live Vercel deployment (runtime `VERCEL_ENV=production`, which no build
+    setting overrides; the demo project's production site is built with `APP_ENV=preview` on
+    staging since 2026-07-20), AND an explicit `preview`/`development` build, AND a test database,
+    the last two allow-lists, so an unset or mistyped flag keeps it off. Seed personas sign in through the e2e fixture mechanism,
     now shared as `lib/fixture-auth.ts`, under their own narrow phone allow-list (canonical admins
     - seed people `500xxxxxx`); "new visitor" creates a fresh Google-marked made-up account. It
-      can never sign in an account with a real email address.
+      can never sign in an account with a real email address. This is a deliberate exception to the
+      CLAUDE.md rule against service-role reads on paths without a server-side role check: the
+      path exists only on test databases, and the environment gate above is its check.
   - **Later steps (no code).** Previews move to the real Vercel project (Preview-scoped staging
     settings, Ignored Build Step removed, Vercel Authentication kept); staging is reseeded with
     made-up people only after the owner's yes; the demo project is deleted last after the

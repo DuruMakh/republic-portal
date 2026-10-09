@@ -94,6 +94,13 @@ describe("testSignInAction", () => {
     },
   );
 
+  it("refuses on a Vercel production deployment built as a preview on staging", async () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    await expect(testSignInAction(form("admin"))).rejects.toThrow("REDIRECT:/login");
+    expect(resolvePersonaPhoneMock).not.toHaveBeenCalled();
+    expect(freshVisitorSessionMock).not.toHaveBeenCalled();
+  });
+
   it("refuses when the service key is missing", async () => {
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
     await expect(testSignInAction(form("admin"))).rejects.toThrow("REDIRECT:/login");

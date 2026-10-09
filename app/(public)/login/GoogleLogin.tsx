@@ -1,6 +1,7 @@
 import { AuthEntryShell } from "@/components/AuthEntryShell";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { TestSignInPanel } from "@/components/TestSignInPanel";
+import { testSignInAction } from "./test-sign-in-actions";
 
 const AUTH_ERROR_MESSAGES: Readonly<Record<string, string>> = {
   oauth_callback: "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
@@ -37,7 +38,7 @@ export function GoogleLogin({
             {errorMessage}
           </p>
         ) : null}
-        {testSignIn ? <TestSignInPanel /> : null}
+        {testSignIn ? <TestSignInPanel action={testSignInAction} /> : null}
       </div>
     </AuthEntryShell>
   );
