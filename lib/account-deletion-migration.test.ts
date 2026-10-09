@@ -21,6 +21,13 @@ const followups = (): string => {
   expect(existsSync(resolve(process.cwd(), FOLLOWUPS)), `${FOLLOWUPS} exists`).toBe(true);
   return readFileSync(resolve(process.cwd(), FOLLOWUPS), "utf8");
 };
+const RACES_FILE = "20261009170000_account_deletion_races.sql";
+const RACES = `supabase/migrations/${RACES_FILE}`;
+/** The fourth migration (fix round 1: the rest of the race class, hourly purge). */
+const races = (): string => {
+  expect(existsSync(resolve(process.cwd(), RACES)), `${RACES} exists`).toBe(true);
+  return readFileSync(resolve(process.cwd(), RACES), "utf8");
+};
 const fn = (name: string): string => {
   const start = sql.indexOf(`create function public.${name}(`);
   expect(start, `${name} is defined`).toBeGreaterThan(-1);
@@ -168,6 +175,7 @@ describe("account deletion migration comments", () => {
     expect(sql.slice(0, 300)).toContain("ADR-047");
     expect(hardening().slice(0, 300)).toContain("ADR-047");
     expect(followups().slice(0, 300)).toContain("ADR-047");
+    expect(races().slice(0, 300)).toContain("ADR-047");
   });
 });
 
@@ -441,6 +449,7 @@ describe("account deletion follow-ups migration (20261009160000)", () => {
   });
 
   it("purges anonymized reservations older than 24 hours daily, safe to run again", () => {
+    // this file's own text; 20261009170000 reschedules the same job hourly (pinned below)
     const text = code(followups());
     const unschedule = text.indexOf(
       "select cron.unschedule(jobid) from cron.job where jobname = 'purge-anonymous-sms-reservations';",
@@ -514,6 +523,180 @@ describe("account deletion follow-ups migration (20261009160000)", () => {
   });
 });
 
+const PURGE_SCHEDULE =
+  /select cron\.schedule\( 'purge-anonymous-sms-reservations', '([^']+)', \$purge\$([\s\S]*?)\$purge\$ \);/g;
+const PURGE_UNSCHEDULE =
+  "select cron.unschedule(jobid) from cron.job where jobname = 'purge-anonymous-sms-reservations';";
+
+describe("account deletion races migration (20261009170000)", () => {
+  it.each([
+    [
+      "admin_update_delegate_profile",
+      "(uuid, text, text)",
+      // the UPDATE, then the added FOUND check
+      "update public.delegates set bio = v_bio, photo_url = v_photo where id = p_delegate_id; " +
+        FOUND_CHECK,
+      [` ${FOUND_CHECK}`],
+    ],
+    [
+      "admin_reveal_personal_id",
+      "(uuid)",
+      // the read now waits for an in-flight erasure (its FOUND check was already there)
+      "select * into v_profile from public.profiles where id = p_member_id for share; " +
+        FOUND_CHECK,
+      [" for share"],
+    ],
+    [
+      "admin_reveal_applicant_personal_id",
+      "(uuid)",
+      "select * into v_profile from public.profiles where id = p_delegate_id for share; " +
+        FOUND_CHECK,
+      [" for share", ` ${FOUND_CHECK}`],
+    ],
+    [
+      // its payment UPDATE could wait on the erasure's cascade, change nothing and still log
+      "admin_void_payment",
+      "(bigint, text)",
+      "select * into v_profile from public.profiles where id = v_payment.member_id for share; " +
+        FOUND_CHECK,
+      [" for share", ` ${FOUND_CHECK}`],
+    ],
+  ])(
+    "%s cannot write a named audit row for a person erased meanwhile",
+    (name, signature, guard, added) => {
+      const restated = definitionIn(races(), name);
+      expect(restated, `${name} is restated in ${RACES_FILE}`).not.toBeNull();
+      const body = code(restated!);
+      const at = body.indexOf(guard);
+      expect(at, "the guard, whole").toBeGreaterThan(-1);
+      expect(at).toBeLessThan(body.indexOf("insert into public.audit_log"));
+      // ...and it is the definition the database runs
+      expect(newestDefinition(name).file).toBe(RACES_FILE);
+      expect(code(latestDefinition(name))).toContain(guard);
+      // otherwise the previous live definition, copied exactly: only `added`, at the guard, is new
+      const previous = newestDefinition(name, { except: [RACES_FILE] }).body;
+      let before = guard;
+      for (const piece of added) {
+        expect(before).toContain(piece);
+        before = before.replace(piece, "");
+      }
+      expect(fromSignature(body, name).replace(guard, before)).toBe(
+        fromSignature(code(previous), name),
+      );
+      // the same grants as before: signed-in callers only
+      const text = code(races());
+      expect(text).toContain(
+        `grant execute on function public.${name}${signature} to authenticated;`,
+      );
+      expect(text).toContain(
+        `revoke execute on function public.${name}${signature} from public, anon;`,
+      );
+      expect(text).not.toMatch(
+        new RegExp(`grant execute on function public\\.${name}[^;]*\\b(?:anon|public)\\b`),
+      );
+    },
+  );
+
+  it("leaves no function that names a person in an audit row open to a concurrent erasure", () => {
+    // Every function whose latest definition writes an audit row with a name read from a
+    // profile, and why it cannot commit that row for a person erased meanwhile.
+    const GUARDED = {
+      // FOUND check right after the UPDATE of the person's row, which the erasure locks first
+      found: [
+        "admin_approve_delegate",
+        "admin_reject_delegate",
+        "admin_update_delegate_name",
+        "admin_update_delegate_profile",
+      ],
+      // the profile read waits FOR SHARE behind the erasure's FOR UPDATE, then finds nothing
+      share: [
+        "admin_reveal_applicant_personal_id",
+        "admin_reveal_personal_id",
+        "admin_void_payment",
+      ],
+      // inserting a row that references the person takes a key-share lock on their profile,
+      // which conflicts with the erasure's FOR UPDATE: it waits and fails on the foreign key,
+      // or finishes first and the scrub sees its audit row
+      foreignKey: {
+        admin_grant_role: "insert into public.admin_roles",
+        admin_reassign_member: "insert into public.memberships",
+        admin_record_payment: "insert into public.payments",
+        admin_record_payments_bulk: "insert into public.payments",
+      },
+      // the target holds a role, so the erasure refuses them (staff_account) while it exists
+      staffOnly: ["admin_revoke_role"],
+    };
+    const named = migrationFiles()
+      .flatMap((file) =>
+        [
+          ...readFileSync(resolve(MIGRATIONS_DIR, file), "utf8").matchAll(
+            /create (?:or replace )?function (?:public\.)?([a-z_]+)\(/g,
+          ),
+        ].map((m) => m[1]!),
+      )
+      .filter((name, i, all) => all.indexOf(name) === i)
+      // the audit INSERT statement itself carries a name (admin_export_members uses first_name
+      // only in the rows it returns, so it is not one of these)
+      .filter((name) =>
+        /insert into public\.audit_log[^;]*first_name/.test(code(latestDefinition(name))),
+      );
+    expect(named.sort()).toEqual(
+      [
+        ...GUARDED.found,
+        ...GUARDED.share,
+        ...Object.keys(GUARDED.foreignKey),
+        ...GUARDED.staffOnly,
+      ].sort(),
+    );
+    const beforeAudit = (name: string, piece: string | RegExp) => {
+      const body = code(latestDefinition(name));
+      const at = typeof piece === "string" ? body.indexOf(piece) : body.search(piece);
+      expect(at, `${name}: ${String(piece)}`).toBeGreaterThan(-1);
+      expect(at, `${name}: before its audit insert`).toBeLessThan(
+        body.indexOf("insert into public.audit_log"),
+      );
+    };
+    // FOUND_CHECK holds no regular-expression metacharacter, so it is used as is
+    for (const name of GUARDED.found) {
+      beforeAudit(name, new RegExp(`update public\\.[a-z_]+ set [^;]*; ${FOUND_CHECK}`));
+    }
+    for (const name of GUARDED.share) {
+      beforeAudit(
+        name,
+        new RegExp(`from public\\.profiles where id = [a-z_.]+ for share; ${FOUND_CHECK}`),
+      );
+    }
+    for (const [name, insert] of Object.entries(GUARDED.foreignKey)) beforeAudit(name, insert);
+    for (const name of GUARDED.staffOnly) {
+      beforeAudit(
+        name,
+        "delete from public.admin_roles where user_id = p_user_id and role = p_role;",
+      );
+      beforeAudit(name, "if v_deleted = 0 then return; end if;");
+    }
+  });
+
+  it("reschedules the purge hourly under the same name, with the same command", () => {
+    const schedules = migrationFiles().flatMap((file) =>
+      [...code(readFileSync(resolve(MIGRATIONS_DIR, file), "utf8")).matchAll(PURGE_SCHEDULE)].map(
+        (m) => ({ file, schedule: m[1], command: m[2], at: m.index }),
+      ),
+    );
+    expect(schedules.map((s) => s.file)).toEqual([FOLLOWUPS_FILE, RACES_FILE]);
+    const [daily, hourly] = schedules;
+    expect(daily!.schedule).toBe("30 1 * * *");
+    // the job the database runs: an anonymized row is gone within about 25 hours
+    expect(hourly!.schedule).toBe("17 * * * *");
+    expect(hourly!.command).toBe(daily!.command);
+    const text = code(races());
+    const unschedule = text.indexOf(PURGE_UNSCHEDULE);
+    expect(unschedule, "the daily job is removed first").toBeGreaterThan(-1);
+    expect(unschedule).toBeLessThan(hourly!.at);
+    // the security session's send functions are theirs: this file leaves them alone too
+    expect(text).not.toMatch(/function (?:public\.)?(?:reserve|complete)_phone_verification/);
+  });
+});
+
 describe("post-apply production schema check covers account deletion", () => {
   const check = readFileSync(
     resolve(process.cwd(), "scripts/production-db-schema-check.sql"),
@@ -543,6 +726,16 @@ describe("post-apply production schema check covers account deletion", () => {
         "or not has_function_privilege('authenticated', 'public.admin_delete_member(uuid,text)', 'EXECUTE') " +
         "or has_function_privilege('service_role', 'public.erase_account(uuid)', 'EXECUTE') then " +
         "raise exception 'account deletion function privileges drifted';",
+    );
+  });
+
+  it("fails the apply when the hourly purge of anonymized SMS reservations is missing", () => {
+    expect(flat(check)).toContain(
+      "if not exists ( select 1 from cron.job where jobname = 'purge-anonymous-sms-reservations' " +
+        "and active and schedule = '17 * * * *' " +
+        "and command = 'delete from public.phone_verification_send_reservations " +
+        "where user_id is null and created_at < now() - interval ''24 hours''' ) then " +
+        "raise exception 'anonymized SMS reservation purge job is missing or changed';",
     );
   });
 

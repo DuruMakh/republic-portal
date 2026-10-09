@@ -199,6 +199,19 @@ begin
     raise exception 'postgres may not delete auth.users, so account deletion would fail';
   end if;
 
+  -- The erasure keeps a person's SMS send reservations of the last 24 hours without the account
+  -- (send limits keep counting); this hourly job removes them once they are older than 24 hours,
+  -- so the phone number is gone within about 25 hours (20261009170000).
+  if not exists (
+    select 1 from cron.job
+     where jobname = 'purge-anonymous-sms-reservations'
+       and active
+       and schedule = '17 * * * *'
+       and command = 'delete from public.phone_verification_send_reservations where user_id is null and created_at < now() - interval ''24 hours'''
+  ) then
+    raise exception 'anonymized SMS reservation purge job is missing or changed';
+  end if;
+
   if exists (
     with expected_views(view_name) as (
       values
