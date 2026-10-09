@@ -4,7 +4,7 @@ import { Pill } from "@/components/Pill";
 import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
-import { formatEventTimeKa, isoToTbilisiLocal, percentages } from "@/lib/community";
+import { formatEventTimeKa, isoToTbilisiLocal, leadingOptions, percentages } from "@/lib/community";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { PollActions } from "../PollActions";
 import { PollForm } from "../PollForm";
@@ -24,6 +24,7 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
   const options = optionsRes.data ?? [];
   const counts = options.map((o) => o.votes);
   const pcts = percentages(counts);
+  const leading = leadingOptions(counts);
 
   return (
     <div>
@@ -64,7 +65,10 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
                   </span>
                 </div>
                 <div className="h-2.5 bg-surface">
-                  <div className="h-2.5 bg-brand" style={{ width: `${pcts[i] ?? 0}%` }} />
+                  <div
+                    className={`h-2.5 ${leading[i] ? "bg-brand" : "bg-teal"}`}
+                    style={{ width: `${pcts[i] ?? 0}%` }}
+                  />
                 </div>
               </div>
             ))}

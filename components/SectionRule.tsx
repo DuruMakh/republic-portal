@@ -14,18 +14,25 @@ export function SectionRule({
   label,
   action,
   as: LabelTag = "h2",
+  tone = "ink",
   className = "",
 }: {
   label: ReactNode;
   action?: ReactNode;
   as?: "h2" | "h3" | "div";
+  /** `teal` marks an informational box (the homepage registry, ADR-048). Default ink. */
+  tone?: "ink" | "teal";
   className?: string;
 }) {
+  const rule = tone === "teal" ? "border-teal" : "border-ink";
+  const labelTone = tone === "teal" ? " text-teal" : "";
   return (
     <div
-      className={`flex items-baseline justify-between border-b-2 border-ink pb-1.5 ${className}`.trim()}
+      className={`flex items-baseline justify-between border-b-2 ${rule} pb-1.5 ${className}`.trim()}
     >
-      <LabelTag className="text-[0.7rem] font-bold uppercase tracking-[.18em]">{label}</LabelTag>
+      <LabelTag className={`text-[0.7rem] font-bold uppercase tracking-[.18em]${labelTone}`}>
+        {label}
+      </LabelTag>
       {action}
     </div>
   );

@@ -269,8 +269,8 @@ export default async function ProfilePage() {
 
         <div className="flex flex-col gap-6">
           {isMemberRole ? (
-            <Card variant="callout">
-              <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-muted-fg">
+            <Card variant="callout-teal">
+              <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-teal">
                 ჩემი დელეგატი
               </div>
               {myDelegateRanked ? (

@@ -1332,6 +1332,28 @@ local` after the unit tests, and builds + runs e2e against it. CI no longer read
 - **Not changed.** Merge = release to respublika.ge; production database changes still go
   through `production-db.yml` dry-run then apply.
 
+## ADR-048 (2026-10-08): Teal is Kronika's second colour
+
+Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
+`docs/superpowers/plans/2026-10-08-teal-secondary-color.md`. No migration, no new variable.
+
+- **Decision.** The owner compared three brand directions and chose to keep Kronika and add
+  teal `#235B59` (hover `#1A4644`) as a second colour. Red acts (links, active nav, №1, focus,
+  primary hover, danger); teal informs (homepage registry figures and rule, supporter chip,
+  non-leading poll bars, the my-delegate call-out border, `dark` buttons, a 1px line in the
+  masthead rule, the footer band).
+- **No tinted panels.** The exploration board's light-teal registry panel was rejected; there is
+  no teal tint token. The footer is the one solid teal area.
+- **Masthead rule as a border.** `masthead-rule` paints 2px ink, 2px paper, 1px teal as one
+  gradient border image. The gap is transparent, so it shows the header's own background. A
+  positioned overlay would have changed the header's `position`, which eight e2e checks pin; a box-shadow would hide under any following sibling with a background.
+- **Accessibility.** Teal/paper 6.9:1 both ways. Red and teal are equally dark (1.00:1), so the
+  footer's links use a paper focus outline, and a leading poll answer is never shown by colour
+  alone (longest bar, percentage). Leading is decided on raw votes (`leadingOptions`), not on
+  rounded percentages, which can split a tie (1/1/1 becomes 34/33/33).
+- **Rejected.** Directions 2 (Agora) and 3 (Republic 1918) from the board: full re-skins, kept
+  for later. A teal tint for information panels: owner preference.
+
 ## ADR-049 (2026-10-08): Members can delete their account; data is erased
 
 Owner request in chat ("lets add account delete feature and it also deletes data"); proposals a–g
