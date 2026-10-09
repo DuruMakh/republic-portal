@@ -18,6 +18,8 @@
   --color-warn: #b45309;
   --color-warn-deep: #96450a;
   --color-danger: #9f1d35;
+  --color-teal: #235b59;
+  --color-teal-dark: #1a4644;
   --font-sans: var(--font-noto-sans-georgian), "Sylfaen", "Segoe UI", system-ui, sans-serif;
   --font-serif: var(--font-noto-serif-georgian), "Sylfaen", Georgia, serif;
 }
@@ -73,6 +75,21 @@
 
 @utility pebble {
   border-radius: 48% 52% 55% 45% / 50% 46% 54% 50%;
+}
+
+/* Masthead rule (ADR-048): 2px ink, a 2px gap, 1px teal, drawn as the header's own bottom
+   border so its position and stickiness stay untouched (e2e pins both). The gap is transparent:
+   it shows the header's own background (paper, so it stays opaque while sticky) or whatever
+   sits behind a header without one. The gradient runs to top, so stops count from the bottom. */
+@utility masthead-rule {
+  border-bottom: 5px solid var(--color-ink);
+  border-image: linear-gradient(
+      to top,
+      var(--color-teal) 0 1px,
+      transparent 1px 3px,
+      var(--color-ink) 3px 5px
+    )
+    0 0 5 0;
 }
 
 @keyframes council-seat-in {

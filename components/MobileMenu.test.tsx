@@ -30,6 +30,14 @@ describe("MobileMenu", () => {
     }
   });
 
+  it("draws the overlay header with the same masthead rule as the site header (ADR-048)", () => {
+    render(<MobileMenu navItems={NAV} />);
+    fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));
+    const bar = screen.getByRole("dialog").firstElementChild as HTMLElement;
+    expect(bar).toHaveClass("masthead-rule");
+    expect(bar).not.toHaveClass("border-b-2");
+  });
+
   it("keeps the linked brand lockup in the overlay header", () => {
     render(<MobileMenu navItems={NAV} />);
     fireEvent.click(screen.getByRole("button", { name: "მენიუ" }));

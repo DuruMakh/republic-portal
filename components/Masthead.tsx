@@ -14,9 +14,10 @@ type NavItem = { href: string; label: string };
 /**
  * The site masthead (spec Sec 3.2, unified to a single layout at the v0.9.0
  * owner checkpoint): horizontal lockup nameplate on the left, nav + session
- * slot + cta on the right, vertically centered with the logo, over a single
- * 2px rule. Same single-row layout on every page, including the homepage --
- * there is no separate homepage mode and no dateline row.
+ * slot + cta on the right, vertically centered with the logo, over the masthead
+ * rule (2px ink, 2px gap, 1px teal; ADR-048). Same single-row layout on every
+ * page, including the homepage -- there is no separate homepage mode and no
+ * dateline row.
  */
 export function Masthead({
   navItems,
@@ -67,12 +68,12 @@ export function Masthead({
     <>
       {back ? <MobileBackHeader href={back.href} label={back.label} /> : null}
       <header
-        // Conditional first so the non-back case reproduces the previously
-        // shipped class string byte-for-byte -- desktop output at >=768px must
-        // not change at all.
+        // Conditional first so the non-back case keeps the shipped class order.
+        // At >=768px the only change since v0.9.0 is the masthead-rule that
+        // replaced the 2px ink rule (ADR-048); nothing else may change there.
         className={`${back ? "hidden md:flex" : "flex"} ${
           mobileSticky ? "sticky top-0 z-40 bg-paper md:static md:z-auto" : ""
-        } items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4 sm:px-10`}
+        } items-center justify-between masthead-rule px-5 pb-2.5 pt-4 sm:px-10`}
       >
         <div className="flex items-center gap-2.5">
           <BrandLockup />

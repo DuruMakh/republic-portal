@@ -12,14 +12,21 @@ export function ballotButtonClasses(state: "solid" | "muted"): string {
 export interface BallotBarProps {
   label: string;
   pct: number;
-  tone: "brand" | "ink" | "muted";
+  tone: "brand" | "teal" | "ink" | "muted";
   /** Displayed in the right-hand slot instead of `pct` when provided; `pct` still
    *  drives the fill width. Additive — omit to keep today's pct-as-label behavior. */
   value?: string | number;
 }
 
+const TONE_CLASS: Record<BallotBarProps["tone"], string> = {
+  brand: "bg-brand",
+  teal: "bg-teal",
+  ink: "bg-ink",
+  muted: "bg-muted-fg",
+};
+
 export function BallotBar({ label, pct, tone, value }: BallotBarProps) {
-  const toneClass = tone === "brand" ? "bg-brand" : tone === "ink" ? "bg-ink" : "bg-muted-fg";
+  const toneClass = TONE_CLASS[tone];
 
   return (
     <div className="grid grid-cols-[1fr_2fr_auto] items-center gap-3">

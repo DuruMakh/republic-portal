@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { formatCountKa } from "@/lib/format";
-import type { PollViewState } from "@/lib/community";
+import { leadingOptions, type PollViewState } from "@/lib/community";
 import { voteAction } from "./actions";
 
 export interface PollCardOption {
@@ -47,6 +47,9 @@ export function PollCard({
     });
   }
 
+  // ADR-048: the leading answer (every answer tied for the most votes) stays red; the rest teal.
+  const leading = leadingOptions(options.map((o) => o.votes));
+
   return (
     <div data-testid={`poll-${pollId}`}>
       <Card title={question}>
@@ -70,7 +73,7 @@ export function PollCard({
           </div>
         ) : (
           <div className="flex flex-col gap-3.5">
-            {options.map((o) => (
+            {options.map((o, i) => (
               <div key={o.optionId}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
                   <span className="font-semibold text-ink">
@@ -82,7 +85,10 @@ export function PollCard({
                   <span className="font-semibold text-muted-fg">{o.pct}%</span>
                 </div>
                 <div className="h-2 bg-surface">
-                  <div className="h-2 bg-brand" style={{ width: `${o.pct}%` }} />
+                  <div
+                    className={`h-2 ${leading[i] ? "bg-brand" : "bg-teal"}`}
+                    style={{ width: `${o.pct}%` }}
+                  />
                 </div>
               </div>
             ))}
