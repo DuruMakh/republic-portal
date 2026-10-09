@@ -155,7 +155,8 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // the only credential that can make it.
     ["submit_support_message", ["invalid_support_message", "too_many_requests"]],
     // Account deletion (20261009140000_account_deletion.sql, restated by
-    // 20261009150000_account_deletion_hardening.sql). erase_account() is the
+    // 20261009150000_account_deletion_hardening.sql and
+    // 20261009160000_account_deletion_followups.sql). erase_account() is the
     // internal erasure: EXECUTE is revoked from public, anon, authenticated and
     // service_role and never granted, so no API role reaches it and it has no caller
     // identity to admit or refuse. Its target checks (unknown id, staff account, staff history)

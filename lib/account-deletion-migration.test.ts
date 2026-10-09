@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ACCOUNT_DELETION_CONFIRM_WORD } from "./account-deletion";
+import { latestDefinition } from "./security/migration-model";
 
 const sql = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20261009140000_account_deletion.sql"),
@@ -12,6 +13,13 @@ const HARDENING = "supabase/migrations/20261009150000_account_deletion_hardening
 const hardening = (): string => {
   expect(existsSync(resolve(process.cwd(), HARDENING)), `${HARDENING} exists`).toBe(true);
   return readFileSync(resolve(process.cwd(), HARDENING), "utf8");
+};
+const FOLLOWUPS_FILE = "20261009160000_account_deletion_followups.sql";
+const FOLLOWUPS = `supabase/migrations/${FOLLOWUPS_FILE}`;
+/** The third migration (the re-review's follow-ups), read the same way. */
+const followups = (): string => {
+  expect(existsSync(resolve(process.cwd(), FOLLOWUPS)), `${FOLLOWUPS} exists`).toBe(true);
+  return readFileSync(resolve(process.cwd(), FOLLOWUPS), "utf8");
 };
 const fn = (name: string): string => {
   const start = sql.indexOf(`create function public.${name}(`);
@@ -156,9 +164,10 @@ describe("account deletion migration comments", () => {
     expect(flat(sql)).toContain("row level security with no policy");
   });
 
-  it("names its decision record in both migrations", () => {
+  it("names its decision record in every account deletion migration", () => {
     expect(sql.slice(0, 300)).toContain("ADR-047");
     expect(hardening().slice(0, 300)).toContain("ADR-047");
+    expect(followups().slice(0, 300)).toContain("ADR-047");
   });
 });
 
@@ -267,6 +276,241 @@ describe("account deletion hardening migration (20261009150000)", () => {
       `${table} add constraint phone_verification_send_reservations_user_id_fkey ` +
         "foreign key (user_id) references auth.users(id) on delete set null;",
     );
+  });
+});
+
+const MIGRATIONS_DIR = resolve(process.cwd(), "supabase/migrations");
+const migrationFiles = (): string[] =>
+  readdirSync(MIGRATIONS_DIR)
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
+
+/** The last definition of `name` in one migration's text, up to its `end $$;`, or null. */
+const definitionIn = (text: string, name: string): string | null => {
+  let start = -1;
+  for (const m of text.matchAll(
+    new RegExp(`create (?:or replace )?function (?:public\\.)?${name}\\(`, "g"),
+  )) {
+    start = m.index;
+  }
+  return start < 0 ? null : text.slice(start, text.indexOf("end $$;", start));
+};
+
+/**
+ * The newest definition of `name` across the migrations (files apply in name order and the last
+ * create-or-replace wins), optionally ignoring some files. The older pins above keep reading
+ * their own files (`fn`, `hardenedErase`); the follow-up pins read what the database runs.
+ */
+const newestDefinition = (
+  name: string,
+  { except = [] as string[] } = {},
+): { file: string; body: string } => {
+  let newest: { file: string; body: string } | undefined;
+  for (const file of migrationFiles()) {
+    if (except.includes(file)) continue;
+    const body = definitionIn(readFileSync(resolve(MIGRATIONS_DIR, file), "utf8"), name);
+    if (body !== null) newest = { file, body };
+  }
+  expect(newest, `${name} is defined by some migration`).toBeDefined();
+  return newest!;
+};
+
+/** The erase_account the database runs. */
+const latestErase = (): string => newestDefinition("erase_account").body;
+
+/** A definition from `returns` on: the header's name spelling (with or without `public.`) aside. */
+const fromSignature = (definition: string, name: string): string =>
+  definition.slice(definition.indexOf(`${name}(`));
+
+const ERASE_HEADER =
+  "create or replace function public.erase_account(p_user_id uuid) returns jsonb " +
+  "language plpgsql volatile security definer set search_path = '' as $$";
+const INVALID_TARGET =
+  "if p_user_id is null or not exists (select 1 from public.profiles where id = p_user_id) " +
+  "then raise exception 'invalid_target'; end if;";
+const STAFF =
+  "if exists (select 1 from public.admin_roles where user_id = p_user_id) " +
+  "then raise exception 'staff_account'; end if;";
+const FOUND_CHECK = "if not found then raise exception 'invalid_target'; end if;";
+
+describe("account deletion follow-ups migration (20261009160000)", () => {
+  it("holds the erase_account the database runs, with the same signature and result", () => {
+    expect(newestDefinition("erase_account").file).toBe(FOLLOWUPS_FILE);
+    const body = code(latestErase());
+    expect(body).toContain(ERASE_HEADER);
+    expect(body).toContain("return jsonb_build_object('photoUrl', v_photo_url);");
+  });
+
+  it("keeps every statement of the hardened version except the team capture it replaces", () => {
+    const replaced = [
+      "select coalesce(array_agg(member_id), '{}') into v_team from public.memberships " +
+        "where delegate_id = p_user_id and ended_at is null",
+      "update public.memberships set ended_at = now() where delegate_id = p_user_id and ended_at is null",
+    ];
+    const hardenedSteps = code(hardenedErase())
+      .split(";")
+      .map((step) => step.trim())
+      .filter(Boolean);
+    // the two replaced statements really are in 20261009150000, so this list cannot go stale
+    for (const step of replaced) expect(hardenedSteps).toContain(step);
+    expect(hardenedSteps.length).toBeGreaterThan(30);
+    const latest = code(latestErase());
+    for (const step of hardenedSteps.filter((s) => !replaced.includes(s))) {
+      expect(latest).toContain(`${step};`);
+    }
+    expect(latest).not.toContain(`${replaced[0]};`);
+    expect(latest).not.toContain(`${replaced[1]};`);
+  });
+
+  it("pins the refusal conditions in full and the hardened key list, in both restatements", () => {
+    for (const restated of [hardenedErase(), latestErase()]) {
+      const body = code(restated);
+      const target = body.indexOf(INVALID_TARGET);
+      const staff = body.indexOf(STAFF);
+      expect(target, "the invalid_target condition, whole").toBeGreaterThan(-1);
+      expect(staff, "the staff_account condition, whole").toBeGreaterThan(target);
+      expect(target).toBeLessThan(body.indexOf("for update;"));
+      const firstWrite = body.search(/\b(update public\.|insert into |delete from )/);
+      expect(firstWrite).toBeGreaterThan(staff);
+      const decl = /v_personal_keys constant text\[\]\s*:=\s*array\[([^\]]*)\]/.exec(body);
+      expect(decl, "v_personal_keys is declared").not.toBeNull();
+      expect([...decl![1]!.matchAll(/'([^']+)'/g)].map((m) => m[1])).toEqual([
+        "name",
+        "memberName",
+        "slug",
+        "firstName",
+        "lastName",
+        "personalId",
+        "phone",
+        "email",
+      ]);
+    }
+  });
+
+  it("locks the person's own open membership row right after the profile lock", () => {
+    // a concurrent delegate change or reassignment of the person finishes first or waits
+    expect(code(latestErase())).toContain(
+      "perform 1 from public.profiles where id = p_user_id for update; " +
+        `${FOUND_CHECK} ` +
+        "perform 1 from public.memberships where member_id = p_user_id and ended_at is null for update; " +
+        "perform 1 from public.delegates where id = p_user_id for update; " +
+        STAFF,
+    );
+  });
+
+  it("builds the departing delegate's team from the rows it ends, so a move cannot collide", () => {
+    // reading the team first and ending it second let a member who moved in between get a
+    // second open membership (23505 on one_active_membership)
+    const body = code(latestErase());
+    const capture = body.indexOf(
+      "with ended as ( update public.memberships set ended_at = now() " +
+        "where delegate_id = p_user_id and ended_at is null returning member_id ) " +
+        "select coalesce(array_agg(member_id), '{}') into v_team from ended; " +
+        "insert into public.memberships (member_id, delegate_id, note) " +
+        "select unnest(v_team), null::uuid, 'delegate_left';",
+    );
+    expect(capture).toBeGreaterThan(body.indexOf(STAFF));
+    expect(capture).toBeLessThan(
+      body.indexOf(
+        "update public.memberships set delegate_id = null where delegate_id = p_user_id;",
+      ),
+    );
+  });
+
+  it("deletes the person's SMS reservations older than 24 hours before the sign-in account", () => {
+    const body = code(latestErase());
+    const del = body.indexOf(
+      "delete from public.phone_verification_send_reservations " +
+        "where user_id = p_user_id and created_at < now() - interval '24 hours';",
+    );
+    expect(del).toBeGreaterThan(body.indexOf(STAFF));
+    expect(del).toBeLessThan(body.indexOf("delete from auth.users where id = p_user_id;"));
+  });
+
+  it("cuts at 24 hours because no send limit looks further back", () => {
+    // if reserve_phone_verification_send ever counts a longer window, the erasure's 24-hour
+    // delete and the daily purge would let deleting and re-registering reset that limit
+    const reserve = latestDefinition("reserve_phone_verification_send");
+    const SECONDS: Record<string, number> = { second: 1, minute: 60, hour: 3600, day: 86400 };
+    const windows = [...reserve.matchAll(/interval '(\d+) (second|minute|hour|day)s?'/g)].map(
+      (m) => Number(m[1]) * SECONDS[m[2]!]!,
+    );
+    expect(windows.length).toBe([...reserve.matchAll(/interval '/g)].length);
+    expect(windows.length).toBeGreaterThan(0);
+    expect(Math.max(...windows)).toBeLessThanOrEqual(24 * 3600);
+  });
+
+  it("purges anonymized reservations older than 24 hours daily, safe to run again", () => {
+    const text = code(followups());
+    const unschedule = text.indexOf(
+      "select cron.unschedule(jobid) from cron.job where jobname = 'purge-anonymous-sms-reservations';",
+    );
+    const schedule = text.indexOf(
+      "select cron.schedule( 'purge-anonymous-sms-reservations', '30 1 * * *', " +
+        "$purge$delete from public.phone_verification_send_reservations " +
+        "where user_id is null and created_at < now() - interval '24 hours'$purge$ );",
+    );
+    expect(unschedule, "an existing job of that name is removed first").toBeGreaterThan(-1);
+    expect(schedule).toBeGreaterThan(unschedule);
+    // the security session's send functions are theirs: this file leaves them alone
+    expect(text).not.toMatch(/function (?:public\.)?(?:reserve|complete)_phone_verification/);
+  });
+
+  it.each([
+    [
+      "admin_approve_delegate",
+      "(uuid, text)",
+      "update public.delegates set status = 'approved', slug = v_slug, verified_at = now(), " +
+        "verified_by = v_uid where id = p_delegate_id;",
+    ],
+    [
+      "admin_reject_delegate",
+      "(uuid, text)",
+      "update public.delegates set status = 'rejected', review_note = v_note, " +
+        "verified_at = now(), verified_by = v_uid where id = p_delegate_id;",
+    ],
+    [
+      "admin_update_delegate_name",
+      "(uuid, text, text)",
+      "update public.profiles set first_name = v_first, last_name = v_last where id = p_delegate_id;",
+    ],
+  ])(
+    "%s refuses a person erased meanwhile before it writes a named audit row",
+    (name, signature, update) => {
+      const restated = definitionIn(followups(), name);
+      expect(restated, `${name} is restated in ${FOLLOWUPS_FILE}`).not.toBeNull();
+      const body = code(restated!);
+      const check = body.indexOf(`${update} ${FOUND_CHECK}`);
+      expect(check, "the FOUND check follows the UPDATE directly").toBeGreaterThan(-1);
+      expect(check).toBeLessThan(body.indexOf("insert into public.audit_log"));
+      // ...and it is the definition the database runs
+      expect(code(latestDefinition(name))).toContain(`${update} ${FOUND_CHECK}`);
+      // otherwise the previous live definition, copied exactly
+      const previous = newestDefinition(name, { except: [FOLLOWUPS_FILE] }).body;
+      expect(fromSignature(body, name).replace(` ${FOUND_CHECK}`, "")).toBe(
+        fromSignature(code(previous), name),
+      );
+      // the same grants as before: signed-in callers only
+      const text = code(followups());
+      expect(text).toContain(
+        `grant execute on function public.${name}${signature} to authenticated;`,
+      );
+      expect(text).toContain(
+        `revoke execute on function public.${name}${signature} from public, anon;`,
+      );
+      expect(text).not.toMatch(
+        new RegExp(`grant execute on function public\\.${name}[^;]*\\b(?:anon|public)\\b`),
+      );
+    },
+  );
+
+  it("re-asserts every revoke on erase_account after restating it", () => {
+    const text = code(followups());
+    const revoke = text.indexOf(
+      "revoke execute on function public.erase_account(uuid) from public, anon, authenticated, service_role;",
+    );
+    expect(revoke).toBeGreaterThan(text.indexOf(ERASE_HEADER));
+    expect(text).not.toMatch(/grant execute on function public\.erase_account/);
   });
 });
 
