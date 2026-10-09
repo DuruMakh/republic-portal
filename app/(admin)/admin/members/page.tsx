@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
-import { ADMIN_DELETE_BUTTON } from "@/lib/account-deletion-copy";
+import { ADMIN_DELETE_BUTTON, ADMIN_DELETE_DONE } from "@/lib/account-deletion-copy";
 import {
   hasAnyRole,
   isStaff,
@@ -47,6 +47,10 @@ export default async function AdminMembersPage({
   const filter = membersFilterSchema.parse(raw);
   const canReveal = hasAnyRole(roles, ["super_admin"]);
   const canDelete = hasAnyRole(roles, ["super_admin"]);
+  // DeleteMemberButton adds ?deleted=1 after a deletion: the deleted row, and the button that
+  // could say so, are already gone from this list. It is not a filter (membersFilterSchema
+  // drops it) and the pagination links below are built without it.
+  const showDeletedNotice = canDelete && raw.deleted === "1";
   const canExport = hasAnyRole(roles, ["finance", "super_admin"]);
 
   const { data: regions, error: regionsError } = await supabase
@@ -105,6 +109,12 @@ export default async function AdminMembersPage({
           გაფილტრე, მოძებნე და დაათვალიერე ყველა რეგისტრირებული წევრი.
         </p>
       </div>
+
+      {showDeletedNotice ? (
+        <p role="status" className="mb-4 text-sm font-semibold text-ok">
+          {ADMIN_DELETE_DONE}
+        </p>
+      ) : null}
 
       <Card>
         <form method="get" className="flex flex-wrap items-end gap-3">

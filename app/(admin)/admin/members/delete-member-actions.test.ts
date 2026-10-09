@@ -33,6 +33,7 @@ const session = adminTestHarness(mocks);
 const userId = "11111111-1111-4111-8111-111111111111";
 const REASON = "member asked by email";
 const NAME = "Nino Beridze";
+const NBSP = String.fromCharCode(0xa0);
 const PHOTO_URL = "https://x.supabase.co/storage/v1/object/public/delegate-photos/p-1.jpg";
 
 afterEach(() => {
@@ -82,6 +83,11 @@ describe("deleteMemberAction — input is checked before any database call", () 
       error: ADMIN_DELETE_NAME_MISMATCH,
     },
     {
+      label: "a typed name over 130 characters",
+      args: [userId, REASON, "x".repeat(131), NAME],
+      error: ADMIN_DELETE_NAME_MISMATCH,
+    },
+    {
       label: "an expected name that is not a string",
       args: [userId, REASON, NAME, undefined],
       error: GENERIC_FUNNEL_ERROR,
@@ -115,6 +121,40 @@ describe("deleteMemberAction — the typed name must be the member's name", () =
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
     expect(s.calls).toHaveLength(0);
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { label: "two spaces inside the stored name", typed: NAME, expected: "Nino  Beridze" },
+    {
+      label: "a non-breaking space inside the stored name",
+      typed: NAME,
+      expected: `Nino${NBSP}Beridze`,
+    },
+    {
+      label: "a trailing non-breaking space on the stored name",
+      typed: NAME,
+      expected: `${NAME}${NBSP}`,
+    },
+    { label: "two spaces inside the typed name", typed: "Nino  Beridze", expected: NAME },
+    {
+      label: "a non-breaking space inside the typed name",
+      typed: `Nino${NBSP}Beridze`,
+      expected: NAME,
+    },
+  ])("matches despite $label (the page shows one ordinary space)", async ({ typed, expected }) => {
+    const s = session({ rpc: () => ok({ photoUrl: null }) });
+    await expect(deleteMemberAction(userId, REASON, typed, expected)).resolves.toEqual({
+      ok: true,
+    });
+    expect(s.rpcCalls()).toHaveLength(1);
+  });
+
+  it("still refuses two different names once the spacing is normalized", async () => {
+    const s = session();
+    await expect(
+      deleteMemberAction(userId, REASON, "Nino  Beridze", "Nino Beridzee"),
+    ).resolves.toEqual({ ok: false, error: ADMIN_DELETE_NAME_MISMATCH });
+    expect(s.calls).toHaveLength(0);
   });
 
   it("never accepts a typed name against an empty expected name", async () => {

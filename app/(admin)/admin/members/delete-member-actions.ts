@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminDeleteMemberSchema, delegatePhotoPath } from "@/lib/account-deletion";
+import { adminDeleteMemberSchema, delegatePhotoPath, normalizeName } from "@/lib/account-deletion";
 import { ADMIN_DELETE_NAME_MISMATCH } from "@/lib/account-deletion-copy";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -50,7 +50,8 @@ export async function deleteMemberAction(
     };
   }
   if (typeof expectedName !== "string") return { ok: false, error: GENERIC_FUNNEL_ERROR };
-  if (parsed.data.typedName !== expectedName.trim()) {
+  // both sides normalized: the page shows a stored "a  b" or "a<nbsp>b" as one plain space
+  if (normalizeName(parsed.data.typedName) !== normalizeName(expectedName)) {
     return { ok: false, error: ADMIN_DELETE_NAME_MISMATCH };
   }
 

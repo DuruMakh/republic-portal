@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ADMIN_DELETE_BUTTON } from "@/lib/account-deletion-copy";
+import { ADMIN_DELETE_BUTTON, ADMIN_DELETE_DONE } from "@/lib/account-deletion-copy";
 import type { AdminRole } from "@/lib/admin";
 import { fakeSession, ok, type DbResult } from "../_test-utils/fake-supabase";
 
@@ -13,7 +13,9 @@ vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Error(`redirect:${to}`);
   },
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/admin/members",
+  useSearchParams: () => new URLSearchParams(),
 }));
 // the actions import the server-only Supabase client; the page only passes them down
 vi.mock("./actions", () => ({ revealPersonalIdAction: vi.fn() }));
@@ -48,11 +50,17 @@ function rows(table: string): DbResult {
   return ok(table === "admin_members" ? [MEMBER] : []);
 }
 
-async function renderPage(roles: AdminRole[]) {
+async function renderPage(
+  roles: AdminRole[],
+  params: Record<string, string | string[] | undefined> = {},
+  total = 0,
+) {
   server.getAdminRoles.mockResolvedValue(roles);
-  const { client } = fakeSession({ from: rows });
+  // the members query asks for an exact count; PostgREST returns it beside data and error
+  const withCount = (table: string): DbResult => ({ ...rows(table), count: total }) as DbResult;
+  const { client } = fakeSession({ from: withCount });
   server.createServerSupabase.mockResolvedValue(client);
-  render(await AdminMembersPage({ searchParams: Promise.resolve({}) }));
+  render(await AdminMembersPage({ searchParams: Promise.resolve(params) }));
 }
 
 beforeEach(() => {
@@ -79,4 +87,47 @@ describe("members list — the delete column (spec 2026-10-08 §3.4)", () => {
       expect(screen.queryByRole("button", { name: ADMIN_DELETE_BUTTON })).toBeNull();
     },
   );
+});
+
+describe("members list — the deletion notice (?deleted=1)", () => {
+  it("tells a super_admin the account was deleted, above the table", async () => {
+    await renderPage(["super_admin"], { deleted: "1" });
+
+    const notice = screen.getByRole("status");
+    expect(notice).toHaveTextContent(ADMIN_DELETE_DONE);
+    // above the list, so it is seen even though the deleted row is already gone
+    const table = screen.getByRole("table");
+    expect(notice.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it.each([
+    ["no parameter", {}],
+    ["deleted=0", { deleted: "0" }],
+    ["deleted=yes", { deleted: "yes" }],
+    ["a repeated deleted", { deleted: ["1", "1"] }],
+  ])("shows no notice with %s", async (_label, params) => {
+    await renderPage(["super_admin"], params);
+
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText(ADMIN_DELETE_DONE)).toBeNull();
+  });
+
+  it("shows nobody but a super_admin the notice, even on a hand-typed URL", async () => {
+    await renderPage(["verifier"], { deleted: "1" });
+
+    expect(screen.queryByText(ADMIN_DELETE_DONE)).toBeNull();
+  });
+
+  it("never carries deleted into the filters or the pagination links", async () => {
+    await renderPage(["super_admin"], { deleted: "1", search: "Nino", page: "2" }, 120);
+
+    const next = screen.getByRole("link", { name: /→/ });
+    const href = new URL(next.getAttribute("href") ?? "", "https://x.test");
+    expect(href.pathname).toBe("/admin/members");
+    expect(href.searchParams.get("search")).toBe("Nino");
+    expect(href.searchParams.get("page")).toBe("3");
+    expect(href.searchParams.has("deleted")).toBe(false);
+    const previous = screen.getByRole("link", { name: /←/ });
+    expect(previous.getAttribute("href")).not.toContain("deleted");
+  });
 });

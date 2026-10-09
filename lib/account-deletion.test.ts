@@ -4,6 +4,7 @@ import {
   adminDeleteMemberSchema,
   delegatePhotoPath,
   deleteAccountSchema,
+  normalizeName,
 } from "./account-deletion";
 import {
   ACCOUNT_DELETE_CONFIRM_LABEL,
@@ -76,8 +77,57 @@ describe("adminDeleteMemberSchema", () => {
     expect(firstMessage({ ...base, userId: "x" })).toBe(GENERIC_FUNNEL_ERROR);
   });
 
+  it("answers a typed name over 130 characters in Georgian, not with zod's English", () => {
+    const result = adminDeleteMemberSchema.safeParse({
+      userId,
+      reason: "x".repeat(10),
+      typedName: "x".repeat(131),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(ADMIN_DELETE_NAME_MISMATCH);
+    }
+    expect(
+      adminDeleteMemberSchema.safeParse({
+        userId,
+        reason: "x".repeat(10),
+        typedName: "x".repeat(130),
+      }).success,
+    ).toBe(true);
+  });
+
   it("warns the admin to keep the member's name out of the reason, because it stays in the audit log", () => {
     expect(ADMIN_DELETE_REASON_HINT).toContain("აუდიტის ჟურნალში");
+  });
+});
+
+describe("normalizeName", () => {
+  const NBSP = String.fromCharCode(0xa0);
+
+  it("trims the ends and collapses every run of whitespace to one space", () => {
+    expect(normalizeName("  Nino   Beridze ")).toBe("Nino Beridze");
+    expect(normalizeName("Nino\t\nBeridze")).toBe("Nino Beridze");
+  });
+
+  it("treats a non-breaking space as an ordinary one", () => {
+    expect(normalizeName(`Nino${NBSP}Beridze${NBSP}`)).toBe("Nino Beridze");
+    expect(normalizeName(`${NBSP}Nino ${NBSP} Beridze`)).toBe("Nino Beridze");
+  });
+
+  it("composes decomposed characters, so the same letters compare equal", () => {
+    const decomposed = `Jose${String.fromCharCode(0x301)} Garcia`;
+    const composed = `Jos${String.fromCharCode(0xe9)} Garcia`;
+    expect(decomposed).not.toBe(composed);
+    expect(normalizeName(decomposed)).toBe(normalizeName(composed));
+  });
+
+  it("leaves a name that is already clean alone, and keeps case significant", () => {
+    expect(normalizeName("Nino Beridze")).toBe("Nino Beridze");
+    expect(normalizeName("nino beridze")).not.toBe(normalizeName("Nino Beridze"));
+  });
+
+  it("turns whitespace-only input into the empty string", () => {
+    expect(normalizeName(`  ${NBSP} `)).toBe("");
   });
 });
 

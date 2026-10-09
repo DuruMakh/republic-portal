@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ADMIN_DELETE_BUTTON,
   ADMIN_DELETE_CANCEL,
   ADMIN_DELETE_CONFIRM,
   ADMIN_DELETE_DONE,
   ADMIN_DELETE_NAME_LABEL,
+  ADMIN_DELETE_NAME_MISMATCH,
   ADMIN_DELETE_REASON_HINT,
   ADMIN_DELETE_REASON_LABEL,
 } from "@/lib/account-deletion-copy";
@@ -13,16 +14,37 @@ import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { DeleteMemberButton } from "./DeleteMemberButton";
 import type { deleteMemberAction } from "./delete-member-actions";
 
+// the list refresh that follows a deletion goes through the router (current URL + deleted=1)
+const nav = vi.hoisted(() => ({
+  replace: vi.fn(),
+  pathname: "/admin/members",
+  search: "",
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: nav.replace }),
+  usePathname: () => nav.pathname,
+  useSearchParams: () => new URLSearchParams(nav.search),
+}));
+
+beforeEach(() => {
+  nav.replace.mockReset();
+  nav.search = "";
+});
+
 type Action = typeof deleteMemberAction;
 type Result = Awaited<ReturnType<Action>>;
 
 const MEMBER_ID = "11111111-1111-4111-8111-111111111111";
 const NAME = "Nino Beridze";
+const NBSP = String.fromCharCode(0xa0);
 const REASON = "member asked by email";
 const REFUSAL = "refused by the database";
 
-function setup(action: Action = vi.fn<Action>().mockResolvedValue({ ok: true })) {
-  render(<DeleteMemberButton memberId={MEMBER_ID} memberName={NAME} action={action} />);
+function setup(
+  action: Action = vi.fn<Action>().mockResolvedValue({ ok: true }),
+  memberName: string = NAME,
+) {
+  render(<DeleteMemberButton memberId={MEMBER_ID} memberName={memberName} action={action} />);
   return action;
 }
 
@@ -74,16 +96,48 @@ describe("DeleteMemberButton — the form is hidden until the row's button is cl
     expect(reason.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("moves focus to the reason field when the form opens (the button it replaces had it)", () => {
+    setup();
+    open();
+    expect(screen.getByLabelText(ADMIN_DELETE_REASON_LABEL)).toHaveFocus();
+  });
+
+  it("points out a name that does not match once the admin leaves the field, not while typing", () => {
+    setup();
+    open();
+    typeReason(REASON);
+    const field = screen.getByLabelText(ADMIN_DELETE_NAME_LABEL);
+    typeName("Nino Ber");
+    expect(screen.queryByText(ADMIN_DELETE_NAME_MISMATCH)).toBeNull();
+    fireEvent.blur(field);
+    expect(screen.getByText(ADMIN_DELETE_NAME_MISMATCH)).toBeInTheDocument();
+    expect(field).toBeInvalid();
+    typeName(NAME);
+    expect(screen.queryByText(ADMIN_DELETE_NAME_MISMATCH)).toBeNull();
+    expect(field).toBeValid();
+  });
+
+  it("says nothing about the name while the field is empty", () => {
+    setup();
+    open();
+    fireEvent.blur(screen.getByLabelText(ADMIN_DELETE_NAME_LABEL));
+    expect(screen.queryByText(ADMIN_DELETE_NAME_MISMATCH)).toBeNull();
+  });
+
   it("closes again and forgets what was typed on cancel", () => {
     const action = setup();
     open();
-    fillValid();
+    typeReason(REASON);
+    typeName("Nino");
+    fireEvent.blur(screen.getByLabelText(ADMIN_DELETE_NAME_LABEL));
+    expect(screen.getByText(ADMIN_DELETE_NAME_MISMATCH)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: ADMIN_DELETE_CANCEL }));
     expect(screen.queryByLabelText(ADMIN_DELETE_REASON_LABEL)).toBeNull();
     expect(screen.getByRole("button", { name: ADMIN_DELETE_BUTTON })).toBeInTheDocument();
     open();
     expect(screen.getByLabelText(ADMIN_DELETE_REASON_LABEL)).toHaveValue("");
     expect(screen.getByLabelText(ADMIN_DELETE_NAME_LABEL)).toHaveValue("");
+    expect(screen.queryByText(ADMIN_DELETE_NAME_MISMATCH)).toBeNull();
     expect(action).not.toHaveBeenCalled();
   });
 });
@@ -112,6 +166,38 @@ describe("DeleteMemberButton — confirm is gated on the reason and the typed na
     expect(confirmButton()).toBeDisabled();
     typeName(`  ${NAME}  `);
     expect(confirmButton()).toBeEnabled();
+  });
+
+  it.each([
+    { label: "two spaces inside the stored name", stored: "Nino  Beridze" },
+    { label: "a non-breaking space inside the stored name", stored: `Nino${NBSP}Beridze` },
+    { label: "a trailing non-breaking space on the stored name", stored: `${NAME}${NBSP}` },
+  ])("accepts the name as the page shows it despite $label", async ({ stored }) => {
+    const action = setup(undefined, stored);
+    open();
+    typeReason(REASON);
+    typeName(NAME);
+    expect(confirmButton()).toBeEnabled();
+    fireEvent.click(confirmButton());
+    await waitFor(() => expect(action).toHaveBeenCalledWith(MEMBER_ID, REASON, NAME, stored));
+  });
+
+  it("accepts a typed name with doubled spaces", () => {
+    setup();
+    open();
+    typeReason(REASON);
+    typeName("Nino  Beridze");
+    expect(confirmButton()).toBeEnabled();
+  });
+
+  it("never enables confirm for a member whose stored name is blank", () => {
+    setup(undefined, `  ${NBSP} `);
+    open();
+    typeReason(REASON);
+    typeName("   ");
+    expect(confirmButton()).toBeDisabled();
+    typeName("x");
+    expect(confirmButton()).toBeDisabled();
   });
 
   it("limits the reason to the 300 characters the database accepts", () => {
@@ -148,6 +234,62 @@ describe("DeleteMemberButton — sending the request", () => {
     expect(screen.queryByLabelText(ADMIN_DELETE_REASON_LABEL)).toBeNull();
     expect(screen.queryByRole("button", { name: ADMIN_DELETE_CONFIRM })).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("refreshes the list with deleted=1 after a success, keeping the current filters", async () => {
+    nav.search = "search=Nino&regionId=3&page=2";
+    setup();
+    open();
+    fillValid();
+    fireEvent.click(confirmButton());
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledTimes(1));
+    // replace, not push or redirect: no back-button state that re-shows the deleted row,
+    // and the page stays scrolled where the admin was
+    expect(nav.replace).toHaveBeenCalledWith(
+      "/admin/members?search=Nino&regionId=3&page=2&deleted=1",
+      { scroll: false },
+    );
+  });
+
+  it("refreshes to a bare deleted=1 when no filter is set", async () => {
+    setup();
+    open();
+    fillValid();
+    fireEvent.click(confirmButton());
+    await waitFor(() =>
+      expect(nav.replace).toHaveBeenCalledWith("/admin/members?deleted=1", { scroll: false }),
+    );
+  });
+
+  it("does not repeat deleted=1 when the list already shows the notice", async () => {
+    nav.search = "deleted=1&search=Nino";
+    setup();
+    open();
+    fillValid();
+    fireEvent.click(confirmButton());
+    await waitFor(() =>
+      expect(nav.replace).toHaveBeenCalledWith("/admin/members?deleted=1&search=Nino", {
+        scroll: false,
+      }),
+    );
+  });
+
+  it("leaves the URL alone when the deletion is refused", async () => {
+    setup(vi.fn<Action>().mockResolvedValue({ ok: false, error: REFUSAL }));
+    open();
+    fillValid();
+    fireEvent.click(confirmButton());
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(REFUSAL));
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it("leaves the URL alone when the action throws", async () => {
+    setup(vi.fn<Action>().mockRejectedValue(new Error("network down")));
+    open();
+    fillValid();
+    fireEvent.click(confirmButton());
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(GENERIC_FUNNEL_ERROR));
+    expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it("shows a refusal in an alert and lets the admin try again", async () => {

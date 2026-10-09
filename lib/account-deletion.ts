@@ -25,8 +25,22 @@ export const deleteAccountSchema = z.object({
 export const adminDeleteMemberSchema = z.object({
   userId: z.string().uuid(GENERIC_FUNNEL_ERROR),
   reason: z.string().trim().min(5, ADMIN_DELETE_REASON_LENGTH).max(300, ADMIN_DELETE_REASON_LENGTH),
-  typedName: z.string().trim().min(1, ADMIN_DELETE_NAME_MISMATCH).max(130),
+  typedName: z
+    .string()
+    .trim()
+    .min(1, ADMIN_DELETE_NAME_MISMATCH)
+    .max(130, ADMIN_DELETE_NAME_MISMATCH),
 });
+
+/**
+ * A person's name as the typed-name check compares it: composed (NFC), every run of
+ * whitespace (a non-breaking space included) collapsed to one space, ends trimmed. HTML renders
+ * two spaces in a row, or a non-breaking one, as a single ordinary space, so an admin who types
+ * what they see on the screen must match.
+ */
+export function normalizeName(name: string): string {
+  return name.normalize("NFC").replace(/\s+/g, " ").trim();
+}
 
 const PHOTO_MARKER = "/delegate-photos/";
 
