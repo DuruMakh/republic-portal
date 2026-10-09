@@ -1443,11 +1443,73 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
   only anonymized rows older than 24 hours, the seven guards in the live function bodies, the
   reveals and the profile edit still working for a living person, and that it leaves nothing
   behind.
-- **Out of scope.** Signed-in Google accounts that never registered (no profile; reachable later
-  through the admin tool); support messages (not linked to accounts); database backups and
-  platform logs (Supabase, Vercel), which are not erased but expire on their own retention; a
-  downloadable copy of one's data (the right of access goes through the contact page); payment
-  retention rules (decide with a lawyer before dues return).
+- **Out of scope.** Signed-in Google accounts that never registered (no profile). Neither door
+  reaches them today: `erase_account` refuses a person without a profile (`invalid_target`), and
+  the admin members list shows profiles only; removing one needs new work. Also out: support
+  messages (not linked to accounts); database backups and platform logs (Supabase, Vercel), which
+  are not erased but expire on their own retention; a downloadable copy of one's data (the right
+  of access goes through the contact page); payment retention rules (decide with a lawyer before
+  dues return).
 - **Window between the releases.** Once A is applied, any signed-in person can call
   `delete_my_account` directly; a delegate who does so before B ships leaves their public photo
   file in Storage until it is removed by hand.
+
+**Release B (application, 2026-10-09).** Branch `claude/account-deletion-app`, stacked on A.
+
+- **Member flow (`/me/profile`).** The page ends with a danger section (`DeleteAccountSection`)
+  on both the registered and the member variant: what is erased and what stays anonymous, plus,
+  for an approved delegate (`isApprovedDelegate`), that their public page goes and their team
+  moves to the central movement. Staff (cabinet_state's `admin` flag, i.e. any `admin_roles`
+  row) see only an explanation pointing to the contact page, no field and no button; the server
+  refuses them anyway. The person types the confirmation word (`ACCOUNT_DELETION_CONFIRM_WORD`,
+  kept equal to the one in `delete_my_account` by a test); the button stays disabled until it
+  matches. `deleteMyAccountAction`: zod checks the word, `getUser()` comes first (no user: the
+  not-signed-in message, no RPC), then `delete_my_account` on the caller's own session, the photo
+  sweep (below), `signOut({ scope: "local" })` and a redirect to `/account-deleted`. An
+  `invalid_target` refusal means the profile is already gone, which only an erasure of this same
+  account does (a double submit racing the first), so it is treated as done: sign out, redirect,
+  no second sweep. The page never offers the button to an account without a profile, so the only
+  other way to get `invalid_target` is a hand-made request, which just signs that caller out. On
+  success Next's client starts the navigation and rejects the call with `NEXT_REDIRECT`; the
+  section swallows that, staying busy and disabled (rethrowing made the app router push the same
+  URL twice). `/account-deleted` is a public, noindex `CenteredNotice` with links home and to the
+  privacy policy. A member whose delegate left sees a `role="status"` note on `/me/delegate`
+  (Card callout) while their open membership has `note = 'delegate_left'`; re-picking the
+  central movement opens no new row, so the note stays then (accepted, rare).
+- **Admin flow (`/admin/members`).** super_admin only: the page shows the delete column only to
+  that role and `admin_delete_member` re-checks it. An inline panel per row asks for a reason
+  (5–300 characters, Georgian zod messages) with a hint not to write the person's name or other
+  personal data in it (the reason stays in the `member.delete` audit row), and for the member's
+  name typed back, compared after NFC and whitespace normalization, as a guard against the wrong
+  row (UX, not security). The RPC runs on the admin's own session, then the same photo sweep for
+  the id it just erased, then `revalidatePath`. The erased row leaves the list, so the button adds
+  `?deleted=1` (other parameters kept, no scroll) and the page shows "account deleted" as a status
+  line above the list. A `staff_history` refusal reads `ADMIN_DELETE_STAFF_HISTORY` ("linked to
+  staff records, cannot be deleted") instead of the member-facing "write to us".
+- **Photo sweep, the only service-role use.** `lib/supabase/delegate-photos.ts` (`server-only`)
+  `removeDelegatePhotos(id, photoUrl)`: lists `delegate-photos` objects named `<id>-…` (the
+  upload path is `<delegateId>-<timestamp>.<ext>`), keeps exactly that prefix, adds the path from
+  the database's `photoUrl` if the listing missed it, and removes them in one call, so photos an
+  earlier replacement failed to remove go too. The id is the session's own user (member) or the
+  zod-checked id the database just erased (admin); the path is the database's; neither is ever
+  client input, and an id that is not a user id never becomes a prefix. It never throws (a
+  listing failure still removes the recorded path; every failure, the service-role client's
+  creation included, is logged and swallowed), so a completed erasure is never reported as a
+  failure and the member is always signed out. Refusals never create the service-role client.
+- **Privacy text.** The version stays `2026-10-v1` (a new way to exercise an existing right, and
+  a more exact account of retention, not a new use of data). The rights section says the account
+  can be deleted on the profile page. The retention section now says: data is kept until the
+  account is deleted; on deletion, personal data leaves the platform database at once; votes in
+  finished polls stay, unidentifiable; the SMS limit record keeps the phone number about a day;
+  backups expire on their own within a week; messages sent through the contact form are not
+  linked to the account and are stored separately (how long is an owner decision, raised at
+  sign-off). The profile lede no longer says "forever". The not-signed-in message
+  (`ERROR_MESSAGES.not_authenticated`) now asks for Google sign-in, like the phone door's.
+- **Tests.** Unit tests cover both actions, the sweep, the section, both pages and the policy
+  sentences. `e2e/account-deletion.spec.ts` is one journey (a Google-backed member deletes their
+  account, lands on `/account-deleted`, `/me` sends them to `/login`, and profile, membership and
+  sign-in account are gone) on the account-deletion digit (9). It had not run when this was
+  written: no local Docker, staging unreachable and CI blocked by billing at the time.
+- **Deferred.** The shared `Field` accessibility work (audit item A11Y-2). Anonymized votes keep
+  their cast time (`poll_votes.created_at`) and insertion-ordered id; in a small poll that could
+  hint at whose vote it was, a database follow-up.

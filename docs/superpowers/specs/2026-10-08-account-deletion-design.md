@@ -46,7 +46,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 | `profiles` row: names, phone, personal ID, birth date, region, city, employment, consent stamp, referral code, status | `id = auth.users.id` (cascade) | deleted |
 | `memberships` (own history) | `member_id` (cascade) | deleted |
 | `delegates` row: bio, photo URL, slug, status | `id = profiles.id` (cascade) | deleted; public page and leaderboard entry vanish on the next cache refresh (≤ 60 s) |
-| delegate photo file in Storage | path inside `delegates.photo_url` | deleted through the Storage API after the database step (§5) |
+| delegate photo files in Storage | path inside `delegates.photo_url`; uploads are named `<id>-<timestamp>.<ext>` | every object named after the person, plus that path, deleted through the Storage API after the database step (§5) |
 | other members' memberships pointing at this delegate | `memberships.delegate_id` (no action, would block) | open rows closed and replaced by a central membership marked `note = 'delegate_left'`; closed rows get `delegate_id = null` |
 | other profiles' `pending_delegate_id` | FK on delete set null | cleared (already the FK rule) |
 | `poll_votes` in polls still running (open, deadline not passed) | `member_id` (cascade) | deleted, so a person who deletes and registers again cannot vote twice (§4.1) |
@@ -84,8 +84,8 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 
 ### 3.3 Staff
 
-- Anyone holding an `admin_roles` row sees the section with the button disabled and the
-  explanation; the server refuses too (`staff_account`).
+- Anyone holding an `admin_roles` row sees the section with only the explanation (no field, no
+  button; it points to the contact page); the server refuses too (`staff_account`).
 - Former staff (no role now, but they recorded payments, approved delegates or wrote audit rows)
   cannot be deleted without breaking the audit trail's foreign keys; the server refuses with
   `staff_history` and the page tells them to contact the board. Rare; acceptable.
@@ -185,23 +185,32 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 
 ## 5. Application
 
-- Server action `deleteMyAccount` (zod: the confirmation word): `getUser()`, RPC, then the
-  Storage removal of the returned photo path with the service-role client (best effort, logged on
-  failure; the path is server-derived, never client input), then `signOut`, then redirect to
-  `/account-deleted`.
-- Admin action `deleteMember` (zod: user id, reason, typed name): RPC, Storage removal,
-  `revalidatePath('/admin/members')`.
+- Server action `deleteMyAccount` (zod: the confirmation word): `getUser()` first (no user: the
+  not-signed-in message, no RPC), RPC on the caller's own session, then the photo sweep, then
+  `signOut`, then redirect to `/account-deleted`. An `invalid_target` refusal (the profile is
+  already gone: a double submit racing the first) counts as done: sign out and redirect.
+- Photo sweep: one server-only helper (`lib/supabase/delegate-photos.ts`), the only service-role
+  use. It removes every `delegate-photos` object named `<id>-…` plus the photo path the database
+  returned; the id is the session's own user or the id the database just erased, the path is the
+  database's, never client input. Best effort: it never throws, every failure is logged, so a
+  completed erasure is never reported as a failure.
+- Admin action `deleteMember` (zod: user id, reason, typed name): RPC, the photo sweep for the
+  erased id, `revalidatePath('/admin/members')`; the list then shows an "account deleted" notice.
 - Error codes mapped to Georgian in `mapFunnelError`: `staff_account`, `staff_history`,
-  `invalid_confirmation`, `invalid_reason`, `cannot_delete_self` (admin path).
-- `/account-deleted`: public, static, Georgian, noindex, a link home.
-- Privacy policy: the rights section adds the self-service sentence; retention sentence becomes
-  "until you delete your account". The version stays `2026-10-v1` (a new way to exercise an
+  `invalid_confirmation`, `invalid_reason`, `cannot_delete_self` (admin path). The admin page
+  words `staff_history` for the admin (the account cannot be deleted), not for the member.
+- `/account-deleted`: public, static, Georgian, noindex, a link home and one to the privacy
+  policy.
+- Privacy policy: the rights section adds the self-service sentence; the retention section says
+  data is kept until the account is deleted, and what outlives a deletion: the SMS limit record
+  (the phone number, about a day), backups (within a week), contact-form messages (not linked to
+  the account, stored separately). The version stays `2026-10-v1` (a new way to exercise an
   existing right, not a new use of data).
 
 ## 6. Tests and checks
 
 - Unit: zod schemas; both actions (fake Supabase, as in `_test-utils/fake-supabase.ts`); the
-  danger section's states (member, delegate with team count, staff disabled); `/account-deleted`;
+  danger section's states (member, delegate, staff disabled); `/account-deleted`;
   the policy sentence.
 - SQL probes on staging (`scripts/verify-account-deletion.mjs`, pinned to the staging host): a
   throwaway member is erased; their vote in a running poll is deleted, while their votes in a
@@ -221,7 +230,8 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 ## 7. Out of scope
 
 - Signed-in Google accounts that never registered (no profile): they hold only the Google email
-  and possibly a phone proof; reachable later through the admin tool if needed.
+  and possibly a phone proof. Neither door reaches them today (`erase_account` refuses a person
+  without a profile, and the admin list shows profiles only); removing one needs new work.
 - Support messages (not linked to accounts).
 - Database backups and platform logs (Supabase, Vercel): not erased; they expire on their own
   retention. The privacy policy must say so rather than claim they are erased.
