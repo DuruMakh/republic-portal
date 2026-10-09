@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ballotButtonClasses } from "@/components/Ballot";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
+import { DeleteAccountSection } from "@/components/DeleteAccountSection";
 import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
 import { Pill } from "@/components/Pill";
@@ -15,6 +16,7 @@ import {
   DELEGACY_STATUS_LABELS,
   deriveDelegacyPhase,
   formatPhoneKa,
+  isApprovedDelegate,
   memberSinceKa,
   TEAM_STATUS_LABELS,
   type TeamMemberStatus,
@@ -24,6 +26,7 @@ import { showMembershipDues } from "@/lib/membership-dues";
 import { rankDelegates } from "@/lib/ranking";
 import { fetchPublicDelegates } from "@/lib/supabase/public";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
+import { deleteMyAccountAction } from "./delete-account-actions";
 import { ProfileForm } from "./ProfileForm";
 import { RegisteredProfileForm } from "./RegisteredProfileForm";
 
@@ -40,8 +43,8 @@ const POLL_TEASER_EYEBROW = "დღის კითხვა";
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabase();
-  // cabinet_state is request-cached (already fetched by the layout); the user and
-  // region lookups are independent, so fan them out in parallel.
+  // cabinet_state is request-cached (already fetched by the layout); the user and region
+  // lookups are independent, so fan them out in parallel.
   const [state, { data: userData }, { data: regions, error: regionsError }] = await Promise.all([
     getCabinetState(), // (member) layout guarantees exists only; standing decides the branch below
     supabase.auth.getUser(),
@@ -54,6 +57,20 @@ export default async function ProfilePage() {
     throw new Error(`regions query failed: ${regionsError.message}`);
   }
   const regionName = (regions ?? []).find((r) => r.id === state.regionId)?.name_ka ?? "—";
+
+  // The danger section closes both branches below (registered and member alike). Staff (any
+  // admin_roles row: cabinet_state's admin flag) cannot self-delete and see only the
+  // explanation (spec 2026-10-08 §3.3); an approved delegate also learns their public page goes
+  // and their team moves.
+  const deleteSection = (
+    <div className="mt-10">
+      <DeleteAccountSection
+        isStaff={state.admin}
+        isDelegate={isApprovedDelegate(state)}
+        action={deleteMyAccountAction}
+      />
+    </div>
+  );
 
   // Registered variant (spec §4.2): name-edit only, no member facts (tier,
   // reference code, member-since, Pill) — those don't exist yet for this
@@ -115,6 +132,7 @@ export default async function ProfilePage() {
             </Card>
           </div>
         </div>
+        {deleteSection}
       </main>
     );
   }
@@ -324,6 +342,7 @@ export default async function ProfilePage() {
           ) : null}
         </div>
       </div>
+      {deleteSection}
     </main>
   );
 }

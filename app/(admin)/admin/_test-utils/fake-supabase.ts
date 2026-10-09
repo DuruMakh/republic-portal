@@ -70,17 +70,31 @@ function chainable(call: DbCall, resolve: () => DbResult): unknown {
   return builder;
 }
 
+/** The signed-in user every fake session reports unless a test says otherwise. */
+export const FAKE_SESSION_USER_ID = "22222222-2222-4222-8222-222222222222";
+
 export interface FakeSession {
   /** hand this to the mocked createServerSupabase */
   client: unknown;
   calls: DbCall[];
   rpcCalls(): DbCall[];
   tableCalls(): DbCall[];
+  /** the session's auth.signOut double (member self-deletion signs the caller out) */
+  signOut: Mock;
+  /** the session's auth.getUser double: FAKE_SESSION_USER_ID by default */
+  getUser: Mock;
 }
 
 export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
   const calls: DbCall[] = [];
+  const signOut = vi.fn<(options?: unknown) => Promise<{ error: null }>>(async () => ({
+    error: null,
+  }));
+  const getUser = vi.fn<() => Promise<{ data: { user: { id: string } | null }; error: unknown }>>(
+    async () => ({ data: { user: { id: FAKE_SESSION_USER_ID } }, error: null }),
+  );
   const client = {
+    auth: { signOut, getUser },
     rpc(name: string, args?: unknown) {
       calls.push({ kind: "rpc", name, args, chain: [] });
       return Promise.resolve(handlers.rpc?.(name, args) ?? EMPTY);
@@ -96,6 +110,8 @@ export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
     calls,
     rpcCalls: () => calls.filter((c) => c.kind === "rpc"),
     tableCalls: () => calls.filter((c) => c.kind === "from"),
+    signOut,
+    getUser,
   };
 }
 
@@ -128,8 +144,19 @@ export interface StorageCall {
   args: unknown[];
 }
 
-/** Service-role client double: storage only (the one thing admin actions use it for). */
-export function fakeAdminClient(opts: { uploadError?: DbError } = {}): {
+/**
+ * Service-role client double: storage only (the one thing admin actions use it for). `list`
+ * answers with every name in `listed`, whatever the search: the code under test must filter
+ * by prefix itself rather than trust the server's match.
+ */
+export function fakeAdminClient(
+  opts: {
+    uploadError?: DbError;
+    listed?: readonly string[];
+    listError?: DbError;
+    removeError?: DbError;
+  } = {},
+): {
   client: unknown;
   storageCalls: StorageCall[];
 } {
@@ -148,9 +175,17 @@ export function fakeAdminClient(opts: { uploadError?: DbError } = {}): {
             record("getPublicUrl", args);
             return { data: { publicUrl: `https://cdn.test/${bucket}/${String(args[0])}` } };
           },
+          list: (...args: unknown[]) => {
+            record("list", args);
+            return Promise.resolve(
+              opts.listError
+                ? { data: null, error: opts.listError }
+                : { data: (opts.listed ?? []).map((name) => ({ name })), error: null },
+            );
+          },
           remove: (...args: unknown[]) => {
             record("remove", args);
-            return Promise.resolve({ data: [], error: null });
+            return Promise.resolve({ data: [], error: opts.removeError ?? null });
           },
         };
       },

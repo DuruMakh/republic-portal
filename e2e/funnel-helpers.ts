@@ -14,15 +14,17 @@ import {
 import { installSupabaseSession, loginAs, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
-// (run number + attempt) and ends in 9 — the login journey's digit. Journey phones
-// replace the final digit. Personal IDs use the reserved 9-prefix (seed uses 1-prefix).
+// (run number + attempt) and ends in 9 — the account-deletion journey's digit. Journey
+// phones replace the final digit. Personal IDs use the reserved 9-prefix (seed uses 1-prefix).
 // Exported so tests derive the expected phone from here rather than re-hardcoding
 // the fallback — this is read at module load, so vi.stubEnv can never reach it.
 export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE = LOGIN_PHONE.slice(0, 8);
 
-// Progressive registration reworked the journeys. Single digits are scarce (0–9,
-// with 9 reserved for E2E_TEST_PHONE itself), so the slots are explicit.
+// Progressive registration reworked the journeys. Single digits are scarce (0–9), so the
+// slots are explicit. Digit 9 is E2E_TEST_PHONE itself: the login journey's slot, free
+// since sign-in went by password (ADR-043; no spec calls cleanupLoginUser any more), now
+// the account-deletion journey's.
 // cleanupJourneyUsers keys off these phones (mechanics unchanged); admin/
 // community specs keep their separate phase4Phone range (no collision).
 export const JOURNEY = {
@@ -42,6 +44,7 @@ export const JOURNEY = {
   membRsvp: 6, // community-events.spec: RSVP as registered
   secDelegate: 7, // security-hardening.spec: approved delegate holding the probed personal ID
   membDupId: 8, // membership.spec: fresh registrant colliding with regDupId's seeded ID
+  accountDelete: 9, // account-deletion.spec: a Google-backed member deletes their own account
 } as const;
 
 export function journeyPhone(journey: number): string {

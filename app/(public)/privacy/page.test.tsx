@@ -74,4 +74,20 @@ describe("/privacy", () => {
     const lists = screen.getAllByRole("list");
     expect(lists.map((l) => l.querySelectorAll("li").length)).toEqual([5, 5]);
   });
+
+  it("says people can delete their account themselves, and what that does", () => {
+    const { container } = render(<PrivacyPage />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან");
+    expect(text).toContain("მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი.");
+  });
+
+  it("says honestly what outlives a deletion, and for how long", () => {
+    const { container } = render(<PrivacyPage />);
+    const text = container.textContent ?? "";
+    // the SMS rate-limit record keeps the phone number for about a day (hourly purge, 25 h max)
+    expect(text).toContain("ერთი დღის განმავლობაში");
+    // support messages are not linked to accounts, so a deletion does not reach them
+    expect(text).toContain("ინახება ცალკე");
+  });
 });
