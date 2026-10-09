@@ -74,4 +74,11 @@ describe("/privacy", () => {
     const lists = screen.getAllByRole("list");
     expect(lists.map((l) => l.querySelectorAll("li").length)).toEqual([5, 5]);
   });
+
+  it("says people can delete their account themselves, and what that does", () => {
+    const { container } = render(<PrivacyPage />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან");
+    expect(text).toContain("მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი.");
+  });
 });
