@@ -45,7 +45,7 @@ Playwright, GitHub Actions, Vercel.
 | `e2e/otp-helpers.ts` (modify) | `fixtureSession` becomes a thin wrapper over `lib/fixture-auth.ts`. |
 | `lib/test-personas.ts` (create) | The fixed persona list (ids, Georgian labels, landing paths). |
 | `app/(public)/login/test-sign-in-actions.ts` (create) | Server action: gate, validate, sign in, set cookies, redirect. |
-| `components/TestSignInPanel.tsx` (create) | The „სატესტო შესვლა" panel. |
+| `components/TestSignInPanel.tsx` (create) | The „სატესტო შესვლა“ panel. |
 | `app/(public)/login/GoogleLogin.tsx`, `page.tsx` (modify) | Render the panel when enabled; new error message. |
 | `e2e/test-sign-in.spec.ts` (create) | Clicks every persona on the CI stack. |
 | `DECISIONS.md`, `README.md` (modify) | ADR and docs. |
@@ -738,7 +738,7 @@ export async function testSignInAction(formData: FormData): Promise<void> {
 - [ ] **Step 5: Run the tests and see them pass**, then the full gates.
 - [ ] **Step 6: Commit** "Preview test sign-in: personas and gated server action".
 
-### Task 8: The „სატესტო შესვლა" panel on /login
+### Task 8: The „სატესტო შესვლა“ panel on /login
 
 **Files:**
 - Create: `components/TestSignInPanel.tsx`
@@ -878,7 +878,7 @@ for (const [label, landing] of LANDINGS) {
   project, which is connected to staging with `NEXT_PUBLIC_APP_ENV=preview`, so the panel works there.
   Evidence for the owner: screenshots of the panel and of each landing page, plus the preview link.
 - [ ] **Step 5:** After sign-off: merge, then check `https://respublika.ge/login` contains no
-  „სატესტო შესვლა" (`curl -s https://respublika.ge/login | grep -c "სატესტო შესვლა"` → `0`).
+  „სატესტო შესვლა“ (`curl -s https://respublika.ge/login | grep -c "სატესტო შესვლა"` → `0`).
 
 ---
 

@@ -1,8 +1,7 @@
-// This suite asserts the CANONICAL STAGING SEED (12 approved delegates, leaderboard
-// order, pending names absent) is present. Staging is shared with real users — the
-// owner is now an approved delegate too, so roster/leaderboard counts are floors (>=)
-// anchored on seeded names/ranks, not exact totals. CI never seeds — if these fail on
-// a missing seeded name/rank or a count below 12, staging drifted; see scripts/seed-staging.mjs.
+// This suite asserts the canonical seed (12 approved delegates, leaderboard order, pending names
+// absent). CI seeds a fresh throwaway stack every run (ADR-050); counts stay floors (>=) anchored
+// on seeded names/ranks so the suite also holds against hosted staging, which carries extra
+// accounts. A missing seeded name/rank or a count below 12 is a real defect or a broken seed.
 import { expect, test, type Page } from "@playwright/test";
 import { formatCountKa } from "../lib/format";
 import { EVENTS_SHOWN } from "./events-switch";

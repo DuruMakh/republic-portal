@@ -86,7 +86,7 @@ production), and the owner can open it.
 
 ### 4.3 Preview test sign-in
 
-On preview builds only, `/login` shows a small panel, „სატესტო შესვლა", with one button per
+On preview builds only, `/login` shows a small panel, „სატესტო შესვლა“, with one button per
 test person:
 
 | Button | Signs in as |
