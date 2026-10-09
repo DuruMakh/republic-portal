@@ -43,12 +43,12 @@ export function PebbleTally({
           strokeDasharray="3 6"
           className="stroke-line"
         />
-        {t.for.map((p, i) => shape(p, "fill-brand", `f${i}`))}
+        {t.for.map((p, i) => shape(p, "fill-teal", `f${i}`))}
         {t.against.map((p, i) => shape(p, "fill-line", `a${i}`))}
       </svg>
       <div className="mt-3.5 flex flex-wrap justify-between gap-3 text-[0.85rem] text-muted-fg">
         <span className="inline-flex items-center gap-2">
-          <Pebble className="h-[11px] w-3" />
+          <Pebble tone="teal" className="h-[11px] w-3" />
           {forLabel}
         </span>
         <span className="inline-flex items-center gap-2">

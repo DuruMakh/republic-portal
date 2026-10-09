@@ -39,7 +39,7 @@ import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 export const metadata: Metadata = { title: `${STRUCTURE_TITLE} — ${SUPPORT_EYEBROW}` };
 
 const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
-const LABEL = "text-[0.74rem] font-bold tracking-[.2em] text-muted-fg";
+const LABEL = "text-[0.74rem] font-bold tracking-[.2em] text-teal";
 // Board follows the index strip's own rule, so only later sections draw a top border.
 // scroll-mt-24 clears the masthead, which is sticky below md (components/Masthead.tsx).
 const SECTION = "scroll-mt-24 py-[clamp(36px,5vw,64px)] md:scroll-mt-6";
@@ -87,7 +87,10 @@ function PebbleList({ label, items }: { label: string; items: readonly string[] 
             key={item}
             className="grid grid-cols-[22px_minmax(0,1fr)] gap-3 border-b border-line py-2.5 font-serif text-[1.02rem] leading-normal text-ink first:border-t"
           >
-            <Pebble className={`mt-[0.5em] h-3 w-[13px] ${i % 2 ? "rotate-[40deg]" : ""}`} />
+            <Pebble
+              tone="teal"
+              className={`mt-[0.5em] h-3 w-[13px] ${i % 2 ? "rotate-[40deg]" : ""}`}
+            />
             {item}
           </li>
         ))}

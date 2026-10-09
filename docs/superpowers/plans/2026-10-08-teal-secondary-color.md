@@ -892,3 +892,16 @@ The whole-branch review found no critical issues. These changes followed it, eac
   count (eight `position` checks, not three), CHANGELOG wording, and two stale code comments.
 - **Renumbered to ADR-048.** ADR-045, -046 and -047 were taken by PRs #46, #45 and #51 while this
   waited for sign-off; every reference in this work now reads ADR-048.
+
+## Addendum task (2026-10-09): teal on /structure
+
+Spec §11. Branch `claude/structure-teal` from main (ADR-048 already merged). One TDD task:
+
+1. Failing tests: `Pebble` teal tones; `DecisionRuleCard` needed pebbles teal; new
+   `MembershipPath.test.tsx`; `PebbleCouncil` seats `fill-teal`; `PebbleTally` for pile and swatch
+   teal; `app/(public)/structure/teal.test.tsx` (bullets `data-tone="teal"`, every small label
+   `text-teal`, headline accent still `text-brand`).
+2. Class-only edits in those components and in `app/(public)/structure/page.tsx` (`LABEL`, list
+   bullet tone). DESIGN.md rows for `teal`, `Pebble`, `DecisionRuleCard`, `MembershipPath`,
+   `PebbleCouncil`, `PebbleTally`.
+3. Gates, PR, preview screenshots, owner sign-off, merge, verify georgia-republic `/structure`.
