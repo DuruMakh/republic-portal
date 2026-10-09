@@ -11,6 +11,7 @@ import { PollCard } from "./PollCard";
 const POLL_ID = "6f1b0a9e-0000-4000-8000-0000000000aa";
 const OPT_A = "6f1b0a9e-0000-4000-8000-0000000000a1";
 const OPT_B = "6f1b0a9e-0000-4000-8000-0000000000a2";
+const OPT_C = "6f1b0a9e-0000-4000-8000-0000000000a3";
 
 describe("PollCard", () => {
   beforeEach(() => {
@@ -74,6 +75,64 @@ describe("PollCard", () => {
       />,
     );
     expect(screen.getByText("გამოკითხვა დასრულებულია · სულ 5 ხმა")).toBeInTheDocument();
+  });
+
+  it("results: the leading answer's bar is brand red, the others teal (ADR-048)", () => {
+    const { container } = render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="results-own"
+        deadlineKa={null}
+        options={[
+          { optionId: OPT_A, label: "Yes", pct: 67, votes: 2, mine: true },
+          { optionId: OPT_B, label: "No", pct: 33, votes: 1, mine: false },
+        ]}
+        total={3}
+      />,
+    );
+    expect(container.querySelector("[style*='width: 67%']")).toHaveClass("bg-brand");
+    expect(container.querySelector("[style*='width: 33%']")).toHaveClass("bg-teal");
+  });
+
+  it("results: a three-way tie is red for all three, though rounding splits it 34/33/33", () => {
+    const { container } = render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="results-closed"
+        deadlineKa={null}
+        options={[
+          { optionId: OPT_A, label: "A", pct: 34, votes: 1, mine: false },
+          { optionId: OPT_B, label: "B", pct: 33, votes: 1, mine: false },
+          { optionId: OPT_C, label: "C", pct: 33, votes: 1, mine: false },
+        ]}
+        total={3}
+      />,
+    );
+    expect(container.querySelector("[style*='width: 34%']")).toHaveClass("bg-brand");
+    const thirds = container.querySelectorAll("[style*='width: 33%']");
+    expect(thirds).toHaveLength(2);
+    thirds.forEach((bar) => expect(bar).toHaveClass("bg-brand"));
+  });
+
+  it("results: 1001 to 1000 shows only the real leader red, though both round to 50%", () => {
+    const { container } = render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="results-closed"
+        deadlineKa={null}
+        options={[
+          { optionId: OPT_A, label: "A", pct: 50, votes: 1001, mine: false },
+          { optionId: OPT_B, label: "B", pct: 50, votes: 1000, mine: false },
+        ]}
+        total={2001}
+      />,
+    );
+    const [first, second] = Array.from(container.querySelectorAll("[style*='width: 50%']"));
+    expect(first).toHaveClass("bg-brand");
+    expect(second).toHaveClass("bg-teal");
   });
 
   it("surfaces the server error inline and keeps the buttons", async () => {

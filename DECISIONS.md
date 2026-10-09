@@ -12,8 +12,8 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - When a decision changes, edit its entry here and add "(changed YYYY-MM-DD)". Do not add a
   correction entry. Move what it replaced to "Retired or replaced" at the bottom.
 - New number: one above the highest here AND in every open PR; recheck right before merging.
-  ADR-048, ADR-049 and ADR-050 are claimed by open PRs (#44, #49 and #48, which must renumber
-  its clashing 047).
+  ADR-049 and ADR-050 are claimed by open PRs (#49, and #48, which must renumber its clashing
+  047).
 
 ## Delivery and environments
 
@@ -120,6 +120,10 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - **ADR-020 Kronika (D3) is the design contract** (`prototype/kronika-d3/`, DESIGN.md): one
   red `#9F1D35`, warm ink on paper, rules instead of shadows, serif for names, dates and
   numerals. Marketing copy follows the mock; functional copy keeps shipped wording.
+- **ADR-048 Teal `#235B59` is the second colour.** Red acts (links, active nav, focus,
+  danger); teal informs (registry figures, supporter chip, non-leading poll bars, `dark`
+  buttons, the footer band). No teal tint panels. Red and teal are equally dark, so a leading
+  poll answer is never shown by colour alone.
 - **ADR-038 `/structure`** is information only, with a condensed display type and pebble motif
   scoped to it; the board roster lives in `lib/board-members.ts`. The header reads მთავარი,
   რეიტინგი, სტრუქტურა.

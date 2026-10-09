@@ -3,6 +3,7 @@ import {
   eventEndIso,
   formatEventTimeKa,
   isoToTbilisiLocal,
+  leadingOptions,
   percentages,
   pollView,
   rsvpOpen,
@@ -130,5 +131,18 @@ describe("formatEventTimeKa", () => {
     expect(formatEventTimeKa("2026-07-25T15:00:00.000Z", "2026-07-26T07:00:00.000Z")).toBe(
       "25.07.2026, 19:00 — 26.07.2026, 11:00",
     );
+  });
+});
+
+describe("leadingOptions (ADR-048: the answers with the most votes lead)", () => {
+  it("marks every answer tied for the most votes, even when rounding splits their percentages", () => {
+    expect(leadingOptions([1, 1, 1])).toEqual([true, true, true]);
+  });
+  it("marks only the true leader when rounding makes two percentages equal", () => {
+    expect(leadingOptions([1001, 1000])).toEqual([true, false]);
+  });
+  it("marks nothing before anyone has voted", () => {
+    expect(leadingOptions([0, 0])).toEqual([false, false]);
+    expect(leadingOptions([])).toEqual([]);
   });
 });

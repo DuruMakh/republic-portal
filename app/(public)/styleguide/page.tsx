@@ -61,6 +61,8 @@ import {
 const PALETTE: { name: string; hex: string }[] = [
   { name: "brand", hex: "#9F1D35" },
   { name: "brand-dark", hex: "#7C1629" },
+  { name: "teal", hex: "#235B59" },
+  { name: "teal-dark", hex: "#1A4644" },
   { name: "ink", hex: "#1A1611" },
   { name: "prose", hex: "#3E362B" },
   { name: "muted-fg", hex: "#6E6659" },
@@ -84,13 +86,16 @@ const CONTRAST_PAIRS = [
   "muted-fg / paper — 5.1:1",
   "paper / ink — 16.1:1",
   "paper / brand — 7.0:1",
+  "teal / paper — 6.9:1",
+  "paper / teal — 6.9:1",
+  "paper / teal-dark — 9.4:1",
 ];
 
 const BUTTON_VARIANTS: { variant: ButtonVariant; label: string }[] = [
   { variant: "primary", label: "primary" },
   { variant: "ghost", label: "ghost" },
   { variant: "danger", label: "danger" },
-  { variant: "dark", label: "dark" },
+  { variant: "dark", label: "dark (teal)" },
 ];
 
 // CabinetNav / AdminNav demos (Task 7 re-dress: underlined tabs + a new
@@ -340,6 +345,17 @@ export default function StyleguidePage() {
               </a>
             }
           />
+          <SectionRule
+            tone="teal"
+            className="mt-6"
+            label="რეიტინგი — ხუთეული"
+            as="div"
+            action={
+              <a href="/leaderboard" className="text-[0.72rem]">
+                სრულად →
+              </a>
+            }
+          />
         </Card>
 
         <Card title="საჯარო რეესტრი">
@@ -370,6 +386,20 @@ export default function StyleguidePage() {
           </div>
         </Card>
 
+        <Card variant="callout-teal">
+          <div className="mb-3">
+            <Pill status="registered" />
+          </div>
+          <IndexRow
+            rank={1}
+            name="გიორგი მაისურაძე"
+            meta="თბილისი — დამტკიცებული · იან 2026"
+            figure={342}
+            figureLabel="წევრი"
+            href="/leaderboard"
+          />
+        </Card>
+
         <Card title="გამოკითხვა">
           <div className="flex flex-col gap-4">
             <p className="font-serif text-[1.02rem] font-semibold leading-snug text-ink">
@@ -377,7 +407,7 @@ export default function StyleguidePage() {
             </p>
             <div className="flex flex-col gap-2">
               <BallotBar label="დიახ" pct={71} tone="brand" />
-              <BallotBar label="არა" pct={14} tone="ink" />
+              <BallotBar label="არა" pct={14} tone="teal" />
               <BallotBar label="თავს ვიკავებ" pct={15} tone="muted" />
             </div>
             <div className="flex gap-2">
