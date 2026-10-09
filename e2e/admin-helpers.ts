@@ -16,9 +16,10 @@ const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
 const BASE7 = LOGIN_PHONE.slice(0, 7);
 
 /**
- * Phase-4 per-run users: 55-block, LAST digit pinned to 8 — the only slot
- * funnel-helpers never uses (journeys take 0–7, login takes 9), so these can
- * never equal a journey/login phone of ANY attempt of the same run. k sits in
+ * Phase-4 per-run users: 55-block, LAST digit pinned to 8. Funnel journeys
+ * (funnel-helpers.ts JOURNEY) take 0–7 and 9, the account-deletion journey,
+ * which these never equal; membDupId also ends in 8 and matches phase4Phone(k)
+ * only when k is the run attempt's digit. k sits in
  * the attempt position, which makes the phones attempt-independent — hence
  * cleanup in beforeAll AND afterAll.
  */

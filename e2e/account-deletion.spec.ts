@@ -50,8 +50,10 @@ async function footprint(userId: string) {
     .eq("member_id", userId);
   if (memberships.error) throw new Error(`membership count failed: ${memberships.error.message}`);
   const account = await db.auth.admin.getUserById(userId);
-  // an absent user is a 404 from the auth server; any other failure must not read as "gone"
-  if (account.error && account.error.status !== 404) {
+  // an absent user is a 404 (code user_not_found) from the auth server; any other failure must
+  // not read as "gone"
+  const absent = account.error?.status === 404 || account.error?.code === "user_not_found";
+  if (account.error && !absent) {
     throw new Error(`sign-in account lookup failed: ${account.error.message}`);
   }
   return {

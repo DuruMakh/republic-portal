@@ -59,8 +59,8 @@ jobs:
         if: hashFiles('playwright.config.ts') != ''
         run: |
           # 55-block: disjoint from the canonical seed's 50XXXXXXX phones (spec §7).
-          # Digit 8 folds in the retry attempt; digit 9 (=9) is the login journey's slot;
-          # funnel journeys replace that final digit (see e2e/funnel-helpers.ts).
+          # Digit 8 folds in the retry attempt; the final digit (=9) is the account-deletion
+          # journey's slot; the other funnel journeys replace it (see e2e/funnel-helpers.ts).
           echo "E2E_TEST_PHONE=55$(printf '%05d' $(( ${{ github.run_number }} % 100000 )))$(( ${{ github.run_attempt }} % 10 ))9" >> "$GITHUB_ENV"
       # e2e asserts exact facts about the canonical seed (12 approved delegates, leaderboard
       # order). Every run seeds a fresh throwaway stack, so a mismatch is a real defect, not drift.

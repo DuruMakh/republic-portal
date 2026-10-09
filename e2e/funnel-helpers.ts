@@ -14,8 +14,8 @@ import {
 import { installSupabaseSession, loginAs, serviceClient } from "./otp-helpers";
 
 // Per-run isolation (spec §7): E2E_TEST_PHONE is CI-derived in the 55XXXXXXX block
-// (run number + attempt) and ends in 9 — the login journey's digit. Journey phones
-// replace the final digit. Personal IDs use the reserved 9-prefix (seed uses 1-prefix).
+// (run number + attempt) and ends in 9 — the account-deletion journey's digit. Journey
+// phones replace the final digit. Personal IDs use the reserved 9-prefix (seed uses 1-prefix).
 // Exported so tests derive the expected phone from here rather than re-hardcoding
 // the fallback — this is read at module load, so vi.stubEnv can never reach it.
 export const LOGIN_PHONE = process.env.E2E_TEST_PHONE ?? "550009999";
