@@ -25,6 +25,9 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      # e2e/otp-cookie.integration.test.ts drives a real Playwright browser inside the unit tests.
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check

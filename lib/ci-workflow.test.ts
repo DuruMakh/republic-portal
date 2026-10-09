@@ -78,6 +78,16 @@ describe("CI runs in two speeds", () => {
     expect(checks).not.toContain("supabase");
   });
 
+  it("installs the browser before the unit tests (one of them drives Playwright)", () => {
+    const checks = job("checks");
+    expect(checks).toMatch(
+      /- run: npx playwright install --with-deps chromium\n\s+timeout-minutes: 10\n/,
+    );
+    expect(checks.indexOf("playwright install")).toBeLessThan(
+      checks.indexOf("- run: npm run test\n"),
+    );
+  });
+
   it("keeps the database, build and browser tests in the quality job only", () => {
     const quality = job("quality");
     for (const step of ["supabase start", "- run: npm run build", "- run: npm run e2e"]) {
