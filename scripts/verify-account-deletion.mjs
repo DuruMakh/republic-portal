@@ -1,14 +1,16 @@
 // Live probe for account deletion (plan 2026-10-08-account-deletion, Task 2). STAGING ONLY.
 // Run: node --env-file=.env.local scripts/verify-account-deletion.mjs
 //
-// Proves migrations 20261009140000_account_deletion.sql and
-// 20261009150000_account_deletion_hardening.sql against the real staging database: the member /
-// delegate / staff paths through the client RPCs, the closed doors (anon, direct erase_account
-// for a client and for service_role, non-super-admin), the audit-log lock, the audit scrub, the
-// admin wrapper, former staff refused with the blocking key named, votes (deleted in a running
-// poll, kept anonymously in a closed or past-deadline one), SMS send reservations kept without
-// the account, and Supabase auth's own log scrubbed. Everything it creates is removed again, on
-// failure too.
+// Proves migrations 20261009140000_account_deletion.sql,
+// 20261009150000_account_deletion_hardening.sql and 20261009160000_account_deletion_followups.sql
+// against the real staging database: the member / delegate / staff paths through the client RPCs,
+// the closed doors (anon, direct erase_account for a client and for service_role,
+// non-super-admin), the audit-log lock, the audit scrub, the admin wrapper, former staff refused
+// with the blocking key named, votes (deleted in a running poll, kept anonymously in a closed or
+// past-deadline one), SMS send reservations (older than 24 hours deleted, newer ones kept without
+// the account, their verification challenge gone), the daily purge job and its command, the
+// follow-ups' FOUND checks and team capture in the live function bodies, and Supabase auth's own
+// log scrubbed. Everything it creates is removed again, on failure too.
 //
 // Pass sentinels are assembled by the database at run time ('PROBE-' || 'NAME'), so an error
 // that echoes the SQL text back can never contain one and pass a check by accident.
@@ -51,7 +53,15 @@ const objects = []; // storage paths
 const voteIds = []; // poll_votes.id
 const pollIds = []; // throwaway polls (their options and votes cascade)
 const reservationIds = []; // phone_verification_send_reservations.id
+const challengeIds = []; // phone_verification_challenges.id
 let cities = null;
+
+const PURGE_JOB = "purge-anonymous-sms-reservations";
+const PURGE_COMMAND =
+  "delete from public.phone_verification_send_reservations " +
+  "where user_id is null and created_at < now() - interval '24 hours'";
+const DAY_MS = 24 * 60 * 60 * 1000;
+const hex64 = () => randomBytes(32).toString("hex");
 
 // ---------------------------------------------------------------------------------------------
 // SQL through the CLI (multi-statement text is refused by the extended protocol, so every probe
@@ -240,6 +250,56 @@ select
       "sequence closed to anon/authenticated, SMS reservations' user_id nullable and set null",
   );
 
+  // 0c. the follow-ups migration is on this database too (catalog, read-only): the live bodies
+  // carry the FOUND checks, the membership lock, the team capture and the reservation delete;
+  // the three admin RPCs keep their grants; the daily purge job is scheduled with its command.
+  const [followups] = sqlRows(`
+select
+  (select count(*)::int from pg_catalog.pg_proc
+    where oid in ('public.admin_approve_delegate(uuid,text)'::regprocedure,
+                  'public.admin_reject_delegate(uuid,text)'::regprocedure,
+                  'public.admin_update_delegate_name(uuid,text,text)'::regprocedure)
+      and position('if not found then raise exception ''invalid_target''; end if;' in prosrc) > 0)
+    as found_checks,
+  (select bool_and(has_function_privilege('authenticated', f, 'EXECUTE')
+                   and not has_function_privilege('anon', f, 'EXECUTE'))
+     from unnest(array['public.admin_approve_delegate(uuid,text)',
+                       'public.admin_reject_delegate(uuid,text)',
+                       'public.admin_update_delegate_name(uuid,text,text)']) as f)
+    as admin_grants_kept,
+  (select regexp_replace(prosrc, '\\s+', ' ', 'g') from pg_catalog.pg_proc
+    where oid = 'public.erase_account(uuid)'::regprocedure) as erase_src`);
+  const eraseSrc = String(followups?.erase_src ?? "");
+  const eraseNeeds = [
+    "from public.memberships where member_id = p_user_id and ended_at is null for update;",
+    "where delegate_id = p_user_id and ended_at is null returning member_id ) " +
+      "select coalesce(array_agg(member_id), '{}') into v_team from ended;",
+    "delete from public.phone_verification_send_reservations where user_id = p_user_id " +
+      "and created_at < now() - interval '24 hours';",
+  ].filter((needle) => !eraseSrc.includes(needle));
+  if (followups?.found_checks !== 3 || followups.admin_grants_kept !== true || eraseNeeds.length) {
+    throw new Error(
+      `follow-ups not in place: found_checks ${followups?.found_checks}, admin grants kept ` +
+        `${followups?.admin_grants_kept}, erase_account lacks ${JSON.stringify(eraseNeeds)}`,
+    );
+  }
+  const jobs = sqlRows(`select jobname, schedule, command, active, username from cron.job
+                         where jobname = '${PURGE_JOB}'`);
+  if (
+    jobs.length !== 1 ||
+    jobs[0].schedule !== "30 1 * * *" ||
+    jobs[0].command !== PURGE_COMMAND ||
+    jobs[0].active !== true
+  ) {
+    throw new Error(`purge job wrong: ${JSON.stringify(jobs)}`);
+  }
+  console.log(
+    "OK: follow-ups applied: FOUND checks in approve/reject/update_name (grants unchanged), " +
+      "erase_account locks the membership row, captures the team via returning, deletes " +
+      `reservations older than 24 hours; cron job ${PURGE_JOB} scheduled once, daily 01:30 UTC, ` +
+      `active, runs as ${jobs[0].username}`,
+  );
+
   // A. wrong word refused; right word erases the member and the sign-in account
   const a = await person("member");
   await expectError(
@@ -298,18 +358,48 @@ end $probe$;`);
     `OK: former staff refused as staff_history, detail "${formerStaff.split("PROBE-HISTORY-OK: ")[1]}"`,
   );
 
-  // A2. an SMS send reservation of the person, and Supabase auth's own log about them
-  const { data: reservation, error: rErr } = await db
-    .from("phone_verification_send_reservations")
+  // A2. SMS send reservations of the person (a recent one, a recent one linked to a verification
+  // challenge, one sent two days ago), and Supabase auth's own log about them
+  const smsPhone = `+99555${randomInt(1000000, 9999999)}`;
+  const { data: challenge, error: chErr } = await db
+    .from("phone_verification_challenges")
     .insert({
       user_id: a.id,
-      phone: `+99555${randomInt(1000000, 9999999)}`,
-      idempotency_key: randomBytes(32).toString("hex"),
+      phone: smsPhone,
+      purpose: "registration",
+      provider: "test",
+      provider_request_id: `probe-account-deletion-${randomBytes(8).toString("hex")}`,
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     })
     .select("id")
     .single();
+  if (chErr) throw new Error(`challenge insert: ${chErr.message}`);
+  challengeIds.push(challenge.id);
+  const { data: reservations, error: rErr } = await db
+    .from("phone_verification_send_reservations")
+    // every row names every column: a bulk insert sends null for a column a row leaves out
+    .insert(
+      [
+        [null, new Date()],
+        [challenge.id, new Date()],
+        [null, new Date(Date.now() - 2 * DAY_MS)],
+      ].map(([challengeId, at]) => ({
+        user_id: a.id,
+        phone: smsPhone,
+        idempotency_key: hex64(),
+        challenge_id: challengeId,
+        created_at: at.toISOString(),
+      })),
+    )
+    .select("id, challenge_id, created_at");
   if (rErr) throw new Error(`reservation insert: ${rErr.message}`);
-  reservationIds.push(reservation.id);
+  reservationIds.push(...reservations.map((r) => r.id));
+  const linked = reservations.find((r) => r.challenge_id === challenge.id);
+  const old = reservations.find((r) => Date.parse(r.created_at) < Date.now() - DAY_MS);
+  const recent = reservations.find((r) => r !== linked && r !== old);
+  if (!linked || !old || !recent) {
+    throw new Error(`reservation fixtures wrong: ${JSON.stringify(reservations)}`);
+  }
   const authLog = () =>
     sqlRows(`select count(*)::int as n from auth.audit_log_entries
               where payload ->> 'actor_id' = ${uuid(a.id)}::text`)[0]?.n;
@@ -334,17 +424,36 @@ end $probe$;`);
   if (authUser?.user) throw new Error("auth user survived");
   console.log("OK: member erased with the sign-in account (result { photoUrl: null })");
 
-  const { data: kept, error: keptErr } = await db
+  const { data: after, error: afterErr } = await db
     .from("phone_verification_send_reservations")
-    .select("id, user_id")
-    .eq("id", reservation.id)
-    .maybeSingle();
-  if (keptErr) throw new Error(`reservation read: ${keptErr.message}`);
-  if (!kept || kept.user_id !== null) {
-    throw new Error(`reservation should survive without the account: ${JSON.stringify(kept)}`);
+    .select("id, user_id, challenge_id")
+    .in("id", [recent.id, linked.id, old.id]);
+  if (afterErr) throw new Error(`reservation read: ${afterErr.message}`);
+  const byId = new Map(after.map((r) => [r.id, r]));
+  if (byId.has(old.id)) {
+    throw new Error(
+      `reservation older than 24 hours survived: ${JSON.stringify(byId.get(old.id))}`,
+    );
   }
+  for (const r of [recent, linked]) {
+    const kept = byId.get(r.id);
+    if (!kept || kept.user_id !== null || kept.challenge_id !== null) {
+      throw new Error(
+        `recent reservation should survive without the account: ${JSON.stringify(kept)}`,
+      );
+    }
+  }
+  const { data: challengeLeft, error: chReadErr } = await db
+    .from("phone_verification_challenges")
+    .select("id")
+    .eq("id", challenge.id)
+    .maybeSingle();
+  if (chReadErr) throw new Error(`challenge read: ${chReadErr.message}`);
+  if (challengeLeft) throw new Error("verification challenge survived the erasure");
   console.log(
-    "OK: SMS send reservation kept after erasure, user_id null (send limits keep counting)",
+    "OK: SMS send reservations: the one older than 24 hours deleted; the two recent ones kept " +
+      "with user_id null (send limits keep counting); the verification challenge deleted and " +
+      "the linked reservation's challenge_id null",
   );
 
   const authLogAfter = authLog();
@@ -817,6 +926,50 @@ end $probe$;`;
         `${before[p.label]} -> ${table}, member_id null)`,
     );
   }
+
+  // G. the daily purge: the command the cron job really stores, run here as the same role that
+  // scheduled it, removes anonymized reservations older than 24 hours and nothing else. Three
+  // made-up rows inside one rolled-back block, so nothing persists and nothing real is lost.
+  const purgePhone = `+99555${randomInt(1000000, 9999999)}`;
+  const keys = [hex64(), hex64(), hex64()];
+  if (!keys.every((k) => /^[a-f0-9]{64}$/.test(k))) throw new Error("bad idempotency key");
+  const purge = sqlError(`
+do $probe$
+declare
+  u constant uuid := ${uuid(reader.id)};
+  v_cmd text := (select command from cron.job where jobname = '${PURGE_JOB}');
+  v_old_anon uuid;
+  v_new_anon uuid;
+  v_old_owned uuid;
+begin
+  if v_cmd is null then raise exception 'PROBE-ASSERT purge job missing'; end if;
+  insert into public.phone_verification_send_reservations (user_id, phone, idempotency_key, created_at)
+    values (null, '${purgePhone}', '${keys[0]}', now() - interval '25 hours') returning id into v_old_anon;
+  insert into public.phone_verification_send_reservations (user_id, phone, idempotency_key, created_at)
+    values (null, '${purgePhone}', '${keys[1]}', now() - interval '23 hours') returning id into v_new_anon;
+  insert into public.phone_verification_send_reservations (user_id, phone, idempotency_key, created_at)
+    values (u, '${purgePhone}', '${keys[2]}', now() - interval '25 hours') returning id into v_old_owned;
+  execute v_cmd;
+  if exists (select 1 from public.phone_verification_send_reservations where id = v_old_anon) then
+    raise exception 'PROBE-ASSERT an anonymized reservation older than 24 hours survived the purge';
+  end if;
+  if not exists (select 1 from public.phone_verification_send_reservations where id = v_new_anon) then
+    raise exception 'PROBE-ASSERT the purge removed an anonymized reservation younger than 24 hours';
+  end if;
+  if not exists (select 1 from public.phone_verification_send_reservations where id = v_old_owned) then
+    raise exception 'PROBE-ASSERT the purge removed a reservation that still has its account';
+  end if;
+  raise exception '%', ${pass("PURGE-OK")};
+end $probe$;`);
+  if (!purge || !purge.includes("PROBE-PURGE-OK")) {
+    throw new Error(
+      `purge job command: ${purge === null ? "no error raised (not rolled back)" : purge}`,
+    );
+  }
+  console.log(
+    "OK: the purge job's stored command removes anonymized reservations older than 24 hours " +
+      "only (younger anonymized and account-linked old rows kept; rolled back)",
+  );
 } catch (err) {
   failed = true;
   console.error(`FAIL: ${redact(err instanceof Error ? err.message : err)}`);
@@ -837,6 +990,11 @@ end $probe$;`;
   if (reservationIds.length) {
     await step("sms reservations", () =>
       db.from("phone_verification_send_reservations").delete().in("id", reservationIds),
+    );
+  }
+  if (challengeIds.length) {
+    await step("verification challenges", () =>
+      db.from("phone_verification_challenges").delete().in("id", challengeIds),
     );
   }
   if (objects.length) await step("photo", () => db.storage.from(BUCKET).remove(objects));
@@ -885,6 +1043,7 @@ end $probe$;`;
     ["poll_votes", voteIds],
     ["polls", pollIds],
     ["phone_verification_send_reservations", reservationIds],
+    ["phone_verification_challenges", challengeIds],
   ]) {
     if (!ids.length) continue;
     const { count, error } = await db
