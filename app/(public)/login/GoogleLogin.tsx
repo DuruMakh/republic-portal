@@ -1,12 +1,20 @@
 import { AuthEntryShell } from "@/components/AuthEntryShell";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { TestSignInPanel } from "@/components/TestSignInPanel";
 
 const AUTH_ERROR_MESSAGES: Readonly<Record<string, string>> = {
   oauth_callback: "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
   account_lookup: "მონაცემების წამოღება ვერ მოხერხდა — სცადეთ თავიდან.",
+  test_sign_in: "სატესტო შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
 };
 
-export function GoogleLogin({ error }: { error?: string }) {
+export function GoogleLogin({
+  error,
+  testSignIn = false,
+}: {
+  error?: string;
+  testSignIn?: boolean;
+}) {
   const errorMessage = error ? AUTH_ERROR_MESSAGES[error] : undefined;
 
   return (
@@ -29,6 +37,7 @@ export function GoogleLogin({ error }: { error?: string }) {
             {errorMessage}
           </p>
         ) : null}
+        {testSignIn ? <TestSignInPanel /> : null}
       </div>
     </AuthEntryShell>
   );
