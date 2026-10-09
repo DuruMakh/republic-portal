@@ -1,5 +1,5 @@
 // This suite asserts the canonical seed (12 approved delegates, leaderboard order, pending names
-// absent). CI seeds a fresh throwaway stack every run (ADR-050); counts stay floors (>=) anchored
+// absent). CI seeds a fresh throwaway stack every run (ADR-047); counts stay floors (>=) anchored
 // on seeded names/ranks so the suite also holds against hosted staging, which carries extra
 // accounts. A missing seeded name/rank or a count below 12 is a real defect or a broken seed.
 import { expect, test, type Page } from "@playwright/test";

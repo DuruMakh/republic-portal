@@ -1292,7 +1292,7 @@ after privacy step 2).
   stays for staging.
 - **First use.** The owner (durumakh@gmail.com) as super_admin, at the owner's request in chat.
 
-## ADR-050 (2026-10-09): Simpler development structure — throwaway CI database, preview test sign-in
+## ADR-047 (2026-10-09): Simpler development structure — throwaway CI database, preview test sign-in
 
 - **Problem.** Every push built two Vercel projects (the demo site and the real one), so the
   hobby plan's 100-deployments-a-day limit blocked real-site releases twice on 2026-10-08. CI ran

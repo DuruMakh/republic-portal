@@ -36,7 +36,7 @@ export function isTestDatabaseUrl(url: string | undefined): boolean {
  * Preview test sign-in (spec 4.3): never on a live Vercel deployment, only on an explicit
  * preview or development build, and only on a test database. VERCEL_ENV is set by Vercel at
  * runtime and no build setting overrides it, which matters because the demo project's
- * production site is built with APP_ENV=preview on staging (ADR-050). The other two are
+ * production site is built with APP_ENV=preview on staging (ADR-047). The other two are
  * allow-lists, so an unset or mistyped flag keeps it off.
  */
 export function testSignInEnabled(): boolean {

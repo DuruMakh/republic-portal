@@ -15,10 +15,10 @@ ARCHITECTURE.md for structure, DECISIONS.md for the ADR log, DESIGN.md for UI ru
 - Production: https://respublika.ge (Vercel project `georgia-republic`) → production Supabase
   `uorvlshbrlbdnbauxsws` in the owner's Duru org. Merge to main releases it.
 - Staging: Supabase `republic-portal-staging` (ref orcxtbedkexoclbfgvzd, Duru org). Used by PR
-  previews and local dev; previews offer the „სატესტო შესვლა“ one-click test sign-in (ADR-050).
+  previews and local dev; previews offer the „სატესტო შესვლა“ one-click test sign-in (ADR-047).
 - CI: its own throwaway local Supabase stack per run (`supabase start` + canonical seed); never
   touches staging or production.
-- Demo site (`republic-portal.vercel.app`): being retired (ADR-050).
+- Demo site (`republic-portal.vercel.app`): being retired (ADR-047).
 
 ## Deploy
 

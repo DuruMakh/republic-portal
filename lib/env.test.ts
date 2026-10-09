@@ -74,7 +74,7 @@ describe("testSignInEnabled", () => {
     },
   );
 
-  // ADR-050 review: the demo project's PRODUCTION deployment is built with APP_ENV=preview on
+  // ADR-047 review: the demo project's PRODUCTION deployment is built with APP_ENV=preview on
   // the staging database (unlocked 2026-07-20 for owner testing). Vercel's runtime VERCEL_ENV
   // cannot be overridden by a build setting, so it is the last word on "is this a live site".
   it("is off on any Vercel production deployment, even one built as a preview on staging", () => {
