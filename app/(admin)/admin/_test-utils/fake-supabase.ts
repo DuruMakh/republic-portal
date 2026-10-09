@@ -76,11 +76,17 @@ export interface FakeSession {
   calls: DbCall[];
   rpcCalls(): DbCall[];
   tableCalls(): DbCall[];
+  /** the session's auth.signOut double (member self-deletion signs the caller out) */
+  signOut: Mock;
 }
 
 export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
   const calls: DbCall[] = [];
+  const signOut = vi.fn<(options?: unknown) => Promise<{ error: null }>>(async () => ({
+    error: null,
+  }));
   const client = {
+    auth: { signOut },
     rpc(name: string, args?: unknown) {
       calls.push({ kind: "rpc", name, args, chain: [] });
       return Promise.resolve(handlers.rpc?.(name, args) ?? EMPTY);
@@ -96,6 +102,7 @@ export function fakeSession(handlers: FakeHandlers = {}): FakeSession {
     calls,
     rpcCalls: () => calls.filter((c) => c.kind === "rpc"),
     tableCalls: () => calls.filter((c) => c.kind === "from"),
+    signOut,
   };
 }
 
