@@ -1,6 +1,13 @@
 name: CI
+# Two speeds (2026-10-09 simpler delivery): `checks` runs on every push; `quality` (database,
+# build, browser tests) waits until a pull request is out of draft. Documentation-only pull
+# requests run nothing; main is always checked in full.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   push:
     branches: [main]
 
@@ -9,7 +16,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      # e2e/otp-cookie.integration.test.ts drives a real Playwright browser inside the unit tests.
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run ka:scan
+      - run: npm run test
+
   quality:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     # A hung step otherwise holds the job for GitHub's 6-hour default (lib/ci-workflow.test.ts).
     timeout-minutes: 60
@@ -29,12 +55,6 @@ jobs:
         with: { version: 2.109.1 }
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
         timeout-minutes: 10
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm run ka:scan
-      - run: npm run test
-      # Loaded only after the unit tests, so they keep running with the environment they always had.
       - name: Point build and e2e at the throwaway stack
         run: |
           set -o pipefail
