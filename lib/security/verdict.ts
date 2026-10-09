@@ -204,6 +204,18 @@ export const POST_GATE_TOKENS = new Set([
   // Same migration: become_member_save_profile() refuses a read-only (GET)
   // call right after its not_authenticated gate — HOW it was called, not WHO.
   "read_only_transaction",
+  // Account deletion (20261009140000_account_deletion.sql). All four are raised
+  // behind a not_authenticated gate (delete_my_account, admin_delete_member) or
+  // inside erase_account(), which no client role can execute:
+  // `invalid_confirmation` is payload validation (the typed word), `cannot_delete_self`
+  // is a rule about WHICH account an admin may remove, `staff_account` and
+  // `staff_history` refuse to erase a person who holds, or once held, a staff role
+  // that the audit trail depends on. Each is about the target, never about whether
+  // the caller may call.
+  "invalid_confirmation",
+  "cannot_delete_self",
+  "staff_account",
+  "staff_history",
 ]);
 
 /**

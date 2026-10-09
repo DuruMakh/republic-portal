@@ -1357,6 +1357,188 @@ Spec: `docs/superpowers/specs/2026-10-08-teal-secondary-color-design.md`. Plan:
 - **Rejected.** Directions 2 (Agora) and 3 (Republic 1918) from the board: full re-skins, kept
   for later. A teal tint for information panels: owner preference.
 
+## ADR-049 (2026-10-08): Members can delete their account; data is erased
+
+Owner request in chat ("lets add account delete feature and it also deletes data"); proposals a–g
+accepted 2026-10-08 (spec `docs/superpowers/specs/2026-10-08-account-deletion-design.md` §1).
+Two releases: A is the database only (`20261009140000_account_deletion.sql`,
+`20261009150000_account_deletion_hardening.sql` with the whole-branch review's fixes,
+`20261009160000_account_deletion_followups.sql` with the re-review's follow-ups, which joined A on
+the owner's 2026-10-09 ruling, and `20261009170000_account_deletion_races.sql`, which closes the
+rest of the race class; each a new file because staging already held the earlier ones); B is the
+app (profile danger section, admin row action, `/account-deleted`, the policy sentence).
+
+- **One erasure, two doors.** `erase_account(uuid)` (SECURITY DEFINER, owned by `postgres`) does
+  everything in one transaction and ends with `delete from auth.users`, which cascades the rest.
+  No API role may execute it — not anon, not authenticated, not service_role (the platform's
+  default privileges had granted service_role; 150000 revokes it). The two ways in are
+  `delete_my_account(confirm word)` for the signed-in person and `admin_delete_member(user,
+reason)` for a super_admin, which writes its `member.delete` audit row first (ADR-014). The
+  schema check (`scripts/production-db-schema-check.sql`) runs after `supabase db push`, so it fails
+  the production-db job if any of those grants drift or if `postgres` loses DELETE on
+  `auth.users`, but it cannot prevent the apply.
+- **Erased:** the sign-in account (identities, sessions), the profile (names, phone, personal ID,
+  birth date, region, city, job, consent stamp, referral code), own memberships, the delegate row
+  and its photo (the photo file through Storage in Release B), RSVPs, payments (none exist while
+  dues are off), phone verification challenges, and votes in polls still running (open and before
+  their deadline). Deleting those votes closes a hole the review found: the erasure frees the
+  phone number and the personal ID, so a person could delete, register again and vote twice in
+  the same poll.
+- **Kept, without the person:** votes in closed or past-deadline polls (member set null, so
+  finished results never change; owner decision c; the member results view now counts options,
+  not members); SMS send reservations of the last 24 hours (user set null, so deleting and
+  re-registering cannot reset the per-number and site-wide send limits; older ones are deleted by
+  the erasure, and an hourly job deletes anonymized ones once they are older than 24 hours, so the
+  phone number is gone within about a day (25 hours at most) of the last code being sent; see
+  Follow-ups);
+  audit rows about the person (below); other members' memberships that pointed at a departing
+  delegate (open ones are closed and replaced by a central membership with
+  `note = 'delegate_left'`, closed ones lose the link).
+- **Supabase auth's own log** (`auth.audit_log_entries`: sign-in and token events, with email and
+  IP address): rows with the person as actor are deleted, best effort — if the owner lacks the
+  privilege the erasure still finishes and raises a notice. Staging's auth server writes no rows
+  there today; the probe proves the delete with made-up rows inside a rolled-back block.
+- **Audit scrub, the one exception to append-only.** Rows about the person keep the action, actor,
+  target id and time; `details` loses every key that holds a name (`name`, `memberName`, `slug`,
+  `firstName`, `lastName`, `personalId`, `phone`, `email`, plus `from`/`to` on
+  `delegate.update_name`, the admin's `note` on `delegate.reject`, and `fromName`/`toName` when the
+  person was the delegate in someone else's `member.reassign`) and gains `"erased": true`.
+  `audit_log_immutable()` allows that UPDATE only when the transaction-local `app.erasing` is on
+  AND the current role is the owner of `erase_account()` AND id, actor, action, target type,
+  target id and time are unchanged. Only `erase_account()` sets the setting (a schema guard keeps
+  `app.erasing` inside that function and the trigger). The client roles do hold the platform's
+  default table grants on `audit_log`, but row level security with no policy shows them no row
+  and lets them change none; service_role can run SQL but is not the owner, so the trigger
+  refuses it even with the setting on (proven on staging). `member.delete` keeps the admin's
+  reason, so the admin page must tell staff not to write the person's name in it. Not scrubbed:
+  free-text payment fields (`payment.void` reason, `payment.record` bank reference) and
+  `member.export` searches — no payments exist; revisit when dues return.
+- **Staff.** Anyone holding an admin role is refused (`staff_account`). Former staff whose id is
+  still referenced (they wrote audit rows, recorded payments, approved delegates) are refused as
+  `staff_history`; the error detail names the blocking foreign key. The trail stays intact.
+- **Races: none remain.** The erasure locks the person's profile row, their own open membership
+  row and their delegate row first, and the polls they voted in `FOR SHARE`, so a concurrent
+  reassignment or delegate change of or to the departing person, or a poll close, either finishes
+  first or waits (and fails on the foreign key once the person is gone). The departing delegate's
+  team is the set of rows the closing UPDATE itself ends, so a member who moves away meanwhile no
+  longer collides with their new central row (23505). Every function that writes a person's name
+  into an audit row either finishes before the erasure (whose scrub then sees the row) or refuses:
+  - a FOUND check right after the UPDATE of the person's row, before the audit insert:
+    `admin_approve_delegate`, `admin_reject_delegate`, `admin_update_delegate_name` (160000),
+    `admin_update_delegate_profile` (170000);
+  - the profile read `FOR SHARE`, which waits behind the erasure's `FOR UPDATE` and then finds no
+    row (`invalid_target`): `admin_reveal_personal_id`, `admin_reveal_applicant_personal_id`,
+    `admin_void_payment` (170000; the last was not in the review's list: its payment UPDATE could
+    wait on the erasure's cascade, change nothing and still log the name);
+  - already safe, unchanged: `admin_grant_role`, `admin_reassign_member`, `admin_record_payment`
+    and `admin_record_payments_bulk` insert a row referencing the person, whose key-share lock on
+    the profile conflicts with the erasure's `FOR UPDATE`; `admin_revoke_role` targets a role
+    holder, whom the erasure refuses while the role row exists.
+
+  A unit test lists every function whose audit insert carries a name and fails when one appears
+  outside these groups. Two transactions taking these locks in opposite order can deadlock;
+  Postgres then aborts one of them and nothing is half-written.
+
+- **Follow-ups (`20261009160000`, the re-review's findings).**
+  - `erase_account` restated exactly as 150000 has it, plus: the person's own open membership row
+    locked right after the profile lock; the delegate's team built with
+    `update … returning member_id`; the person's SMS send reservations older than 24 hours deleted
+    (every window `reserve_phone_verification_send` counts is 24 hours or shorter; a unit test
+    keeps it so). Its revokes are asserted again.
+  - pg_cron job `purge-anonymous-sms-reservations`: deletes reservations with no account that are
+    older than 24 hours. Daily at 01:30 UTC in 160000, hourly at minute 17 since 170000; any job of
+    that name is unscheduled first, so a fresh replay works. The security session's send functions
+    are unchanged. The production schema check fails the job if it is missing, inactive or changed.
+  - `admin_approve_delegate`, `admin_reject_delegate`, `admin_update_delegate_name` restated from
+    their latest definitions with `if not found then raise exception 'invalid_target'` after their
+    UPDATE, before the audit insert; grants unchanged.
+  - Pinned in `lib/account-deletion-migration.test.ts`: all of the above, plus the hardened
+    `v_personal_keys` list and the full `invalid_target` / `staff_account` conditions.
+- **Races closed (`20261009170000`, fix round 1 of the follow-ups' review).** The FOUND check in
+  `admin_update_delegate_profile`, the `FOR SHARE` profile reads in the two reveals and in
+  `admin_void_payment`, and the hourly purge; each function restated exactly from its latest
+  definition plus only those lines, grants unchanged.
+- **Staging proof (2026-10-08 and 2026-10-09, `scripts/verify-account-deletion.mjs`).** A
+  function owned by `postgres` may `delete from auth.users` on the hosted platform, so the spec's
+  fallback (deleting the auth user with the service-role admin API) is not needed. The probe also
+  proves the audit scrub, the trigger lock, the wrapper checks, former-staff refusal with its
+  detail, running-poll votes deleted, closed and past-deadline votes kept, a reservation older than
+  24 hours deleted while recent ones stay without the account (the linked verification challenge
+  gone, its link cleared), the purge job scheduled once (hourly) and its stored command removing
+  only anonymized rows older than 24 hours, the seven guards in the live function bodies, the
+  reveals and the profile edit still working for a living person, and that it leaves nothing
+  behind.
+- **Out of scope.** Signed-in Google accounts that never registered (no profile). Neither door
+  reaches them today: `erase_account` refuses a person without a profile (`invalid_target`), and
+  the admin members list shows profiles only; removing one needs new work. Also out: support
+  messages (not linked to accounts); database backups and platform logs (Supabase, Vercel), which
+  are not erased but expire on their own retention; a downloadable copy of one's data (the right
+  of access goes through the contact page); payment retention rules (decide with a lawyer before
+  dues return).
+- **Window between the releases.** Once A is applied, any signed-in person can call
+  `delete_my_account` directly; a delegate who does so before B ships leaves their public photo
+  file in Storage until it is removed by hand.
+
+**Release B (application, 2026-10-09).** Branch `claude/account-deletion-app`, stacked on A.
+
+- **Member flow (`/me/profile`).** The page ends with a danger section (`DeleteAccountSection`)
+  on both the registered and the member variant: what is erased and what stays anonymous, plus,
+  for an approved delegate (`isApprovedDelegate`), that their public page goes and their team
+  moves to the central movement. Staff (cabinet_state's `admin` flag, i.e. any `admin_roles`
+  row) see only an explanation pointing to the contact page, no field and no button; the server
+  refuses them anyway. The person types the confirmation word (`ACCOUNT_DELETION_CONFIRM_WORD`,
+  kept equal to the one in `delete_my_account` by a test); the button stays disabled until it
+  matches. `deleteMyAccountAction`: zod checks the word, `getUser()` comes first (no user: the
+  not-signed-in message, no RPC), then `delete_my_account` on the caller's own session, the photo
+  sweep (below), `signOut({ scope: "local" })` and a redirect to `/account-deleted`. An
+  `invalid_target` refusal means the profile is already gone, which only an erasure of this same
+  account does (a double submit racing the first), so it is treated as done: sign out, redirect,
+  no second sweep. The page never offers the button to an account without a profile, so the only
+  other way to get `invalid_target` is a hand-made request, which just signs that caller out. On
+  success Next's client starts the navigation and rejects the call with `NEXT_REDIRECT`; the
+  section swallows that, staying busy and disabled (rethrowing made the app router push the same
+  URL twice). `/account-deleted` is a public, noindex `CenteredNotice` with links home and to the
+  privacy policy. A member whose delegate left sees a `role="status"` note on `/me/delegate`
+  (Card callout) while their open membership has `note = 'delegate_left'`; re-picking the
+  central movement opens no new row, so the note stays then (accepted, rare).
+- **Admin flow (`/admin/members`).** super_admin only: the page shows the delete column only to
+  that role and `admin_delete_member` re-checks it. An inline panel per row asks for a reason
+  (5–300 characters, Georgian zod messages) with a hint not to write the person's name or other
+  personal data in it (the reason stays in the `member.delete` audit row), and for the member's
+  name typed back, compared after NFC and whitespace normalization, as a guard against the wrong
+  row (UX, not security). The RPC runs on the admin's own session, then the same photo sweep for
+  the id it just erased, then `revalidatePath`. The erased row leaves the list, so the button adds
+  `?deleted=1` (other parameters kept, no scroll) and the page shows "account deleted" as a status
+  line above the list. A `staff_history` refusal reads `ADMIN_DELETE_STAFF_HISTORY` ("linked to
+  staff records, cannot be deleted") instead of the member-facing "write to us".
+- **Photo sweep, the only service-role use.** `lib/supabase/delegate-photos.ts` (`server-only`)
+  `removeDelegatePhotos(id, photoUrl)`: lists `delegate-photos` objects named `<id>-…` (the
+  upload path is `<delegateId>-<timestamp>.<ext>`), keeps exactly that prefix, adds the path from
+  the database's `photoUrl` if the listing missed it, and removes them in one call, so photos an
+  earlier replacement failed to remove go too. The id is the session's own user (member) or the
+  zod-checked id the database just erased (admin); the path is the database's; neither is ever
+  client input, and an id that is not a user id never becomes a prefix. It never throws (a
+  listing failure still removes the recorded path; every failure, the service-role client's
+  creation included, is logged and swallowed), so a completed erasure is never reported as a
+  failure and the member is always signed out. Refusals never create the service-role client.
+- **Privacy text.** The version stays `2026-10-v1` (a new way to exercise an existing right, and
+  a more exact account of retention, not a new use of data). The rights section says the account
+  can be deleted on the profile page. The retention section now says: data is kept until the
+  account is deleted; on deletion, personal data leaves the platform database at once; votes in
+  finished polls stay, unidentifiable; the SMS limit record keeps the phone number about a day;
+  backups expire on their own within a week; messages sent through the contact form are not
+  linked to the account and are stored separately (how long is an owner decision, raised at
+  sign-off). The profile lede no longer says "forever". The not-signed-in message
+  (`ERROR_MESSAGES.not_authenticated`) now asks for Google sign-in, like the phone door's.
+- **Tests.** Unit tests cover both actions, the sweep, the section, both pages and the policy
+  sentences. `e2e/account-deletion.spec.ts` is one journey (a Google-backed member deletes their
+  account, lands on `/account-deleted`, `/me` sends them to `/login`, and profile, membership and
+  sign-in account are gone) on the account-deletion digit (9). It had not run when this was
+  written: no local Docker, staging unreachable and CI blocked by billing at the time.
+- **Deferred.** The shared `Field` accessibility work (audit item A11Y-2). Anonymized votes keep
+  their cast time (`poll_votes.created_at`) and insertion-ordered id; in a small poll that could
+  hint at whose vote it was, a database follow-up.
+
 ## ADR-051 (2026-10-09): Simpler delivery — two process sizes, batched PRs, two-speed CI, a local database
 
 - **Problem.** On 7–8 October, 25 pull requests and 101 CI runs (about 2,500 CI minutes) in two

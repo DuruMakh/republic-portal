@@ -148,4 +148,9 @@ describe("membersFilterSchema — searchParams-tolerant", () => {
     expect(membersFilterSchema.parse({ cityId: "7" }).cityId).toBe(7);
     expect(membersFilterSchema.parse({ cityId: "abc" }).cityId).toBeUndefined();
   });
+  it("drops keys it does not know, so ?deleted=1 (the deletion notice) never becomes a filter", () => {
+    const f = membersFilterSchema.parse({ deleted: "1", search: "Nino", unknown: "x" });
+    expect(f).toEqual({ search: "Nino", page: 1 });
+    expect(f).not.toHaveProperty("deleted");
+  });
 });

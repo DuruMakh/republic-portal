@@ -154,6 +154,16 @@ describe("verdict.ts token classification vs. the live migrations", () => {
     // The page is public; the database call is not — the server action holds
     // the only credential that can make it.
     ["submit_support_message", ["invalid_support_message", "too_many_requests"]],
+    // Account deletion (20261009140000_account_deletion.sql, restated by
+    // 20261009150000_account_deletion_hardening.sql and
+    // 20261009160000_account_deletion_followups.sql). erase_account() is the
+    // internal erasure: EXECUTE is revoked from public, anon, authenticated and
+    // service_role and never granted, so no API role reaches it and it has no caller
+    // identity to admit or refuse. Its target checks (unknown id, staff account, staff history)
+    // sit behind the two wrappers' own gates: delete_my_account() and
+    // admin_delete_member() each raise their gate token first and are checked by the
+    // test below like every other RPC.
+    ["erase_account", ["invalid_target", "staff_account", "staff_history"]],
   ]);
 
   /** Last definition of each function across the migrations, in apply order. */

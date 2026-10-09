@@ -12,8 +12,7 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - When a decision changes, edit its entry here and add "(changed YYYY-MM-DD)". Do not add a
   correction entry. Move what it replaced to "Retired or replaced" at the bottom.
 - New number: one above the highest here AND in every open PR; recheck right before merging.
-  ADR-049 and ADR-050 are claimed by open PRs (#49, and #48, which must renumber its clashing
-  047).
+  ADR-050 is claimed by open PR #48, which must renumber its clashing 047.
 
 ## Delivery and environments
 
@@ -68,7 +67,8 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   the same transaction. Audit actors are permanent, so e2e users never act as admins.
 - **ADR-017 Community content:** no client grants on base tables; public, member and admin
   views carry the visibility rules; bodies are plain text (no markdown, no stored HTML); one
-  vote per member is the primary key.
+  vote per member is a unique constraint (changed 2026-10-09: ADR-049 keeps finished-poll
+  votes anonymously).
 - **ADR-026 Every new view revokes client grants before granting** (default privileges make a
   fresh view writable); `lib/security/schema-guards.test.ts` checks every migration.
 - **ADR-030 Owner-executed views** keep the committed public-read / signed-in-read grants; any
@@ -81,6 +81,11 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   personal-ID conflicts stop the membership step, each audited; SMS send limits per account,
   per number and site-wide; approved delegates' names locked (admins correct them, audited);
   the service worker never caches signed-in or cross-origin responses.
+- **ADR-049 Account deletion erases the person** (owner request, 2026-10-08). Members delete
+  themselves on `/me/profile`; a super_admin deletes on request from `/admin/members` (reason
+  audited, never a name). `erase_account()` removes the sign-in account in one transaction;
+  finished-poll votes stay anonymous, running-poll votes go; audit rows lose personal details;
+  staff are refused. Anonymized SMS send records keep the phone at most 25 h (hourly purge).
 - **ADR-016 Tbilisi is the day source** in SQL (`tbilisi_today()`) and TypeScript; CSV exports
   neutralise formulas; the last-super-admin guard is serialized.
 

@@ -175,6 +175,43 @@ begin
     raise exception 'phone_verification_challenges.superseded_at is missing';
   end if;
 
+  -- Account deletion (ADR-049): the two wrappers are the only way in, and only when signed in;
+  -- the erasure itself is closed to every API role, service_role included.
+  if to_regprocedure('public.erase_account(uuid)') is null
+     or to_regprocedure('public.delete_my_account(text)') is null
+     or to_regprocedure('public.admin_delete_member(uuid,text)') is null then
+    raise exception 'required account deletion function is missing';
+  end if;
+
+  if has_function_privilege('anon', 'public.erase_account(uuid)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.delete_my_account(text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.admin_delete_member(uuid,text)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'public.erase_account(uuid)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.delete_my_account(text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.admin_delete_member(uuid,text)', 'EXECUTE')
+     or has_function_privilege('service_role', 'public.erase_account(uuid)', 'EXECUTE') then
+    raise exception 'account deletion function privileges drifted';
+  end if;
+
+  -- erase_account() is owned by postgres and ends by removing the sign-in account; without this
+  -- privilege every deletion would fail (proven allowed on staging, 2026-10-08).
+  if not has_table_privilege('postgres', 'auth.users', 'DELETE') then
+    raise exception 'postgres may not delete auth.users, so account deletion would fail';
+  end if;
+
+  -- The erasure keeps a person's SMS send reservations of the last 24 hours without the account
+  -- (send limits keep counting); this hourly job removes them once they are older than 24 hours,
+  -- so the phone number is gone within about 25 hours (20261009170000).
+  if not exists (
+    select 1 from cron.job
+     where jobname = 'purge-anonymous-sms-reservations'
+       and active
+       and schedule = '17 * * * *'
+       and command = 'delete from public.phone_verification_send_reservations where user_id is null and created_at < now() - interval ''24 hours'''
+  ) then
+    raise exception 'anonymized SMS reservation purge job is missing or changed';
+  end if;
+
   if exists (
     with expected_views(view_name) as (
       values

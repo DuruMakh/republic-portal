@@ -77,6 +77,7 @@ export const AUDIT_ACTION_LABELS_KA: Record<string, string> = {
   "member.reveal_personal_id": "წევრის პირადი ნომრის ნახვა",
   "member.export": "წევრების ექსპორტი",
   "member.reassign": "წევრის გადანაწილება",
+  "member.delete": "წევრის წაშლა მოთხოვნით",
   "member.personal_id_conflict": "პირადი ნომრის დამთხვევა",
   "payment.record": "გადახდის აღრიცხვა",
   "payment.bulk_record": "გადახდების ჯგუფური აღრიცხვა",

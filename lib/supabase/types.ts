@@ -83,6 +83,7 @@ export interface Database {
           delegate_id: string | null;
           started_at: string;
           ended_at: string | null;
+          note: "delegate_left" | null;
         };
         Insert: never;
         Update: never;
@@ -171,7 +172,7 @@ export interface Database {
       phone_verification_send_reservations: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
           phone: string;
           purpose: "registration";
           idempotency_key: string;
@@ -180,7 +181,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          user_id: string;
+          user_id?: string | null;
           phone: string;
           purpose?: "registration";
           idempotency_key: string;
@@ -189,7 +190,7 @@ export interface Database {
         };
         Update: {
           id?: string;
-          user_id?: string;
+          user_id?: string | null;
           phone?: string;
           purpose?: "registration";
           idempotency_key?: string;
@@ -281,7 +282,13 @@ export interface Database {
         Relationships: [];
       };
       poll_votes: {
-        Row: { poll_id: string; option_id: string; member_id: string; created_at: string };
+        Row: {
+          id: number;
+          poll_id: string;
+          option_id: string;
+          member_id: string | null;
+          created_at: string;
+        };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -728,6 +735,8 @@ export interface Database {
       admin_delete_poll: { Args: { p_id: string }; Returns: undefined };
       member_rsvp: { Args: { p_event_id: string; p_going: boolean }; Returns: undefined };
       member_cast_vote: { Args: { p_poll_id: string; p_option_id: string }; Returns: undefined };
+      delete_my_account: { Args: { p_confirm: string }; Returns: Json };
+      admin_delete_member: { Args: { p_user_id: string; p_reason: string }; Returns: Json };
       delegate_team_rsvps: { Args: Record<PropertyKey, never>; Returns: Json };
     };
     Enums: {
