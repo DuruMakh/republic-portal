@@ -77,7 +77,7 @@
   border-radius: 48% 52% 55% 45% / 50% 46% 54% 50%;
 }
 
-/* Masthead rule (ADR-046): 2px ink, a 2px gap, 1px teal, drawn as the header's own bottom
+/* Masthead rule (ADR-047): 2px ink, a 2px gap, 1px teal, drawn as the header's own bottom
    border so its position and stickiness stay untouched (e2e pins both). The gap is transparent:
    it shows the header's own background (paper, so it stays opaque while sticky) or whatever
    sits behind a header without one. The gradient runs to top, so stops count from the bottom. */

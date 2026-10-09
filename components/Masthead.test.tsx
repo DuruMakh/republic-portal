@@ -78,7 +78,7 @@ describe("Masthead", () => {
     expect(mastheadHeader!.className).toContain("md:flex");
   });
 
-  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-046)", () => {
+  it("draws the masthead rule as the header's own border, not the old 2px ink rule (ADR-047)", () => {
     vi.mocked(usePathname).mockReturnValue("/");
     render(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     const header = screen.getByRole("banner");
@@ -95,6 +95,16 @@ describe("Masthead", () => {
 
     rerender(<Masthead navItems={NAV_ITEMS} cta={<span>CTA</span>} />);
     expect(screen.queryByText("პირადი კაბინეტი")).not.toBeInTheDocument();
+  });
+
+  it("marks the home link on the homepage even when the server renders it as /index (Vercel ISR)", () => {
+    // Vercel keys the root page's ISR entry as /index and regenerates it there, so the server
+    // render sees usePathname() === "/index"; React then keeps that unmarked HTML on hydration.
+    vi.mocked(usePathname).mockReturnValue("/index");
+    render(
+      <Masthead navItems={[{ href: "/", label: "Home" }, ...NAV_ITEMS]} cta={<span>CTA</span>} />,
+    );
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   });
 });
 

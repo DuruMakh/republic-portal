@@ -134,7 +134,7 @@ describe("formatEventTimeKa", () => {
   });
 });
 
-describe("leadingOptions (ADR-046: the answers with the most votes lead)", () => {
+describe("leadingOptions (ADR-047: the answers with the most votes lead)", () => {
   it("marks every answer tied for the most votes, even when rounding splits their percentages", () => {
     expect(leadingOptions([1, 1, 1])).toEqual([true, true, true]);
   });

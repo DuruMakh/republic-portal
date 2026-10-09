@@ -1,0 +1,99 @@
+name: Production admin role
+
+# Grants an admin role on the PRODUCTION database to a completed member, found by the email of
+# their Google sign-in (ADR-046). This is the bootstrap path for the first super_admin; after that,
+# super_admins grant roles in the app (/admin/admins). Manual and main-only; the grant writes the
+# same audit row as the in-app grant, with a via marker.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Google sign-in email of the member who gets the role
+        required: true
+        type: string
+      role:
+        description: Role to grant
+        required: true
+        type: choice
+        options:
+          - super_admin
+          - verifier
+          - finance
+          - editor
+      confirm_project_ref:
+        description: Type the production Supabase project ref to authorize this run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-db-migrations
+  cancel-in-progress: false
+
+jobs:
+  grant:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-db
+    env:
+      EXPECTED_PRODUCTION_PROJECT_ID: uorvlshbrlbdnbauxsws
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with:
+          version: 2.109.1
+
+      - name: Validate target and inputs
+        env:
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          GRANT_EMAIL: ${{ inputs.email }}
+          GRANT_ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_PASSWORD"
+          test "$CONFIRM_PROJECT_REF" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+          test "$SUPABASE_PROJECT_ID" = "$EXPECTED_PRODUCTION_PROJECT_ID"
+          # A plain address only: no quotes, slashes or backslashes can reach the SQL or sed.
+          printf '%s' "$GRANT_EMAIL" | grep -Eq '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+          case "$GRANT_ROLE" in
+            super_admin|verifier|finance|editor) ;;
+            *) exit 1 ;;
+          esac
+
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Grant the role
+        env:
+          GRANT_EMAIL: ${{ inputs.email }}
+          GRANT_ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          sed -e "s/__EMAIL__/${GRANT_EMAIL}/g" -e "s/__ROLE__/${GRANT_ROLE}/g" \
+            scripts/production-grant-admin.sql > grant.sql
+          supabase db query --linked --file grant.sql
+
+      - name: Confirm the role is held
+        env:
+          GRANT_EMAIL: ${{ inputs.email }}
+          GRANT_ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          supabase db query --linked --output json --agent yes \
+            "select coalesce(array_agg(r.role order by r.role), '{}') as roles from public.admin_roles r join auth.users u on u.id = r.user_id where lower(u.email) = lower('${GRANT_EMAIL}');" \
+            > roles.json
+          jq -e --arg role "$GRANT_ROLE" '.rows[0].roles | index($role) != null' roles.json >/dev/null
+          echo "Roles now held: $(jq -c '.rows[0].roles' roles.json)"

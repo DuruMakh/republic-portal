@@ -153,7 +153,7 @@ No e2e test asserts colours (checked), so the e2e suite is unaffected.
 - `/styleguide`: palette swatches, the new contrast pairs, a teal `SectionRule`, a `callout-teal`
   card, the teal `BallotBar` tone, the restyled `dark` button row, and the supporter chip. Any new
   demo label is byte-spliced from existing source, never typed.
-- `DECISIONS.md`: the next free ADR (expected ADR-046; recheck main before merge).
+- `DECISIONS.md`: the next free ADR (expected ADR-047; recheck main before merge).
 - `CHANGELOG.md`: a plain-language entry.
 
 ## 9. Release

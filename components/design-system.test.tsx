@@ -19,7 +19,7 @@ describe("Button", () => {
     expect(btn.classList.contains("text-brand")).toBe(true);
   });
 
-  it("renders dark as the teal secondary button (ADR-046)", () => {
+  it("renders dark as the teal secondary button (ADR-047)", () => {
     render(<Button variant="dark">Find</Button>);
     const btn = screen.getByRole("button", { name: "Find" });
     expect(btn).toHaveClass("bg-teal", "border-teal", "text-paper", "hover:bg-teal-dark");
@@ -41,7 +41,7 @@ describe("Pill", () => {
     render(<Pill status="profile_completed" />);
     expect(screen.getByText("წევრი").className).toBe(paidClass);
   });
-  it("shows the supporter chip in teal, in the chip system's own /10 tint (ADR-046)", () => {
+  it("shows the supporter chip in teal, in the chip system's own /10 tint (ADR-047)", () => {
     const { container } = render(<Pill status="registered" />);
     const chip = container.firstElementChild;
     expect(chip).toHaveClass("bg-teal/10", "text-teal");
@@ -115,7 +115,7 @@ describe("Card", () => {
     expect(container.firstElementChild).toHaveClass("border-ink", "bg-paper-bright");
   });
 
-  it("callout-teal is the same surface with a teal border (ADR-046)", () => {
+  it("callout-teal is the same surface with a teal border (ADR-047)", () => {
     const { container } = render(<Card variant="callout-teal">x</Card>);
     expect(container.firstElementChild).toHaveClass("border-teal", "bg-paper-bright");
     expect(container.firstElementChild).not.toHaveClass("border-ink");

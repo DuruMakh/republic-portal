@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");
 
-describe("theme tokens (ADR-046)", () => {
+describe("theme tokens (ADR-047)", () => {
   it("defines the teal second colour and its hover shade", () => {
     expect(css).toMatch(/--color-teal:\s*#235b59;/i);
     expect(css).toMatch(/--color-teal-dark:\s*#1a4644;/i);

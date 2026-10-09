@@ -15,7 +15,7 @@ type NavItem = { href: string; label: string };
  * The site masthead (spec Sec 3.2, unified to a single layout at the v0.9.0
  * owner checkpoint): horizontal lockup nameplate on the left, nav + session
  * slot + cta on the right, vertically centered with the logo, over the masthead
- * rule (2px ink, 2px gap, 1px teal; ADR-046). Same single-row layout on every
+ * rule (2px ink, 2px gap, 1px teal; ADR-047). Same single-row layout on every
  * page, including the homepage -- there is no separate homepage mode and no
  * dateline row.
  */
@@ -70,7 +70,7 @@ export function Masthead({
       <header
         // Conditional first so the non-back case keeps the shipped class order.
         // At >=768px the only change since v0.9.0 is the masthead-rule that
-        // replaced the 2px ink rule (ADR-046); nothing else may change there.
+        // replaced the 2px ink rule (ADR-047); nothing else may change there.
         className={`${back ? "hidden md:flex" : "flex"} ${
           mobileSticky ? "sticky top-0 z-40 bg-paper md:static md:z-auto" : ""
         } items-center justify-between masthead-rule px-5 pb-2.5 pt-4 sm:px-10`}
