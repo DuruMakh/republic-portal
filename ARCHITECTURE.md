@@ -2,7 +2,7 @@
 
 One Next.js App Router app. Public pages server-rendered (SEO/OG); cabinets/admin are
 authed client views. Supabase = Postgres + phone-OTP auth + storage, RLS on everything.
-Vercel hosts; every PR gets a preview deployment pointed at the STAGING Supabase project.
+Vercel hosts production only; changes are checked on a local Supabase stack (README).
 
 ## Layout
 
@@ -17,8 +17,9 @@ Vercel hosts; every PR gets a preview deployment pointed at the STAGING Supabase
 
 ## Environments
 
-- production: republic-portal-prod Supabase + Vercel production.
-- staging: republic-portal-staging Supabase + all Vercel previews + local dev + CI e2e.
+- production: production Supabase + Vercel project `georgia-republic` (respublika.ge).
+- local and CI: a throwaway local Supabase stack (`supabase start` + canonical seed). The hosted
+  staging project and PR previews were deleted 2026-10-09 (ADR-051).
 
 ## Auth flow
 
