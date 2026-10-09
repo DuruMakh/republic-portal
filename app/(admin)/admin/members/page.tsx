@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
 import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
+import { ADMIN_DELETE_BUTTON } from "@/lib/account-deletion-copy";
 import {
   hasAnyRole,
   isStaff,
@@ -19,6 +20,8 @@ import { membersFilterSchema } from "@/lib/admin-schemas";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { revealPersonalIdAction } from "./actions";
+import { DeleteMemberButton } from "./DeleteMemberButton";
+import { deleteMemberAction } from "./delete-member-actions";
 import { ExportControls } from "./ExportControls";
 import { RevealPersonalId } from "./RevealPersonalId";
 
@@ -43,6 +46,7 @@ export default async function AdminMembersPage({
   const raw = await searchParams;
   const filter = membersFilterSchema.parse(raw);
   const canReveal = hasAnyRole(roles, ["super_admin"]);
+  const canDelete = hasAnyRole(roles, ["super_admin"]);
   const canExport = hasAnyRole(roles, ["finance", "super_admin"]);
 
   const { data: regions, error: regionsError } = await supabase
@@ -195,6 +199,7 @@ export default async function AdminMembersPage({
                   <th className={tableThClass}>სტატუსი</th>
                   <th className={tableThClass}>თარიღი</th>
                   {canReveal ? <th className={tableThClass}>პირადი ნომერი</th> : null}
+                  {canDelete ? <th className={tableThClass}>{ADMIN_DELETE_BUTTON}</th> : null}
                 </>
               }
             >
@@ -232,6 +237,15 @@ export default async function AdminMembersPage({
                   {canReveal ? (
                     <td className={tableCellClass}>
                       <RevealPersonalId memberId={m.id} reveal={revealPersonalIdAction} />
+                    </td>
+                  ) : null}
+                  {canDelete ? (
+                    <td className={tableCellClass}>
+                      <DeleteMemberButton
+                        memberId={m.id}
+                        memberName={`${m.first_name} ${m.last_name}`}
+                        action={deleteMemberAction}
+                      />
                     </td>
                   ) : null}
                 </tr>
