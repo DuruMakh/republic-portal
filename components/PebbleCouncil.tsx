@@ -45,7 +45,7 @@ export function PebbleCouncil({
         <Ellipse
           key={`s${i}`}
           p={p}
-          className="council-seat fill-brand"
+          className="council-seat fill-teal"
           delay={`${Math.round((0.15 + i * 0.12) * 100) / 100}s`}
         />
       ))}

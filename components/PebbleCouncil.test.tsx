@@ -18,4 +18,11 @@ describe("PebbleCouncil", () => {
     expect(classes).toContain("w-[200px]");
     expect(classes.filter((c) => c.startsWith("w-"))).toEqual(["w-[200px]"]);
   });
+
+  it("draws the board seats in teal (ADR-048)", () => {
+    const { container } = render(<PebbleCouncil seats={5} centerLabel="X" />);
+    const seats = container.querySelectorAll("ellipse.council-seat");
+    expect(seats).toHaveLength(5);
+    seats.forEach((seat) => expect(seat).toHaveClass("fill-teal"));
+  });
 });

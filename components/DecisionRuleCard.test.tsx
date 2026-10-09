@@ -8,7 +8,7 @@ describe("DecisionRuleCard", () => {
     expect(screen.getByText("არანაკლებ 2/3")).toBeInTheDocument();
     expect(screen.getByText("ტექსტი")).toBeInTheDocument();
     const row = screen.getByRole("img", { name: "5-დან 4 ხმა" });
-    expect(row.querySelectorAll('[data-tone="brand"]')).toHaveLength(4);
+    expect(row.querySelectorAll('[data-tone="teal"]')).toHaveLength(4);
     expect(row.querySelectorAll('[data-tone="empty"]')).toHaveLength(1);
   });
 });

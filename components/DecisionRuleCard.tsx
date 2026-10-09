@@ -29,7 +29,7 @@ export function DecisionRuleCard({
         {Array.from({ length: total }, (_, i) => (
           <Pebble
             key={i}
-            tone={i < needed ? "brand" : "empty"}
+            tone={i < needed ? "teal" : "empty"}
             className={`h-[26px] w-[30px] ${TILT[i % TILT.length]}`}
           />
         ))}
