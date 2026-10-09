@@ -78,6 +78,24 @@ describe("DeleteAccountSection", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(GENERIC_FUNNEL_ERROR));
   });
 
+  it("stays busy and silent when the deletion ends in the redirect to /account-deleted", async () => {
+    // What Next's client hands back when a server action redirects: it has already started the
+    // navigation, and rejects the action's promise with this marker (message NEXT_REDIRECT).
+    const redirected = Object.assign(new Error("NEXT_REDIRECT"), {
+      digest: "NEXT_REDIRECT;push;/account-deleted;307;",
+    });
+    const deleting = vi.fn<Action>().mockRejectedValue(redirected);
+    render(<DeleteAccountSection isStaff={false} isDelegate={false} action={deleting} />);
+    typeWord(ACCOUNT_DELETION_CONFIRM_WORD);
+    fireEvent.click(screen.getByRole("button", { name: ACCOUNT_DELETE_BUTTON }));
+    await waitFor(() => expect(deleting).toHaveBeenCalled());
+    // let the rejection settle; a rethrow would surface as an unhandled rejection and fail the run
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByRole("alert")).toBeNull();
+    // no second click while the page changes: the button keeps its busy, disabled state
+    expect(screen.getByRole("button", { name: ACCOUNT_DELETE_BUSY })).toBeDisabled();
+  });
+
   it("tells a delegate their page goes and their team moves", () => {
     render(<DeleteAccountSection isStaff={false} isDelegate action={action} />);
     expect(screen.getByText(ACCOUNT_DELETE_DELEGATE_NOTE)).toBeInTheDocument();

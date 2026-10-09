@@ -34,17 +34,22 @@ export function DeleteAccountSection({
   async function onDelete() {
     setBusy(true);
     setError(null);
+    let result: { ok: false; error: string };
     try {
-      const result = await action({ confirm: word });
-      // success never comes back here: the action redirects to /account-deleted
-      if (result && !result.ok) setError(result.error);
+      result = await action({ confirm: word });
     } catch (e) {
-      // the redirect surfaces as a thrown NEXT_REDIRECT; anything else is a real failure
-      if (e instanceof Error && e.message.includes("NEXT_REDIRECT")) throw e;
+      // Success never resolves: the action redirects to /account-deleted, and Next's client
+      // starts that navigation itself before rejecting the call with NEXT_REDIRECT. Rethrowing
+      // would reach the app router's unhandled-rejection listener, which pushes the same URL a
+      // second time; so the redirect ends here, still busy, the button disabled until the page
+      // changes. Anything else is a real failure.
+      if (e instanceof Error && e.message === "NEXT_REDIRECT") return;
       setError(GENERIC_FUNNEL_ERROR);
-    } finally {
       setBusy(false);
+      return;
     }
+    if (result && !result.ok) setError(result.error);
+    setBusy(false);
   }
 
   return (
