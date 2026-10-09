@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased - A second colour (2026-10-08)
+
+The site keeps its newspaper look and gains a second colour, teal, next to the red.
+
+- Red still marks things you do: links, the main buttons, the active menu item, the No. 1
+  delegate.
+- Teal marks things you read: the live numbers on the homepage, the supporter label, the
+  poll answers that are not leading, your delegate's card, and the search and export buttons in admin.
+- A thin teal line now runs under the black line at the top of every page, and the footer is a
+  teal band.
+- In poll results, answers tied for the most votes are all shown as leading, even when rounding
+  gives them slightly different percentages.
+- Every text colour pair passes the standard readability check. Links in the teal footer show a
+  light outline when you move through them with the keyboard, because the usual red outline
+  would not be visible on teal.
+
 ## 0.12.0 - The support page (2026-08-02)
 
 A new page where anyone can write to the movement, reachable from the link in the

@@ -85,7 +85,7 @@ export function MobileMenu({
           aria-label={MENU_DIALOG_LABEL}
           className="fixed inset-0 z-50 flex flex-col bg-paper"
         >
-          <div className="flex items-center justify-between border-b-2 border-ink px-5 pb-2.5 pt-4">
+          <div className="flex items-center justify-between masthead-rule px-5 pb-2.5 pt-4">
             <BrandLockup onClick={close} />
             <button
               type="button"

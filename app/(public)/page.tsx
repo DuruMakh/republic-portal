@@ -163,13 +163,13 @@ export default async function HomePage() {
           ) : null}
         </div>
         <aside className="mt-8 flex flex-col gap-6 lg:mt-0 lg:pl-7">
-          <div>
-            <SectionRule label={REG} />
+          <div data-testid="registry">
+            <SectionRule label={REG} tone="teal" />
             <div className="mt-1">
               <div className="flex justify-between border-b border-hairline py-2.5">
                 <span className="text-[0.85rem] text-muted-fg">{STAT_APPROVED_LABEL}</span>
                 <span
-                  className="font-serif text-xl font-bold"
+                  className="font-serif text-xl font-bold text-teal"
                   data-testid="stat-approved-delegates"
                 >
                   <CountUp value={stats.approved_delegates} />
@@ -177,20 +177,26 @@ export default async function HomePage() {
               </div>
               <div className="flex justify-between border-b border-hairline py-2.5">
                 <span className="text-[0.85rem] text-muted-fg">{STAT_MEMBERS_LABEL}</span>
-                <span className="font-serif text-xl font-bold" data-testid="stat-members-total">
+                <span
+                  className="font-serif text-xl font-bold text-teal"
+                  data-testid="stat-members-total"
+                >
                   <CountUp value={stats.members_total} />
                 </span>
               </div>
               <div className="flex justify-between border-b border-hairline py-2.5">
                 <span className="text-[0.85rem] text-muted-fg">{STAT_REGISTERED_LABEL}</span>
-                <span className="font-serif text-xl font-bold" data-testid="stat-registered-total">
+                <span
+                  className="font-serif text-xl font-bold text-teal"
+                  data-testid="stat-registered-total"
+                >
                   <CountUp value={stats.registered_total} />
                 </span>
               </div>
               {tStats ? (
                 <div className="flex justify-between border-b border-hairline py-2.5">
                   <span className="text-[0.85rem] text-muted-fg">{TOTAL_GEL_LABEL}</span>
-                  <span className="font-serif text-xl font-bold">
+                  <span className="font-serif text-xl font-bold text-teal">
                     {formatCountKa(Math.round(tStats.total_gel))}₾
                   </span>
                 </div>

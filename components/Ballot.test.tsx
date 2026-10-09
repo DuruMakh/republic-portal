@@ -5,6 +5,7 @@ import { BallotBar } from "./Ballot";
 describe("BallotBar", () => {
   it.each([
     ["brand", "bg-brand"],
+    ["teal", "bg-teal"],
     ["ink", "bg-ink"],
     ["muted", "bg-muted-fg"],
   ] as const)("the fill is pct wide and coloured by tone %s", (tone, toneClass) => {
