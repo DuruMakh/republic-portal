@@ -13,8 +13,9 @@ feature and it also deletes data".
   on their profile. They can register again later with the same phone and ID number, as a new
   person. One copy of the phone number stays for a short while: the anonymized SMS rate-limit
   record of a code sent in the last 24 hours, kept so that deleting and registering again cannot
-  reset the send limits. A nightly job removes it, at most about two days after that code was
-  sent. Database backups and service logs are not erased; they expire on their own (§2, §7).
+  reset the send limits. An hourly job removes it within about a day (25 hours at most) of that
+  code being sent. Database backups and service logs are not erased; they expire on their own
+  (§2, §7).
 - Their votes in finished polls keep counting, with no name attached, so closed poll results never
   change. A vote in a poll that is still running is removed, so nobody can delete, register again
   and vote twice.
@@ -53,7 +54,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 | `event_rsvps` | `member_id` (cascade) | deleted |
 | `payments` (none exist while dues are off) | `member_id` (cascade) | deleted; revisit with the lawyer before dues return |
 | phone verification challenges and proofs | `user_id = auth.users.id` (cascade) | deleted |
-| SMS send reservations (`phone_verification_send_reservations`) | `user_id` (was cascade) | older than 24 hours: deleted by the erasure (no send limit looks further back). Newer: kept, `user_id` set null, so deleting and registering again cannot reset the per-number and site-wide send limits; a daily pg_cron job (01:30 UTC) deletes anonymized ones older than 24 hours, so the phone number is gone at most about two days after the last code was sent (`20261009160000`) |
+| SMS send reservations (`phone_verification_send_reservations`) | `user_id` (was cascade) | older than 24 hours: deleted by the erasure (no send limit looks further back). Newer: kept, `user_id` set null, so deleting and registering again cannot reset the per-number and site-wide send limits; an hourly pg_cron job (minute 17) deletes anonymized ones older than 24 hours, so the phone number is gone within about a day (25 hours at most) of the last code being sent (`20261009160000`, hourly since `20261009170000`) |
 | Supabase auth's own log (`auth.audit_log_entries`: sign-ins, token events, email, IP) | the person as `payload.actor_id`, no foreign key | rows with the person as actor deleted, best effort: lacking the privilege never blocks the erasure (§4.4) |
 | `audit_log` rows about the person (`target_id = id`, payment rows through `details.memberId`, other members' reassign rows through `fromDelegateId` / `toDelegateId`) | names in `details` (§4.3 lists the keys) | `details` loses every personal key and gains `"erased": true`; action, actor, target id and time stay (§4.3) |
 | `audit_log` rows the person wrote as actor | only staff write audit rows | not reachable: staff cannot self-delete (§3.3) |
@@ -163,12 +164,18 @@ keep the action, lose the name; (g) a super_admin can delete on request.
   `has_admin_role('super_admin')`, the reason length, not self; writes its own `member.delete`
   audit row (so the ADR-014 guard finds it in this function), then calls
   `erase_account(p_user_id)`.
-- `admin_approve_delegate`, `admin_reject_delegate` and `admin_update_delegate_name` raise
-  `invalid_target` when their UPDATE finds the person gone, before their audit insert, so an
-  admin action racing an erasure cannot write a named audit row after the scrub
-  (`20261009160000`).
-- A daily pg_cron job, `purge-anonymous-sms-reservations` (01:30 UTC), deletes SMS send
-  reservations with no account that are older than 24 hours (`20261009160000`).
+- No admin action racing an erasure can write a named audit row after the scrub.
+  `admin_approve_delegate`, `admin_reject_delegate`, `admin_update_delegate_name`
+  (`20261009160000`) and `admin_update_delegate_profile` (`20261009170000`) raise
+  `invalid_target` when their UPDATE finds the person gone, before their audit insert.
+  `admin_reveal_personal_id`, `admin_reveal_applicant_personal_id` and `admin_void_payment` read
+  the profile `FOR SHARE`, wait for an erasure in flight and then refuse (`20261009170000`). The
+  others that name a person (role grant, reassignment, recording a payment) insert a row
+  referencing the person and wait on the same lock; revoking a role targets staff, whom the
+  erasure refuses.
+- An hourly pg_cron job, `purge-anonymous-sms-reservations` (minute 17), deletes SMS send
+  reservations with no account that are older than 24 hours (`20261009170000`; daily in
+  `20261009160000`). The production schema check fails the job if it is missing or changed.
 - Proven on staging (2026-10-08, `scripts/verify-account-deletion.mjs` with throwaway users): a
   function owned by `postgres` may `delete from auth.users` on the hosted platform, so the
   fallback (the server action deleting the auth user with the service-role admin API) is not
@@ -220,10 +227,6 @@ keep the action, lose the name; (g) a super_admin can delete on request.
   retention. The privacy policy must say so rather than claim they are erased.
 - A downloadable copy of one's data (the right of access goes through the contact page).
 - Payment retention rules (no payments exist; decide with a lawyer before dues return).
-- A race left open: `admin_reveal_personal_id` and `admin_reveal_applicant_personal_id` read the
-  profile without a lock and write only their audit row, so one running at the same moment as an
-  erasure can still leave the person's name in that row. (Approve, reject and rename refuse once
-  the person is gone, `20261009160000`.)
 
 ## 8. Release
 

@@ -1297,10 +1297,11 @@ after privacy step 2).
 Owner request in chat ("lets add account delete feature and it also deletes data"); proposals a–g
 accepted 2026-10-08 (spec `docs/superpowers/specs/2026-10-08-account-deletion-design.md` §1).
 Two releases: A is the database only (`20261009140000_account_deletion.sql`,
-`20261009150000_account_deletion_hardening.sql` with the whole-branch review's fixes, and
+`20261009150000_account_deletion_hardening.sql` with the whole-branch review's fixes,
 `20261009160000_account_deletion_followups.sql` with the re-review's follow-ups, which joined A on
-the owner's 2026-10-09 ruling; each a new file because staging already held the earlier ones); B is
-the app (profile danger section, admin row action, `/account-deleted`, the policy sentence).
+the owner's 2026-10-09 ruling, and `20261009170000_account_deletion_races.sql`, which closes the
+rest of the race class; each a new file because staging already held the earlier ones); B is the
+app (profile danger section, admin row action, `/account-deleted`, the policy sentence).
 
 - **One erasure, two doors.** `erase_account(uuid)` (SECURITY DEFINER, owned by `postgres`) does
   everything in one transaction and ends with `delete from auth.users`, which cascades the rest.
@@ -1322,8 +1323,9 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
   finished results never change; owner decision c; the member results view now counts options,
   not members); SMS send reservations of the last 24 hours (user set null, so deleting and
   re-registering cannot reset the per-number and site-wide send limits; older ones are deleted by
-  the erasure, and a nightly job deletes anonymized ones once they are older than 24 hours, so the
-  phone number is gone at most about two days after the last code was sent; see Follow-ups);
+  the erasure, and an hourly job deletes anonymized ones once they are older than 24 hours, so the
+  phone number is gone within about a day (25 hours at most) of the last code being sent; see
+  Follow-ups);
   audit rows about the person (below); other members' memberships that pointed at a departing
   delegate (open ones are closed and replaced by a central membership with
   `note = 'delegate_left'`, closed ones lose the link).
@@ -1349,41 +1351,58 @@ reason)` for a super_admin, which writes its `member.delete` audit row first (AD
 - **Staff.** Anyone holding an admin role is refused (`staff_account`). Former staff whose id is
   still referenced (they wrote audit rows, recorded payments, approved delegates) are refused as
   `staff_history`; the error detail names the blocking foreign key. The trail stays intact.
-- **Races.** The erasure locks the person's profile row, their own open membership row and their
-  delegate row first, and the polls they voted in `FOR SHARE`, so a concurrent reassignment or
-  delegate change of or to the departing person, or a poll close, either finishes first or waits
-  (and fails on the foreign key once the person is gone). The departing delegate's team is the set
-  of rows the closing UPDATE itself ends, so a member who moves away meanwhile no longer collides
-  with their new central row (23505). `admin_approve_delegate`, `admin_reject_delegate` and
-  `admin_update_delegate_name` refuse with `invalid_target` when their UPDATE finds the person
-  gone, so they cannot write a named audit row after the scrub. Still open:
-  `admin_reveal_personal_id` and `admin_reveal_applicant_personal_id` read the profile without a
-  lock and write only their audit row, so one running at the same moment as an erasure can still
-  leave the person's name in that row. Two transactions taking these locks in opposite order can
-  deadlock; Postgres then aborts one of them and nothing is half-written.
+- **Races: none remain.** The erasure locks the person's profile row, their own open membership
+  row and their delegate row first, and the polls they voted in `FOR SHARE`, so a concurrent
+  reassignment or delegate change of or to the departing person, or a poll close, either finishes
+  first or waits (and fails on the foreign key once the person is gone). The departing delegate's
+  team is the set of rows the closing UPDATE itself ends, so a member who moves away meanwhile no
+  longer collides with their new central row (23505). Every function that writes a person's name
+  into an audit row either finishes before the erasure (whose scrub then sees the row) or refuses:
+  - a FOUND check right after the UPDATE of the person's row, before the audit insert:
+    `admin_approve_delegate`, `admin_reject_delegate`, `admin_update_delegate_name` (160000),
+    `admin_update_delegate_profile` (170000);
+  - the profile read `FOR SHARE`, which waits behind the erasure's `FOR UPDATE` and then finds no
+    row (`invalid_target`): `admin_reveal_personal_id`, `admin_reveal_applicant_personal_id`,
+    `admin_void_payment` (170000; the last was not in the review's list: its payment UPDATE could
+    wait on the erasure's cascade, change nothing and still log the name);
+  - already safe, unchanged: `admin_grant_role`, `admin_reassign_member`, `admin_record_payment`
+    and `admin_record_payments_bulk` insert a row referencing the person, whose key-share lock on
+    the profile conflicts with the erasure's `FOR UPDATE`; `admin_revoke_role` targets a role
+    holder, whom the erasure refuses while the role row exists.
+
+  A unit test lists every function whose audit insert carries a name and fails when one appears
+  outside these groups. Two transactions taking these locks in opposite order can deadlock;
+  Postgres then aborts one of them and nothing is half-written.
+
 - **Follow-ups (`20261009160000`, the re-review's findings).**
   - `erase_account` restated exactly as 150000 has it, plus: the person's own open membership row
     locked right after the profile lock; the delegate's team built with
     `update … returning member_id`; the person's SMS send reservations older than 24 hours deleted
     (every window `reserve_phone_verification_send` counts is 24 hours or shorter; a unit test
     keeps it so). Its revokes are asserted again.
-  - pg_cron job `purge-anonymous-sms-reservations`, daily at 01:30 UTC: deletes reservations with
-    no account that are older than 24 hours. Any job of that name is unscheduled first, so a fresh
-    replay works. The security session's send functions are unchanged.
+  - pg_cron job `purge-anonymous-sms-reservations`: deletes reservations with no account that are
+    older than 24 hours. Daily at 01:30 UTC in 160000, hourly at minute 17 since 170000; any job of
+    that name is unscheduled first, so a fresh replay works. The security session's send functions
+    are unchanged. The production schema check fails the job if it is missing, inactive or changed.
   - `admin_approve_delegate`, `admin_reject_delegate`, `admin_update_delegate_name` restated from
     their latest definitions with `if not found then raise exception 'invalid_target'` after their
     UPDATE, before the audit insert; grants unchanged.
   - Pinned in `lib/account-deletion-migration.test.ts`: all of the above, plus the hardened
     `v_personal_keys` list and the full `invalid_target` / `staff_account` conditions.
+- **Races closed (`20261009170000`, fix round 1 of the follow-ups' review).** The FOUND check in
+  `admin_update_delegate_profile`, the `FOR SHARE` profile reads in the two reveals and in
+  `admin_void_payment`, and the hourly purge; each function restated exactly from its latest
+  definition plus only those lines, grants unchanged.
 - **Staging proof (2026-10-08 and 2026-10-09, `scripts/verify-account-deletion.mjs`).** A
   function owned by `postgres` may `delete from auth.users` on the hosted platform, so the spec's
   fallback (deleting the auth user with the service-role admin API) is not needed. The probe also
   proves the audit scrub, the trigger lock, the wrapper checks, former-staff refusal with its
   detail, running-poll votes deleted, closed and past-deadline votes kept, a reservation older than
   24 hours deleted while recent ones stay without the account (the linked verification challenge
-  gone, its link cleared), the purge job scheduled once and its stored command removing only
-  anonymized rows older than 24 hours, the follow-ups in the live function bodies, and that it
-  leaves nothing behind.
+  gone, its link cleared), the purge job scheduled once (hourly) and its stored command removing
+  only anonymized rows older than 24 hours, the seven guards in the live function bodies, the
+  reveals and the profile edit still working for a living person, and that it leaves nothing
+  behind.
 - **Out of scope.** Signed-in Google accounts that never registered (no profile; reachable later
   through the admin tool); support messages (not linked to accounts); database backups and
   platform logs (Supabase, Vercel), which are not erased but expire on their own retention; a
