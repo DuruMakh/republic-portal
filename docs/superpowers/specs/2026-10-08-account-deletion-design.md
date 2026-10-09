@@ -11,10 +11,10 @@ feature and it also deletes data".
 - Everything that identifies them is erased: name, personal ID number, birth date, region and
   city, job, membership history, delegate page and photo, sign-in account, and the phone number
   on their profile. They can register again later with the same phone and ID number, as a new
-  person. One copy of the phone number stays for now: the anonymized SMS rate-limit record, kept
-  so that deleting and registering again cannot reset the send limits. It is purged within about
-  a day once Release B ships; until then it can stay longer. Database backups and service logs
-  are not erased; they expire on their own (§2, §7).
+  person. One copy of the phone number stays for a short while: the anonymized SMS rate-limit
+  record of a code sent in the last 24 hours, kept so that deleting and registering again cannot
+  reset the send limits. A nightly job removes it, at most about two days after that code was
+  sent. Database backups and service logs are not erased; they expire on their own (§2, §7).
 - Their votes in finished polls keep counting, with no name attached, so closed poll results never
   change. A vote in a poll that is still running is removed, so nobody can delete, register again
   and vote twice.
@@ -53,7 +53,7 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 | `event_rsvps` | `member_id` (cascade) | deleted |
 | `payments` (none exist while dues are off) | `member_id` (cascade) | deleted; revisit with the lawyer before dues return |
 | phone verification challenges and proofs | `user_id = auth.users.id` (cascade) | deleted |
-| SMS send reservations (`phone_verification_send_reservations`) | `user_id` (was cascade) | kept, `user_id` set null, so deleting and registering again cannot reset the per-number and site-wide send limits; the phone number stays in the row: Release A removes it only through the existing 24-hour cleanup, which runs when that number next asks for a code, so a number that never asks again keeps its row; Release B's first migration adds the purge (`erase_account` deletes the person's reservations older than 24 hours, and a daily job deletes anonymized ones older than 24 hours), so the phone number is gone within about a day once Release B ships |
+| SMS send reservations (`phone_verification_send_reservations`) | `user_id` (was cascade) | older than 24 hours: deleted by the erasure (no send limit looks further back). Newer: kept, `user_id` set null, so deleting and registering again cannot reset the per-number and site-wide send limits; a daily pg_cron job (01:30 UTC) deletes anonymized ones older than 24 hours, so the phone number is gone at most about two days after the last code was sent (`20261009160000`) |
 | Supabase auth's own log (`auth.audit_log_entries`: sign-ins, token events, email, IP) | the person as `payload.actor_id`, no foreign key | rows with the person as actor deleted, best effort: lacking the privilege never blocks the erasure (§4.4) |
 | `audit_log` rows about the person (`target_id = id`, payment rows through `details.memberId`, other members' reassign rows through `fromDelegateId` / `toDelegateId`) | names in `details` (§4.3 lists the keys) | `details` loses every personal key and gains `"erased": true`; action, actor, target id and time stay (§4.3) |
 | `audit_log` rows the person wrote as actor | only staff write audit rows | not reachable: staff cannot self-delete (§3.3) |
@@ -147,11 +147,13 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 - `erase_account(p_user_id uuid) returns jsonb`: internal. EXECUTE is revoked from public, anon,
   authenticated and service_role (the platform's default privileges grant service_role; no
   server code needs it, the app calls the two wrappers). In one transaction: lock the person's
-  profile and delegate rows (a concurrent reassignment or delegate change to the departing person
-  finishes first or waits; approve, reject and rename are not covered, §7); refuse staff
+  profile row, their own open membership row and their delegate row (a concurrent reassignment
+  or delegate change of or to the departing person finishes first or waits); refuse staff
   (`staff_account`); capture the delegate photo URL; delete the votes in polls still running
-  (§4.1); move the delegate's team (§2); scrub the audit rows
-  (§4.3); delete the person's rows from Supabase auth's own log, best effort;
+  (§4.1); move the delegate's team (§2; the team is the set of rows the closing UPDATE ends,
+  `returning member_id`, so a member who moves away meanwhile cannot collide); scrub the audit
+  rows (§4.3); delete the person's rows from Supabase auth's own log, best effort; delete the
+  person's SMS send reservations older than 24 hours;
   `delete from auth.users where id = p_user_id` (cascades everything in §2; a foreign-key
   violation here means staff history → `staff_history`, with the blocking key in the error
   detail). Returns `{ photoUrl }` for the Storage step.
@@ -161,6 +163,12 @@ keep the action, lose the name; (g) a super_admin can delete on request.
   `has_admin_role('super_admin')`, the reason length, not self; writes its own `member.delete`
   audit row (so the ADR-014 guard finds it in this function), then calls
   `erase_account(p_user_id)`.
+- `admin_approve_delegate`, `admin_reject_delegate` and `admin_update_delegate_name` raise
+  `invalid_target` when their UPDATE finds the person gone, before their audit insert, so an
+  admin action racing an erasure cannot write a named audit row after the scrub
+  (`20261009160000`).
+- A daily pg_cron job, `purge-anonymous-sms-reservations` (01:30 UTC), deletes SMS send
+  reservations with no account that are older than 24 hours (`20261009160000`).
 - Proven on staging (2026-10-08, `scripts/verify-account-deletion.mjs` with throwaway users): a
   function owned by `postgres` may `delete from auth.users` on the hosted platform, so the
   fallback (the server action deleting the auth user with the service-role admin API) is not
@@ -191,11 +199,13 @@ keep the action, lose the name; (g) a super_admin can delete on request.
 - SQL probes on staging (`scripts/verify-account-deletion.mjs`, pinned to the staging host): a
   throwaway member is erased; their vote in a running poll is deleted, while their votes in a
   closed and a past-deadline poll survive with a null member and unchanged counts; their SMS send
-  reservation survives with a null user; their rows in Supabase auth's log are deleted; a
-  throwaway delegate's member lands on central with the note; a staff account is refused, and
-  former staff are refused as `staff_history` naming the key; the audit rows lose every personal
-  key; clients see and change no `audit_log` row (row level security with no policy), and
-  service_role is refused by the trigger even with `app.erasing` set (owner lock).
+  reservation older than 24 hours is deleted, the recent ones survive with a null user, and the
+  one linked to a verification challenge loses the challenge; the purge job's command removes
+  only anonymized reservations older than 24 hours; their rows in Supabase auth's log are
+  deleted; a throwaway delegate's member lands on central with the note; a staff account is
+  refused, and former staff are refused as `staff_history` naming the key; the audit rows lose
+  every personal key; clients see and change no `audit_log` row (row level security with no
+  policy), and service_role is refused by the trigger even with `app.erasing` set (owner lock).
 - e2e (one journey, no extra SMS logins beyond the existing budget): a member deletes their
   account, lands on `/account-deleted`, and `/me` sends them to `/login`.
 - Production: the migration-only release runs the production-db workflow's schema checks, which
@@ -210,11 +220,10 @@ keep the action, lose the name; (g) a super_admin can delete on request.
   retention. The privacy policy must say so rather than claim they are erased.
 - A downloadable copy of one's data (the right of access goes through the contact page).
 - Payment retention rules (no payments exist; decide with a lawyer before dues return).
-- A race Release B fixes: `admin_approve_delegate`, `admin_reject_delegate`,
-  `admin_update_delegate_name` and `admin_reveal_personal_id` take no lock and have no FOUND check,
-  so one running at the same moment as an erasure can commit an audit row with the person's name
-  after the scrub. Until Release B's first migration (plan Task 3a), deletion is reachable only
-  through a direct API call, so the window is negligible.
+- A race left open: `admin_reveal_personal_id` and `admin_reveal_applicant_personal_id` read the
+  profile without a lock and write only their audit row, so one running at the same moment as an
+  erasure can still leave the person's name in that row. (Approve, reject and rename refuse once
+  the person is gone, `20261009160000`.)
 
 ## 8. Release
 
