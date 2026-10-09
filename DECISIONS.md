@@ -1331,3 +1331,37 @@ local` after the unit tests, and builds + runs e2e against it. CI no longer read
   setup, and it costs about the same as the staging project.
 - **Not changed.** Merge = release to respublika.ge; production database changes still go
   through `production-db.yml` dry-run then apply.
+
+## ADR-051 (2026-10-09): Simpler delivery — two process sizes, batched PRs, two-speed CI, a local database
+
+- **Problem.** On 7–8 October, 25 pull requests and 101 CI runs (about 2,500 CI minutes) in two
+  days exhausted the private repo's monthly Actions allowance, and two Vercel projects building
+  every push hit the 100-deployments-a-day limit. The cause was the shape of the work, not the
+  tools: every owner request became its own PR, database changes were split into two releases,
+  every push ran the full database + browser suite, and every change, however small, went
+  through spec → plan → per-task reviews. July's phases shipped as one PR each without trouble.
+- **Decision.**
+  - **Two process sizes** (CLAUDE.md "Process"): Small (copy, styling, one bug fix, tooling) is
+    test → fix → one review → screenshots → sign-off; Large (feature, migration, sign-in, roles,
+    personal data, payments) keeps spec → plan → TDD → reviews. ADRs only for real decisions.
+  - **Batching:** one branch and PR per batch of owner requests, sized to the work. A database
+    change ships with the code that uses it; two-step releases only when live users could break.
+  - **Two-speed CI:** `checks` (typecheck, lint, format, ka:scan, unit tests) on every PR push;
+    `quality` (local Supabase stack, seed, build, e2e) skips draft PRs. Documentation-only PRs
+    (`docs/**`, `*.md`) run nothing; pushes to main always run both. No status check is
+    required on main, so a skipped run never blocks a merge.
+  - **A local database replaces staging.** The owner deleted the hosted staging project and the
+    demo Vercel project (`republic-portal`) was deleted 2026-10-09, so there are no preview links.
+    Docker Desktop on the development laptop (owner-approved install) runs the same pinned
+    Supabase CLI as CI through `npx supabase@2.109.1` (no new package.json dependency):
+    `npm run db:start` (stack + `.env.development.local` via `scripts/local-db-env.mjs`, which
+    refuses any non-local address), `db:seed` (canonical seed), `db:reset`, `db:stop`, and
+    `e2e:local`. Owner sign-off is on screenshots taken from this local copy.
+  - **Repository public again** (owner, 2026-10-09), so Actions minutes are free.
+- **Rejected.** A free hosted preview database: it needs the owner to create projects and copy
+  keys, which conflicts with "owner only chats". Shipping straight to live without a check.
+- **Not changed.** Merge = release to respublika.ge; production database changes go through
+  `production-db.yml` dry-run then apply; never merge with failing CI.
+- **Left for later.** Scripts and helpers still named "staging" (`seed-staging.mjs`,
+  `staging-guard.mjs`, the staging ref in the test-database allow-list) keep working against the
+  local stack; renaming them is cosmetic.

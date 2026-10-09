@@ -12,10 +12,12 @@ The user may ask questions or give tasks in Georgian. Conduct work in English an
 
 ## Process (non-negotiable)
 
-- Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Codex + /codex review)
-  → /qa on preview → OWNER sign-off on the Vercel preview link → merge.
-- Owner writes zero code and reads no code. All evidence for sign-off must be
-  plain-language + screenshots + a preview URL.
+- Follow the "Process" section of CLAUDE.md (ADR-051): two sizes (Small: test → fix → one
+  review → screenshots; Large: spec → plan → TDD → reviews), one PR per batch of owner
+  requests, push when ready, a database change ships with its code, ADRs only for real
+  decisions.
+- Owner writes zero code and reads no code. Sign-off evidence is plain language and
+  screenshots of the change running on the local copy (Docker + local Supabase, README).
 - Never merge with failing CI. Never push directly to main.
 
 ## Code rules

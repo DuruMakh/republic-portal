@@ -8,19 +8,37 @@ UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kroni
 
 ## Process (non-negotiable)
 
-- Every feature: spec → plan (docs/superpowers/plans/) → TDD → code review (Claude:
-  independent per-task reviews + whole-branch review) → /qa on preview → OWNER sign-off
-  on the Vercel preview link → merge. (Independent /codex review dropped by owner
-  decision, 2026-07-15.)
-- Owner writes zero code and reads no code. All evidence for sign-off must be
-  plain-language + screenshots + a preview URL.
+Two sizes (simpler delivery, 2026-10-09). Use Small unless the change touches the database,
+sign-in, roles, personal data or payments.
+
+- **Small**: copy, styling, layout, a single bug fix, tooling. Failing test first where there
+  is behaviour to test → fix → one review → screenshots → owner sign-off in chat → merge.
+  No spec, plan or ADR.
+- **Large**: a new feature, a database migration, anything in sign-in, roles, personal data
+  or payments. Short spec → plan (docs/superpowers/plans/, few large tasks, not many small
+  ones) → TDD → one review per task + a whole-branch review → screenshots → owner sign-off in
+  chat → merge.
+- **Batch.** One branch and one PR per batch of owner requests, sized to the work (a day's or
+  a week's worth). Never one PR per item.
+- **Push when ready.** Work and check on the local copy first (all five CI gates, plus e2e
+  against the local database), then push. If a branch must go up early, open its PR as a
+  draft: drafts get only the quick `checks` job; the slow `quality` job runs once it is
+  marked ready. Every push to a ready PR costs a full CI run, so batch review fixes.
+- **A database change ships in the same PR as the code that uses it**, as one release. Split it
+  into "database first, code later" only when live users could break in between.
+- **ADRs only for real decisions**, the kind someone could later ask "why?" about. Recheck main's
+  last ADR number right before merging.
+- Owner writes zero code and reads no code. Sign-off evidence is plain language and
+  screenshots of the change running on the local copy (Docker + local Supabase, see README).
+  There are no preview links or staging database since 2026-10-09.
 - Owner only chats (owner order, 2026-10-08). Every development and release step is the
   agent's job, done from the session: merging after sign-off, dispatching the production
-  database workflow (dry-run, then apply), staging pushes, deploy checks. Never ask the owner
-  to click, run a command, or open a dashboard. Their part is decisions and sign-off, given
-  in chat. If a tool permission blocks a step, explain the block in plain words and ask in
-  chat how to proceed; never hand over a command to run.
-- Never merge with failing CI. Never push directly to main.
+  database workflow (dry-run, then apply), deploy checks. Never ask the owner to click, run a
+  command, or open a dashboard. Their part is decisions and sign-off, given in chat. If a tool
+  permission blocks a step, explain the block in plain words and ask in chat how to proceed;
+  never hand over a command to run.
+- Never merge with failing CI. Never push directly to main. Merge = release to
+  respublika.ge: check the live site after every merge.
 
 ## Code rules
 
