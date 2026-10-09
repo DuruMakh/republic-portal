@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { NOT_AUTHENTICATED_MESSAGE } from "@/lib/funnel";
 import { RegisteredProfileForm } from "./RegisteredProfileForm";
 
 const updateRegisteredNameAction = vi.fn();
@@ -68,13 +69,11 @@ describe("RegisteredProfileForm", () => {
     updateRegisteredNameAction.mockClear();
     updateRegisteredNameAction.mockResolvedValue({
       ok: false,
-      error: "სესია ამოიწურა — დაადასტურე ნომერი თავიდან.",
+      error: NOT_AUTHENTICATED_MESSAGE,
     });
     renderForm();
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
-    expect(
-      await screen.findByText("სესია ამოიწურა — დაადასტურე ნომერი თავიდან."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(NOT_AUTHENTICATED_MESSAGE)).toBeInTheDocument();
     expect(screen.queryByTestId("profile-saved")).toBeNull();
   });
 });

@@ -8,6 +8,7 @@ import {
   mapFunnelError,
   type CabinetStatePresent,
 } from "./funnel";
+import { PHONE_VERIFICATION_MESSAGES } from "./phone-verification/contracts";
 
 function cab(overrides: Partial<CabinetStatePresent>): CabinetStatePresent {
   return {
@@ -101,6 +102,12 @@ describe("mapFunnelError", () => {
     const message = ERROR_MESSAGES[token];
     expect(mapFunnelError(token)).toBe(message);
     expect(mapFunnelError(`P0001: ${token}`)).toBe(message);
+  });
+  it("tells a lapsed session to sign in with Google again, in the phone door's exact words", () => {
+    // Sign-in is Google-only (PR #22): "confirm your number again" sent people to a door that
+    // no longer exists. funnel.ts cannot import contracts.ts (node:crypto would reach client
+    // bundles), so the two copies are kept equal here.
+    expect(ERROR_MESSAGES["not_authenticated"]).toBe(PHONE_VERIFICATION_MESSAGES.not_authenticated);
   });
   it("raw 23505 unique-violation text never mislabels as a payment duplicate", () => {
     expect(mapFunnelError('duplicate key value violates unique constraint "one_active"')).toBe(
