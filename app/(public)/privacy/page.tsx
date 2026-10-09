@@ -17,7 +17,8 @@ type Section = ({ heading: string; body: string } | { heading: string; items: st
  * Spec docs/superpowers/specs/2026-10-08-registration-privacy-consent-design.md section 5.
  * Linked from the registration consent box (lib/privacy.ts PRIVACY_POLICY_PATH), so
  * changing the substance here means bumping PRIVACY_POLICY_VERSION and the migration.
- * The 2026-10-09 self-service-deletion sentences deliberately kept version 2026-10-v1 (spec
+ * The 2026-10-09 self-service-deletion sentences and the retention section's account of what
+ * outlives a deletion deliberately kept version 2026-10-v1 (spec
  * docs/superpowers/specs/2026-10-08-account-deletion-design.md section 5).
  */
 const SECTIONS: Section[] = [
@@ -56,7 +57,7 @@ const SECTIONS: Section[] = [
   },
   {
     heading: "რამდენ ხანს ვინახავთ",
-    body: "მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი. წაშლისას შენი პერსონალური მონაცემები მაშინვე იშლება. დასრულებულ გამოკითხვებში მიცემული ხმები რჩება ისე, რომ შენი ამოცნობა შეუძლებელი იყოს. სარეზერვო ასლები და ტექნიკური ჩანაწერები, მაგალითად SMS-ების ლიმიტის აღრიცხვა, თავისით იშლება მოკლე ვადაში.",
+    body: "მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი. წაშლისას შენი პერსონალური მონაცემები პლატფორმის მონაცემთა ბაზიდან მაშინვე იშლება. დასრულებულ გამოკითხვებში მიცემული ხმები რჩება ისე, რომ შენი ამოცნობა შეუძლებელი იყოს. SMS-ების ლიმიტის აღრიცხვაში შენი ტელეფონის ნომერი რჩება დაახლოებით ერთი დღის განმავლობაში, სარეზერვო ასლები კი თავისით იშლება ერთი კვირის განმავლობაში. საკონტაქტო ფორმით გამოგზავნილი შეტყობინებები ანგარიშთან დაკავშირებული არ არის და ინახება ცალკე.",
   },
   {
     heading: "შენი უფლებები",

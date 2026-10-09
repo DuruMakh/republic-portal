@@ -4,11 +4,11 @@
  */
 export const ACCOUNT_DELETE_HEADING = "ანგარიშის წაშლა";
 export const ACCOUNT_DELETE_LEDE =
-  "წაშლისას სამუდამოდ იშლება შენი სახელი, ტელეფონი, პირადი ნომერი, წევრობის ისტორია და Google-ით შესვლის ანგარიში. დასრულებულ გამოკითხვებში მიცემული ხმები ითვლება, მაგრამ შენს სახელთან აღარ იქნება დაკავშირებული; მიმდინარე გამოკითხვებში შენი ხმა წაიშლება. წაშლის გაუქმება შეუძლებელია.";
+  "წაშლისას იშლება შენი სახელი, ტელეფონი, პირადი ნომერი, წევრობის ისტორია და Google-ით შესვლის ანგარიში. დასრულებულ გამოკითხვებში მიცემული ხმები ითვლება, მაგრამ შენს სახელთან აღარ იქნება დაკავშირებული; მიმდინარე გამოკითხვებში შენი ხმა წაიშლება. წაშლის გაუქმება შეუძლებელია.";
 export const ACCOUNT_DELETE_DELEGATE_NOTE =
   "შენი საჯარო გვერდი წაიშლება, ხოლო შენი გუნდის წევრები გადავლენ ცენტრალურ მოძრაობაში და შეძლებენ ახალი დელეგატის არჩევას.";
 export const ACCOUNT_DELETE_STAFF_NOTE =
-  "ადმინისტრატორის როლის მქონე ანგარიშის წაშლა შეუძლებელია. ჯერ სუპერ-ადმინმა უნდა მოგიხსნას როლი.";
+  "ადმინისტრატორის როლის მქონე ანგარიშის წაშლა აქედან შეუძლებელია — მოგვწერე საკონტაქტო გვერდიდან.";
 export const ACCOUNT_DELETE_CONFIRM_LABEL = "დასადასტურებლად ჩაწერე სიტყვა: წაშლა";
 export const ACCOUNT_DELETE_CONFIRM_MISMATCH = "დასადასტურებლად ზუსტად ჩაწერე სიტყვა: წაშლა";
 export const ACCOUNT_DELETE_BUTTON = "ანგარიშის წაშლა";
@@ -28,3 +28,10 @@ export const ADMIN_DELETE_CONFIRM = "საბოლოოდ წაშლა";
 export const ADMIN_DELETE_CANCEL = "გაუქმება";
 export const ADMIN_DELETE_NAME_MISMATCH = "სახელი და გვარი არ ემთხვევა.";
 export const ADMIN_DELETE_DONE = "ანგარიში წაიშალა.";
+/**
+ * The admin's own wording for the database's `staff_history` refusal (a former staff member
+ * whose id the audit trail still references). mapFunnelError's text for that token speaks to
+ * the member themselves ("write to us"), which is wrong on the admin page.
+ */
+export const ADMIN_DELETE_STAFF_HISTORY =
+  "ეს ანგარიში ადმინისტრატორის ჩანაწერებთანაა დაკავშირებული და ვერ წაიშლება.";

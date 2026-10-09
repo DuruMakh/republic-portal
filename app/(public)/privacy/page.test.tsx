@@ -81,4 +81,13 @@ describe("/privacy", () => {
     expect(text).toContain("ანგარიშის წაშლა შეგიძლია თავადაც, პროფილის გვერდიდან");
     expect(text).toContain("მონაცემებს ვინახავთ, სანამ ანგარიშს არ წაშლი.");
   });
+
+  it("says honestly what outlives a deletion, and for how long", () => {
+    const { container } = render(<PrivacyPage />);
+    const text = container.textContent ?? "";
+    // the SMS rate-limit record keeps the phone number for about a day (hourly purge, 25 h max)
+    expect(text).toContain("ერთი დღის განმავლობაში");
+    // support messages are not linked to accounts, so a deletion does not reach them
+    expect(text).toContain("ინახება ცალკე");
+  });
 });

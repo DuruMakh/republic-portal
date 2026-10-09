@@ -47,6 +47,10 @@ describe("the confirmation word in the copy", () => {
   it("tells the person that a running poll loses their vote, in the lede", () => {
     expect(ACCOUNT_DELETE_LEDE).toContain("მიმდინარე გამოკითხვებში");
   });
+
+  it("opens the lede without promising erasure 'forever' (backups expire on their own)", () => {
+    expect(ACCOUNT_DELETE_LEDE.startsWith("წაშლისას იშლება ")).toBe(true);
+  });
 });
 
 describe("adminDeleteMemberSchema", () => {
