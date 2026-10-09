@@ -1,5 +1,5 @@
 -- Account deletion (spec docs/superpowers/specs/2026-10-08-account-deletion-design.md,
--- ADR-047). Additive for the code on main: one vote per member still holds (now a unique
+-- ADR-049). Additive for the code on main: one vote per member still holds (now a unique
 -- constraint instead of the primary key), the audit log still refuses every client write,
 -- and nothing on main calls the new functions.
 

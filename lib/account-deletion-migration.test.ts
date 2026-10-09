@@ -172,10 +172,10 @@ describe("account deletion migration comments", () => {
   });
 
   it("names its decision record in every account deletion migration", () => {
-    expect(sql.slice(0, 300)).toContain("ADR-047");
-    expect(hardening().slice(0, 300)).toContain("ADR-047");
-    expect(followups().slice(0, 300)).toContain("ADR-047");
-    expect(races().slice(0, 300)).toContain("ADR-047");
+    expect(sql.slice(0, 300)).toContain("ADR-049");
+    expect(hardening().slice(0, 300)).toContain("ADR-049");
+    expect(followups().slice(0, 300)).toContain("ADR-049");
+    expect(races().slice(0, 300)).toContain("ADR-049");
   });
 });
 

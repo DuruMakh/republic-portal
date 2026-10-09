@@ -175,7 +175,7 @@ begin
     raise exception 'phone_verification_challenges.superseded_at is missing';
   end if;
 
-  -- Account deletion (ADR-047): the two wrappers are the only way in, and only when signed in;
+  -- Account deletion (ADR-049): the two wrappers are the only way in, and only when signed in;
   -- the erasure itself is closed to every API role, service_role included.
   if to_regprocedure('public.erase_account(uuid)') is null
      or to_regprocedure('public.delete_my_account(text)') is null

@@ -1,4 +1,4 @@
--- Account deletion, hardening (ADR-047; spec docs/superpowers/specs/2026-10-08-account-deletion-design.md).
+-- Account deletion, hardening (ADR-049; spec docs/superpowers/specs/2026-10-08-account-deletion-design.md).
 -- The whole-branch review's fixes to 20261009140000_account_deletion.sql. That file is already
 -- on staging, so its statements stay as they are and every change lands here; both files ship
 -- together in the same migration-only release. Still additive for the code on main: nothing on

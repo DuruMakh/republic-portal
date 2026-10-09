@@ -1,4 +1,4 @@
--- Account deletion, follow-ups (ADR-047; spec docs/superpowers/specs/2026-10-08-account-deletion-design.md).
+-- Account deletion, follow-ups (ADR-049; spec docs/superpowers/specs/2026-10-08-account-deletion-design.md).
 -- The whole-branch re-review's findings on 20261009140000 and 20261009150000. Both files are
 -- already on staging, so their statements stay as they are and every change lands here; all three
 -- ship together in the same database release (PR #49). Still additive for the code on main:

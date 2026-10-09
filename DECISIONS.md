@@ -1332,7 +1332,7 @@ local` after the unit tests, and builds + runs e2e against it. CI no longer read
 - **Not changed.** Merge = release to respublika.ge; production database changes still go
   through `production-db.yml` dry-run then apply.
 
-## ADR-047 (2026-10-08): Members can delete their account; data is erased
+## ADR-049 (2026-10-08): Members can delete their account; data is erased
 
 Owner request in chat ("lets add account delete feature and it also deletes data"); proposals a–g
 accepted 2026-10-08 (spec `docs/superpowers/specs/2026-10-08-account-deletion-design.md` §1).

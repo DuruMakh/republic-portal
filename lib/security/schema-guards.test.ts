@@ -873,13 +873,13 @@ describe("ADR-014 — every admin RPC the app calls re-checks the role first and
 });
 
 /**
- * ADR-047: the audit log's one exception (the erasure scrub) is opened by the
+ * ADR-049: the audit log's one exception (the erasure scrub) is opened by the
  * transaction-local setting `app.erasing`. Only erase_account() may set it and
  * only audit_log_immutable() may read it; anything else touching it is a new
  * door into an append-only table. Comments are stripped first, so prose that
  * names the setting is not a use of it.
  */
-describe("ADR-047 — app.erasing belongs to erase_account and the audit trigger alone", () => {
+describe("ADR-049 — app.erasing belongs to erase_account and the audit trigger alone", () => {
   const FUNCTION_DEF =
     /create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\([\s\S]*?\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\2\$/gi;
 

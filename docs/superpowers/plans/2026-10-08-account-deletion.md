@@ -46,7 +46,7 @@
 | `app/(admin)/admin/members/delete-member-actions.ts` + `DeleteMemberButton.tsx` | admin delete on request | 9 |
 | `app/(public)/privacy/page.tsx` | rights + retention sentences | 10 |
 | `e2e/account-deletion.spec.ts` | one journey | 11 |
-| `DECISIONS.md` | ADR-047 | 12 |
+| `DECISIONS.md` | ADR-049 | 12 |
 
 ---
 
@@ -175,7 +175,7 @@ Expected: FAIL — `ENOENT ... 20261009140000_account_deletion.sql`, and the sch
 
 ```sql
 -- Account deletion (spec docs/superpowers/specs/2026-10-08-account-deletion-design.md,
--- ADR-047). Additive for the code on main: one vote per member still holds (now a unique
+-- ADR-049). Additive for the code on main: one vote per member still holds (now a unique
 -- constraint instead of the primary key), the audit log still refuses every client write,
 -- and nothing on main calls the new functions.
 
@@ -473,7 +473,7 @@ The vote check (spec §6) needs an open poll; add it here if a staging poll is a
 - [ ] **Step 3: Run it**
 
 Run: `node --env-file=.env.local scripts/verify-account-deletion.mjs`
-Expected: four `OK:` lines. If case A fails with `permission denied for table users`, the hosted `postgres` role cannot delete auth users: apply the spec §4.4 fallback — `erase_account` ends with `delete from public.profiles where id = p_user_id` instead of `auth.users`, returns `{ photoUrl, userId }`, and Task 5/9's actions call `createAdminClient().auth.admin.deleteUser(userId)` right after the RPC (a failure there is logged and the person re-tries; their profile is already gone). Record the outcome in ADR-047.
+Expected: four `OK:` lines. If case A fails with `permission denied for table users`, the hosted `postgres` role cannot delete auth users: apply the spec §4.4 fallback — `erase_account` ends with `delete from public.profiles where id = p_user_id` instead of `auth.users`, returns `{ photoUrl, userId }`, and Task 5/9's actions call `createAdminClient().auth.admin.deleteUser(userId)` right after the RPC (a failure there is logged and the person re-tries; their profile is already gone). Record the outcome in ADR-049.
 
 - [ ] **Step 4: Commit**
 
@@ -1076,7 +1076,7 @@ export async function deleteMemberAction(
 
 The typed-name check is a UX guard against deleting the wrong row; authorization stays in `admin_delete_member` (ADR-014).
 
-The admin copy (Task 4, `ADMIN_DELETE_REASON_LABEL` or a hint under the reason field) must tell staff not to write the person's name in the reason: the `member.delete` audit row keeps the reason after the erasure (ADR-047), so a name written there would survive it. Pin it in `DeleteMemberButton.test.tsx`.
+The admin copy (Task 4, `ADMIN_DELETE_REASON_LABEL` or a hint under the reason field) must tell staff not to write the person's name in the reason: the `member.delete` audit row keeps the reason after the erasure (ADR-049), so a name written there would survive it. Pin it in `DeleteMemberButton.test.tsx`.
 
 `DeleteMemberButton.tsx`: a client component with props `{ memberId: string; memberName: string; action: typeof deleteMemberAction }`. A `Button variant="danger" size="sm"` labelled `ADMIN_DELETE_BUTTON` opens an inline panel with `TextareaField` (`ADMIN_DELETE_REASON_LABEL`), `Field` (`ADMIN_DELETE_NAME_LABEL`), a `danger` button `ADMIN_DELETE_CONFIRM` and a `ghost` button `ADMIN_DELETE_CANCEL`. Use `adminControlClasses` for the inputs as the other admin forms do.
 
@@ -1175,6 +1175,6 @@ Check `createGoogleBackedTestUser`'s and `loginAs`'s real signatures in `e2e/fun
 
 ### Task 12: Decision record, gates, release
 
-- [ ] **Step 1:** `DECISIONS.md` ADR-047 (recheck the last number on `main`): what is erased/kept (spec §2), the audit-scrub exception and why it cannot be reached by a client, staff refusal, the `postgres`-owned `delete from auth.users` result from Task 2 (or the fallback taken), anonymous votes, out-of-scope items.
+- [ ] **Step 1:** `DECISIONS.md` ADR-049 (recheck the last number on `main`): what is erased/kept (spec §2), the audit-scrub exception and why it cannot be reached by a client, staff refusal, the `postgres`-owned `delete from auth.users` result from Task 2 (or the fallback taken), anonymous votes, out-of-scope items.
 - [ ] **Step 2:** `npm run typecheck && npm run lint && npm run format:check && npm run test && npm run ka:scan`; all green.
 - [ ] **Step 3:** PR "Members can delete their account (and their data)"; CI green; preview QA with screenshots: profile danger section (member, delegate, staff), the deletion journey on the preview with a staging test account, `/account-deleted`, the admin row action, the updated policy. Owner sign-off in chat; merge; verify on georgia-republic (policy text live, `/account-deleted` 200, profile section visible when signed in is checked by the owner's own account only if they ask).

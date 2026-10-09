@@ -1,4 +1,4 @@
--- Account deletion, the rest of the race class (ADR-047; spec
+-- Account deletion, the rest of the race class (ADR-049; spec
 -- docs/superpowers/specs/2026-10-08-account-deletion-design.md). Fix round 1 of the review of
 -- 20261009160000, which is already on staging: its statements stay as they are and every change
 -- lands here. Same database release (PR #49). Additive for the code on main: the four admin RPCs
