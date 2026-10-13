@@ -4,9 +4,9 @@ import { STRUCTURE_HREF } from "@/lib/structure-copy";
 
 // The homepage's last section (owner request, 2026-10-13): after the About and Principles
 // sections, the page ends by sending the reader to sign up. A red band, the one place red
-// fills a panel, because this is the page's call to act; carved-stone chains run along its
-// edges and the emblem sits beside the words. Paper focus outlines, as on the teal footer:
-// a red ring on red is invisible.
+// fills a panel, because this is the page's call to act; carved-stone rosettes run along its
+// edges, and a teal panel beside it holds the emblem, so both brand colours meet. Paper focus
+// outlines, as on the teal footer: a red ring on red is invisible.
 const KICKER = "შემოგვიერთდი";
 const HEADING = "ქართული რესპუბლიკა შენით იწყება";
 const LEDE =
@@ -39,17 +39,19 @@ function Chain({ id }: { id: string }) {
 export function HomeClosing() {
   return (
     <section aria-labelledby="home-closing-title" className="px-5 pb-12 pt-4 sm:px-10">
-      <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] px-4 py-4 text-paper sm:px-6">
-        <Chain id="home-closing-chain-top" />
-        <div className="grid items-center gap-8 px-2 py-10 sm:px-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid place-items-center bg-teal p-8 lg:order-last lg:p-10">
           <Image
             src="/brand/emblem-roundel-red-notext.png"
             alt=""
             width={360}
             height={360}
-            className="mx-auto w-[112px] sm:w-[150px] lg:order-last lg:w-[220px]"
+            className="w-[112px] sm:w-[150px] lg:w-[220px]"
           />
-          <div className="text-center lg:text-left">
+        </div>
+        <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] px-4 py-4 text-paper sm:px-6">
+          <Chain id="home-closing-chain-top" />
+          <div className="px-2 py-10 text-center sm:px-8 sm:py-12 lg:text-left">
             <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-paper/80">
               {KICKER}
             </div>
@@ -81,8 +83,8 @@ export function HomeClosing() {
               </ButtonLink>
             </div>
           </div>
+          <Chain id="home-closing-chain-bottom" />
         </div>
-        <Chain id="home-closing-chain-bottom" />
       </div>
     </section>
   );
