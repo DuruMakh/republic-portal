@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ABOUT_BELIEFS, ABOUT_GOAL_CORE, ABOUT_PORTAL, ABOUT_TITLE } from "@/lib/about-copy";
 import { formatCountKa } from "@/lib/format";
 
 const data = vi.hoisted(() => ({
@@ -148,6 +149,34 @@ describe("registry box (ADR-048)", () => {
     expect(registry.firstElementChild).toHaveClass("border-teal");
     for (const id of ["stat-approved-delegates", "stat-members-total", "stat-registered-total"]) {
       expect(screen.getByTestId(id)).toHaveClass("text-teal");
+    }
+  });
+});
+
+describe("homepage section about us (owner, 2026-10-13)", () => {
+  it("quotes the goal and links to the about page", async () => {
+    render(await HomePage());
+
+    expect(screen.getByRole("heading", { level: 2, name: ABOUT_TITLE })).toBeInTheDocument();
+    // the drop cap splits the first letter off, so match the paragraph's whole text
+    expect(
+      screen.getByText((_, el) => el?.tagName === "P" && el.textContent === ABOUT_GOAL_CORE),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
+      "href",
+      "/about",
+    );
+  });
+
+  it("no longer repeats the about page's text in its own paragraphs", async () => {
+    render(await HomePage());
+
+    expect(screen.queryByText(/ქართული რესპუბლიკის პორტალის მიზანია/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ვიწრო კორუმპირებულ ელიტას/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ოლიგარქებს/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ღირსეული და მდიდარი ცხოვრების/)).not.toBeInTheDocument();
+    for (const text of [...ABOUT_BELIEFS, ABOUT_PORTAL]) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
     }
   });
 });

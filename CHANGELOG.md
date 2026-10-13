@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - About us (2026-10-13)
+
+A new page, ჩვენ შესახებ, with the movement's own description of who it is and what it wants.
+
+- The page carries the owner's text word for word: who we are, the three things we believe
+  (numbered with the Georgian letters ა, ბ, გ), why unity matters, our goal and the portal's
+  purpose, then a join button.
+- It is linked from the header (right after მთავარი), the phone menu and the footer.
+- On the homepage, the four paragraphs under the headline said almost the same as the new page,
+  so they gave way to a short ჩვენ შესახებ section: the goal sentence, the emblem and a link to
+  the full page.
+- A new braided ornament, in the manner of Georgian stone carving, decorates the page and the
+  homepage section.
+
 ## Unreleased - A second colour (2026-10-08)
 
 The site keeps its newspaper look and gains a second colour, teal, next to the red.

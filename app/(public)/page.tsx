@@ -1,9 +1,12 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
 import { IndexRow } from "@/components/IndexRow";
 import { NewsCard } from "@/components/NewsCard";
+import { OrnamentRule } from "@/components/OrnamentRule";
 import { SectionRule } from "@/components/SectionRule";
+import { ABOUT_GOAL_CORE, ABOUT_HREF, ABOUT_READ_MORE, ABOUT_TITLE } from "@/lib/about-copy";
 import { formatDateKa } from "@/lib/cabinet";
 import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
@@ -21,17 +24,10 @@ import {
 
 export const revalidate = 60;
 
-// Homepage copy supplied by the owner on 2026-10-07. P1 keeps its opening drop cap.
+// Homepage copy supplied by the owner on 2026-10-07. Its four paragraphs gave way to the
+// about-us section on 2026-10-13 (they repeated /about); the section keeps the drop cap.
 const HEADLINE = "ერთად შევქმნათ ქართული რესპუბლიკა";
 const LEDE = "იდეები მხოლოდ მაშინ ცვლიან ქვეყანას, როდესაც ადამიანები მათ გარშემო ერთიანდებიან.";
-const P1 =
-  "ქართული რესპუბლიკის პორტალის მიზანია შექმნას სივრცე, სადაც ქართველი ხალხი გაერთიანდება, ორგანიზდება, აირჩევს საკუთარ წარმომადგენლებს და უშუალოდ მიიღებს მონაწილეობას გადაწყვეტილებების მიღებაში.";
-const P2 =
-  "საქართველო ეკუთვნის ხალხს და არა ვიწრო კორუმპირებულ ელიტას, რომელიც ჩვენს ხარჯზე მდიდრდება და ქვეყნის სიმდიდრეს პირად ქონებად აქცევს.";
-const P3 =
-  "საქართველოს უნდა მართავდნენ ადამიანები, რომლებიც ქართველ ხალხს ემსახურებიან და არა ოლიგარქებს.";
-const P4 =
-  "ჩვენ გვჯერა, რომ ერთად შეგვიძლია დავიბრუნოთ საქართველო და შევქმნათ ქვეყანა, სადაც ქართულ ოჯახს ღირსეული და მდიდარი ცხოვრების შესაძლებლობა აქვს, სახელმწიფო კი თითოეულ ადამიანს ემსახურება.";
 const STRIP = "როგორ შემოგვიერთდები";
 const REG = "რეესტრი — დღეს";
 const TOP = "რეიტინგი — ხუთეული";
@@ -86,21 +82,30 @@ export default async function HomePage() {
           <p className="mt-3.5 font-serif text-[1.12rem] leading-[1.6] text-prose lg:text-[clamp(0.74rem,2.1cqw,1.12rem)] lg:whitespace-nowrap">
             {LEDE}
           </p>
-          <div className="mt-4 grid gap-7 sm:grid-cols-2">
-            <div className="space-y-4">
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">
-                <span className="float-left pr-2.5 pt-1 font-serif text-[3.4rem] font-bold leading-[0.78] text-brand">
-                  {P1.slice(0, 1)}
-                </span>
-                {P1.slice(1)}
-              </p>
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P2}</p>
+          <section className="mt-6">
+            <SectionRule label={ABOUT_TITLE} />
+            <div className="mt-4 grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div>
+                <p className="font-serif text-[1.05rem] leading-[1.75] text-prose">
+                  <span className="float-left pr-2.5 pt-1 font-serif text-[3.4rem] font-bold leading-[0.78] text-brand">
+                    {ABOUT_GOAL_CORE.slice(0, 1)}
+                  </span>
+                  {ABOUT_GOAL_CORE.slice(1)}
+                </p>
+                <p className="mt-3">
+                  <Link href={ABOUT_HREF}>{ABOUT_READ_MORE}</Link>
+                </p>
+              </div>
+              <Image
+                src="/brand/emblem-roundel-red-notext.png"
+                alt=""
+                width={360}
+                height={360}
+                className="hidden w-[104px] sm:block"
+              />
             </div>
-            <div className="space-y-4">
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P3}</p>
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P4}</p>
-            </div>
-          </div>
+            <OrnamentRule className="mt-6" />
+          </section>
           <div id="join-strip" className="mt-6">
             <SectionRule label={STRIP} />
             <div className="grid sm:grid-cols-3">

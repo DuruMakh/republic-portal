@@ -90,8 +90,11 @@ Georgian**. `lang="ka"` throughout.
 - **Minimum text-size floor: 0.74rem (~11px).** No micro-print below it.
 - Justified two-column body is desktop-only; mobile is single-column, left-aligned (Georgian
   does not hyphenate — justified narrow columns produce rivers).
-- The homepage manifesto keeps a serif **drop cap** in `brand` (float technique). Drop caps
-  appear nowhere else.
+- The homepage keeps a serif **drop cap** in `brand` (float technique), now on the about-us
+  section's quote. Drop caps appear nowhere else.
+- **Ornament band** (`OrnamentRule`, `ornament-rule` utility): a braided border in the manner of
+  Georgian stone carving, ink strands with a red dot in each loop. Decorative only; used on
+  `/about` and under the homepage's about-us section.
 
 ## Interaction identity (spec §2.4)
 
