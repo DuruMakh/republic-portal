@@ -5,6 +5,7 @@ import { Pill } from "@/components/Pill";
 import { DELEGATE_LEFT_NOTE } from "@/lib/account-deletion-copy";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
+import { showRatings } from "@/lib/ratings-switch";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { DelegateChange } from "./DelegateChange";
 
@@ -46,6 +47,8 @@ export default async function MyDelegatePage() {
   // (spec 2026-10-08 §3.2). Choosing a delegate opens a fresh row without the note, so it
   // goes away by itself; re-picking central opens no new row, so it stays (accepted).
   const delegateLeft = openMembership?.note === "delegate_left";
+  // Hidden by default (ADR-052): the chosen delegate's member count and the word რეიტინგი.
+  const ratingsShown = showRatings();
 
   return (
     <main>
@@ -71,7 +74,9 @@ export default async function MyDelegatePage() {
           შენ შეგიძლია ნებისმიერ დროს, შეზღუდვის გარეშე შეცვალო დელეგატი.
         </p>
         <p className="mt-1 text-sm text-muted-fg">
-          არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე.
+          {ratingsShown
+            ? "არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე."
+            : "არჩევანი ძალაში შედის მყისიერად."}
         </p>
       </div>
 
@@ -97,7 +102,7 @@ export default async function MyDelegatePage() {
                   </span>
                 )}
               </div>
-              {current ? (
+              {current && ratingsShown ? (
                 <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-sm">
                   <span className="text-muted-fg">წევრი</span>
                   <strong className="font-serif text-lg text-ink">

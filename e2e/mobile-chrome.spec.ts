@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
+import { RATINGS_SHOWN } from "./ratings-switch";
+import { STRUCTURE_NAV_LABEL } from "../lib/structure-copy";
 
 // Task 10 regression guard for the chrome Tasks 3-9 shipped (public masthead
 // menu, sticky join CTA, back headers, StickyBar's single-bar-per-route
@@ -14,13 +16,10 @@ import { FINANCES_PUBLIC } from "./finances-switch";
 // Every Georgian literal below is copied byte-for-byte from shipped source,
 // never hand-typed (DESIGN.md's Georgian integrity gate):
 //   MENU / MENU_NAV_LABEL   <- components/MobileMenu.tsx (MENU, MENU_NAV_LABEL)
-//   BOARD_LABEL             <- app/(public)/layout.tsx navItems ("/leaderboard"),
-//                              same string as lib/mobile-nav.ts's BOARD_INDEX
 //   BACK_LABEL              <- components/MobileBackHeader.tsx's BACK
 //   NEWS_INDEX_LABEL        <- lib/mobile-nav.ts's NEWS_INDEX
 const MENU = "მენიუ";
 const MENU_NAV_LABEL = "მთავარი ნავიგაცია";
-const BOARD_LABEL = "რეიტინგი";
 const BACK_LABEL = "← უკან";
 const NEWS_INDEX_LABEL = "სიახლეები";
 
@@ -38,7 +37,8 @@ const PUBLIC_CHROME_ROUTES = [
   "/news",
   // ADR-042: /events is a 404 too while events are hidden.
   ...(EVENTS_SHOWN ? ["/events"] : []),
-  "/leaderboard",
+  // ADR-052: /leaderboard is a 404 too while ratings are hidden.
+  ...(RATINGS_SHOWN ? ["/leaderboard"] : []),
   ...(FINANCES_PUBLIC ? ["/transparency"] : []),
   "/support",
 ];
@@ -119,7 +119,10 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
   }) => {
     for (const path of [...PUBLIC_CHROME_ROUTES, "/join", "/join/terms", "/login"]) {
       await page.goto(path);
-      await expect(page.getByRole("link", { name: BOARD_LABEL }).first(), path).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: STRUCTURE_NAV_LABEL }).first(),
+        path,
+      ).toBeVisible();
       await expect(page.getByRole("button", { name: MENU }), path).toBeHidden();
       await expect(page.locator("div.sticky.bottom-0"), path).toBeHidden();
       await expect(page.getByRole("banner").last(), path).toHaveCSS("position", "static");
@@ -134,7 +137,9 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
       ...(EVENTS_SHOWN
         ? [{ index: "/events", href: "a[href^='/events/']", url: /\/events\/.+/ }]
         : []),
-      { index: "/leaderboard", href: "a[href^='/delegates/']", url: /\/delegates\/.+/ },
+      ...(RATINGS_SHOWN
+        ? [{ index: "/leaderboard", href: "a[href^='/delegates/']", url: /\/delegates\/.+/ }]
+        : []),
     ];
 
     for (const detail of details) {
@@ -144,7 +149,7 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
       await firstLink.click();
       await expect(page).toHaveURL(detail.url);
       await expect(page.getByRole("link", { name: BACK_LABEL, exact: true })).toBeHidden();
-      await expect(page.getByRole("link", { name: BOARD_LABEL }).first()).toBeVisible();
+      await expect(page.getByRole("link", { name: STRUCTURE_NAV_LABEL }).first()).toBeVisible();
       await expect(page.getByRole("banner")).toHaveCSS("position", "static");
     }
   });

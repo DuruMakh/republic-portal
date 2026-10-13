@@ -7,6 +7,7 @@ import { PageSheet } from "@/components/PageSheet";
 import { SiteFooter } from "@/components/SiteFooter";
 import { filterEventLinks, showEvents } from "@/lib/events-switch";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
+import { filterRatingLinks, showRatings } from "@/lib/ratings-switch";
 import { STRUCTURE_HREF, STRUCTURE_NAV_LABEL } from "@/lib/structure-copy";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
@@ -56,14 +57,20 @@ const footerLinks: { href: string; label: string }[] = [
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const financesPublic = showPublicFinances();
   const eventsShown = showEvents();
+  // Ratings are hidden by default too (ADR-052): no რეიტინგი link in the header or phone menu.
+  const ratingsShown = showRatings();
 
   return (
     <>
       <DemoBanner />
       <PageSheet>
         <Masthead
-          navItems={filterEventLinks(filterFinanceLinks(navItems, financesPublic), eventsShown)}
+          navItems={filterRatingLinks(
+            filterEventLinks(filterFinanceLinks(navItems, financesPublic), eventsShown),
+            ratingsShown,
+          )}
           eventsShown={eventsShown}
+          ratingsShown={ratingsShown}
           cta={<HeaderSessionAction joinLabel={HEADER_CTA_LABEL} />}
         />
         {/* FOOTER-PIN: PageSheet is min-h-screen flex flex-col; a growing plain

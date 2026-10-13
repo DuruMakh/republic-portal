@@ -189,3 +189,14 @@ describe("mobileBackTarget while events are hidden (ADR-042)", () => {
     expect(mobileBackTarget("/events/tbilisi-meeting")?.href).toBe("/events");
   });
 });
+
+describe("mobileBackTarget while ratings are hidden", () => {
+  it("gives a delegate profile no back header, so it never links to the hidden ranking", () => {
+    expect(mobileBackTarget("/delegates/giorgi-khachidze", true, false)).toBeNull();
+  });
+
+  it("leaves every other back target as it is", () => {
+    expect(mobileBackTarget("/news/some-article", true, false)?.href).toBe("/news");
+    expect(mobileBackTarget("/events/tbilisi-meeting", true, false)?.href).toBe("/events");
+  });
+});

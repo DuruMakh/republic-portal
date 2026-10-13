@@ -7,7 +7,7 @@ vi.mock("@/lib/supabase/middleware", () => ({ updateSession }));
 
 const { proxy } = await import("./proxy");
 
-const SWITCHES = ["SHOW_PUBLIC_FINANCES", "SHOW_EVENTS"] as const;
+const SWITCHES = ["SHOW_PUBLIC_FINANCES", "SHOW_EVENTS", "SHOW_RATINGS"] as const;
 const original = Object.fromEntries(SWITCHES.map((name) => [name, process.env[name]]));
 
 beforeEach(() => {
@@ -26,7 +26,7 @@ afterEach(() => {
 const call = (path: string) => proxy(new NextRequest(`http://localhost:3000${path}`));
 
 describe("proxy", () => {
-  it.each(["/transparency", "/events", "/events/any-event-slug"])(
+  it.each(["/transparency", "/events", "/events/any-event-slug", "/leaderboard"])(
     "answers hidden %s with the site-wide not-found page, before any page cache",
     async (path) => {
       const response = await call(path);
@@ -40,11 +40,12 @@ describe("proxy", () => {
   it("passes a page through once its switch is on", async () => {
     process.env.SHOW_PUBLIC_FINANCES = "true";
     process.env.SHOW_EVENTS = "true";
-    for (const path of ["/transparency", "/events"]) {
+    process.env.SHOW_RATINGS = "true";
+    for (const path of ["/transparency", "/events", "/leaderboard"]) {
       const response = await call(path);
       expect(response.headers.get("x-middleware-rewrite")).toBeNull();
     }
-    expect(updateSession).toHaveBeenCalledTimes(2);
+    expect(updateSession).toHaveBeenCalledTimes(3);
   });
 
   it("refreshes the session on ordinary pages", async () => {

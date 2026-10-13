@@ -30,6 +30,7 @@ beforeEach(() => {
   // flip these tests. The public-mode tests below stub it to "true" themselves.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
   vi.stubEnv("SHOW_EVENTS", undefined);
+  vi.stubEnv("SHOW_RATINGS", undefined);
   nav.pathname = "/";
 });
 
@@ -158,5 +159,36 @@ describe("public layout — privacy policy link", () => {
       "href",
       "/privacy",
     );
+  });
+});
+
+describe("public layout — ratings", () => {
+  const RATINGS = "რეიტინგი";
+
+  it("lists no რეიტინგი link in the header or the phone menu while ratings are hidden", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).queryByRole("link", { name: RATINGS }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/leaderboard"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("link", { name: RATINGS }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("brings the რეიტინგი link back once SHOW_RATINGS=true", () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
+    renderLayout();
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: RATINGS })).toHaveAttribute(
+      "href",
+      "/leaderboard",
+    );
+  });
+
+  it("gives a delegate profile on a phone no back link to the hidden ranking", () => {
+    nav.pathname = "/delegates/giorgi-maisuradze";
+    renderLayout();
+    expect(screen.queryByRole("link", { name: "← უკან" })).not.toBeInTheDocument();
   });
 });

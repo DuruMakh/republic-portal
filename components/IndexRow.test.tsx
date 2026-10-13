@@ -30,4 +30,11 @@ describe("IndexRow", () => {
     render(<IndexRow rank={1} name="Alice" meta="Region A" figure="100" figureLabel="votes" />);
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
+
+  it("leaves out the rank and the figure when neither is passed", () => {
+    render(<IndexRow name="Alice" meta="Region A" href="/alice" />);
+    expect(screen.getByRole("link", { name: "Alice" })).toBeInTheDocument();
+    expect(screen.getByText("Region A")).toBeInTheDocument();
+    expect(document.querySelector('[data-testid^="rank-"]')).toBeNull();
+  });
 });

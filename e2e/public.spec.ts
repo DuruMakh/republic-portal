@@ -7,6 +7,7 @@ import { formatCountKa } from "../lib/format";
 import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
 import { serviceClient } from "./otp-helpers";
+import { RATINGS_SHOWN } from "./ratings-switch";
 
 const DEMO_BANNER = "სადემონსტრაციო გარემო — მონაცემები ფიქტიურია";
 const NOT_FOUND_HEADING = "გვერდი ვერ მოიძებნა.";
@@ -19,7 +20,7 @@ const DELEGATE_NOT_FOUND_HEADING = "დელეგატი ვერ მოი
 const EVENT_NOT_FOUND_TITLE = "ღონისძიება ვერ მოიძებნა — ქართული რესპუბლიკა";
 
 /**
- * A page hidden by a switch (ADR-034, ADR-042) must be indistinguishable from a mistyped address:
+ * A page hidden by a switch (ADR-034, ADR-042, ADR-052) must be indistinguishable from a mistyped address:
  * 404, the Georgian notice, and the exact not-found title both in the served HTML (what a link
  * preview or a browser without scripts sees) and in the tab once the page has loaded (ADR-040).
  */
@@ -84,8 +85,11 @@ test.describe("home", () => {
       expect(registeredTotal ?? 0).toBeGreaterThanOrEqual(members);
     }).toPass({ timeout: 90_000, intervals: [2_000, 5_000, 10_000] });
 
-    await page.getByRole("navigation").first().getByRole("link", { name: "რეიტინგი" }).click();
-    await expect(page).toHaveURL(/\/leaderboard$/);
+    // ADR-052: the header's რეიტინგი link is there only while SHOW_RATINGS=true.
+    if (RATINGS_SHOWN) {
+      await page.getByRole("navigation").first().getByRole("link", { name: "რეიტინგი" }).click();
+      await expect(page).toHaveURL(/\/leaderboard$/);
+    }
   });
 
   test("the single register CTA lands on the Google-gated join flow", async ({ page }) => {
@@ -110,6 +114,8 @@ test.describe("home", () => {
 });
 
 test.describe("leaderboard", () => {
+  test.skip(!RATINGS_SHOWN, "ratings are hidden (ADR-052) — see the ratings hidden group");
+
   test("ranks 12 delegates with plain numbering, no medals", async ({ page }) => {
     await page.goto("/leaderboard");
     const rows = page.getByTestId("leader-row");
@@ -134,11 +140,14 @@ test.describe("delegate page", () => {
   test("renders profile, rank and share tags by slug", async ({ page, request }) => {
     await page.goto("/delegates/giorgi-maisuradze");
     await expect(page.getByRole("heading", { name: "გიორგი მაისურაძე" })).toBeVisible();
-    await expect(page.getByText("#1")).toBeVisible();
-    await expect(page.getByText("პოზიცია რეიტინგში")).toBeVisible();
+    // ADR-052: the member count and rank are there only while SHOW_RATINGS=true.
+    await expect(page.getByText("#1")).toHaveCount(RATINGS_SHOWN ? 1 : 0);
+    await expect(page.getByText("პოზიცია რეიტინგში")).toHaveCount(RATINGS_SHOWN ? 1 : 0);
     // .first() keeps the locator on the StatCard label (the active-member stat under
     // test) should the wording ever repeat on the page, without loosening the check.
-    await expect(page.getByText("წევრი", { exact: true }).first()).toBeVisible(); // member stat present (ADR-037)
+    if (RATINGS_SHOWN) {
+      await expect(page.getByText("წევრი", { exact: true }).first()).toBeVisible(); // member stat present (ADR-037)
+    }
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
     expect(ogTitle).toContain("გიორგი მაისურაძე");
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute("content");
@@ -354,6 +363,35 @@ test.describe("structure page", () => {
   });
 });
 
+// ADR-052: ratings are hidden unless SHOW_RATINGS=true. With the switch on, the leaderboard and
+// delegate page groups above cover the visible surfaces.
+test.describe("ratings hidden", () => {
+  test.skip(RATINGS_SHOWN, "ratings are shown — see the leaderboard group");
+
+  test("/leaderboard answers 404 even with the exact address, and the tab never names it", async ({
+    page,
+  }) => {
+    await expectHiddenPage(page, "/leaderboard");
+  });
+
+  test("no public page links to it, and the homepage has no top five", async ({ page }) => {
+    for (const path of ["/", "/news", "/join", "/support", "/delegates/giorgi-maisuradze"]) {
+      await page.goto(path);
+      await expect(page.locator('a[href="/leaderboard"]'), path).toHaveCount(0);
+      await expect(page.getByText(/რეიტინგ/), path).toHaveCount(0);
+    }
+  });
+
+  test("a delegate profile on a phone has no back link to the hidden ranking", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const response = await page.goto("/delegates/giorgi-maisuradze");
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "გიორგი მაისურაძე" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "← უკან", exact: true })).toHaveCount(0);
+    await expect(page.locator('a[href="/leaderboard"]')).toHaveCount(0);
+  });
+});
+
 // ADR-042: events are hidden unless SHOW_EVENTS=true. With the switch on, community-events.spec.ts
 // and the homepage check above cover the visible pages.
 test.describe("events hidden", () => {
@@ -375,7 +413,13 @@ test.describe("events hidden", () => {
   });
 
   test("no public page links to it", async ({ page }) => {
-    for (const path of ["/", "/news", "/leaderboard", "/join", "/support"]) {
+    for (const path of [
+      "/",
+      "/news",
+      ...(RATINGS_SHOWN ? ["/leaderboard"] : []),
+      "/join",
+      "/support",
+    ]) {
       await page.goto(path);
       await expect(page.locator('a[href="/events"]'), path).toHaveCount(0);
       await expect(page.locator('a[href^="/events/"]'), path).toHaveCount(0);
@@ -394,6 +438,7 @@ test.describe("not-found titles after the 60-second refresh", () => {
     ...(FINANCES_PUBLIC ? [] : ["/transparency"]),
     // a real seeded event's address too: hiding events must not leak its title
     ...(EVENTS_SHOWN ? [] : ["/events", "/events/saerto-kreba-tbilisshi"]),
+    ...(RATINGS_SHOWN ? [] : ["/leaderboard"]),
   ].map((path): [string, string, string] => [path, NOT_FOUND_TITLE, NOT_FOUND_HEADING]);
   pages.push(
     ["/news/no-such-article-xyz", ARTICLE_NOT_FOUND_TITLE, NOT_FOUND_HEADING],
