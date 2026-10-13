@@ -19,6 +19,7 @@ import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
+import { OrnamentBand, Rosette } from "@/components/Ornament";
 import { PageSheet } from "@/components/PageSheet";
 import { PebbleTally } from "@/components/PebbleTally";
 import { Pill } from "@/components/Pill";
@@ -28,6 +29,7 @@ import { Select, SelectField } from "@/components/Select";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
+import { ABOUT_TITLE } from "@/lib/about-copy";
 import { adminTabs } from "@/lib/admin";
 import { BOARD_SIZE, votesNeeded } from "@/lib/board-rules";
 import {
@@ -532,6 +534,14 @@ export default function StyleguidePage() {
               notice={ROSTER_NOTICE}
               placeholders={2}
             />
+          </div>
+        </Card>
+
+        {/* 17b. /about motif: the carved-stone rosette and border band, in teal. */}
+        <Card title={ABOUT_TITLE}>
+          <div className="flex flex-col gap-6">
+            <Rosette className="w-[150px] text-teal" />
+            <OrnamentBand className="text-teal" />
           </div>
         </Card>
 

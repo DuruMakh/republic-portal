@@ -14,4 +14,13 @@ describe("sitemap", () => {
       priority: 0.3,
     });
   });
+
+  it("lists the about page", async () => {
+    const entries = await sitemap();
+    expect(entries).toContainEqual({
+      url: "https://example.test/about",
+      changeFrequency: "monthly",
+      priority: 0.7,
+    });
+  });
 });

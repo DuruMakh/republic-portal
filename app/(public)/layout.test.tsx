@@ -89,6 +89,26 @@ describe("public layout — structure link", () => {
   });
 });
 
+describe("public layout — about link", () => {
+  const ABOUT = "ჩვენ შესახებ";
+
+  it("links ჩვენ შესახებ right after მთავარი in the header, and from the footer and the phone menu", () => {
+    renderLayout();
+    const header = within(screen.getByRole("banner"));
+    expect(header.getByRole("link", { name: ABOUT })).toHaveAttribute("href", "/about");
+    const labels = header.getAllByRole("link").map((a) => a.textContent);
+    expect(labels.indexOf(ABOUT)).toBe(labels.indexOf("მთავარი") + 1);
+    expect(
+      within(screen.getByRole("contentinfo")).getByRole("link", { name: ABOUT }),
+    ).toHaveAttribute("href", "/about");
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: ABOUT })).toHaveAttribute(
+      "href",
+      "/about",
+    );
+  });
+});
+
 describe("public layout — news and events live on the homepage, not the header", () => {
   const NEWS = "სიახლეები";
   const EVENTS = "ღონისძიებები";

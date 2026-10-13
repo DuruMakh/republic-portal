@@ -20,6 +20,8 @@ const PAGES = [
   "/support",
   // The organization structure page (ADR-038): two-column sections that must stack.
   "/structure",
+  // The about page: three belief columns and two text columns that must stack.
+  "/about",
 ];
 
 test.describe("360px viewport has no horizontal overflow", () => {
