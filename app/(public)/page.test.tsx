@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HOME_ABOUT_EXCERPT } from "@/lib/about-copy";
 import { formatCountKa } from "@/lib/format";
+import { PRINCIPLES } from "@/lib/principles-copy";
 
 const data = vi.hoisted(() => ({
   fetchPublicStats: vi.fn(),
@@ -159,7 +160,28 @@ describe("about section below the hero", () => {
 
     const section = screen.getByRole("region", { name: "ჩვენ შესახებ" });
     expect(section.previousElementSibling?.querySelector("h1")).not.toBeNull();
+    expect(section.nextElementSibling).toBe(
+      screen.getByRole("region", { name: "ჩვენი პრინციპები" }),
+    );
     expect(section).toHaveTextContent(HOME_ABOUT_EXCERPT);
     expect(screen.getByRole("link", { name: "წაიკითხე სრულად" })).toHaveAttribute("href", "/about");
+  });
+});
+
+describe("homepage principles section", () => {
+  it("lists the twelve principles, each linking to its place on /principles", async () => {
+    render(await HomePage());
+
+    const section = screen.getByRole("region", { name: "ჩვენი პრინციპები" });
+    expect(within(section).getByRole("link", { name: "ყველა პრინციპი →" })).toHaveAttribute(
+      "href",
+      "/principles",
+    );
+    PRINCIPLES.forEach(({ title }, i) => {
+      expect(within(section).getByRole("link", { name: new RegExp(title) })).toHaveAttribute(
+        "href",
+        `/principles#principle-${i + 1}`,
+      );
+    });
   });
 });

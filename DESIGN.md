@@ -83,7 +83,7 @@ Georgian**. `lang="ka"` throughout.
 - **Sans** — UI labels, forms, buttons, nav, and small-caps section labels (~.7rem, weight
   700, letterspacing ~.18em).
 - **Display (condensed)** — `display-heading` utility: Noto Sans Georgian at `font-stretch: 68%`,
-  weight ~850, tight leading. Used only on `/structure` headings for now (ADR-038).
+  weight ~850, tight leading. Used only on `/structure` and `/principles` headings, and the homepage principles section (ADR-038).
 - Base 15px, line-height 1.65. Page `h1`s are serif 2.1–2.7rem. The homepage headline
   uses `text-wrap: balance` on smaller screens; with the desktop sidebar, its size is
   4% of the main column's width (`4cqw`) so the owner's title fits on one line.
