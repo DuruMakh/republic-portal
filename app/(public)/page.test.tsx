@@ -202,13 +202,41 @@ describe("homepage section on our principles (owner, 2026-10-13)", () => {
     );
   });
 
-  it("sits third, after the about-us section and the join strip", async () => {
+  it("follows the about-us section, ahead of the news", async () => {
     render(await HomePage());
 
     const order = screen
       .getAllByRole("heading", { level: 2 })
       .map((h) => h.textContent)
       .slice(0, 3);
-    expect(order).toEqual([ABOUT_TITLE, "როგორ შემოგვიერთდები", PRINCIPLES_TITLE]);
+    expect(order).toEqual([ABOUT_TITLE, PRINCIPLES_TITLE, "სიახლეები"]);
+  });
+});
+
+describe("homepage closing join band (owner, 2026-10-13)", () => {
+  it("ends the page with the three membership steps and the join button", async () => {
+    const { container } = render(await HomePage());
+
+    const headings = screen.getAllByRole("heading", { level: 2 });
+    const band = headings.at(-1)!.closest("section")!;
+    expect(headings.at(-1)).toHaveTextContent("როგორ შემოგვიერთდები");
+    // full width: a sibling after the main column and sidebar grid, not inside it
+    expect(band.parentElement).toBe(container.querySelector("main"));
+    expect(within(band).getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(
+      "href",
+      "/join",
+    );
+    expect(within(band).getByRole("link", { name: "დაიწყე რეგისტრაციით →" })).toHaveAttribute(
+      "href",
+      "/join",
+    );
+    expect(within(band).getByRole("link", { name: "გაეცანი წესებს →" })).toHaveAttribute(
+      "href",
+      "/join/terms",
+    );
+    expect(within(band).getByRole("link", { name: "შემოგვიერთდი →" })).toHaveAttribute(
+      "href",
+      "/join",
+    );
   });
 });

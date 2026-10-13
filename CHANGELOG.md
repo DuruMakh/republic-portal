@@ -12,8 +12,11 @@ Two new pages: ჩვენ შესახებ, the movement's own descriptio
   number and its heading, after a clickable list of all twelve that jumps to each one.
 - Both pages are linked from the header, the phone menu and the footer. On tablets the header
   links are set slightly smaller so all of them fit beside the join button.
-- On the homepage, a third section lists the twelve principles, each linking to its place on the
-  principles page.
+- On the homepage, a section after ჩვენ შესახებ lists the twelve principles, each linking to its
+  place on the principles page.
+- The homepage now ends with a wide როგორ შემოგვიერთდები band: the three steps (supporter, member,
+  delegate), each with a large number, and a join button. The steps moved here from the middle of
+  the page.
 - On the homepage, the four paragraphs under the headline said almost the same as the new page,
   so they gave way to a short ჩვენ შესახებ section: the goal sentence, the emblem and a link to
   the full page.
