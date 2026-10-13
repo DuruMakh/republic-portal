@@ -90,6 +90,24 @@ describe("public layout — structure link", () => {
   });
 });
 
+describe("public layout — principles link", () => {
+  const PRINCIPLES = "ჩვენი პრინციპები";
+
+  it("links ჩვენი პრინციპები from the header, the footer and the phone menu", () => {
+    renderLayout();
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", { name: PRINCIPLES }),
+    ).toHaveAttribute("href", "/principles");
+    expect(
+      within(screen.getByRole("contentinfo")).getByRole("link", { name: PRINCIPLES }),
+    ).toHaveAttribute("href", "/principles");
+    fireEvent.click(screen.getByRole("button", { name: MENU }));
+    expect(
+      within(screen.getByRole("dialog")).getByRole("link", { name: PRINCIPLES }),
+    ).toHaveAttribute("href", "/principles");
+  });
+});
+
 describe("public layout — news and events live on the homepage, not the header", () => {
   const NEWS = "სიახლეები";
   const EVENTS = "ღონისძიებები";
