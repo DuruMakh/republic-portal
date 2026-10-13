@@ -77,15 +77,6 @@
   border-radius: 48% 52% 55% 45% / 50% 46% 54% 50%;
 }
 
-/* /about: a carved border band, a running row of lozenges between two rules. A mask, so the band
-   takes the element's text colour from a token class (text-teal, text-brand). */
-@utility ornament-band {
-  background-color: currentColor;
-  --ornament: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='16' fill='none' stroke='black' stroke-width='1.5'%3E%3Cpath d='M0 .75h24M0 15.25h24M12 3.5l4.5 4.5-4.5 4.5L7.5 8z'/%3E%3Ccircle cx='0' cy='8' r='1.6' fill='black' stroke='none'/%3E%3Ccircle cx='24' cy='8' r='1.6' fill='black' stroke='none'/%3E%3C/svg%3E");
-  -webkit-mask: var(--ornament) repeat-x left center / 24px 16px;
-  mask: var(--ornament) repeat-x left center / 24px 16px;
-}
-
 /* Masthead rule (ADR-048): 2px ink, a 2px gap, 1px teal, drawn as the header's own bottom
    border so its position and stickiness stay untouched (e2e pins both). The gap is transparent:
    it shows the header's own background (paper, so it stays opaque while sticky) or whatever

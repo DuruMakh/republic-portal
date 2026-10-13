@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { OrnamentBand, Rosette } from "@/components/Ornament";
+import Image from "next/image";
+import { Braid } from "@/components/Ornament";
 import {
   ABOUT_BELIEFS,
   ABOUT_GOAL,
@@ -7,73 +8,73 @@ import {
   ABOUT_PURPOSE,
   ABOUT_TITLE,
   ABOUT_UNITY,
-  BELIEF_LETTERS,
 } from "@/lib/about-copy";
 import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 
 // app/layout.tsx sets a plain string title, so each public page carries the site-name suffix.
 export const metadata: Metadata = { title: `${ABOUT_TITLE} — ${SUPPORT_EYEBROW}` };
 
-const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
-const SECTION = "py-[clamp(36px,5vw,64px)]";
-const BODY = "font-serif text-[clamp(1rem,1.4vw,1.1rem)] leading-[1.8] text-prose";
+const WRAP = "mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-10";
 
 export default function AboutPage() {
-  const [firstWord, ...rest] = ABOUT_TITLE.split(" ");
-
   return (
     <main>
       <section
-        className={`${WRAP} grid items-center gap-[clamp(20px,4vw,56px)] py-[clamp(28px,4vw,48px)] min-[900px]:grid-cols-[minmax(0,1fr)_auto]`}
+        className={`${WRAP} grid items-center gap-10 py-[clamp(40px,6vw,88px)] min-[900px]:grid-cols-[minmax(0,1fr)_auto] min-[900px]:gap-16`}
       >
         <div>
-          <h1 className="display-heading mb-5 text-[clamp(2.4rem,6vw,4.4rem)] leading-[1.05] text-ink">
-            {firstWord} <span className="text-brand">{rest.join(" ")}</span>
+          <div className="text-[0.74rem] font-bold uppercase tracking-[.2em] text-brand">
+            {SUPPORT_EYEBROW}
+          </div>
+          <h1 className="mt-4 font-serif text-[clamp(2.6rem,6vw,4.6rem)] leading-[1.05] font-bold text-ink">
+            {ABOUT_TITLE}
           </h1>
-          <p className="max-w-[24em] font-serif text-[clamp(1.2rem,2.2vw,1.6rem)] leading-normal text-ink">
+          <p className="mt-6 max-w-[20em] font-serif text-[clamp(1.35rem,2.8vw,2.1rem)] leading-[1.4] text-ink">
             {ABOUT_INTRO}
           </p>
         </div>
-        <Rosette className="hidden w-[clamp(150px,18vw,210px)] text-teal min-[900px]:block" />
+        <Image
+          src="/brand/emblem-roundel-red-notext.png"
+          alt=""
+          width={360}
+          height={360}
+          priority
+          className="mx-auto w-[150px] sm:w-[200px] min-[900px]:w-[260px]"
+        />
       </section>
 
-      <div className={WRAP}>
-        <OrnamentBand className="text-teal" />
-      </div>
-
-      <section className={SECTION}>
-        <ol className={`${WRAP} grid gap-y-10 min-[900px]:grid-cols-3 min-[900px]:gap-x-10`}>
-          {ABOUT_BELIEFS.map((belief, i) => (
-            <li key={belief} className="border-t-2 border-ink pt-5">
-              <span
-                aria-hidden="true"
-                className="block font-serif text-[clamp(3.2rem,5vw,4.2rem)] leading-none font-extrabold text-transparent [-webkit-text-stroke:1.5px_var(--color-brand)]"
-              >
-                {BELIEF_LETTERS[i]}
-              </span>
-              <p className={`mt-4 ${BODY}`}>{belief}</p>
+      <section className="pb-[clamp(40px,6vw,80px)]">
+        <ul className={WRAP}>
+          {ABOUT_BELIEFS.map((belief) => (
+            <li
+              key={belief}
+              className="border-t border-line py-[clamp(24px,3vw,36px)] last:border-b"
+            >
+              <p className="max-w-[46em] border-l-4 border-brand pl-[clamp(16px,2.5vw,32px)] font-serif text-[clamp(1.15rem,2vw,1.5rem)] leading-[1.6] text-ink">
+                {belief}
+              </p>
             </li>
           ))}
-        </ol>
+        </ul>
       </section>
 
-      <section className={`${SECTION} border-y border-line bg-paper-bright`}>
-        <div className={`${WRAP} flex flex-col items-center text-center`}>
-          <Rosette className="w-14 text-teal" />
-          <p className="mt-6 max-w-[34em] font-serif text-[clamp(1.2rem,2.3vw,1.6rem)] leading-[1.6] font-bold text-ink [text-wrap:balance]">
+      <section className="bg-brand text-paper">
+        <Braid className="text-paper" groove="brand" />
+        <div className={`${WRAP} py-[clamp(44px,6vw,80px)] text-center`}>
+          <p className="mx-auto max-w-[30em] font-serif text-[clamp(1.3rem,2.6vw,1.9rem)] leading-[1.55] font-bold [text-wrap:balance]">
             {ABOUT_UNITY}
           </p>
         </div>
+        <Braid className="text-paper" groove="brand" />
       </section>
 
-      <section className={SECTION}>
-        <div className={`${WRAP} grid gap-8 min-[900px]:grid-cols-2 min-[900px]:gap-14`}>
-          <p className={`border-l-2 border-brand pl-5 ${BODY}`}>{ABOUT_GOAL}</p>
-          <p className={BODY}>{ABOUT_PURPOSE}</p>
-        </div>
-        <div className={`${WRAP} mt-[clamp(36px,5vw,64px)]`}>
-          <OrnamentBand className="text-teal" />
-        </div>
+      <section className={`${WRAP} py-[clamp(48px,7vw,96px)]`}>
+        <p className="max-w-[34em] font-serif text-[clamp(1.25rem,2.4vw,1.8rem)] leading-[1.5] font-bold text-ink">
+          {ABOUT_GOAL}
+        </p>
+        <p className="mt-8 max-w-[44em] font-serif text-[clamp(1.05rem,1.6vw,1.2rem)] leading-[1.8] text-prose">
+          {ABOUT_PURPOSE}
+        </p>
       </section>
     </main>
   );

@@ -19,7 +19,7 @@ import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
-import { OrnamentBand, Rosette } from "@/components/Ornament";
+import { Braid } from "@/components/Ornament";
 import { PageSheet } from "@/components/PageSheet";
 import { PebbleTally } from "@/components/PebbleTally";
 import { Pill } from "@/components/Pill";
@@ -537,11 +537,10 @@ export default function StyleguidePage() {
           </div>
         </Card>
 
-        {/* 17b. /about motif: the carved-stone rosette and border band, in teal. */}
+        {/* 17b. /about motif: the carved-stone braid that edges the red band. */}
         <Card title={ABOUT_TITLE}>
-          <div className="flex flex-col gap-6">
-            <Rosette className="w-[150px] text-teal" />
-            <OrnamentBand className="text-teal" />
+          <div className="bg-brand">
+            <Braid className="text-paper" groove="brand" />
           </div>
         </Card>
 
