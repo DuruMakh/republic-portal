@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formatCountKa } from "@/lib/format";
+import { PRINCIPLES } from "@/lib/principles-copy";
 
 const data = vi.hoisted(() => ({
   fetchPublicStats: vi.fn(),
@@ -149,5 +150,23 @@ describe("registry box (ADR-048)", () => {
     for (const id of ["stat-approved-delegates", "stat-members-total", "stat-registered-total"]) {
       expect(screen.getByTestId(id)).toHaveClass("text-teal");
     }
+  });
+});
+
+describe("homepage principles section", () => {
+  it("lists the twelve principles, each linking to its place on /principles", async () => {
+    render(await HomePage());
+
+    const section = screen.getByRole("region", { name: "ჩვენი პრინციპები" });
+    expect(within(section).getByRole("link", { name: "ყველა პრინციპი →" })).toHaveAttribute(
+      "href",
+      "/principles",
+    );
+    PRINCIPLES.forEach(({ title }, i) => {
+      expect(within(section).getByRole("link", { name: new RegExp(title) })).toHaveAttribute(
+        "href",
+        `/principles#principle-${i + 1}`,
+      );
+    });
   });
 });
