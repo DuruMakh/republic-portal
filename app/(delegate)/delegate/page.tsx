@@ -8,6 +8,7 @@ import { StatCard } from "@/components/StatCard";
 import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
+import { showRatings } from "@/lib/ratings-switch";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { rankDelegates } from "@/lib/ranking";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
@@ -43,27 +44,31 @@ export default async function DelegateDashboardPage() {
   const teamRsvps = (teamRsvpsRaw ?? []) as unknown as TeamRsvpEvent[];
 
   // Rank reuses the leaderboard's exact inputs + math (spec §3.6) so the two
-  // surfaces can never disagree.
+  // surfaces can never disagree. Ratings hidden (the default, ADR-052): no rank card, so no
+  // reads for it either.
+  const ratingsShown = showRatings();
   let rankValue: string = "—";
   let rankSub: string | undefined;
-  const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
-    supabase.from("public_delegates").select("id, first_name, last_name, members"),
-    supabase.auth.getUser(),
-  ]);
-  if (rankError) {
-    // an approved delegate must never see an honest-looking „—" because a query failed
-    throw new Error(`public_delegates query failed: ${rankError.message}`);
-  }
-  if (authResult.error || !authResult.data.user) {
-    // same invariant: a failed auth read must throw, not silently degrade the rank to „—"
-    throw new Error(`auth.getUser failed: ${authResult.error?.message ?? "no user"}`);
-  }
-  const authUser = authResult.data.user;
-  const ranked = rankDelegates(publicDelegates ?? []);
-  const mine = ranked.find((d) => d.id === authUser.id);
-  if (mine) {
-    rankValue = `#${mine.rank}`;
-    rankSub = `${mine.rank} / ${ranked.length} დელეგატი`;
+  if (ratingsShown) {
+    const [{ data: publicDelegates, error: rankError }, authResult] = await Promise.all([
+      supabase.from("public_delegates").select("id, first_name, last_name, members"),
+      supabase.auth.getUser(),
+    ]);
+    if (rankError) {
+      // an approved delegate must never see an honest-looking „—" because a query failed
+      throw new Error(`public_delegates query failed: ${rankError.message}`);
+    }
+    if (authResult.error || !authResult.data.user) {
+      // same invariant: a failed auth read must throw, not silently degrade the rank to „—"
+      throw new Error(`auth.getUser failed: ${authResult.error?.message ?? "no user"}`);
+    }
+    const authUser = authResult.data.user;
+    const ranked = rankDelegates(publicDelegates ?? []);
+    const mine = ranked.find((d) => d.id === authUser.id);
+    if (mine) {
+      rankValue = `#${mine.rank}`;
+      rankSub = `${mine.rank} / ${ranked.length} დელეგატი`;
+    }
   }
 
   return (
@@ -100,7 +105,9 @@ export default async function DelegateDashboardPage() {
             sub="ლიმიტის გარეშე"
             accent="brand"
           />
-          <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
+          {ratingsShown ? (
+            <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
+          ) : null}
         </div>
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-4">

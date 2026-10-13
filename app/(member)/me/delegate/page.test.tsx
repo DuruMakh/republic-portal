@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DELEGATE_LEFT_NOTE } from "@/lib/account-deletion-copy";
 import { cabinetStateFixture } from "@/lib/test-cabinet-state";
 import {
@@ -18,8 +18,15 @@ vi.mock("next/navigation", () => ({
     throw new Error(`redirect:${to}`);
   },
 }));
-// the picker has its own test (and needs the router)
-vi.mock("./DelegateChange", () => ({ DelegateChange: () => null }));
+// the picker has its own test (and needs the router); its props are kept to check what reaches
+// the browser
+const picker = vi.hoisted(() => ({ props: null as unknown }));
+vi.mock("./DelegateChange", () => ({
+  DelegateChange: (props: unknown) => {
+    picker.props = props;
+    return null;
+  },
+}));
 
 import MyDelegatePage from "./page";
 
@@ -37,7 +44,12 @@ function session(openMembership: { note: "delegate_left" | null } | null): FakeS
 }
 
 beforeEach(() => {
+  vi.stubEnv("SHOW_RATINGS", undefined);
   server.getCabinetState.mockResolvedValue(cabinetStateFixture());
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("my-delegate page: the delegate-left note (spec 2026-10-08 §3.2)", () => {
@@ -78,5 +90,64 @@ describe("my-delegate page: the delegate-left note (spec 2026-10-08 §3.2)", () 
       { method: "is", args: ["ended_at", null] },
       { method: "maybeSingle", args: [] },
     ]);
+  });
+});
+
+describe("my-delegate page: the chosen delegate's member count (ADR-052)", () => {
+  const DELEGATE_ID = "00000000-0000-0000-0000-000000000001";
+  const RATING_NOTE = "არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე.";
+
+  beforeEach(() => {
+    server.getCabinetState.mockResolvedValue(
+      cabinetStateFixture({
+        chosenDelegate: { id: DELEGATE_ID, firstName: "ეკა", lastName: "მელაძე" },
+      }),
+    );
+    const s = fakeSession({
+      from: (table) => {
+        if (table === "memberships") return ok(null);
+        if (table === "regions") return ok([]);
+        if (table === "public_delegates") {
+          return ok([
+            {
+              id: DELEGATE_ID,
+              first_name: "ეკა",
+              last_name: "მელაძე",
+              region_id: 8,
+              region_name_ka: "გურია",
+              members: 84,
+            },
+          ]);
+        }
+        return undefined;
+      },
+    });
+    server.createServerSupabase.mockResolvedValue(s.client);
+  });
+
+  it("names the delegate without their member count or the ranking while ratings are hidden", async () => {
+    render(await MyDelegatePage());
+
+    expect(screen.getByTestId("current-delegate")).toHaveTextContent("ეკა მელაძე");
+    expect(screen.queryByText("84")).toBeNull();
+    expect(screen.queryByText(RATING_NOTE)).toBeNull();
+    expect(screen.getByText("არჩევანი ძალაში შედის მყისიერად.")).toBeInTheDocument();
+  });
+
+  it("sends the picker no member counts, since its props reach the browser", async () => {
+    render(await MyDelegatePage());
+
+    const { delegates } = picker.props as { delegates: Record<string, unknown>[] };
+    expect(delegates).toHaveLength(1);
+    expect(delegates[0]).not.toHaveProperty("members");
+  });
+
+  it("brings both back once SHOW_RATINGS=true", async () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
+
+    render(await MyDelegatePage());
+
+    expect(screen.getByText("84")).toBeInTheDocument();
+    expect(screen.getByText(RATING_NOTE)).toBeInTheDocument();
   });
 });

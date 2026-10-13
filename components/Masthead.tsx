@@ -25,6 +25,7 @@ export function Masthead({
   sessionSlot,
   tag,
   eventsShown = true,
+  ratingsShown = true,
 }: {
   navItems: NavItem[];
   cta: ReactNode;
@@ -41,6 +42,8 @@ export function Masthead({
    * pointing at the hidden index (ADR-042).
    */
   eventsShown?: boolean;
+  /** showRatings(), passed the same way: a delegate profile gets no back header to the hidden ranking (ADR-052). */
+  ratingsShown?: boolean;
 }) {
   const pathname = useChromePathname();
 
@@ -61,7 +64,7 @@ export function Masthead({
   // empty <nav> that a screen reader would announce as a hollow landmark.
   const hasNav = navItems.length > 0 || Boolean(sessionSlot) || Boolean(cta);
 
-  const back = mobileBackTarget(pathname, eventsShown);
+  const back = mobileBackTarget(pathname, eventsShown, ratingsShown);
   const mobileSticky = pathname !== "/styleguide" && !pathname.startsWith("/admin");
 
   return (
