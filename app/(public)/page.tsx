@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ButtonLink } from "@/components/ButtonLink";
 import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
 import { IndexRow } from "@/components/IndexRow";
@@ -12,10 +11,8 @@ import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
 import { showEvents } from "@/lib/events-switch";
 import { formatCountKa } from "@/lib/format";
-import { PRINCIPLES, PRINCIPLES_HREF, PRINCIPLES_TITLE } from "@/lib/principles-copy";
 import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
-import { CLOSING_CTA } from "@/lib/structure-copy";
 import {
   fetchPublicDelegates,
   fetchPublicEvents,
@@ -48,11 +45,6 @@ const LADDER_2_LINK = "დაიწყე რეგისტრაციით �
 const LADDER_3_TITLE = "დელეგატი";
 const LADDER_3_DESC = "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.";
 const LADDER_3_LINK = "გაეცანი წესებს →";
-const LADDER = [
-  { title: LADDER_1_TITLE, desc: LADDER_1_DESC, link: LADDER_1_LINK, href: "/join" },
-  { title: LADDER_2_TITLE, desc: LADDER_2_DESC, link: LADDER_2_LINK, href: "/join" },
-  { title: LADDER_3_TITLE, desc: LADDER_3_DESC, link: LADDER_3_LINK, href: "/join/terms" },
-] as const;
 const STAT_REGISTERED_LABEL = "მხარდამჭერი";
 const STAT_MEMBERS_LABEL = "წევრი";
 const STAT_APPROVED_LABEL = "დამტკიცებული დელეგატი";
@@ -112,25 +104,32 @@ export default async function HomePage() {
               />
             </div>
           </section>
-          <section className="mt-8">
-            <SectionRule label={PRINCIPLES_TITLE} />
-            <ol className="grid sm:grid-cols-2 sm:gap-x-8">
-              {PRINCIPLES.map(({ title }, i) => (
-                <li key={title}>
-                  <Link
-                    href={`${PRINCIPLES_HREF}#principle-${i + 1}`}
-                    className="flex items-baseline gap-3 border-b border-hairline py-2.5 text-ink no-underline hover:text-brand"
-                  >
-                    <span className="w-6 shrink-0 font-serif font-bold text-brand">{i + 1}</span>{" "}
-                    <span className="text-[0.88rem] font-semibold leading-snug">{title}</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-3">
-              <Link href={PRINCIPLES_HREF}>{ABOUT_READ_MORE}</Link>
-            </p>
-          </section>
+          <div id="join-strip" className="mt-6">
+            <SectionRule label={STRIP} />
+            <div className="grid sm:grid-cols-3">
+              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
+                <div className="font-serif font-bold text-ink">{LADDER_1_TITLE}</div>
+                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_1_DESC}</p>
+                <p className="mt-2">
+                  <Link href="/join">{LADDER_1_LINK}</Link>
+                </p>
+              </div>
+              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
+                <div className="font-serif font-bold text-ink">{LADDER_2_TITLE}</div>
+                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_2_DESC}</p>
+                <p className="mt-2">
+                  <Link href="/join">{LADDER_2_LINK}</Link>
+                </p>
+              </div>
+              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
+                <div className="font-serif font-bold text-ink">{LADDER_3_TITLE}</div>
+                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_3_DESC}</p>
+                <p className="mt-2">
+                  <Link href="/join/terms">{LADDER_3_LINK}</Link>
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="mt-10">
             <SectionRule label={NEWS_LABEL} action={<Link href="/news">{FULL}</Link>} />
             {news.length === 0 ? (
@@ -225,36 +224,6 @@ export default async function HomePage() {
           </div>
         </aside>
       </div>
-      <section
-        id="join-strip"
-        className="border-t-2 border-ink bg-paper-bright px-5 py-[clamp(36px,5vw,64px)] sm:px-10"
-      >
-        <h2 className="display-heading text-center text-[clamp(2rem,4.2vw,3.2rem)] text-ink">
-          {STRIP}
-        </h2>
-        <ol className="mx-auto mt-[clamp(24px,3vw,40px)] grid max-w-[1040px] gap-[clamp(20px,3vw,40px)] sm:grid-cols-3">
-          {LADDER.map(({ title, desc, link, href }, i) => (
-            <li key={title} className="border-t-2 border-ink pt-4">
-              <span
-                aria-hidden="true"
-                className="block font-serif text-[clamp(2.6rem,4vw,3.4rem)] leading-none font-extrabold text-transparent [-webkit-text-stroke:1.5px_var(--color-brand)]"
-              >
-                {i + 1}
-              </span>
-              <div className="mt-3 font-serif text-[1.15rem] font-bold text-ink">{title}</div>
-              <p className="mt-1 text-[0.88rem] leading-relaxed text-muted-fg">{desc}</p>
-              <p className="mt-3">
-                <Link href={href}>{link}</Link>
-              </p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-[clamp(28px,4vw,44px)] flex justify-center">
-          <ButtonLink href="/join" size="lg">
-            {CLOSING_CTA}
-          </ButtonLink>
-        </div>
-      </section>
     </main>
   );
 }

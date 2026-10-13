@@ -1,8 +1,7 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ABOUT_BELIEFS, ABOUT_GOAL_CORE, ABOUT_PORTAL, ABOUT_TITLE } from "@/lib/about-copy";
 import { formatCountKa } from "@/lib/format";
-import { PRINCIPLES, PRINCIPLES_TITLE } from "@/lib/principles-copy";
 
 const data = vi.hoisted(() => ({
   fetchPublicStats: vi.fn(),
@@ -158,13 +157,12 @@ describe("homepage section about us (owner, 2026-10-13)", () => {
   it("quotes the goal and links to the about page", async () => {
     render(await HomePage());
 
-    const section = screen.getByRole("heading", { level: 2, name: ABOUT_TITLE }).closest("section");
-    expect(section).not.toBeNull();
+    expect(screen.getByRole("heading", { level: 2, name: ABOUT_TITLE })).toBeInTheDocument();
     // the drop cap splits the first letter off, so match the paragraph's whole text
     expect(
       screen.getByText((_, el) => el?.tagName === "P" && el.textContent === ABOUT_GOAL_CORE),
     ).toBeInTheDocument();
-    expect(within(section!).getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
       "href",
       "/about",
     );
@@ -180,63 +178,5 @@ describe("homepage section about us (owner, 2026-10-13)", () => {
     for (const text of [...ABOUT_BELIEFS, ABOUT_PORTAL]) {
       expect(screen.queryByText(text)).not.toBeInTheDocument();
     }
-  });
-});
-
-describe("homepage section on our principles (owner, 2026-10-13)", () => {
-  it("lists the twelve principles, each linking to its place on the page", async () => {
-    render(await HomePage());
-
-    const heading = screen.getByRole("heading", { level: 2, name: PRINCIPLES_TITLE });
-    const section = heading.closest("section");
-    expect(section).not.toBeNull();
-    PRINCIPLES.forEach(({ title }, i) => {
-      expect(within(section!).getByRole("link", { name: `${i + 1} ${title}` })).toHaveAttribute(
-        "href",
-        `/principles#principle-${i + 1}`,
-      );
-    });
-    expect(within(section!).getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
-      "href",
-      "/principles",
-    );
-  });
-
-  it("follows the about-us section, ahead of the news", async () => {
-    render(await HomePage());
-
-    const order = screen
-      .getAllByRole("heading", { level: 2 })
-      .map((h) => h.textContent)
-      .slice(0, 3);
-    expect(order).toEqual([ABOUT_TITLE, PRINCIPLES_TITLE, "სიახლეები"]);
-  });
-});
-
-describe("homepage closing join band (owner, 2026-10-13)", () => {
-  it("ends the page with the three membership steps and the join button", async () => {
-    const { container } = render(await HomePage());
-
-    const headings = screen.getAllByRole("heading", { level: 2 });
-    const band = headings.at(-1)!.closest("section")!;
-    expect(headings.at(-1)).toHaveTextContent("როგორ შემოგვიერთდები");
-    // full width: a sibling after the main column and sidebar grid, not inside it
-    expect(band.parentElement).toBe(container.querySelector("main"));
-    expect(within(band).getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(
-      "href",
-      "/join",
-    );
-    expect(within(band).getByRole("link", { name: "დაიწყე რეგისტრაციით →" })).toHaveAttribute(
-      "href",
-      "/join",
-    );
-    expect(within(band).getByRole("link", { name: "გაეცანი წესებს →" })).toHaveAttribute(
-      "href",
-      "/join/terms",
-    );
-    expect(within(band).getByRole("link", { name: "შემოგვიერთდი →" })).toHaveAttribute(
-      "href",
-      "/join",
-    );
   });
 });

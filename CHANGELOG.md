@@ -1,22 +1,13 @@
 # Changelog
 
-## Unreleased - About us and our principles (2026-10-13)
+## Unreleased - About us (2026-10-13)
 
-Two new pages: ჩვენ შესახებ, the movement's own description of who it is and what it wants, and
-ჩვენი პრინციპები, its twelve principles.
+A new page, ჩვენ შესახებ, with the movement's own description of who it is and what it wants.
 
-- The about page carries the owner's text word for word: who we are, the three things we believe
+- The page carries the owner's text word for word: who we are, the three things we believe
   (numbered with the Georgian letters ა, ბ, გ), why unity matters, our goal and the portal's
   purpose, then a join button.
-- The principles page carries the owner's twelve principles word for word, each with a large
-  number and its heading, after a clickable list of all twelve that jumps to each one.
-- Both pages are linked from the header, the phone menu and the footer. On tablets the header
-  links are set slightly smaller so all of them fit beside the join button.
-- On the homepage, a section after ჩვენ შესახებ lists the twelve principles, each linking to its
-  place on the principles page.
-- The homepage now ends with a wide როგორ შემოგვიერთდები band: the three steps (supporter, member,
-  delegate), each with a large number, and a join button. The steps moved here from the middle of
-  the page.
+- It is linked from the header (right after მთავარი), the phone menu and the footer.
 - On the homepage, the four paragraphs under the headline said almost the same as the new page,
   so they gave way to a short ჩვენ შესახებ section: the goal sentence, the emblem and a link to
   the full page.
