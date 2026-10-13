@@ -9,6 +9,13 @@ import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
 import { showEvents } from "@/lib/events-switch";
 import { formatCountKa } from "@/lib/format";
+import {
+  PRINCIPLES,
+  PRINCIPLES_HOME_LINK,
+  PRINCIPLES_HREF,
+  PRINCIPLES_TITLE,
+  principleAnchor,
+} from "@/lib/principles-copy";
 import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
 import {
@@ -221,6 +228,48 @@ export default async function HomePage() {
           </div>
         </aside>
       </div>
+      <PrinciplesSection />
     </main>
+  );
+}
+
+/** The owner's twelve principles as a numbered index, each opening its place on /principles. */
+function PrinciplesSection() {
+  const [firstWord, ...rest] = PRINCIPLES_TITLE.split(" ");
+  return (
+    <section
+      aria-labelledby="home-principles-title"
+      className="border-t border-hairline px-5 pb-12 pt-10 sm:px-10"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <h2
+          id="home-principles-title"
+          className="display-heading text-[clamp(1.9rem,3.6vw,2.7rem)] text-ink"
+        >
+          {firstWord} <span className="text-brand">{rest.join(" ")}</span>
+        </h2>
+        <Link href={PRINCIPLES_HREF}>{PRINCIPLES_HOME_LINK}</Link>
+      </div>
+      <ol className="mt-5 grid border-t-2 border-ink sm:grid-cols-2 lg:grid-cols-4">
+        {PRINCIPLES.map(({ title }, i) => (
+          <li key={title} className="border-b border-hairline">
+            <Link
+              href={`${PRINCIPLES_HREF}#${principleAnchor(i + 1)}`}
+              className="group grid h-full grid-cols-[2.4rem_minmax(0,1fr)] items-baseline gap-2 py-4 pr-5 text-ink no-underline"
+            >
+              <span
+                aria-hidden="true"
+                className="font-serif text-[1.7rem] font-extrabold leading-none text-brand"
+              >
+                {i + 1}
+              </span>
+              <span className="font-serif text-[0.98rem] leading-snug group-hover:text-brand">
+                {title}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
