@@ -257,7 +257,10 @@ function PrinciplesSection() {
               href={`${PRINCIPLES_HREF}#${principleAnchor(i + 1)}`}
               className="group grid h-full grid-cols-[2.4rem_minmax(0,1fr)] items-baseline gap-2 py-4 pr-5 text-ink no-underline"
             >
-              <span className="font-serif text-[1.7rem] font-extrabold leading-none text-brand">
+              <span
+                aria-hidden="true"
+                className="font-serif text-[1.7rem] font-extrabold leading-none text-brand"
+              >
                 {i + 1}
               </span>
               <span className="font-serif text-[0.98rem] leading-snug group-hover:text-brand">
