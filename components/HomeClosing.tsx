@@ -39,10 +39,10 @@ function Chain({ id }: { id: string }) {
 
 export function HomeClosing() {
   return (
-    <section aria-labelledby="home-closing-title" className="px-5 pb-12 pt-4 sm:px-10">
-      <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] px-4 py-4 text-paper sm:px-6">
+    <section aria-labelledby="home-closing-title">
+      <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] py-4 text-paper">
         <Chain id="home-closing-chain-top" />
-        <div className="grid items-center gap-8 px-2 py-10 sm:px-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14">
+        <div className="grid items-center gap-8 px-5 py-10 sm:px-10 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14">
           <Image
             src="/brand/emblem-roundel-red-notext.png"
             alt=""
