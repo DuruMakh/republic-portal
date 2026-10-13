@@ -18,8 +18,15 @@ vi.mock("next/navigation", () => ({
     throw new Error(`redirect:${to}`);
   },
 }));
-// the picker has its own test (and needs the router)
-vi.mock("./DelegateChange", () => ({ DelegateChange: () => null }));
+// the picker has its own test (and needs the router); its props are kept to check what reaches
+// the browser
+const picker = vi.hoisted(() => ({ props: null as unknown }));
+vi.mock("./DelegateChange", () => ({
+  DelegateChange: (props: unknown) => {
+    picker.props = props;
+    return null;
+  },
+}));
 
 import MyDelegatePage from "./page";
 
@@ -125,6 +132,14 @@ describe("my-delegate page: the chosen delegate's member count (ADR-052)", () =>
     expect(screen.queryByText("84")).toBeNull();
     expect(screen.queryByText(RATING_NOTE)).toBeNull();
     expect(screen.getByText("არჩევანი ძალაში შედის მყისიერად.")).toBeInTheDocument();
+  });
+
+  it("sends the picker no member counts, since its props reach the browser", async () => {
+    render(await MyDelegatePage());
+
+    const { delegates } = picker.props as { delegates: Record<string, unknown>[] };
+    expect(delegates).toHaveLength(1);
+    expect(delegates[0]).not.toHaveProperty("members");
   });
 
   it("brings both back once SHOW_RATINGS=true", async () => {

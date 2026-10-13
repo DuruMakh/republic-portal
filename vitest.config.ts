@@ -28,6 +28,7 @@ export default defineConfig({
             "app/**/*.test.{ts,tsx}",
             "e2e/**/*.test.ts",
             "proxy.test.ts",
+            "next.config.test.ts",
           ],
         },
       },

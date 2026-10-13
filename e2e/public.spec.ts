@@ -374,6 +374,12 @@ test.describe("ratings hidden", () => {
     await expectHiddenPage(page, "/leaderboard");
   });
 
+  test("the retired /delegates index no longer redirects into it", async ({ page }) => {
+    const response = await page.goto("/delegates");
+    expect(response?.status()).toBe(404);
+    await expect(page).toHaveURL(/\/delegates$/);
+  });
+
   test("no public page links to it, and the homepage has no top five", async ({ page }) => {
     for (const path of ["/", "/news", "/join", "/support", "/delegates/giorgi-maisuradze"]) {
       await page.goto(path);

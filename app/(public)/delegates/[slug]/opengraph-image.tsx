@@ -3,6 +3,7 @@ import path from "node:path";
 import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
 import { formatCountKa } from "@/lib/format";
+import { showRatings } from "@/lib/ratings-switch";
 import { fetchDelegateBySlug } from "@/lib/supabase/public";
 
 export const revalidate = 60;
@@ -52,9 +53,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         <div style={{ fontSize: 76, lineHeight: 1.1, fontFamily: "NotoSerifGeo", fontWeight: 700 }}>
           {`${delegate.first_name} ${delegate.last_name}`}
         </div>
-        <div style={{ display: "flex", fontSize: 36, color: "#9F1D35" }}>
-          წევრი: {formatCountKa(delegate.members)}
-        </div>
+        {/* the share preview names no member count while ratings are hidden (ADR-052) */}
+        {showRatings() ? (
+          <div style={{ display: "flex", fontSize: 36, color: "#9F1D35" }}>
+            წევრი: {formatCountKa(delegate.members)}
+          </div>
+        ) : null}
       </div>
       <div style={{ display: "flex", height: 10, width: 260 }}>
         <div style={{ flex: 3, background: "#9F1D35" }} />

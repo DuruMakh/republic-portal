@@ -123,7 +123,14 @@ export default async function MyDelegatePage() {
         <Card title="დელეგატის შეცვლა">
           <DelegateChange
             regions={regions ?? []}
-            delegates={delegates ?? []}
+            // only the fields the picker uses: its props reach the browser, and the member
+            // counts must not while ratings are hidden (ADR-052)
+            delegates={(delegates ?? []).map(({ id, first_name, last_name, region_id }) => ({
+              id,
+              first_name,
+              last_name,
+              region_id,
+            }))}
             currentDelegateId={state.chosenDelegate?.id ?? null}
             initialRegionId={current?.region_id ?? state.regionId ?? regions?.[0]?.id ?? 1}
           />
