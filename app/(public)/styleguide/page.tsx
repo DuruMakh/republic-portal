@@ -19,7 +19,6 @@ import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
-import { OrnamentRule } from "@/components/OrnamentRule";
 import { PageSheet } from "@/components/PageSheet";
 import { PebbleTally } from "@/components/PebbleTally";
 import { Pill } from "@/components/Pill";
@@ -29,7 +28,6 @@ import { Select, SelectField } from "@/components/Select";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
-import { ABOUT_TITLE } from "@/lib/about-copy";
 import { adminTabs } from "@/lib/admin";
 import { BOARD_SIZE, votesNeeded } from "@/lib/board-rules";
 import {
@@ -535,12 +533,6 @@ export default function StyleguidePage() {
               placeholders={2}
             />
           </div>
-        </Card>
-
-        {/* /about's ornament band: the braided border under the hero, around the unity quote
-            and under the homepage's about-us section. */}
-        <Card title={ABOUT_TITLE}>
-          <OrnamentRule />
         </Card>
 
         {/* 18. Mobile chrome. Every one of these carries `md:hidden`, a viewport

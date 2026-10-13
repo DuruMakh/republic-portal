@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ABOUT_BELIEFS, ABOUT_GOAL_CORE, ABOUT_PORTAL, ABOUT_TITLE } from "@/lib/about-copy";
 import { formatCountKa } from "@/lib/format";
+import { PRINCIPLES, PRINCIPLES_TITLE } from "@/lib/principles-copy";
 
 const data = vi.hoisted(() => ({
   fetchPublicStats: vi.fn(),
@@ -157,12 +158,13 @@ describe("homepage section about us (owner, 2026-10-13)", () => {
   it("quotes the goal and links to the about page", async () => {
     render(await HomePage());
 
-    expect(screen.getByRole("heading", { level: 2, name: ABOUT_TITLE })).toBeInTheDocument();
+    const section = screen.getByRole("heading", { level: 2, name: ABOUT_TITLE }).closest("section");
+    expect(section).not.toBeNull();
     // the drop cap splits the first letter off, so match the paragraph's whole text
     expect(
       screen.getByText((_, el) => el?.tagName === "P" && el.textContent === ABOUT_GOAL_CORE),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
+    expect(within(section!).getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
       "href",
       "/about",
     );
@@ -178,5 +180,35 @@ describe("homepage section about us (owner, 2026-10-13)", () => {
     for (const text of [...ABOUT_BELIEFS, ABOUT_PORTAL]) {
       expect(screen.queryByText(text)).not.toBeInTheDocument();
     }
+  });
+});
+
+describe("homepage section on our principles (owner, 2026-10-13)", () => {
+  it("lists the twelve principles, each linking to its place on the page", async () => {
+    render(await HomePage());
+
+    const heading = screen.getByRole("heading", { level: 2, name: PRINCIPLES_TITLE });
+    const section = heading.closest("section");
+    expect(section).not.toBeNull();
+    PRINCIPLES.forEach(({ title }, i) => {
+      expect(within(section!).getByRole("link", { name: `${i + 1} ${title}` })).toHaveAttribute(
+        "href",
+        `/principles#principle-${i + 1}`,
+      );
+    });
+    expect(within(section!).getByRole("link", { name: "წაიკითხე სრულად →" })).toHaveAttribute(
+      "href",
+      "/principles",
+    );
+  });
+
+  it("sits third, after the about-us section and the join strip", async () => {
+    render(await HomePage());
+
+    const order = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.textContent)
+      .slice(0, 3);
+    expect(order).toEqual([ABOUT_TITLE, "როგორ შემოგვიერთდები", PRINCIPLES_TITLE]);
   });
 });

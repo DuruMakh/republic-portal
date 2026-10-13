@@ -92,9 +92,6 @@ Georgian**. `lang="ka"` throughout.
   does not hyphenate — justified narrow columns produce rivers).
 - The homepage keeps a serif **drop cap** in `brand` (float technique), now on the about-us
   section's quote. Drop caps appear nowhere else.
-- **Ornament band** (`OrnamentRule`, `ornament-rule` utility): a braided border in the manner of
-  Georgian stone carving, ink strands with a red dot in each loop. Decorative only; used on
-  `/about` and under the homepage's about-us section.
 
 ## Interaction identity (spec §2.4)
 

@@ -22,6 +22,7 @@ const PAGES = [
   "/structure",
   // The about page (owner, 2026-10-13): three belief columns that must stack.
   "/about",
+  "/principles",
 ];
 
 test.describe("360px viewport has no horizontal overflow", () => {

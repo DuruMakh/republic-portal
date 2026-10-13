@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { filterEventLinks, showEvents } from "@/lib/events-switch";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { ABOUT_HREF, ABOUT_TITLE } from "@/lib/about-copy";
+import { PRINCIPLES_HREF, PRINCIPLES_TITLE } from "@/lib/principles-copy";
 import { STRUCTURE_HREF, STRUCTURE_NAV_LABEL } from "@/lib/structure-copy";
 import { SUPPORT_FOOTER_LABEL } from "@/lib/support-copy";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
@@ -28,6 +29,7 @@ const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლი
 const navItems: { href: string; label: string }[] = [
   { href: "/", label: "მთავარი" },
   { href: ABOUT_HREF, label: ABOUT_TITLE },
+  { href: PRINCIPLES_HREF, label: PRINCIPLES_TITLE },
   { href: "/leaderboard", label: "რეიტინგი" },
   { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
@@ -38,6 +40,7 @@ const footerLinks: { href: string; label: string }[] = [
   { href: PRIVACY_POLICY_PATH, label: FOOTER_PRIVACY_LABEL },
   { href: "/news", label: NAV_NEWS_LABEL },
   { href: ABOUT_HREF, label: ABOUT_TITLE },
+  { href: PRINCIPLES_HREF, label: PRINCIPLES_TITLE },
   { href: STRUCTURE_HREF, label: STRUCTURE_NAV_LABEL },
   { href: FINANCES_HREF, label: NAV_TRANSPARENCY_LABEL },
   // Footer, not top nav (spec §8): contact is a destination people go looking

@@ -4,7 +4,6 @@ import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
 import { IndexRow } from "@/components/IndexRow";
 import { NewsCard } from "@/components/NewsCard";
-import { OrnamentRule } from "@/components/OrnamentRule";
 import { SectionRule } from "@/components/SectionRule";
 import { ABOUT_GOAL_CORE, ABOUT_HREF, ABOUT_READ_MORE, ABOUT_TITLE } from "@/lib/about-copy";
 import { formatDateKa } from "@/lib/cabinet";
@@ -12,6 +11,7 @@ import { splitEvents } from "@/lib/community";
 import { excerpt } from "@/lib/content-render";
 import { showEvents } from "@/lib/events-switch";
 import { formatCountKa } from "@/lib/format";
+import { PRINCIPLES, PRINCIPLES_HREF, PRINCIPLES_TITLE } from "@/lib/principles-copy";
 import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
 import {
@@ -104,7 +104,6 @@ export default async function HomePage() {
                 className="hidden w-[104px] sm:block"
               />
             </div>
-            <OrnamentRule className="mt-6" />
           </section>
           <div id="join-strip" className="mt-6">
             <SectionRule label={STRIP} />
@@ -132,6 +131,25 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+          <section className="mt-10">
+            <SectionRule label={PRINCIPLES_TITLE} />
+            <ol className="grid sm:grid-cols-2 sm:gap-x-8">
+              {PRINCIPLES.map(({ title }, i) => (
+                <li key={title}>
+                  <Link
+                    href={`${PRINCIPLES_HREF}#principle-${i + 1}`}
+                    className="flex items-baseline gap-3 border-b border-hairline py-2.5 text-ink no-underline hover:text-brand"
+                  >
+                    <span className="w-6 shrink-0 font-serif font-bold text-brand">{i + 1}</span>{" "}
+                    <span className="text-[0.88rem] font-semibold leading-snug">{title}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3">
+              <Link href={PRINCIPLES_HREF}>{ABOUT_READ_MORE}</Link>
+            </p>
+          </section>
           <div className="mt-10">
             <SectionRule label={NEWS_LABEL} action={<Link href="/news">{FULL}</Link>} />
             {news.length === 0 ? (

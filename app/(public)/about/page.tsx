@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { ButtonLink } from "@/components/ButtonLink";
-import { OrnamentRule } from "@/components/OrnamentRule";
 import {
   ABOUT_BELIEF_MARKERS,
   ABOUT_BELIEFS,
@@ -46,10 +45,6 @@ export default function AboutPage() {
         />
       </section>
 
-      <div className={WRAP}>
-        <OrnamentRule />
-      </div>
-
       <section className={SECTION}>
         <ol className={`${WRAP} grid gap-[clamp(24px,3vw,44px)] min-[900px]:grid-cols-3`}>
           {ABOUT_BELIEFS.map((belief, i) => (
@@ -73,11 +68,9 @@ export default function AboutPage() {
 
       <section className="border-y border-line bg-paper-bright">
         <div className={`${WRAP} py-[clamp(36px,5vw,64px)]`}>
-          <OrnamentRule className="mx-auto max-w-[160px]" />
-          <p className="mx-auto my-[clamp(20px,3vw,32px)] max-w-[30em] text-center font-serif text-[clamp(1.25rem,2.3vw,1.7rem)] leading-[1.5] font-semibold text-ink [text-wrap:balance]">
+          <p className="mx-auto max-w-[30em] text-center font-serif text-[clamp(1.25rem,2.3vw,1.7rem)] leading-[1.5] font-semibold text-ink [text-wrap:balance]">
             {ABOUT_UNITY}
           </p>
-          <OrnamentRule className="mx-auto max-w-[160px]" />
         </div>
       </section>
 

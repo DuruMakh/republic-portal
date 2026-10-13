@@ -70,7 +70,7 @@ export function Masthead({
       <header
         // Conditional first so the non-back case keeps the shipped class order.
         // At >=768px the only change since v0.9.0 is the masthead-rule that
-        // replaced the 2px ink rule (ADR-048); nothing else may change there.
+        // replaced the 2px ink rule (ADR-048), and the nav's tablet sizing below.
         className={`${back ? "hidden md:flex" : "flex"} ${
           mobileSticky ? "sticky top-0 z-40 bg-paper md:static md:z-auto" : ""
         } items-center justify-between masthead-rule px-5 pb-2.5 pt-4 sm:px-10`}
@@ -83,9 +83,11 @@ export function Masthead({
         </div>
         {hasNav ? (
           <>
+            {/* Between md and lg the nav sets at the 0.74rem floor with tighter gaps, so the
+                public header's five links and the join button fit a 768px tablet (2026-10-13). */}
             <nav
               aria-label="მთავარი ნავიგაცია"
-              className="hidden items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold md:flex sm:gap-4"
+              className="hidden items-center gap-2.5 overflow-x-auto whitespace-nowrap text-[0.74rem] font-semibold md:flex lg:gap-4 lg:text-[0.8rem]"
             >
               {navLinks}
               {sessionSlot}
