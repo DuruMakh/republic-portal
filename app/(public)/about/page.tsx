@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Braid } from "@/components/Ornament";
 import {
   ABOUT_BELIEFS,
@@ -17,30 +16,22 @@ export const metadata: Metadata = { title: `${ABOUT_TITLE} — ${SUPPORT_EYEBROW
 const WRAP = "mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-10";
 
 export default function AboutPage() {
+  const [firstWord, ...rest] = ABOUT_TITLE.split(" ");
+
   return (
     <main>
-      <section
-        className={`${WRAP} grid items-center gap-10 py-[clamp(40px,6vw,88px)] min-[900px]:grid-cols-[minmax(0,1fr)_auto] min-[900px]:gap-16`}
-      >
+      <section className={`${WRAP} py-[clamp(40px,6vw,88px)]`}>
         <div>
           <div className="text-[0.74rem] font-bold uppercase tracking-[.2em] text-brand">
             {SUPPORT_EYEBROW}
           </div>
-          <h1 className="mt-4 font-serif text-[clamp(2.6rem,6vw,4.6rem)] leading-[1.05] font-bold text-ink">
-            {ABOUT_TITLE}
+          <h1 className="mt-4 display-heading text-[clamp(2.6rem,6vw,4.6rem)] leading-[1.05] text-ink">
+            {firstWord} <span className="text-brand">{rest.join(" ")}</span>
           </h1>
-          <p className="mt-6 max-w-[20em] font-serif text-[clamp(1.35rem,2.8vw,2.1rem)] leading-[1.4] text-ink">
+          <p className="mt-6 max-w-[24em] font-serif text-[clamp(1.35rem,2.8vw,2.1rem)] leading-[1.4] text-ink">
             {ABOUT_INTRO}
           </p>
         </div>
-        <Image
-          src="/brand/emblem-roundel-red-notext.png"
-          alt=""
-          width={360}
-          height={360}
-          priority
-          className="mx-auto w-[150px] sm:w-[200px] min-[900px]:w-[260px]"
-        />
       </section>
 
       <section className="pb-[clamp(40px,6vw,80px)]">
