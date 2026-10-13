@@ -4,9 +4,10 @@ import { STRUCTURE_HREF } from "@/lib/structure-copy";
 
 // The homepage's last section (owner request, 2026-10-13): after the About and Principles
 // sections, the page ends by sending the reader to sign up. A red band, the one place red
-// fills a panel, because this is the page's call to act. Teal strips of carved-stone rosettes
-// edge it top and bottom, and the emblem sits beside the words. Paper focus outlines, as on
-// the teal footer: a red ring on red is invisible.
+// fills a panel, because this is the page's call to act; carved-stone rosettes edge it and the
+// emblem sits beside the words. The rosettes are a lighter teal (owner's pick): the teal token
+// is as dark as the red and vanishes on it. Paper focus outlines, as on the teal footer: a red
+// ring on red is invisible.
 const KICKER = "შემოგვიერთდი";
 const HEADING = "ქართული რესპუბლიკა შენით იწყება";
 const LEDE =
@@ -17,7 +18,7 @@ const STRUCTURE = "როგორ ვართ მოწყობილი";
 /** A row of four-loop rosettes, after the emblem, between two hairlines: a carved stone border. */
 function Chain({ id }: { id: string }) {
   return (
-    <svg aria-hidden="true" className="block h-[18px] w-full text-paper/60">
+    <svg aria-hidden="true" className="block h-[18px] w-full text-[#5aaba4]">
       <defs>
         <pattern id={id} width="18" height="18" patternUnits="userSpaceOnUse">
           <g fill="none" stroke="currentColor" strokeWidth="1.1">
@@ -39,11 +40,9 @@ function Chain({ id }: { id: string }) {
 export function HomeClosing() {
   return (
     <section aria-labelledby="home-closing-title" className="px-5 pb-12 pt-4 sm:px-10">
-      <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] text-paper">
-        <div className="bg-teal px-4 py-2.5 sm:px-6">
-          <Chain id="home-closing-chain-top" />
-        </div>
-        <div className="grid items-center gap-8 px-6 py-12 sm:px-14 sm:py-14 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14">
+      <div className="bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-dark))] px-4 py-4 text-paper sm:px-6">
+        <Chain id="home-closing-chain-top" />
+        <div className="grid items-center gap-8 px-2 py-10 sm:px-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14">
           <Image
             src="/brand/emblem-roundel-red-notext.png"
             alt=""
@@ -84,9 +83,7 @@ export function HomeClosing() {
             </div>
           </div>
         </div>
-        <div className="bg-teal px-4 py-2.5 sm:px-6">
-          <Chain id="home-closing-chain-bottom" />
-        </div>
+        <Chain id="home-closing-chain-bottom" />
       </div>
     </section>
   );

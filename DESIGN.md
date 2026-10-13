@@ -66,9 +66,10 @@ the ones with the most votes (`leadingOptions`), never the largest rounded perce
 
 The homepage closing band (`HomeClosing`, owner request 2026-10-13) is the one red-filled panel,
 because it is the page's call to act: a `brand`→`brand-dark` gradient, paper text, the red roundel
-emblem, and `inverse` / `ghost-inverse` buttons with paper focus outlines. Solid teal strips edge
-it top and bottom, each carrying a row of paper four-loop rosettes (after the emblem), like a
-carved stone border; besides the footer, they are the only solid teal areas.
+emblem, and `inverse` / `ghost-inverse` buttons with paper focus outlines. A row of four-loop
+rosettes (after the emblem) between two hairlines edges it top and bottom, like a carved stone
+border, drawn in a lighter teal `#5aaba4`: the `teal` token is as dark as the red and vanishes on
+it. That shade is decoration only, never text or a control.
 
 Focus-visible is a 2px `brand` outline, offset 2px, on every interactive element, except on the
 teal footer, where links use a `paper` outline (red on teal is invisible).
