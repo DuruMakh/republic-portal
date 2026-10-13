@@ -100,21 +100,5 @@ export function principleAnchor(number: number): string {
   return `principle-${number}`;
 }
 
-/** Old Georgian alphabetic numerals 1–12: the page's decorative ornament per principle. */
-export const GEORGIAN_NUMERALS = [
-  "ა",
-  "ბ",
-  "გ",
-  "დ",
-  "ე",
-  "ვ",
-  "ზ",
-  "ჱ",
-  "თ",
-  "ი",
-  "ია",
-  "იბ",
-] as const;
-
 /** Homepage section: the link to the full page. */
 export const PRINCIPLES_HOME_LINK = "ყველა პრინციპი →";

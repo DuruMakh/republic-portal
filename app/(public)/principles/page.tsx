@@ -1,24 +1,20 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ButtonLink";
-import {
-  GEORGIAN_NUMERALS,
-  PRINCIPLES,
-  PRINCIPLES_TITLE,
-  principleAnchor,
-} from "@/lib/principles-copy";
+import { PRINCIPLES, PRINCIPLES_TITLE, principleAnchor } from "@/lib/principles-copy";
 import { CLOSING_CTA } from "@/lib/structure-copy";
 import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 
 // app/layout.tsx sets a plain string title, so each public page carries the site-name suffix.
 export const metadata: Metadata = { title: `${PRINCIPLES_TITLE} — ${SUPPORT_EYEBROW}` };
 
-// The /structure page's grammar: same wrap, display headings, serif prose and outlined ornament.
+// The /structure page's grammar: same wrap, display headings and serif prose.
 const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
 // scroll-mt-24 clears the masthead, which is sticky below md (components/Masthead.tsx).
 const SECTION = "scroll-mt-24 py-[clamp(32px,4.5vw,56px)] md:scroll-mt-6";
 const NUMBER = "font-serif font-extrabold leading-[.8] text-brand";
-const ORNAMENT =
-  "hidden font-serif text-[clamp(4rem,7vw,6rem)] leading-[.7] font-extrabold text-transparent select-none [-webkit-text-stroke:1.5px_var(--color-line)] lg:block";
+// The site emblem, faint, beside each principle on desktop (owner choice, 2026-10-13).
+const ORNAMENT = "hidden h-20 w-20 opacity-[.12] select-none lg:block";
 
 export default function PrinciplesPage() {
   const [firstWord, ...rest] = PRINCIPLES_TITLE.split(" ");
@@ -83,9 +79,14 @@ export default function PrinciplesPage() {
                   ))}
                 </div>
               </div>
-              <div aria-hidden="true" className={ORNAMENT}>
-                {GEORGIAN_NUMERALS[i]}
-              </div>
+              <Image
+                src="/brand/emblem-roundel-red-notext.png"
+                alt=""
+                aria-hidden="true"
+                width={80}
+                height={80}
+                className={ORNAMENT}
+              />
             </div>
           </section>
         );

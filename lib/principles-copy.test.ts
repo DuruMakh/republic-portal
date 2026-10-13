@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GEORGIAN_NUMERALS, PRINCIPLES, principleAnchor } from "./principles-copy";
+import { PRINCIPLES, principleAnchor } from "./principles-copy";
 
 describe("principles copy", () => {
   it("keeps the owner's twelve principles in order", () => {
@@ -20,8 +20,7 @@ describe("principles copy", () => {
     }
   });
 
-  it("gives each principle an anchor and a Georgian numeral", () => {
+  it("gives each principle an anchor", () => {
     expect(principleAnchor(3)).toBe("principle-3");
-    expect(GEORGIAN_NUMERALS).toHaveLength(PRINCIPLES.length);
   });
 });
