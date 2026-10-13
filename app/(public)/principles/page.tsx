@@ -18,7 +18,7 @@ const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
 const SECTION = "scroll-mt-24 py-[clamp(32px,4.5vw,56px)] md:scroll-mt-6";
 const NUMBER = "font-serif font-extrabold leading-[.8] text-brand";
 const ORNAMENT =
-  "hidden font-serif text-[clamp(4rem,7vw,6rem)] leading-[.7] font-extrabold text-transparent select-none [-webkit-text-stroke:1.5px_var(--color-line)] min-[900px]:block";
+  "hidden font-serif text-[clamp(4rem,7vw,6rem)] leading-[.7] font-extrabold text-transparent select-none [-webkit-text-stroke:1.5px_var(--color-line)] lg:block";
 
 export default function PrinciplesPage() {
   const [firstWord, ...rest] = PRINCIPLES_TITLE.split(" ");
@@ -32,9 +32,9 @@ export default function PrinciplesPage() {
       </section>
 
       <nav aria-label={PRINCIPLES_TITLE} className="border-t border-line">
-        <ol className={`${WRAP} grid sm:grid-cols-2 min-[900px]:grid-cols-3`}>
+        <ol className={`${WRAP} grid sm:grid-cols-2 lg:grid-cols-3`}>
           {PRINCIPLES.map(({ title }, i) => (
-            <li key={title} className="border-b border-line sm:odd:pr-5 min-[900px]:pr-5">
+            <li key={title} className="border-b border-line sm:pr-5">
               <a
                 href={`#${principleAnchor(i + 1)}`}
                 className="group grid h-full grid-cols-[2.6rem_minmax(0,1fr)] items-baseline gap-2 py-3 text-ink no-underline"
@@ -64,7 +64,7 @@ export default function PrinciplesPage() {
             className={i > 0 ? `${SECTION} border-t border-line` : SECTION}
           >
             <div
-              className={`${WRAP} grid gap-x-[clamp(16px,3vw,40px)] gap-y-3 sm:grid-cols-[4.5rem_minmax(0,1fr)] min-[900px]:grid-cols-[6rem_minmax(0,1fr)_auto]`}
+              className={`${WRAP} grid gap-x-[clamp(16px,3vw,40px)] gap-y-3 sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[6rem_minmax(0,1fr)_auto]`}
             >
               <div aria-hidden="true" className={`${NUMBER} text-[clamp(2.8rem,6vw,4.6rem)]`}>
                 {i + 1}
