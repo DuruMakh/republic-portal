@@ -65,11 +65,10 @@ carry meaning: a leading poll answer is also the longest bar and shows its perce
 the ones with the most votes (`leadingOptions`), never the largest rounded percentage.
 
 The homepage closing band (`HomeClosing`, owner request 2026-10-13) is the one red-filled panel,
-because it is the page's call to act: a `brand`→`brand-dark` gradient, paper text, a row of
-four-loop rosettes (after the emblem) along its top and bottom edges, and `inverse` /
-`ghost-inverse` buttons with paper focus outlines. Beside it (above it on phones) a solid teal
-panel holds the red roundel emblem, so both brand colours meet there; besides the footer, it is
-the only solid teal area.
+because it is the page's call to act: a `brand`→`brand-dark` gradient, paper text, the red roundel
+emblem, and `inverse` / `ghost-inverse` buttons with paper focus outlines. Solid teal strips edge
+it top and bottom, each carrying a row of paper four-loop rosettes (after the emblem), like a
+carved stone border; besides the footer, they are the only solid teal areas.
 
 Focus-visible is a 2px `brand` outline, offset 2px, on every interactive element, except on the
 teal footer, where links use a `paper` outline (red on teal is invisible).
