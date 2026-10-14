@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
+import { HomeAboutSection } from "@/components/HomeAboutSection";
 import { HomeClosing } from "@/components/HomeClosing";
 import { IndexRow } from "@/components/IndexRow";
 import { NewsCard } from "@/components/NewsCard";
@@ -234,6 +235,7 @@ export default async function HomePage() {
           ) : null}
         </aside>
       </div>
+      <HomeAboutSection />
       <PrinciplesSection />
       <HomeClosing />
     </main>

@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HOME_ABOUT_EXCERPT } from "@/lib/about-copy";
 import { formatCountKa } from "@/lib/format";
 import { PRINCIPLES } from "@/lib/principles-copy";
 
@@ -152,6 +153,20 @@ describe("registry box (ADR-048)", () => {
     for (const id of ["stat-approved-delegates", "stat-members-total", "stat-registered-total"]) {
       expect(screen.getByTestId(id)).toHaveClass("text-teal");
     }
+  });
+});
+
+describe("about section below the hero", () => {
+  it("opens the about text and links to the full page", async () => {
+    render(await HomePage());
+
+    const section = screen.getByRole("region", { name: "ჩვენ შესახებ" });
+    expect(section.previousElementSibling?.querySelector("h1")).not.toBeNull();
+    expect(section.nextElementSibling).toBe(
+      screen.getByRole("region", { name: "ჩვენი პრინციპები" }),
+    );
+    expect(section).toHaveTextContent(HOME_ABOUT_EXCERPT);
+    expect(screen.getByRole("link", { name: "წაიკითხე სრულად" })).toHaveAttribute("href", "/about");
   });
 });
 

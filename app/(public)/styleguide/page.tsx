@@ -19,6 +19,7 @@ import { IndexRow } from "@/components/IndexRow";
 import { Masthead } from "@/components/Masthead";
 import { MembershipPath } from "@/components/MembershipPath";
 import { NewsCard } from "@/components/NewsCard";
+import { Braid } from "@/components/Ornament";
 import { PageSheet } from "@/components/PageSheet";
 import { PebbleTally } from "@/components/PebbleTally";
 import { Pill } from "@/components/Pill";
@@ -28,6 +29,7 @@ import { Select, SelectField } from "@/components/Select";
 import { StatCard } from "@/components/StatCard";
 import { Stepper } from "@/components/Stepper";
 import { TransferInstructions } from "@/components/TransferInstructions";
+import { ABOUT_TITLE } from "@/lib/about-copy";
 import { adminTabs } from "@/lib/admin";
 import { BOARD_SIZE, votesNeeded } from "@/lib/board-rules";
 import {
@@ -544,6 +546,13 @@ export default function StyleguidePage() {
               notice={ROSTER_NOTICE}
               placeholders={2}
             />
+          </div>
+        </Card>
+
+        {/* 17b. /about motif: the carved-stone braid that edges the red band. */}
+        <Card title={ABOUT_TITLE}>
+          <div className="bg-brand">
+            <Braid className="text-paper" groove="brand" />
           </div>
         </Card>
 

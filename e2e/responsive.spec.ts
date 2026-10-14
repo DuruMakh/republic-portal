@@ -22,6 +22,8 @@ const PAGES = [
   "/support",
   // The organization structure page (ADR-038): two-column sections that must stack.
   "/structure",
+  // The about page: three belief columns and two text columns that must stack.
+  "/about",
   // The principles page: a numbered index grid and ruled sections that must stack.
   "/principles",
 ];

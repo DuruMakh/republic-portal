@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(showRatings()
       ? [{ url: `${base}/leaderboard`, changeFrequency: "hourly" as const, priority: 0.9 }]
       : []),
+    { url: `${base}/about`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/structure`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/principles`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/join`, changeFrequency: "monthly", priority: 0.8 },

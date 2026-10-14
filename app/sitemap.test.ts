@@ -23,6 +23,15 @@ describe("sitemap", () => {
     });
   });
 
+  it("lists the about page", async () => {
+    const entries = await sitemap();
+    expect(entries).toContainEqual({
+      url: "https://example.test/about",
+      changeFrequency: "monthly",
+      priority: 0.7,
+    });
+  });
+
   it("leaves the ranking out while ratings are hidden, and lists it once they are on", async () => {
     const hidden = await sitemap();
     expect(hidden.map((e) => e.url)).not.toContain("https://example.test/leaderboard");
