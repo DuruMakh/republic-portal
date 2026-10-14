@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CountUp } from "@/components/CountUp";
 import { EventRow } from "@/components/EventRow";
+import { HomeClosing } from "@/components/HomeClosing";
 import { IndexRow } from "@/components/IndexRow";
 import { NewsCard } from "@/components/NewsCard";
 import { SectionRule } from "@/components/SectionRule";
@@ -234,6 +235,7 @@ export default async function HomePage() {
         </aside>
       </div>
       <PrinciplesSection />
+      <HomeClosing />
     </main>
   );
 }

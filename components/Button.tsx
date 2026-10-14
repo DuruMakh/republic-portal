@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-export type ButtonVariant = "primary" | "ghost" | "danger" | "dark" | "ghost-inverse";
+export type ButtonVariant = "primary" | "ghost" | "danger" | "dark" | "ghost-inverse" | "inverse";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
@@ -11,6 +11,8 @@ const variants: Record<ButtonVariant, string> = {
   dark: "border border-teal bg-teal text-paper hover:border-teal-dark hover:bg-teal-dark",
   ghost: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
   "ghost-inverse": "border border-paper bg-transparent text-paper hover:bg-paper hover:text-ink",
+  // Solid paper for the main action on a red or ink surface (the homepage closing band).
+  inverse: "border border-paper bg-paper text-ink hover:border-ink hover:bg-ink hover:text-paper",
   danger: "border border-brand bg-transparent text-brand hover:bg-brand hover:text-paper",
 };
 
