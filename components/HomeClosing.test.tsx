@@ -26,3 +26,12 @@ describe("HomeClosing", () => {
     );
   });
 });
+
+describe("HomeClosing focus ring", () => {
+  it("gives both links a paper focus outline, since red on red is invisible", () => {
+    render(<HomeClosing />);
+    for (const name of ["გახდი მხარდამჭერი", "როგორ ვართ მოწყობილი"]) {
+      expect(screen.getByRole("link", { name })).toHaveClass("focus-visible:outline-paper");
+    }
+  });
+});

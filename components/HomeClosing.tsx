@@ -51,7 +51,7 @@ export function HomeClosing() {
             className="mx-auto w-[112px] sm:w-[150px] lg:order-last lg:w-[220px]"
           />
           <div className="text-center lg:text-left">
-            <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-paper/80">
+            <div className="text-[0.74rem] font-bold uppercase tracking-[.18em] text-paper/80">
               {KICKER}
             </div>
             <h2
