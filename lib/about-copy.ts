@@ -1,8 +1,8 @@
 /**
  * Every Georgian string on /about and in the homepage section that links to it. The page text
  * is the owner's, supplied in chat on 2026-10-13 and kept verbatim. The owner's message broke
- * off at „...მიღების პროცესში უშ“, so the last words of ABOUT_PURPOSE („უშუალოდ მონაწილეობა.“)
- * are a completion the owner was asked to confirm.
+ * off at „...მიღების პროცესში უშ“; the last words of ABOUT_PURPOSE („უშუალოდ მონაწილეობა.“)
+ * are a completion the owner confirmed in chat on 2026-10-14.
  */
 export const ABOUT_HREF = "/about";
 export const ABOUT_TITLE = "ჩვენ შესახებ";
