@@ -19,6 +19,7 @@ import {
 } from "@/lib/principles-copy";
 import { showPublicFinances } from "@/lib/public-finances";
 import { rankDelegates } from "@/lib/ranking";
+import { showRatings } from "@/lib/ratings-switch";
 import {
   fetchPublicDelegates,
   fetchPublicEvents,
@@ -74,9 +75,11 @@ export default async function HomePage() {
   const financesPublic = showPublicFinances();
   // Events are hidden by default too (ADR-042): no fetch and no section until SHOW_EVENTS=true.
   const eventsShown = showEvents();
+  // The top five is hidden by default too (ADR-052): no fetch and no section until SHOW_RATINGS=true.
+  const ratingsShown = showRatings();
   const [stats, delegates, tStats, news, events] = await Promise.all([
     fetchPublicStats(),
-    fetchPublicDelegates(),
+    ratingsShown ? fetchPublicDelegates() : Promise.resolve([]),
     financesPublic ? fetchTransparencyStats() : Promise.resolve(null),
     fetchPublicNews(),
     eventsShown ? fetchPublicEvents() : Promise.resolve([]),
@@ -211,22 +214,24 @@ export default async function HomePage() {
               ) : null}
             </div>
           </div>
-          <div>
-            <SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>} />
+          {ratingsShown ? (
             <div>
-              {ranked.slice(0, 5).map((d) => (
-                <IndexRow
-                  key={d.id}
-                  rank={d.rank}
-                  name={`${d.first_name} ${d.last_name}`}
-                  meta={d.region_name_ka ?? "—"}
-                  figure={formatCountKa(d.members)}
-                  figureLabel={RANK_FIGURE_LABEL}
-                  href={`/delegates/${d.slug}`}
-                />
-              ))}
+              <SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>} />
+              <div>
+                {ranked.slice(0, 5).map((d) => (
+                  <IndexRow
+                    key={d.id}
+                    rank={d.rank}
+                    name={`${d.first_name} ${d.last_name}`}
+                    meta={d.region_name_ka ?? "—"}
+                    figure={formatCountKa(d.members)}
+                    figureLabel={RANK_FIGURE_LABEL}
+                    href={`/delegates/${d.slug}`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </aside>
       </div>
       <PrinciplesSection />

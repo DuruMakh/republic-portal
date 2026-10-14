@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
+import { RATINGS_SHOWN } from "./ratings-switch";
 
 const PAGES = [
   "/",
-  "/leaderboard",
+  // ADR-052: /leaderboard is a 404 while ratings are hidden.
+  ...(RATINGS_SHOWN ? ["/leaderboard"] : []),
   "/news",
   // ADR-042: /events is a 404 while events are hidden.
   ...(EVENTS_SHOWN ? ["/events"] : []),

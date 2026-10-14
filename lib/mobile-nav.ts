@@ -65,13 +65,20 @@ const NO_CTA_ROUTES: ReadonlySet<string> = new Set(["/join", "/join/terms", "/pr
  * While events are hidden (ADR-042) an old event address is a 404 with no
  * events index to return to, so it gets no back header — the plain public
  * header instead. Only the public layout reads the switch; the cabinet and
- * admin chrome never sit on an event address, hence the default.
+ * admin chrome never sit on an event address, hence the default. Likewise,
+ * while ratings are hidden (ADR-052) a delegate profile has no ranking to
+ * return to, so it gets the plain public header too.
  */
-export function mobileBackTarget(pathname: string, eventsShown = true): BackTarget | null {
+export function mobileBackTarget(
+  pathname: string,
+  eventsShown = true,
+  ratingsShown = true,
+): BackTarget | null {
   const exact = STATIC_BACK[pathname];
   if (exact) return exact;
   for (const { prefix, target } of PREFIX_BACK) {
     if (!eventsShown && prefix === "/events/") continue;
+    if (!ratingsShown && prefix === "/delegates/") continue;
     if (pathname.startsWith(prefix) && pathname.length > prefix.length) return target;
   }
   return null;

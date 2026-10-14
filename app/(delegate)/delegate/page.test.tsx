@@ -20,6 +20,7 @@ const rpc = vi.fn();
 
 beforeEach(() => {
   vi.stubEnv("SHOW_EVENTS", undefined);
+  vi.stubEnv("SHOW_RATINGS", undefined);
   rpc.mockReset();
   rpc.mockImplementation((name: string) =>
     Promise.resolve(
@@ -68,5 +69,24 @@ describe("delegate panel — team RSVP card (ADR-042)", () => {
 
     expect(screen.getByTestId("team-rsvp")).toBeInTheDocument();
     expect(rpc).toHaveBeenCalledWith("delegate_team_rsvps");
+  });
+});
+
+describe("delegate panel — place in the ranking (ADR-052)", () => {
+  const RANK_LABEL = "რეიტინგში ადგილი";
+
+  it("shows the team size but no place in the ranking while ratings are hidden", async () => {
+    render(await DelegateDashboardPage());
+
+    expect(screen.getByText("გუნდის წევრი")).toBeInTheDocument();
+    expect(screen.queryByText(RANK_LABEL)).not.toBeInTheDocument();
+  });
+
+  it("brings the place back once SHOW_RATINGS=true", async () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
+
+    render(await DelegateDashboardPage());
+
+    expect(screen.getByText(RANK_LABEL)).toBeInTheDocument();
   });
 });

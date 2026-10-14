@@ -24,6 +24,7 @@ import {
 import { formatCountKa } from "@/lib/format";
 import { showMembershipDues } from "@/lib/membership-dues";
 import { rankDelegates } from "@/lib/ranking";
+import { showRatings } from "@/lib/ratings-switch";
 import { fetchPublicDelegates } from "@/lib/supabase/public";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { deleteMyAccountAction } from "./delete-account-actions";
@@ -169,6 +170,7 @@ export default async function ProfilePage() {
   // failure here just hides the teaser rather than taking down the whole
   // profile page over a poll-of-the-day blurb.
   const teaserPoll = pollsResult.data?.[0] ?? null;
+  const ratingsShown = showRatings();
 
   return (
     <main>
@@ -275,12 +277,13 @@ export default async function ProfilePage() {
               </div>
               {myDelegateRanked ? (
                 <div className="mt-2">
+                  {/* name and region only while ratings are hidden (ADR-052) */}
                   <IndexRow
-                    rank={myDelegateRanked.rank}
+                    rank={ratingsShown ? myDelegateRanked.rank : undefined}
                     name={`${myDelegateRanked.first_name} ${myDelegateRanked.last_name}`}
                     meta={myDelegateRanked.region_name_ka ?? "—"}
-                    figure={formatCountKa(myDelegateRanked.members)}
-                    figureLabel={RANK_FIGURE_LABEL}
+                    figure={ratingsShown ? formatCountKa(myDelegateRanked.members) : undefined}
+                    figureLabel={ratingsShown ? RANK_FIGURE_LABEL : undefined}
                     href={`/delegates/${myDelegateRanked.slug}`}
                   />
                 </div>
