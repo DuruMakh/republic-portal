@@ -137,9 +137,13 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - **ADR-022 Selects stay native** under the design-system styling.
 - **ADR-025 The support page is a contact page.** Nothing is emailed; messages wait in
   `/admin/support`. Its RPC is callable only with the service role (ADR-026).
-- **Hidden sections (ADR-034 finances, ADR-037 dues, ADR-042 events):** each is behind a
-  server-only switch (`SHOW_PUBLIC_FINANCES`, `SHOW_MEMBERSHIP_DUES`, `SHOW_EVENTS`) that shows
-  only for the word `true` and needs a redeploy. Nothing is deleted. The anon-readable finance
+- **ADR-052 Ratings are hidden for launch** (owner, 2026-10-13): no one sees who has how many
+  members. `/leaderboard`, its header link, the homepage top five, a delegate's member count and
+  rank, and the delegate panel's place are behind `SHOW_RATINGS` (`lib/ratings-switch.ts`).
+  Choosing a delegate, team sizes and the ranking math are untouched; the switch restores all.
+- **Hidden sections (ADR-034 finances, ADR-037 dues, ADR-042 events, ADR-052 ratings):** each
+  is behind a server-only switch (`SHOW_PUBLIC_FINANCES`, `SHOW_MEMBERSHIP_DUES`, `SHOW_EVENTS`,
+  `SHOW_RATINGS`) that shows only for the word `true` and needs a redeploy. Nothing is deleted. The anon-readable finance
   total views stay readable until the owner decides otherwise.
 - **Not-found pages:** every route group has its own `not-found.tsx` (ADR-034,
   `app/route-groups.test.tsx`); switch-hidden addresses are answered in `proxy.ts` with a real

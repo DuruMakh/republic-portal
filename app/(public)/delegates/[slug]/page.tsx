@@ -6,6 +6,7 @@ import { Eyebrow } from "@/components/Eyebrow";
 import { StatCard } from "@/components/StatCard";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
+import { showRatings } from "@/lib/ratings-switch";
 import { fetchDelegateBySlug, fetchPublicDelegates } from "@/lib/supabase/public";
 import { metadata as notFoundMetadata } from "./not-found";
 import Link from "next/link";
@@ -43,17 +44,21 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
   const ranked = rankDelegates(await fetchPublicDelegates());
   const delegate = ranked.find((d) => d.slug === slug);
   if (!delegate) notFound();
+  // Hidden by default (ADR-052): no member count, rank or way back to the ranking.
+  const ratingsShown = showRatings();
 
   const name = `${delegate.first_name} ${delegate.last_name}`;
   const initials = `${delegate.first_name[0] ?? ""}${delegate.last_name[0] ?? ""}`;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <div className="mb-6">
-        <Link href="/leaderboard" className="text-sm font-semibold text-brand hover:underline">
-          ← უკან რეიტინგზე
-        </Link>
-      </div>
+      {ratingsShown ? (
+        <div className="mb-6">
+          <Link href="/leaderboard" className="text-sm font-semibold text-brand hover:underline">
+            ← უკან რეიტინგზე
+          </Link>
+        </div>
+      ) : null}
       <div className="flex items-center gap-5 border-b border-ink pb-6">
         {delegate.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- remote host list not configured until real photos exist (Phase 4)
@@ -77,19 +82,21 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
       <p className="mt-5 text-muted-fg">
         {delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო")}
       </p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <StatCard
-          label="წევრი"
-          value={formatCountKa(delegate.members)}
-          accent="brand"
-          sub="ღია რეიტინგში"
-        />
-        <StatCard
-          label="პოზიცია რეიტინგში"
-          value={`#${delegate.rank}`}
-          sub="დამტკიცებულ დელეგატებს შორის"
-        />
-      </div>
+      {ratingsShown ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <StatCard
+            label="წევრი"
+            value={formatCountKa(delegate.members)}
+            accent="brand"
+            sub="ღია რეიტინგში"
+          />
+          <StatCard
+            label="პოზიცია რეიტინგში"
+            value={`#${delegate.rank}`}
+            sub="დამტკიცებულ დელეგატებს შორის"
+          />
+        </div>
+      ) : null}
       <div className="mt-6">
         <Card>
           <div className="text-center">

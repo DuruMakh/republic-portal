@@ -27,6 +27,7 @@ beforeEach(() => {
   // flip these tests. The public-mode test below stubs it to "true" itself.
   vi.stubEnv("SHOW_PUBLIC_FINANCES", undefined);
   vi.stubEnv("SHOW_EVENTS", undefined);
+  vi.stubEnv("SHOW_RATINGS", undefined);
   for (const fetcher of Object.values(data)) fetcher.mockReset();
   data.fetchPublicStats.mockResolvedValue({
     approved_delegates: 12,
@@ -77,6 +78,7 @@ describe("homepage ladder and counter vocabulary (owner copy round, 2026-10-07)"
   });
 
   it("labels plain members and supporters in the registry and the ranking (ADR-037)", async () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
     data.fetchPublicDelegates.mockResolvedValue([
       {
         id: "00000000-0000-0000-0000-000000000001",
@@ -165,6 +167,28 @@ describe("about section below the hero", () => {
     );
     expect(section).toHaveTextContent(HOME_ABOUT_EXCERPT);
     expect(screen.getByRole("link", { name: "წაიკითხე სრულად" })).toHaveAttribute("href", "/about");
+  });
+});
+
+describe("homepage ranking (ADR-052)", () => {
+  const TOP_HEADING = "რეიტინგი — ხუთეული";
+
+  it("has no top-five ranking, no link to /leaderboard and no delegates fetch while hidden", async () => {
+    render(await HomePage());
+
+    expect(screen.queryByText(TOP_HEADING)).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/leaderboard"]')).toBeNull();
+    expect(data.fetchPublicDelegates).not.toHaveBeenCalled();
+  });
+
+  it("brings the top five back once SHOW_RATINGS=true", async () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
+
+    render(await HomePage());
+
+    expect(screen.getByText(TOP_HEADING)).toBeInTheDocument();
+    expect(document.querySelector('a[href="/leaderboard"]')).not.toBeNull();
+    expect(data.fetchPublicDelegates).toHaveBeenCalledTimes(1);
   });
 });
 

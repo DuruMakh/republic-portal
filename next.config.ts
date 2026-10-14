@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { showRatings } from "./lib/ratings-switch";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -15,6 +16,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     // Owner fix #3: the delegates index duplicated რეიტინგი and retired into it.
     // EXACT source only — /delegates/<slug> profile pages must keep resolving.
+    // While ratings are hidden (ADR-052) there is no ranking to send anyone to, and a cached
+    // permanent redirect into a 404 would outlive the switch: /delegates is a plain 404 then.
+    if (!showRatings()) return [];
     return [{ source: "/delegates", destination: "/leaderboard", permanent: true }];
   },
 };

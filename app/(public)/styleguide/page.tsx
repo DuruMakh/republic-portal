@@ -229,6 +229,18 @@ export default function StyleguidePage() {
                   დიდი
                 </Button>
               </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3 bg-brand p-4">
+                <span className="w-20 shrink-0 font-mono text-[0.7rem] text-paper">inverse</span>
+                <Button variant="inverse" size="sm">
+                  პატარა
+                </Button>
+                <Button variant="inverse" size="md">
+                  საშუალო
+                </Button>
+                <Button variant="inverse" size="lg">
+                  დიდი
+                </Button>
+              </div>
             </div>
             <div className="border-t border-hairline pt-4">
               <div className="mb-3 text-xs font-semibold text-muted-fg">ავტორიზაციის ნაკადი</div>
