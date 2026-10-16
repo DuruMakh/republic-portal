@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
     // multipart envelope. Scope stays global-but-harmless: every other action
     // in the app carries tiny payloads.
     serverActions: { bodySizeLimit: "6mb" },
+    // Vercel restores Turbopack's saved build cache between deploys. On 2026-10-16 it served
+    // styles built from the previous app/globals.css (new colours and fonts missing on the
+    // live site), so every production build starts clean.
+    turbopackFileSystemCacheForBuild: false,
   },
   async redirects() {
     // Owner fix #3: the delegates index duplicated რეიტინგი and retired into it.

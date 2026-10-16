@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { AdminPageHeader, adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { formatDateTimeKa, hasAnyRole } from "@/lib/admin";
 import { pageParamSchema } from "@/lib/admin-schemas";
 import {
@@ -51,9 +53,7 @@ export default async function AdminSupportPage({
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">{SUPPORT_ADMIN_TAB_LABEL}</h1>
-      </div>
+      <AdminPageHeader title={SUPPORT_ADMIN_TAB_LABEL} />
 
       <Card padded={false}>
         {rows.length === 0 ? (
@@ -63,24 +63,32 @@ export default async function AdminSupportPage({
             bodyTestId="support-messages"
             head={
               <>
-                <th className={tableThClass}>{SUPPORT_NAME_LABEL}</th>
-                <th className={tableThClass}>{SUPPORT_ADMIN_EMAIL_HEADING}</th>
-                <th className={tableThClass}>{SUPPORT_ADMIN_PHONE_HEADING}</th>
-                <th className={tableThClass}>{SUPPORT_MESSAGE_LABEL}</th>
+                <th className={adminThClass}>
+                  <Caps>{SUPPORT_NAME_LABEL}</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>{SUPPORT_ADMIN_EMAIL_HEADING}</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>{SUPPORT_ADMIN_PHONE_HEADING}</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>{SUPPORT_MESSAGE_LABEL}</Caps>
+                </th>
               </>
             }
           >
             {rows.map((row) => (
-              <tr key={row.id} className={tableRowClass}>
-                <td className={`${tableCellClass} align-top`}>
+              <tr key={row.id} className={adminRowClass}>
+                <td className={`${adminTdClass} align-top`}>
                   {row.name}
                   <span className="block text-[0.74rem] text-muted-fg">
                     {formatDateTimeKa(row.created_at)}
                   </span>
                 </td>
-                <td className={`${tableCellClass} align-top`}>{row.email ?? "—"}</td>
-                <td className={`${tableCellClass} align-top`}>{row.phone ?? "—"}</td>
-                <td className={`${tableCellClass} align-top whitespace-pre-wrap`}>{row.message}</td>
+                <td className={`${adminTdClass} align-top`}>{row.email ?? "—"}</td>
+                <td className={`${adminTdClass} align-top`}>{row.phone ?? "—"}</td>
+                <td className={`${adminTdClass} align-top whitespace-pre-wrap`}>{row.message}</td>
               </tr>
             ))}
           </DataTable>

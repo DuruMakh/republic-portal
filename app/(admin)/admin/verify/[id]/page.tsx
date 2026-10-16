@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { AdminPageHeader, AdminSectionTitle } from "@/components/AdminUi";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
-import { SectionRule } from "@/components/SectionRule";
 import { hasAnyRole } from "@/lib/admin";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { updateDelegateNameAction, updateDelegateProfileAction } from "./actions";
@@ -31,27 +31,28 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">
-          {delegate.first_name} {delegate.last_name}
-        </h1>
-        <p className="mt-1 text-sm text-muted-fg">
-          {delegate.region_name_ka ?? "—"} ·{" "}
-          {delegate.slug ? (
-            <a
-              href={`/delegates/${delegate.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-brand hover:underline"
-            >
-              საჯარო გვერდი →
-            </a>
-          ) : null}
-        </p>
-      </div>
-      <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        title={`${delegate.first_name} ${delegate.last_name}`}
+        person
+        sub={
+          <>
+            {delegate.region_name_ka ?? "—"} ·{" "}
+            {delegate.slug ? (
+              <a
+                href={`/delegates/${delegate.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-brand no-underline hover:underline"
+              >
+                საჯარო გვერდი →
+              </a>
+            ) : null}
+          </>
+        }
+      />
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <Card>
-          <SectionRule label="სახელი და გვარი" className="mb-4" />
+          <AdminSectionTitle className="mb-5">სახელი და გვარი</AdminSectionTitle>
           <DelegateNameForm
             delegateId={delegate.id}
             initialFirstName={delegate.first_name}
@@ -60,7 +61,7 @@ export default async function DelegateEditPage({ params }: { params: Promise<{ i
           />
         </Card>
         <Card>
-          <SectionRule label="ბიო და ფოტო" className="mb-4" />
+          <AdminSectionTitle className="mb-5">ბიო და ფოტო</AdminSectionTitle>
           <DelegateProfileForm
             delegateId={delegate.id}
             initialBio={delegate.bio ?? ""}

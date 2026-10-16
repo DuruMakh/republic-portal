@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Card } from "@/components/Card";
+import { AdminPageHeader, AdminSectionTitle } from "@/components/AdminUi";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
-import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { ArticleActions } from "../ArticleActions";
@@ -23,22 +24,24 @@ export default async function EditNewsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-[2rem] font-bold text-ink">სიახლის რედაქტირება</h1>
-          <Pill {...contentPill(article.status)} />
-          {article.slug && article.status === "published" ? (
-            <a
-              href={`/news/${article.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-brand hover:underline"
-            >
-              ნახე საიტზე ↗
-            </a>
-          ) : null}
-        </div>
-      </div>
+      <AdminPageHeader
+        title="სიახლის რედაქტირება"
+        meta={
+          <>
+            <Pill {...contentPill(article.status)} />
+            {article.slug && article.status === "published" ? (
+              <a
+                href={`/news/${article.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-brand hover:underline"
+              >
+                ნახე საიტზე ↗
+              </a>
+            ) : null}
+          </>
+        }
+      />
 
       <NewsForm
         article={{
@@ -49,19 +52,19 @@ export default async function EditNewsPage({ params }: { params: Promise<{ id: s
         }}
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div>
-          <SectionRule label="ყდის სურათი" className="mb-4" />
+      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <Card>
+          <AdminSectionTitle className="mb-5">ყდის სურათი</AdminSectionTitle>
           <CoverUpload newsId={article.id} imageUrl={article.image_url} />
-        </div>
-        <div>
-          <SectionRule label="მოქმედებები" className="mb-4" />
+        </Card>
+        <Card>
+          <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
           <ArticleActions
             id={article.id}
             status={article.status}
             everPublished={article.published_at !== null}
           />
-        </div>
+        </Card>
       </div>
     </div>
   );

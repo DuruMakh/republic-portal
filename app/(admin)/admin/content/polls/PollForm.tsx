@@ -60,7 +60,7 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
         კითხვა
         <input

@@ -3,9 +3,16 @@ import { redirect } from "next/navigation";
 import { BallotBar } from "@/components/Ballot";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
-import { SectionRule } from "@/components/SectionRule";
-import { StatCard } from "@/components/StatCard";
+import { DataTable } from "@/components/DataTable";
+import {
+  AdminPageHeader,
+  AdminSectionTitle,
+  AdminStat,
+  adminRowClass,
+  adminTdClass,
+  adminThClass,
+} from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
 import { barPct, conversionPct, hasAnyRole, isStaff } from "@/lib/admin";
 import { formatAmountGel, formatDateKa } from "@/lib/cabinet";
 import { formatCountKa } from "@/lib/format";
@@ -59,50 +66,42 @@ export default async function AdminOverviewPage() {
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">მიმოხილვა</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          პლატფორმის ცოცხალი მაჩვენებლები — წევრები, დელეგატები, შემოსავალი და ვერიფიკაციის რიგი.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="მიმოხილვა"
+        lede="პლატფორმის ცოცხალი მაჩვენებლები — წევრები, დელეგატები, შემოსავალი და ვერიფიკაციის რიგი."
+      />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 border-t-2 border-ink">
-        <StatCard
+      <div className="grid grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+        <AdminStat
           value={formatCountKa(overview.registered_total)}
           label="მხარდამჭერი"
           sub="ჯამური რეესტრი — წევრებიც შედიან"
         />
-        <StatCard
+        <AdminStat
           value={formatCountKa(overview.total_completed)}
           label="წევრი"
           sub="დასრულებული წევრობა"
         />
-        <StatCard
+        <AdminStat
           value={conversionPct(overview.total_completed, overview.registered_total)}
           label="კონვერსია"
           sub="რეგისტრაციიდან წევრობამდე"
         />
-        <StatCard
+        <AdminStat
           value={formatCountKa(overview.approved_delegates)}
           label="დამტკიცებული დელეგატი"
           sub="↑ აქტიური რეგიონული ქსელი"
         />
-        {/* Hand-composed to match StatCard's own markup byte-for-byte instead of a
-            StatCard prop change: `accent` only supports "brand" and `sub` is a plain
-            string with no className slot (StatCard.tsx is out of this task's scope),
-            so the amber "needs attention" signal goes on a manually-styled sub line
-            (task-18-brief.md Step 2). */}
-        <div className="border-t-2 border-ink pt-3">
-          <div className="font-serif text-[2.1rem] font-bold leading-tight text-brand">
-            {formatCountKa(overview.pending_delegates)}
-          </div>
-          <div className="text-[0.74rem] text-muted-fg">ვერიფიკაციის მოლოდინში</div>
-          <div className="text-[0.74rem] text-warn mt-0.5">საჭიროებს გადახედვას</div>
-        </div>
+        <AdminStat
+          value={formatCountKa(overview.pending_delegates)}
+          label="ვერიფიკაციის მოლოდინში"
+          sub="საჭიროებს გადახედვას"
+          urgent
+        />
         {/* No "active" tier while dues are dropped (ADR-037): the paying-member card is
             gone, and the dues total shows only with SHOW_MEMBERSHIP_DUES. */}
         {showMembershipDues() ? (
-          <StatCard
+          <AdminStat
             value={`${formatCountKa(overview.mrr_gel)} ₾`}
             label="სავარაუდო MRR"
             sub="აქტიური წევრების საწევროების ჯამი"
@@ -110,34 +109,43 @@ export default async function AdminOverviewPage() {
         ) : null}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-12 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         {canSeePayments && recent ? (
           <Card>
-            <SectionRule
-              label="ბოლო ტრანზაქციები"
+            <AdminSectionTitle
               action={
-                <ButtonLink href="/admin/finances" variant="ghost" size="sm">
+                <ButtonLink href="/admin/finances" variant="ghost" size="md">
                   ყველა →
                 </ButtonLink>
               }
-            />
+            >
+              ბოლო ტრანზაქციები
+            </AdminSectionTitle>
             {recent.data && recent.data.length > 0 ? (
               <DataTable
                 head={
                   <>
-                    <th className={tableThClass}>წევრი</th>
-                    <th className={tableThClass}>თანხა ₾</th>
-                    <th className={tableThClass}>თარიღი</th>
+                    <th className={adminThClass}>
+                      <Caps>წევრი</Caps>
+                    </th>
+                    <th className={`${adminThClass} text-right`}>
+                      <Caps>თანხა ₾</Caps>
+                    </th>
+                    <th className={adminThClass}>
+                      <Caps>თარიღი</Caps>
+                    </th>
                   </>
                 }
               >
                 {recent.data.map((p) => (
-                  <tr key={p.id} className={tableRowClass}>
-                    <td className={`${tableCellClass} font-semibold`}>
+                  <tr key={p.id} className={adminRowClass}>
+                    <td className={`${adminTdClass} font-bold`}>
                       {p.first_name} {p.last_name}
                     </td>
-                    <td className={tableCellClass}>{formatAmountGel(p.amount_gel)}</td>
-                    <td className={`${tableCellClass} text-muted-fg`}>{formatDateKa(p.paid_at)}</td>
+                    <td className={`${adminTdClass} text-right`}>
+                      {formatAmountGel(p.amount_gel)}
+                    </td>
+                    <td className={`${adminTdClass} text-secondary`}>{formatDateKa(p.paid_at)}</td>
                   </tr>
                 ))}
               </DataTable>
@@ -149,26 +157,27 @@ export default async function AdminOverviewPage() {
 
         <div className="flex flex-col gap-6">
           <Card variant="callout">
-            <p className="text-xs font-bold uppercase tracking-wide text-brand">
-              ვერიფიკაციის რიგი
+            <p className="text-[12px] font-bold tracking-[.14em] text-brand">
+              <Caps>ვერიფიკაციის რიგი</Caps>
             </p>
-            <p className="mt-2 text-4xl font-extrabold text-brand">
+            <p className="mt-2.5 font-serif text-[64px] leading-none font-bold text-brand">
               {formatCountKa(overview.pending_delegates)}
             </p>
-            <p className="mt-1 text-sm font-semibold text-muted-fg">
-              დელეგატი ელოდება დადასტურებას
-            </p>
+            <p className="mt-2.5 text-[15px] text-secondary">დელეგატი ელოდება დადასტურებას</p>
             {hasAnyRole(roles, ["verifier", "super_admin"]) ? (
-              <div className="mt-4">
-                <ButtonLink href="/admin/verify" variant="primary">
-                  გადადი ვერიფიკაციაზე →
-                </ButtonLink>
-              </div>
+              <ButtonLink
+                href="/admin/verify"
+                variant="primary"
+                size="lg"
+                className="mt-[22px] w-full"
+              >
+                გადადი ვერიფიკაციაზე →
+              </ButtonLink>
             ) : null}
           </Card>
 
           <Card>
-            <SectionRule label="წევრები მხარეების მიხედვით" />
+            <AdminSectionTitle>წევრები მხარეების მიხედვით</AdminSectionTitle>
             <div className="mt-4 flex flex-col gap-3">
               {shownRegions.map((r, i) => (
                 <BallotBar

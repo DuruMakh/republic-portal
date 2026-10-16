@@ -22,3 +22,11 @@ describe("redirects", () => {
     ]);
   });
 });
+
+describe("production build", () => {
+  it("rebuilds every file instead of reusing Turbopack's saved build cache", () => {
+    // Vercel restores that cache between deploys; on 2026-10-16 it served styles built from
+    // the previous app/globals.css, so the live homepage lost its new colours and fonts.
+    expect(nextConfig.experimental?.turbopackFileSystemCacheForBuild).toBe(false);
+  });
+});

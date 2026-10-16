@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { AdminPageHeader, adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
@@ -26,14 +28,14 @@ export default async function AdminEventsListPage() {
 
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიებები</h1>
+      <AdminPageHeader
+        title="ღონისძიებები"
+        action={
           <ButtonLink href="/admin/content/events/new" size="sm">
             ახალი ღონისძიება
           </ButtonLink>
-        </div>
-      </div>
+        }
+      />
       <Card padded={false}>
         {rows.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-fg">ჯერ ცარიელია.</p>
@@ -42,25 +44,35 @@ export default async function AdminEventsListPage() {
             bodyTestId="admin-events-body"
             head={
               <>
-                <th className={tableThClass}>დასახელება</th>
-                <th className={tableThClass}>დრო</th>
-                <th className={tableThClass}>ადგილი</th>
-                <th className={tableThClass}>სტატუსი</th>
-                <th className={tableThClass}>მოდის</th>
-                <th className={tableThClass}></th>
+                <th className={adminThClass}>
+                  <Caps>დასახელება</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>დრო</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>ადგილი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>სტატუსი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>მოდის</Caps>
+                </th>
+                <th className={adminThClass}></th>
               </>
             }
           >
             {rows.map((e) => (
-              <tr key={e.id} className={tableRowClass}>
-                <td className={`${tableCellClass} font-semibold text-ink`}>{e.title}</td>
-                <td className={tableCellClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
-                <td className={tableCellClass}>{e.location}</td>
-                <td className={tableCellClass}>
+              <tr key={e.id} className={adminRowClass}>
+                <td className={`${adminTdClass} font-semibold text-ink`}>{e.title}</td>
+                <td className={adminTdClass}>{formatEventTimeKa(e.starts_at, e.ends_at)}</td>
+                <td className={adminTdClass}>{e.location}</td>
+                <td className={adminTdClass}>
                   <Pill {...contentPill(e.status)} />
                 </td>
-                <td className={tableCellClass}>{formatCountKa(e.going_count)}</td>
-                <td className={tableCellClass}>
+                <td className={adminTdClass}>{formatCountKa(e.going_count)}</td>
+                <td className={adminTdClass}>
                   <Link
                     href={`/admin/content/events/${e.id}`}
                     className="font-semibold text-brand hover:underline"
