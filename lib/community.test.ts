@@ -153,7 +153,7 @@ describe("eventDayMonthKa", () => {
     expect(eventDayMonthKa("2026-07-25T15:00:00.000Z")).toEqual({ day: "25", month: "ივლ" });
   });
   it("uses Tbilisi's date, not UTC's, near midnight", () => {
-    expect(eventDayMonthKa("2026-12-31T20:30:00.000Z")).toEqual({ day: "1", month: "იან" });
+    expect(eventDayMonthKa("2026-12-31T20:30:00.000Z")).toEqual({ day: "01", month: "იან" });
   });
   it("returns null for malformed input", () => {
     expect(eventDayMonthKa("garbage")).toBeNull();
