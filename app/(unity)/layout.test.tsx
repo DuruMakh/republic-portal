@@ -78,6 +78,20 @@ describe("ერთობა layout", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("keeps Tab inside the phone menu and returns focus to the menu button when it closes", () => {
+    renderLayout();
+    const trigger = screen.getByRole("button", { name: MENU });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    const links = within(dialog).getAllByRole("link");
+    links.at(-1)?.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it("gives phones a back bar instead of the header on a detail page, and no join bar on /join", () => {
     nav.pathname = "/join/terms";
     renderLayout();

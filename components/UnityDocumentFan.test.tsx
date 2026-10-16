@@ -1,22 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { HOME_DOCUMENTS } from "@/lib/home-copy";
-import { HomeDocuments } from "./HomeDocuments";
+import { ABOUT_DOCUMENTS, ABOUT_DOCUMENTS_CAPTION } from "@/lib/about-copy";
+import { HOME_DOCUMENTS, HOME_DOCUMENTS_CAPTION } from "@/lib/home-copy";
+import { UnityDocumentFan } from "./UnityDocumentFan";
 
-const act = HOME_DOCUMENTS.find((d) => d.id === "act")!;
+const [, , act] = HOME_DOCUMENTS;
 
-describe("HomeDocuments", () => {
+describe("UnityDocumentFan", () => {
   it("draws one zoom button per archive page and no viewer until one is clicked", () => {
-    render(<HomeDocuments />);
+    render(<UnityDocumentFan documents={HOME_DOCUMENTS} caption={HOME_DOCUMENTS_CAPTION} />);
 
     for (const doc of HOME_DOCUMENTS) {
       expect(screen.getByRole("button", { name: `გადიდება — ${doc.name}` })).toBeInTheDocument();
     }
+    expect(screen.getByText(HOME_DOCUMENTS_CAPTION)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens the clicked page large, with its caption, and closes it with the close button", () => {
-    render(<HomeDocuments />);
+  it("opens the clicked page large with its caption, offers one close button and returns focus", () => {
+    render(<UnityDocumentFan documents={HOME_DOCUMENTS} caption={HOME_DOCUMENTS_CAPTION} />);
     const trigger = screen.getByRole("button", { name: `გადიდება — ${act.name}` });
 
     fireEvent.click(trigger);
@@ -26,16 +28,18 @@ describe("HomeDocuments", () => {
     expect(screen.getByRole("img", { name: act.name })).toHaveAttribute("src", act.src);
     expect(dialog).toHaveTextContent(act.caption);
 
-    const [close] = screen.getAllByRole("button", { name: "დახურვა" });
+    // The backdrop also closes on click, but it is not a second button for keyboards or readers.
+    const close = screen.getByRole("button", { name: "დახურვა" });
     expect(close).toHaveFocus();
-    fireEvent.click(close!);
+    fireEvent.click(close);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(trigger).toHaveFocus();
   });
 
   it("closes on Escape", () => {
-    render(<HomeDocuments />);
-    fireEvent.click(screen.getByRole("button", { name: `გადიდება — ${act.name}` }));
+    render(<UnityDocumentFan documents={ABOUT_DOCUMENTS} caption={ABOUT_DOCUMENTS_CAPTION} />);
+    const [first] = ABOUT_DOCUMENTS;
+    fireEvent.click(screen.getByRole("button", { name: `გადიდება — ${first.name}` }));
 
     fireEvent.keyDown(document, { key: "Escape" });
 

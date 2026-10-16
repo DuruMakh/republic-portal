@@ -1,4 +1,4 @@
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 import { PRINCIPLE_ROOTS_LABEL, type PrincipleRoot } from "@/lib/principles-copy";
 
 /**
@@ -24,7 +24,9 @@ export function PrinciplesRoots({
           aria-hidden="true"
           className="block h-3 w-[34px] flex-none bg-[url(/unity/ornament-wine.svg)] bg-size-[auto_12px] bg-left bg-repeat-x"
         />
-        <span>{mtavruli(PRINCIPLE_ROOTS_LABEL)}</span>
+        <span>
+          <Caps>{PRINCIPLE_ROOTS_LABEL}</Caps>
+        </span>
       </div>
       {art ? (
         // eslint-disable-next-line @next/next/no-img-element -- decorative vector drawing
