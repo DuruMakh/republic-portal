@@ -50,7 +50,7 @@ export default function UnityLayout({ children }: { children: ReactNode }) {
   const ratingsShown = showRatings();
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-limestone text-[17px] leading-[1.65] text-ink">
+    <div className="unity-fonts flex min-h-screen flex-col overflow-x-clip bg-limestone text-[17px] leading-[1.65] text-ink">
       <DemoBanner />
       <UnityHeader
         navItems={filterRatingLinks(navItems, ratingsShown)}

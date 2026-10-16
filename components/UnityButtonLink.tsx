@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 
 const VARIANTS = {
   /** Red fill: the default call to act on light backgrounds. */
@@ -60,7 +60,7 @@ export function UnityButtonLink({
 }) {
   return (
     <Link href={href} className={unityButtonClasses(variant, size, className)}>
-      {mtavruli(children)}
+      <Caps>{children}</Caps>
       {arrow ? <UnityButtonArrow /> : null}
     </Link>
   );

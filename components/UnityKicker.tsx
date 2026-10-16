@@ -1,4 +1,4 @@
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 
 /**
  * The „ერთობა“ section label: a two-part bar (red and ink, or sand and limestone on wine)
@@ -24,7 +24,9 @@ export function UnityKicker({
         <span className={`block h-1 w-6 sm:w-[30px] ${light ? "bg-sand" : "bg-brand"}`} />
         <span className={`block h-1 w-3.5 sm:w-[18px] ${light ? "bg-limestone" : "bg-ink"}`} />
       </span>
-      <span>{mtavruli(children)}</span>
+      <span>
+        <Caps>{children}</Caps>
+      </span>
     </div>
   );
 }

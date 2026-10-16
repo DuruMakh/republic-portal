@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 
+import { Caps } from "@/components/Caps";
 import { useChromePathname } from "@/components/ChromePathname";
 import { useSignedIn } from "@/components/useSignedIn";
-import { mtavruli } from "@/lib/mtavruli";
 import { showsJoinCta } from "@/lib/mobile-nav";
 
 const JOIN = "შემოგვიერთდი";
@@ -26,7 +26,7 @@ export function UnityJoinBar() {
         href={signedIn ? "/me" : "/join"}
         className="flex h-[54px] items-center justify-center bg-brand text-[14px] font-bold tracking-[.08em] text-white no-underline hover:bg-brand-dark hover:text-white"
       >
-        {mtavruli(signedIn ? CABINET : JOIN)}
+        <Caps>{signedIn ? CABINET : JOIN}</Caps>
       </Link>
     </div>
   );

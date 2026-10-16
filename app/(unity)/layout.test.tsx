@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mtavruli } from "@/lib/mtavruli";
 
 const nav = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
@@ -16,7 +15,7 @@ vi.mock("@/lib/supabase/client", () => ({
 
 import UnityLayout from "./layout";
 
-const RATING_HEADER = mtavruli("რეიტინგი");
+const RATING_HEADER = "რეიტინგი";
 const MENU = "მენიუ";
 
 function renderLayout() {
@@ -37,20 +36,14 @@ afterEach(() => {
 });
 
 describe("ერთობა layout", () => {
-  it("shows the design's header links in Georgian capitals and marks the current page", () => {
+  it("shows the design's header links (ordinary letters as their names) and marks the current page", () => {
     renderLayout();
     const header = within(screen.getByRole("banner"));
-    const about = header.getByRole("link", { name: mtavruli("ჩვენ შესახებ") });
+    const about = header.getByRole("link", { name: "ჩვენ შესახებ" });
     expect(about).toHaveAttribute("href", "/about");
     expect(about).toHaveAttribute("aria-current", "page");
-    expect(header.getByRole("link", { name: mtavruli("სტრუქტურა") })).toHaveAttribute(
-      "href",
-      "/structure",
-    );
-    expect(header.getByRole("link", { name: mtavruli("შემოგვიერთდი") })).toHaveAttribute(
-      "href",
-      "/join",
-    );
+    expect(header.getByRole("link", { name: "სტრუქტურა" })).toHaveAttribute("href", "/structure");
+    expect(header.getByRole("link", { name: "შემოგვიერთდი" })).toHaveAttribute("href", "/join");
   });
 
   it("hides every ranking link while ratings are hidden (the default)", () => {
@@ -77,7 +70,7 @@ describe("ერთობა layout", () => {
     renderLayout();
     fireEvent.click(screen.getByRole("button", { name: MENU }));
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByRole("link", { name: mtavruli("პრინციპები") })).toHaveAttribute(
+    expect(within(dialog).getByRole("link", { name: "პრინციპები" })).toHaveAttribute(
       "href",
       "/principles",
     );
@@ -91,13 +84,13 @@ describe("ერთობა layout", () => {
     const back = screen.getByRole("link", { name: "← უკან" });
     expect(back).toHaveAttribute("href", "/join");
     // Only the header's own join button: no phone join bar here.
-    expect(screen.getAllByRole("link", { name: mtavruli("შემოგვიერთდი") })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "შემოგვიერთდი" })).toHaveLength(1);
   });
 
   it("shows the phone join bar on the redesigned pages and no back bar", () => {
     renderLayout();
     expect(screen.queryByRole("link", { name: "← უკან" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: mtavruli("შემოგვიერთდი") })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "შემოგვიერთდი" })).toHaveLength(2);
   });
 
   it("keeps ფინანსები out of the footer unless SHOW_PUBLIC_FINANCES=true", () => {
