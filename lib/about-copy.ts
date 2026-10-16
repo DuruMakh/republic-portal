@@ -10,6 +10,7 @@ import {
   INDEPENDENCE_ACT,
   type DocumentFan,
 } from "@/lib/archive-documents";
+import { MEMBERS_LEAD, MEMBERS_PATH_LABEL } from "@/lib/structure-copy";
 
 export const ABOUT_HREF = "/about";
 export const ABOUT_TITLE = "ჩვენ შესახებ";
@@ -55,8 +56,6 @@ export type AboutPortalCard = {
   title: string;
   /** The lower block: a Mtavruli label, a line of text and a link. */
   detail: { label: string; text: string; link: { href: string; label: string } };
-  /** True for the block that shows or links to the delegate ranking (hidden with ratings). */
-  isRating?: boolean;
 };
 
 export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
@@ -71,19 +70,18 @@ export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
   {
     title: "ორგანიზება",
     detail: {
-      label: "დელეგატი",
-      text: "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.",
-      link: { href: "/join/terms", label: "გაეცანი წესებს →" },
+      label: "წევრი",
+      text: MEMBERS_LEAD,
+      link: { href: "/structure#members", label: `${MEMBERS_PATH_LABEL} →` },
     },
   },
   {
     title: "ლიდერების არჩევა",
     detail: {
-      label: "დელეგატების რეიტინგი",
-      text: "ავტომატურად ლაგდება წევრების რაოდენობის მიხედვით.",
-      link: { href: "/leaderboard", label: "სრულად →" },
+      label: "დელეგატი",
+      text: "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.",
+      link: { href: "/join/terms", label: "გაეცანი წესებს →" },
     },
-    isRating: true,
   },
   {
     title: "გადაწყვეტილებების მიღების პროცესში მონაწილეობა",

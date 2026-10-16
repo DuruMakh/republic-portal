@@ -25,7 +25,6 @@ import {
   ABOUT_UNITY_CLOSE,
   ABOUT_UNITY_LEAD,
 } from "@/lib/about-copy";
-import { showRatings } from "@/lib/ratings-switch";
 import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 
 // app/layout.tsx sets a plain string title, so each public page carries the site-name suffix.
@@ -36,8 +35,6 @@ const SECTION_TITLE =
 
 /** /about in the owner's „ერთობა“ design: who we are, what we aim for, and where we come from. */
 export default function AboutPage() {
-  const ratingsShown = showRatings();
-
   return (
     <main>
       {/* Hero: who we are, and the three beliefs. */}
@@ -129,7 +126,7 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <AboutPortalCards ratingsShown={ratingsShown} />
+          <AboutPortalCards />
         </div>
       </section>
 

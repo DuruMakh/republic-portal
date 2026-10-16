@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as copy from "@/lib/about-copy";
 import { mtavruli } from "@/lib/mtavruli";
+import { MEMBERS_LEAD } from "@/lib/structure-copy";
 import AboutPage, { metadata } from "./page";
 
 beforeEach(() => {
@@ -60,21 +61,36 @@ describe("/about", () => {
     );
   });
 
-  it("hides the delegate ranking while ratings are off, keeping the card's title", () => {
+  it("orders the portal cards supporter, member, delegate, common vote", () => {
     render(<AboutPage />);
-    expect(screen.getByText("ლიდერების არჩევა")).toBeInTheDocument();
+    const cards = screen.getByText("ლიდერების არჩევა").closest("ul")!;
+    const items = within(cards).getAllByRole("listitem");
+    expect(items).toHaveLength(4);
+    expect(items[0]).toHaveTextContent(mtavruli("მხარდამჭერი"));
+    expect(items[1]).toHaveTextContent("ორგანიზება");
+    expect(items[1]).toHaveTextContent(mtavruli("წევრი"));
+    expect(items[1]).toHaveTextContent(MEMBERS_LEAD);
+    expect(within(items[1]!).getByRole("link", { name: "როგორ ხდები წევრი →" })).toHaveAttribute(
+      "href",
+      "/structure#members",
+    );
+    expect(items[2]).toHaveTextContent("ლიდერების არჩევა");
+    expect(items[2]).toHaveTextContent(mtavruli("დელეგატი"));
+    expect(items[2]).toHaveTextContent("მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.");
+    expect(within(items[2]!).getByRole("link", { name: "გაეცანი წესებს →" })).toHaveAttribute(
+      "href",
+      "/join/terms",
+    );
+    expect(items[3]).toHaveTextContent(mtavruli("საერთო კენჭისყრა"));
+  });
+
+  it("never links the portal cards to the delegate ranking", () => {
+    vi.stubEnv("SHOW_RATINGS", "true");
+    render(<AboutPage />);
     expect(screen.queryByText(mtavruli("დელეგატების რეიტინგი"))).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "სრულად →" })).not.toBeInTheDocument();
     for (const link of screen.getAllByRole("link")) {
       expect(link).not.toHaveAttribute("href", "/leaderboard");
     }
-  });
-
-  it("brings the ranking block back once SHOW_RATINGS=true", () => {
-    vi.stubEnv("SHOW_RATINGS", "true");
-    render(<AboutPage />);
-    expect(screen.getByText(mtavruli("დელეგატების რეიტინგი"))).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "სრულად →" })).toHaveAttribute("href", "/leaderboard");
   });
 
   it("has the roots section at #roots with the documents and the seven dates", () => {
