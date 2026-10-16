@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Eyebrow } from "@/components/Eyebrow";
+import { Caps } from "@/components/Caps";
+import { UnityKicker } from "@/components/UnityKicker";
+import { UnityTextLink } from "@/components/UnityTextLink";
+import { GEORGIAN_NUMERALS } from "@/lib/principles-copy";
 import { SUPPORT_HEADING } from "@/lib/support-copy";
 
 export const metadata: Metadata = {
@@ -78,42 +80,102 @@ const SECTIONS: Section[] = [
   },
 ];
 
+const sectionId = (index: number) => `p${index + 1}`;
+
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-16 pt-10">
-      <div className="mb-2">
-        <Eyebrow>პერსონალური მონაცემები</Eyebrow>
-      </div>
-      <h1 className="mb-4 break-words font-serif text-3xl font-bold text-ink">
-        კონფიდენციალურობის პოლიტიკა
-      </h1>
-      <p className="mb-6 text-sm text-prose">
-        ეს გვერდი გიხსნის, რა მონაცემებს ვაგროვებთ, რისთვის ვიყენებთ და ვინ ხედავს მათ. ვერსია 1,
-        2026 წლის ოქტომბერი.
-      </p>
-      <div className="flex flex-col gap-6 border-y-2 border-ink py-8">
-        {SECTIONS.map((section) => (
-          <section key={section.heading}>
-            <h2 className="mb-2 font-serif text-lg font-bold text-ink">{section.heading}</h2>
-            {"items" in section ? (
-              <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-prose">
-                {section.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-prose">{section.body}</p>
-            )}
-            {section.contact ? (
-              <p className="mt-2 text-sm">
-                <Link href="/support" className="font-semibold text-brand hover:underline">
-                  {SUPPORT_HEADING} →
-                </Link>
-              </p>
-            ) : null}
-          </section>
-        ))}
+    <main
+      aria-labelledby="page-title"
+      className="pb-16 pt-10 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]"
+    >
+      <div className="unity-container">
+        <UnityKicker>პერსონალური მონაცემები</UnityKicker>
+        <h1
+          id="page-title"
+          className="m-0 mt-[18px] max-w-[16em] break-words font-serif text-[28px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(44px,4.4vw,64px)] sm:leading-[1.12] sm:tracking-[-.01em]"
+        >
+          კონფიდენციალურობის პოლიტიკა
+        </h1>
+        <p className="m-0 mt-4 max-w-[34em] font-serif text-[18px] leading-[1.6] text-prose sm:mt-[26px] sm:text-[clamp(19px,1.6vw,22px)]">
+          ეს გვერდი გიხსნის, რა მონაცემებს ვაგროვებთ, რისთვის ვიყენებთ და ვინ ხედავს მათ. ვერსია 1,
+          2026 წლის ოქტომბერი.
+        </p>
+        <div className="mt-7 grid items-start gap-[clamp(40px,5vw,88px)] sm:mt-12 min-[900px]:grid-cols-[300px_minmax(0,1fr)]">
+          <nav aria-label="სარჩევი" className="sticky top-6 hidden min-[900px]:block">
+            <p className="m-0 border-b-2 border-ink pb-2.5 text-[12px] font-bold tracking-[.14em] text-secondary">
+              <Caps>სარჩევი</Caps>
+            </p>
+            <ol className="m-0 list-none p-0">
+              {SECTIONS.map((section, index) => (
+                <li key={section.heading}>
+                  <a
+                    href={`#${sectionId(index)}`}
+                    className="grid grid-cols-[30px_minmax(0,1fr)] gap-2 border-b border-rule py-[9px] text-[15px] text-ink no-underline transition-colors hover:text-brand"
+                  >
+                    <Numeral index={index} className="text-[20px] leading-[1.1]" />
+                    <span>{section.heading}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+          <div className="border-y-2 border-ink">
+            {SECTIONS.map((section, index) => (
+              <section
+                key={section.heading}
+                id={sectionId(index)}
+                aria-labelledby={`${sectionId(index)}-t`}
+                className="grid scroll-mt-6 grid-cols-[38px_minmax(0,1fr)] gap-2.5 border-b border-rule py-[22px] last:border-b-0 sm:grid-cols-[64px_minmax(0,1fr)] sm:gap-6 sm:py-[30px]"
+              >
+                <Numeral index={index} className="text-[28px] leading-[1.1] sm:text-[40px]" />
+                <div className="min-w-0">
+                  <h2
+                    id={`${sectionId(index)}-t`}
+                    className="m-0 font-serif text-[20px] font-bold leading-[1.35] text-ink sm:text-[24px]"
+                  >
+                    {section.heading}
+                  </h2>
+                  {"items" in section ? (
+                    <ul className="m-0 mt-3 flex list-none flex-col gap-2.5 p-0">
+                      {section.items.map((item) => (
+                        <li
+                          key={item}
+                          className="grid grid-cols-[22px_minmax(0,1fr)] gap-2 text-[16px] leading-[1.7] text-prose sm:text-[17px]"
+                        >
+                          <span aria-hidden="true" className="pt-[9px]">
+                            <span className="block h-2 w-2.5 rounded-[48%_52%_55%_45%/50%_46%_54%_50%] bg-teal" />
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="m-0 mt-3 text-[16px] leading-[1.75] text-prose sm:text-[17px]">
+                      {section.body}
+                    </p>
+                  )}
+                  {section.contact ? (
+                    <p className="m-0 mt-3.5">
+                      <UnityTextLink href="/support" className="text-[15.5px] font-bold">
+                        {SUPPORT_HEADING} →
+                      </UnityTextLink>
+                    </p>
+                  ) : null}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
+  );
+}
+
+/** The old Georgian letter numbering each section (ა, ბ, გ …), decoration only. */
+function Numeral({ index, className }: { index: number; className: string }) {
+  return (
+    <span aria-hidden="true" className={`font-aso font-light text-brand ${className}`}>
+      {GEORGIAN_NUMERALS[index]}
+    </span>
   );
 }

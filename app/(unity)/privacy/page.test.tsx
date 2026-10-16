@@ -71,7 +71,7 @@ describe("/privacy", () => {
 
   it("lists what is collected and who sees it as bullet points", () => {
     render(<PrivacyPage />);
-    const lists = screen.getAllByRole("list");
+    const lists = screen.getAllByRole("list").filter((list) => !list.closest("nav"));
     expect(lists.map((l) => l.querySelectorAll("li").length)).toEqual([5, 5]);
   });
 
@@ -89,5 +89,16 @@ describe("/privacy", () => {
     expect(text).toContain("ერთი დღის განმავლობაში");
     // support messages are not linked to accounts, so a deletion does not reach them
     expect(text).toContain("ინახება ცალკე");
+  });
+
+  it("opens with a contents list linking to every section", () => {
+    render(<PrivacyPage />);
+    const contents = screen.getByRole("navigation", { name: "სარჩევი" });
+    const links = Array.from(contents.querySelectorAll("a"));
+    expect(links).toHaveLength(SECTIONS.length);
+    links.forEach((link, i) => expect(link).toHaveAccessibleName(SECTIONS[i]));
+    for (const link of links) {
+      expect(document.getElementById(link.getAttribute("href")!.slice(1))).not.toBeNull();
+    }
   });
 });
