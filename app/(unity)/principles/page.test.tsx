@@ -1,31 +1,123 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { PRINCIPLES, PRINCIPLES_TITLE } from "@/lib/principles-copy";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { GEORGIAN_NUMERALS, PRINCIPLES } from "@/lib/principles-copy";
 import PrinciplesPage, { metadata } from "./page";
 
+function article(number: number): HTMLElement {
+  const el = document.getElementById(`principle-${number}`);
+  if (!el) throw new Error(`no #principle-${number}`);
+  return el;
+}
+
+function toggle(number: number): HTMLElement {
+  return within(article(number)).getByRole("button");
+}
+
+afterEach(() => {
+  window.history.replaceState(null, "", "/principles");
+});
+
 describe("/principles", () => {
-  it("renders every principle, numbered, with its full text", () => {
-    const { container } = render(<PrinciplesPage />);
-    expect(screen.getByRole("heading", { level: 1, name: PRINCIPLES_TITLE })).toBeInTheDocument();
-    const headings = screen.getAllByRole("heading", { level: 2 });
-    expect(headings.map((h) => h.textContent)).toEqual(
-      PRINCIPLES.map((p, i) => `${i + 1}. ${p.title}`),
-    );
-    for (const { paragraphs } of PRINCIPLES) {
-      for (const text of paragraphs) expect(screen.getByText(text)).toBeInTheDocument();
-    }
-    const index = screen.getByRole("navigation", { name: PRINCIPLES_TITLE });
-    const links = within(index).getAllByRole("link");
+  it("opens with the headline, lede and a link down to the contents", () => {
+    render(<PrinciplesPage />);
+    expect(screen.getByRole("heading", { level: 1, name: "პრინციპები" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "ჩვენი მიზანია ქართველი ერის გაერთიანება საერთო პრინციპების, ღირებულებებისა და მიზნების გარშემო.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ᲡᲐᲠᲩᲔᲕᲘ ↓" })).toHaveAttribute("href", "#contents");
+    expect(document.getElementById("contents")).not.toBeNull();
+  });
+
+  it("rings the knot with the twelve numerals, each linking to its principle", () => {
+    render(<PrinciplesPage />);
+    const seal = screen.getByRole("navigation", { name: "პრინციპების ბეჭედი" });
+    const links = within(seal).getAllByRole("link");
     expect(links).toHaveLength(12);
-    PRINCIPLES.forEach(({ title }, i) => {
-      const link = links[i];
-      expect(link).toHaveTextContent(title);
+    links.forEach((link, i) => {
+      expect(link).toHaveAccessibleName(`პრინციპი ${i + 1}`);
+      expect(link).toHaveTextContent(GEORGIAN_NUMERALS[i] ?? "");
       expect(link).toHaveAttribute("href", `#principle-${i + 1}`);
-      expect(container.querySelector(`#principle-${i + 1}`)).not.toBeNull();
     });
   });
 
+  it("lists the contents, each entry linking to its principle", () => {
+    render(<PrinciplesPage />);
+    const contents = screen.getByRole("navigation", { name: "ᲡᲐᲠᲩᲔᲕᲘ" });
+    const links = within(contents).getAllByRole("link");
+    expect(links).toHaveLength(12);
+    PRINCIPLES.forEach(({ title }, i) => {
+      expect(links[i]).toHaveTextContent(title);
+      expect(links[i]).toHaveAttribute("href", `#principle-${i + 1}`);
+    });
+  });
+
+  it("gives every principle its own section with the full text and its historical roots", () => {
+    render(<PrinciplesPage />);
+    PRINCIPLES.forEach(({ title, lead, body, roots }, i) => {
+      const section = article(i + 1);
+      expect(section).toHaveAccessibleName(title);
+      expect(within(section).getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+      expect(within(section).getByText(lead)).toBeInTheDocument();
+      for (const text of body) expect(within(section).getByText(text)).toBeInTheDocument();
+      const note = within(section).getByRole("complementary", { name: "ისტორიული ფესვი" });
+      for (const root of roots) {
+        if (root.kind === "event") expect(note.textContent).toContain(root.date);
+        if (root.kind === "quote") expect(note.textContent).toContain(root.text);
+      }
+      expect(section).toHaveTextContent(`ᲞᲠᲘᲜᲪᲘᲞᲘ ${String(i + 1).padStart(2, "0")}`);
+    });
+  });
+
+  it("quotes principle 5 in the wine band", () => {
+    render(<PrinciplesPage />);
+    const band = screen.getByRole("region", { name: "ციტატა" });
+    expect(band).toHaveTextContent(
+      "ხელისუფლება არის ქართველი ერის მიერ დროებით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
+    );
+  });
+
+  it("on phones folds the principles into rows, one open at a time, the first open", () => {
+    render(<PrinciplesPage />);
+    expect(toggle(1)).toHaveAttribute("aria-expanded", "true");
+    for (let n = 2; n <= 12; n++) expect(toggle(n)).toHaveAttribute("aria-expanded", "false");
+    const panel = document.getElementById(toggle(3).getAttribute("aria-controls") ?? "");
+    expect(panel).not.toBeNull();
+    expect(article(3)).toContainElement(panel);
+
+    fireEvent.click(toggle(3));
+    expect(toggle(3)).toHaveAttribute("aria-expanded", "true");
+    expect(toggle(1)).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle(3));
+    expect(toggle(3)).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("opens the principle a link points at (#principle-N)", () => {
+    window.history.replaceState(null, "", "/principles#principle-4");
+    render(<PrinciplesPage />);
+    expect(toggle(4)).toHaveAttribute("aria-expanded", "true");
+    expect(toggle(1)).toHaveAttribute("aria-expanded", "false");
+
+    act(() => {
+      window.history.replaceState(null, "", "/principles#principle-9");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(toggle(9)).toHaveAttribute("aria-expanded", "true");
+    expect(toggle(4)).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes with the join call and a link on to the structure", () => {
+    render(<PrinciplesPage />);
+    expect(screen.getByRole("heading", { level: 2, name: "ერთად შეგვიძლია." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ორგანიზაციული სტრუქტურა →" })).toHaveAttribute(
+      "href",
+      "/structure",
+    );
+  });
+
   it("carries the site-name suffix in its tab title", () => {
-    expect(metadata.title).toBe(`${PRINCIPLES_TITLE} — ქართული რესპუბლიკა`);
+    expect(metadata.title).toBe("პრინციპები — ქართული რესპუბლიკა");
   });
 });
