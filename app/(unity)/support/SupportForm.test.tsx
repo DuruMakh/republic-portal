@@ -92,4 +92,11 @@ describe("SupportForm", () => {
     release({ ok: true });
     await screen.findByText(SUPPORT_SUCCESS);
   });
+
+  it("counts the message's characters against the 2000 limit", () => {
+    render(<SupportForm submit={vi.fn()} />);
+    expect(screen.getByText("0 / 2000")).toBeInTheDocument();
+    fill();
+    expect(screen.getByText(`${MESSAGE.length} / 2000`)).toBeInTheDocument();
+  });
 });

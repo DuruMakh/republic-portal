@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/Button";
-import { Field, TextareaField } from "@/components/Field";
+import { UnityButton } from "@/components/UnityButton";
+import { UnityField, UnityTextareaField } from "@/components/UnityField";
 import {
   SUPPORT_EMAIL_LABEL,
   SUPPORT_FAILURE,
   SUPPORT_MESSAGE_LABEL,
   SUPPORT_NAME_LABEL,
+  SUPPORT_OPTIONAL_HINT,
   SUPPORT_PHONE_LABEL,
   SUPPORT_SUBMIT_LABEL,
   SUPPORT_SUCCESS,
@@ -81,48 +82,60 @@ export function SupportForm({
   }
 
   if (sent) {
-    return <p className="font-serif text-[1.02rem] text-prose">{SUPPORT_SUCCESS}</p>;
+    return <p className="m-0 font-serif text-[19px] leading-[1.6] text-prose">{SUPPORT_SUCCESS}</p>;
   }
 
   return (
-    <form className="flex flex-col gap-5" onSubmit={onSubmit} noValidate>
-      <Field
+    <form className="flex flex-col gap-[26px] sm:gap-[30px]" onSubmit={onSubmit} noValidate>
+      <UnityField
         label={SUPPORT_NAME_LABEL}
         value={name}
         error={fieldErrors.name}
         onChange={(e) => setName(e.target.value)}
+        autoComplete="name"
         maxLength={60}
       />
-      <Field
-        label={SUPPORT_EMAIL_LABEL}
-        type="email"
-        value={email}
-        error={fieldErrors.email}
-        onChange={(e) => setEmail(e.target.value)}
-        maxLength={120}
-      />
-      <Field
-        label={SUPPORT_PHONE_LABEL}
-        type="tel"
-        value={phone}
-        error={fieldErrors.phone}
-        onChange={(e) => setPhone(e.target.value)}
-        maxLength={40}
-      />
-      <TextareaField
+      <div className="grid gap-[26px] sm:grid-cols-2 sm:gap-8">
+        <UnityField
+          label={SUPPORT_EMAIL_LABEL}
+          hint={SUPPORT_OPTIONAL_HINT}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          error={fieldErrors.email}
+          onChange={(e) => setEmail(e.target.value)}
+          maxLength={120}
+        />
+        <UnityField
+          label={SUPPORT_PHONE_LABEL}
+          hint={SUPPORT_OPTIONAL_HINT}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          value={phone}
+          error={fieldErrors.phone}
+          onChange={(e) => setPhone(e.target.value)}
+          maxLength={40}
+        />
+      </div>
+      <UnityTextareaField
         label={SUPPORT_MESSAGE_LABEL}
         value={message}
         error={fieldErrors.message}
         onChange={(e) => setMessage(e.target.value)}
         rows={7}
         maxLength={2000}
+        footer={
+          <span className="self-end font-serif text-[13.5px] text-secondary">
+            {message.length} / 2000
+          </span>
+        }
       />
-      {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-      <div>
-        <Button type="submit" disabled={busy}>
-          {SUPPORT_SUBMIT_LABEL}
-        </Button>
-      </div>
+      {formError ? <p className="m-0 text-[15px] font-semibold text-brand">{formError}</p> : null}
+      <UnityButton type="submit" disabled={busy} className="w-full">
+        {SUPPORT_SUBMIT_LABEL}
+      </UnityButton>
     </form>
   );
 }

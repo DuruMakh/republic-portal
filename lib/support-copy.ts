@@ -16,8 +16,10 @@ export const SUPPORT_EYEBROW = "ქართული რესპუბლი�
 export const SUPPORT_HEADING = "დაგვიკავშირდი";
 export const SUPPORT_LEDE = "მოგვწერე — ყველა შეტყობინებას ვკითხულობთ და გიპასუხებთ.";
 export const SUPPORT_NAME_LABEL = "სახელი";
-export const SUPPORT_EMAIL_LABEL = "ელ-ფოსტა (არასავალდებულო)";
-export const SUPPORT_PHONE_LABEL = "ტელეფონი (არასავალდებულო)";
+export const SUPPORT_EMAIL_LABEL = "ელ-ფოსტა";
+export const SUPPORT_PHONE_LABEL = "ტელეფონი";
+/** Shown after the email and phone labels, in lower case beside the capitals. */
+export const SUPPORT_OPTIONAL_HINT = "(არასავალდებულო)";
 export const SUPPORT_MESSAGE_LABEL = "შეტყობინება";
 export const SUPPORT_SUBMIT_LABEL = "გაგზავნა";
 export const SUPPORT_SUCCESS = "შეტყობინება გაიგზავნა. მალე გიპასუხებთ.";

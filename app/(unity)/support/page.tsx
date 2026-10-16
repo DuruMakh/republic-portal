@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/Card";
-import { Eyebrow } from "@/components/Eyebrow";
+import { UnityKicker } from "@/components/UnityKicker";
 import { SUPPORT_EYEBROW, SUPPORT_HEADING, SUPPORT_LEDE } from "@/lib/support-copy";
 import { submitSupportMessageAction } from "./actions";
 import { SupportForm } from "./SupportForm";
@@ -13,14 +12,35 @@ export const metadata: Metadata = { title: `${SUPPORT_HEADING} — ${SUPPORT_EYE
 
 export default function SupportPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-      <Eyebrow>{SUPPORT_EYEBROW}</Eyebrow>
-      <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{SUPPORT_HEADING}</h1>
-      <p className="mt-3 font-serif text-[1.02rem] text-prose">{SUPPORT_LEDE}</p>
-      <div className="mt-8">
-        <Card>
-          <SupportForm submit={submitSupportMessageAction} />
-        </Card>
+    <main
+      aria-labelledby="page-title"
+      className="relative overflow-hidden pb-16 pt-10 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]"
+    >
+      <div className="unity-container relative">
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative ornament, fixed art */}
+        <img
+          src="/unity/knot-cream.svg"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-[180px] -top-[120px] hidden w-[620px] max-w-none min-[900px]:block"
+        />
+        <div className="relative grid items-start gap-7 min-[900px]:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] min-[900px]:gap-[clamp(40px,6vw,96px)]">
+          <div>
+            <UnityKicker>{SUPPORT_EYEBROW}</UnityKicker>
+            <h1
+              id="page-title"
+              className="m-0 mt-[18px] font-display text-[52px] font-bold leading-[.94] tracking-[-.005em] sm:mt-[26px] sm:text-[clamp(56px,6vw,92px)] sm:leading-[.92]"
+            >
+              {SUPPORT_HEADING}
+            </h1>
+            <p className="m-0 mt-4 max-w-[34em] font-serif text-[18px] leading-[1.6] text-prose sm:mt-[26px] sm:text-[clamp(19px,1.6vw,22px)]">
+              {SUPPORT_LEDE}
+            </p>
+          </div>
+          <div className="border border-rule bg-chalk px-5 py-7 sm:p-12 min-[900px]:mt-2">
+            <SupportForm submit={submitSupportMessageAction} />
+          </div>
+        </div>
       </div>
     </main>
   );
