@@ -21,13 +21,13 @@ import { PRINCIPLES_HREF } from "@/lib/principles-copy";
 export function HomeHero() {
   return (
     <section className="relative overflow-hidden bg-wine text-limestone [&_:focus-visible]:outline-limestone">
-      <div className="unity-container relative pb-9 pt-6 sm:pb-[clamp(40px,4.5vw,64px)] sm:pt-[clamp(28px,3vw,44px)]">
+      <div className="unity-container relative pb-9 pt-6 sm:pb-[clamp(32px,3vw,44px)] sm:pt-[clamp(20px,2vw,28px)]">
         <UnityKicker tone="light">{HOME_HERO_KICKER}</UnityKicker>
-        <h1 className="m-0 mt-[22px] font-display text-[54px] font-bold leading-[.94] tracking-[-.004em] [text-wrap:balance] sm:mt-[30px] sm:text-[clamp(50px,8vw,116px)]">
+        <h1 className="m-0 mt-[22px] font-display text-[54px] font-bold leading-[.94] tracking-[-.004em] [text-wrap:balance] sm:mt-5 sm:text-[clamp(50px,8vw,116px)]">
           <span className="block">{HOME_HEADLINE[0]}</span>{" "}
           <span className="block text-sand">{HOME_HEADLINE[1]}</span>
         </h1>
-        <div className="mt-[22px] flex flex-col sm:mt-[clamp(28px,3vw,44px)] lg:grid lg:grid-cols-[minmax(0,calc(340px_+_(100%_-_800px_-_clamp(36px,5vw,72px))_/_2.6))_minmax(0,1fr)] lg:grid-rows-[1fr_auto] lg:gap-x-[clamp(36px,5vw,72px)]">
+        <div className="mt-[22px] flex flex-col sm:mt-[clamp(20px,2vw,28px)] lg:grid lg:grid-cols-[minmax(0,calc(340px_+_(100%_-_800px_-_clamp(36px,5vw,72px))_/_2.6))_minmax(0,1fr)] lg:grid-rows-[1fr_auto] lg:gap-x-[clamp(36px,5vw,72px)]">
           <p className="m-0 max-w-[24em] font-serif text-[19px] leading-[1.55] sm:text-[clamp(20px,1.8vw,25px)] lg:col-start-1 lg:row-start-1 lg:self-end">
             {HOME_LEDE}
           </p>
