@@ -103,7 +103,8 @@ describe("MobileTabBar", () => {
   it("keeps every tab label at or above the 0.74rem floor", () => {
     const { container } = render(<MobileTabBar tabs={TABS} more={MORE} />);
     const bar = container.querySelector("nav")!;
-    expect(bar.className).toContain("text-[0.74rem]");
+    // 12.5px is above the 0.74rem (11.84px) floor
+    expect(bar.className).toContain("text-[12.5px]");
   });
 
   // Regression guard for owner fix #7. The registered tab set contains /me,

@@ -134,7 +134,7 @@ export function ProfileForm({
             }}
           />
         </div>
-        <div className="grid gap-7 sm:grid-cols-2">
+        <div className="grid gap-7">
           <CabinetReadonlyField
             label="ტელეფონი"
             value={formatPhoneKa(phone)}

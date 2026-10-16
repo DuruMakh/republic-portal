@@ -47,6 +47,7 @@ export function CabinetHead({
   face = "display",
   lede,
   aside,
+  asideInline = false,
   children,
 }: {
   kicker?: string;
@@ -56,6 +57,8 @@ export function CabinetHead({
   lede?: ReactNode;
   /** Shown beside the headline (pills, status), wrapping under it on narrow screens. */
   aside?: ReactNode;
+  /** Sit the aside right after the headline instead of at the far end of the row. */
+  asideInline?: boolean;
   children?: ReactNode;
 }) {
   const h1 =
@@ -65,7 +68,9 @@ export function CabinetHead({
   return (
     <div className="relative border-b-2 border-ink pb-6 md:pb-[34px]">
       {kicker ? <UnityKicker className="mb-4 md:mb-[22px]">{kicker}</UnityKicker> : null}
-      <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-3">
+      <div
+        className={`flex flex-wrap items-center gap-y-3 ${asideInline ? "gap-x-6" : "justify-between gap-x-10"}`}
+      >
         <h1 className={`m-0 text-balance tracking-[-.005em] ${h1}`}>{title}</h1>
         {aside}
       </div>

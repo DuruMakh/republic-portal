@@ -81,6 +81,7 @@ export default async function DelegateDashboardPage() {
       <CabinetHead
         title={`გამარჯობა, ${state.firstName}`}
         aside={<Pill status={panel.status} />}
+        asideInline
         lede="მართე შენი გუნდი და თვალი ადევნე მხარდაჭერას რეალურ დროში."
       />
 
