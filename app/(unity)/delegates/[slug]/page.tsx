@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ButtonLink } from "@/components/ButtonLink";
-import { Card } from "@/components/Card";
-import { Eyebrow } from "@/components/Eyebrow";
-import { StatCard } from "@/components/StatCard";
+import { Caps } from "@/components/Caps";
+import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { UnityTextLink } from "@/components/UnityTextLink";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
 import { showRatings } from "@/lib/ratings-switch";
 import { fetchDelegateBySlug, fetchPublicDelegates } from "@/lib/supabase/public";
 import { metadata as notFoundMetadata } from "./not-found";
-import Link from "next/link";
 
 export const revalidate = 60;
 
@@ -51,68 +49,117 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
   const initials = `${delegate.first_name[0] ?? ""}${delegate.last_name[0] ?? ""}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      {ratingsShown ? (
-        <div className="mb-6">
-          <Link href="/leaderboard" className="text-sm font-semibold text-brand hover:underline">
-            ← უკან რეიტინგზე
-          </Link>
-        </div>
-      ) : null}
-      <div className="flex items-center gap-5 border-b border-ink pb-6">
-        {delegate.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- remote host list not configured until real photos exist (Phase 4)
-          <img
-            src={delegate.photo_url}
-            alt={name}
-            className="h-20 w-20 rounded-full border border-hairline object-cover"
-          />
-        ) : (
-          <span className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-brand/10 text-2xl font-extrabold text-brand">
-            {initials}
-          </span>
-        )}
-        <div>
-          <Eyebrow>
-            {delegate.region_name_ka} · {APPROVED_STATUS}
-          </Eyebrow>
-          <h1 className="mt-1 font-serif text-3xl font-bold text-ink">{name}</h1>
-        </div>
-      </div>
-      <p className="mt-5 text-muted-fg">
-        {delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო")}
-      </p>
-      {ratingsShown ? (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <StatCard
-            label="წევრი"
-            value={formatCountKa(delegate.members)}
-            accent="brand"
-            sub="ღია რეიტინგში"
-          />
-          <StatCard
-            label="პოზიცია რეიტინგში"
-            value={`#${delegate.rank}`}
-            sub="დამტკიცებულ დელეგატებს შორის"
-          />
-        </div>
-      ) : null}
-      <div className="mt-6">
-        <Card>
-          <div className="text-center">
-            <h2 className="text-lg font-bold text-ink">დაუდექი მხარში {delegate.first_name}-ს</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg">
-              დარეგისტრირდი და წევრობის გაფორმებისას აირჩიე ის შენს დელეგატად — მხარდაჭერა წევრობით
-              ხდება.
-            </p>
-            <div className="mt-5">
-              <ButtonLink href="/join" size="lg">
-                გახდი მისი მხარდამჭერი
-              </ButtonLink>
+    <main
+      aria-labelledby="page-title"
+      className="pb-16 pt-7 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]"
+    >
+      <div className="unity-container">
+        <div className="mx-auto max-w-[960px]">
+          {ratingsShown ? (
+            <UnityTextLink href="/leaderboard" className="mb-5 inline-block text-[15px] sm:mb-7">
+              ← უკან რეიტინგზე
+            </UnityTextLink>
+          ) : null}
+          <div className="flex items-center gap-[18px] border-t border-ink pt-5 sm:gap-8 sm:pt-8">
+            {delegate.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- remote host list not configured until real photos exist (Phase 4)
+              <img
+                src={delegate.photo_url}
+                alt={name}
+                className="size-[88px] flex-none rounded-full border border-rule bg-sandstone object-cover sm:size-[132px]"
+              />
+            ) : (
+              <span className="grid size-[88px] flex-none place-items-center rounded-full border border-rule bg-sandstone font-serif text-[30px] font-semibold text-brand sm:size-[132px] sm:text-[44px]">
+                {initials}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="m-0 text-[12px] font-bold tracking-[.14em] text-brand sm:text-[13px]">
+                <Caps>{`${delegate.region_name_ka ?? ""} · ${APPROVED_STATUS}`}</Caps>
+              </p>
+              <h1
+                id="page-title"
+                className="m-0 mt-2.5 font-serif text-[32px] font-semibold leading-[1.12] sm:text-[56px]"
+              >
+                {name}
+              </h1>
             </div>
           </div>
-        </Card>
+          <p className="m-0 mt-6 max-w-[40em] font-serif text-[18px] leading-[1.65] text-prose sm:mt-9 sm:text-[21px]">
+            {delegate.bio ?? delegateBioFallback(delegate.region_name_ka ?? "საქართველო")}
+          </p>
+          {ratingsShown ? (
+            <dl className="m-0 mt-8 grid gap-6 sm:mt-12 sm:grid-cols-2 sm:gap-10">
+              <DelegateStat
+                value={formatCountKa(delegate.members)}
+                label="წევრი"
+                sub="ღია რეიტინგში"
+                red
+              />
+              <DelegateStat
+                value={`#${delegate.rank}`}
+                label="პოზიცია რეიტინგში"
+                sub="დამტკიცებულ დელეგატებს შორის"
+              />
+            </dl>
+          ) : null}
+          <section
+            aria-labelledby="support-title"
+            className="relative mt-10 overflow-hidden bg-wine px-6 py-9 text-center text-sand [&_:focus-visible]:outline-limestone sm:mt-16 sm:p-14"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- decorative ornament, fixed art */}
+            <img
+              src="/unity/knot-wine.svg"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute left-1/2 top-1/2 w-[330px] max-w-none -translate-x-1/2 -translate-y-1/2 sm:w-[560px]"
+            />
+            <div className="relative">
+              <h2
+                id="support-title"
+                className="m-0 font-serif text-[26px] font-semibold leading-[1.25] text-limestone sm:text-[34px]"
+              >
+                დაუდექი მხარში {delegate.first_name}-ს
+              </h2>
+              <p className="mx-auto mb-0 mt-3.5 max-w-[32em] text-[15.5px] leading-[1.6] sm:text-[16.5px]">
+                დარეგისტრირდი და წევრობის გაფორმებისას აირჩიე ის შენს დელეგატად — მხარდაჭერა
+                წევრობით ხდება.
+              </p>
+              <UnityButtonLink
+                href="/join"
+                variant="cream"
+                className="mt-6 w-full sm:mt-8 sm:w-auto"
+              >
+                გახდი მისი მხარდამჭერი
+              </UnityButtonLink>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
+  );
+}
+
+function DelegateStat({
+  value,
+  label,
+  sub,
+  red = false,
+}: {
+  value: string;
+  label: string;
+  sub: string;
+  red?: boolean;
+}) {
+  return (
+    <div className="flex flex-col border-t-2 border-ink pt-3.5 sm:pt-[18px]">
+      <dt className="order-2 mt-2 text-[16px] font-bold">{label}</dt>
+      <dd
+        className={`order-1 m-0 font-serif text-[40px] font-bold leading-[1.05] sm:text-[56px] ${red ? "text-brand" : "text-ink"}`}
+      >
+        {value}
+      </dd>
+      <dd className="order-3 m-0 text-[14px] text-secondary">{sub}</dd>
+    </div>
   );
 }
