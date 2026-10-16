@@ -109,6 +109,31 @@ function timeKa(iso: string): string {
   return `${pad2(t.getUTCHours())}:${pad2(t.getUTCMinutes())}`;
 }
 
+const MONTHS_KA = [
+  "იანვარი",
+  "თებერვალი",
+  "მარტი",
+  "აპრილი",
+  "მაისი",
+  "ივნისი",
+  "ივლისი",
+  "აგვისტო",
+  "სექტემბერი",
+  "ოქტომბერი",
+  "ნოემბერი",
+  "დეკემბერი",
+] as const;
+
+/** The big date on an event row: the Tbilisi start day, and its month with the year. */
+export function eventDateBadgeKa(startsAt: string): { day: string; monthYear: string } {
+  const t = toTbilisiParts(startsAt);
+  if (!t) return { day: "", monthYear: "" };
+  return {
+    day: pad2(t.getUTCDate()),
+    monthYear: `${MONTHS_KA[t.getUTCMonth()]} ${t.getUTCFullYear()}`,
+  };
+}
+
 export function formatEventTimeKa(startsAt: string, endsAt: string | null): string {
   const startDate = formatDateKa(startsAt);
   const startTime = timeKa(startsAt);

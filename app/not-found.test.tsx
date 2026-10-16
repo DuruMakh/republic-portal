@@ -32,9 +32,9 @@ describe("site-wide not-found page (unknown URLs)", () => {
   });
 
   // This page is prerendered once, for /_not-found, but opened at whatever address was mistyped.
-  // Chrome that differs by address (the phone back header under /news/, /events/ and /delegates/,
-  // the non-sticky header under /admin) would exist only on the client, and hydration would fail.
-  it.each(["/news/a/b", "/events/a/b", "/delegates/a/b"])(
+  // Chrome that differs by address (the phone back header under /news/, /events/ and /delegates/)
+  // would exist only on the client, and hydration would fail.
+  it.each(["/news/a/b", "/events/a/b", "/delegates/a/b", "/admin/a"])(
     "shows one header at %s, exactly as the prerendered page does",
     (address) => {
       nav.pathname = address;
@@ -42,10 +42,4 @@ describe("site-wide not-found page (unknown URLs)", () => {
       expect(container.querySelectorAll("header")).toHaveLength(1);
     },
   );
-
-  it("keeps the sticky phone header at /admin/a, exactly as the prerendered page does", () => {
-    nav.pathname = "/admin/a";
-    render(<RootNotFound />);
-    expect(screen.getByRole("banner").className).toContain("sticky");
-  });
 });

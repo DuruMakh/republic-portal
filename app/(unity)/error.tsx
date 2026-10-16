@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@/components/Button";
-import { CenteredNotice } from "@/components/CenteredNotice";
+import { UnityButton } from "@/components/UnityButton";
+import { UnityNotice } from "@/components/UnityNotice";
 
 export default function PublicError({ reset }: { error: Error; reset: () => void }) {
   return (
-    <CenteredNotice
+    <UnityNotice
       title="დროებითი შეფერხება"
       description="გვერდის ჩატვირთვა ვერ მოხერხდა. სცადე თავიდან."
-      actions={<Button onClick={reset}>თავიდან ცდა</Button>}
+      actions={<UnityButton onClick={reset}>თავიდან ცდა</UnityButton>}
     />
   );
 }

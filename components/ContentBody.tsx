@@ -4,11 +4,29 @@ import { parseBody } from "@/lib/content-render";
  * The one renderer for news/event bodies (public pages, cabinet, admin preview).
  * Server-component-safe (no hooks); builds elements, never injects HTML.
  */
-export function ContentBody({ body, className = "" }: { body: string; className?: string }) {
+export function ContentBody({
+  body,
+  className = "",
+  reading = false,
+}: {
+  body: string;
+  className?: string;
+  /** The „ერთობა“ article page's larger serif reading text. */
+  reading?: boolean;
+}) {
   return (
-    <div className={`space-y-4 text-ink ${className}`.trim()}>
+    <div
+      className={`${reading ? "space-y-[22px] text-prose" : "space-y-4 text-ink"} ${className}`.trim()}
+    >
       {parseBody(body).map((paragraph, pi) => (
-        <p key={pi} className="text-[0.92rem] leading-[1.75]">
+        <p
+          key={pi}
+          className={
+            reading
+              ? "m-0 font-serif text-[18px] leading-[1.8] sm:text-[19px]"
+              : "text-[0.92rem] leading-[1.75]"
+          }
+        >
           {paragraph.map((span, si) =>
             span.type === "link" ? (
               // color/underline inherit the global link rule (app/globals.css `a{}`) —

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckboxField } from "@/components/Field";
+import { UnityCheckboxField } from "@/components/UnityField";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
 
 /**
@@ -18,7 +18,7 @@ export function PrivacyConsentField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <CheckboxField
+      <UnityCheckboxField
         name="privacyConsent"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
@@ -31,7 +31,7 @@ export function PrivacyConsentField({
               href={PRIVACY_POLICY_PATH}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-brand hover:underline"
+              className="font-bold text-brand underline decoration-1 underline-offset-[5px] hover:text-brand-dark"
             >
               კონფიდენციალურობის პოლიტიკის
             </Link>{" "}
@@ -40,7 +40,7 @@ export function PrivacyConsentField({
         }
       />
       {error ? (
-        <p role="alert" className="text-sm font-semibold text-danger">
+        <p role="alert" className="text-[14px] font-semibold text-danger">
           {error}
         </p>
       ) : null}
