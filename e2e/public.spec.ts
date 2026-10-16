@@ -44,17 +44,14 @@ test.describe("home", () => {
       page.getByRole("heading", { name: "ერთად შევქმნათ ქართული რესპუბლიკა" }),
     ).toBeVisible();
     await expect(page.getByText(DEMO_BANNER)).toBeVisible();
-    // Since ADR-038 the header carries neither page: these homepage links are the way in
-    // (news is also in the footer; events, while SHOW_EVENTS=true, only from here).
+    // The header carries no news link: the homepage news section is the way in (news is also
+    // in the footer).
     await expect(page.getByRole("main").locator('a[href="/news"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: "სიახლეები" })).toBeVisible();
-    // ADR-042: the events section is there only while SHOW_EVENTS=true.
-    await expect(page.getByRole("main").locator('a[href="/events"]')).toHaveCount(
-      EVENTS_SHOWN ? 1 : 0,
-    );
-    await expect(page.getByRole("heading", { name: "ღონისძიებები" })).toHaveCount(
-      EVENTS_SHOWN ? 1 : 0,
-    );
+    await expect(page.getByRole("region", { name: "სიახლეები" })).toBeVisible();
+    // The „ერთობა“ homepage has no events or ranking section, whatever the switches say
+    // (ADR-042, ADR-052): /events and /leaderboard are never linked from <main>.
+    await expect(page.getByRole("main").locator('a[href="/events"]')).toHaveCount(0);
+    await expect(page.getByRole("main").locator('a[href="/leaderboard"]')).toHaveCount(0);
     let members = 0;
     for (const id of ["stat-approved-delegates", "stat-members-total"]) {
       // playwright.config.ts sets use.contextOptions.reducedMotion: "reduce", so
@@ -68,7 +65,7 @@ test.describe("home", () => {
     }
 
     // registered_total is cumulative — every profile, ever (D5/R2-5) — and the home
-    // page is ISR-cached (revalidate 60, app/(public)/page.tsx): a render predating
+    // page is ISR-cached (revalidate 60, app/(unity)/page.tsx): a render predating
     // another spec's own seed/cleanup churn can lag a stale snapshot by up to one
     // window, so settle-poll the UI against a FRESH DB truth on every attempt (a
     // count captured once could itself go stale mid-loop).
@@ -94,9 +91,9 @@ test.describe("home", () => {
 
   test("the single register CTA lands on the Google-gated join flow", async ({ page }) => {
     await page.goto("/");
-    // One door now: the ladder's first column CTA is „გახდი მხარდამჭერი →“ (app/(public)/page.tsx);
+    // One door now: the join steps' first CTA is „გახდი მხარდამჭერი →“ (components/HomeJoinSteps.tsx);
     // the old two-door „გახდი დელეგატი“ is gone. Scope to <main> — the header keeps its own
-    // „შემოგვიერთდი“ link outside <main> (app/(public)/layout.tsx).
+    // „შემოგვიერთდი“ link outside <main> (app/(unity)/layout.tsx).
     const cta = page
       .getByRole("main")
       .getByRole("link", { name: "გახდი მხარდამჭერი →", exact: true });
@@ -324,8 +321,12 @@ test.describe("structure page", () => {
     for (const name of ["ბორდი", "წევრები", "საერთო კენჭისყრა", "ბორდის შემადგენლობა"]) {
       await expect(page.getByRole("heading", { level: 2, name, exact: true })).toBeVisible();
     }
-    await expect(page.getByRole("img", { name: "5-დან 4 ხმა" })).toBeVisible();
-    await expect(page.getByRole("img", { name: "5-დან 3 ხმა" })).toBeVisible();
+    // The rule cards' pebble rows: press a pebble to flip that board member's vote.
+    const twoThirds = page.getByRole("group", { name: "5-დან 4 ხმა" });
+    await expect(twoThirds).toBeVisible();
+    await expect(page.getByRole("group", { name: "5-დან 3 ხმა" })).toBeVisible();
+    await twoThirds.getByRole("button", { name: "ბორდის წევრი 4" }).click();
+    await expect(page.getByText("გადაწყვეტილება არ მიიღება")).toBeVisible();
     await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
 
     await page

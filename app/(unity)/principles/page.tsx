@@ -1,101 +1,60 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ButtonLink";
+import { PrinciplesContents } from "@/components/PrinciplesContents";
+import { PrinciplesList } from "@/components/PrinciplesList";
+import { PrinciplesSeal } from "@/components/PrinciplesSeal";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityKicker } from "@/components/UnityKicker";
+import { UnityTextLink } from "@/components/UnityTextLink";
+import { mtavruli } from "@/lib/mtavruli";
 import {
-  GEORGIAN_NUMERALS,
-  PRINCIPLES,
-  PRINCIPLES_TITLE,
-  principleAnchor,
+  PRINCIPLES_CLOSING_LINK,
+  PRINCIPLES_CONTENTS,
+  PRINCIPLES_CONTENTS_ANCHOR,
+  PRINCIPLES_KICKER,
+  PRINCIPLES_LEDE,
+  PRINCIPLES_PAGE_TITLE,
 } from "@/lib/principles-copy";
-import { CLOSING_CTA } from "@/lib/structure-copy";
 import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 
 // app/layout.tsx sets a plain string title, so each public page carries the site-name suffix.
-export const metadata: Metadata = { title: `${PRINCIPLES_TITLE} — ${SUPPORT_EYEBROW}` };
+export const metadata: Metadata = { title: `${PRINCIPLES_PAGE_TITLE} — ${SUPPORT_EYEBROW}` };
 
-// The /structure page's grammar: same wrap, display headings, serif prose and outlined ornament.
-const WRAP = "mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-10";
-// scroll-mt-24 clears the masthead, which is sticky below md (components/Masthead.tsx).
-const SECTION = "scroll-mt-24 py-[clamp(32px,4.5vw,56px)] md:scroll-mt-6";
-const NUMBER = "font-serif font-extrabold leading-[.8] text-brand";
-const ORNAMENT =
-  "hidden font-serif text-[clamp(4rem,7vw,6rem)] leading-[.7] font-extrabold text-transparent select-none [-webkit-text-stroke:1.5px_var(--color-line)] lg:block";
-
+/**
+ * /principles in the owner's „ერთობა“ design: the seal hero, the contents band, the twelve
+ * principles (folded into rows on phones) with the principle 5 quote band, and the closing.
+ */
 export default function PrinciplesPage() {
-  const [firstWord, ...rest] = PRINCIPLES_TITLE.split(" ");
-
   return (
     <main>
-      <section className={`${WRAP} py-[clamp(28px,4vw,48px)]`}>
-        <h1 className="display-heading text-[clamp(2rem,4.6vw,3.6rem)] leading-[1.05] text-ink">
-          {firstWord} <span className="text-brand">{rest.join(" ")}</span>
-        </h1>
+      <section
+        aria-labelledby="pr-title"
+        className="pt-10 pb-11 sm:pt-[clamp(56px,7vw,104px)] sm:pb-[clamp(64px,7vw,104px)]"
+      >
+        <div className="unity-container flex flex-wrap items-center gap-8 sm:gap-[clamp(48px,6vw,96px)]">
+          <div className="min-w-0 flex-[1.15_1_440px]">
+            <UnityKicker>{PRINCIPLES_KICKER}</UnityKicker>
+            <h1
+              id="pr-title"
+              className="mt-5 font-display text-[56px] leading-[.92] font-bold tracking-[-.005em] sm:mt-[26px] sm:text-[clamp(56px,7.8vw,112px)] sm:leading-[.9]"
+            >
+              {PRINCIPLES_PAGE_TITLE}
+            </h1>
+            <p className="mt-5 max-w-[24em] font-serif text-[19px] leading-[1.55] text-prose sm:mt-8 sm:text-[clamp(21px,1.9vw,27px)] sm:leading-[1.5]">
+              {PRINCIPLES_LEDE}
+            </p>
+            <p className="mt-9 text-[17px] max-sm:hidden">
+              <UnityTextLink href={`#${PRINCIPLES_CONTENTS_ANCHOR}`}>
+                {`${mtavruli(PRINCIPLES_CONTENTS)} ↓`}
+              </UnityTextLink>
+            </p>
+          </div>
+          <PrinciplesSeal />
+        </div>
       </section>
 
-      <nav aria-label={PRINCIPLES_TITLE} className="border-t border-line">
-        <ol className={`${WRAP} grid sm:grid-cols-2 lg:grid-cols-3`}>
-          {PRINCIPLES.map(({ title }, i) => (
-            <li key={title} className="border-b border-line sm:pr-5">
-              <a
-                href={`#${principleAnchor(i + 1)}`}
-                className="group grid h-full grid-cols-[2.6rem_minmax(0,1fr)] items-baseline gap-2 py-3 text-ink no-underline"
-              >
-                <span
-                  aria-hidden="true"
-                  className="font-serif text-[1.6rem] leading-none font-extrabold text-transparent transition-colors [-webkit-text-stroke:1.2px_var(--color-brand)] group-hover:text-brand"
-                >
-                  {i + 1}
-                </span>
-                <span className="font-serif text-[0.98rem] leading-snug group-hover:text-brand">
-                  {title}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </nav>
-
-      {PRINCIPLES.map(({ title, paragraphs }, i) => {
-        const id = principleAnchor(i + 1);
-        return (
-          <section
-            key={title}
-            id={id}
-            aria-labelledby={`${id}-title`}
-            className={i > 0 ? `${SECTION} border-t border-line` : SECTION}
-          >
-            <div
-              className={`${WRAP} grid gap-x-[clamp(16px,3vw,40px)] gap-y-3 sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[6rem_minmax(0,1fr)_auto]`}
-            >
-              <div aria-hidden="true" className={`${NUMBER} text-[clamp(2.8rem,6vw,4.6rem)]`}>
-                {i + 1}
-              </div>
-              <div className="max-w-[44em]">
-                <h2
-                  id={`${id}-title`}
-                  className="display-heading text-[clamp(1.6rem,3vw,2.4rem)] text-ink"
-                >
-                  <span className="sr-only">{i + 1}. </span>
-                  {title}
-                </h2>
-                <div className="mt-4 space-y-4 font-serif text-[clamp(1rem,1.3vw,1.08rem)] leading-[1.75] text-prose">
-                  {paragraphs.map((text) => (
-                    <p key={text}>{text}</p>
-                  ))}
-                </div>
-              </div>
-              <div aria-hidden="true" className={ORNAMENT}>
-                {GEORGIAN_NUMERALS[i]}
-              </div>
-            </div>
-          </section>
-        );
-      })}
-
-      <div className="flex justify-center border-t border-line py-[clamp(28px,4vw,44px)]">
-        <ButtonLink href="/join" size="lg">
-          {CLOSING_CTA}
-        </ButtonLink>
-      </div>
+      <PrinciplesContents />
+      <PrinciplesList />
+      <UnityClosing link={PRINCIPLES_CLOSING_LINK} />
     </main>
   );
 }
