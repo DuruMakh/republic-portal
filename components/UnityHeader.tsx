@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Caps } from "@/components/Caps";
 import { useChromePathname } from "@/components/ChromePathname";
+import { useFocusTrap } from "@/components/useFocusTrap";
 import { useSignedIn } from "@/components/useSignedIn";
 import { mobileBackTarget } from "@/lib/mobile-nav";
 
@@ -21,7 +22,8 @@ const BACK = "← უკან";
 /**
  * The „ერთობა“ header. On the homepage it sits on the wine hero (light logo, sand links, a
  * limestone button); everywhere else it is limestone with a hairline below. Below 900px the
- * links fold into a full-screen wine menu. The account slot follows HeaderSessionAction:
+ * links fold into a full-screen wine menu and the header stays pinned while the page scrolls
+ * (as the Kronika masthead did on phones). The account slot follows HeaderSessionAction:
  * guests get the join door, a signed-in visitor gets the cabinet link after mount.
  *
  * On a detail page (mobileBackTarget) phones get a sticky back bar instead: „← უკან“ to the
@@ -41,21 +43,19 @@ export function UnityHeader({
   const pathname = useChromePathname();
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dark = pathname === "/";
 
+  // Escape, the Tab cycle and the body-scroll lock come from useFocusTrap, as in MobileMenu.
+  const close = useCallback(() => setOpen(false), []);
+  useFocusTrap({ active: open, containerRef: panelRef, onEscape: close });
+
+  // Back to the menu button on a real open -> close transition (not on mount).
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (!open) return;
-    closeRef.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    if (wasOpen.current && !open) triggerRef.current?.focus({ preventScroll: true });
+    wasOpen.current = open;
   }, [open]);
 
   const action = signedIn ? { href: "/me", label: CABINET } : { href: "/join", label: JOIN };
@@ -79,8 +79,8 @@ export function UnityHeader({
       <header
         className={`${back ? "hidden min-[900px]:block" : ""} ${
           dark
-            ? "relative z-10 border-b border-limestone/14 bg-wine text-limestone"
-            : "relative z-10 border-b border-rule bg-limestone text-ink"
+            ? "sticky top-0 z-40 border-b border-limestone/14 bg-wine text-limestone min-[900px]:relative min-[900px]:z-10 [&_:focus-visible]:outline-limestone"
+            : "sticky top-0 z-40 border-b border-rule bg-limestone text-ink min-[900px]:relative min-[900px]:z-10"
         }`}
       >
         <div className="unity-container flex h-[68px] items-center justify-between gap-6 min-[900px]:h-[88px]">
@@ -132,6 +132,7 @@ export function UnityHeader({
               <Caps>{action.label}</Caps>
             </Link>
             <button
+              ref={triggerRef}
               type="button"
               onClick={() => setOpen(true)}
               aria-expanded={open}
@@ -152,6 +153,7 @@ export function UnityHeader({
 
         {open ? (
           <div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={MENU}
@@ -167,7 +169,6 @@ export function UnityHeader({
                 className="block h-[38px] w-auto"
               />
               <button
-                ref={closeRef}
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label={CLOSE}

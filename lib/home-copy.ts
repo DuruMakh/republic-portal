@@ -4,6 +4,12 @@
  * steps of „როგორ შემოგვიერთდები“ are the owner's 2026-10-07 ladder (ADR-035). Strings the
  * design writes in capitals are kept in normal Georgian here and passed through mtavruli().
  */
+import {
+  CONSTITUTION_COVER,
+  CONSTITUTION_SIGNATURES,
+  INDEPENDENCE_ACT,
+  type DocumentFan,
+} from "@/lib/archive-documents";
 
 export const HOME_HERO_KICKER = "სამოქალაქო პლატფორმა";
 /** The headline in its two lines: the second is set in sand. */
@@ -96,46 +102,11 @@ export const HOME_ROOTS_LINK = { href: "/about#roots", label: "ჩვენი �
 export const HOME_ROOTS_BUTTON = "ჩვენი ფესვები — სრულად";
 export const HOME_DOCUMENTS_CAPTION =
   "დამოუკიდებლობის აქტი, დადასტურებული დამფუძნებელი კრების მიერ 1919 წლის 12 მარტს · 1921 წლის კონსტიტუცია: გარეკანი და ხელმოწერები. წყარო: საქართველოს ეროვნული არქივი";
-export const HOME_DOCUMENTS_ZOOM = "გადიდება";
-export const HOME_DOCUMENTS_CLOSE = "დახურვა";
-
-export type HomeDocument = {
-  id: "cover" | "signatures" | "act";
-  src: string;
-  width: number;
-  height: number;
-  /** Names the page: the zoom button's label follows it and the open view uses it as alt. */
-  name: string;
-  caption: string;
-};
-
 /** The three archive pages in the fan, in the design's stacking order (the act on top). */
-export const HOME_DOCUMENTS: readonly HomeDocument[] = [
-  {
-    id: "cover",
-    src: "/unity/doc-constitution-cover.jpg",
-    width: 891,
-    height: 1275,
-    name: "1921 წლის კონსტიტუციის გარეკანი",
-    caption: "საქართველოს კონსტიტუცია, 1921 — გარეკანი. საქართველოს ეროვნული არქივი",
-  },
-  {
-    id: "signatures",
-    src: "/unity/doc-handwritten.jpg",
-    width: 897,
-    height: 1271,
-    name: "1921 წლის კონსტიტუციის ხელმოწერები",
-    caption: "1921 წლის კონსტიტუციის ხელმოწერების გვერდი. საქართველოს ეროვნული არქივი",
-  },
-  {
-    id: "act",
-    src: "/unity/doc-independence-act.jpg",
-    width: 920,
-    height: 1280,
-    name: "საქართველოს დამოუკიდებლობის აქტი, ხელმოწერებით",
-    caption:
-      "საქართველოს დამოუკიდებლობის აქტი — დამფუძნებელი კრების მიერ 1919 წლის 12 მარტს დადასტურებული ეგზემპლარი, ხელმოწერებით. საქართველოს ეროვნული არქივი",
-  },
+export const HOME_DOCUMENTS: DocumentFan = [
+  CONSTITUTION_COVER,
+  CONSTITUTION_SIGNATURES,
+  INDEPENDENCE_ACT,
 ];
 
 export type HomeMilestone = {

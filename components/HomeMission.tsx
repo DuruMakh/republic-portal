@@ -66,22 +66,18 @@ function Flag({ phone }: { phone: boolean }) {
     >
       <span className={`absolute rounded-[1px] bg-ink ${pole}`} />
       <span className={`absolute rounded-full bg-ink ${finial}`} />
-      {/* eslint-disable-next-line @next/next/no-img-element -- animated decorative flag */}
-      <img
-        src="/unity/flag-wave.webp"
-        alt=""
-        width={984}
-        height={752}
-        className={`absolute block h-auto max-w-none motion-reduce:hidden ${cloth}`}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element -- still frame of the flag */}
-      <img
-        src="/unity/flag-still.png"
-        alt=""
-        width={984}
-        height={752}
-        className={`absolute hidden h-auto max-w-none motion-reduce:block ${cloth}`}
-      />
+      {/* Visitors who ask for less motion get the still frame instead; only one file loads. */}
+      <picture>
+        <source srcSet="/unity/flag-still.png" media="(prefers-reduced-motion: reduce)" />
+        <img
+          src="/unity/flag-wave.webp"
+          alt=""
+          width={264}
+          height={202}
+          loading="lazy"
+          className={`absolute block h-auto max-w-none ${cloth}`}
+        />
+      </picture>
     </span>
   );
 }

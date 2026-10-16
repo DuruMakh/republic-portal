@@ -1,10 +1,12 @@
 import { Caps } from "@/components/Caps";
-import { HomeDocuments } from "@/components/HomeDocuments";
+import { UnityDocumentFan } from "@/components/UnityDocumentFan";
 import { UnityButtonLink } from "@/components/UnityButtonLink";
 import { UnityKicker } from "@/components/UnityKicker";
 import { UnityOrnament } from "@/components/UnityOrnament";
 import { UnityTextLink } from "@/components/UnityTextLink";
 import {
+  HOME_DOCUMENTS,
+  HOME_DOCUMENTS_CAPTION,
   HOME_MILESTONES,
   HOME_ROOTS_BUTTON,
   HOME_ROOTS_KICKER,
@@ -39,7 +41,12 @@ export function HomeRoots() {
               <span className="block text-brand">{HOME_ROOTS_TITLE[1]}</span>
             </h2>
           </div>
-          <HomeDocuments className="mt-[30px] min-[56.25rem]:col-start-2 min-[56.25rem]:row-span-6 min-[56.25rem]:row-start-1 min-[56.25rem]:mt-0 min-[56.25rem]:self-center" />
+          <UnityDocumentFan
+            documents={HOME_DOCUMENTS}
+            caption={HOME_DOCUMENTS_CAPTION}
+            captionClassName="mx-auto max-w-[48em] sm:text-center"
+            className="mt-[30px] min-[56.25rem]:col-start-2 min-[56.25rem]:row-span-6 min-[56.25rem]:row-start-1 min-[56.25rem]:mt-0 min-[56.25rem]:self-center"
+          />
           <blockquote className={`m-0 mt-[30px] sm:mt-[34px] ${LEFT} min-[56.25rem]:row-start-3`}>
             <span
               aria-hidden="true"

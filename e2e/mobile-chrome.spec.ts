@@ -68,7 +68,7 @@ test.describe("mobile chrome at 390x844", () => {
 
   test("the unchanged styleguide masthead does not become sticky", async ({ page }) => {
     await page.goto("/styleguide");
-    await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+    await expect(page.getByRole("banner")).not.toHaveCSS("position", "sticky");
   });
 
   test("a detail route gets the back header pointing at its index", async ({ page }) => {
@@ -125,7 +125,8 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
       ).toBeVisible();
       await expect(page.getByRole("button", { name: MENU }), path).toBeHidden();
       await expect(page.locator("div.sticky.bottom-0"), path).toBeHidden();
-      await expect(page.getByRole("banner").last(), path).toHaveCSS("position", "static");
+      // The „ერთობა“ masthead is position: relative (it layers over its hero), never pinned.
+      await expect(page.getByRole("banner").last(), path).not.toHaveCSS("position", "sticky");
     }
   });
 
@@ -150,7 +151,7 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
       await expect(page).toHaveURL(detail.url);
       await expect(page.getByRole("link", { name: BACK_LABEL, exact: true })).toBeHidden();
       await expect(page.getByRole("link", { name: STRUCTURE_NAV_LABEL }).first()).toBeVisible();
-      await expect(page.getByRole("banner")).toHaveCSS("position", "static");
+      await expect(page.getByRole("banner")).not.toHaveCSS("position", "sticky");
     }
   });
 });

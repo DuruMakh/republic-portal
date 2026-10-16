@@ -1,5 +1,5 @@
+import { Caps } from "@/components/Caps";
 import { ABOUT_GOAL_STEPS } from "@/lib/about-copy";
-import { mtavruli } from "@/lib/mtavruli";
 
 type Pebble = { cx: number; cy: number; rx: number; ry: number; rotate: number; fill: string };
 
@@ -107,7 +107,8 @@ export function AboutGoalSteps() {
           </div>
           <div className="min-w-0 sm:mt-[22px]">
             <span className="block text-[22px] font-black leading-none text-teal [font-stretch:62.5%] sm:text-[28px]">
-              {`0${i + 1} · ${mtavruli(step.label)}`}
+              {`0${i + 1} · `}
+              <Caps>{step.label}</Caps>
             </span>
             <p className="m-0 mt-2.5 font-serif text-[17px] leading-[1.55] text-ink sm:mt-3.5 sm:text-[21px]">
               {step.text}

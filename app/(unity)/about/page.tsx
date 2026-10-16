@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AboutDocuments } from "@/components/AboutDocuments";
+import { UnityDocumentFan } from "@/components/UnityDocumentFan";
 import { AboutGoalSteps } from "@/components/AboutGoalSteps";
 import { AboutPortalCards } from "@/components/AboutPortalCards";
 import { AboutTimeline } from "@/components/AboutTimeline";
@@ -9,6 +9,8 @@ import { UnityOrnament } from "@/components/UnityOrnament";
 import {
   ABOUT_BELIEFS,
   ABOUT_CLOSING_LINK,
+  ABOUT_DOCUMENTS,
+  ABOUT_DOCUMENTS_CAPTION,
   ABOUT_GOAL_KICKER,
   ABOUT_GOAL_TITLE,
   ABOUT_INTRO_LEAD,
@@ -143,7 +145,12 @@ export default function AboutPage() {
             <p className="m-0 mt-4 font-serif text-[17px] leading-[1.6] text-prose [text-wrap:pretty] sm:mt-6 sm:text-[clamp(17px,1.3vw,18.5px)] sm:leading-[1.62]">
               {ABOUT_ROOTS_INTRO}
             </p>
-            <AboutDocuments />
+            <UnityDocumentFan
+              documents={ABOUT_DOCUMENTS}
+              caption={ABOUT_DOCUMENTS_CAPTION}
+              className="mt-[26px] max-w-[560px] sm:mt-10 min-[900px]:max-w-none"
+              frameClassName="aspect-[350/290] sm:aspect-[440/352]"
+            />
           </div>
           <AboutTimeline />
         </div>
