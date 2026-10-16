@@ -11,13 +11,25 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           mkdir -p live-css
-          curl -sSD live-css/home-headers.txt https://respublika.ge/ -o live-css/home.html
+          for i in $(seq 1 60); do
+            curl -s "https://respublika.ge/?v=$i" -o live-css/home.html
+            ok=0
+            for u in $(grep -oE '/_next/static/[^"]+\.css' live-css/home.html | sort -u); do
+              curl -s "https://respublika.ge$u" | grep -q -- '--color-wine' && ok=1
+            done
+            echo "try $i ok=$ok"
+            [ $ok = 1 ] && break
+            sleep 20
+          done
           grep -oE '/_next/static/[^"]+\.css' live-css/home.html | sort -u > live-css/css-urls.txt
-          while read u; do n=$(basename "$u"); curl -sSD "live-css/$n.headers" "https://respublika.ge$u" -o "live-css/$n"; done < live-css/css-urls.txt
-          curl -sS https://respublika.ge/_next/static/immutable/chunks/12k6mbi1xccrv.css -o live-css/old-12k6.css || true
-          ls -la live-css > live-css/ls.txt
+          echo "ok=$ok tries=$i" > live-css/result.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm init -y >/dev/null && npm i playwright@1.56.1 >/dev/null && node node_modules/playwright/cli.js install --with-deps chromium
+      - run: node live-shots/shoot.cjs
       - run: |
           git config user.name "live-screenshot"
           git config user.email "noreply@github.com"
-          git add live-css
-          git commit -m "Live CSS" && git push
+          git add live-shots live-css
+          git commit -m "Live screenshots after fix" && git push
