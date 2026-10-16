@@ -4,7 +4,7 @@ import { mtavruli } from "@/lib/mtavruli";
 
 const nav = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
-vi.mock("next/font/local", () => ({ default: () => ({ variable: "font-var" }) }));
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {

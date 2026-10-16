@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import localFont from "next/font/local";
 import { DemoBanner } from "@/components/DemoBanner";
 import { UnityFooter } from "@/components/UnityFooter";
 import { UnityHeader } from "@/components/UnityHeader";
@@ -11,21 +10,6 @@ import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { filterRatingLinks, RATINGS_HREF, showRatings } from "@/lib/ratings-switch";
 import { STRUCTURE_HREF } from "@/lib/structure-copy";
-
-// Display headlines (GL Gordeziani) and old-Georgian numerals (BPG Nateli AsoMtavruli), from the
-// owner's „ერთობა“ design. Only the redesigned pages use them, so they load here, not in the root.
-const gordeziani = localFont({
-  src: "../fonts/gl-gordeziani-bold.woff2",
-  weight: "700",
-  variable: "--font-gl-gordeziani",
-  display: "swap",
-});
-const asomtavruli = localFont({
-  src: "../fonts/bpg-nateli-asomtavruli.woff2",
-  weight: "300",
-  variable: "--font-bpg-asomtavruli",
-  display: "swap",
-});
 
 const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლიკა — ღია ჩანაწერი";
 
@@ -66,9 +50,7 @@ export default function UnityLayout({ children }: { children: ReactNode }) {
   const ratingsShown = showRatings();
 
   return (
-    <div
-      className={`${gordeziani.variable} ${asomtavruli.variable} flex min-h-screen flex-col overflow-x-clip bg-limestone text-[17px] leading-[1.65] text-ink`}
-    >
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-limestone text-[17px] leading-[1.65] text-ink">
       <DemoBanner />
       <UnityHeader
         navItems={filterRatingLinks(navItems, ratingsShown)}
