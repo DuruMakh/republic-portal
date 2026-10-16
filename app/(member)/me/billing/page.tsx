@@ -66,9 +66,12 @@ export default async function BillingPage() {
             </p>
           ) : null}
         </div>
-        <CabinetPanel tone="ink" className="md:px-10">
-          <TransferInstructions referenceCode={state.referenceCode} />
-        </CabinetPanel>
+        {/* legacy pre-Phase-2 accounts have no code (spec §3.8): no empty panel either */}
+        {state.referenceCode ? (
+          <CabinetPanel tone="ink" className="md:px-10">
+            <TransferInstructions referenceCode={state.referenceCode} />
+          </CabinetPanel>
+        ) : null}
       </div>
 
       <CabinetPanel className="mt-8 md:mt-10 md:px-10">

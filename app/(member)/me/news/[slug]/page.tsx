@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CabinetPage } from "@/components/CabinetPage";
 import { ContentBody } from "@/components/ContentBody";
 import { Pill } from "@/components/Pill";
 import { UnityKicker } from "@/components/UnityKicker";
@@ -65,40 +66,36 @@ export default async function MemberArticlePage({ params }: { params: Promise<{ 
   if (!article) notFound();
 
   return (
-    <main>
-      <section className="pb-14 pt-7 md:pb-32 md:pt-14">
-        <div className="unity-container">
-          <div className="mx-auto max-w-[860px]">
-            <Link
-              href="/me/news"
-              className="text-[15px] font-bold text-brand underline decoration-brand/40 underline-offset-4 hover:decoration-brand"
-            >
-              ← სიახლეები
-            </Link>
-            <article className="mt-8 md:mt-10">
-              <div className="border-b border-ink pb-6 md:pb-7">
-                <div className="flex flex-wrap items-center gap-3.5">
-                  <UnityKicker>{formatDateKa(article.publishedAt)}</UnityKicker>
-                  {article.membersOnly ? (
-                    <Pill status="profile_completed" label="წევრებისთვის" />
-                  ) : null}
-                </div>
-                <h1 className="mt-5 mb-0 text-balance font-serif text-[32px] font-semibold leading-[1.2] text-ink md:text-[clamp(40px,4.4vw,58px)]">
-                  {article.title}
-                </h1>
-              </div>
-              {article.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
-                <img src={article.imageUrl} alt="" className="mt-9 w-full object-cover" />
+    <CabinetPage>
+      <div className="mx-auto max-w-[860px]">
+        <Link
+          href="/me/news"
+          className="text-[15px] font-bold text-brand underline decoration-brand/40 underline-offset-4 hover:decoration-brand"
+        >
+          ← სიახლეები
+        </Link>
+        <article className="mt-8 md:mt-10">
+          <div className="border-b border-ink pb-6 md:pb-7">
+            <div className="flex flex-wrap items-center gap-3.5">
+              <UnityKicker>{formatDateKa(article.publishedAt)}</UnityKicker>
+              {article.membersOnly ? (
+                <Pill status="profile_completed" label="წევრებისთვის" />
               ) : null}
-              <ContentBody
-                body={article.body}
-                className="mt-9 max-w-[42em] md:mt-12 [&_p]:font-serif [&_p]:text-[17px] [&_p]:leading-[1.75] [&_p]:text-prose md:[&_p]:text-[19px]"
-              />
-            </article>
+            </div>
+            <h1 className="mt-5 mb-0 text-balance font-serif text-[32px] font-semibold leading-[1.2] text-ink md:text-[clamp(40px,4.4vw,58px)]">
+              {article.title}
+            </h1>
           </div>
-        </div>
-      </section>
-    </main>
+          {article.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
+            <img src={article.imageUrl} alt="" className="mt-9 w-full object-cover" />
+          ) : null}
+          <ContentBody
+            body={article.body}
+            className="mt-9 max-w-[42em] md:mt-12 [&_p]:font-serif [&_p]:text-[17px] [&_p]:leading-[1.75] [&_p]:text-prose md:[&_p]:text-[19px]"
+          />
+        </article>
+      </div>
+    </CabinetPage>
   );
 }
