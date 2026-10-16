@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Card } from "@/components/Card";
+import {
+  CabinetHead,
+  CabinetPage,
+  CabinetPanel,
+  CabinetPanelTitle,
+} from "@/components/CabinetPage";
 import { Pill } from "@/components/Pill";
 import { DELEGATE_LEFT_NOTE } from "@/lib/account-deletion-copy";
 import { isApprovedDelegate } from "@/lib/cabinet";
@@ -51,91 +56,101 @@ export default async function MyDelegatePage() {
   const ratingsShown = showRatings();
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ჩემი დელეგატი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          დელეგატი შენს ხმას წარადგენს მოძრაობაში. არჩევანი ყოველთვის შენზეა.
-        </p>
-      </div>
+    <CabinetPage deco="map">
+      <CabinetHead
+        title="ჩემი დელეგატი"
+        lede="დელეგატი შენს ხმას წარადგენს მოძრაობაში. არჩევანი ყოველთვის შენზეა."
+      />
 
       {delegateLeft ? (
-        <div className="mb-6">
-          <Card variant="callout">
-            <p role="status" className="text-sm font-semibold text-ink">
+        <div className="mt-6 md:mt-8">
+          <CabinetPanel tone="ink" className="md:p-6">
+            <p role="status" className="m-0 text-[16px] font-semibold text-ink">
               {DELEGATE_LEFT_NOTE}
             </p>
-          </Card>
+          </CabinetPanel>
         </div>
       ) : null}
 
-      <div className="mb-6">
-        <p className="text-sm font-bold text-ink">
+      <div className="mt-6 flex flex-col gap-1.5 md:mt-8">
+        <p className="m-0 text-[16px] font-bold leading-[1.55] md:text-[17px]">
           შენ შეგიძლია ნებისმიერ დროს, შეზღუდვის გარეშე შეცვალო დელეგატი.
         </p>
-        <p className="mt-1 text-sm text-muted-fg">
+        <p className="m-0 text-[15px] leading-[1.55] text-secondary md:text-[16px]">
           {ratingsShown
             ? "არჩევანი ძალაში შედის მყისიერად და აისახება დელეგატის რეიტინგზე."
             : "არჩევანი ძალაში შედის მყისიერად."}
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <Card title="მიმდინარე დელეგატი">
-          {state.chosenDelegate ? (
-            <div>
-              <h3 className="font-serif text-lg font-bold text-ink" data-testid="current-delegate">
-                {state.chosenDelegate.firstName} {state.chosenDelegate.lastName}
+      <div className="mt-7 grid items-start gap-6 md:mt-10 min-[1100px]:grid-cols-2 min-[1100px]:gap-10">
+        <CabinetPanel tone="teal">
+          <CabinetPanelTitle tone="teal">მიმდინარე დელეგატი</CabinetPanelTitle>
+          <div className="mt-5 flex items-center gap-4 md:gap-[22px]">
+            <span
+              aria-hidden="true"
+              className="inline-flex size-16 flex-none overflow-hidden rounded-full bg-sandstone md:size-20"
+            >
+              <svg viewBox="0 0 52 52" className="size-full">
+                <circle cx="26" cy="21" r="9" fill="#D6CCBC" />
+                <path d="M9 52c0-11 7.6-18 17-18s17 7 17 18z" fill="#D6CCBC" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <h3
+                className="m-0 font-serif text-[24px] font-bold leading-[1.2] md:text-[30px]"
+                data-testid="current-delegate"
+              >
+                {state.chosenDelegate
+                  ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
+                  : "არ მყავს დელეგატი"}
               </h3>
-              <div className="mt-1.5 flex items-center gap-2">
-                {current ? (
-                  <>
-                    <Pill status="approved" />
-                    {current.region_name_ka ? (
-                      <span className="text-sm text-muted-fg">{current.region_name_ka}</span>
-                    ) : null}
-                  </>
-                ) : (
-                  // bound delegate is no longer approved/public — don't fake an „approved“ pill
-                  <span className="text-sm text-muted-fg" data-testid="delegate-unavailable">
-                    დელეგატი ამჟამად მიუწვდომელია
-                  </span>
-                )}
-              </div>
-              {current && ratingsShown ? (
-                <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3 text-sm">
-                  <span className="text-muted-fg">წევრი</span>
-                  <strong className="font-serif text-lg text-ink">
-                    {formatCountKa(current.members)}
-                  </strong>
+              {state.chosenDelegate ? (
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                  {current ? (
+                    <>
+                      <Pill status="approved" />
+                      {current.region_name_ka ? (
+                        <span className="text-[15px] text-secondary">{current.region_name_ka}</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    // bound delegate is no longer approved/public — don't fake an „approved“ pill
+                    <span className="text-[15px] text-secondary" data-testid="delegate-unavailable">
+                      დელეგატი ამჟამად მიუწვდომელია
+                    </span>
+                  )}
                 </div>
               ) : null}
             </div>
-          ) : (
-            <div>
-              <h3 className="font-serif text-lg font-bold text-ink" data-testid="current-delegate">
-                არ მყავს დელეგატი
-              </h3>
+          </div>
+          {current && ratingsShown ? (
+            <div className="mt-6 flex items-baseline justify-between border-y border-rule py-3.5">
+              <span className="text-[15px] text-secondary">წევრი</span>
+              <strong className="font-serif text-[24px]">{formatCountKa(current.members)}</strong>
             </div>
-          )}
-        </Card>
+          ) : null}
+        </CabinetPanel>
 
-        <Card title="დელეგატის შეცვლა">
-          <DelegateChange
-            regions={regions ?? []}
-            // only the fields the picker uses: its props reach the browser, and the member
-            // counts must not while ratings are hidden (ADR-052)
-            delegates={(delegates ?? []).map(({ id, first_name, last_name, region_id }) => ({
-              id,
-              first_name,
-              last_name,
-              region_id,
-            }))}
-            currentDelegateId={state.chosenDelegate?.id ?? null}
-            initialRegionId={current?.region_id ?? state.regionId ?? regions?.[0]?.id ?? 1}
-          />
-        </Card>
+        <CabinetPanel tone="ink">
+          <CabinetPanelTitle>დელეგატის შეცვლა</CabinetPanelTitle>
+          <div className="mt-7">
+            <DelegateChange
+              regions={regions ?? []}
+              // only the fields the picker uses: its props reach the browser, and the member
+              // counts must not while ratings are hidden (ADR-052)
+              delegates={(delegates ?? []).map(({ id, first_name, last_name, region_id }) => ({
+                id,
+                first_name,
+                last_name,
+                region_id,
+              }))}
+              currentDelegateId={state.chosenDelegate?.id ?? null}
+              initialRegionId={current?.region_id ?? state.regionId ?? regions?.[0]?.id ?? 1}
+            />
+          </div>
+        </CabinetPanel>
       </div>
-    </main>
+    </CabinetPage>
   );
 }

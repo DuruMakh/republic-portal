@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/Button";
+import { Caps } from "@/components/Caps";
 
-export function CopyButton({ text }: { text: string }) {
+/**
+ * Copy-to-clipboard in the „ერთობა“ look: a small square outline button with spaced capitals.
+ * `tone="light"` is the limestone outline for wine panels.
+ */
+export function CopyButton({ text, tone = "ink" }: { text: string; tone?: "ink" | "light" }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -26,8 +30,16 @@ export function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={copy}>
-      {copied ? "დაკოპირდა ✓" : "კოპირება"}
-    </Button>
+    <button
+      type="button"
+      onClick={copy}
+      className={`inline-flex h-10 flex-none cursor-pointer items-center justify-center whitespace-nowrap border bg-transparent px-4 text-[12px] font-bold tracking-[.08em] transition-colors ${
+        tone === "light"
+          ? "border-limestone/60 text-limestone hover:bg-limestone hover:text-wine"
+          : "border-ink text-ink hover:bg-ink hover:text-limestone"
+      }`}
+    >
+      <Caps>{copied ? "დაკოპირდა ✓" : "კოპირება"}</Caps>
+    </button>
   );
 }

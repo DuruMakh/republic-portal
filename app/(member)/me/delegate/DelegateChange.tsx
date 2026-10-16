@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
-import { SelectField } from "@/components/Select";
+import { UnityButton } from "@/components/UnityButton";
+import { UnitySelectField } from "@/components/UnitySelectField";
 import { changeDelegateSchema } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { changeDelegateAction } from "../actions";
@@ -86,8 +86,8 @@ export function DelegateChange({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <SelectField
+    <div className="flex flex-col gap-6">
+      <UnitySelectField
         label="რეგიონი"
         id="change-region"
         value={regionId}
@@ -98,8 +98,8 @@ export function DelegateChange({
             {r.name_ka}
           </option>
         ))}
-      </SelectField>
-      <SelectField
+      </UnitySelectField>
+      <UnitySelectField
         label="დელეგატი"
         id="change-delegate"
         value={choice}
@@ -114,28 +114,28 @@ export function DelegateChange({
             {d.id === currentDelegateId ? " (მიმდინარე)" : ""}
           </option>
         ))}
-      </SelectField>
-      <p className="text-xs text-muted-fg">
+      </UnitySelectField>
+      <p className="m-0 text-[14px] leading-[1.55] text-secondary">
         აჩვენებს მხოლოდ დამტკიცებულ დელეგატებს არჩეულ რეგიონში.
       </p>
       {message ? (
         <p
           role="status"
-          className={`text-sm font-semibold ${
+          className={`m-0 text-[15px] font-bold ${
             message.kind === "ok"
-              ? "text-ok"
+              ? "text-ok-deep"
               : message.kind === "error"
-                ? "text-danger"
-                : "text-muted-fg"
+                ? "text-brand"
+                : "text-secondary"
           }`}
           data-testid="change-delegate-message"
         >
           {message.text}
         </p>
       ) : null}
-      <Button className="w-full" onClick={change} disabled={busy}>
+      <UnityButton variant="ink" className="w-full" onClick={change} disabled={busy}>
         დელეგატის შეცვლა
-      </Button>
+      </UnityButton>
     </div>
   );
 }

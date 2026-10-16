@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/Eyebrow";
+import { UnityKicker } from "@/components/UnityKicker";
 
 /** Article list card — shared by /news (public) and /me/news (cabinet feed). */
 export function NewsCard({
@@ -22,30 +23,30 @@ export function NewsCard({
   variant?: "row" | "lead" | "tile";
 }) {
   if (variant === "row") {
+    // The cabinet feed row of the „ერთობა“ redesign: wide thumbnail, red kicker, serif title.
     return (
-      <Link href={href} className="group flex gap-4 border-b border-hairline pb-4 no-underline">
+      <Link
+        href={href}
+        className="group grid items-start gap-4 border-b border-rule py-6 text-ink no-underline sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-7 md:grid-cols-[240px_minmax(0,1fr)] md:gap-9 md:py-[30px]"
+      >
         {imageUrl ? (
           // Raw <img>, not next/image: this is Supabase Storage-hosted
           // and not in next.config's image host allowlist (delegate-photo
           // precedent — app/(admin)/admin/verify/[id]/DelegateProfileForm.tsx);
           // next/image would throw on an unconfigured remote host.
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt={title}
-            className="h-20 w-28 shrink-0 border border-hairline object-cover"
-          />
+          <img src={imageUrl} alt={title} className="aspect-[3/2] w-full object-cover" />
         ) : null}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Eyebrow>სიახლეები</Eyebrow>
+        <div className={`flex min-w-0 flex-col ${imageUrl ? "" : "sm:col-span-2"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <UnityKicker>სიახლეები</UnityKicker>
             {pill}
           </div>
-          <h3 className="mt-1 font-serif text-lg font-bold text-ink group-hover:text-brand">
+          <h3 className="mt-3.5 mb-0 font-serif text-[20px] font-bold leading-[1.35] transition-colors group-hover:text-brand md:text-[24px]">
             {title}
           </h3>
-          <p className="mt-1 text-[0.74rem] text-muted-fg">{publishedAt}</p>
-          <p className="mt-1 text-sm text-muted-fg">{excerptText}</p>
+          <p className="mt-1.5 mb-0 text-[13.5px] text-secondary">{publishedAt}</p>
+          <p className="mt-2 mb-0 text-[16px] leading-[1.6] text-prose">{excerptText}</p>
         </div>
       </Link>
     );

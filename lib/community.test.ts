@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   eventEndIso,
+  eventDayMonthKa,
   formatEventTimeKa,
   isoToTbilisiLocal,
   leadingOptions,
@@ -144,5 +145,17 @@ describe("leadingOptions (ADR-048: the answers with the most votes lead)", () =>
   it("marks nothing before anyone has voted", () => {
     expect(leadingOptions([0, 0])).toEqual([false, false]);
     expect(leadingOptions([])).toEqual([]);
+  });
+});
+
+describe("eventDayMonthKa", () => {
+  it("gives the Tbilisi day and the short Georgian month", () => {
+    expect(eventDayMonthKa("2026-07-25T15:00:00.000Z")).toEqual({ day: "25", month: "ივლ" });
+  });
+  it("uses Tbilisi's date, not UTC's, near midnight", () => {
+    expect(eventDayMonthKa("2026-12-31T20:30:00.000Z")).toEqual({ day: "1", month: "იან" });
+  });
+  it("returns null for malformed input", () => {
+    expect(eventDayMonthKa("garbage")).toBeNull();
   });
 });

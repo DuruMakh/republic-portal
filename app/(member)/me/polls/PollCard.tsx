@@ -2,8 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 import { formatCountKa } from "@/lib/format";
 import { leadingOptions, type PollViewState } from "@/lib/community";
 import { voteAction } from "./actions";
@@ -51,40 +49,46 @@ export function PollCard({
   const leading = leadingOptions(options.map((o) => o.votes));
 
   return (
-    <div data-testid={`poll-${pollId}`}>
-      <Card title={question}>
-        {deadlineKa ? (
-          <p className="mb-3 text-xs font-semibold text-muted-fg">{deadlineKa}</p>
-        ) : null}
+    <section
+      data-testid={`poll-${pollId}`}
+      className={`border bg-chalk p-6 md:px-10 md:py-9 ${view === "buttons" ? "border-ink" : "border-rule"}`}
+    >
+      <h3 className="m-0 font-serif text-[22px] font-semibold leading-[1.3] text-ink md:text-[26px]">
+        {question}
+      </h3>
+      {deadlineKa ? <p className="mt-2 mb-0 text-[14px] text-secondary">{deadlineKa}</p> : null}
 
-        {view === "buttons" ? (
-          <div className="flex flex-col gap-2.5">
-            {options.map((o) => (
-              <Button
-                key={o.optionId}
-                variant="ghost"
-                disabled={pending}
-                onClick={() => vote(o.optionId)}
-                className="w-full justify-start"
-              >
-                {o.label}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3.5">
+      {view === "buttons" ? (
+        <div className="mt-5 flex flex-col gap-2.5">
+          {options.map((o) => (
+            <button
+              key={o.optionId}
+              type="button"
+              disabled={pending}
+              onClick={() => vote(o.optionId)}
+              className="min-h-[54px] w-full cursor-pointer border border-ink bg-chalk px-[18px] py-3 text-left text-[16px] font-semibold text-ink transition-colors hover:bg-ink hover:text-limestone disabled:pointer-events-none disabled:opacity-50"
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6">
+          <div className="flex flex-col gap-5">
             {options.map((o, i) => (
               <div key={o.optionId}>
-                <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-ink">
+                <div className="mb-2 flex items-baseline justify-between gap-4 text-[16px]">
+                  <span className={leading[i] ? "font-bold text-ink" : "text-ink"}>
                     {o.label}
                     {o.mine ? (
-                      <span className="ms-2 text-xs font-semibold text-brand">✓ შენი არჩევანი</span>
+                      <span className="ms-2.5 text-[13px] font-bold text-brand">
+                        ✓ შენი არჩევანი
+                      </span>
                     ) : null}
                   </span>
-                  <span className="font-semibold text-muted-fg">{o.pct}%</span>
+                  <span className="font-serif font-bold text-ink">{o.pct}%</span>
                 </div>
-                <div className="h-2 bg-surface">
+                <div className="h-2 bg-sandstone">
                   <div
                     className={`h-2 ${leading[i] ? "bg-brand" : "bg-teal"}`}
                     style={{ width: `${o.pct}%` }}
@@ -92,16 +96,16 @@ export function PollCard({
                 </div>
               </div>
             ))}
-            <p className="mt-1 text-xs text-muted-fg">
-              {view === "results-closed"
-                ? `გამოკითხვა დასრულებულია · სულ ${formatCountKa(total)} ხმა`
-                : `✓ შენ უკვე მიეცი ხმა · სულ ${formatCountKa(total)} ხმა`}
-            </p>
           </div>
-        )}
+          <p className="mt-6 mb-0 border-t border-rule pt-5 text-[14px] text-secondary">
+            {view === "results-closed"
+              ? `გამოკითხვა დასრულებულია · სულ ${formatCountKa(total)} ხმა`
+              : `✓ შენ უკვე მიეცი ხმა · სულ ${formatCountKa(total)} ხმა`}
+          </p>
+        </div>
+      )}
 
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-      </Card>
-    </div>
+      {error ? <p className="mt-4 mb-0 text-[15px] font-semibold text-brand">{error}</p> : null}
+    </section>
   );
 }

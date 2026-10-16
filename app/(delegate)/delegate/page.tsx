@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ButtonLink } from "@/components/ButtonLink";
-import { Card } from "@/components/Card";
+import {
+  CabinetHead,
+  CabinetPage,
+  CabinetPanel,
+  CabinetPanelTitle,
+  CabinetStat,
+} from "@/components/CabinetPage";
 import { Pill } from "@/components/Pill";
 import { ReferralCard } from "@/components/ReferralCard";
-import { StatCard } from "@/components/StatCard";
+import { UnityButtonLink } from "@/components/UnityButtonLink";
 import type { DelegatePanelData } from "@/lib/cabinet";
 import type { TeamRsvpEvent } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
@@ -72,64 +77,58 @@ export default async function DelegateDashboardPage() {
   }
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-[2rem] font-bold text-ink">
-            გამარჯობა, {state.firstName}
-          </h1>
-          <Pill status={panel.status} />
-        </div>
-        <p className="mt-2 text-sm text-muted-fg">
-          მართე შენი გუნდი და თვალი ადევნე მხარდაჭერას რეალურ დროში.
-        </p>
-      </div>
+    <CabinetPage deco="map">
+      <CabinetHead
+        title={`გამარჯობა, ${state.firstName}`}
+        aside={<Pill status={panel.status} />}
+        lede="მართე შენი გუნდი და თვალი ადევნე მხარდაჭერას რეალურ დროში."
+      />
 
-      <div className="flex flex-col gap-6">
+      <div className="mt-8 grid items-start gap-8 md:mt-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
+              team, the same figure the ranking counts — is the headline. „გუნდის წევრი“
+              keeps it apart from the referral card's წევრი row, which counts the link's
+              sign-ups instead (ADR-039); the card's supporter row replaced the old
+              delegate-link-only supporter box. */}
+          <div className="grid gap-6 sm:grid-cols-2 sm:gap-10">
+            <CabinetStat
+              value={panel.totalCount}
+              label="გუნდის წევრი"
+              sub="ლიმიტის გარეშე"
+              accent
+            />
+            {ratingsShown ? (
+              <CabinetStat value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
+            ) : null}
+          </div>
+          <CabinetPanel>
+            <CabinetPanelTitle>გუნდის დეტალური სია</CabinetPanelTitle>
+            <p className="mt-2 mb-0 text-[16px] leading-[1.6] text-prose">
+              იხილე ყველა წევრი, მათი სტატუსი და რეგისტრაციის თარიღი.
+            </p>
+            <UnityButtonLink href="/delegate/team" variant="teal" size="sm" arrow className="mt-6">
+              ნახე შენი გუნდი
+            </UnityButtonLink>
+          </CabinetPanel>
+          {!eventsShown ? null : teamRsvpsError ? (
+            <CabinetPanel>
+              <CabinetPanelTitle>გუნდის RSVP</CabinetPanelTitle>
+              <p className="mt-3 mb-0 text-[15px] text-secondary">{GENERIC_FUNNEL_ERROR}</p>
+            </CabinetPanel>
+          ) : (
+            <TeamRsvpCard events={teamRsvps} />
+          )}
+        </div>
         {panel.referralCode != null ? (
           <ReferralCard
+            tone="wine"
             code={panel.referralCode}
             supporters={panel.referralSupporters ?? 0}
             members={panel.referralMembers ?? 0}
           />
         ) : null}
-        {/* No dues, so no "active" tier (ADR-037): totalCount — every member in the
-            team, the same figure the ranking counts — is the headline. „გუნდის წევრი“
-            keeps it apart from the referral card's წევრი row, which counts the link's
-            sign-ups instead (ADR-039); the card's supporter row replaced the old
-            delegate-link-only supporter box. */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <StatCard
-            value={panel.totalCount}
-            label="გუნდის წევრი"
-            sub="ლიმიტის გარეშე"
-            accent="brand"
-          />
-          {ratingsShown ? (
-            <StatCard value={rankValue} label="რეიტინგში ადგილი" sub={rankSub} />
-          ) : null}
-        </div>
-        <Card>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-ink">გუნდის დეტალური სია</h3>
-              <p className="mt-1 text-sm text-muted-fg">
-                იხილე ყველა წევრი, მათი სტატუსი და რეგისტრაციის თარიღი.
-              </p>
-            </div>
-            <ButtonLink href="/delegate/team" variant="dark">
-              ნახე შენი გუნდი
-            </ButtonLink>
-          </div>
-        </Card>
-        {!eventsShown ? null : teamRsvpsError ? (
-          <Card title="გუნდის RSVP">
-            <p className="text-sm text-muted-fg">{GENERIC_FUNNEL_ERROR}</p>
-          </Card>
-        ) : (
-          <TeamRsvpCard events={teamRsvps} />
-        )}
       </div>
-    </main>
+    </CabinetPage>
   );
 }

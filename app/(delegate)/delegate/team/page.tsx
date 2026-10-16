@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { CabinetHead, CabinetPage } from "@/components/CabinetPage";
 import type { TeamMember } from "@/lib/cabinet";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { TeamTable } from "./TeamTable";
@@ -20,18 +21,22 @@ export default async function DelegateTeamPage() {
   const team = teamData as unknown as TeamMember[];
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ჩემი გუნდი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          შენს გუნდში{" "}
-          <strong className="text-ink" data-testid="team-count">
-            {team.length}
-          </strong>{" "}
-          წევრი
-        </p>
+    <CabinetPage>
+      <CabinetHead
+        title="ჩემი გუნდი"
+        lede={
+          <>
+            შენს გუნდში{" "}
+            <strong className="text-ink" data-testid="team-count">
+              {team.length}
+            </strong>{" "}
+            წევრი
+          </>
+        }
+      />
+      <div className="mt-8 md:mt-12">
+        <TeamTable members={team} />
       </div>
-      <TeamTable members={team} />
-    </main>
+    </CabinetPage>
   );
 }

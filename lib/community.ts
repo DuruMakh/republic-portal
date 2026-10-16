@@ -109,6 +109,28 @@ function timeKa(iso: string): string {
   return `${pad2(t.getUTCHours())}:${pad2(t.getUTCMinutes())}`;
 }
 
+const MONTHS_SHORT_KA = [
+  "იან",
+  "თებ",
+  "მარ",
+  "აპრ",
+  "მაი",
+  "ივნ",
+  "ივლ",
+  "აგვ",
+  "სექ",
+  "ოქტ",
+  "ნოე",
+  "დეკ",
+] as const;
+
+/** Event start → the cabinet date tile: Tbilisi day of month and short Georgian month name. */
+export function eventDayMonthKa(iso: string): { day: string; month: string } | null {
+  const t = toTbilisiParts(iso);
+  if (!t) return null;
+  return { day: String(t.getUTCDate()), month: MONTHS_SHORT_KA[t.getUTCMonth()] ?? "" };
+}
+
 export function formatEventTimeKa(startsAt: string, endsAt: string | null): string {
   const startDate = formatDateKa(startsAt);
   const startTime = timeKa(startsAt);

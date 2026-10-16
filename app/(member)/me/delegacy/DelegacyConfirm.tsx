@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
+import { UnityButton } from "@/components/UnityButton";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { requestDelegacyAction } from "./actions";
 
@@ -33,10 +33,16 @@ export function DelegacyConfirm() {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button onClick={confirm} disabled={busy} data-testid="delegacy-confirm">
+      <UnityButton
+        variant="cream"
+        className="w-full"
+        onClick={confirm}
+        disabled={busy}
+        data-testid="delegacy-confirm"
+      >
         მოთხოვნის გაგზავნა
-      </Button>
-      {error ? <p className="text-sm font-semibold text-danger">{error}</p> : null}
+      </UnityButton>
+      {error ? <p className="m-0 text-[15px] font-bold text-limestone">{error}</p> : null}
     </div>
   );
 }

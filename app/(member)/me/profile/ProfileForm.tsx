@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
-import { Field, inputClasses } from "@/components/Field";
-import { SelectField } from "@/components/Select";
+import { CabinetPanel, CabinetPanelTitle, CabinetReadonlyField } from "@/components/CabinetPage";
+import { UnityField } from "@/components/UnityField";
+import { UnityButton } from "@/components/UnityButton";
+import { UnitySelectField } from "@/components/UnitySelectField";
 import { EMPLOYMENT_OTHER, employmentToForm, formatPhoneKa, formToEmployment } from "@/lib/cabinet";
 import { profileUpdateSchema } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
@@ -111,10 +111,11 @@ export function ProfileForm({
   }
 
   return (
-    <Card title="პირადი მონაცემები">
-      <div className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
+    <CabinetPanel>
+      <CabinetPanelTitle>პირადი მონაცემები</CabinetPanelTitle>
+      <div className="mt-7 flex flex-col gap-7">
+        <div className="grid gap-7 sm:grid-cols-2">
+          <UnityField
             label="სახელი"
             name="firstName"
             value={firstName}
@@ -123,7 +124,7 @@ export function ProfileForm({
               setFirstName(e.target.value);
             }}
           />
-          <Field
+          <UnityField
             label="გვარი"
             name="lastName"
             value={lastName}
@@ -133,41 +134,30 @@ export function ProfileForm({
             }}
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">ტელეფონი</span>
-            <div className="flex items-center gap-2">
-              <input
-                className={`${inputClasses} w-full border-line bg-surface`}
-                value={formatPhoneKa(phone)}
-                readOnly
-                aria-label="ტელეფონი"
-                data-testid="profile-phone"
-              />
-              <span className="whitespace-nowrap rounded-full bg-ok/10 px-2 py-1 text-xs font-semibold text-ok">
+        <div className="grid gap-7 sm:grid-cols-2">
+          <CabinetReadonlyField
+            label="ტელეფონი"
+            value={formatPhoneKa(phone)}
+            testId="profile-phone"
+            badge={
+              <span className="whitespace-nowrap border border-ok/30 bg-ok/10 px-2 py-0.5 text-[12px] font-bold text-ok-deep">
                 ✓ ვერიფიც.
               </span>
-            </div>
-            <p className="text-xs text-muted-fg">
-              ნომრის შესაცვლელად საჭიროა ხელახალი დადასტურება.
-            </p>
-          </div>
+            }
+            hint="ნომრის შესაცვლელად საჭიროა ხელახალი დადასტურება."
+          />
           {hasPersonalId ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
-              <input
-                className={`${inputClasses} border-line bg-surface tracking-widest`}
-                value="•••••••••••"
-                readOnly
-                aria-label="პირადი ნომერი"
-                data-testid="profile-pid"
-              />
-              <p className="text-xs text-muted-fg">ვერიფიცირებული · დაცული მონაცემი.</p>
-            </div>
+            <CabinetReadonlyField
+              label="პირადი ნომერი"
+              value="•••••••••••"
+              testId="profile-pid"
+              hint="ვერიფიცირებული · დაცული მონაცემი."
+              spaced
+            />
           ) : null}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField
+        <div className="grid gap-7 sm:grid-cols-2">
+          <UnitySelectField
             label="მხარე"
             id="profile-region"
             value={regionId}
@@ -181,8 +171,8 @@ export function ProfileForm({
                 {r.name_ka}
               </option>
             ))}
-          </SelectField>
-          <SelectField
+          </UnitySelectField>
+          <UnitySelectField
             label="ქალაქი / მუნიციპალიტეტი"
             id="profile-city"
             value={cityId}
@@ -196,9 +186,9 @@ export function ProfileForm({
                 {c.name_ka}
               </option>
             ))}
-          </SelectField>
+          </UnitySelectField>
         </div>
-        <SelectField
+        <UnitySelectField
           label="სამუშაო ადგილი / სტატუსი"
           id="profile-employment"
           value={employmentChoice}
@@ -213,9 +203,9 @@ export function ProfileForm({
             </option>
           ))}
           <option value={EMPLOYMENT_OTHER}>სხვა (მიუთითე)</option>
-        </SelectField>
+        </UnitySelectField>
         {employmentChoice === EMPLOYMENT_OTHER ? (
-          <Field
+          <UnityField
             label="მიუთითე საქმიანობა"
             name="employmentCustom"
             value={employmentCustom}
@@ -226,18 +216,18 @@ export function ProfileForm({
             }}
           />
         ) : null}
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="m-0 text-[15px] text-danger">{error}</p> : null}
         {saved ? (
-          <p className="text-sm font-semibold text-ok" data-testid="profile-saved">
+          <p className="m-0 text-[15px] font-bold text-ok-deep" data-testid="profile-saved">
             პროფილი განახლდა ✓
           </p>
         ) : null}
         <div className="flex justify-end">
-          <Button onClick={save} disabled={busy}>
+          <UnityButton variant="ink" size="sm" onClick={save} disabled={busy}>
             შენახვა
-          </Button>
+          </UnityButton>
         </div>
       </div>
-    </Card>
+    </CabinetPanel>
   );
 }
