@@ -4,6 +4,13 @@
  * splits it into the hero, the wine band, the goal steps and the portal cards and adds the
  * 1918 — 1991 roots section. All copy below is the design's, kept verbatim.
  */
+import {
+  CONSTITUTION_FIRST_CHAPTER,
+  CONSTITUTION_SIGNATURES,
+  INDEPENDENCE_ACT,
+  type DocumentFan,
+} from "@/lib/archive-documents";
+
 export const ABOUT_HREF = "/about";
 export const ABOUT_TITLE = "ჩვენ შესახებ";
 
@@ -94,45 +101,11 @@ export const ABOUT_ROOTS_INTRO =
   "1918 წლის 26 მაისს საქართველომ დამოუკიდებლობა გამოაცხადა და დემოკრატიული რესპუბლიკა შექმნა. სამ წელზე ნაკლებ დროში რესპუბლიკამ საყოველთაო არჩევნები ჩაატარა, ქალებს ხმის უფლება მისცა და მიიღო კონსტიტუცია, რომელიც ხელმწიფებას მთელს ერს აკუთვნებდა.";
 
 /** The three archive pages in the fan, in the design's stacking order (the act on top). */
-export type AboutDocument = {
-  id: "constitution" | "signatures" | "act";
-  src: string;
-  width: number;
-  height: number;
-  /** Names the page: the zoom button's label follows it and the open view uses it as alt. */
-  name: string;
-  caption: string;
-};
-
-export const ABOUT_DOCUMENTS: readonly AboutDocument[] = [
-  {
-    id: "constitution",
-    src: "/unity/doc-constitution-page.jpg",
-    width: 904,
-    height: 1280,
-    name: "1921 წლის კონსტიტუციის პირველი თავი",
-    caption: "1921 წლის კონსტიტუცია — თავი პირველი: ზოგადი დებულებანი. საქართველოს ეროვნული არქივი",
-  },
-  {
-    id: "signatures",
-    src: "/unity/doc-handwritten.jpg",
-    width: 897,
-    height: 1271,
-    name: "1921 წლის კონსტიტუციის ხელმოწერები",
-    caption: "1921 წლის კონსტიტუციის ხელმოწერების გვერდი. საქართველოს ეროვნული არქივი",
-  },
-  {
-    id: "act",
-    src: "/unity/doc-independence-act.jpg",
-    width: 920,
-    height: 1280,
-    name: "საქართველოს დამოუკიდებლობის აქტი, ხელმოწერებით",
-    caption:
-      "საქართველოს დამოუკიდებლობის აქტი — დამფუძნებელი კრების მიერ 1919 წლის 12 მარტს დადასტურებული ეგზემპლარი, ხელმოწერებით. საქართველოს ეროვნული არქივი",
-  },
+export const ABOUT_DOCUMENTS: DocumentFan = [
+  CONSTITUTION_FIRST_CHAPTER,
+  CONSTITUTION_SIGNATURES,
+  INDEPENDENCE_ACT,
 ];
-export const ABOUT_DOCUMENTS_ZOOM = "გადიდება";
-export const ABOUT_DOCUMENTS_CLOSE = "დახურვა";
 export const ABOUT_DOCUMENTS_CAPTION =
   "დამოუკიდებლობის აქტი (1919 წლის 12 მარტის ეგზემპლარი) · 1921 წლის კონსტიტუცია: პირველი თავი და ხელმოწერები. წყარო: საქართველოს ეროვნული არქივი";
 

@@ -26,7 +26,7 @@ describe("/principles", () => {
         "ჩვენი მიზანია ქართველი ერის გაერთიანება საერთო პრინციპების, ღირებულებებისა და მიზნების გარშემო.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "ᲡᲐᲠᲩᲔᲕᲘ ↓" })).toHaveAttribute("href", "#contents");
+    expect(screen.getByRole("link", { name: "სარჩევი" })).toHaveAttribute("href", "#contents");
     expect(document.getElementById("contents")).not.toBeNull();
   });
 
@@ -44,7 +44,7 @@ describe("/principles", () => {
 
   it("lists the contents, each entry linking to its principle", () => {
     render(<PrinciplesPage />);
-    const contents = screen.getByRole("navigation", { name: "ᲡᲐᲠᲩᲔᲕᲘ" });
+    const contents = screen.getByRole("navigation", { name: "სარჩევი" });
     const links = within(contents).getAllByRole("link");
     expect(links).toHaveLength(12);
     PRINCIPLES.forEach(({ title }, i) => {
@@ -58,7 +58,8 @@ describe("/principles", () => {
     PRINCIPLES.forEach(({ title, lead, body, roots }, i) => {
       const section = article(i + 1);
       expect(section).toHaveAccessibleName(title);
-      expect(within(section).getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+      // The desktop heading and the phone accordion's heading; CSS shows one per width.
+      expect(within(section).getAllByRole("heading", { level: 2, name: title })).toHaveLength(2);
       expect(within(section).getByText(lead)).toBeInTheDocument();
       for (const text of body) expect(within(section).getByText(text)).toBeInTheDocument();
       const note = within(section).getByRole("complementary", { name: "ისტორიული ფესვი" });

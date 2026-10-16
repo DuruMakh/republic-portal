@@ -1,9 +1,9 @@
 "use client";
 
+import { Caps } from "@/components/Caps";
 import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
 import { PrinciplesQuote } from "@/components/PrinciplesQuote";
 import { PrinciplesRoots } from "@/components/PrinciplesRoots";
-import { mtavruli } from "@/lib/mtavruli";
 import {
   GEORGIAN_NUMERALS,
   PRINCIPLES,
@@ -119,7 +119,7 @@ function PrincipleSection({
             {numeral}
           </span>
           <span className="text-[21px] leading-[1.1] font-black [font-stretch:62.5%]">
-            {mtavruli(title)}
+            <Caps>{title}</Caps>
           </span>
           <svg
             aria-hidden="true"
@@ -146,7 +146,7 @@ function PrincipleSection({
             {numeral}
           </div>
           <div className="mt-1.5 text-[13px] font-bold tracking-[.14em] text-brand max-sm:hidden">
-            {mtavruli(principleLabel(number))}
+            <Caps>{principleLabel(number)}</Caps>
           </div>
           <PrinciplesRoots
             roots={roots}

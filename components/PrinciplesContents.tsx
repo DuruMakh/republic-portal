@@ -1,4 +1,4 @@
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 import {
   GEORGIAN_NUMERALS,
   PRINCIPLES,
@@ -21,7 +21,7 @@ export function PrinciplesContents() {
     >
       <div className="unity-container">
         <div id="toc-title" className="text-[13px] font-bold tracking-[.14em] text-brand">
-          {mtavruli(PRINCIPLES_CONTENTS)}
+          <Caps>{PRINCIPLES_CONTENTS}</Caps>
         </div>
         <ol className="mt-6 list-none columns-[3_280px] gap-x-10 border-t-2 border-ink p-0">
           {PRINCIPLES.map(({ title }, i) => (

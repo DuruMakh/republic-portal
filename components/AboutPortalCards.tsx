@@ -1,6 +1,6 @@
+import { Caps } from "@/components/Caps";
 import Link from "next/link";
 import { ABOUT_PORTAL_CARDS } from "@/lib/about-copy";
-import { mtavruli } from "@/lib/mtavruli";
 
 /**
  * What the portal lets people do: four ruled cards side by side (a list of rows on a phone),
@@ -31,7 +31,7 @@ export function AboutPortalCards({ ratingsShown }: { ratingsShown: boolean }) {
             {detail ? (
               <>
                 <span className="ml-8 mt-2.5 block text-[12px] font-bold tracking-[.1em] text-secondary sm:ml-0 sm:mt-[22px] sm:border-t sm:border-rule sm:pt-[18px] sm:text-[13px]">
-                  {mtavruli(detail.label)}
+                  <Caps>{detail.label}</Caps>
                 </span>
                 <span className="ml-8 mt-1 block text-[15.5px] leading-[1.55] text-prose sm:ml-0 sm:mt-2 sm:flex-1 sm:text-[16px] sm:leading-[1.6]">
                   {detail.text}
