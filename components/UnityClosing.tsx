@@ -23,10 +23,15 @@ export function UnityClosing({ link }: { link?: { href: string; label: string } 
         >
           {TITLE}
         </h2>
-        <div className="mt-[clamp(36px,4vw,56px)] hidden flex-wrap items-center gap-x-9 gap-y-5 sm:flex">
-          <UnityButtonLink href="/join" variant="cream" size="lg" arrow>
-            {JOIN}
-          </UnityButtonLink>
+        {/* Phones join from the sticky join bar, so only the second link shows there. */}
+        <div
+          className={`mt-[clamp(36px,4vw,56px)] flex-wrap items-center gap-x-9 gap-y-5 sm:flex ${link ? "flex" : "hidden"}`}
+        >
+          <span className="hidden sm:contents">
+            <UnityButtonLink href="/join" variant="cream" size="lg" arrow>
+              {JOIN}
+            </UnityButtonLink>
+          </span>
           {link ? (
             <UnityTextLink href={link.href} tone="light" className="text-[17px]">
               {link.label}

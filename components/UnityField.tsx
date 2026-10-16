@@ -4,7 +4,7 @@ import {
   type ReactNode,
   type TextareaHTMLAttributes,
 } from "react";
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 
 /**
  * „ერთობა“ form fields: the same label/error contract as Field.tsx, drawn the way the owner's
@@ -17,9 +17,7 @@ const controlClasses =
 function UnityLabel({ htmlFor, label, hint }: { htmlFor: string; label: string; hint?: string }) {
   return (
     <label htmlFor={htmlFor} className="text-[12px] font-bold tracking-[.12em] text-secondary">
-      {/* Mtavruli on screen; the accessible name stays in ordinary letters. */}
-      <span aria-hidden="true">{mtavruli(label)}</span>
-      <span className="sr-only">{label}</span>
+      <Caps>{label}</Caps>
       {hint ? <span className="font-semibold tracking-[.02em]"> {hint}</span> : null}
     </label>
   );

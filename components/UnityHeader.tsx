@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { Caps } from "@/components/Caps";
 import { useChromePathname } from "@/components/ChromePathname";
 import { useSignedIn } from "@/components/useSignedIn";
-import { mtavruli } from "@/lib/mtavruli";
 import { mobileBackTarget } from "@/lib/mobile-nav";
 
 type NavItem = { href: string; label: string };
@@ -72,7 +72,7 @@ export function UnityHeader({
             {BACK}
           </Link>
           <span className="text-[12px] font-bold tracking-[.14em] text-brand">
-            {mtavruli(back.label)}
+            <Caps>{back.label}</Caps>
           </span>
         </header>
       ) : null}
@@ -115,7 +115,7 @@ export function UnityHeader({
                         : "border-transparent text-ink hover:text-brand"
                   }`}
                 >
-                  {mtavruli(item.label)}
+                  <Caps>{item.label}</Caps>
                 </Link>
               );
             })}
@@ -129,7 +129,7 @@ export function UnityHeader({
                   : "bg-brand text-white hover:bg-brand-dark hover:text-white"
               }`}
             >
-              {mtavruli(action.label)}
+              <Caps>{action.label}</Caps>
             </Link>
             <button
               type="button"
@@ -202,7 +202,7 @@ export function UnityHeader({
                       current ? "text-white hover:text-white" : "text-limestone hover:text-white"
                     }`}
                   >
-                    {mtavruli(item.label)}
+                    <Caps>{item.label}</Caps>
                     {current ? (
                       <span aria-hidden="true" className="pebble block h-[11px] w-3.5 bg-sand" />
                     ) : null}
@@ -216,7 +216,7 @@ export function UnityHeader({
                 onClick={() => setOpen(false)}
                 className="flex h-14 items-center justify-center bg-limestone text-[14px] font-bold tracking-[.08em] text-wine no-underline hover:bg-white hover:text-wine"
               >
-                {mtavruli(action.label)}
+                <Caps>{action.label}</Caps>
               </Link>
             </div>
           </div>

@@ -5,7 +5,7 @@ import {
   type UnityButtonSize,
   type UnityButtonVariant,
 } from "@/components/UnityButtonLink";
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 
 /**
  * The <button> twin of UnityButtonLink, for forms and actions: the same variants, sizes and
@@ -36,7 +36,7 @@ export function UnityButton({
       )}
       {...rest}
     >
-      {mtavruli(children)}
+      <Caps>{children}</Caps>
       {arrow ? <UnityButtonArrow /> : null}
     </button>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mtavruli } from "@/lib/mtavruli";
+import { Caps } from "@/components/Caps";
 
 const VARIANTS = {
   /** Red fill: the default call to act on light backgrounds. */
@@ -10,6 +10,10 @@ const VARIANTS = {
   ink: "bg-ink text-limestone hover:bg-brand hover:text-white",
   /** Ink outline, filling with ink on hover. */
   ghost: "border border-ink bg-transparent text-ink hover:bg-ink hover:text-limestone",
+  /** Teal fill: the delegate panel's team action. */
+  teal: "bg-teal text-white hover:bg-teal-dark hover:text-white",
+  /** Red outline, filling red on hover: destructive actions such as deleting the account. */
+  danger: "border border-brand bg-transparent text-brand hover:bg-brand hover:text-white",
 } as const;
 
 const SIZES = {
@@ -60,7 +64,7 @@ export function UnityButtonLink({
 }) {
   return (
     <Link href={href} className={unityButtonClasses(variant, size, className)}>
-      {mtavruli(children)}
+      <Caps>{children}</Caps>
       {arrow ? <UnityButtonArrow /> : null}
     </Link>
   );
