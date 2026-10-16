@@ -1,284 +1,40 @@
-import Link from "next/link";
-import { CountUp } from "@/components/CountUp";
-import { EventRow } from "@/components/EventRow";
-import { HomeAboutSection } from "@/components/HomeAboutSection";
-import { HomeClosing } from "@/components/HomeClosing";
-import { IndexRow } from "@/components/IndexRow";
-import { NewsCard } from "@/components/NewsCard";
-import { SectionRule } from "@/components/SectionRule";
-import { formatDateKa } from "@/lib/cabinet";
-import { splitEvents } from "@/lib/community";
-import { excerpt } from "@/lib/content-render";
-import { showEvents } from "@/lib/events-switch";
-import { formatCountKa } from "@/lib/format";
-import {
-  PRINCIPLES,
-  PRINCIPLES_HOME_LINK,
-  PRINCIPLES_HREF,
-  PRINCIPLES_TITLE,
-  principleAnchor,
-} from "@/lib/principles-copy";
-import { showPublicFinances } from "@/lib/public-finances";
-import { rankDelegates } from "@/lib/ranking";
-import { showRatings } from "@/lib/ratings-switch";
-import {
-  fetchPublicDelegates,
-  fetchPublicEvents,
-  fetchPublicNews,
-  fetchPublicStats,
-  fetchTransparencyStats,
-} from "@/lib/supabase/public";
+import { HomeHero } from "@/components/HomeHero";
+import { HomeJoinSteps } from "@/components/HomeJoinSteps";
+import { HomeMission } from "@/components/HomeMission";
+import { HomeNews } from "@/components/HomeNews";
+import { HomePrinciples } from "@/components/HomePrinciples";
+import { HomeRoots } from "@/components/HomeRoots";
+import { HomeStructure } from "@/components/HomeStructure";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityOrnament } from "@/components/UnityOrnament";
+import { fetchPublicNews, fetchPublicStats } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
-// Homepage copy supplied by the owner on 2026-10-07. P1 keeps its opening drop cap.
-const HEADLINE = "ერთად შევქმნათ ქართული რესპუბლიკა";
-const LEDE = "იდეები მხოლოდ მაშინ ცვლიან ქვეყანას, როდესაც ადამიანები მათ გარშემო ერთიანდებიან.";
-const P1 =
-  "ქართული რესპუბლიკის პორტალის მიზანია შექმნას სივრცე, სადაც ქართველი ხალხი გაერთიანდება, ორგანიზდება, აირჩევს საკუთარ წარმომადგენლებს და უშუალოდ მიიღებს მონაწილეობას გადაწყვეტილებების მიღებაში.";
-const P2 =
-  "საქართველო ეკუთვნის ხალხს და არა ვიწრო კორუმპირებულ ელიტას, რომელიც ჩვენს ხარჯზე მდიდრდება და ქვეყნის სიმდიდრეს პირად ქონებად აქცევს.";
-const P3 =
-  "საქართველოს უნდა მართავდნენ ადამიანები, რომლებიც ქართველ ხალხს ემსახურებიან და არა ოლიგარქებს.";
-const P4 =
-  "ჩვენ გვჯერა, რომ ერთად შეგვიძლია დავიბრუნოთ საქართველო და შევქმნათ ქვეყანა, სადაც ქართულ ოჯახს ღირსეული და მდიდარი ცხოვრების შესაძლებლობა აქვს, სახელმწიფო კი თითოეულ ადამიანს ემსახურება.";
-const STRIP = "როგორ შემოგვიერთდები";
-const REG = "რეესტრი — დღეს";
-const TOP = "რეიტინგი — ხუთეული";
-const FULL = "სრულად →";
+/** How many of the latest stories the homepage shows. */
+const NEWS_COUNT = 3;
 
-// Ladder columns and the supporter wording: the owner's 2026-10-07 copy round (ADR-035) —
-// supporter is the free tier, so the registry counter says it too. With dues dropped there
-// is no "active" tier (ADR-037): the member counter and a delegate's ranked figure count
-// every member. The collected-dues label matches app/(public)/transparency/page.tsx.
-const LADDER_1_TITLE = "მხარდამჭერი";
-const LADDER_1_DESC = "მარტივი რეგისტრაცია მეილით და ტელეფონით.";
-const LADDER_1_LINK = "გახდი მხარდამჭერი →";
-const LADDER_2_TITLE = "წევრი";
-const LADDER_2_DESC = "აყენებს ინიციატივებს და მონაწილეობს საერთო კენჭისყრაში.";
-const LADDER_2_LINK = "დაიწყე რეგისტრაციით →";
-const LADDER_3_TITLE = "დელეგატი";
-const LADDER_3_DESC = "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.";
-const LADDER_3_LINK = "გაეცანი წესებს →";
-const STAT_REGISTERED_LABEL = "მხარდამჭერი";
-const STAT_MEMBERS_LABEL = "წევრი";
-const STAT_APPROVED_LABEL = "დამტკიცებული დელეგატი";
-const TOTAL_GEL_LABEL = "შეგროვებული საწევრო შენატანები";
-const RANK_FIGURE_LABEL = "წევრი";
-const NEWS_LABEL = "სიახლეები";
-const EVENTS_LABEL = "ღონისძიებები";
-const NEWS_EMPTY = "სიახლეები მალე გამოჩნდება.";
-const EVENTS_EMPTY = "მომავალი ღონისძიებები მალე გამოცხადდება.";
-
+/**
+ * The homepage in the owner's „ერთობა“ redesign (design files Main-cc44, Home-Mobile-sstd).
+ * The header above it turns wine on "/", so the hero reads as one block with it. The design has
+ * no ranking, events or finance section: the homepage fetches only the counters and the news,
+ * and the hidden surfaces stay off it whatever their switches say (ADR-034, ADR-042, ADR-052).
+ * The teal braid closes the page right above the footer, as in the design.
+ */
 export default async function HomePage() {
-  // The collected-dues figure is part of the hidden finance surface (ADR-034): no fetch,
-  // no row, until SHOW_PUBLIC_FINANCES=true.
-  const financesPublic = showPublicFinances();
-  // Events are hidden by default too (ADR-042): no fetch and no section until SHOW_EVENTS=true.
-  const eventsShown = showEvents();
-  // The top five is hidden by default too (ADR-052): no fetch and no section until SHOW_RATINGS=true.
-  const ratingsShown = showRatings();
-  const [stats, delegates, tStats, news, events] = await Promise.all([
-    fetchPublicStats(),
-    ratingsShown ? fetchPublicDelegates() : Promise.resolve([]),
-    financesPublic ? fetchTransparencyStats() : Promise.resolve(null),
-    fetchPublicNews(),
-    eventsShown ? fetchPublicEvents() : Promise.resolve([]),
-  ]);
-  const ranked = rankDelegates(delegates);
-  const { upcoming } = splitEvents(events, new Date().toISOString());
+  const [stats, news] = await Promise.all([fetchPublicStats(), fetchPublicNews()]);
 
   return (
     <main>
-      <div className="grid gap-0 px-5 pb-12 pt-8 sm:px-10 lg:grid-cols-[1fr_348px]">
-        <div className="lg:border-r lg:border-hairline lg:pr-8 lg:[container-type:inline-size]">
-          <h1 className="font-serif text-[2rem] font-bold leading-[1.16] [text-wrap:balance] sm:text-[2.7rem] lg:text-[4cqw] lg:whitespace-nowrap">
-            {HEADLINE}
-          </h1>
-          <p className="mt-3.5 font-serif text-[1.12rem] leading-[1.6] text-prose lg:text-[clamp(0.74rem,2.1cqw,1.12rem)] lg:whitespace-nowrap">
-            {LEDE}
-          </p>
-          <div className="mt-4 grid gap-7 sm:grid-cols-2">
-            <div className="space-y-4">
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">
-                <span className="float-left pr-2.5 pt-1 font-serif text-[3.4rem] font-bold leading-[0.78] text-brand">
-                  {P1.slice(0, 1)}
-                </span>
-                {P1.slice(1)}
-              </p>
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P2}</p>
-            </div>
-            <div className="space-y-4">
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P3}</p>
-              <p className="text-[0.92rem] leading-[1.75] sm:text-justify">{P4}</p>
-            </div>
-          </div>
-          <div id="join-strip" className="mt-6">
-            <SectionRule label={STRIP} />
-            <div className="grid sm:grid-cols-3">
-              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
-                <div className="font-serif font-bold text-ink">{LADDER_1_TITLE}</div>
-                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_1_DESC}</p>
-                <p className="mt-2">
-                  <Link href="/join">{LADDER_1_LINK}</Link>
-                </p>
-              </div>
-              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
-                <div className="font-serif font-bold text-ink">{LADDER_2_TITLE}</div>
-                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_2_DESC}</p>
-                <p className="mt-2">
-                  <Link href="/join">{LADDER_2_LINK}</Link>
-                </p>
-              </div>
-              <div className="border-b border-hairline py-4 sm:border-b-0 sm:border-r sm:py-0 sm:pr-4 last:border-0 sm:pl-4 first:pl-0">
-                <div className="font-serif font-bold text-ink">{LADDER_3_TITLE}</div>
-                <p className="mt-1 text-[0.8rem] text-muted-fg">{LADDER_3_DESC}</p>
-                <p className="mt-2">
-                  <Link href="/join/terms">{LADDER_3_LINK}</Link>
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-10">
-            <SectionRule label={NEWS_LABEL} action={<Link href="/news">{FULL}</Link>} />
-            {news.length === 0 ? (
-              <p className="mt-4 text-muted-fg">{NEWS_EMPTY}</p>
-            ) : (
-              <div className="mt-6 grid gap-x-8 gap-y-8 sm:grid-cols-3">
-                {news.slice(0, 3).map((n) => (
-                  <NewsCard
-                    variant="tile"
-                    key={n.id}
-                    href={`/news/${n.slug}`}
-                    title={n.title}
-                    publishedAt={formatDateKa(n.published_at)}
-                    imageUrl={n.image_url}
-                    excerptText={excerpt(n.body)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-          {eventsShown ? (
-            <div className="mt-10">
-              <SectionRule label={EVENTS_LABEL} action={<Link href="/events">{FULL}</Link>} />
-              {upcoming.length === 0 ? (
-                <p className="mt-4 text-muted-fg">{EVENTS_EMPTY}</p>
-              ) : (
-                <div className="mt-6 flex flex-col gap-3">
-                  {upcoming.slice(0, 3).map((e) => (
-                    <EventRow key={e.id} event={e} />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : null}
-        </div>
-        <aside className="mt-8 flex flex-col gap-6 lg:mt-0 lg:pl-7">
-          <div data-testid="registry">
-            <SectionRule label={REG} tone="teal" />
-            <div className="mt-1">
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">{STAT_APPROVED_LABEL}</span>
-                <span
-                  className="font-serif text-xl font-bold text-teal"
-                  data-testid="stat-approved-delegates"
-                >
-                  <CountUp value={stats.approved_delegates} />
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">{STAT_MEMBERS_LABEL}</span>
-                <span
-                  className="font-serif text-xl font-bold text-teal"
-                  data-testid="stat-members-total"
-                >
-                  <CountUp value={stats.members_total} />
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">{STAT_REGISTERED_LABEL}</span>
-                <span
-                  className="font-serif text-xl font-bold text-teal"
-                  data-testid="stat-registered-total"
-                >
-                  <CountUp value={stats.registered_total} />
-                </span>
-              </div>
-              {tStats ? (
-                <div className="flex justify-between border-b border-hairline py-2.5">
-                  <span className="text-[0.85rem] text-muted-fg">{TOTAL_GEL_LABEL}</span>
-                  <span className="font-serif text-xl font-bold text-teal">
-                    {formatCountKa(Math.round(tStats.total_gel))}₾
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          </div>
-          {ratingsShown ? (
-            <div>
-              <SectionRule label={TOP} action={<Link href="/leaderboard">{FULL}</Link>} />
-              <div>
-                {ranked.slice(0, 5).map((d) => (
-                  <IndexRow
-                    key={d.id}
-                    rank={d.rank}
-                    name={`${d.first_name} ${d.last_name}`}
-                    meta={d.region_name_ka ?? "—"}
-                    figure={formatCountKa(d.members)}
-                    figureLabel={RANK_FIGURE_LABEL}
-                    href={`/delegates/${d.slug}`}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </aside>
-      </div>
-      <HomeAboutSection />
-      <PrinciplesSection />
-      <HomeClosing />
+      <HomeHero />
+      <HomeMission stats={stats} />
+      <HomeJoinSteps />
+      <HomePrinciples />
+      <HomeStructure />
+      <HomeNews items={news.slice(0, NEWS_COUNT)} />
+      <HomeRoots />
+      <UnityClosing />
+      <UnityOrnament tone="teal" />
     </main>
-  );
-}
-
-/** The owner's twelve principles as a numbered index, each opening its place on /principles. */
-function PrinciplesSection() {
-  const [firstWord, ...rest] = PRINCIPLES_TITLE.split(" ");
-  return (
-    <section
-      aria-labelledby="home-principles-title"
-      className="border-t border-hairline px-5 pb-12 pt-10 sm:px-10"
-    >
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-        <h2
-          id="home-principles-title"
-          className="display-heading text-[clamp(1.9rem,3.6vw,2.7rem)] text-ink"
-        >
-          {firstWord} <span className="text-brand">{rest.join(" ")}</span>
-        </h2>
-        <Link href={PRINCIPLES_HREF}>{PRINCIPLES_HOME_LINK}</Link>
-      </div>
-      <ol className="mt-5 grid border-t-2 border-ink sm:grid-cols-2 lg:grid-cols-4">
-        {PRINCIPLES.map(({ title }, i) => (
-          <li key={title} className="border-b border-hairline">
-            <Link
-              href={`${PRINCIPLES_HREF}#${principleAnchor(i + 1)}`}
-              className="group grid h-full grid-cols-[2.4rem_minmax(0,1fr)] items-baseline gap-2 py-4 pr-5 text-ink no-underline"
-            >
-              <span
-                aria-hidden="true"
-                className="font-serif text-[1.7rem] font-extrabold leading-none text-brand"
-              >
-                {i + 1}
-              </span>
-              <span className="font-serif text-[0.98rem] leading-snug group-hover:text-brand">
-                {title}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }

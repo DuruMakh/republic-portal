@@ -64,12 +64,8 @@ every other chip. Red and teal are equally dark (1.00:1), so never let red-versu
 carry meaning: a leading poll answer is also the longest bar and shows its percentage. The leading answers are
 the ones with the most votes (`leadingOptions`), never the largest rounded percentage.
 
-The homepage closing band (`HomeClosing`, owner request 2026-10-13) is the one red-filled panel,
-because it is the page's call to act: a `brand`→`brand-dark` gradient, paper text, the red roundel
-emblem, and `inverse` / `ghost-inverse` buttons with paper focus outlines. A row of four-loop
-rosettes (after the emblem) between two hairlines edges it top and bottom, like a carved stone
-border, drawn in a lighter teal `#5aaba4`: the `teal` token is as dark as the red and vanishes on
-it. That shade is decoration only, never text or a control.
+The homepage, About, Principles and Structure use the „ერთობა“ redesign instead (ADR-053): its
+closing band is `UnityClosing`, a wine panel with the waving flag, in `components/Unity*.tsx`.
 
 Focus-visible is a 2px `brand` outline, offset 2px, on every interactive element, except on the
 teal footer, where links use a `paper` outline (red on teal is invisible).

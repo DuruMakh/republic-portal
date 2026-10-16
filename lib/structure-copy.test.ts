@@ -21,10 +21,13 @@ function strings(value: unknown): string[] {
 
 describe("structure copy", () => {
   it("splices every string verbatim from the approved spec text", () => {
+    // The „ერთობა“ design's additions (2026-10-16) live in DESIGN_ONLY_COPY; everything else is
+    // still the spec's text.
+    const designOnly = new Set(strings(copy.DESIGN_ONLY_COPY));
     const values = Object.entries(copy)
-      .filter(([name]) => name !== "STRUCTURE_HREF")
+      .filter(([name]) => name !== "STRUCTURE_HREF" && name !== "DESIGN_ONLY_COPY")
       .flatMap(([, value]) => strings(value))
-      .filter((s) => !s.startsWith("#"));
+      .filter((s) => !s.startsWith("#") && !designOnly.has(s));
     expect(values.length).toBeGreaterThan(25);
     for (const value of values) expect(SPEC, value).toContain(value);
   });
@@ -32,6 +35,11 @@ describe("structure copy", () => {
   it("formats the rule-card label the way the spec shows it", () => {
     expect(copy.votesLabel(4, 5)).toBe("5-დან 4 ხმა");
     expect(SPEC).toContain(copy.votesLabel(4, 5));
+  });
+
+  it("formats the ring caption and pebble names the way the design shows them", () => {
+    expect(copy.boardSizeLabel(5)).toBe("5 წევრი");
+    expect(copy.boardMemberLabel(1)).toBe("ბორდის წევრი 1");
   });
 
   it("contains no quotation marks of any kind", () => {
@@ -46,6 +54,7 @@ describe("structure copy", () => {
     expect(copy.BOARD_DUTIES).toHaveLength(4);
     expect(copy.MEMBERS_PATH_STEPS).toHaveLength(3);
     expect(copy.MEMBERS_RIGHTS).toHaveLength(4);
-    expect(copy.SECTION_INDEX.map((s) => s.href)).toEqual(["#board", "#members", "#vote"]);
+    // The design's flow order: members propose, the board decides, everyone votes.
+    expect(copy.SECTION_INDEX.map((s) => s.href)).toEqual(["#members", "#board", "#vote"]);
   });
 });

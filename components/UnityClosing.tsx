@@ -8,7 +8,7 @@ const FLAG_ALT = "საქართველოს სახელმწიფ�
 /**
  * The closing wine band shared by the „ერთობა“ pages: the big headline, the join button and an
  * optional second link, with the waving state flag fading in from the right. Below 1040px the
- * flag drops under the text; at phone width only the headline stays (the join bar takes over).
+ * flag drops under the text; at phone width the join button gives way to the join bar.
  */
 export function UnityClosing({ link }: { link?: { href: string; label: string } }) {
   return (
