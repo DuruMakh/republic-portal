@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { AdminPageHeader, adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { adminControlClasses } from "@/components/Field";
 import { Select } from "@/components/Select";
 import {
@@ -96,12 +98,10 @@ export default async function AdminAuditPage({
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">აუდიტის ჟურნალი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          ყველა ადმინისტრაციული მოქმედება — უახლესი პირველ ადგილას. ჩანაწერები წაუშლელია.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="აუდიტის ჟურნალი"
+        lede="ყველა ადმინისტრაციული მოქმედება — უახლესი პირველ ადგილას. ჩანაწერები წაუშლელია."
+      />
 
       <Card>
         <form method="get" className="flex flex-wrap items-end gap-3">
@@ -157,31 +157,41 @@ export default async function AdminAuditPage({
               bodyTestId="admin-audit-body"
               head={
                 <>
-                  <th className={tableThClass}>დრო</th>
-                  <th className={tableThClass}>ვინ</th>
-                  <th className={tableThClass}>მოქმედება</th>
-                  <th className={tableThClass}>ობიექტი</th>
-                  <th className={tableThClass}>დეტალები</th>
+                  <th className={adminThClass}>
+                    <Caps>დრო</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>ვინ</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>მოქმედება</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>ობიექტი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>დეტალები</Caps>
+                  </th>
                 </>
               }
             >
               {entries.map((e) => (
-                <tr key={e.id} className={tableRowClass}>
-                  <td className={`${tableCellClass} whitespace-nowrap text-muted-fg`}>
+                <tr key={e.id} className={adminRowClass}>
+                  <td className={`${adminTdClass} whitespace-nowrap text-muted-fg`}>
                     {formatDateTimeKa(e.created_at)}
                   </td>
-                  <td className={`${tableCellClass} font-semibold`}>
+                  <td className={`${adminTdClass} font-semibold`}>
                     {e.actor_first_name ? `${e.actor_first_name} ${e.actor_last_name}` : "სისტემა"}
                   </td>
-                  <td className={tableCellClass}>{auditActionLabel(e.action)}</td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>{auditActionLabel(e.action)}</td>
+                  <td className={adminTdClass}>
                     {e.target_label ??
                       detailsLabel(e.details) ??
                       `${TARGET_TYPE_LABELS_KA[e.target_type] ?? e.target_type}${
                         e.target_id ? ` · ${e.target_id.slice(0, 8)}` : ""
                       }`}
                   </td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>
                     {e.details !== null ? (
                       <details>
                         <summary className="cursor-pointer text-xs font-semibold text-brand">

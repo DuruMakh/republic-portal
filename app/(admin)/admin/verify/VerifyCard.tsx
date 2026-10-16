@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
 import { Pill } from "@/components/Pill";
+import { Caps } from "@/components/Caps";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { RevealPersonalId } from "../members/RevealPersonalId";
 import type { ApproveResult, RevealResult, VerifyActionResult } from "./actions";
@@ -113,22 +114,22 @@ export function VerifyCard({
           ) : null}
           <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <div>
-              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                პირადი ნომერი
+              <dt className="text-[11px] font-bold tracking-[.12em] text-secondary">
+                <Caps>პირადი ნომერი</Caps>
               </dt>
               <dd>
                 <RevealPersonalId memberId={applicant.id} reveal={reveal} />
               </dd>
             </div>
             <div>
-              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                ტელეფონი
+              <dt className="text-[11px] font-bold tracking-[.12em] text-secondary">
+                <Caps>ტელეფონი</Caps>
               </dt>
               <dd className="font-semibold">{formatPhoneKa(applicant.phone)}</dd>
             </div>
             <div>
-              <dt className="text-[0.72rem] font-bold uppercase tracking-wide text-muted-fg">
-                რეგისტრაცია
+              <dt className="text-[11px] font-bold tracking-[.12em] text-secondary">
+                <Caps>რეგისტრაცია</Caps>
               </dt>
               <dd className="font-semibold">{formatDateKa(applicant.createdAt)}</dd>
             </div>

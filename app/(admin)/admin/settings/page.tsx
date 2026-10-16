@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdminPageHeader } from "@/components/AdminUi";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
 import { formatDateTimeKa, hasAnyRole } from "@/lib/admin";
@@ -22,19 +23,21 @@ export default async function AdminSettingsPage() {
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">პარამეტრები</h1>
-        <p className="mt-2 text-sm text-muted-fg">აქტიური წევრის წესის მართვა.</p>
+      <AdminPageHeader title="პარამეტრები" lede="აქტიური წევრის წესის მართვა." />
+      <div className="max-w-[900px]">
+        <Card>
+          <h2 className="mb-4 font-serif text-[22px] leading-[1.3] font-semibold">
+            აქტიური წევრის წესი
+          </h2>
+          <SettingsForm initialGraceDays={graceDays} save={updateGraceDaysAction} />
+          <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted-fg">
+            ბოლო ცვლილება: {formatDateTimeKa(setting.updated_at)}
+            {setting.updated_by_first_name
+              ? ` · ${setting.updated_by_first_name} ${setting.updated_by_last_name}`
+              : ""}
+          </p>
+        </Card>
       </div>
-      <Card title="აქტიური წევრის წესი">
-        <SettingsForm initialGraceDays={graceDays} save={updateGraceDaysAction} />
-        <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted-fg">
-          ბოლო ცვლილება: {formatDateTimeKa(setting.updated_at)}
-          {setting.updated_by_first_name
-            ? ` · ${setting.updated_by_first_name} ${setting.updated_by_last_name}`
-            : ""}
-        </p>
-      </Card>
     </main>
   );
 }
