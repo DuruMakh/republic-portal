@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DELEGATE_TERMS } from "@/components/DelegateTerms";
 import { UnityKicker } from "@/components/UnityKicker";
+import { UnityDisplayTitle } from "@/components/UnityPageHead";
 import { GEORGIAN_NUMERALS } from "@/lib/principles-copy";
 
 export const metadata: Metadata = {
@@ -30,12 +31,7 @@ export default function TermsPage() {
         />
         <div className="relative max-w-[860px]">
           <UnityKicker>დელეგატის წესები და პირობები</UnityKicker>
-          <h1
-            id="page-title"
-            className="m-0 mt-[18px] max-w-[16em] font-display text-[52px] font-bold leading-[.94] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(56px,6vw,92px)] sm:leading-[.92]"
-          >
-            წესები და პირობები
-          </h1>
+          <UnityDisplayTitle compact>წესები და პირობები</UnityDisplayTitle>
           <p
             role="note"
             className="m-0 mt-7 border-l-4 border-warn bg-warn/10 px-[18px] py-3.5 text-[15px] font-bold leading-[1.55] text-warn-deep sm:mt-9"

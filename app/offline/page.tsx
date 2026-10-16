@@ -7,7 +7,7 @@ export default function OfflinePage() {
   return (
     <main
       aria-labelledby="page-title"
-      className="relative min-h-screen overflow-hidden bg-sandstone px-5 py-24 text-ink sm:px-6 sm:py-40"
+      className="unity-fonts relative min-h-screen overflow-hidden bg-sandstone px-5 py-24 text-ink sm:px-6 sm:py-40"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative map, precached art */}
       <img

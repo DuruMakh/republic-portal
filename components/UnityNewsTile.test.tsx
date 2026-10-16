@@ -34,6 +34,11 @@ describe("UnityNewsTile", () => {
     expect(screen.getByRole("link")).toHaveAccessibleName(/^სატესტო სიახლე/);
   });
 
+  it("makes the story title a heading, so screen readers can jump between stories", () => {
+    render(<UnityNewsTile {...BASE} imageUrl={null} />);
+    expect(screen.getByRole("heading", { level: 3, name: "სატესტო სიახლე" })).toBeInTheDocument();
+  });
+
   it("adds the section kicker on the lead story", () => {
     render(<UnityNewsTile {...BASE} imageUrl={null} lead />);
     expect(screen.getByText("ᲡᲘᲐᲮᲚᲔᲔᲑᲘ")).toBeInTheDocument();

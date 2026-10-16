@@ -8,6 +8,11 @@ describe("UnityNotice", () => {
     expect(screen.getByRole("main", { name: "დროებითი შეფერხება" })).toBeInTheDocument();
     expect(screen.getByText("სცადე თავიდან.")).toBeInTheDocument();
   });
+
+  it("carries the „ერთობა“ fonts itself, for error pages outside the ერთობა layout", () => {
+    render(<UnityNotice title="დროებითი შეფერხება" />);
+    expect(screen.getByRole("main")).toHaveClass("unity-fonts");
+  });
 });
 
 describe("UnityNotFoundNotice", () => {

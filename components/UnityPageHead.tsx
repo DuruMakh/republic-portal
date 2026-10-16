@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Caps } from "@/components/Caps";
 import { UnityKicker } from "@/components/UnityKicker";
+import { UnityTextLink } from "@/components/UnityTextLink";
 
 /**
  * The opening of a „ერთობა“ content page (news, events, finances, contact, rules, privacy): the
@@ -22,12 +23,7 @@ export function UnityPageHead({
     <section className="pb-7 pt-10 sm:pb-12 sm:pt-[clamp(56px,6vw,88px)]">
       <div className="unity-container">
         <UnityKicker>{kicker}</UnityKicker>
-        <h1
-          id="page-title"
-          className="m-0 mt-[18px] max-w-[16em] font-display text-[52px] font-bold leading-[.94] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(64px,7.4vw,112px)] sm:leading-[.92]"
-        >
-          {title}
-        </h1>
+        <UnityDisplayTitle>{title}</UnityDisplayTitle>
         {intro ? (
           <p className="m-0 mt-4 max-w-[34em] font-serif text-[18px] leading-[1.6] text-prose sm:mt-[26px] sm:text-[clamp(19px,1.6vw,22px)]">
             {intro}
@@ -36,6 +32,57 @@ export function UnityPageHead({
         {children}
       </div>
     </section>
+  );
+}
+
+/**
+ * The big display-font page heading under the kicker. `compact` is the smaller size for pages
+ * that set the heading beside a form or ornament (contact, rules).
+ */
+export function UnityDisplayTitle({
+  children,
+  compact = false,
+}: {
+  children: string;
+  compact?: boolean;
+}) {
+  return (
+    <h1
+      id="page-title"
+      className={`m-0 mt-[18px] max-w-[16em] font-display text-[52px] font-bold leading-[.94] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:leading-[.92] ${
+        compact ? "sm:text-[clamp(56px,6vw,92px)]" : "sm:text-[clamp(64px,7.4vw,112px)]"
+      }`}
+    >
+      {children}
+    </h1>
+  );
+}
+
+/** The head of a single article or event: the way back, the date kicker and the serif title. */
+export function UnityArticleHead({
+  backHref,
+  backLabel,
+  kicker,
+  title,
+}: {
+  backHref: string;
+  backLabel: string;
+  kicker: string;
+  title: string;
+}) {
+  return (
+    <>
+      <UnityTextLink href={backHref} className="mb-5 inline-block text-[15px] font-bold sm:mb-7">
+        {backLabel}
+      </UnityTextLink>
+      <UnityKicker>{kicker}</UnityKicker>
+      <h1
+        id="page-title"
+        className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
+      >
+        {title}
+      </h1>
+    </>
   );
 }
 

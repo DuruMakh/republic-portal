@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
 import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
 import { UnityClosing } from "@/components/UnityClosing";
-import { UnityKicker } from "@/components/UnityKicker";
-import { UnityTextLink } from "@/components/UnityTextLink";
+import { UnityArticleHead } from "@/components/UnityPageHead";
 import { excerpt } from "@/lib/content-render";
 import { eventEndIso, formatEventTimeKa } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
@@ -60,16 +59,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <section className="pb-16 pt-7 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]">
         <div className="unity-container">
           <article className="mx-auto max-w-[860px]">
-            <UnityTextLink href="/events" className="mb-5 inline-block text-[15px] sm:mb-7">
-              {BACK}
-            </UnityTextLink>
-            <UnityKicker>{formatEventTimeKa(event.starts_at, event.ends_at)}</UnityKicker>
-            <h1
-              id="page-title"
-              className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
-            >
-              {event.title}
-            </h1>
+            <UnityArticleHead
+              backHref="/events"
+              backLabel={BACK}
+              kicker={formatEventTimeKa(event.starts_at, event.ends_at)}
+              title={event.title}
+            />
             <p className="m-0 mt-4 flex items-center gap-2.5 text-[15px] font-semibold text-secondary sm:mt-[22px] sm:text-[16px]">
               <span
                 aria-hidden="true"

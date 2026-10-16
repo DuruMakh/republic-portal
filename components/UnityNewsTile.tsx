@@ -53,21 +53,21 @@ export function UnityNewsTile({
       }`}
     >
       {photo}
-      <span className="flex min-w-0 flex-col">
+      <div className="flex min-w-0 flex-col">
         {lead ? (
           <span aria-hidden="true" className="hidden sm:block">
             <UnityKicker>სიახლეები</UnityKicker>
           </span>
         ) : null}
-        <span
-          className={`font-serif font-semibold transition-colors group-hover/tile:text-brand ${
+        <h3
+          className={`m-0 font-serif font-semibold transition-colors group-hover/tile:text-brand ${
             lead
               ? "order-2 mt-1.5 text-[21px] leading-[1.35] sm:order-none sm:mt-[18px] sm:text-[clamp(28px,2.6vw,38px)] sm:leading-[1.25]"
               : "order-2 mt-1.5 text-[21px] leading-[1.35] sm:text-[22px]"
           }`}
         >
           {title}
-        </span>
+        </h3>
         <span
           className={`order-1 mt-[18px] text-[14px] text-secondary ${lead ? "sm:order-none sm:mt-3.5 sm:text-[15px]" : ""}`}
         >
@@ -82,7 +82,7 @@ export function UnityNewsTile({
         >
           {excerptText}
         </span>
-      </span>
+      </div>
     </Link>
   );
 }

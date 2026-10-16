@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { UnityPageHead, UnitySectionLabel } from "./UnityPageHead";
+import {
+  UnityArticleHead,
+  UnityDisplayTitle,
+  UnityPageHead,
+  UnitySectionLabel,
+} from "./UnityPageHead";
 
 describe("UnityPageHead", () => {
   it("shows the kicker, the page heading and the intro", () => {
@@ -23,5 +28,34 @@ describe("UnitySectionLabel", () => {
   it("is a level-two heading in ordinary letters for screen readers", () => {
     render(<UnitySectionLabel>სიახლეები</UnitySectionLabel>);
     expect(screen.getByRole("heading", { level: 2, name: "სიახლეები" })).toBeInTheDocument();
+  });
+});
+
+describe("UnityDisplayTitle", () => {
+  it("is the page heading that names the main landmark", () => {
+    render(<UnityDisplayTitle>წესები და პირობები</UnityDisplayTitle>);
+    expect(screen.getByRole("heading", { level: 1, name: "წესები და პირობები" })).toHaveAttribute(
+      "id",
+      "page-title",
+    );
+  });
+});
+
+describe("UnityArticleHead", () => {
+  it("leads with the way back, then the kicker and the article heading", () => {
+    render(
+      <UnityArticleHead
+        backHref="/news"
+        backLabel="← სიახლეები"
+        kicker="19 ივლისი"
+        title="სათაური"
+      />,
+    );
+    expect(screen.getByRole("link", { name: "← სიახლეები" })).toHaveAttribute("href", "/news");
+    expect(screen.getByRole("heading", { level: 1, name: "სათაური" })).toHaveAttribute(
+      "id",
+      "page-title",
+    );
+    expect(screen.getByText("19 ივლისი")).toBeInTheDocument();
   });
 });

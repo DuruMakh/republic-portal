@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { UnityKicker } from "@/components/UnityKicker";
+import { UnityDisplayTitle } from "@/components/UnityPageHead";
 import { SUPPORT_EYEBROW, SUPPORT_HEADING, SUPPORT_LEDE } from "@/lib/support-copy";
 import { submitSupportMessageAction } from "./actions";
 import { SupportForm } from "./SupportForm";
@@ -27,12 +28,7 @@ export default function SupportPage() {
         <div className="relative grid items-start gap-7 min-[900px]:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] min-[900px]:gap-[clamp(40px,6vw,96px)]">
           <div>
             <UnityKicker>{SUPPORT_EYEBROW}</UnityKicker>
-            <h1
-              id="page-title"
-              className="m-0 mt-[18px] font-display text-[52px] font-bold leading-[.94] tracking-[-.005em] sm:mt-[26px] sm:text-[clamp(56px,6vw,92px)] sm:leading-[.92]"
-            >
-              {SUPPORT_HEADING}
-            </h1>
+            <UnityDisplayTitle compact>{SUPPORT_HEADING}</UnityDisplayTitle>
             <p className="m-0 mt-4 max-w-[34em] font-serif text-[18px] leading-[1.6] text-prose sm:mt-[26px] sm:text-[clamp(19px,1.6vw,22px)]">
               {SUPPORT_LEDE}
             </p>

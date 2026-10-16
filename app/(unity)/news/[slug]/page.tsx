@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
 import { UnityClosing } from "@/components/UnityClosing";
-import { UnityKicker } from "@/components/UnityKicker";
+import { UnityArticleHead } from "@/components/UnityPageHead";
 import { UnityTextLink } from "@/components/UnityTextLink";
 import { excerpt } from "@/lib/content-render";
 import { formatDateKa } from "@/lib/cabinet";
@@ -50,19 +50,12 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
         <div className="unity-container">
           <article>
             <div className="mx-auto max-w-[860px]">
-              <UnityTextLink
-                href="/news"
-                className="mb-5 inline-block text-[15px] font-bold sm:mb-7"
-              >
-                {BACK}
-              </UnityTextLink>
-              <UnityKicker>{formatDateKa(article.published_at)}</UnityKicker>
-              <h1
-                id="page-title"
-                className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
-              >
-                {article.title}
-              </h1>
+              <UnityArticleHead
+                backHref="/news"
+                backLabel={BACK}
+                kicker={formatDateKa(article.published_at)}
+                title={article.title}
+              />
             </div>
             {article.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)

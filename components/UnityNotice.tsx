@@ -22,7 +22,7 @@ export function UnityNotice({
   return (
     <main
       aria-labelledby="page-title"
-      className="relative overflow-hidden px-5 pb-[72px] pt-16 sm:px-0 sm:pb-[140px] sm:pt-[120px]"
+      className="unity-fonts relative overflow-hidden px-5 pb-[72px] pt-16 sm:px-0 sm:pb-[140px] sm:pt-[120px]"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative ornament, fixed art */}
       <img
