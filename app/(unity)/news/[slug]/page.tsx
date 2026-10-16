@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
-import { Eyebrow } from "@/components/Eyebrow";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityKicker } from "@/components/UnityKicker";
+import { UnityTextLink } from "@/components/UnityTextLink";
 import { excerpt } from "@/lib/content-render";
 import { formatDateKa } from "@/lib/cabinet";
+import { CONTACT_CLOSING_LINK } from "@/lib/public-pages-copy";
 import { fetchPublicNews, fetchPublicNewsBySlug } from "@/lib/supabase/public";
 import { metadata as notFoundMetadata } from "./not-found";
 
 export const revalidate = 60;
+
+const BACK = "← სიახლეები";
 
 export async function generateStaticParams() {
   const news = await fetchPublicNews();
@@ -41,25 +45,45 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
   if (!article) notFound();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <Link href="/news" className="text-sm font-semibold text-brand hover:underline">
-        ← სიახლეები
-      </Link>
-      <article className="mt-6">
-        <div className="border-b border-ink pb-4">
-          <Eyebrow>{formatDateKa(article.published_at)}</Eyebrow>
-          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{article.title}</h1>
+    <main aria-labelledby="page-title">
+      <section className="pb-16 pt-7 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]">
+        <div className="unity-container">
+          <article>
+            <div className="mx-auto max-w-[860px]">
+              <UnityTextLink
+                href="/news"
+                className="mb-5 inline-block text-[15px] font-bold sm:mb-7"
+              >
+                {BACK}
+              </UnityTextLink>
+              <UnityKicker>{formatDateKa(article.published_at)}</UnityKicker>
+              <h1
+                id="page-title"
+                className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
+              >
+                {article.title}
+              </h1>
+            </div>
+            {article.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
+              <img
+                src={article.image_url}
+                alt={article.title}
+                className="mx-auto mt-[26px] block aspect-[3/2] w-full max-w-[1080px] bg-sandstone object-cover sm:mt-12 sm:aspect-[21/9] sm:max-h-[460px]"
+              />
+            ) : null}
+            <div className="mx-auto mt-7 max-w-[720px] sm:mt-[52px]">
+              <ContentBody body={article.body} reading />
+              <div className="mt-9 border-t border-rule pt-[22px] sm:pt-[26px]">
+                <UnityTextLink href="/news" className="text-[15px] font-bold sm:text-[16px]">
+                  {BACK}
+                </UnityTextLink>
+              </div>
+            </div>
+          </article>
         </div>
-        {article.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
-          <img
-            src={article.image_url}
-            alt={article.title}
-            className="mt-6 max-h-[420px] w-full border border-hairline object-cover"
-          />
-        ) : null}
-        <ContentBody body={article.body} className="mt-6" />
-      </article>
+      </section>
+      <UnityClosing link={CONTACT_CLOSING_LINK} />
     </main>
   );
 }

@@ -1,58 +1,62 @@
 import type { Metadata } from "next";
-import { Eyebrow } from "@/components/Eyebrow";
-import { NewsCard } from "@/components/NewsCard";
-import { SectionRule } from "@/components/SectionRule";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityNewsTile } from "@/components/UnityNewsTile";
+import { UnityPageHead, UnitySectionLabel } from "@/components/UnityPageHead";
 import { excerpt } from "@/lib/content-render";
 import { formatDateKa } from "@/lib/cabinet";
+import { CONTACT_CLOSING_LINK } from "@/lib/public-pages-copy";
 import { fetchPublicNews } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
+const TITLE = "სიახლეები";
+const INTRO = "მოძრაობის სიახლეები და განცხადებები.";
+
 export const metadata: Metadata = {
-  title: "სიახლეები — ქართული რესპუბლიკა",
-  description: "მოძრაობის სიახლეები და განცხადებები.",
+  title: `${TITLE} — ქართული რესპუბლიკა`,
+  description: INTRO,
   openGraph: { images: ["/og-default.png"] },
 };
 
 export default async function NewsPage() {
   const news = await fetchPublicNews();
+  const [lead, ...rest] = news;
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <Eyebrow>ქართული რესპუბლიკა</Eyebrow>
-      <h1 className="mt-1 font-serif text-4xl font-bold text-ink">სიახლეები</h1>
-      {news.length === 0 ? (
-        <p className="mt-8 text-muted-fg">სიახლეები მალე გამოჩნდება.</p>
-      ) : (
-        <>
-          <SectionRule label="სიახლეები" className="mt-8" />
-          <div className="mt-6">
-            <NewsCard
-              variant="lead"
-              key={news[0]!.id}
-              href={`/news/${news[0]!.slug}`}
-              title={news[0]!.title}
-              publishedAt={formatDateKa(news[0]!.published_at)}
-              imageUrl={news[0]!.image_url}
-              excerptText={excerpt(news[0]!.body)}
-            />
-          </div>
-          {news.length > 1 ? (
-            <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
-              {news.slice(1).map((n) => (
-                <NewsCard
-                  variant="tile"
-                  key={n.id}
-                  href={`/news/${n.slug}`}
-                  title={n.title}
-                  publishedAt={formatDateKa(n.published_at)}
-                  imageUrl={n.image_url}
-                  excerptText={excerpt(n.body)}
+    <main aria-labelledby="page-title">
+      <UnityPageHead kicker="ქართული რესპუბლიკა" title={TITLE} intro={INTRO} />
+      <section className="pb-16 pt-2 sm:pb-[clamp(88px,9vw,136px)] sm:pt-0">
+        <div className="unity-container">
+          <UnitySectionLabel>{TITLE}</UnitySectionLabel>
+          {lead ? (
+            <ul className="m-0 mt-6 flex list-none flex-col gap-7 p-0 sm:mt-0 sm:grid sm:grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] sm:gap-x-[clamp(28px,3vw,44px)] sm:gap-y-14">
+              <li className="sm:col-span-full sm:mb-[-12px]">
+                <UnityNewsTile
+                  lead
+                  href={`/news/${lead.slug}`}
+                  title={lead.title}
+                  publishedAt={formatDateKa(lead.published_at)}
+                  imageUrl={lead.image_url}
+                  excerptText={excerpt(lead.body)}
                 />
+              </li>
+              {rest.map((n) => (
+                <li key={n.id}>
+                  <UnityNewsTile
+                    href={`/news/${n.slug}`}
+                    title={n.title}
+                    publishedAt={formatDateKa(n.published_at)}
+                    imageUrl={n.image_url}
+                    excerptText={excerpt(n.body)}
+                  />
+                </li>
               ))}
-            </div>
-          ) : null}
-        </>
-      )}
+            </ul>
+          ) : (
+            <p className="m-0 mt-8 text-secondary">სიახლეები მალე გამოჩნდება.</p>
+          )}
+        </div>
+      </section>
+      <UnityClosing link={CONTACT_CLOSING_LINK} />
     </main>
   );
 }
