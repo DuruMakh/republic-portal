@@ -7,6 +7,11 @@ export const NOT_FOUND_METADATA: Metadata = {
   title: "გვერდი ვერ მოიძებნა — ქართული რესპუბლიკა",
 };
 
+/** The not-found wording, shared with the redesigned site's UnityNotFoundNotice. */
+export const NOT_FOUND_TITLE = "გვერდი ვერ მოიძებნა.";
+export const NOT_FOUND_DESCRIPTION = "ბმული შეიძლება მოძველდა ან არასწორად ჩაიწერა.";
+export const NOT_FOUND_HOME = "დაბრუნდი მთავარ გვერდზე";
+
 /**
  * The one Georgian "page not found" notice, shared by the site-wide and the public not-found
  * pages. The description is the sentence app/(public)/delegates/[slug]/not-found.tsx already
@@ -15,9 +20,9 @@ export const NOT_FOUND_METADATA: Metadata = {
 export function NotFoundNotice() {
   return (
     <CenteredNotice
-      title="გვერდი ვერ მოიძებნა."
-      description="ბმული შეიძლება მოძველდა ან არასწორად ჩაიწერა."
-      actions={<ButtonLink href="/">დაბრუნდი მთავარ გვერდზე</ButtonLink>}
+      title={NOT_FOUND_TITLE}
+      description={NOT_FOUND_DESCRIPTION}
+      actions={<ButtonLink href="/">{NOT_FOUND_HOME}</ButtonLink>}
     />
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { NOT_FOUND_METADATA, NotFoundNotice } from "@/components/NotFoundNotice";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
+import { UnityNotFoundNotice } from "@/components/UnityNotice";
 import { showEvents } from "@/lib/events-switch";
 
 const EVENT_NOT_FOUND_METADATA: Metadata = {
@@ -18,5 +19,5 @@ export function generateMetadata(): Metadata {
 
 /** The notice is the public group's generic one; only the title is the event's own. */
 export default function EventNotFound() {
-  return <NotFoundNotice />;
+  return <UnityNotFoundNotice />;
 }

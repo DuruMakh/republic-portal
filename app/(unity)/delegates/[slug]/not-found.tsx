@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ButtonLink";
-import { CenteredNotice } from "@/components/CenteredNotice";
+import { NOT_FOUND_DESCRIPTION, NOT_FOUND_HOME } from "@/components/NotFoundNotice";
+import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { UnityNotice } from "@/components/UnityNotice";
 import { showRatings } from "@/lib/ratings-switch";
 
 /**
@@ -12,20 +13,16 @@ export const metadata: Metadata = { title: "დელეგატი ვერ �
 
 export default function DelegateNotFound() {
   return (
-    <CenteredNotice
+    <UnityNotice
       title="დელეგატი ვერ მოიძებნა."
-      description="ბმული შეიძლება მოძველდა ან არასწორად ჩაიწერა."
+      description={NOT_FOUND_DESCRIPTION}
       actions={
         // while ratings are hidden (ADR-052) there is no ranking to return to: the site-wide
         // not-found notice's home link instead
         showRatings() ? (
-          <ButtonLink href="/leaderboard" variant="ghost">
-            დაბრუნდი რეიტინგზე
-          </ButtonLink>
+          <UnityButtonLink href="/leaderboard">დაბრუნდი რეიტინგზე</UnityButtonLink>
         ) : (
-          <ButtonLink href="/" variant="ghost">
-            დაბრუნდი მთავარ გვერდზე
-          </ButtonLink>
+          <UnityButtonLink href="/">{NOT_FOUND_HOME}</UnityButtonLink>
         )
       }
     />

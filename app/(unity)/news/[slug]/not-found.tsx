@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NotFoundNotice } from "@/components/NotFoundNotice";
+import { UnityNotFoundNotice } from "@/components/UnityNotice";
 
 /**
  * A missing article's tab title. The page's generateMetadata returns this same object for a
@@ -10,5 +10,5 @@ export const metadata: Metadata = { title: "სიახლე ვერ მო�
 
 /** The notice is the public group's generic one; only the title is the article's own. */
 export default function NewsNotFound() {
-  return <NotFoundNotice />;
+  return <UnityNotFoundNotice />;
 }

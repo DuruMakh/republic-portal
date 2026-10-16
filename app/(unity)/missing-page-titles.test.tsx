@@ -83,7 +83,7 @@ describe("the public group's not-found file", () => {
 
 // Any dynamic segment ([slug], [id], ...): a page there can raise a 404 for an address nobody listed.
 describe("public pages with a dynamic segment", () => {
-  const PUBLIC_DIR = path.join(process.cwd(), "app", "(public)");
+  const PUBLIC_DIR = path.join(process.cwd(), "app", "(unity)");
   const dynamicDirs = readdirSync(PUBLIC_DIR, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isDirectory() && /^\[.+\]$/.test(entry.name))
     .map((entry) => path.join(entry.parentPath, entry.name));
