@@ -97,14 +97,14 @@ async function reachGoogleForm(user = googleUser()) {
   mocks.getUser.mockResolvedValue({ data: { user }, error: null });
   mocks.rpc.mockResolvedValue({ data: { exists: false }, error: null });
   await renderJoin();
-  await screen.findByLabelText("სახელი");
+  await screen.findByRole("textbox", { name: "სახელი" });
 }
 
 async function sendGoogleCodeExpectingNoCodeScreen() {
   await reachGoogleForm();
-  fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-  fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-  fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+  fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), { target: { value: "ნინო" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), { target: { value: "ბერიძე" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" }), {
     target: { value: "555123456" },
   });
   fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
@@ -177,9 +177,13 @@ describe("JoinForm rollout selector", () => {
   it("legacy mode also holds the code until the consent box is ticked", async () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH_MODE", "phone");
     await renderJoin();
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" }), {
       target: { value: "555123456" },
     });
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
@@ -217,8 +221,8 @@ describe("GoogleJoinForm", () => {
 
     const google = await screen.findByRole("button", { name: "Google-ით გაგრძელება" });
     expectCurrentRegistrationStep("Google");
-    expect(screen.queryByLabelText("სახელი")).toBeNull();
-    expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "სახელი" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "ტელეფონის ნომერი" })).toBeNull();
     fireEvent.click(google);
 
     await waitFor(() =>
@@ -240,24 +244,28 @@ describe("GoogleJoinForm", () => {
     await renderJoin();
 
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/me/profile"));
-    expect(screen.queryByLabelText("ტელეფონის ნომერი")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "ტელეფონის ნომერი" })).toBeNull();
   });
 
   it("shows the name and phone form for a Google user without a profile", async () => {
     await reachGoogleForm();
 
     expectCurrentRegistrationStep("ტელეფონი");
-    expect(screen.getByLabelText("სახელი")).toBeEnabled();
-    expect(screen.getByLabelText("გვარი")).toBeEnabled();
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: "სახელი" })).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "გვარი" })).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toHaveValue("");
   });
 
   it("resumes a consumed phone proof after reload without sending a second SMS", async () => {
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
 
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toHaveValue(PHONE);
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toHaveValue(PHONE);
     fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
@@ -279,8 +287,12 @@ describe("GoogleJoinForm", () => {
       error: "რეგისტრაციისთვის საჭიროა დადასტურებული მობილურის ნომერი.",
     });
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
     fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
@@ -297,21 +309,29 @@ describe("GoogleJoinForm", () => {
       error: GENERIC_FUNNEL_ERROR,
     });
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
     fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));
 
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expect(mocks.sendPhone).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toBeEnabled();
   });
 
   it("does not preflight a changed phone against the unrelated confirmed phone", async () => {
     await reachGoogleForm(googleUser({ phone: PHONE, phone_confirmed_at: EXPIRES_AT }));
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" }), {
       target: { value: "555654321" },
     });
     fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
@@ -378,7 +398,7 @@ describe("GoogleJoinForm", () => {
 
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
     expectCurrentRegistrationStep("ტელეფონი");
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toBeDisabled();
     const retry = screen.getByRole("button", { name: "დარეგისტრირება" });
     fireEvent.click(retry);
 
@@ -395,9 +415,13 @@ describe("GoogleJoinForm", () => {
       message: PHONE_VERIFICATION_MESSAGES.not_authenticated,
     });
     await reachGoogleForm();
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" }), {
       target: { value: "555123456" },
     });
     fireEvent.click(screen.getByRole("checkbox", { name: CONSENT }));
@@ -420,7 +444,7 @@ describe("GoogleJoinForm", () => {
     expect(await screen.findByText(PHONE_VERIFICATION_MESSAGES.phone_in_use)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "ნომრის შეცვლა" }));
 
-    expect(screen.getByLabelText("ტელეფონის ნომერი")).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "კოდის მიღება" })).toBeInTheDocument();
     expect(mocks.registerGoogle).not.toHaveBeenCalled();
     expect(mocks.replace).not.toHaveBeenCalled();
@@ -444,9 +468,13 @@ describe("GoogleJoinForm", () => {
 
   it("sends no SMS and registers nothing until the consent box is ticked", async () => {
     await reachGoogleForm();
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "ნინო" } });
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "ბერიძე" } });
-    fireEvent.change(screen.getByLabelText("ტელეფონის ნომერი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "ნინო" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "ბერიძე" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" }), {
       target: { value: "555123456" },
     });
     fireEvent.click(screen.getByRole("button", { name: "კოდის მიღება" }));

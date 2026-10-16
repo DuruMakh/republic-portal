@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ZodIssue } from "zod";
-import { AuthEntryShell } from "@/components/AuthEntryShell";
+import { AuthAsideSteps, AuthEntryShell } from "@/components/AuthEntryShell";
 import { AuthProgress } from "@/components/AuthProgress";
-import { Button } from "@/components/Button";
-import { Field } from "@/components/Field";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { PhoneVerification } from "@/components/PhoneVerification";
 import { PrivacyConsentField } from "@/components/PrivacyConsentField";
+import { UnityButton } from "@/components/UnityButton";
+import { UnityField } from "@/components/UnityField";
 import { deriveDestination } from "@/lib/cabinet";
 import { GENERIC_FUNNEL_ERROR, isReferralCodeCandidate, type CabinetState } from "@/lib/funnel";
 import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
@@ -315,19 +315,22 @@ export function GoogleJoinForm() {
         phoneStep ? (
           <p>ნომერზე მიიღებ ერთჯერად SMS კოდს. შემდეგ შესვლისთვის მხოლოდ Google დაგჭირდება.</p>
         ) : (
-          <ol className="flex list-decimal flex-col gap-2 pl-4">
-            <li>Google-ით უსაფრთხოდ შედიხარ.</li>
-            <li>ერთხელ ადასტურებ ტელეფონის ნომერს.</li>
-            <li>ხდები მხარდამჭერი და გადადიხარ პირად კაბინეტში.</li>
-            <li>თუ წევრობა გინდა, კაბინეტში ავსებ უფრო ვრცელ კითხვარს.</li>
-          </ol>
+          <AuthAsideSteps
+            steps={[
+              "Google-ით უსაფრთხოდ შედიხარ.",
+              "ერთხელ ადასტურებ ტელეფონის ნომერს.",
+              "ხდები მხარდამჭერი და გადადიხარ პირად კაბინეტში.",
+              "თუ წევრობა გინდა, კაბინეტში ავსებ უფრო ვრცელ კითხვარს.",
+            ]}
+            highlight={2}
+          />
         )
       }
       compact={phoneStep}
     >
       {notice ? (
         <p
-          className="mb-5 border-l-2 border-brand bg-surface px-4 py-3 text-sm text-ink"
+          className="mb-6 border-l-4 border-brand bg-sandstone px-[18px] py-3.5 text-[15px] font-semibold text-ink"
           data-testid="join-notice"
         >
           {notice}
@@ -335,28 +338,28 @@ export function GoogleJoinForm() {
       ) : null}
 
       {phase === "loading" ? (
-        <p role="status" className="text-sm text-muted-fg">
+        <p role="status" className="text-[16px] text-secondary">
           მონაცემები იტვირთება…
         </p>
       ) : null}
 
       {phase === "google" ? (
-        <div className="flex max-w-xl flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <GoogleAuthButton nextPath={nextPath} label="Google-ით გაგრძელება" />
-          <p className="text-xs text-muted-fg">
+          <p className="text-[14.5px] leading-[1.6] text-secondary">
             Google-ით გაგრძელებით ეთანხმები ჩვენს{" "}
             <Link
               href={PRIVACY_POLICY_PATH}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-brand hover:underline"
+              className="font-bold text-brand underline decoration-1 underline-offset-[5px] hover:text-brand-dark"
             >
               კონფიდენციალურობის პოლიტიკას
             </Link>
             .
           </p>
           {formError ? (
-            <p role="alert" className="text-sm font-semibold text-danger">
+            <p role="alert" className="text-[15px] font-semibold text-danger">
               {formError}
             </p>
           ) : null}
@@ -364,7 +367,7 @@ export function GoogleJoinForm() {
       ) : null}
 
       {phase === "otp" && challenge ? (
-        <div className="flex max-w-xl flex-col gap-4">
+        <div className="flex flex-col gap-3.5">
           <PhoneVerification
             phone={phone}
             challengeId={challenge.challengeId}
@@ -372,16 +375,16 @@ export function GoogleJoinForm() {
             onChallengeChanged={setChallenge}
             onVerified={afterPhoneVerified}
           />
-          <Button variant="ghost" size="sm" onClick={changePhone}>
+          <UnityButton variant="ghost" size="sm" onClick={changePhone} className="w-full">
             ნომრის შეცვლა
-          </Button>
+          </UnityButton>
         </div>
       ) : null}
 
       {phase === "form" || phase === "retry" ? (
-        <div className="flex max-w-2xl flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
+        <div className="flex flex-col gap-[26px] sm:gap-[30px]">
+          <div className="grid gap-6 sm:grid-cols-2 sm:gap-8">
+            <UnityField
               label="სახელი"
               name="firstName"
               placeholder="მაგ. ნინო"
@@ -389,7 +392,7 @@ export function GoogleJoinForm() {
               onChange={(event) => setFirstName(event.target.value)}
               error={errors.firstName}
             />
-            <Field
+            <UnityField
               label="გვარი"
               name="lastName"
               placeholder="მაგ. ბერიძე"
@@ -399,7 +402,7 @@ export function GoogleJoinForm() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Field
+            <UnityField
               label="ტელეფონის ნომერი"
               name="phone"
               inputMode="tel"
@@ -409,7 +412,7 @@ export function GoogleJoinForm() {
               error={errors.phone}
               disabled={phase === "retry"}
             />
-            <p className="text-xs text-muted-fg">
+            <p className="text-[13.5px] leading-[1.55] text-secondary">
               {phase === "retry"
                 ? "ნომერი დადასტურებულია"
                 : "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად."}
@@ -424,13 +427,17 @@ export function GoogleJoinForm() {
             error={errors.privacyConsent}
           />
           {formError ? (
-            <p role="alert" className="text-sm font-semibold text-danger">
+            <p role="alert" className="text-[15px] font-semibold text-danger">
               {formError}
             </p>
           ) : null}
-          <Button onClick={phase === "retry" ? submitRetry : submitForm} disabled={busy} size="lg">
+          <UnityButton
+            onClick={phase === "retry" ? submitRetry : submitForm}
+            disabled={busy}
+            className="w-full"
+          >
             {phase === "retry" ? "დარეგისტრირება" : "კოდის მიღება"}
-          </Button>
+          </UnityButton>
         </div>
       ) : null}
     </AuthEntryShell>

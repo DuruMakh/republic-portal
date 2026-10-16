@@ -31,10 +31,10 @@ export function GoogleLogin({
         </p>
       }
     >
-      <div className="flex max-w-xl flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <GoogleAuthButton nextPath="/join" label="Google-ით შესვლა" />
         {errorMessage ? (
-          <p role="alert" className="text-sm font-semibold text-danger">
+          <p role="alert" className="text-[15px] font-semibold text-danger">
             {errorMessage}
           </p>
         ) : null}
