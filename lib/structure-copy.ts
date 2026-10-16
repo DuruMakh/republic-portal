@@ -56,7 +56,6 @@ export const VOTE_AGAINST = "წინააღმდეგი";
 
 export const ROSTER_HEADING = "ბორდის შემადგენლობა";
 export const ROSTER_NOTICE = "ბორდის შემადგენლობა მალე გამოქვეყნდება";
-export const CLOSING_CTA = "შემოგვიერთდი →";
 
 /** The hero's council ring caption under the board's name, e.g. 5 წევრი. */
 export function boardSizeLabel(size: number): string {

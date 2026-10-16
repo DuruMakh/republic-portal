@@ -1,3 +1,4 @@
+import { Caps } from "@/components/Caps";
 import type { Metadata } from "next";
 import { PrinciplesContents } from "@/components/PrinciplesContents";
 import { PrinciplesList } from "@/components/PrinciplesList";
@@ -5,7 +6,6 @@ import { PrinciplesSeal } from "@/components/PrinciplesSeal";
 import { UnityClosing } from "@/components/UnityClosing";
 import { UnityKicker } from "@/components/UnityKicker";
 import { UnityTextLink } from "@/components/UnityTextLink";
-import { mtavruli } from "@/lib/mtavruli";
 import {
   PRINCIPLES_CLOSING_LINK,
   PRINCIPLES_CONTENTS,
@@ -44,7 +44,7 @@ export default function PrinciplesPage() {
             </p>
             <p className="mt-9 text-[17px] max-sm:hidden">
               <UnityTextLink href={`#${PRINCIPLES_CONTENTS_ANCHOR}`}>
-                {`${mtavruli(PRINCIPLES_CONTENTS)} ↓`}
+                <Caps>{PRINCIPLES_CONTENTS}</Caps> <span aria-hidden="true">↓</span>
               </UnityTextLink>
             </p>
           </div>
