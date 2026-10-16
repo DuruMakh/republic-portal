@@ -41,8 +41,8 @@ export function AdminPageHeader({
         <h1
           className={
             person
-              ? "font-serif text-[clamp(40px,4vw,56px)] leading-[1.1] font-bold text-balance"
-              : "font-display text-[clamp(48px,4.4vw,64px)] leading-[.92] font-bold tracking-[-.005em] text-balance"
+              ? "min-w-0 font-serif text-[clamp(32px,4vw,56px)] leading-[1.1] font-bold text-balance break-words"
+              : "min-w-0 font-display text-[clamp(36px,4.4vw,64px)] leading-[.92] font-bold tracking-[-.005em] text-balance break-words"
           }
         >
           {title}

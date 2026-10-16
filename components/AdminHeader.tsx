@@ -16,12 +16,19 @@ export function AdminHeader({ tabs }: { tabs: AdminTab[] }) {
   return (
     <header className="bg-teal text-limestone">
       <div className={ADMIN_CONTAINER}>
-        <div className="flex h-[84px] items-center gap-5">
+        <div className="flex h-[84px] items-center gap-3 sm:gap-5">
           <Link href="/" aria-label={HOME_LABEL} className="flex shrink-0">
-            <Image src="/unity/logo-light.png" alt="" width={131} height={44} priority />
+            <Image
+              src="/unity/logo-light.png"
+              alt=""
+              width={131}
+              height={44}
+              priority
+              className="h-auto w-[110px] sm:w-[131px]"
+            />
           </Link>
           <span aria-hidden="true" className="h-[30px] w-px flex-none bg-limestone/30" />
-          <span className="whitespace-nowrap text-[13px] font-bold tracking-[.16em] text-sand">
+          <span className="whitespace-nowrap text-[11px] font-bold tracking-[.1em] text-sand sm:text-[13px] sm:tracking-[.16em]">
             <Caps>{ADMIN_TAG}</Caps>
           </span>
         </div>
