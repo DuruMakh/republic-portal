@@ -22,6 +22,17 @@
   --color-teal-dark: #1a4644;
   --font-sans: var(--font-noto-sans-georgian), "Sylfaen", "Segoe UI", system-ui, sans-serif;
   --font-serif: var(--font-noto-serif-georgian), "Sylfaen", Georgia, serif;
+
+  /* „ერთობა“ visual system (owner redesign, Page 2: home, about, principles, structure). */
+  --color-wine: #5c0e1d;
+  --color-sand: #e4d2b0;
+  --color-limestone: #f6f2ec;
+  --color-chalk: #fffdf9;
+  --color-sandstone: #ece5da;
+  --color-rule: #ddd3c4;
+  --color-secondary: #6b6255;
+  --font-display: var(--font-gl-gordeziani), var(--font-noto-sans-georgian), sans-serif;
+  --font-aso: var(--font-bpg-asomtavruli), var(--font-noto-serif-georgian), serif;
 }
 
 @layer base {
@@ -106,4 +117,12 @@
   .council-seat {
     animation: none;
   }
+}
+
+/* „ერთობა“ page width: up to 1240px of content plus side padding that grows with the screen. */
+@utility unity-container {
+  box-sizing: content-box;
+  margin-inline: auto;
+  max-width: 1240px;
+  padding-inline: clamp(20px, 4.5vw, 72px);
 }
