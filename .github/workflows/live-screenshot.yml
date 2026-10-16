@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm init -y >/dev/null && npm i playwright@1.56.1 >/dev/null && npx playwright install --with-deps chromium
+      - run: npm init -y >/dev/null && npm i playwright@1.56.1 >/dev/null && node node_modules/playwright/cli.js install --with-deps chromium
       - run: node live-shots/shoot.cjs
       - run: |
           git config user.name "live-screenshot"
