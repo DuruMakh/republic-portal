@@ -18,6 +18,27 @@ const SIZES = {
   lg: "h-[60px] px-[30px] text-[15px] gap-3",
 } as const;
 
+export type UnityButtonVariant = keyof typeof VARIANTS;
+export type UnityButtonSize = keyof typeof SIZES;
+
+/** The „ერთობა“ button classes, shared by UnityButtonLink and UnityButton. */
+export function unityButtonClasses(
+  variant: UnityButtonVariant = "wine",
+  size: UnityButtonSize = "md",
+  extra = "",
+): string {
+  return `inline-flex items-center justify-center whitespace-nowrap font-bold tracking-[.08em] no-underline transition-colors ${VARIANTS[variant]} ${SIZES[size]} ${extra}`;
+}
+
+/** The trailing → the design puts on primary actions. */
+export function UnityButtonArrow() {
+  return (
+    <span aria-hidden="true" className="text-[1.3em] tracking-normal">
+      →
+    </span>
+  );
+}
+
 /**
  * The „ერთობა“ button, drawn as a link: square, bold spaced Mtavruli capitals, colour-only hover.
  * `arrow` adds the trailing → that the design puts on primary actions.
@@ -32,22 +53,15 @@ export function UnityButtonLink({
 }: {
   href: string;
   children: string;
-  variant?: keyof typeof VARIANTS;
-  size?: keyof typeof SIZES;
+  variant?: UnityButtonVariant;
+  size?: UnityButtonSize;
   arrow?: boolean;
   className?: string;
 }) {
   return (
-    <Link
-      href={href}
-      className={`inline-flex items-center justify-center whitespace-nowrap font-bold tracking-[.08em] no-underline transition-colors ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
-    >
+    <Link href={href} className={unityButtonClasses(variant, size, className)}>
       {mtavruli(children)}
-      {arrow ? (
-        <span aria-hidden="true" className="text-[1.3em] tracking-normal">
-          →
-        </span>
-      ) : null}
+      {arrow ? <UnityButtonArrow /> : null}
     </Link>
   );
 }
