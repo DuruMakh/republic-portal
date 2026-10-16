@@ -24,7 +24,7 @@ export function HomeStructure() {
   return (
     <section
       aria-labelledby="home-structure-title"
-      className="overflow-hidden bg-sandstone pb-[60px] pt-14 sm:py-[clamp(80px,9vw,136px)]"
+      className="overflow-hidden bg-sandstone pb-10 pt-10 sm:py-[clamp(48px,5vw,76px)]"
     >
       <div className="unity-container flex flex-col lg:grid lg:grid-cols-[minmax(0,13fr)_minmax(0,12fr)] lg:grid-rows-[1fr_auto_auto_auto_auto_1fr] lg:gap-x-[clamp(40px,6vw,96px)]">
         <div className={`${LEFT} lg:row-start-2`}>

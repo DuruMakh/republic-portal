@@ -96,12 +96,12 @@ export function HomeMission({ stats }: { stats: PublicStats }) {
 
   return (
     <section aria-label={HOME_MISSION_LABEL} className="group/mission relative">
-      <div className="unity-container relative z-[2] pt-11 sm:pt-[clamp(64px,7vw,104px)]">
-        <dl className="m-0 grid grid-cols-3 border-t-2 border-teal">
+      <div className="unity-container relative z-[2] pt-7 sm:pt-[clamp(32px,3.5vw,52px)]">
+        <dl className="m-0 grid grid-cols-3">
           {counters.map((c, i) => (
             <div
               key={c.id}
-              className={`flex min-w-0 flex-col-reverse justify-end pt-4 sm:pt-[26px] ${STAT_PADDING[i]}`}
+              className={`flex min-w-0 flex-col-reverse justify-end ${STAT_PADDING[i]}`}
             >
               <dt className="mt-3 flex flex-col items-start gap-2 text-[13px] font-semibold leading-[1.3] text-ink sm:mt-[18px] sm:flex-row sm:items-center sm:gap-3 sm:text-[18px]">
                 <span className="flex h-[18px] items-center sm:h-6">
@@ -168,7 +168,7 @@ export function HomeMission({ stats }: { stats: PublicStats }) {
         ))}
       </div>
 
-      <div className="-mt-px bg-wine px-5 pb-[52px] pt-1.5 sm:px-[6.944%] sm:pb-[clamp(64px,6vw,96px)] sm:pt-1">
+      <div className="-mt-px bg-wine px-5 pb-10 pt-1.5 sm:px-[6.944%] sm:pb-[clamp(40px,4vw,60px)] sm:pt-1">
         <ol className="m-0 list-none p-0 sm:grid sm:grid-cols-2 sm:gap-10 min-[56.25rem]:grid-cols-4">
           {HOME_MISSION_STEPS.map((step, i) => (
             <li

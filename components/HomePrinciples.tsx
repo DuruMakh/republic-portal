@@ -34,7 +34,7 @@ export function HomePrinciples() {
   return (
     <section
       aria-labelledby="home-principles-title"
-      className="pb-[92px] pt-14 sm:py-[clamp(80px,9vw,136px)]"
+      className="pb-16 pt-10 sm:py-[clamp(48px,5vw,76px)]"
     >
       <div className="unity-container">
         <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">

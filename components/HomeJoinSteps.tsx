@@ -17,7 +17,7 @@ export function HomeJoinSteps() {
   return (
     <section
       aria-labelledby="home-join-title"
-      className="border-y border-rule bg-chalk py-14 sm:py-[clamp(72px,8.5vw,128px)]"
+      className="border-y border-rule bg-chalk py-10 sm:py-[clamp(44px,4.5vw,68px)]"
     >
       <div className="unity-container">
         <h2

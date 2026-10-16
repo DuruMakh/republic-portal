@@ -15,9 +15,9 @@ const BLEED =
  */
 export function HomeNews({ items }: { items: readonly PublicNewsItem[] }) {
   return (
-    <section aria-labelledby="home-news-title" className="pb-[60px] sm:pb-[clamp(80px,9vw,136px)]">
+    <section aria-labelledby="home-news-title" className="pb-10 sm:pb-[clamp(48px,5vw,76px)]">
       <div className="unity-container">
-        <div className="flex items-center justify-between gap-4 border-t border-rule pt-10 sm:pt-[clamp(48px,5vw,72px)]">
+        <div className="flex items-center justify-between gap-4 border-t border-rule pt-8 sm:pt-[clamp(36px,3.5vw,52px)]">
           {/* The kicker is the visible title; the heading names the section for assistive tech. */}
           <h2 id="home-news-title" className="sr-only">
             {HOME_NEWS_TITLE}

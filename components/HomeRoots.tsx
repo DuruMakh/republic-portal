@@ -29,7 +29,7 @@ export function HomeRoots() {
   return (
     <section aria-labelledby="home-roots-title" className="relative bg-sandstone">
       <UnityOrnament className="sm:h-[22px]! sm:bg-size-[auto_22px]!" />
-      <div className="unity-container pb-14 pt-12 sm:pb-[clamp(72px,8vw,112px)] sm:pt-[clamp(64px,7vw,104px)]">
+      <div className="unity-container pb-10 pt-9 sm:pb-[clamp(44px,4.5vw,64px)] sm:pt-[clamp(40px,4vw,60px)]">
         <div className="flex flex-col min-[56.25rem]:grid min-[56.25rem]:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] min-[56.25rem]:grid-rows-[1fr_auto_auto_auto_auto_1fr] min-[56.25rem]:gap-x-[clamp(40px,5vw,88px)]">
           <div className={`${LEFT} min-[56.25rem]:row-start-2`}>
             <UnityKicker>{HOME_ROOTS_KICKER}</UnityKicker>

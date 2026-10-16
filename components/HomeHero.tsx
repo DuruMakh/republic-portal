@@ -21,7 +21,7 @@ import { PRINCIPLES_HREF } from "@/lib/principles-copy";
 export function HomeHero() {
   return (
     <section className="relative overflow-hidden bg-wine text-limestone [&_:focus-visible]:outline-limestone">
-      <div className="unity-container relative pb-10 pt-9 sm:pb-[clamp(56px,7vw,108px)] sm:pt-[clamp(48px,6vw,92px)]">
+      <div className="unity-container relative pb-9 pt-6 sm:pb-[clamp(40px,4.5vw,64px)] sm:pt-[clamp(28px,3vw,44px)]">
         <UnityKicker tone="light">{HOME_HERO_KICKER}</UnityKicker>
         <h1 className="m-0 mt-[22px] font-display text-[54px] font-bold leading-[.94] tracking-[-.004em] [text-wrap:balance] sm:mt-[30px] sm:text-[clamp(50px,8vw,116px)]">
           <span className="block">{HOME_HEADLINE[0]}</span>{" "}
