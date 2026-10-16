@@ -9,13 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm init -y >/dev/null && npm i playwright@1.56.1 >/dev/null && node node_modules/playwright/cli.js install --with-deps chromium
-      - run: node live-shots/shoot.cjs
+      - run: |
+          mkdir -p live-css
+          curl -sSD live-css/home-headers.txt https://respublika.ge/ -o live-css/home.html
+          grep -oE '/_next/static/[^"]+\.css' live-css/home.html | sort -u > live-css/css-urls.txt
+          while read u; do n=$(basename "$u"); curl -sSD "live-css/$n.headers" "https://respublika.ge$u" -o "live-css/$n"; done < live-css/css-urls.txt
+          curl -sS https://respublika.ge/_next/static/immutable/chunks/12k6mbi1xccrv.css -o live-css/old-12k6.css || true
+          ls -la live-css > live-css/ls.txt
       - run: |
           git config user.name "live-screenshot"
           git config user.email "noreply@github.com"
-          git add live-shots
-          git commit -m "Live screenshots" && git push
+          git add live-css
+          git commit -m "Live CSS" && git push
