@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ballotButtonClasses } from "@/components/Ballot";
 import { ContentBody } from "@/components/ContentBody";
-import { Eyebrow } from "@/components/Eyebrow";
 import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityKicker } from "@/components/UnityKicker";
+import { UnityTextLink } from "@/components/UnityTextLink";
 import { excerpt } from "@/lib/content-render";
 import { eventEndIso, formatEventTimeKa } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
+import { CONTACT_CLOSING_LINK } from "@/lib/public-pages-copy";
 import { fetchPublicEventBySlug, fetchPublicEvents } from "@/lib/supabase/public";
 import { generateMetadata as notFoundMetadata } from "./not-found";
 
 export const revalidate = 60;
+
+const BACK = "← ღონისძიებები";
 
 export async function generateStaticParams() {
   // Hidden (ADR-042): build no event pages; any address falls through to the not-found below.
@@ -52,36 +56,58 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const isPast = new Date(eventEndIso(event)).getTime() < Date.now();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <Link href="/events" className="text-sm font-semibold text-brand hover:underline">
-        ← ღონისძიებები
-      </Link>
-      <article className="mt-6">
-        <div className="border-b border-ink pb-4">
-          <Eyebrow>{formatEventTimeKa(event.starts_at, event.ends_at)}</Eyebrow>
-          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{event.title}</h1>
-          <p className="mt-2 font-semibold text-muted-fg">{event.location}</p>
+    <main aria-labelledby="page-title">
+      <section className="pb-16 pt-7 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]">
+        <div className="unity-container">
+          <article className="mx-auto max-w-[860px]">
+            <UnityTextLink href="/events" className="mb-5 inline-block text-[15px] sm:mb-7">
+              {BACK}
+            </UnityTextLink>
+            <UnityKicker>{formatEventTimeKa(event.starts_at, event.ends_at)}</UnityKicker>
+            <h1
+              id="page-title"
+              className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
+            >
+              {event.title}
+            </h1>
+            <p className="m-0 mt-4 flex items-center gap-2.5 text-[15px] font-semibold text-secondary sm:mt-[22px] sm:text-[16px]">
+              <span
+                aria-hidden="true"
+                className="inline-block h-[11px] w-3.5 flex-none rounded-[48%_52%_55%_45%/50%_46%_54%_50%] bg-brand"
+              />
+              {event.location}
+            </p>
+
+            {event.status === "cancelled" ? (
+              <p className="m-0 mt-8 border-l-4 border-brand bg-sandstone px-5 py-4 font-semibold text-brand">
+                ღონისძიება გაუქმებულია
+              </p>
+            ) : null}
+
+            <div className="mt-8 border-t border-rule pt-8 sm:mt-10 sm:pt-10">
+              <ContentBody body={event.description} reading />
+            </div>
+
+            {event.status === "published" && !isPast ? (
+              <Link
+                href="/me/events"
+                className="mt-[38px] flex min-h-[60px] items-center justify-between gap-4 border border-ink px-5 text-[16px] font-bold text-ink no-underline transition-colors hover:bg-ink hover:text-limestone sm:min-h-[68px] sm:px-7 sm:text-[17px]"
+              >
+                <span>დასწრების აღნიშვნა კაბინეტში</span>
+                <span aria-hidden="true" className="text-[22px]">
+                  →
+                </span>
+              </Link>
+            ) : null}
+            {event.status === "published" && isPast ? (
+              <p className="m-0 mt-[38px] text-[15px] font-semibold text-secondary">
+                ღონისძიება დასრულებულია.
+              </p>
+            ) : null}
+          </article>
         </div>
-
-        {event.status === "cancelled" ? (
-          <p className="mt-6 border border-ink bg-paper-bright px-4 py-3 font-semibold text-brand">
-            ღონისძიება გაუქმებულია
-          </p>
-        ) : null}
-
-        <ContentBody body={event.description} className="mt-6" />
-
-        {event.status === "published" && !isPast ? (
-          <div className="mt-8 flex gap-2">
-            <Link href="/me/events" className={ballotButtonClasses("solid")}>
-              დასწრების აღნიშვნა კაბინეტში
-            </Link>
-          </div>
-        ) : null}
-        {event.status === "published" && isPast ? (
-          <p className="mt-8 text-sm font-semibold text-muted-fg">ღონისძიება დასრულებულია.</p>
-        ) : null}
-      </article>
+      </section>
+      <UnityClosing link={CONTACT_CLOSING_LINK} />
     </main>
   );
 }

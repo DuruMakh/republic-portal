@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventRow } from "@/components/EventRow";
-import { Eyebrow } from "@/components/Eyebrow";
 import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
-import { SectionRule } from "@/components/SectionRule";
+import { UnityClosing } from "@/components/UnityClosing";
+import { UnityPageHead, UnitySectionLabel } from "@/components/UnityPageHead";
 import { splitEvents } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
-import { fetchPublicEvents } from "@/lib/supabase/public";
+import { CONTACT_CLOSING_LINK } from "@/lib/public-pages-copy";
+import { fetchPublicEvents, type PublicEventItem } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
+const TITLE = "ღონისძიებები";
+const INTRO = "მოძრაობის შეხვედრები და ღონისძიებები.";
+
 const EVENTS_METADATA: Metadata = {
-  title: "ღონისძიებები — ქართული რესპუბლიკა",
-  description: "მოძრაობის შეხვედრები და ღონისძიებები.",
+  title: `${TITLE} — ქართული რესპუბლიკა`,
+  description: INTRO,
   openGraph: { images: ["/og-default.png"] },
 };
 
@@ -31,31 +35,37 @@ export default async function EventsPage() {
   const events = await fetchPublicEvents();
   const { upcoming, past } = splitEvents(events, new Date().toISOString());
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <Eyebrow>ქართული რესპუბლიკა</Eyebrow>
-      <h1 className="mt-1 font-serif text-4xl font-bold text-ink">ღონისძიებები</h1>
-
-      <SectionRule label="მომავალი" className="mt-10" />
-      {upcoming.length === 0 ? (
-        <p className="mt-3 text-muted-fg">მომავალი ღონისძიებები მალე გამოცხადდება.</p>
-      ) : (
-        <div className="mt-3 flex flex-col gap-3">
-          {upcoming.map((e) => (
-            <EventRow key={e.id} event={e} />
-          ))}
+    <main aria-labelledby="page-title">
+      <UnityPageHead kicker="ქართული რესპუბლიკა" title={TITLE} intro={INTRO} />
+      <section className="pb-16 pt-2 sm:pb-[clamp(88px,9vw,136px)] sm:pt-0">
+        <div className="unity-container">
+          <UnitySectionLabel>მომავალი</UnitySectionLabel>
+          {upcoming.length === 0 ? (
+            <p className="m-0 mt-6 text-secondary">მომავალი ღონისძიებები მალე გამოცხადდება.</p>
+          ) : (
+            <EventList events={upcoming} />
+          )}
+          {past.length > 0 ? (
+            <div className="mt-14 sm:mt-[72px]">
+              <UnitySectionLabel>გასული</UnitySectionLabel>
+              <EventList events={past} past />
+            </div>
+          ) : null}
         </div>
-      )}
-
-      {past.length > 0 ? (
-        <>
-          <SectionRule label="გასული" className="mt-12" />
-          <div className="mt-3 flex flex-col gap-3">
-            {past.map((e) => (
-              <EventRow key={e.id} event={e} />
-            ))}
-          </div>
-        </>
-      ) : null}
+      </section>
+      <UnityClosing link={CONTACT_CLOSING_LINK} />
     </main>
+  );
+}
+
+function EventList({ events, past = false }: { events: PublicEventItem[]; past?: boolean }) {
+  return (
+    <ul className="m-0 mt-5 flex list-none flex-col gap-3 p-0 sm:mt-7 sm:gap-3.5">
+      {events.map((e) => (
+        <li key={e.id}>
+          <EventRow event={e} past={past} />
+        </li>
+      ))}
+    </ul>
   );
 }
