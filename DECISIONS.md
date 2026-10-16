@@ -129,6 +129,12 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   danger); teal informs (registry figures, supporter chip, non-leading poll bars, `dark`
   buttons, the footer band). No teal tint panels. Red and teal are equally dark, so a leading
   poll answer is never shown by colour alone.
+- **ADR-053 „ერთობა“ replaces Kronika page by page** (owner redesign, 2026-10-16): full-bleed
+  limestone, wine `#5C0E1D` bands, teal footer, GL Gordeziani headlines and BPG Nateli
+  AsoMtavruli numerals (self-hosted, `app/fonts/`). Redesigned pages live in the `app/(unity)`
+  route group (its own header, footer and join bar, `components/Unity*.tsx`); other pages keep
+  the Kronika chrome until their turn. Georgian capitals come from `lib/mtavruli.ts`, since CSS
+  `uppercase` leaves Georgian unchanged.
 - **ADR-038 `/structure`** is information only, with a condensed display type and pebble motif
   scoped to it; the board roster lives in `lib/board-members.ts`. The header reads მთავარი,
   რეიტინგი, სტრუქტურა.

@@ -5,13 +5,15 @@ import { UnityFooter } from "@/components/UnityFooter";
 import { UnityHeader } from "@/components/UnityHeader";
 import { UnityJoinBar } from "@/components/UnityJoinBar";
 import { ABOUT_HREF } from "@/lib/about-copy";
+import { showEvents } from "@/lib/events-switch";
 import { PRINCIPLES_HREF } from "@/lib/principles-copy";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
+import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { filterRatingLinks, RATINGS_HREF, showRatings } from "@/lib/ratings-switch";
 import { STRUCTURE_HREF } from "@/lib/structure-copy";
 
 // Display headlines (GL Gordeziani) and old-Georgian numerals (BPG Nateli AsoMtavruli), from the
-// owner's „ერთობა“ design. Only these four pages use them, so they load here, not in the root.
+// owner's „ერთობა“ design. Only the redesigned pages use them, so they load here, not in the root.
 const gordeziani = localFont({
   src: "../fonts/gl-gordeziani-bold.woff2",
   weight: "700",
@@ -50,13 +52,15 @@ const footerLinks = [
 const legalLinks = [
   { href: "/join/terms", label: "წესები" },
   { href: PRIVACY_POLICY_PATH, label: "კონფიდენციალურობა" },
+  { href: FINANCES_HREF, label: "ფინანსები" },
 ];
 
 /**
  * Chrome for the four pages of the owner's „ერთობა“ redesign (Page 2 of the design canvas):
  * home, about, principles and structure. Full-bleed limestone instead of the Kronika paper sheet,
- * the new header and teal footer, and the phone join bar. Every other public page keeps the
- * (public) layout until its own redesign. The ranking link follows SHOW_RATINGS (ADR-052).
+ * the new header and teal footer, and the phone join bar. Other public pages move here as their
+ * redesign lands. The ranking link follows SHOW_RATINGS (ADR-052), the finance link
+ * SHOW_PUBLIC_FINANCES (ADR-034).
  */
 export default function UnityLayout({ children }: { children: ReactNode }) {
   const ratingsShown = showRatings();
@@ -66,11 +70,15 @@ export default function UnityLayout({ children }: { children: ReactNode }) {
       className={`${gordeziani.variable} ${asomtavruli.variable} flex min-h-screen flex-col overflow-x-clip bg-limestone text-[17px] leading-[1.65] text-ink`}
     >
       <DemoBanner />
-      <UnityHeader navItems={filterRatingLinks(navItems, ratingsShown)} />
+      <UnityHeader
+        navItems={filterRatingLinks(navItems, ratingsShown)}
+        eventsShown={showEvents()}
+        ratingsShown={ratingsShown}
+      />
       <div className="flex-1">{children}</div>
       <UnityFooter
         navLinks={filterRatingLinks(footerLinks, ratingsShown)}
-        legalLinks={legalLinks}
+        legalLinks={filterFinanceLinks(legalLinks, showPublicFinances())}
         copyright={FOOTER_COPYRIGHT}
       />
       <UnityJoinBar />
