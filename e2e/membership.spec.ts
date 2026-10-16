@@ -153,7 +153,7 @@ test("full upgrade: register → wizard → application sent and member nav", as
     regionLabel: "თბილისი",
     personalId: journeyPersonalId(JOURNEY.membFull),
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+  await page.getByRole("button", { name: "გაგრძელება" }).click();
 
   // application phase (ADR-036): the board reviews it; the dues consent names the
   // amount, so a fee regression away from 10 GEL still fails here
@@ -209,7 +209,7 @@ test("resume: a saved profile lands straight on the tier phase, fields intact", 
     regionLabel: "კახეთი",
     personalId: journeyPersonalId(JOURNEY.membResume),
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+  await page.getByRole("button", { name: "გაგრძელება" }).click();
   await expect(page.getByRole("heading", { name: "წევრობის განაცხადი" })).toBeVisible();
 
   // the overview CTA now reads „continue…"
@@ -247,7 +247,7 @@ test("referral binding survives to completion and shows as the current delegate"
     regionLabel: "აჭარა",
     personalId: journeyPersonalId(JOURNEY.regReferral),
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+  await page.getByRole("button", { name: "გაგრძელება" }).click();
   await agreeAndSend(page);
   await expect(page.getByTestId("chosen-delegate")).toHaveText(fullName);
 
@@ -284,7 +284,7 @@ test("a personal ID already claimed by another member is rejected inline, stayin
     regionLabel: "თბილისი",
     personalId: heldId, // already claimed by the seeded member above
   });
-  await page.getByRole("button", { name: "გაგრძელება →" }).click();
+  await page.getByRole("button", { name: "გაგრძელება" }).click();
 
   // the duplicate surfaces as a field error, not a form banner, and the wizard
   // stays on the profile phase — no silent advance to the tier phase

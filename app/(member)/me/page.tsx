@@ -57,7 +57,7 @@ export default async function CabinetOverviewPage() {
           <div className="mt-6 md:mt-7">
             <CabinetPerks perks={MEMBERSHIP_PERKS} />
           </div>
-          <div className="mt-8 md:mt-9" data-testid="become-member-cta">
+          <div className="mt-8 md:mt-9 md:w-fit" data-testid="become-member-cta">
             <UnityButtonLink href="/me/membership" variant="cream" arrow className="max-md:w-full">
               {phase === "tier" ? "გააგრძელე წევრობის გაფორმება" : "გახდი წევრი"}
             </UnityButtonLink>

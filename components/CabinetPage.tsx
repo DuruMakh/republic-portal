@@ -171,15 +171,6 @@ export function CabinetDataRow({ label, children }: { label: string; children: R
   );
 }
 
-/** Spaced-capitals field label, for controls whose accessible name comes from aria-label. */
-export function CabinetCapsLabel({ children, htmlFor }: { children: string; htmlFor?: string }) {
-  return (
-    <label htmlFor={htmlFor} className="text-[12px] font-bold tracking-[.12em] text-secondary">
-      <Caps>{children}</Caps>
-    </label>
-  );
-}
-
 /** The membership perks as a check list: sand ticks on wine, or green ticks on light paper. */
 export function CabinetPerks({
   perks,
