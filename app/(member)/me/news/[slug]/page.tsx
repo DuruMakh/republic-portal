@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CabinetPage } from "@/components/CabinetPage";
 import { ContentBody } from "@/components/ContentBody";
-import { Eyebrow } from "@/components/Eyebrow";
 import { Pill } from "@/components/Pill";
+import { UnityKicker } from "@/components/UnityKicker";
 import { formatDateKa } from "@/lib/cabinet";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 
@@ -65,28 +66,36 @@ export default async function MemberArticlePage({ params }: { params: Promise<{ 
   if (!article) notFound();
 
   return (
-    <main className="mx-auto max-w-3xl">
-      <Link href="/me/news" className="text-sm font-semibold text-brand hover:underline">
-        ← სიახლეები
-      </Link>
-      <article className="mt-6">
-        <div className="border-b border-ink pb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Eyebrow>{formatDateKa(article.publishedAt)}</Eyebrow>
-            {article.membersOnly ? <Pill status="profile_completed" label="წევრებისთვის" /> : null}
+    <CabinetPage>
+      <div className="mx-auto max-w-[860px]">
+        <Link
+          href="/me/news"
+          className="text-[15px] font-bold text-brand underline decoration-brand/40 underline-offset-4 hover:decoration-brand"
+        >
+          ← სიახლეები
+        </Link>
+        <article className="mt-8 md:mt-10">
+          <div className="border-b border-ink pb-6 md:pb-7">
+            <div className="flex flex-wrap items-center gap-3.5">
+              <UnityKicker>{formatDateKa(article.publishedAt)}</UnityKicker>
+              {article.membersOnly ? (
+                <Pill status="profile_completed" label="წევრებისთვის" />
+              ) : null}
+            </div>
+            <h1 className="mt-5 mb-0 text-balance font-serif text-[32px] font-semibold leading-[1.2] text-ink md:text-[clamp(40px,4.4vw,58px)]">
+              {article.title}
+            </h1>
           </div>
-          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">{article.title}</h1>
-        </div>
-        {article.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
-          <img
-            src={article.imageUrl}
-            alt=""
-            className="mt-6 w-full border border-hairline object-cover"
+          {article.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Supabase Storage host not in next.config images (delegate-photo precedent)
+            <img src={article.imageUrl} alt="" className="mt-9 w-full object-cover" />
+          ) : null}
+          <ContentBody
+            body={article.body}
+            className="mt-9 max-w-[42em] md:mt-12 [&_p]:font-serif [&_p]:text-[17px] [&_p]:leading-[1.75] [&_p]:text-prose md:[&_p]:text-[19px]"
           />
-        ) : null}
-        <ContentBody body={article.body} className="mt-6" />
-      </article>
-    </main>
+        </article>
+      </div>
+    </CabinetPage>
   );
 }

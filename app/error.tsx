@@ -1,2 +1,2 @@
 "use client";
-export { default } from "./(public)/error";
+export { default } from "./(unity)/error";

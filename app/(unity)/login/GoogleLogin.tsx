@@ -1,0 +1,45 @@
+import { AuthEntryShell } from "@/components/AuthEntryShell";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { TestSignInPanel } from "@/components/TestSignInPanel";
+import { testSignInAction } from "./test-sign-in-actions";
+
+const AUTH_ERROR_MESSAGES: Readonly<Record<string, string>> = {
+  oauth_callback: "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
+  account_lookup: "მონაცემების წამოღება ვერ მოხერხდა — სცადეთ თავიდან.",
+  test_sign_in: "სატესტო შესვლა ვერ მოხერხდა — სცადეთ თავიდან.",
+};
+
+export function GoogleLogin({
+  error,
+  testSignIn = false,
+}: {
+  error?: string;
+  testSignIn?: boolean;
+}) {
+  const errorMessage = error ? AUTH_ERROR_MESSAGES[error] : undefined;
+
+  return (
+    <AuthEntryShell
+      eyebrow="პირადი კაბინეტი"
+      title="შესვლა"
+      intro="Google-ით შედიხარ უსაფრთხოდ და სწრაფად."
+      asideTitle="პირველად ხარ?"
+      aside={
+        <p>
+          Google-ის შემდეგ მოკლე რეგისტრაციას დაასრულებ და ტელეფონის ნომერს მხოლოდ ერთხელ
+          დაადასტურებ.
+        </p>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <GoogleAuthButton nextPath="/join" label="Google-ით შესვლა" />
+        {errorMessage ? (
+          <p role="alert" className="text-[15px] font-semibold text-danger">
+            {errorMessage}
+          </p>
+        ) : null}
+        {testSignIn ? <TestSignInPanel action={testSignInAction} /> : null}
+      </div>
+    </AuthEntryShell>
+  );
+}

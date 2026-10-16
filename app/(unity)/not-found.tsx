@@ -1,4 +1,5 @@
-import { NOT_FOUND_METADATA, NotFoundNotice } from "@/components/NotFoundNotice";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
+import { UnityNotFoundNotice } from "@/components/UnityNotice";
 
 /**
  * The generic title for a 404 raised by a public page without a not-found file of its own (today
@@ -12,5 +13,5 @@ export const metadata = NOT_FOUND_METADATA;
 
 /** Missing pages inside the public site: the notice renders within the public header and footer. */
 export default function PublicNotFound() {
-  return <NotFoundNotice />;
+  return <UnityNotFoundNotice />;
 }

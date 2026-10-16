@@ -1,11 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
-import { adminControlClasses } from "@/components/Field";
+import {
+  CabinetPanel,
+  CabinetSectionLabel,
+  cabinetCellClass,
+  cabinetRowClass,
+  cabinetThClass,
+} from "@/components/CabinetPage";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
-import { SectionRule } from "@/components/SectionRule";
 import { formatDateKa, TEAM_STATUS_LABELS, type TeamMember } from "@/lib/cabinet";
 
 export function TeamTable({ members }: { members: TeamMember[] }) {
@@ -20,58 +25,66 @@ export function TeamTable({ members }: { members: TeamMember[] }) {
   }, [members, query]);
 
   return (
-    <Card>
-      <SectionRule
-        label="წევრების სია"
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className={adminControlClasses}
-              style={{ width: 220 }}
-              placeholder="ძებნა სახელით ან გვარით…"
-              aria-label="ძებნა სახელით ან გვარით"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+    <CabinetPanel className="md:px-10">
+      <CabinetSectionLabel
+        aside={
+          <input
+            className="h-10 w-full max-w-[300px] border-0 border-b border-ink bg-transparent p-0 text-[16px] text-ink placeholder:text-secondary focus:border-brand focus-visible:outline-none"
+            placeholder="ძებნა სახელით ან გვარით…"
+            aria-label="ძებნა სახელით ან გვარით"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         }
-      />
+      >
+        წევრების სია
+      </CabinetSectionLabel>
       {members.length === 0 ? (
-        <div className="pt-6 text-sm" data-testid="team-empty">
-          <p className="font-semibold text-ink">ჯერ არავინ დარეგისტრირებულა შენი ბმულით</p>
-          <p className="mt-1 text-muted-fg">გააზიარე ბმული და გუნდი აქ გამოჩნდება.</p>
+        <div className="pt-6" data-testid="team-empty">
+          <p className="m-0 font-serif text-[18px] font-semibold text-ink">
+            ჯერ არავინ დარეგისტრირებულა შენი ბმულით
+          </p>
+          <p className="mt-1.5 mb-0 text-[15px] text-secondary">
+            გააზიარე ბმული და გუნდი აქ გამოჩნდება.
+          </p>
         </div>
       ) : filtered.length === 0 ? (
-        <p className="pt-6 text-sm text-muted-fg" data-testid="team-no-results">
+        <p className="m-0 pt-6 text-[15px] text-secondary" data-testid="team-no-results">
           ვერაფერი მოიძებნა ამ ფილტრით.
         </p>
       ) : (
-        <DataTable
-          bodyTestId="team-rows"
-          head={
-            <>
-              <th className={tableThClass}>წევრი</th>
-              <th className={tableThClass}>რეგისტრაციის თარიღი</th>
-              <th className={tableThClass}>სტატუსი</th>
-            </>
-          }
-        >
-          {filtered.map((m, i) => (
-            <tr
-              key={`${m.firstName}-${m.lastName}-${m.registeredAt}-${i}`}
-              className={tableRowClass}
-            >
-              <td className={`${tableCellClass} font-semibold text-ink`}>
-                {m.firstName} {m.lastName}
-              </td>
-              <td className={tableCellClass}>{formatDateKa(m.registeredAt)}</td>
-              <td className={tableCellClass}>
-                <Pill status={m.status} label={TEAM_STATUS_LABELS[m.status]} />
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        <div className="mt-2">
+          <DataTable
+            bodyTestId="team-rows"
+            head={
+              <>
+                {["წევრი", "რეგისტრაციის თარიღი", "სტატუსი"].map((label) => (
+                  <th key={label} scope="col" className={cabinetThClass}>
+                    <Caps>{label}</Caps>
+                  </th>
+                ))}
+              </>
+            }
+          >
+            {filtered.map((m, i) => (
+              <tr
+                key={`${m.firstName}-${m.lastName}-${m.registeredAt}-${i}`}
+                className={cabinetRowClass}
+              >
+                <td className={`${cabinetCellClass} font-semibold`}>
+                  {m.firstName} {m.lastName}
+                </td>
+                <td className={`${cabinetCellClass} font-serif text-secondary`}>
+                  {formatDateKa(m.registeredAt)}
+                </td>
+                <td className={cabinetCellClass}>
+                  <Pill status={m.status} label={TEAM_STATUS_LABELS[m.status]} />
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
       )}
-    </Card>
+    </CabinetPanel>
   );
 }

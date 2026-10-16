@@ -31,4 +31,16 @@ describe("EventRow", () => {
     // Label spliced from contentPill("cancelled") in lib/admin.ts -- never retyped.
     expect(screen.getByRole("link")).toHaveTextContent("გაუქმებული");
   });
+
+  it("shows the start day large with the month beside the full time", () => {
+    render(<EventRow event={EVENT} />);
+    expect(screen.getByText("01")).toBeInTheDocument();
+    expect(screen.getByText("აგვისტო 2026")).toBeInTheDocument();
+    expect(screen.getByText("01.08.2026, 19:00")).toBeInTheDocument();
+  });
+
+  it("dims a past event", () => {
+    render(<EventRow event={EVENT} past />);
+    expect(screen.getByRole("link")).toHaveAttribute("data-past", "true");
+  });
 });

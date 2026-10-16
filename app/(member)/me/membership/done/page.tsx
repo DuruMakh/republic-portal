@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ButtonLink } from "@/components/ButtonLink";
-import { Eyebrow } from "@/components/Eyebrow";
+import { CabinetPage } from "@/components/CabinetPage";
 import { Pill } from "@/components/Pill";
+import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { UnityKicker } from "@/components/UnityKicker";
 import { isApprovedDelegate } from "@/lib/cabinet";
 import { getCabinetState } from "@/lib/supabase/server";
 
@@ -19,33 +20,48 @@ export default async function MembershipDonePage() {
   const underReview = state.status !== "active_member";
 
   return (
-    <main className="mx-auto max-w-xl">
-      <div className="mb-6">
-        <Eyebrow>წევრობის გაფორმება</Eyebrow>
-      </div>
-      <div className="mx-auto max-w-lg border-y-2 border-ink py-10 text-center">
-        <h1 className="font-serif text-4xl font-bold text-ink">
-          {underReview ? "განაცხადი გაგზავნილია ✓" : "რეგისტრაცია დასრულებულია ✓"}
-        </h1>
-        <div className="mt-4">
-          {/* the stored status stays profile_completed; only the wording says "pending" */}
-          <Pill status={underReview ? "pending" : "active_member"} />
+    <CabinetPage>
+      <div className="relative py-6 md:py-12">
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative backdrop */}
+        <img
+          src="/unity/knot-cream.svg"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-auto w-[360px] max-w-none -translate-x-1/2 -translate-y-1/2 md:w-[640px]"
+        />
+        <div className="relative mx-auto max-w-[780px] text-center">
+          <div className="flex justify-center">
+            <UnityKicker>წევრობის გაფორმება</UnityKicker>
+          </div>
+          <div className="mt-7 border-y-2 border-ink bg-limestone/86 px-6 py-10 md:py-11">
+            <h1 className="m-0 font-serif text-[32px] font-semibold leading-[1.2] md:text-[48px]">
+              {underReview ? "განაცხადი გაგზავნილია ✓" : "რეგისტრაცია დასრულებულია ✓"}
+            </h1>
+            <div className="mt-4">
+              {/* the stored status stays profile_completed; only the wording says "pending" */}
+              <Pill status={underReview ? "pending" : "active_member"} />
+            </div>
+            {underReview ? (
+              <p className="mt-4 mb-0 text-[17px] text-secondary">
+                შენს განაცხადს განიხილავს ბორდი.
+              </p>
+            ) : null}
+            <p className="mt-4 mb-0 text-[17px] text-ink">
+              დელეგატი:{" "}
+              <strong className="font-serif" data-testid="chosen-delegate">
+                {state.chosenDelegate
+                  ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
+                  : "არ მყავს დელეგატი"}
+              </strong>
+            </p>
+            <div className="mt-7">
+              <UnityButtonLink href="/me/profile" className="max-md:w-full">
+                ჩემი კაბინეტი
+              </UnityButtonLink>
+            </div>
+          </div>
         </div>
-        {underReview ? (
-          <p className="mt-4 text-sm text-prose">შენს განაცხადს განიხილავს ბორდი.</p>
-        ) : null}
       </div>
-      <p className="mt-4 text-sm text-muted-fg">
-        დელეგატი:{" "}
-        <strong className="text-ink" data-testid="chosen-delegate">
-          {state.chosenDelegate
-            ? `${state.chosenDelegate.firstName} ${state.chosenDelegate.lastName}`
-            : "არ მყავს დელეგატი"}
-        </strong>
-      </p>
-      <div className="mt-6 flex flex-col gap-2">
-        <ButtonLink href="/me/profile">ჩემი კაბინეტი</ButtonLink>
-      </div>
-    </main>
+    </CabinetPage>
   );
 }

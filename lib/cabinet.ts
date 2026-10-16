@@ -79,6 +79,13 @@ export function cabinetNavItems(
   return items;
 }
 
+/** What membership opens, listed on the supporter home and beside the membership form. */
+export const MEMBERSHIP_PERKS = [
+  "ხმის მიცემა გამოკითხვებში",
+  "საკუთარი დელეგატის არჩევა",
+  "წევრებისთვის განკუთვნილი სიახლეები",
+] as const;
+
 /** Select value for the employment „სხვა (მიუთითე)“ branch (never a stored value). */
 export const EMPLOYMENT_OTHER = "__other";
 

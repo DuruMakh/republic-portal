@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
-import { Field, inputClasses } from "@/components/Field";
+import { CabinetPanel, CabinetPanelTitle, CabinetReadonlyField } from "@/components/CabinetPage";
+import { UnityField } from "@/components/UnityField";
+import { UnityButton } from "@/components/UnityButton";
 import { formatPhoneKa } from "@/lib/cabinet";
 import { registeredNameUpdateSchema } from "@/lib/cabinet-schemas";
 import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
@@ -68,10 +68,11 @@ export function RegisteredProfileForm({
   }
 
   return (
-    <Card title="პირადი მონაცემები">
-      <div className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
+    <CabinetPanel>
+      <CabinetPanelTitle>პირადი მონაცემები</CabinetPanelTitle>
+      <div className="mt-7 flex flex-col gap-7">
+        <div className="grid gap-7 sm:grid-cols-2">
+          <UnityField
             label="სახელი"
             name="firstName"
             value={firstName}
@@ -80,7 +81,7 @@ export function RegisteredProfileForm({
               setFirstName(e.target.value);
             }}
           />
-          <Field
+          <UnityField
             label="გვარი"
             name="lastName"
             value={lastName}
@@ -90,42 +91,33 @@ export function RegisteredProfileForm({
             }}
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">ტელეფონი</span>
-            <input
-              className={`${inputClasses} w-full border-line bg-surface`}
-              value={formatPhoneKa(phone)}
-              readOnly
-              aria-label="ტელეფონი"
-              data-testid="profile-phone"
-            />
-          </div>
+        <div className="grid gap-7 sm:grid-cols-2">
+          <CabinetReadonlyField
+            label="ტელეფონი"
+            value={formatPhoneKa(phone)}
+            testId="profile-phone"
+          />
           {hasPersonalId ? (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-ink">პირადი ნომერი</span>
-              <input
-                className={`${inputClasses} border-line bg-surface tracking-widest`}
-                value={personalIdMasked}
-                readOnly
-                aria-label="პირადი ნომერი"
-                data-testid="profile-pid"
-              />
-            </div>
+            <CabinetReadonlyField
+              label="პირადი ნომერი"
+              value={personalIdMasked}
+              testId="profile-pid"
+              spaced
+            />
           ) : null}
         </div>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="m-0 text-[15px] text-danger">{error}</p> : null}
         {saved ? (
-          <p className="text-sm font-semibold text-ok" data-testid="profile-saved">
+          <p className="m-0 text-[15px] font-bold text-ok-deep" data-testid="profile-saved">
             პროფილი განახლდა ✓
           </p>
         ) : null}
         <div className="flex justify-end">
-          <Button onClick={save} disabled={busy}>
+          <UnityButton variant="ink" size="sm" onClick={save} disabled={busy}>
             შენახვა
-          </Button>
+          </UnityButton>
         </div>
       </div>
-    </Card>
+    </CabinetPanel>
   );
 }

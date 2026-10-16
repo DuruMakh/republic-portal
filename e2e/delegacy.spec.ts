@@ -102,7 +102,7 @@ test("request, review and both outcomes: approve, reject, re-approve", async ({ 
       await loginAs(rPage, phase4Phone(REQUESTER));
       // the profile card advertises the ladder
       await rPage.goto("/me/profile");
-      await rPage.getByRole("link", { name: "გაიგე მეტი →" }).click();
+      await rPage.getByRole("link", { name: "გაიგე მეტი" }).click();
       await expect(rPage).toHaveURL(/\/me\/delegacy/);
       await rPage.getByRole("button", { name: "მოთხოვნის გაგზავნა" }).click();
       await expect(rPage.getByText("მოთხოვნა გაგზავნილია")).toBeVisible();

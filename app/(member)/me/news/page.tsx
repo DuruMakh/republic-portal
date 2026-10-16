@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { CabinetHead, CabinetPage } from "@/components/CabinetPage";
 import { NewsCard } from "@/components/NewsCard";
 import { Pill } from "@/components/Pill";
 import { excerpt } from "@/lib/content-render";
@@ -63,19 +64,19 @@ export default async function MemberNewsPage() {
   }
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">სიახლეები</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          {state.completed
+    <CabinetPage>
+      <CabinetHead
+        title="სიახლეები"
+        lede={
+          state.completed
             ? "მოძრაობის სიახლეები — წევრებისთვის განკუთვნილი მასალების ჩათვლით."
-            : "მოძრაობის საჯარო სიახლეები."}
-        </p>
-      </div>
+            : "მოძრაობის საჯარო სიახლეები."
+        }
+      />
       {items.length === 0 ? (
-        <p className="mt-8 text-muted-fg">სიახლეები მალე გამოჩნდება.</p>
+        <p className="mt-8 font-serif text-[18px] text-secondary">სიახლეები მალე გამოჩნდება.</p>
       ) : (
-        <div className="mt-6 flex flex-col gap-4">
+        <div>
           {items.map((n) => (
             <NewsCard
               key={n.id}
@@ -91,6 +92,6 @@ export default async function MemberNewsPage() {
           ))}
         </div>
       )}
-    </main>
+    </CabinetPage>
   );
 }

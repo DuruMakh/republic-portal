@@ -41,7 +41,7 @@ describe("DelegateChange", () => {
         initialRegionId={1}
       />,
     );
-    const select = screen.getByLabelText("დელეგატი");
+    const select = screen.getByRole("combobox", { name: "დელეგატი" });
     const options = Array.from(select.querySelectorAll("option")).map((o) => o.textContent);
     expect(options[0]).toBe("არ მყავს დელეგატი");
     expect(options[1]).toBe("გიორგი მაისურაძე (მიმდინარე)");
@@ -57,7 +57,9 @@ describe("DelegateChange", () => {
         initialRegionId={1}
       />,
     );
-    fireEvent.change(screen.getByLabelText("დელეგატი"), { target: { value: DELEGATES[0]!.id } });
+    fireEvent.change(screen.getByRole("combobox", { name: "დელეგატი" }), {
+      target: { value: DELEGATES[0]!.id },
+    });
     fireEvent.click(screen.getByRole("button", { name: "დელეგატის შეცვლა" }));
     expect(screen.getByText("ეს დელეგატი უკვე არჩეულია")).toBeInTheDocument();
     expect(changeDelegateAction).not.toHaveBeenCalled();
@@ -73,7 +75,9 @@ describe("DelegateChange", () => {
         initialRegionId={1}
       />,
     );
-    fireEvent.change(screen.getByLabelText("დელეგატი"), { target: { value: "central" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "დელეგატი" }), {
+      target: { value: "central" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "დელეგატის შეცვლა" }));
     await waitFor(() => expect(changeDelegateAction).toHaveBeenCalledWith({ delegateId: null }));
     expect(await screen.findByText("დელეგატი შეიცვალა ✓")).toBeInTheDocument();
@@ -88,8 +92,8 @@ describe("DelegateChange", () => {
         initialRegionId={2}
       />,
     );
-    const regionSelect = screen.getByLabelText("რეგიონი");
-    const delegateSelect = screen.getByLabelText("დელეგატი") as HTMLSelectElement;
+    const regionSelect = screen.getByRole("combobox", { name: "რეგიონი" });
+    const delegateSelect = screen.getByRole("combobox", { name: "დელეგატი" }) as HTMLSelectElement;
 
     // page seeded region 2 (Imereti) because that's where the current delegate lives —
     // the picker must list them, marked current, even though it differs from the member's own region.
@@ -118,7 +122,7 @@ describe("DelegateChange", () => {
         initialRegionId={1}
       />,
     );
-    const select = screen.getByLabelText("დელეგატი") as HTMLSelectElement;
+    const select = screen.getByRole("combobox", { name: "დელეგატი" }) as HTMLSelectElement;
     expect(select.value).toBe("central"); // not a blank/missing <option>
     // central differs from the (invisible) current binding, so submit is a real change
     fireEvent.click(screen.getByRole("button", { name: "დელეგატის შეცვლა" }));
@@ -134,8 +138,8 @@ describe("DelegateChange", () => {
         initialRegionId={1}
       />,
     );
-    const regionSelect = screen.getByLabelText("რეგიონი");
-    const delegateSelect = screen.getByLabelText("დელეგატი") as HTMLSelectElement;
+    const regionSelect = screen.getByRole("combobox", { name: "რეგიონი" });
+    const delegateSelect = screen.getByRole("combobox", { name: "დელეგატი" }) as HTMLSelectElement;
 
     fireEvent.change(delegateSelect, { target: { value: DELEGATES[0]!.id } });
     expect(delegateSelect.value).toBe(DELEGATES[0]!.id);

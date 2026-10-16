@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { AuthEntryShell } from "./AuthEntryShell";
+import { AuthAsideSteps, AuthEntryShell } from "./AuthEntryShell";
 import { AuthProgress } from "./AuthProgress";
 
 describe("AuthEntryShell", () => {
@@ -45,7 +45,7 @@ describe("AuthEntryShell", () => {
     expect(screen.getByRole("complementary")).toHaveAccessibleName("პირველად ხარ?");
   });
 
-  it("starts compact continuation states directly with their action", () => {
+  it("keeps the heading and the side note on the phone step but drops the intro", () => {
     render(
       <AuthEntryShell
         eyebrow="ნაბიჯი 2 — ტელეფონის დადასტურება"
@@ -63,10 +63,20 @@ describe("AuthEntryShell", () => {
       </AuthEntryShell>,
     );
 
-    expect(screen.getByRole("main")).toHaveAccessibleName("რეგისტრაციის გაგრძელება");
+    expect(screen.getByRole("main")).toHaveAccessibleName("შემოგვიერთდი ერთ წუთში");
     expect(screen.getByRole("list", { name: "რეგისტრაციის ნაბიჯები" })).toBeInTheDocument();
     expect(screen.getByLabelText("სახელი")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "შემოგვიერთდი ერთ წუთში" })).toBeNull();
-    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(
+      screen.queryByText("Google-ით იწყებ, ტელეფონის ნომერს კი მხოლოდ ერთხელ ადასტურებ."),
+    ).toBeNull();
+    expect(screen.getByRole("complementary")).toHaveAccessibleName("რატომ ტელეფონი?");
+  });
+});
+
+describe("AuthAsideSteps", () => {
+  it("lists the steps in order with their two-digit numbers", () => {
+    render(<AuthAsideSteps steps={["პირველი", "მეორე", "მესამე"]} highlight={1} />);
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual(["01პირველი", "02მეორე", "03მესამე"]);
   });
 });

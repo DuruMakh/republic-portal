@@ -6,11 +6,15 @@ const STEPS: ReadonlyArray<{ id: AuthProgressStep; number: string; label: string
   { id: "cabinet", number: "03", label: "კაბინეტი" },
 ];
 
+/**
+ * The registration step bar („ერთობა“): three columns between 2px ink rules, big condensed
+ * numerals, the current step underlined in red, a finished step ticked in green.
+ */
 export function AuthProgress({ currentStep }: { currentStep: AuthProgressStep }) {
   const currentIndex = STEPS.findIndex((step) => step.id === currentStep);
 
   return (
-    <ol aria-label="რეგისტრაციის ნაბიჯები" className="grid grid-cols-3 border-y border-ink">
+    <ol aria-label="რეგისტრაციის ნაბიჯები" className="flex list-none border-y-2 border-ink p-0">
       {STEPS.map((step, index) => {
         const state =
           index < currentIndex ? "complete" : index === currentIndex ? "current" : "upcoming";
@@ -20,12 +24,26 @@ export function AuthProgress({ currentStep }: { currentStep: AuthProgressStep })
             key={step.id}
             aria-current={state === "current" ? "step" : undefined}
             data-state={state}
-            className="group flex min-w-0 items-center gap-1.5 border-r border-hairline px-2 py-3 last:border-r-0 sm:gap-3 sm:px-4"
+            className="group relative flex min-w-0 flex-1 flex-col gap-1 border-l border-rule pb-3 pl-3 pr-1.5 pt-2.5 first:border-l-0 first:pl-0 min-[900px]:flex-row min-[900px]:items-baseline min-[900px]:gap-3.5 min-[900px]:py-[18px] min-[900px]:pl-[22px] min-[900px]:pr-5"
           >
-            <span className="font-serif text-[0.76rem] font-bold text-brand">{step.number}</span>
-            <span className="min-w-0 text-[0.68rem] font-bold leading-4 tracking-[.01em] text-muted-fg group-data-[state=current]:text-ink sm:text-[0.8rem] sm:tracking-[.04em]">
-              {step.label}
+            <span
+              aria-hidden="true"
+              className="text-[24px] font-black leading-none text-[#a39684] [font-stretch:62.5%] group-data-[state=complete]:text-brand group-data-[state=current]:text-brand min-[900px]:text-[34px]"
+            >
+              {step.number}
             </span>
+            <span className="text-[13px] font-bold leading-[1.3] text-secondary group-data-[state=current]:text-ink min-[900px]:text-[15px]">
+              <span>{step.label}</span>
+              {state === "complete" ? (
+                <span aria-hidden="true" className="text-ok-deep">
+                  {" "}
+                  ✓
+                </span>
+              ) : null}
+            </span>
+            {state === "current" ? (
+              <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 h-1 bg-brand" />
+            ) : null}
           </li>
         );
       })}

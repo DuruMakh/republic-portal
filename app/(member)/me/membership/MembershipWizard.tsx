@@ -2,12 +2,14 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
+import { CabinetPage, CabinetPanel, CabinetPerks } from "@/components/CabinetPage";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
-import { Eyebrow } from "@/components/Eyebrow";
-import { CheckboxField, Field } from "@/components/Field";
-import { SelectField } from "@/components/Select";
+import { UnityCheckboxField, UnityField } from "@/components/UnityField";
+import { UnitySelectField } from "@/components/UnitySelectField";
 import { Stepper } from "@/components/Stepper";
+import { UnityButton } from "@/components/UnityButton";
+import { UnityKicker } from "@/components/UnityKicker";
+import { MEMBERSHIP_PERKS } from "@/lib/cabinet";
 import {
   deriveMembershipPhase,
   DUPLICATE_PERSONAL_ID_MESSAGE,
@@ -32,6 +34,11 @@ function isFieldKey(key: unknown): key is FieldKey {
 type WizardPhase = "profile" | "tier";
 
 const CONSENT_REQUIRED_MESSAGE = "გასაგზავნად მონიშნე ორივე თანხმობა.";
+
+const NEXT_STEPS = [
+  "შენს განაცხადს განიხილავს ბორდი",
+  "დადასტურების შემდეგ ხდები მოძრაობის წევრი",
+] as const;
 
 export function MembershipWizard({ initialState }: { initialState: CabinetStatePresent }) {
   const router = useRouter();
@@ -245,11 +252,13 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   if (phase === "profile") {
     phaseContent = (
       <>
-        <h2 className="mb-5 font-serif font-bold border-b-2 border-ink pb-2">წევრის მონაცემები</h2>
-        <div className="flex flex-col gap-4">
+        <h2 className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]">
+          წევრის მონაცემები
+        </h2>
+        <div className="mt-6 flex flex-col gap-6 md:mt-8">
           {askPersonalId ? (
             <div className="flex flex-col gap-1.5">
-              <Field
+              <UnityField
                 label="პირადი ნომერი"
                 name="personalId"
                 inputMode="numeric"
@@ -258,10 +267,10 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                 onChange={(e) => setPersonalId(e.target.value)}
                 error={errors.personalId}
               />
-              <p className="text-xs text-muted-fg">11 ნიშნა</p>
+              <p className="m-0 text-[13.5px] text-secondary">11 ნიშნა</p>
             </div>
           ) : null}
-          <Field
+          <UnityField
             label="დაბადების თარიღი"
             name="birthDate"
             type="date"
@@ -269,8 +278,8 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             onChange={(e) => setBirthDate(e.target.value)}
             error={errors.birthDate}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
+          <div className="grid gap-6 sm:grid-cols-2">
+            <UnitySelectField
               label="მხარე"
               id="mw-region"
               value={regionId === null ? "" : String(regionId)}
@@ -285,8 +294,8 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {r.name_ka}
                 </option>
               ))}
-            </SelectField>
-            <SelectField
+            </UnitySelectField>
+            <UnitySelectField
               label="ქალაქი / მუნიციპალიტეტი"
               id="mw-city"
               value={cityId === null ? "" : String(cityId)}
@@ -301,9 +310,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
                   {c.name_ka}
                 </option>
               ))}
-            </SelectField>
+            </UnitySelectField>
           </div>
-          <SelectField
+          <UnitySelectField
             label="სამუშაო ადგილი / სტატუსი"
             id="mw-work"
             value={workPreset}
@@ -319,9 +328,9 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               </option>
             ))}
             <option value="__other">სხვა (მიუთითე)</option>
-          </SelectField>
+          </UnitySelectField>
           {workPreset === "__other" ? (
-            <Field
+            <UnityField
               label="მიუთითე შენი საქმიანობა"
               name="workFree"
               placeholder="მაგ. არქიტექტორი, ფერმერი, IT სპეციალისტი..."
@@ -343,24 +352,48 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             value={delegateId}
             onChange={setDelegateId}
           />
-          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-          <Button onClick={submitProfile} disabled={busy} size="lg">
-            გაგრძელება →
-          </Button>
+          {formError ? <p className="m-0 text-[15px] text-danger">{formError}</p> : null}
+          <UnityButton onClick={submitProfile} disabled={busy} arrow className="w-full">
+            გაგრძელება
+          </UnityButton>
         </div>
       </>
     );
   } else {
     phaseContent = (
       <>
-        <h2 className="mb-5 font-serif font-bold border-b-2 border-ink pb-2">წევრობის განაცხადი</h2>
-        <p className="text-[0.74rem] font-bold tracking-[.08em] text-muted-fg">რა მოხდება შემდეგ</p>
-        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-sm text-prose">
-          <li>შენს განაცხადს განიხილავს ბორდი</li>
-          <li>დადასტურების შემდეგ ხდები მოძრაობის წევრი</li>
+        <h2 className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]">
+          წევრობის განაცხადი
+        </h2>
+        <p className="mt-6 mb-0 text-[12px] font-bold tracking-[.14em] text-secondary md:mt-8">
+          რა მოხდება შემდეგ
+        </p>
+        <ol className="mt-4 mb-0 list-none p-0">
+          {NEXT_STEPS.map((text, i) => (
+            <li
+              key={text}
+              className={`relative grid grid-cols-[40px_minmax(0,1fr)] gap-3.5 ${
+                i < NEXT_STEPS.length - 1 ? "pb-[22px]" : ""
+              }`}
+            >
+              {i < NEXT_STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-0.5 left-[19px] top-8 border-l-2 border-dashed border-[#cfc4b3]"
+                />
+              ) : null}
+              <span
+                aria-hidden="true"
+                className="text-center text-[28px] font-black leading-none text-teal [font-stretch:62.5%]"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="pt-[3px] text-[16px] leading-[1.55] md:text-[17px]">{text}</span>
+            </li>
+          ))}
         </ol>
-        <div className="mt-5 flex flex-col gap-3 border-t border-hairline pt-5">
-          <CheckboxField
+        <div className="mt-7 flex flex-col gap-[18px] border-t border-rule pt-7 md:mt-8">
+          <UnityCheckboxField
             label="თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად"
             checked={dataConsent}
             onChange={(e) => {
@@ -368,7 +401,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               clearConsentError();
             }}
           />
-          <CheckboxField
+          <UnityCheckboxField
             label={`თანახმა ვარ, მომავალში, როცა საწევრო შემოიღება, ვიხდიდე ყოველთვიურ საწევროს — ${MEMBERSHIP_FEE_GEL} ₾ თვეში`}
             checked={duesConsent}
             onChange={(e) => {
@@ -378,33 +411,45 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           />
         </div>
         {tierError ? (
-          <p role="alert" className="mt-3 text-sm text-danger">
+          <p role="alert" className="mt-4 mb-0 text-[15px] text-danger">
             {tierError}
           </p>
         ) : null}
-        <div className="mt-5 flex flex-col gap-3">
-          <Button onClick={completeTier} disabled={tierBusy} size="lg">
+        <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:flex-wrap md:mt-9">
+          <UnityButton onClick={completeTier} disabled={tierBusy}>
             განაცხადის გაგზავნა
-          </Button>
-          <Button variant="ghost" onClick={() => setPhase("profile")} disabled={tierBusy}>
+          </UnityButton>
+          <UnityButton variant="ghost" onClick={() => setPhase("profile")} disabled={tierBusy}>
             ← მონაცემების შესწორება
-          </Button>
+          </UnityButton>
         </div>
       </>
     );
   }
 
   return (
-    <main className="mx-auto max-w-xl">
-      <div className="mb-6">
-        <Eyebrow>წევრობის გაფორმება</Eyebrow>
-      </div>
-      <div className="mb-6 flex justify-center">
+    <CabinetPage>
+      <UnityKicker>წევრობის გაფორმება</UnityKicker>
+      <div className="mt-[18px] md:mt-[26px]">
         <Stepper steps={["პროფილი", "განაცხადი"]} current={phase === "profile" ? 1 : 2} />
       </div>
-      <div className="bg-paper-bright border border-hairline p-8 sm:p-10 shadow-[0_1px_0_var(--color-hairline)]">
-        {phaseContent}
+      <div className="mt-[26px] grid items-start gap-11 md:mt-12 md:grid-cols-[minmax(0,1fr)_minmax(0,400px)] md:gap-[clamp(40px,5vw,80px)]">
+        <div className="min-w-0 max-w-[720px]">
+          <div className="border border-rule bg-chalk p-6 md:px-12 md:py-11">{phaseContent}</div>
+          <span aria-hidden="true" className="mx-1.5 mt-[5px] block h-px bg-ink md:mx-2.5" />
+        </div>
+        <CabinetPanel tone="wine" as="aside" className="md:px-11 md:pb-[150px] md:pt-11">
+          <h2 className="m-0 font-serif text-[22px] font-semibold leading-[1.3] text-limestone md:text-[26px]">
+            გახდი წევრი
+          </h2>
+          <p className="mt-3 mb-0 text-[16.5px] leading-[1.6] text-sand">
+            წევრობა ხსნის მოძრაობის სრულ შესაძლებლობებს.
+          </p>
+          <div className="mt-6">
+            <CabinetPerks perks={MEMBERSHIP_PERKS} />
+          </div>
+        </CabinetPanel>
       </div>
-    </main>
+    </CabinetPage>
   );
 }

@@ -104,7 +104,7 @@ function agreeToBoth() {
 describe("MembershipWizard — profile phase", () => {
   it("shows Georgian validation errors and does not call the action when required fields are empty", async () => {
     render(<MembershipWizard initialState={cab({})} />);
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText("მიუთითე საქმიანობა.")).toBeInTheDocument();
     expect(screen.getByText("აირჩიე მხარე.")).toBeInTheDocument();
     expect(screen.getByText("აირჩიე ქალაქი.")).toBeInTheDocument();
@@ -116,10 +116,10 @@ describe("MembershipWizard — profile phase", () => {
     render(
       <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
     );
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
       birthDate: "1990-05-20",
@@ -136,10 +136,10 @@ describe("MembershipWizard — profile phase", () => {
     render(
       <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
     );
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    const submitButton = screen.getByRole("button", { name: "გაგრძელება →" });
+    const submitButton = screen.getByRole("button", { name: "გაგრძელება" });
     fireEvent.click(submitButton);
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
@@ -156,11 +156,13 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
-    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "პირადი ნომერი" }), {
+      target: { value: "01001000000" },
+    });
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
       personalId: "01001000000",
@@ -174,7 +176,7 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
-    const idInput = screen.getByLabelText("პირადი ნომერი") as HTMLInputElement;
+    const idInput = screen.getByRole("textbox", { name: "პირადი ნომერი" }) as HTMLInputElement;
     // A real browser caps inserted/pasted text at the input's maxlength attribute
     // before the change event ever fires; fireEvent.change's direct .value
     // assignment does not, so the cap is reproduced explicitly here to prove the
@@ -185,10 +187,10 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         ? pastedWithSeparators.slice(0, idInput.maxLength)
         : pastedWithSeparators;
     fireEvent.change(idInput, { target: { value: effectivePaste } });
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
       personalId: "01001000000",
@@ -202,11 +204,11 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         initialState={cab({ hasPersonalId: true, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
-    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    expect(screen.queryByRole("textbox", { name: "პირადი ნომერი" })).toBeNull();
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({ personalId: null });
   });
@@ -221,17 +223,22 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
-    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "პირადი ნომერი" }), {
+      target: { value: "01001000000" },
+    });
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
     // still the profile phase — no separate form-level banner duplicating the same message
     expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     // field-level, not just a banner that happens to say the same words (review finding M2):
     // Field only sets aria-invalid when its own `error` prop is populated
-    expect(screen.getByLabelText("პირადი ნომერი")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("textbox", { name: "პირადი ნომერი" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
   });
 
   it("stops asking for the ID after a successful save, even after navigating back to the profile phase (review finding F2)", async () => {
@@ -248,17 +255,19 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
         initialState={cab({ hasPersonalId: false, regionId: 1, cityId: 5, employment: "სტუდენტი" })}
       />,
     );
-    expect(screen.getByLabelText("პირადი ნომერი")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("პირადი ნომერი"), { target: { value: "01001000000" } });
-    fireEvent.change(screen.getByLabelText("დაბადების თარიღი"), {
+    expect(screen.getByRole("textbox", { name: "პირადი ნომერი" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "პირადი ნომერი" }), {
+      target: { value: "01001000000" },
+    });
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
     expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
-    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "პირადი ნომერი" })).toBeNull();
   });
 });
 
@@ -333,7 +342,7 @@ describe("MembershipWizard — tier phase", () => {
     fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
     expect(screen.getByText("წევრის მონაცემები")).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByLabelText("დაბადების თარიღი")).toHaveValue(PROFILED.birthDate),
+      expect(screen.getByLabelText(/დაბადების თარიღი/)).toHaveValue(PROFILED.birthDate),
     );
     expect(completeMembershipAction).not.toHaveBeenCalled();
   });
@@ -346,7 +355,7 @@ describe("MembershipWizard — tier phase", () => {
     fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
-    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება →" }));
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
     expect(screen.queryByText("აირჩიე საწევრო პაკეტი.")).toBeNull();

@@ -31,11 +31,11 @@ describe("GoogleAuthButton", () => {
     expect(mark.getAttribute("src")).toContain("google-g.png");
   });
 
-  it("wears the site's ink-outline button on paper, not Google's white button (owner choice, ADR-035)", () => {
+  it("wears the redesign's ink-outline button on chalk, not Google's white button (owner choice, ADR-035)", () => {
     render(<GoogleAuthButton nextPath="/join" label="Google-ით გაგრძელება" />);
 
     const button = screen.getByRole("button", { name: "Google-ით გაგრძელება" });
-    expect(button).toHaveClass("border-ink", "bg-transparent", "text-ink", "hover:bg-ink");
+    expect(button).toHaveClass("border-ink", "bg-chalk", "text-ink", "hover:bg-ink");
     expect(button).not.toHaveClass("bg-white");
   });
 

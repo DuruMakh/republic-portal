@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { CabinetHead, CabinetPage } from "@/components/CabinetPage";
 import { formatEventTimeKa, percentages, pollView } from "@/lib/community";
 import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 import { PollCard, type PollCardOption } from "./PollCard";
@@ -35,17 +36,15 @@ export default async function MemberPollsPage() {
   });
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">შიდა გამოკითხვები</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          მიიღე მონაწილეობა მოძრაობის შიდა გადაწყვეტილებებში.
-        </p>
-      </div>
+    <CabinetPage deco="map">
+      <CabinetHead
+        title="შიდა გამოკითხვები"
+        lede="მიიღე მონაწილეობა მოძრაობის შიდა გადაწყვეტილებებში."
+      />
 
-      <div className="flex max-w-3xl flex-col gap-5">
+      <div className="mt-8 flex max-w-[900px] flex-col gap-6 md:mt-12 md:gap-7">
         {polls.length === 0 ? (
-          <p className="text-muted-fg">გამოკითხვები მალე გამოჩნდება.</p>
+          <p className="m-0 font-serif text-[18px] text-secondary">გამოკითხვები მალე გამოჩნდება.</p>
         ) : (
           polls.map((poll) => {
             const pollOptions = (optionsRes.data ?? []).filter((o) => o.poll_id === poll.id);
@@ -79,6 +78,6 @@ export default async function MemberPollsPage() {
           })
         )}
       </div>
-    </main>
+    </CabinetPage>
   );
 }

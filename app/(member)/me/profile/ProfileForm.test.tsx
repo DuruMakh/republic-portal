@@ -57,50 +57,68 @@ function renderForm(employment: string, hasPersonalId = true) {
 describe("ProfileForm", () => {
   it("prefills preset employment; phone is formatted read-only; PID fully masked", async () => {
     renderForm("სტუდენტი");
-    expect(screen.getByLabelText("სახელი")).toHaveValue("ნინო");
-    expect(screen.getByLabelText("სამუშაო ადგილი / სტატუსი")).toHaveValue("სტუდენტი");
+    expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveValue("ნინო");
+    expect(screen.getByRole("combobox", { name: "სამუშაო ადგილი / სტატუსი" })).toHaveValue(
+      "სტუდენტი",
+    );
     expect(screen.getByTestId("profile-phone")).toHaveValue("+995 599 12 34 56");
     expect(screen.getByTestId("profile-phone")).toHaveAttribute("readonly");
     expect(screen.getByTestId("profile-pid")).toHaveValue("•••••••••••");
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
   });
 
   it("non-preset employment renders as „სხვა“ with the custom text", async () => {
     renderForm("მეწარმე");
-    expect(screen.getByLabelText("სამუშაო ადგილი / სტატუსი")).toHaveValue("__other");
-    expect(screen.getByLabelText("მიუთითე საქმიანობა")).toHaveValue("მეწარმე");
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
+    expect(screen.getByRole("combobox", { name: "სამუშაო ადგილი / სტატუსი" })).toHaveValue(
+      "__other",
+    );
+    expect(screen.getByRole("textbox", { name: "მიუთითე საქმიანობა" })).toHaveValue("მეწარმე");
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
   });
 
   it("submits the mapped employment and confirms in Georgian", async () => {
     updateProfileAction.mockResolvedValue({ ok: true, state: {} });
     renderForm("სტუდენტი");
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
-    fireEvent.change(screen.getByLabelText("სამუშაო ადგილი / სტატუსი"), {
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "სამუშაო ადგილი / სტატუსი" }), {
       target: { value: "__other" },
     });
-    fireEvent.change(screen.getByLabelText("მიუთითე საქმიანობა"), {
+    fireEvent.change(screen.getByRole("textbox", { name: "მიუთითე საქმიანობა" }), {
       target: { value: "მეწარმე" },
     });
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() => expect(updateProfileAction).toHaveBeenCalled());
     expect(updateProfileAction.mock.calls[0]?.[0]).toMatchObject({ employment: "მეწარმე" });
     expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "გიორგი" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: "გიორგი" },
+    });
     expect(screen.queryByTestId("profile-saved")).toBeNull();
   });
 
   it("resets the city selection when the region changes and the current city is invalid there", async () => {
     renderForm("სტუდენტი");
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
-    fireEvent.change(screen.getByLabelText("მხარე"), { target: { value: "2" } });
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("9"));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9"),
+    );
   });
 
   it("hides the PID row when the profile has no personal ID yet (owner fix #10)", async () => {
     renderForm("სტუდენტი", false);
     expect(screen.queryByTestId("profile-pid")).toBeNull();
-    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
-    await waitFor(() => expect(screen.getByLabelText("ქალაქი / მუნიციპალიტეტი")).toHaveValue("3"));
+    expect(screen.queryByRole("textbox", { name: "პირადი ნომერი" })).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
   });
 });

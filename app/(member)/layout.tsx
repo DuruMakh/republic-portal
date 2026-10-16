@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CabinetNav } from "@/components/CabinetNav";
-import { Masthead } from "@/components/Masthead";
-import { MobileTabBar } from "@/components/MobileTabBar";
-import { PageSheet } from "@/components/PageSheet";
+import { CabinetShell } from "@/components/CabinetShell";
 import { cabinetNavItems, cabinetRole } from "@/lib/cabinet";
 import { filterEventLinks, showEvents } from "@/lib/events-switch";
 import { filterBillingLinks, showMembershipDues } from "@/lib/membership-dues";
@@ -29,10 +26,9 @@ const BACK_TO_PUBLIC = "← საჯარო";
  * themselves on state.completed. Runs server-side on every request — safe
  * because the service worker has never cached /me (NetworkOnly, app/sw.ts).
  *
- * Kronika chrome (spec §5.1): PageSheet + a compact Masthead carrying the
- * "პირადი კაბინეტი" register tag (logo + tag only — no public nav items and
- * no session slot; every actual section link, incl. sign-out, lives in
- * CabinetNav directly below, unchanged). The open-polls nav badge (D10) is
+ * „ერთობა“ chrome (owner redesign, პირადი კაბინეტი): CabinetShell's wine band carries the
+ * "პირადი კაბინეტი" register tag, the back-to-public link and the CabinetNav tabs (incl.
+ * sign-out). The open-polls nav badge (D10) is
  * wired here: a single head-count read against member_polls, mapped onto the
  * ALREADY-COMPUTED cabinetNavItems() result — cabinetNavItems() itself is not
  * touched, and the map is a no-op for the registered fallback nav (it has no
@@ -64,21 +60,21 @@ export default async function MemberLayout({ children }: { children: React.React
   );
   const { tabs, more } = mobileTabs(items, role);
   return (
-    <PageSheet>
-      <Masthead
-        navItems={[]}
-        tag={CABINET_TAG}
-        cta={
-          <Link href="/" className="text-muted-fg no-underline hover:text-brand">
-            {BACK_TO_PUBLIC}
-          </Link>
-        }
-      />
-      <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-        <CabinetNav items={items} />
-        {children}
-      </div>
-      <MobileTabBar tabs={tabs} more={more} />
-    </PageSheet>
+    <CabinetShell
+      tag={CABINET_TAG}
+      items={items}
+      tabs={tabs}
+      more={more}
+      backLink={
+        <Link
+          href="/"
+          className="text-[15px] font-semibold text-limestone underline decoration-sand/60 decoration-1 underline-offset-[6px] hover:text-white hover:decoration-white"
+        >
+          {BACK_TO_PUBLIC}
+        </Link>
+      }
+    >
+      {children}
+    </CabinetShell>
   );
 }
