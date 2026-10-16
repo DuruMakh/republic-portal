@@ -39,4 +39,11 @@ describe("UnityButton", () => {
     expect(screen.getByRole("button").className).toContain(shared);
     expect(screen.getByRole("link").className).toContain(shared);
   });
+
+  it("has the account screens' teal and danger variants", () => {
+    expect(unityButtonClasses("teal")).toContain("bg-teal");
+    expect(unityButtonClasses("teal")).toContain("hover:bg-teal-dark");
+    expect(unityButtonClasses("danger")).toContain("border-brand");
+    expect(unityButtonClasses("danger")).toContain("hover:bg-brand");
+  });
 });
