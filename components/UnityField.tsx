@@ -17,7 +17,9 @@ const controlClasses =
 function UnityLabel({ htmlFor, label, hint }: { htmlFor: string; label: string; hint?: string }) {
   return (
     <label htmlFor={htmlFor} className="text-[12px] font-bold tracking-[.12em] text-secondary">
-      {mtavruli(label)}
+      {/* Mtavruli on screen; the accessible name stays in ordinary letters. */}
+      <span aria-hidden="true">{mtavruli(label)}</span>
+      <span className="sr-only">{label}</span>
       {hint ? <span className="font-semibold tracking-[.02em]"> {hint}</span> : null}
     </label>
   );
