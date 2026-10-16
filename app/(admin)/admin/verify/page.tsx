@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import {
+  AdminPageHeader,
+  adminRowClass,
+  AdminSubNav,
+  adminTdClass,
+  adminThClass,
+} from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { hasAnyRole } from "@/lib/admin";
 import { formatDateKa } from "@/lib/cabinet";
+import { showRatings } from "@/lib/ratings-switch";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 import { approveDelegateAction, rejectDelegateAction, revealApplicantIdAction } from "./actions";
 import { VerifyCard } from "./VerifyCard";
@@ -41,30 +49,22 @@ export default async function AdminVerifyPage({
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">დელეგატების ვერიფიკაცია</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          დადასტურება ააქტიურებს დელეგატის რეფერალურ ბმულს და აქცევს პროფილს საჯაროდ ხილვადს
-          რეიტინგსა და პორტალზე.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="დელეგატების ვერიფიკაცია"
+        lede={`დადასტურება ააქტიურებს დელეგატის რეფერალურ ბმულს და აქცევს პროფილს საჯაროდ ხილვადს ${
+          // while ratings are hidden for launch (ADR-052) the profile shows on the portal only
+          showRatings() ? "რეიტინგსა და პორტალზე" : "პორტალზე"
+        }.`}
+      />
 
-      <nav className="mb-6 flex gap-1 border-b border-line pb-2" aria-label="სტატუსის ფილტრი">
-        {TABS.map((t) => (
-          <Link
-            key={t.key}
-            href={`/admin/verify?tab=${t.key}`}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={
-              tab === t.key
-                ? "text-brand border-b-2 border-brand pb-1"
-                : "text-ink hover:text-brand"
-            }
-          >
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <AdminSubNav
+        label="სტატუსის ფილტრი"
+        items={TABS.map((t) => ({
+          href: `/admin/verify?tab=${t.key}`,
+          label: t.label,
+          active: tab === t.key,
+        }))}
+      />
 
       {tab === "approved" ? (
         <Card padded={false}>
@@ -76,23 +76,35 @@ export default async function AdminVerifyPage({
             <DataTable
               head={
                 <>
-                  <th className={tableThClass}>დელეგატი</th>
-                  <th className={tableThClass}>რეგიონი</th>
-                  <th className={tableThClass}>საჯარო გვერდი</th>
-                  <th className={tableThClass}>გუნდი</th>
-                  <th className={tableThClass}>ბიო / ფოტო</th>
-                  <th className={tableThClass}>დამტკიცდა</th>
-                  <th className={tableThClass}></th>
+                  <th className={adminThClass}>
+                    <Caps>დელეგატი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>რეგიონი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>საჯარო გვერდი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>გუნდი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>ბიო / ფოტო</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>დამტკიცდა</Caps>
+                  </th>
+                  <th className={adminThClass}></th>
                 </>
               }
             >
               {rows.map((d) => (
-                <tr key={d.id} className={tableRowClass}>
-                  <td className={`${tableCellClass} font-semibold`}>
+                <tr key={d.id} className={adminRowClass}>
+                  <td className={`${adminTdClass} font-semibold`}>
                     {d.first_name} {d.last_name}
                   </td>
-                  <td className={tableCellClass}>{d.region_name_ka ?? "—"}</td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>{d.region_name_ka ?? "—"}</td>
+                  <td className={adminTdClass}>
                     {d.slug ? (
                       <a
                         href={`/delegates/${d.slug}`}
@@ -106,14 +118,14 @@ export default async function AdminVerifyPage({
                       "—"
                     )}
                   </td>
-                  <td className={tableCellClass}>{d.total_supporters} წევრი</td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>{d.total_supporters} წევრი</td>
+                  <td className={adminTdClass}>
                     {d.bio ? "ბიო ✓" : "ბიო —"} · {d.photo_url ? "ფოტო ✓" : "ფოტო —"}
                   </td>
-                  <td className={`${tableCellClass} text-muted-fg`}>
+                  <td className={`${adminTdClass} text-muted-fg`}>
                     {d.verified_at ? formatDateKa(d.verified_at) : "—"}
                   </td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>
                     <ButtonLink href={`/admin/verify/${d.id}`} variant="ghost" size="sm">
                       რედაქტირება
                     </ButtonLink>

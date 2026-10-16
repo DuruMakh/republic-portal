@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AdminNav } from "./AdminNav";
 
@@ -14,7 +14,7 @@ describe("AdminNav (spec §3.1)", () => {
     { href: "/admin", label: "მიმოხილვა" },
     { href: "/admin/members", label: "წევრები" },
   ];
-  it("renders the tabs, active marker and sign-out (register tag moved to the Masthead tag, Task 18)", () => {
+  it("renders the tabs, active marker and sign-out (register tag moved to the AdminHeader)", () => {
     render(<AdminNav tabs={tabs} />);
     expect(screen.getByRole("link", { name: "მიმოხილვა" })).toHaveAttribute("href", "/admin");
     expect(screen.getByRole("link", { name: "წევრები" })).toHaveAttribute("aria-current", "page");
@@ -48,8 +48,12 @@ describe("AdminNav (spec §3.1)", () => {
       { href: "/admin/verify", label: "ვერიფიკაცია", count: 3 },
     ];
     const { container } = render(<AdminNav tabs={tabsWithCounts} />);
-    const overviewBadge = container.querySelector('a[href="/admin"] span');
-    const verifyBadge = container.querySelector('a[href="/admin/verify"] span');
+    const overviewBadge = within(
+      container.querySelector('a[href="/admin"]') as HTMLElement,
+    ).getByText("2");
+    const verifyBadge = within(
+      container.querySelector('a[href="/admin/verify"]') as HTMLElement,
+    ).getByText("3");
     expect(overviewBadge?.className).toContain("bg-brand");
     expect(verifyBadge?.className).toContain("bg-warn");
   });

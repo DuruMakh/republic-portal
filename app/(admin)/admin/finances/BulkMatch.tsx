@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { formatAmountGel } from "@/lib/cabinet";
 import type { BulkConfirmResult, BulkPreviewResult, BulkPreviewRow, BulkStatus } from "./types";
@@ -110,32 +112,44 @@ export function BulkMatch({
             bodyTestId="bulk-preview-body"
             head={
               <>
-                <th className={tableThClass}>სტრიქონი</th>
-                <th className={tableThClass}>კოდი</th>
-                <th className={tableThClass}>თანხა</th>
-                <th className={tableThClass}>თარიღი</th>
-                <th className={tableThClass}>წევრი</th>
-                <th className={tableThClass}>შედეგი</th>
+                <th className={adminThClass}>
+                  <Caps>სტრიქონი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>კოდი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>თანხა</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>თარიღი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>წევრი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>შედეგი</Caps>
+                </th>
               </>
             }
           >
             {rows.map((r) => (
-              <tr key={r.index} className={tableRowClass}>
-                <td className={`${tableCellClass} max-w-[260px] truncate font-mono text-xs`}>
+              <tr key={r.index} className={adminRowClass}>
+                <td className={`${adminTdClass} max-w-[260px] truncate font-mono text-xs`}>
                   {r.line}
                 </td>
-                <td className={`${tableCellClass} font-mono text-xs`}>{r.code ?? "—"}</td>
-                <td className={tableCellClass}>
+                <td className={`${adminTdClass} font-mono text-xs`}>{r.code ?? "—"}</td>
+                <td className={adminTdClass}>
                   {r.amountGel === null ? "—" : formatAmountGel(r.amountGel)}
                 </td>
-                <td className={tableCellClass}>{r.paidAt ?? "—"}</td>
-                <td className={tableCellClass}>
+                <td className={adminTdClass}>{r.paidAt ?? "—"}</td>
+                <td className={adminTdClass}>
                   {r.memberName ?? "—"}
                   {r.months !== null ? (
                     <span className="ms-1 text-xs text-muted-fg">→ {r.months} თვე</span>
                   ) : null}
                 </td>
-                <td className={tableCellClass}>
+                <td className={adminTdClass}>
                   <Pill
                     status={
                       r.status === "ok"

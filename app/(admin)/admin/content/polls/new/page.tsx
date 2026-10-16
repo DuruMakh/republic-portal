@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Card } from "@/components/Card";
+import { AdminPageHeader } from "@/components/AdminUi";
 import { PollForm } from "../PollForm";
 
 export const metadata: Metadata = { title: "ახალი გამოკითხვა — ქართული რესპუბლიკა" };
@@ -6,10 +8,12 @@ export const metadata: Metadata = { title: "ახალი გამოკი�
 export default function NewPollPage() {
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ახალი გამოკითხვა</h1>
+      <AdminPageHeader title="ახალი გამოკითხვა" />
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <Card>
+          <PollForm poll={null} />
+        </Card>
       </div>
-      <PollForm poll={null} />
     </div>
   );
 }

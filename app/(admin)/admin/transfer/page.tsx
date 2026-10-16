@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { AdminPageHeader, adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { hasAnyRole } from "@/lib/admin";
 import { pageParamSchema } from "@/lib/admin-schemas";
 import { formatCountKa } from "@/lib/format";
@@ -59,13 +61,10 @@ export default async function AdminTransferPage({
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ადმინისტრაციული ტრანსფერი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          ცენტრალურ მოძრაობაზე მიბმული (ობოლი) წევრები გადაანაწილე შესაბამისი მხარის დამტკიცებულ
-          დელეგატებზე.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="ადმინისტრაციული ტრანსფერი"
+        lede="ცენტრალურ მოძრაობაზე მიბმული (ობოლი) წევრები გადაანაწილე შესაბამისი მხარის დამტკიცებულ დელეგატებზე."
+      />
 
       <Card>
         <p className="text-sm text-muted-fg">
@@ -94,19 +93,25 @@ export default async function AdminTransferPage({
               bodyTestId="admin-transfer-body"
               head={
                 <>
-                  <th className={tableThClass}>წევრი</th>
-                  <th className={tableThClass}>რეგიონი</th>
-                  <th className={`${tableThClass} text-right`}>მიმღები დელეგატი / მოქმედება</th>
+                  <th className={adminThClass}>
+                    <Caps>წევრი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>რეგიონი</Caps>
+                  </th>
+                  <th className={`${adminThClass} text-right`}>
+                    <Caps>მიმღები დელეგატი / მოქმედება</Caps>
+                  </th>
                 </>
               }
             >
               {orphans.map((m) => (
-                <tr key={m.id} className={tableRowClass}>
-                  <td className={`${tableCellClass} font-semibold`}>
+                <tr key={m.id} className={adminRowClass}>
+                  <td className={`${adminTdClass} font-semibold`}>
                     {m.first_name} {m.last_name}
                   </td>
-                  <td className={tableCellClass}>{m.region_name_ka ?? "—"}</td>
-                  <td className={`${tableCellClass} text-right`}>
+                  <td className={adminTdClass}>{m.region_name_ka ?? "—"}</td>
+                  <td className={`${adminTdClass} text-right`}>
                     <ReassignRow
                       memberId={m.id}
                       options={m.region_id === null ? [] : (byRegion.get(m.region_id) ?? [])}
