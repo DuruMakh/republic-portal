@@ -21,8 +21,7 @@ const TABBAR_LABEL = "კაბინეტის ნავიგაცია";
  * rules-and-type system.
  *
  * Labels arrive already shortened by mobileTabs(); this component never
- * truncates, because the 0.74rem floor in DESIGN.md §2.3 forbids solving
- * overflow with a smaller font.
+ * truncates, and the 12.5px label stays above the 0.74rem floor in DESIGN.md §2.3.
  */
 export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: CabinetNavItem[] }) {
   const pathname = usePathname();
@@ -47,13 +46,20 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
   // „მთავარი“ (/me) on every registered page — owner fix #7, already fixed once.
   const activeHref = activeNavHref([...tabs, ...more], pathname);
   const moreActive = more.some((item) => item.href === activeHref);
+  // „ერთობა“ redesign: one condensed line per tab, the count as a bubble over the label's corner.
   const slot =
-    "flex flex-1 min-w-0 h-14 items-center justify-center gap-1 px-1 text-center no-underline";
+    "relative flex flex-auto min-w-12 h-14 items-center justify-center px-1 text-center whitespace-nowrap no-underline";
+  const marker = (
+    <span aria-hidden="true" className="absolute inset-x-2 -top-0.5 h-[3px] bg-brand" />
+  );
 
   return (
     <>
       <StickyBar>
-        <nav aria-label={TABBAR_LABEL} className="flex text-[0.74rem] font-semibold">
+        <nav
+          aria-label={TABBAR_LABEL}
+          className="flex bg-limestone px-1 text-[12.5px] font-semibold [font-stretch:87.5%]"
+        >
           {tabs.map((tab) => {
             const on = tab.href === activeHref;
             return (
@@ -61,12 +67,17 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
                 key={tab.href}
                 href={tab.href}
                 aria-current={on ? "page" : undefined}
-                className={`${slot} border-t-2 ${
-                  on ? "border-brand font-bold text-brand" : "border-transparent text-ink"
-                }`}
+                className={`${slot} ${on ? "font-bold text-brand" : "text-ink"}`}
               >
-                <span className="min-w-0 break-words">{tab.label}</span>
-                {tab.count ? <Badge>{tab.count}</Badge> : null}
+                {on ? marker : null}
+                <span className="relative">
+                  {tab.label}
+                  {tab.count ? (
+                    <span className="absolute -right-[15px] -top-[13px]">
+                      <Badge>{tab.count}</Badge>
+                    </span>
+                  ) : null}
+                </span>
               </Link>
             );
           })}
@@ -75,10 +86,9 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
             onClick={() => setSheetOpen(true)}
             aria-expanded={sheetOpen}
             aria-current={moreActive ? "page" : undefined}
-            className={`${slot} border-t-2 ${
-              moreActive ? "border-brand font-bold text-brand" : "border-transparent text-ink"
-            }`}
+            className={`${slot} cursor-pointer ${moreActive ? "font-bold text-brand" : "text-ink"}`}
           >
+            {moreActive ? marker : null}
             {MORE}
           </button>
         </nav>

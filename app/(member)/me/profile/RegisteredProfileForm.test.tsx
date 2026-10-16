@@ -25,8 +25,8 @@ function renderForm(hasPersonalId = true) {
 describe("RegisteredProfileForm", () => {
   it("prefills names; phone is formatted read-only; PID shows the server-masked value", () => {
     renderForm();
-    expect(screen.getByLabelText("სახელი")).toHaveValue("ნინო");
-    expect(screen.getByLabelText("გვარი")).toHaveValue("ბერიძე");
+    expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveValue("ნინო");
+    expect(screen.getByRole("textbox", { name: "გვარი" })).toHaveValue("ბერიძე");
     expect(screen.getByTestId("profile-phone")).toHaveValue("+995 599 12 34 56");
     expect(screen.getByTestId("profile-phone")).toHaveAttribute("readonly");
     expect(screen.getByTestId("profile-pid")).toHaveValue("010********");
@@ -36,14 +36,14 @@ describe("RegisteredProfileForm", () => {
   it("hides the PID row when the profile has no personal ID yet (owner fix #10)", () => {
     renderForm(false);
     expect(screen.queryByTestId("profile-pid")).toBeNull();
-    expect(screen.queryByLabelText("პირადი ნომერი")).toBeNull();
-    expect(screen.getByLabelText("სახელი")).toHaveValue("ნინო");
+    expect(screen.queryByRole("textbox", { name: "პირადი ნომერი" })).toBeNull();
+    expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveValue("ნინო");
   });
 
   it("rejects an empty name in Georgian without calling the action", async () => {
     updateRegisteredNameAction.mockClear();
     renderForm();
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: "   " } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     expect(await screen.findByText("შეავსე ეს ველი")).toBeInTheDocument();
     expect(updateRegisteredNameAction).not.toHaveBeenCalled();
@@ -53,7 +53,9 @@ describe("RegisteredProfileForm", () => {
     updateRegisteredNameAction.mockClear();
     updateRegisteredNameAction.mockResolvedValue({ ok: true });
     renderForm();
-    fireEvent.change(screen.getByLabelText("სახელი"), { target: { value: " გიორგი " } });
+    fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
+      target: { value: " გიორგი " },
+    });
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() => expect(updateRegisteredNameAction).toHaveBeenCalled());
     expect(updateRegisteredNameAction.mock.calls[0]?.[0]).toMatchObject({
@@ -61,7 +63,9 @@ describe("RegisteredProfileForm", () => {
       lastName: "ბერიძე",
     });
     expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
-    fireEvent.change(screen.getByLabelText("გვარი"), { target: { value: "მაისურაძე" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
+      target: { value: "მაისურაძე" },
+    });
     expect(screen.queryByTestId("profile-saved")).toBeNull();
   });
 

@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ballotButtonClasses } from "@/components/Ballot";
-import { ButtonLink } from "@/components/ButtonLink";
-import { Card } from "@/components/Card";
+import {
+  CabinetDataRow,
+  CabinetHead,
+  CabinetPage,
+  CabinetPanel,
+  CabinetPanelTitle,
+  CabinetSectionLabel,
+} from "@/components/CabinetPage";
+import { Caps } from "@/components/Caps";
 import { DeleteAccountSection } from "@/components/DeleteAccountSection";
-import { Eyebrow } from "@/components/Eyebrow";
 import { IndexRow } from "@/components/IndexRow";
 import { Pill } from "@/components/Pill";
 import { ReferralCard } from "@/components/ReferralCard";
-import { SectionRule } from "@/components/SectionRule";
+import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { UnityKicker } from "@/components/UnityKicker";
 import {
   cabinetRole,
   DELEGACY_REJECTED_NOTE,
@@ -64,7 +70,7 @@ export default async function ProfilePage() {
   // explanation (spec 2026-10-08 §3.3); an approved delegate also learns their public page goes
   // and their team moves.
   const deleteSection = (
-    <div className="mt-10">
+    <div className="mt-12 md:mt-[72px]">
       <DeleteAccountSection
         isStaff={state.admin}
         isDelegate={isApprovedDelegate(state)}
@@ -78,39 +84,27 @@ export default async function ProfilePage() {
   // standing. A compact upgrade card points at the become-a-member journey.
   if (!state.completed) {
     return (
-      <main>
-        <h1 className="font-serif text-[2rem] font-bold text-ink">
-          {state.firstName} {state.lastName}
-        </h1>
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-start">
-          <div>
-            <SectionRule label="პირადი მონაცემები" />
-            <div>
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">ტელეფონი</span>
-                <span className="font-serif text-[0.92rem] font-bold text-ink">
-                  {formatPhoneKa(user?.phone)}
-                </span>
-              </div>
+      <CabinetPage>
+        <CabinetHead
+          kicker="ჩემი პროფილი"
+          face="serif"
+          title={`${state.firstName} ${state.lastName}`}
+        />
+        <div className="mt-8 grid items-start gap-8 md:mt-12 min-[1100px]:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] min-[1100px]:gap-14">
+          <div className="flex min-w-0 flex-col gap-6">
+            <CabinetSectionLabel>პირადი მონაცემები</CabinetSectionLabel>
+            <div className="-mt-6">
+              <CabinetDataRow label="ტელეფონი">{formatPhoneKa(user?.phone)}</CabinetDataRow>
               {state.hasPersonalId ? (
-                <div className="flex justify-between border-b border-hairline py-2.5">
-                  <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
-                  <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
-                    {state.personalIdMasked}
-                  </span>
-                </div>
+                <CabinetDataRow label="პირადი ნომერი">
+                  <span className="tracking-wide">{state.personalIdMasked}</span>
+                </CabinetDataRow>
               ) : null}
-              <div className="flex justify-between border-b border-hairline py-2.5">
-                <span className="text-[0.85rem] text-muted-fg">რეგიონი</span>
-                <span
-                  className="font-serif text-[0.92rem] font-bold text-ink"
-                  data-testid="summary-region"
-                >
-                  {regionName}
-                </span>
-              </div>
+              <CabinetDataRow label="რეგიონი">
+                <span data-testid="summary-region">{regionName}</span>
+              </CabinetDataRow>
             </div>
-            <div className="mt-8">
+            <div className="mt-4">
               <RegisteredProfileForm
                 initial={{ firstName: state.firstName, lastName: state.lastName }}
                 phone={user?.phone ?? null}
@@ -119,22 +113,26 @@ export default async function ProfilePage() {
               />
             </div>
           </div>
-          <div>
-            <Card variant="callout">
-              <Eyebrow>შემდეგი ნაბიჯი</Eyebrow>
-              <h3 className="mt-1 font-serif text-lg font-bold text-ink">გახდი წევრი</h3>
-              <p className="mt-1 text-sm text-muted-fg">
+          <div className="min-[1100px]:sticky min-[1100px]:top-6">
+            <CabinetPanel tone="wine">
+              <UnityKicker tone="light">შემდეგი ნაბიჯი</UnityKicker>
+              <h3 className="mt-4 mb-0 font-display text-[44px] font-bold leading-[.94] text-limestone md:text-[52px]">
+                გახდი წევრი
+              </h3>
+              <p className="mt-3.5 mb-0 text-[16.5px] leading-[1.6] text-sand">
                 წევრობა ხსნის ხმის მიცემას გამოკითხვებში, დელეგატის არჩევას და წევრებისთვის
                 განკუთვნილ სიახლეებს.
               </p>
-              <div className="mt-4">
-                <ButtonLink href="/me/membership">გახდი წევრი →</ButtonLink>
+              <div className="mt-[26px]">
+                <UnityButtonLink href="/me/membership" variant="cream" arrow className="w-full">
+                  გახდი წევრი
+                </UnityButtonLink>
               </div>
-            </Card>
+            </CabinetPanel>
           </div>
         </div>
         {deleteSection}
-      </main>
+      </CabinetPage>
     );
   }
 
@@ -173,55 +171,38 @@ export default async function ProfilePage() {
   const ratingsShown = showRatings();
 
   return (
-    <main>
-      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b-2 border-ink pb-3">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">
-          {state.firstName} {state.lastName}
-        </h1>
-        <p className="flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-fg">
-          <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
-          {/* the GR- code is the bank-transfer reference: only with the dues (ADR-037) */}
-          {showMembershipDues() && state.referenceCode ? (
-            <span>· {state.referenceCode}</span>
-          ) : null}
-          {since ? <span>· წევრი {since}</span> : null}
-        </p>
-      </div>
+    <CabinetPage>
+      <CabinetHead
+        kicker="ჩემი პროფილი"
+        face="serif"
+        title={`${state.firstName} ${state.lastName}`}
+        aside={
+          <p className="m-0 flex flex-wrap items-center gap-2 text-[15px] text-secondary md:self-end">
+            <Pill status={teamStatus} label={TEAM_STATUS_LABELS[teamStatus]} />
+            {/* the GR- code is the bank-transfer reference: only with the dues (ADR-037) */}
+            {showMembershipDues() && state.referenceCode ? (
+              <span>· {state.referenceCode}</span>
+            ) : null}
+            {since ? <span>· წევრი {since}</span> : null}
+          </p>
+        }
+      />
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1.35fr_1fr] lg:items-start">
-        <div>
-          <SectionRule label="პირადი მონაცემები" />
-          <div>
-            <div className="flex justify-between border-b border-hairline py-2.5">
-              <span className="text-[0.85rem] text-muted-fg">ტელეფონი</span>
-              <span className="font-serif text-[0.92rem] font-bold text-ink">
-                {formatPhoneKa(user?.phone)}
-              </span>
-            </div>
-            <div className="flex justify-between border-b border-hairline py-2.5">
-              <span className="text-[0.85rem] text-muted-fg">პირადი ნომერი</span>
-              <span className="font-serif text-[0.92rem] font-bold tracking-wide text-ink">
-                {state.personalIdMasked}
-              </span>
-            </div>
-            <div className="flex justify-between border-b border-hairline py-2.5">
-              <span className="text-[0.85rem] text-muted-fg">რეგიონი</span>
-              <span
-                className="font-serif text-[0.92rem] font-bold text-ink"
-                data-testid="summary-region"
-              >
-                {regionName}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 border-b border-hairline py-2.5">
-              <span className="text-[0.85rem] text-muted-fg">სამუშაო ადგილი / სტატუსი</span>
-              <span className="font-serif text-[0.92rem] font-bold text-ink text-right">
-                {state.employment}
-              </span>
-            </div>
+      <div className="mt-8 grid items-start gap-8 md:mt-12 min-[1100px]:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] min-[1100px]:gap-14">
+        <div className="flex min-w-0 flex-col gap-6">
+          <CabinetSectionLabel>პირადი მონაცემები</CabinetSectionLabel>
+          <div className="-mt-6">
+            <CabinetDataRow label="ტელეფონი">{formatPhoneKa(user?.phone)}</CabinetDataRow>
+            <CabinetDataRow label="პირადი ნომერი">
+              <span className="tracking-wide">{state.personalIdMasked}</span>
+            </CabinetDataRow>
+            <CabinetDataRow label="რეგიონი">
+              <span data-testid="summary-region">{regionName}</span>
+            </CabinetDataRow>
+            <CabinetDataRow label="სამუშაო ადგილი / სტატუსი">{state.employment}</CabinetDataRow>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-4">
             <ProfileForm
               initial={{
                 firstName: state.firstName,
@@ -237,46 +218,57 @@ export default async function ProfilePage() {
           </div>
 
           {delegacyPhase === "eligible" ? (
-            <Card variant="callout">
-              <Eyebrow>შემდეგი საფეხური</Eyebrow>
-              <h3 className="mt-1 font-serif text-lg font-bold text-ink">გახდი დელეგატი</h3>
-              <p className="mt-1 text-sm text-muted-fg">
-                წარადგინე კანდიდატურა და გახდი მოძრაობის რეგიონული ხმა — საჯარო პროფილით და საკუთარი
-                გუნდით.
-              </p>
-              <div className="mt-4">
-                <ButtonLink href="/me/delegacy">გაიგე მეტი →</ButtonLink>
-              </div>
-            </Card>
-          ) : delegacyPhase === "pending" ? (
-            <Card variant="callout">
-              <div className="flex items-center gap-3">
-                <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
-                <h3 className="font-serif text-lg font-bold text-ink">
-                  დელეგატობის მოთხოვნა გაგზავნილია
+            <CabinetPanel tone="ink" className="md:px-9 md:py-8">
+              {/* eslint-disable-next-line @next/next/no-img-element -- decorative backdrop */}
+              <img
+                src="/unity/knot-cream.svg"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-[90px] -right-[70px] hidden h-auto w-[260px] max-w-none sm:block"
+              />
+              <div className="relative">
+                <UnityKicker>შემდეგი საფეხური</UnityKicker>
+                <h3 className="mt-3.5 mb-0 font-serif text-[24px] font-semibold leading-[1.3] md:text-[28px]">
+                  გახდი დელეგატი
                 </h3>
+                <p className="mt-2.5 mb-0 max-w-[32em] text-[16px] leading-[1.6] text-prose">
+                  წარადგინე კანდიდატურა და გახდი მოძრაობის რეგიონული ხმა — საჯარო პროფილით და
+                  საკუთარი გუნდით.
+                </p>
+                <div className="mt-6">
+                  <UnityButtonLink href="/me/delegacy" size="sm" arrow>
+                    გაიგე მეტი
+                  </UnityButtonLink>
+                </div>
               </div>
-              <p className="mt-2 text-sm text-muted-fg">შედეგს აქვე ნახავ.</p>
-            </Card>
+            </CabinetPanel>
+          ) : delegacyPhase === "pending" ? (
+            <CabinetPanel tone="ink" className="md:px-9 md:py-8">
+              <div className="flex flex-wrap items-center gap-3">
+                <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
+                <CabinetPanelTitle>დელეგატობის მოთხოვნა გაგზავნილია</CabinetPanelTitle>
+              </div>
+              <p className="mt-2.5 mb-0 text-[16px] text-secondary">შედეგს აქვე ნახავ.</p>
+            </CabinetPanel>
           ) : delegacyPhase === "rejected" ? (
-            <Card variant="callout">
-              <div className="flex items-center gap-3">
+            <CabinetPanel tone="ink" className="md:px-9 md:py-8">
+              <div className="flex flex-wrap items-center gap-3">
                 <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
-                <h3 className="font-serif text-lg font-bold text-ink">დელეგატობის მოთხოვნა</h3>
+                <CabinetPanelTitle>დელეგატობის მოთხოვნა</CabinetPanelTitle>
               </div>
-              <p className="mt-2 text-sm text-muted-fg">{DELEGACY_REJECTED_NOTE}</p>
-            </Card>
+              <p className="mt-2.5 mb-0 text-[16px] text-secondary">{DELEGACY_REJECTED_NOTE}</p>
+            </CabinetPanel>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-6">
           {isMemberRole ? (
-            <Card variant="callout-teal">
-              <div className="text-[0.7rem] font-bold uppercase tracking-[.18em] text-teal">
-                ჩემი დელეგატი
+            <CabinetPanel tone="teal" className="md:p-6">
+              <div className="border-b border-rule pb-3 text-[12px] font-bold tracking-[.14em] text-teal">
+                <Caps>ჩემი დელეგატი</Caps>
               </div>
               {myDelegateRanked ? (
-                <div className="mt-2">
+                <div>
                   {/* name and region only while ratings are hidden (ADR-052) */}
                   <IndexRow
                     rank={ratingsShown ? myDelegateRanked.rank : undefined}
@@ -288,9 +280,9 @@ export default async function ProfilePage() {
                   />
                 </div>
               ) : (
-                <div className="mt-2">
+                <div className="border-b border-rule py-3.5">
                   <p
-                    className="font-serif text-lg font-bold text-ink"
+                    className="m-0 font-serif text-[18px] font-bold text-ink"
                     data-testid="current-delegate"
                   >
                     {state.chosenDelegate
@@ -299,7 +291,7 @@ export default async function ProfilePage() {
                   </p>
                   {state.chosenDelegate ? (
                     <p
-                      className="mt-1 text-[0.78rem] text-muted-fg"
+                      className="mt-1 mb-0 text-[14px] text-secondary"
                       data-testid="delegate-unavailable"
                     >
                       დელეგატი ამჟამად მიუწვდომელია
@@ -309,11 +301,11 @@ export default async function ProfilePage() {
               )}
               <Link
                 href="/me/delegate"
-                className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+                className="mt-4 inline-block text-[15px] font-bold text-brand underline decoration-1 underline-offset-[5px] hover:text-brand-dark"
               >
                 დელეგატის შეცვლა →
               </Link>
-            </Card>
+            </CabinetPanel>
           ) : null}
 
           {state.referralCode != null ? (
@@ -330,22 +322,27 @@ export default async function ProfilePage() {
           ) : null}
 
           {teaserPoll ? (
-            <Card variant="callout">
-              <Eyebrow>{POLL_TEASER_EYEBROW}</Eyebrow>
-              <p className="mt-2 font-serif text-[1.02rem] font-semibold leading-snug text-ink">
+            <CabinetPanel tone="ink" className="md:p-6">
+              <UnityKicker>{POLL_TEASER_EYEBROW}</UnityKicker>
+              <p className="mt-3.5 mb-0 font-serif text-[19px] font-semibold leading-snug text-ink">
                 {teaserPoll.question}
               </p>
-              <Link
-                href="/me/polls"
-                className={`mt-3 inline-flex items-center justify-center ${ballotButtonClasses("solid")}`}
-              >
-                სრულად →
-              </Link>
-            </Card>
+              <div className="mt-4">
+                <UnityButtonLink
+                  href="/me/polls"
+                  variant="ghost"
+                  size="sm"
+                  arrow
+                  className="w-full"
+                >
+                  სრულად
+                </UnityButtonLink>
+              </div>
+            </CabinetPanel>
           ) : null}
         </div>
       </div>
       {deleteSection}
-    </main>
+    </CabinetPage>
   );
 }

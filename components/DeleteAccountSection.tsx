@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
-import { Field } from "@/components/Field";
+import { UnityField } from "@/components/UnityField";
+import { UnityButton } from "@/components/UnityButton";
 import { ACCOUNT_DELETION_CONFIRM_WORD } from "@/lib/account-deletion";
 import {
   ACCOUNT_DELETE_BUSY,
@@ -53,15 +52,24 @@ export function DeleteAccountSection({
   }
 
   return (
-    <Card title={ACCOUNT_DELETE_HEADING}>
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-prose">{ACCOUNT_DELETE_LEDE}</p>
-        {isDelegate ? <p className="text-sm text-prose">{ACCOUNT_DELETE_DELEGATE_NOTE}</p> : null}
+    <section className="border border-t-[3px] border-rule border-t-brand bg-chalk p-6 md:px-10 md:py-9">
+      <div className="grid gap-7 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-end md:gap-14">
+        <div className="flex flex-col gap-3">
+          <h2 className="m-0 font-serif text-[22px] font-semibold leading-[1.3] text-brand md:text-[24px]">
+            {ACCOUNT_DELETE_HEADING}
+          </h2>
+          <p className="m-0 text-[15.5px] leading-[1.65] text-prose">{ACCOUNT_DELETE_LEDE}</p>
+          {isDelegate ? (
+            <p className="m-0 text-[15.5px] leading-[1.65] text-prose">
+              {ACCOUNT_DELETE_DELEGATE_NOTE}
+            </p>
+          ) : null}
+        </div>
         {isStaff ? (
-          <p className="text-sm font-semibold text-ink">{ACCOUNT_DELETE_STAFF_NOTE}</p>
+          <p className="m-0 text-[15.5px] font-semibold text-ink">{ACCOUNT_DELETE_STAFF_NOTE}</p>
         ) : (
-          <>
-            <Field
+          <div className="flex flex-col gap-5">
+            <UnityField
               label={ACCOUNT_DELETE_CONFIRM_LABEL}
               name="deleteConfirm"
               value={word}
@@ -69,18 +77,23 @@ export function DeleteAccountSection({
               onChange={(e) => setWord(e.target.value)}
             />
             <div>
-              <Button variant="danger" onClick={onDelete} disabled={!matches || busy}>
+              <UnityButton
+                variant="danger"
+                size="sm"
+                onClick={onDelete}
+                disabled={!matches || busy}
+              >
                 {busy ? ACCOUNT_DELETE_BUSY : ACCOUNT_DELETE_BUTTON}
-              </Button>
+              </UnityButton>
             </div>
             {error ? (
-              <p role="alert" className="text-sm font-semibold text-danger">
+              <p role="alert" className="m-0 text-[15px] font-semibold text-danger">
                 {error}
               </p>
             ) : null}
-          </>
+          </div>
         )}
       </div>
-    </Card>
+    </section>
   );
 }

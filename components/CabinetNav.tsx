@@ -3,10 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/Badge";
+import { Caps } from "@/components/Caps";
 import { useSignOut } from "@/components/useSignOut";
 import type { CabinetNavItem } from "@/lib/cabinet";
 import { activeNavHref } from "@/lib/nav-active";
 
+/**
+ * The cabinet's tab row on the wine band („ერთობა“ redesign): spaced capitals, the current
+ * tab white with a sand underline, sign-out in sand at the far end. Desktop only; phones use
+ * MobileTabBar.
+ */
 export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
   const pathname = usePathname();
   const signOut = useSignOut();
@@ -17,11 +23,13 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
   // this nav also serves the delegate chrome, whose root is /delegate.
   // Shared with MobileTabBar via lib/nav-active.ts so the rule cannot drift.
   const activeHref = activeNavHref(items, pathname);
+  const tab =
+    "inline-flex h-14 items-center gap-2 whitespace-nowrap text-[13px] font-semibold tracking-[.08em] no-underline transition-colors";
 
   return (
     <nav
       aria-label="კაბინეტის ნავიგაცია"
-      className="mb-8 hidden gap-5 overflow-x-auto whitespace-nowrap border-b border-hairline text-[0.78rem] font-semibold md:flex"
+      className="hidden items-stretch gap-[clamp(22px,2.6vw,40px)] overflow-x-auto border-t border-limestone/14 md:flex"
     >
       {items.map((item) => {
         const active = item.href === activeHref;
@@ -30,17 +38,25 @@ export function CabinetNav({ items }: { items: CabinetNavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`no-underline inline-flex items-center gap-1.5 ${
-              active ? "text-brand border-b-2 border-brand pb-1" : "text-ink hover:text-brand"
+            className={`${tab} ${
+              active
+                ? "text-white shadow-[inset_0_-3px_0_var(--color-sand)] hover:text-white"
+                : "text-limestone/84 hover:text-white"
             }`}
           >
-            {item.label}
-            {item.count ? <Badge>{item.count}</Badge> : null}
+            <span>
+              <Caps>{item.label}</Caps>
+            </span>
+            {item.count ? <Badge tone="sand">{item.count}</Badge> : null}
           </Link>
         );
       })}
-      <button type="button" onClick={signOut} className="ms-auto text-ink hover:text-brand">
-        გასვლა
+      <button
+        type="button"
+        onClick={signOut}
+        className={`${tab} ms-auto cursor-pointer border-0 bg-transparent p-0 text-sand hover:text-white`}
+      >
+        <Caps>გასვლა</Caps>
       </button>
     </nav>
   );

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/Card";
+import { CabinetHead, CabinetPage, CabinetSectionLabel } from "@/components/CabinetPage";
 import { Pill } from "@/components/Pill";
-import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
-import { formatEventTimeKa, rsvpOpen, splitEvents } from "@/lib/community";
+import { eventDayMonthKa, formatEventTimeKa, rsvpOpen, splitEvents } from "@/lib/community";
 import { showEvents } from "@/lib/events-switch";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { EventRsvp } from "./EventRsvp";
@@ -31,63 +30,86 @@ export default async function MemberEventsPage() {
   const { upcoming, past } = splitEvents(eventsRes.data ?? [], nowIso);
 
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიებები</h1>
-        <p className="mt-2 text-sm text-muted-fg">აღნიშნე დასწრება — გუნდი შენზეა დამოკიდებული.</p>
-      </div>
+    <CabinetPage>
+      <CabinetHead title="ღონისძიებები" lede="აღნიშნე დასწრება — გუნდი შენზეა დამოკიდებული." />
 
-      <div className="flex flex-col gap-4">
+      <CabinetSectionLabel className="mt-10 md:mt-12">მომავალი</CabinetSectionLabel>
+      <div className="mt-6 flex flex-col gap-3.5 md:mt-7">
         {upcoming.length === 0 ? (
-          <p className="text-muted-fg">მომავალი ღონისძიებები მალე გამოცხადდება.</p>
+          <p className="m-0 font-serif text-[18px] text-secondary">
+            მომავალი ღონისძიებები მალე გამოცხადდება.
+          </p>
         ) : (
-          upcoming.map((e) => (
-            <Card key={e.id}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-muted-fg">
+          upcoming.map((e) => {
+            const cancelled = e.status === "cancelled";
+            const date = eventDayMonthKa(e.starts_at);
+            return (
+              <article
+                key={e.id}
+                className="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-x-5 gap-y-4 border border-rule bg-chalk p-5 md:grid-cols-[110px_minmax(0,1fr)_auto] md:gap-x-7 md:px-7 md:py-6"
+              >
+                <div
+                  className={`self-stretch border-r border-rule pr-4 text-center md:pr-6 ${
+                    cancelled ? "text-secondary" : "text-brand"
+                  }`}
+                >
+                  <span className="block font-serif text-[34px] font-bold leading-none md:text-[46px]">
+                    {date?.day}
+                  </span>
+                  <span className="mt-1 block text-[13px] font-semibold text-secondary">
+                    {date?.month}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="m-0 text-[14px] font-semibold text-secondary">
                     {formatEventTimeKa(e.starts_at, e.ends_at)} · {e.location}
                   </p>
-                  <h3 className="mt-1 font-serif text-lg font-bold text-ink">{e.title}</h3>
-                  <p className="mt-1 text-sm text-muted-fg">
-                    სულ მოდის {formatCountKa(goingByEvent.get(e.id) ?? 0)} მონაწილე
+                  <h3 className="mt-1.5 mb-0 font-serif text-[20px] font-semibold leading-[1.35] text-ink md:text-[23px]">
+                    {e.title}
+                  </h3>
+                  <p className="mt-1.5 mb-0 text-[15px] text-prose">
+                    სულ მოდის{" "}
+                    <strong className="text-ink">
+                      {formatCountKa(goingByEvent.get(e.id) ?? 0)}
+                    </strong>{" "}
+                    მონაწილე
                   </p>
                 </div>
-                {e.status === "cancelled" ? <Pill {...contentPill("cancelled")} /> : null}
-              </div>
-              <div className="mt-4">
-                <EventRsvp
-                  eventId={e.id}
-                  status={myStatusByEvent.get(e.id) ?? null}
-                  open={rsvpOpen(e, nowIso)}
-                />
-              </div>
-            </Card>
-          ))
+                <div className="col-span-2 flex flex-wrap items-center gap-3.5 md:col-span-1 md:justify-end">
+                  {cancelled ? <Pill {...contentPill("cancelled")} /> : null}
+                  <EventRsvp
+                    eventId={e.id}
+                    status={myStatusByEvent.get(e.id) ?? null}
+                    open={rsvpOpen(e, nowIso)}
+                  />
+                </div>
+              </article>
+            );
+          })
         )}
       </div>
 
       {past.length > 0 ? (
         <>
-          <SectionRule label="გასული" className="mt-12" />
-          <div className="mt-3 flex flex-col gap-2">
+          <CabinetSectionLabel className="mt-14 md:mt-16">გასული</CabinetSectionLabel>
+          <div className="mt-6 flex flex-col gap-2.5">
             {past.map((e) => (
               <div
                 key={e.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-hairline bg-surface px-4 py-2.5 text-sm"
+                className="grid items-center gap-x-6 gap-y-1 border border-rule bg-sandstone px-5 py-4 md:grid-cols-[200px_minmax(0,1fr)_auto] md:px-6"
               >
-                <span className="font-semibold text-muted-fg">
+                <span className="text-[14px] text-secondary">
                   {formatEventTimeKa(e.starts_at, e.ends_at)}
                 </span>
-                <span className="font-serif font-semibold text-ink">{e.title}</span>
+                <span className="font-serif text-[17px] font-semibold text-ink">{e.title}</span>
                 {myStatusByEvent.get(e.id) === "going" ? (
-                  <span className="text-xs font-semibold text-ok">დაესწარი ✓</span>
+                  <span className="text-[14px] font-bold text-ok-deep">დაესწარი ✓</span>
                 ) : null}
               </div>
             ))}
           </div>
         </>
       ) : null}
-    </main>
+    </CabinetPage>
   );
 }

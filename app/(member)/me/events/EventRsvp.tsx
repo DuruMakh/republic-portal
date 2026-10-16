@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
+import { UnityButton } from "@/components/UnityButton";
 import { rsvpAction } from "./actions";
 
 export function EventRsvp({
@@ -19,7 +19,7 @@ export function EventRsvp({
   const [pending, startTransition] = useTransition();
 
   if (!open) {
-    return <p className="text-sm font-semibold text-muted-fg">რეგისტრაცია დახურულია</p>;
+    return <p className="m-0 text-[15px] text-secondary">რეგისტრაცია დახურულია</p>;
   }
   const going = status === "going";
 
@@ -37,21 +37,21 @@ export function EventRsvp({
 
   return (
     <div className="flex flex-col gap-2" data-testid={`rsvp-${eventId}`}>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3.5">
         {going ? (
           <>
-            <span className="text-sm font-semibold text-ok">✓ შენ მოდიხარ</span>
-            <Button variant="ghost" size="sm" disabled={pending} onClick={() => submit(false)}>
+            <span className="text-[15px] font-bold text-ok-deep">✓ შენ მოდიხარ</span>
+            <UnityButton variant="ghost" size="sm" disabled={pending} onClick={() => submit(false)}>
               გაუქმება
-            </Button>
+            </UnityButton>
           </>
         ) : (
-          <Button size="sm" disabled={pending} onClick={() => submit(true)}>
+          <UnityButton size="sm" disabled={pending} onClick={() => submit(true)}>
             მოვალ
-          </Button>
+          </UnityButton>
         )}
       </div>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="m-0 text-[14px] font-semibold text-brand">{error}</p> : null}
     </div>
   );
 }

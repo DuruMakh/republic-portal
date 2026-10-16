@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card } from "@/components/Card";
+import {
+  CabinetHead,
+  CabinetNote,
+  CabinetPage,
+  CabinetPanel,
+  CabinetPanelTitle,
+} from "@/components/CabinetPage";
 import { DelegateTerms } from "@/components/DelegateTerms";
 import { Pill } from "@/components/Pill";
 import { DELEGACY_REJECTED_NOTE, DELEGACY_STATUS_LABELS, deriveDelegacyPhase } from "@/lib/cabinet";
@@ -17,65 +23,68 @@ export default async function DelegacyPage() {
   if (phase === null) redirect("/me/membership"); // registered: membership comes first
   if (phase === "approved") redirect("/delegate");
 
+  const termsLink = (
+    <Link
+      href="/join/terms"
+      className="mt-5 inline-block text-[15px] font-semibold text-brand underline decoration-brand/40 underline-offset-4 hover:decoration-brand"
+    >
+      დელეგატის წესები და პირობები →
+    </Link>
+  );
+
   return (
-    <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">გახდი დელეგატი</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          დელეგატი მოძრაობის რეგიონული ხმაა — ვერიფიცირებული, საჯარო და ანგარიშვალდებული.
-        </p>
-      </div>
-      {phase === "pending" ? (
-        <Card variant="callout">
-          <div className="flex items-center gap-3">
-            <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
-            <h2 className="font-serif text-lg font-bold text-ink">მოთხოვნა გაგზავნილია</h2>
-          </div>
-          <p className="mt-2 text-sm text-muted-fg">
-            შენი მოთხოვნა ადმინისტრაციასთანაა — შედეგს აქვე ნახავ. ამასობაში წევრობის ყველა
-            შესაძლებლობა უცვლელად მუშაობს.
-          </p>
-          <Link
-            href="/join/terms"
-            className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
-          >
-            დელეგატის წესები და პირობები →
-          </Link>
-        </Card>
-      ) : phase === "rejected" ? (
-        <Card variant="callout">
-          <div className="flex items-center gap-3">
-            <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
-            <h2 className="font-serif text-lg font-bold text-ink">მოთხოვნა არ დამტკიცდა</h2>
-          </div>
-          <p className="mt-2 text-sm text-muted-fg">
-            {DELEGACY_REJECTED_NOTE} შენი წევრობა უცვლელი რჩება.
-          </p>
-          <Link
-            href="/join/terms"
-            className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
-          >
-            დელეგატის წესები და პირობები →
-          </Link>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-6">
-          <p className="border border-warn bg-warn/10 px-4 py-3 text-sm font-semibold text-warn-deep">
-            სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.
-          </p>
-          <DelegateTerms />
-          <Card>
-            <h2 className="font-serif text-lg font-bold text-ink">დაადასტურე თანხმობა</h2>
-            <p className="mt-1 text-sm text-muted-fg">
-              გაგზავნით ეთანხმები ზემოთ მოცემულ წესებს. ახალი მონაცემები არ გროვდება — ვერიფიკაციას
-              შენი არსებული პროფილი გადის.
-            </p>
-            <div className="mt-4">
-              <DelegacyConfirm />
+    <CabinetPage deco="knot">
+      <CabinetHead
+        title="გახდი დელეგატი"
+        lede="დელეგატი მოძრაობის რეგიონული ხმაა — ვერიფიცირებული, საჯარო და ანგარიშვალდებული."
+      />
+      <div className="mt-8 md:mt-12">
+        {phase === "pending" ? (
+          <CabinetPanel tone="ink" className="max-w-[760px]">
+            <div className="flex flex-wrap items-center gap-3">
+              <Pill status="pending" label={DELEGACY_STATUS_LABELS.pending} />
+              <CabinetPanelTitle>მოთხოვნა გაგზავნილია</CabinetPanelTitle>
             </div>
-          </Card>
-        </div>
-      )}
-    </main>
+            <p className="mt-3 mb-0 text-[16px] leading-[1.65] text-prose">
+              შენი მოთხოვნა ადმინისტრაციასთანაა — შედეგს აქვე ნახავ. ამასობაში წევრობის ყველა
+              შესაძლებლობა უცვლელად მუშაობს.
+            </p>
+            {termsLink}
+          </CabinetPanel>
+        ) : phase === "rejected" ? (
+          <CabinetPanel tone="ink" className="max-w-[760px]">
+            <div className="flex flex-wrap items-center gap-3">
+              <Pill status="rejected" label={DELEGACY_STATUS_LABELS.rejected} />
+              <CabinetPanelTitle>მოთხოვნა არ დამტკიცდა</CabinetPanelTitle>
+            </div>
+            <p className="mt-3 mb-0 text-[16px] leading-[1.65] text-prose">
+              {DELEGACY_REJECTED_NOTE} შენი წევრობა უცვლელი რჩება.
+            </p>
+            {termsLink}
+          </CabinetPanel>
+        ) : (
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-[clamp(32px,4vw,64px)]">
+            <div className="min-w-0">
+              <CabinetNote>სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.</CabinetNote>
+              <div className="mt-8">
+                <DelegateTerms />
+              </div>
+            </div>
+            <CabinetPanel tone="wine" as="aside" className="lg:sticky lg:top-6">
+              <h2 className="m-0 font-serif text-[26px] font-semibold leading-[1.25] text-limestone md:text-[30px]">
+                დაადასტურე თანხმობა
+              </h2>
+              <p className="mt-3.5 mb-0 text-[16.5px] leading-[1.65] text-sand">
+                გაგზავნით ეთანხმები ზემოთ მოცემულ წესებს. ახალი მონაცემები არ გროვდება —
+                ვერიფიკაციას შენი არსებული პროფილი გადის.
+              </p>
+              <div className="mt-[26px]">
+                <DelegacyConfirm />
+              </div>
+            </CabinetPanel>
+          </div>
+        )}
+      </div>
+    </CabinetPage>
   );
 }

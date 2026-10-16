@@ -20,7 +20,9 @@ const REFUSAL = "refused by the database";
 const action = vi.fn<Action>().mockResolvedValue({ ok: false, error: REFUSAL });
 
 function typeWord(value: string) {
-  fireEvent.change(screen.getByLabelText(ACCOUNT_DELETE_CONFIRM_LABEL), { target: { value } });
+  fireEvent.change(screen.getByRole("textbox", { name: ACCOUNT_DELETE_CONFIRM_LABEL }), {
+    target: { value },
+  });
 }
 
 describe("DeleteAccountSection", () => {
@@ -112,6 +114,6 @@ describe("DeleteAccountSection", () => {
     render(<DeleteAccountSection isStaff isDelegate={false} action={action} />);
     expect(screen.getByText(ACCOUNT_DELETE_STAFF_NOTE)).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.queryByLabelText(ACCOUNT_DELETE_CONFIRM_LABEL)).toBeNull();
+    expect(screen.queryByRole("textbox", { name: ACCOUNT_DELETE_CONFIRM_LABEL })).toBeNull();
   });
 });

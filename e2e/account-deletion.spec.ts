@@ -77,7 +77,7 @@ test("a member deletes their account and their data is gone", async ({ page }) =
   expect(await footprint(id)).toEqual({ profiles: 1, memberships: 1, signInAccount: true });
 
   await page.goto("/me/profile");
-  const word = page.getByLabel(ACCOUNT_DELETE_CONFIRM_LABEL, { exact: true });
+  const word = page.getByRole("textbox", { name: ACCOUNT_DELETE_CONFIRM_LABEL, exact: true });
   const remove = page.getByRole("button", { name: ACCOUNT_DELETE_BUTTON, exact: true });
 
   // locked until the confirmation word is typed
