@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Caps } from "@/components/Caps";
 import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { UnityStat } from "@/components/UnityStat";
 import { UnityTextLink } from "@/components/UnityTextLink";
 import { delegateBioFallback, formatCountKa } from "@/lib/format";
 import { rankDelegates } from "@/lib/ranking";
@@ -90,13 +91,15 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
           </p>
           {ratingsShown ? (
             <dl className="m-0 mt-8 grid gap-6 sm:mt-12 sm:grid-cols-2 sm:gap-10">
-              <DelegateStat
+              <UnityStat
+                large
                 value={formatCountKa(delegate.members)}
                 label="წევრი"
                 sub="ღია რეიტინგში"
                 red
               />
-              <DelegateStat
+              <UnityStat
+                large
                 value={`#${delegate.rank}`}
                 label="პოზიცია რეიტინგში"
                 sub="დამტკიცებულ დელეგატებს შორის"
@@ -137,29 +140,5 @@ export default async function DelegatePage({ params }: { params: Promise<{ slug:
         </div>
       </div>
     </main>
-  );
-}
-
-function DelegateStat({
-  value,
-  label,
-  sub,
-  red = false,
-}: {
-  value: string;
-  label: string;
-  sub: string;
-  red?: boolean;
-}) {
-  return (
-    <div className="flex flex-col border-t-2 border-ink pt-3.5 sm:pt-[18px]">
-      <dt className="order-2 mt-2 text-[16px] font-bold">{label}</dt>
-      <dd
-        className={`order-1 m-0 font-serif text-[40px] font-bold leading-[1.05] sm:text-[56px] ${red ? "text-brand" : "text-ink"}`}
-      >
-        {value}
-      </dd>
-      <dd className="order-3 m-0 text-[14px] text-secondary">{sub}</dd>
-    </div>
   );
 }
