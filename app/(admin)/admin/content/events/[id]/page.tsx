@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Card } from "@/components/Card";
+import { AdminPageHeader, AdminSectionTitle } from "@/components/AdminUi";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
-import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { isoToTbilisiLocal } from "@/lib/community";
@@ -27,44 +28,50 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-[2rem] font-bold text-ink">ღონისძიების რედაქტირება</h1>
-          <Pill {...contentPill(event.status)} />
-          <span className="text-sm font-semibold text-muted-fg">
-            მოდის: {formatCountKa(event.going_count)}
-          </span>
-          {event.slug && event.status !== "draft" ? (
-            <a
-              href={`/events/${event.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-brand hover:underline"
-            >
-              ნახე საიტზე ↗
-            </a>
-          ) : null}
-        </div>
-      </div>
-
-      <EventForm
-        event={{
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          location: event.location,
-          startsAtLocal: isoToTbilisiLocal(event.starts_at),
-          endsAtLocal: event.ends_at ? isoToTbilisiLocal(event.ends_at) : "",
-        }}
+      <AdminPageHeader
+        title="ღონისძიების რედაქტირება"
+        meta={
+          <>
+            <Pill {...contentPill(event.status)} />
+            <span className="text-sm font-semibold text-muted-fg">
+              მოდის: {formatCountKa(event.going_count)}
+            </span>
+            {event.slug && event.status !== "draft" ? (
+              <a
+                href={`/events/${event.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-brand hover:underline"
+              >
+                ნახე საიტზე ↗
+              </a>
+            ) : null}
+          </>
+        }
       />
 
-      <div className="mt-8">
-        <SectionRule label="მოქმედებები" className="mb-4" />
-        <EventActions
-          id={event.id}
-          status={event.status}
-          everPublished={event.published_at !== null}
-        />
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <Card>
+          <EventForm
+            event={{
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              location: event.location,
+              startsAtLocal: isoToTbilisiLocal(event.starts_at),
+              endsAtLocal: event.ends_at ? isoToTbilisiLocal(event.ends_at) : "",
+            }}
+          />
+        </Card>
+
+        <Card>
+          <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
+          <EventActions
+            id={event.id}
+            status={event.status}
+            everPublished={event.published_at !== null}
+          />
+        </Card>
       </div>
     </div>
   );

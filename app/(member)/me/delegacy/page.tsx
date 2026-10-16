@@ -67,7 +67,7 @@ export default async function DelegacyPage() {
             <div className="min-w-0">
               <CabinetNote>სამუშაო ვერსია — ექვემდებარება იურიდიულ გადახედვას.</CabinetNote>
               <div className="mt-8">
-                <DelegateTerms layout="lettered" />
+                <DelegateTerms />
               </div>
             </div>
             <CabinetPanel tone="wine" as="aside" className="lg:sticky lg:top-6">

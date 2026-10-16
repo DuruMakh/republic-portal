@@ -1,11 +1,12 @@
-import PublicLayout from "@/app/(public)/layout";
+import UnityLayout from "@/app/(unity)/layout";
 import { PinChromePathname } from "@/components/ChromePathname";
-import { NOT_FOUND_METADATA, NotFoundNotice } from "@/components/NotFoundNotice";
+import { NOT_FOUND_METADATA } from "@/components/NotFoundNotice";
+import { UnityNotFoundNotice } from "@/components/UnityNotice";
 
 export const metadata = NOT_FOUND_METADATA;
 
 /**
- * Unknown URLs land here: the same Georgian notice, wrapped in the public site chrome so the
+ * Unknown URLs land here: the same Georgian notice, wrapped in the redesigned public site chrome so the
  * visitor keeps the header and footer instead of a bare page.
  *
  * Every route group has its own not-found.tsx that shows just the notice inside its own layout
@@ -16,15 +17,15 @@ export const metadata = NOT_FOUND_METADATA;
  * chrome is therefore pinned to that path: left to read the live address, a deep one such as
  * /news/a/b would add the phone back header on the client only, and hydration would fail.
  *
- * PublicLayout must stay static (no cookies(), headers() or database reads): this file is built
+ * UnityLayout must stay static (no cookies(), headers() or database reads): this file is built
  * into every route's not-found boundary, so a dynamic layout here would make every route dynamic.
  */
 export default function RootNotFound() {
   return (
     <PinChromePathname pathname="/_not-found">
-      <PublicLayout>
-        <NotFoundNotice />
-      </PublicLayout>
+      <UnityLayout>
+        <UnityNotFoundNotice />
+      </UnityLayout>
     </PinChromePathname>
   );
 }

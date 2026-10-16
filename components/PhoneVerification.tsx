@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/Button";
+import { UnityButton } from "@/components/UnityButton";
 import { OtpInput } from "@/components/OtpInput";
 import { otpSchema } from "@/lib/funnel-schemas";
 import {
@@ -11,7 +11,7 @@ import {
 import {
   sendPhoneVerificationAction,
   verifyPhoneVerificationAction,
-} from "@/app/(public)/join/phone-actions";
+} from "@/app/(unity)/join/phone-actions";
 
 interface PhoneVerificationProps {
   phone: string;
@@ -113,18 +113,21 @@ export function PhoneVerification({
   }
 
   return (
-    <div className="flex flex-col gap-4" data-expires-at={expiresAt}>
-      <p className="text-sm text-muted-fg">
-        გამოგზავნილია SMS კოდი ნომერზე <strong className="text-ink">{phone}</strong>. შეიყვანე
-        6-ნიშნა კოდი.
+    <div className="flex flex-col" data-expires-at={expiresAt}>
+      <p className="text-[16px] leading-[1.6] text-secondary sm:text-[17px]">
+        გამოგზავნილია SMS კოდი ნომერზე{" "}
+        <strong className="whitespace-nowrap font-bold text-ink">{phone}</strong>. შეიყვანე 6-ნიშნა
+        კოდი.
       </p>
-      <OtpInput value={code} onChange={setCode} error={error} />
-      <Button onClick={verify} disabled={busy}>
+      <div className="mt-7 sm:mt-9">
+        <OtpInput value={code} onChange={setCode} error={error} />
+      </div>
+      <UnityButton onClick={verify} disabled={busy} className="mt-8 w-full sm:mt-10">
         დადასტურება
-      </Button>
+      </UnityButton>
       <button
         type="button"
-        className="text-sm text-muted-fg underline-offset-2 enabled:hover:underline disabled:opacity-60"
+        className="mt-[18px] min-h-11 cursor-pointer self-center border-0 bg-transparent px-2 text-[15px] font-semibold text-secondary underline-offset-4 enabled:hover:text-ink enabled:hover:underline disabled:cursor-not-allowed"
         disabled={cooldownActive || busy}
         onClick={resend}
       >

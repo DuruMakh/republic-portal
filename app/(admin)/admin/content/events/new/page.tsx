@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Card } from "@/components/Card";
+import { AdminPageHeader } from "@/components/AdminUi";
 import { notFound } from "next/navigation";
 import { showEvents } from "@/lib/events-switch";
 import { EventForm } from "../EventForm";
@@ -10,10 +12,12 @@ export default function NewEventPage() {
   if (!showEvents()) notFound();
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ახალი ღონისძიება</h1>
+      <AdminPageHeader title="ახალი ღონისძიება" />
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <Card>
+          <EventForm event={null} />
+        </Card>
       </div>
-      <EventForm event={null} />
     </div>
   );
 }

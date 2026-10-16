@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Card } from "@/components/Card";
+import { AdminPageHeader, AdminSectionTitle } from "@/components/AdminUi";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
-import { SectionRule } from "@/components/SectionRule";
 import { contentPill } from "@/lib/admin";
 import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa, isoToTbilisiLocal, leadingOptions, percentages } from "@/lib/community";
@@ -28,57 +29,63 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-[2rem] font-bold text-ink">გამოკითხვა</h1>
-          <Pill {...contentPill(poll.status)} />
-          <span className="text-sm font-semibold text-muted-fg">
-            სულ {formatCountKa(poll.total_votes)} ხმა
-          </span>
-          {poll.ends_at ? (
+      <AdminPageHeader
+        title="გამოკითხვა"
+        meta={
+          <>
+            <Pill {...contentPill(poll.status)} />
             <span className="text-sm font-semibold text-muted-fg">
-              ბოლო ვადა: {formatEventTimeKa(poll.ends_at, null)}
+              სულ {formatCountKa(poll.total_votes)} ხმა
             </span>
-          ) : null}
-        </div>
-      </div>
+            {poll.ends_at ? (
+              <span className="text-sm font-semibold text-muted-fg">
+                ბოლო ვადა: {formatEventTimeKa(poll.ends_at, null)}
+              </span>
+            ) : null}
+          </>
+        }
+      />
 
-      {poll.status === "draft" ? (
-        <PollForm
-          poll={{
-            id: poll.id,
-            question: poll.question,
-            options: options.map((o) => o.label),
-            endsAtLocal: poll.ends_at ? isoToTbilisiLocal(poll.ends_at) : "",
-          }}
-        />
-      ) : (
-        <div className="max-w-2xl">
-          <h2 className="text-lg font-bold text-ink">{poll.question}</h2>
-          <div className="mt-4 flex flex-col gap-3.5">
-            {options.map((o, i) => (
-              <div key={o.option_id}>
-                <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-ink">{o.label}</span>
-                  <span className="font-semibold text-muted-fg">
-                    {formatCountKa(o.votes)} · {pcts[i] ?? 0}%
-                  </span>
-                </div>
-                <div className="h-2.5 bg-surface">
-                  <div
-                    className={`h-2.5 ${leading[i] ? "bg-brand" : "bg-teal"}`}
-                    style={{ width: `${pcts[i] ?? 0}%` }}
-                  />
-                </div>
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <Card>
+          {poll.status === "draft" ? (
+            <PollForm
+              poll={{
+                id: poll.id,
+                question: poll.question,
+                options: options.map((o) => o.label),
+                endsAtLocal: poll.ends_at ? isoToTbilisiLocal(poll.ends_at) : "",
+              }}
+            />
+          ) : (
+            <div>
+              <h2 className="text-lg font-bold text-ink">{poll.question}</h2>
+              <div className="mt-4 flex flex-col gap-3.5">
+                {options.map((o, i) => (
+                  <div key={o.option_id}>
+                    <div className="mb-1.5 flex items-center justify-between text-sm">
+                      <span className="font-semibold text-ink">{o.label}</span>
+                      <span className="font-semibold text-muted-fg">
+                        {formatCountKa(o.votes)} · {pcts[i] ?? 0}%
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-surface">
+                      <div
+                        className={`h-2.5 ${leading[i] ? "bg-brand" : "bg-teal"}`}
+                        style={{ width: `${pcts[i] ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
+        </Card>
 
-      <div className="mt-8">
-        <SectionRule label="მოქმედებები" className="mb-4" />
-        <PollActions id={poll.id} status={poll.status} />
+        <Card>
+          <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
+          <PollActions id={poll.id} status={poll.status} />
+        </Card>
       </div>
     </div>
   );

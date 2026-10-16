@@ -134,6 +134,16 @@ export function eventDayMonthKa(iso: string): { day: string; month: string } | n
   return { day: pad2(t.getUTCDate()), month: MONTHS_SHORT_KA[t.getUTCMonth()] ?? "" };
 }
 
+/** The big date on an event row: the Tbilisi start day, and its month with the year. */
+export function eventDateBadgeKa(startsAt: string): { day: string; monthYear: string } {
+  const t = toTbilisiParts(startsAt);
+  if (!t) return { day: "", monthYear: "" };
+  return {
+    day: pad2(t.getUTCDate()),
+    monthYear: `${MONTHS_KA[t.getUTCMonth()]} ${t.getUTCFullYear()}`,
+  };
+}
+
 export function formatEventTimeKa(startsAt: string, endsAt: string | null): string {
   const startDate = formatDateKa(startsAt);
   const startTime = timeKa(startsAt);

@@ -19,7 +19,7 @@ export function OtpInput({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex justify-center gap-2" role="group" aria-label="SMS კოდი">
+      <div className="flex justify-center gap-2.5 sm:gap-4" role="group" aria-label="SMS კოდი">
         {digits.map((digit, i) => (
           <input
             key={i}
@@ -33,9 +33,9 @@ export function OtpInput({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             data-testid={`otp-${i}`}
-            className={`w-10 h-11 border-0 border-b-2 ${
-              error ? "border-brand" : "border-ink"
-            } bg-transparent text-center font-serif text-xl focus:border-brand focus-visible:outline-none`}
+            className={`h-[58px] w-11 rounded-none border-0 border-b-2 p-0 sm:h-[68px] sm:w-14 ${
+              error ? "border-brand" : digit ? "border-ink" : "border-[#a39684]"
+            } bg-transparent text-center font-serif text-[30px] font-semibold text-ink focus:border-brand focus-visible:outline-none sm:text-[36px]`}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, "");
               if (raw.length > 1) {
@@ -57,7 +57,7 @@ export function OtpInput({
         ))}
       </div>
       {error ? (
-        <p id={errorId} className="text-center text-xs text-danger">
+        <p id={errorId} className="mt-2 text-center text-[14px] font-semibold text-danger">
           {error}
         </p>
       ) : null}

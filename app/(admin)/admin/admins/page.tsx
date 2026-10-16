@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import {
+  AdminPageHeader,
+  adminRowClass,
+  AdminSectionTitle,
+  adminTdClass,
+  adminThClass,
+} from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { hasAnyRole, ROLE_LABELS_KA, roleDutiesKa, type AdminRole } from "@/lib/admin";
 import { formatDateKa, formatPhoneKa } from "@/lib/cabinet";
 import { showEvents } from "@/lib/events-switch";
@@ -48,15 +56,16 @@ export default async function AdminAdminsPage() {
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">ადმინების მართვა</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          როლების მინიჭება და მოხსნა — ყველა ცვლილება აღირიცხება აუდიტის ჟურნალში.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="ადმინების მართვა"
+        lede="როლების მინიჭება და მოხსნა — ყველა ცვლილება აღირიცხება აუდიტის ჟურნალში."
+      />
 
       <div className="flex flex-col gap-6">
-        <Card title="როლის მინიჭება">
+        <Card>
+          <h2 className="mb-4 font-serif text-[22px] leading-[1.3] font-semibold">
+            როლის მინიჭება
+          </h2>
           <GrantRoleForm
             find={findAdminCandidateAction}
             grant={grantRoleAction}
@@ -64,23 +73,32 @@ export default async function AdminAdminsPage() {
           />
         </Card>
 
-        <Card title="მიმდინარე ადმინები" padded={false}>
+        <Card>
+          <AdminSectionTitle>მიმდინარე ადმინები</AdminSectionTitle>
           <DataTable
             bodyTestId="admin-admins-body"
             head={
               <>
-                <th className={tableThClass}>ადმინი</th>
-                <th className={tableThClass}>ტელეფონი</th>
-                <th className={tableThClass}>როლები</th>
-                <th className={tableThClass}>მინიჭების თარიღი</th>
+                <th className={adminThClass}>
+                  <Caps>ადმინი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>ტელეფონი</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>როლები</Caps>
+                </th>
+                <th className={adminThClass}>
+                  <Caps>მინიჭების თარიღი</Caps>
+                </th>
               </>
             }
           >
             {[...byUser.entries()].map(([userId, admin]) => (
-              <tr key={userId} className={tableRowClass}>
-                <td className={`${tableCellClass} font-semibold`}>{admin.name}</td>
-                <td className={tableCellClass}>{formatPhoneKa(admin.phone)}</td>
-                <td className={tableCellClass}>
+              <tr key={userId} className={adminRowClass}>
+                <td className={`${adminTdClass} font-semibold`}>{admin.name}</td>
+                <td className={adminTdClass}>{formatPhoneKa(admin.phone)}</td>
+                <td className={adminTdClass}>
                   <span className="flex flex-wrap gap-2">
                     {admin.roles.map((r) => (
                       <span
@@ -93,7 +111,7 @@ export default async function AdminAdminsPage() {
                     ))}
                   </span>
                 </td>
-                <td className={`${tableCellClass} text-muted-fg`}>
+                <td className={`${adminTdClass} text-muted-fg`}>
                   {formatDateKa(admin.roles[0]!.grantedAt)}
                   {admin.roles[0]!.grantedBy ? ` · ${admin.roles[0]!.grantedBy}` : ""}
                 </td>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   eventEndIso,
+  eventDateBadgeKa,
   eventDayMonthKa,
   formatEventTimeKa,
   isoToTbilisiLocal,
@@ -157,5 +158,21 @@ describe("eventDayMonthKa", () => {
   });
   it("returns null for malformed input", () => {
     expect(eventDayMonthKa("garbage")).toBeNull();
+  });
+});
+
+describe("eventDateBadgeKa", () => {
+  it("splits the Tbilisi start date into the day and the month with the year", () => {
+    expect(eventDateBadgeKa("2026-10-14T15:00:00.000Z")).toEqual({
+      day: "14",
+      monthYear: "ოქტომბერი 2026",
+    });
+  });
+
+  it("uses Tbilisi time, so a late-evening UTC start falls on the next day", () => {
+    expect(eventDateBadgeKa("2026-12-31T21:30:00.000Z")).toEqual({
+      day: "01",
+      monthYear: "იანვარი 2027",
+    });
   });
 });

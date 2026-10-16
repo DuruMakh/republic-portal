@@ -37,6 +37,9 @@ const revision = __SW_REVISION__;
 const serwist = new Serwist({
   precacheEntries: [
     { url: "/offline", revision },
+    // The offline page's own images, so it is whole without a connection.
+    { url: "/unity/logo.png", revision },
+    { url: "/public-pages/map-dots-grey.svg", revision },
     { url: "/manifest.webmanifest", revision },
     { url: "/icons/icon-192.png", revision },
     { url: "/icons/icon-512.png", revision },

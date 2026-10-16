@@ -46,55 +46,58 @@ export function NewsForm({ article }: { article: EditableArticle | null }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-          სათაური
-          <input
-            className={adminControlClasses}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={160}
-          />
-        </label>
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+      <Card>
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+            სათაური
+            <input
+              className={adminControlClasses}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={160}
+            />
+          </label>
 
-        <fieldset className="flex items-center gap-5 text-sm">
-          <legend className="mb-1.5 font-semibold text-ink">ხილვადობა</legend>
-          {(["public", "members"] as const).map((v) => (
-            <label key={v} className="flex items-center gap-1.5 font-semibold text-muted-fg">
-              <input
-                type="radio"
-                name="visibility"
-                checked={visibility === v}
-                onChange={() => setVisibility(v)}
-              />
-              {VISIBILITY_LABELS_KA[v]}
-            </label>
-          ))}
-        </fieldset>
+          <fieldset className="flex items-center gap-5 text-sm">
+            <legend className="mb-1.5 font-semibold text-ink">ხილვადობა</legend>
+            {(["public", "members"] as const).map((v) => (
+              <label key={v} className="flex items-center gap-1.5 font-semibold text-muted-fg">
+                <input
+                  type="radio"
+                  name="visibility"
+                  checked={visibility === v}
+                  onChange={() => setVisibility(v)}
+                />
+                {VISIBILITY_LABELS_KA[v]}
+              </label>
+            ))}
+          </fieldset>
 
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-          ტექსტი
-          <textarea
-            className={`${adminControlClasses} min-h-72 font-sans`}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-          />
-        </label>
-        <p className="text-xs text-muted-fg">
-          ცარიელი ხაზი იწყებს ახალ აბზაცს; ბმულები ავტომატურად აქტიურდება.
-        </p>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+            ტექსტი
+            <textarea
+              className={`${adminControlClasses} min-h-72 font-sans`}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          </label>
+          <p className="text-xs text-muted-fg">
+            ცარიელი ხაზი იწყებს ახალ აბზაცს; ბმულები ავტომატურად აქტიურდება.
+          </p>
 
-        <div className="flex items-center gap-3">
-          <Button disabled={pending} onClick={submit}>
-            შენახვა
-          </Button>
-          {saved ? <span className="text-sm font-semibold text-ok">შენახულია.</span> : null}
+          <div className="flex items-center gap-3">
+            <Button disabled={pending} onClick={submit}>
+              შენახვა
+            </Button>
+            {saved ? <span className="text-sm font-semibold text-ok">შენახულია.</span> : null}
+          </div>
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
         </div>
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
-      </div>
+      </Card>
 
-      <Card title="გადახედვა">
+      <Card>
+        <h2 className="mb-4 font-serif text-[22px] leading-[1.3] font-semibold">გადახედვა</h2>
         <div data-testid="news-preview">
           {body.trim() === "" ? (
             <p className="text-sm text-muted-fg">ტექსტი ჯერ ცარიელია.</p>

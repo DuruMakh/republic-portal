@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Card } from "@/components/Card";
-import { DataTable, tableCellClass, tableRowClass, tableThClass } from "@/components/DataTable";
+import { AdminPageHeader, adminRowClass, adminTdClass, adminThClass } from "@/components/AdminUi";
+import { Caps } from "@/components/Caps";
+import { DataTable } from "@/components/DataTable";
 import { Pill } from "@/components/Pill";
 import { ADMIN_DELETE_BUTTON, ADMIN_DELETE_DONE } from "@/lib/account-deletion-copy";
 import {
@@ -103,12 +105,10 @@ export default async function AdminMembersPage({
 
   return (
     <main>
-      <div className="mb-8 border-b-2 border-ink pb-4">
-        <h1 className="font-serif text-[2rem] font-bold text-ink">წევრების მართვა</h1>
-        <p className="mt-2 text-sm text-muted-fg">
-          გაფილტრე, მოძებნე და დაათვალიერე ყველა რეგისტრირებული წევრი.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="წევრების მართვა"
+        lede="გაფილტრე, მოძებნე და დაათვალიერე ყველა რეგისტრირებული წევრი."
+      />
 
       {showDeletedNotice ? (
         <p role="status" className="mb-4 text-sm font-semibold text-ok">
@@ -198,32 +198,56 @@ export default async function AdminMembersPage({
               bodyTestId="admin-members-body"
               head={
                 <>
-                  <th className={tableThClass}>სახელი გვარი</th>
+                  <th className={adminThClass}>
+                    <Caps>სახელი გვარი</Caps>
+                  </th>
                   {/* ტელეფონი is a deliberate addition to the spec's column list:
                     search matches phone, so operators must see why a row matched */}
-                  <th className={tableThClass}>ტელეფონი</th>
-                  <th className={tableThClass}>რეგიონი</th>
-                  <th className={tableThClass}>დელეგატი</th>
-                  <th className={tableThClass}>საწევრო</th>
-                  <th className={tableThClass}>კოდი</th>
-                  <th className={tableThClass}>სტატუსი</th>
-                  <th className={tableThClass}>თარიღი</th>
-                  {canReveal ? <th className={tableThClass}>პირადი ნომერი</th> : null}
-                  {canDelete ? <th className={tableThClass}>{ADMIN_DELETE_BUTTON}</th> : null}
+                  <th className={adminThClass}>
+                    <Caps>ტელეფონი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>რეგიონი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>დელეგატი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>საწევრო</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>კოდი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>სტატუსი</Caps>
+                  </th>
+                  <th className={adminThClass}>
+                    <Caps>თარიღი</Caps>
+                  </th>
+                  {canReveal ? (
+                    <th className={adminThClass}>
+                      <Caps>პირადი ნომერი</Caps>
+                    </th>
+                  ) : null}
+                  {canDelete ? (
+                    <th className={adminThClass}>
+                      <Caps>{ADMIN_DELETE_BUTTON}</Caps>
+                    </th>
+                  ) : null}
                 </>
               }
             >
               {members.map((m) => (
-                <tr key={m.id} className={tableRowClass}>
-                  <td className={`${tableCellClass} font-semibold`}>
+                <tr key={m.id} className={adminRowClass}>
+                  <td className={`${adminTdClass} font-semibold`}>
                     {m.first_name} {m.last_name}
                     {m.is_delegate ? (
                       <span className="ms-1 text-xs text-muted-fg">· დელეგატი</span>
                     ) : null}
                   </td>
-                  <td className={tableCellClass}>{formatPhoneKa(m.phone)}</td>
-                  <td className={tableCellClass}>{m.region_name_ka ?? "—"}</td>
-                  <td className={tableCellClass}>
+                  <td className={`${adminTdClass} whitespace-nowrap`}>{formatPhoneKa(m.phone)}</td>
+                  <td className={adminTdClass}>{m.region_name_ka ?? "—"}</td>
+                  <td className={adminTdClass}>
                     {m.standing === "registered"
                       ? m.signup_delegate_first_name
                         ? `მოიწვია: ${m.signup_delegate_first_name} ${m.signup_delegate_last_name}`
@@ -232,25 +256,23 @@ export default async function AdminMembersPage({
                         ? `${m.delegate_first_name} ${m.delegate_last_name}`
                         : "ცენტრალური მოძრაობა"}
                   </td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>
                     {m.membership_tier === null ? "—" : `${m.membership_tier} ₾`}
                   </td>
-                  <td className={`${tableCellClass} font-mono text-xs`}>
+                  <td className={`${adminTdClass} whitespace-nowrap font-mono text-xs`}>
                     {m.reference_code ?? "—"}
                   </td>
-                  <td className={tableCellClass}>
+                  <td className={adminTdClass}>
                     <Pill status={m.status} label={MEMBER_STATUS_LABELS_KA[m.status]} />
                   </td>
-                  <td className={`${tableCellClass} text-muted-fg`}>
-                    {formatDateKa(m.created_at)}
-                  </td>
+                  <td className={`${adminTdClass} text-muted-fg`}>{formatDateKa(m.created_at)}</td>
                   {canReveal ? (
-                    <td className={tableCellClass}>
+                    <td className={adminTdClass}>
                       <RevealPersonalId memberId={m.id} reveal={revealPersonalIdAction} />
                     </td>
                   ) : null}
                   {canDelete ? (
-                    <td className={tableCellClass}>
+                    <td className={adminTdClass}>
                       <DeleteMemberButton
                         memberId={m.id}
                         memberName={`${m.first_name} ${m.last_name}`}

@@ -38,7 +38,7 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
         onClick={startGoogleOAuth}
         disabled={pending}
         aria-busy={pending}
-        className="relative inline-flex min-h-[48px] w-full items-center justify-center border border-ink bg-transparent px-12 text-[0.9rem] font-medium text-ink no-underline transition-colors hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:opacity-60"
+        className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3.5 border border-ink bg-chalk px-6 text-[16px] font-semibold text-ink no-underline transition-colors hover:bg-ink hover:text-limestone disabled:pointer-events-none disabled:opacity-60 min-[900px]:h-16 min-[900px]:text-[17px]"
       >
         <Image
           src="/brand/google-g.png"
@@ -47,7 +47,6 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
           data-testid="google-mark"
           width={20}
           height={20}
-          className="absolute left-3"
         />
         <span>{label}</span>
       </button>
