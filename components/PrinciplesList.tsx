@@ -141,7 +141,7 @@ function PrincipleSection({
         <div className="min-w-0 max-sm:contents sm:flex-[1_1_200px]">
           <div
             aria-hidden="true"
-            className="pb-[.16em] font-aso text-[clamp(96px,11vw,168px)] leading-[1.05] font-light text-transparent [-webkit-text-stroke:1.5px_var(--color-brand)] max-sm:hidden"
+            className="-mb-[.08em] font-aso text-[clamp(96px,11vw,168px)] leading-[1.05] font-light text-transparent [-webkit-text-stroke:1.5px_var(--color-brand)] max-sm:hidden"
           >
             {numeral}
           </div>
@@ -151,7 +151,7 @@ function PrincipleSection({
           <PrinciplesRoots
             roots={roots}
             art={rootsArt}
-            className="mt-10 max-w-[340px] max-sm:order-last max-sm:mt-[22px] max-sm:max-w-none"
+            className="mt-5 max-w-[340px] max-sm:order-last max-sm:mt-[22px] max-sm:max-w-none"
           />
         </div>
         <div className="min-w-0 max-w-[780px] sm:flex-[3_1_560px]">
