@@ -10,7 +10,6 @@ import {
   INDEPENDENCE_ACT,
   type DocumentFan,
 } from "@/lib/archive-documents";
-import { MEMBERS_LEAD, MEMBERS_PATH_LABEL } from "@/lib/structure-copy";
 
 export const ABOUT_HREF = "/about";
 export const ABOUT_TITLE = "ჩვენ შესახებ";
@@ -55,7 +54,12 @@ export const ABOUT_PORTAL_SUB = "ეს არის სივრცე, სა�
 export type AboutPortalCard = {
   title: string;
   /** The lower block: a Mtavruli label, a line of text and a link. */
-  detail: { label: string; text: string; link: { href: string; label: string } };
+  detail: {
+    label: string;
+    text: string;
+    /** `signedInHref`, when set, replaces `href` for a signed-in visitor. */
+    link: { href: string; signedInHref?: string; label: string };
+  };
 };
 
 export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
@@ -71,8 +75,8 @@ export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
     title: "ორგანიზება",
     detail: {
       label: "წევრი",
-      text: MEMBERS_LEAD,
-      link: { href: "/structure#members", label: `${MEMBERS_PATH_LABEL} →` },
+      text: "წევრად გასახდომად შეავსე განაცხადი.",
+      link: { href: "/join", signedInHref: "/me/membership", label: "გახდი წევრი →" },
     },
   },
   {

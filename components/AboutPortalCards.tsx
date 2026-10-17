@@ -4,9 +4,10 @@ import { ABOUT_PORTAL_CARDS } from "@/lib/about-copy";
 
 /**
  * What the portal lets people do: four ruled cards side by side (a list of rows on a phone),
- * each with a lower block naming the role and a link.
+ * each with a lower block naming the role and a link. A signed-in visitor gets a card's
+ * `signedInHref` (e.g. straight to the membership form instead of registration).
  */
-export function AboutPortalCards() {
+export function AboutPortalCards({ signedIn }: { signedIn: boolean }) {
   return (
     <ul className="m-0 mt-[26px] list-none border-t-2 border-ink p-0 sm:mt-[clamp(48px,5vw,72px)] sm:grid sm:grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] sm:border-l sm:border-t sm:border-rule">
       {ABOUT_PORTAL_CARDS.map(({ title, detail }, i) => (
@@ -32,7 +33,7 @@ export function AboutPortalCards() {
             {detail.text}
           </span>
           <Link
-            href={detail.link.href}
+            href={(signedIn && detail.link.signedInHref) || detail.link.href}
             className="ml-8 mt-2 inline-block text-[15px] font-semibold text-brand underline decoration-1 underline-offset-[5px] hover:text-brand-dark sm:ml-0 sm:mt-[18px] sm:self-start sm:text-[16px]"
           >
             {detail.link.label}
