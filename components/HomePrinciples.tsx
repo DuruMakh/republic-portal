@@ -94,7 +94,7 @@ export function HomePrinciples() {
             width={556}
             height={485}
             loading="lazy"
-            className="pointer-events-none absolute left-1/2 top-[calc(50%+14px)] -z-10 h-[224px] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 opacity-20 sm:top-1/2 sm:h-[300px]"
+            className="pointer-events-none absolute left-1/2 top-[calc(50%+14px)] -z-10 h-[168px] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 opacity-20 sm:top-1/2 sm:h-[clamp(136px,14vw,200px)]"
           />
           <UnityOrnament className={`${MOTTO_STRIP} bg-right!`} />
           <figure className="relative m-0 flex-none text-center">

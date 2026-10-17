@@ -3,7 +3,7 @@ import { PRINCIPLES_QUOTE, PRINCIPLES_QUOTE_LABEL, principleLabel } from "@/lib/
 
 /**
  * The wine pull-quote band from principle 5, with the wine knot bleeding off the left edge.
- * On desktop it sits after principle 5; on phones it follows the folded list.
+ * From tablet width up it sits after principle 5; phones keep the sentence in its original text.
  */
 export function PrinciplesQuote({ className = "" }: { className?: string }) {
   return (
