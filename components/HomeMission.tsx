@@ -168,20 +168,20 @@ export function HomeMission({ stats }: { stats: PublicStats }) {
         ))}
       </div>
 
-      <div className="-mt-px bg-wine px-5 pb-10 pt-1.5 sm:px-[6.944%] sm:pb-[clamp(40px,4vw,60px)] sm:pt-1">
-        <ol className="m-0 list-none p-0 sm:grid sm:grid-cols-2 sm:gap-10 min-[56.25rem]:grid-cols-4">
+      <div className="-mt-px bg-wine px-5 pb-5 pt-1.5 sm:px-[6.944%] sm:pb-[clamp(40px,4vw,60px)] sm:pt-1">
+        <ol className="m-0 grid list-none grid-cols-2 gap-x-5 p-0 sm:gap-10 min-[56.25rem]:grid-cols-4">
           {HOME_MISSION_STEPS.map((step, i) => (
             <li
               key={step}
-              className={`${STEP_HOOKS[i]} group/step grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-baseline gap-2.5 border-t border-sand/22 py-4 first:border-t-0 sm:flex sm:flex-col sm:items-start sm:gap-4 sm:border-t-0 sm:py-0`}
+              className={`${STEP_HOOKS[i]} group/step flex min-w-0 flex-col items-start gap-1 border-t border-sand/22 pb-3 pt-2 first:border-t-0 [&:nth-child(2)]:border-t-0 sm:gap-4 sm:border-t-0 sm:py-0`}
             >
               <span
                 aria-hidden="true"
-                className="font-aso text-[34px] font-light leading-none text-sand transition-colors duration-200 group-hover/step:text-chalk sm:text-[56px] sm:leading-[.9]"
+                className="font-aso text-[24px] font-light leading-none text-sand transition-colors duration-200 group-hover/step:text-chalk sm:text-[56px] sm:leading-[.9]"
               >
                 {GEORGIAN_NUMERALS[i]}
               </span>
-              <span className="font-serif text-[19px] leading-[1.45] text-limestone [text-wrap:pretty] sm:text-[clamp(19px,1.6vw,22px)] sm:leading-[1.42]">
+              <span className="font-serif text-[17px] leading-[1.35] text-limestone [text-wrap:pretty] sm:text-[clamp(19px,1.6vw,22px)] sm:leading-[1.42]">
                 {step}
               </span>
             </li>
