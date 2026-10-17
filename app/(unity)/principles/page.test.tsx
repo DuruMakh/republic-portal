@@ -62,7 +62,7 @@ describe("/principles", () => {
       expect(within(section).getAllByRole("heading", { level: 2, name: title })).toHaveLength(2);
       expect(within(section).getByText(lead)).toBeInTheDocument();
       for (const text of body) expect(within(section).getByText(text)).toBeInTheDocument();
-      const note = within(section).getByRole("complementary", { name: "ისტორიული ფესვი" });
+      const note = within(section).getByRole("complementary", { name: "ჩვენი მემკვიდრეობა" });
       for (const root of roots) {
         if (root.kind === "event") expect(note.textContent).toContain(root.date);
         if (root.kind === "quote") expect(note.textContent).toContain(root.text);

@@ -1,7 +1,7 @@
 /**
  * Every Georgian string on /principles, in one module. The twelve principles are the owner's
  * text, sent in chat on 2026-10-13, kept verbatim; the „ერთობა“ redesign (Page 2, 2026-10-16)
- * sets each one's first sentence apart as its lead and adds a „ისტორიული ფესვი“ note of dates
+ * sets each one's first sentence apart as its lead and adds a „ჩვენი მემკვიდრეობა“ note of dates
  * and quotations beside it. Concatenated, lead and body are still the owner's text word for word.
  */
 export const PRINCIPLES_HREF = "/principles";
@@ -17,11 +17,11 @@ export const PRINCIPLES_CONTENTS = "სარჩევი";
 export const PRINCIPLES_CONTENTS_ANCHOR = "contents";
 export const PRINCIPLES_SEAL_LABEL = "პრინციპების ბეჭედი";
 export const PRINCIPLES_LIST_LABEL = "პრინციპები";
-export const PRINCIPLE_ROOTS_LABEL = "ისტორიული ფესვი";
+export const PRINCIPLE_ROOTS_LABEL = "ჩვენი მემკვიდრეობა";
 export const PRINCIPLES_QUOTE_LABEL = "ციტატა";
 export const PRINCIPLES_CLOSING_LINK = { href: "/structure", label: "ორგანიზაციული სტრუქტურა →" };
 
-/** One entry of a principle's „ისტორიული ფესვი“ note. */
+/** One entry of a principle's „ჩვენი მემკვიდრეობა“ note. */
 export type PrincipleRoot =
   | { kind: "event"; date: string; text: string }
   | { kind: "quote"; text: string; author?: string; source: string }
