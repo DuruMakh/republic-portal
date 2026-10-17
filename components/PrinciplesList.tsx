@@ -68,7 +68,7 @@ export function PrinciplesList() {
               last={number === PRINCIPLES.length}
             />
             {number === PRINCIPLES_QUOTE.principle ? (
-              <PrinciplesQuote className="max-sm:order-last max-sm:mt-12 max-sm:border-b max-sm:border-limestone/14" />
+              <PrinciplesQuote className="max-sm:hidden" />
             ) : null}
           </Fragment>
         );
