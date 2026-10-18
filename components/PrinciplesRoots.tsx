@@ -3,15 +3,13 @@ import { PRINCIPLE_ROOTS_LABEL, type PrincipleRoot } from "@/lib/principles-copy
 
 /**
  * A principle's heritage note: under a small braid and label, the dates and quotations
- * the principle grows from. Principle 1's note carries the 9 April tulips, floated right.
+ * the principle grows from.
  */
 export function PrinciplesRoots({
   roots,
-  art = false,
   className = "",
 }: {
   roots: readonly PrincipleRoot[];
-  art?: boolean;
   className?: string;
 }) {
   return (
@@ -25,16 +23,6 @@ export function PrinciplesRoots({
           <Caps>{PRINCIPLE_ROOTS_LABEL}</Caps>
         </span>
       </div>
-      {art ? (
-        // eslint-disable-next-line @next/next/no-img-element -- decorative vector drawing
-        <img
-          src="/unity/tulips.svg"
-          alt=""
-          width={196}
-          height={200}
-          className="float-right mt-3.5 mb-1.5 ml-3 h-auto w-[46px]"
-        />
-      ) : null}
       {roots.map((root, i) => {
         const gap = i === 0 ? "mt-3" : root.kind === "note" ? "mt-3" : "mt-4";
         switch (root.kind) {

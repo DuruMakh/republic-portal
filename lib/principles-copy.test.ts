@@ -4,24 +4,39 @@ import {
   PRINCIPLES,
   principleAnchor,
   principleFromHash,
-  principleLabel,
 } from "./principles-copy";
 
 describe("principles copy", () => {
   it("keeps the owner's twelve principles in order", () => {
     expect(PRINCIPLES).toHaveLength(12);
-    expect(PRINCIPLES[0]?.title).toBe("საქართველოს დამოუკიდებლობა და სუვერენიტეტი");
-    expect(PRINCIPLES[11]?.title).toBe("მდიდარი საქართველო და ტექნოლოგიური განვითარება");
-    expect(PRINCIPLES.map((p) => p.body.length)).toEqual([1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2]);
+    expect(PRINCIPLES.map(({ title }) => title)).toEqual([
+      "საქართველოს დამოუკიდებლობა და სუვერენიტეტი",
+      "ერი სახელმწიფოს შექმნა",
+      "თავისუფლება, სამართლიანობა და კანონის უზენაესობა",
+      "ერთობა, მშვიდობა და უსაფრთხოება",
+      "ქართული თვითმყოფადობის დაცვა და გაძლიერება",
+      "ძლიერი თავდაცვა და ბრძოლისუნარიანობა",
+      "აქტიური საგარეო პოლიტიკა",
+      "მდიდარი საქართველო და ტექნოლოგიური განვითარება",
+      "ხალხის ფულისა და ქვეყნის სიმდიდრის ხელშეუხებლობა",
+      "ქართული ერის დემოგრაფიული გაძლიერება და რეგიონალური განვითარება",
+      "ღირსეული ცხოვრება",
+      "ოკუპაციის დასრულება",
+    ]);
+    expect(PRINCIPLES.map((p) => p.body.length)).toEqual([2, 3, 3, 2, 3, 2, 2, 2, 2, 4, 2, 1]);
   });
 
   it("keeps the owner's text whole: the lead is the first sentence of the first paragraph", () => {
     expect(PRINCIPLES[0]?.lead).toBe(
       "საქართველო არის და იქნება თავისუფალი, დამოუკიდებელი სახელმწიფო.",
     );
-    expect(PRINCIPLES[0]?.body[0]).toMatch(/^1989 წლის 9 აპრილს/);
-    // Principle 8's first paragraph is a single sentence: it is all lead.
-    expect(PRINCIPLES[7]?.body[0]).toMatch(/^სახელმწიფომ ასევე/);
+    expect(PRINCIPLES[0]?.body[0]).toBe(
+      "ქართველი ერის ურყევი ნება, იცხოვროს საკუთარ, დამოუკიდებელ სახელმწიფოში, დადასტურებულია როგორც 1918 წლის 26 მაისისა და 1991 წლის 9 აპრილის დამოუკიდებლობის გამოცხადების აქტებით, ისე 1921 წლის თებერვალსა და 1989 წლის 9 აპრილს თავისუფლებისა და დამოუკიდებლობისთვის გაღებული მსხვერპლით. ეს ნება უზენაესია და არ ექვემდებარება გადახედვას.",
+    );
+    // The last principle keeps the rest of its opening paragraph after the lead.
+    expect(PRINCIPLES[11]?.body[0]).toBe(
+      "აფხაზეთი და ცხინვალის რეგიონი ქართული სახელმწიფოს განუყოფელი ნაწილი და ერის სამკვიდრებელია. ოკუპირებული ტერიტორიების გათავისუფლება და მშობლიურ მიწაზე დაბრუნება ქართველების საერთო ამოცანა და ერი-სახელმწიფოს არსებობის გარდაუვალი წინაპირობაა. თითოეული პოლიტიკური გადაწყვეტილება და სახელმწიფოებრივი ნაბიჯი უნდა ემსახურებოდეს ოკუპაციის დასრულებას.",
+    );
   });
 
   it("has no stray whitespace or empty text", () => {
@@ -38,10 +53,8 @@ describe("principles copy", () => {
     for (const { roots } of PRINCIPLES) expect(roots.length).toBeGreaterThan(0);
   });
 
-  it("gives each principle an anchor, a label and a Georgian numeral", () => {
+  it("gives each principle an anchor and a Georgian numeral", () => {
     expect(principleAnchor(3)).toBe("principle-3");
-    expect(principleLabel(3)).toBe("პრინციპი 03");
-    expect(principleLabel(12)).toBe("პრინციპი 12");
     expect(GEORGIAN_NUMERALS).toHaveLength(PRINCIPLES.length);
   });
 

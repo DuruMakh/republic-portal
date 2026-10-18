@@ -48,7 +48,7 @@ export function PrinciplesSeal() {
             <a
               key={numeral}
               href={`#${principleAnchor(i + 1)}`}
-              aria-label={`პრინციპი ${i + 1}`}
+              aria-label={`შეთანხმების პუნქტი ${i + 1}`}
               style={{ left: `${left}%`, top: `${top}%` }}
               className={`absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-brand bg-limestone font-aso leading-none font-light text-brand no-underline transition-colors hover:bg-brand hover:text-white sm:size-[52px] ${
                 numeral.length > 1 ? "text-[16px] sm:text-[19px]" : "text-[18px] sm:text-[21px]"

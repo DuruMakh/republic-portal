@@ -1,17 +1,14 @@
 "use client";
 
 import { Caps } from "@/components/Caps";
-import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
-import { PrinciplesQuote } from "@/components/PrinciplesQuote";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { PrinciplesRoots } from "@/components/PrinciplesRoots";
 import {
   GEORGIAN_NUMERALS,
   PRINCIPLES,
   PRINCIPLES_LIST_LABEL,
-  PRINCIPLES_QUOTE,
   principleAnchor,
   principleFromHash,
-  principleLabel,
 } from "@/lib/principles-copy";
 
 // Below Tailwind's `sm` the principles fold into rows (the phone design).
@@ -23,10 +20,10 @@ function subscribeToHash(onChange: () => void) {
 }
 
 /**
- * The twelve principles. From `sm` up each is an open section (numeral, label and historical
- * roots on the left, title, lead and text on the right), with the principle 5 quote band after
- * the fifth. On phones they fold into rows, one open at a time (the first to begin with), and a
- * link to #principle-N opens that row and scrolls to it.
+ * The twelve principles. From `sm` up each is an open section (numeral and historical
+ * roots on the left, title, lead and text on the right). On phones they fold into rows, one
+ * open at a time (the first to begin with), and a link to #principle-N opens that row and
+ * scrolls to it.
  */
 export function PrinciplesList() {
   const hash = useSyncExternalStore(
@@ -59,18 +56,14 @@ export function PrinciplesList() {
       {PRINCIPLES.map((principle, i) => {
         const number = i + 1;
         return (
-          <Fragment key={principle.title}>
-            <PrincipleSection
-              number={number}
-              open={state.open === number}
-              onToggle={() => toggle(number)}
-              ruled={number !== 1 && number !== PRINCIPLES_QUOTE.principle + 1}
-              last={number === PRINCIPLES.length}
-            />
-            {number === PRINCIPLES_QUOTE.principle ? (
-              <PrinciplesQuote className="max-sm:hidden" />
-            ) : null}
-          </Fragment>
+          <PrincipleSection
+            key={principle.title}
+            number={number}
+            open={state.open === number}
+            onToggle={() => toggle(number)}
+            ruled={number !== 1}
+            last={number === PRINCIPLES.length}
+          />
         );
       })}
     </section>
@@ -92,7 +85,7 @@ function PrincipleSection({
 }) {
   const principle = PRINCIPLES[number - 1];
   if (!principle) return null;
-  const { title, lead, body, roots, rootsArt } = principle;
+  const { title, lead, body, roots } = principle;
   const id = principleAnchor(number);
   const numeral = GEORGIAN_NUMERALS[number - 1];
 
@@ -145,12 +138,8 @@ function PrincipleSection({
           >
             {numeral}
           </div>
-          <div className="mt-1.5 text-[13px] font-bold tracking-[.14em] text-brand max-sm:hidden">
-            <Caps>{principleLabel(number)}</Caps>
-          </div>
           <PrinciplesRoots
             roots={roots}
-            art={rootsArt}
             className="mt-5 max-w-[340px] max-sm:order-last max-sm:mt-[22px] max-sm:max-w-none"
           />
         </div>

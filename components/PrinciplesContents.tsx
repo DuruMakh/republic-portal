@@ -28,7 +28,7 @@ export function PrinciplesContents() {
             <li key={title} className="break-inside-avoid">
               <a
                 href={`#${principleAnchor(i + 1)}`}
-                className="group grid grid-cols-[40px_minmax(0,1fr)] items-baseline gap-2.5 border-b border-[#cfc4b3] py-3.5 pr-2 text-ink no-underline transition-colors hover:bg-chalk"
+                className="group grid grid-cols-[40px_minmax(0,1fr)] items-baseline gap-2.5 border-b border-[#cfc4b3] py-3.5 pr-2 text-ink no-underline transition-colors"
               >
                 <span
                   aria-hidden="true"

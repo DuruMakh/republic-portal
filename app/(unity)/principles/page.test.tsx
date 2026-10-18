@@ -20,10 +20,10 @@ afterEach(() => {
 describe("/principles", () => {
   it("opens with the headline, lede and a link down to the contents", () => {
     render(<PrinciplesPage />);
-    expect(screen.getByRole("heading", { level: 1, name: "პრინციპები" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "შეთანხმება" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "ჩვენი მიზანია ქართველი ერის გაერთიანება საერთო პრინციპების, ღირებულებებისა და მიზნების გარშემო.",
+        "ეს შეთანხმება აერთიანებს იდეებს, რომელთა განხორციელებისთვისაც „ქართული რესპუბლიკა“ მზად არის მთელი ძალისხმევა გაიღოს. ჩვენი მიზანია, ამ იდეების გარშემო გავაერთიანოთ თანამოაზრეები და ისინი საქართველოს მოსახლეობის უდიდესი უმრავლესობის საერთო მიზნებად ვაქციოთ.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "სარჩევი" })).toHaveAttribute("href", "#contents");
@@ -32,11 +32,11 @@ describe("/principles", () => {
 
   it("rings the knot with the twelve numerals, each linking to its principle", () => {
     render(<PrinciplesPage />);
-    const seal = screen.getByRole("navigation", { name: "პრინციპების ბეჭედი" });
+    const seal = screen.getByRole("navigation", { name: "შეთანხმების ბეჭედი" });
     const links = within(seal).getAllByRole("link");
     expect(links).toHaveLength(12);
     links.forEach((link, i) => {
-      expect(link).toHaveAccessibleName(`პრინციპი ${i + 1}`);
+      expect(link).toHaveAccessibleName(`შეთანხმების პუნქტი ${i + 1}`);
       expect(link).toHaveTextContent(GEORGIAN_NUMERALS[i] ?? "");
       expect(link).toHaveAttribute("href", `#principle-${i + 1}`);
     });
@@ -61,21 +61,26 @@ describe("/principles", () => {
       // The desktop heading and the phone accordion's heading; CSS shows one per width.
       expect(within(section).getAllByRole("heading", { level: 2, name: title })).toHaveLength(2);
       expect(within(section).getByText(lead)).toBeInTheDocument();
-      for (const text of body) expect(within(section).getByText(text)).toBeInTheDocument();
+      for (const text of body) {
+        expect(within(section).getByText(text.replace(/\s+/g, " "))).toBeInTheDocument();
+      }
       const note = within(section).getByRole("complementary", { name: "ჩვენი მემკვიდრეობა" });
       for (const root of roots) {
         if (root.kind === "event") expect(note.textContent).toContain(root.date);
         if (root.kind === "quote") expect(note.textContent).toContain(root.text);
       }
-      expect(section).toHaveTextContent(`ᲞᲠᲘᲜᲪᲘᲞᲘ ${String(i + 1).padStart(2, "0")}`);
+      expect(
+        screen.queryByText(`ᲞᲠᲘᲜᲪᲘᲞᲘ ${String(i + 1).padStart(2, "0")}`),
+      ).not.toBeInTheDocument();
     });
   });
 
-  it("quotes principle 5 in the wine band", () => {
+  it("continues directly from principle 2 to 3 without a separate quote band", () => {
     render(<PrinciplesPage />);
-    const band = screen.getByRole("region", { name: "ციტატა" });
-    expect(band).toHaveTextContent(
-      "ხელისუფლება არის ქართველი ერის მიერ დროებით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
+    expect(screen.queryByRole("region", { name: "ციტატა" })).not.toBeInTheDocument();
+    expect(article(2).nextElementSibling).toBe(article(3));
+    expect(article(2)).toHaveTextContent(
+      "ხელისუფლება არის ქართველი ერის მიერ შეზღუდული ვადით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
     );
   });
 
@@ -119,6 +124,6 @@ describe("/principles", () => {
   });
 
   it("carries the site-name suffix in its tab title", () => {
-    expect(metadata.title).toBe("პრინციპები — ქართული რესპუბლიკა");
+    expect(metadata.title).toBe("შეთანხმება — ქართული რესპუბლიკა");
   });
 });
