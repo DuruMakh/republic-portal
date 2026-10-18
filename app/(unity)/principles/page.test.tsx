@@ -61,7 +61,9 @@ describe("/principles", () => {
       // The desktop heading and the phone accordion's heading; CSS shows one per width.
       expect(within(section).getAllByRole("heading", { level: 2, name: title })).toHaveLength(2);
       expect(within(section).getByText(lead)).toBeInTheDocument();
-      for (const text of body) expect(within(section).getByText(text)).toBeInTheDocument();
+      for (const text of body) {
+        expect(within(section).getByText(text.replace(/\s+/g, " "))).toBeInTheDocument();
+      }
       const note = within(section).getByRole("complementary", { name: "ჩვენი მემკვიდრეობა" });
       for (const root of roots) {
         if (root.kind === "event") expect(note.textContent).toContain(root.date);
@@ -73,11 +75,13 @@ describe("/principles", () => {
     });
   });
 
-  it("quotes principle 5 in the wine band", () => {
+  it("quotes principle 2 in the wine band immediately after its section", () => {
     render(<PrinciplesPage />);
     const band = screen.getByRole("region", { name: "ციტატა" });
+    expect(band.previousElementSibling).toHaveAttribute("id", "principle-2");
+    expect(band.nextElementSibling).toHaveAttribute("id", "principle-3");
     expect(band).toHaveTextContent(
-      "ხელისუფლება არის ქართველი ერის მიერ დროებით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
+      "ხელისუფლება არის ქართველი ერის მიერ შეზღუდული ვადით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
     );
   });
 

@@ -23,8 +23,8 @@ function subscribeToHash(onChange: () => void) {
 
 /**
  * The twelve principles. From `sm` up each is an open section (numeral and historical
- * roots on the left, title, lead and text on the right), with the principle 5 quote band after
- * the fifth. On phones they fold into rows, one open at a time (the first to begin with), and a
+ * roots on the left, title, lead and text on the right), with the principle 2 quote band after
+ * the second. On phones they fold into rows, one open at a time (the first to begin with), and a
  * link to #principle-N opens that row and scrolls to it.
  */
 export function PrinciplesList() {

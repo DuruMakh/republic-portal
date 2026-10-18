@@ -1,8 +1,8 @@
 import { PRINCIPLES_QUOTE, PRINCIPLES_QUOTE_LABEL } from "@/lib/principles-copy";
 
 /**
- * The wine pull-quote band from principle 5, with the wine knot bleeding off the left edge.
- * From tablet width up it sits after principle 5; phones keep the sentence in its original text.
+ * The wine pull-quote band from principle 2, with the wine knot bleeding off the left edge.
+ * From tablet width up it sits after principle 2; phones keep the sentence in its original text.
  */
 export function PrinciplesQuote({ className = "" }: { className?: string }) {
   return (
