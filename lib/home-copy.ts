@@ -12,7 +12,7 @@ import {
 } from "@/lib/archive-documents";
 import { PRINCIPLES_TITLE } from "@/lib/principles-copy";
 
-export const HOME_HERO_KICKER = "სამოქალაქო პლატფორმა";
+export const HOME_HERO_KICKER = "სამოქალაქო პორტალი";
 /** The headline in its two lines: the second is set in sand. */
 export const HOME_HEADLINE = ["ერთად შევქმნათ", "ქართული რესპუბლიკა"] as const;
 export const HOME_LEDE =
