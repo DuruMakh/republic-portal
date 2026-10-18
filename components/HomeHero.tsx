@@ -32,6 +32,7 @@ export function HomeHero() {
           <span className="block text-sand">
             {english ? "the " : ""}
             {t(HOME_HEADLINE[1])}
+            {english ? "." : ""}
           </span>
         </h1>
         <div className="mt-[22px] flex flex-col sm:mt-[clamp(20px,2vw,28px)] lg:grid lg:grid-cols-[minmax(0,calc(340px_+_(100%_-_800px_-_clamp(36px,5vw,72px))_/_2.6))_minmax(0,1fr)] lg:grid-rows-[1fr_auto] lg:gap-x-[clamp(36px,5vw,72px)]">

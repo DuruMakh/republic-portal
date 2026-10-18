@@ -28,7 +28,7 @@ describe("English public pages", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Together, let’s build the Georgian Republic",
+      "Unite to Build the Georgian Republic.",
     );
     expect(screen.getByRole("link", { name: "Become a supporter" })).toHaveAttribute(
       "href",

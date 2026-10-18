@@ -178,7 +178,7 @@ export const publicMessages: Record<string, string> = {
     "“…Despite its divisions, Georgia was always spiritually whole.”",
   "„გზა ჭეშმარიტებისა“, 1983": "“The Path of Truth”, 1983",
   [home.HOME_HERO_KICKER]: "Civic portal",
-  [home.HOME_HEADLINE[0]]: "Together, let’s build",
+  [home.HOME_HEADLINE[0]]: "Unite to Build",
   [home.HOME_HEADLINE[1]]: "Georgian Republic",
   [home.HOME_LEDE]: "Ideas change a country only when people come together around them.",
   [home.HOME_HERO_JOIN]: "Become a supporter",
