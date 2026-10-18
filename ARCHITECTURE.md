@@ -6,9 +6,12 @@ Vercel hosts production only; changes are checked on a local Supabase stack (REA
 
 ## Layout
 
-- app/(public|member|delegate|admin)/ — route groups per area; each protected group has a
+- app/[locale]/(unity|public|member|delegate|admin)/ — shared pages for `ka` and `en`;
+  the proxy keeps Georgian addresses unprefixed and English under `/en`. Administration
+  stays Georgian. Each protected group has a
   layout.tsx that enforces auth + role server-side.
 - lib/ — pure domain logic (validation, status derivation, ranking). Unit-tested.
+- lib/i18n/ — language context, localized links, English interface dictionaries, dates and metadata.
 - lib/supabase/ — client factories: client.ts (browser, anon), server.ts (SSR, cookies),
   admin.ts (service-role, server-only).
 - components/ — design-system components (see DESIGN.md).

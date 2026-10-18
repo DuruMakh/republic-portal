@@ -14,22 +14,34 @@ afterEach(() => {
 });
 
 describe("sitemap", () => {
+  it("pairs English and Georgian public addresses without publishing hidden routes", async () => {
+    const entries = await sitemap();
+    expect(entries.map((entry) => entry.url)).toContain("https://example.test/en/principles");
+    expect(entries.map((entry) => entry.url)).not.toContain("https://example.test/en/leaderboard");
+    expect(
+      entries.find((entry) => entry.url === "https://example.test/en/about")?.alternates?.languages,
+    ).toEqual({ ka: "https://example.test/about", en: "https://example.test/en/about" });
+  });
   it("lists the privacy policy like the delegate rules", async () => {
     const entries = await sitemap();
-    expect(entries).toContainEqual({
-      url: "https://example.test/privacy",
-      changeFrequency: "monthly",
-      priority: 0.3,
-    });
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        url: "https://example.test/privacy",
+        changeFrequency: "monthly",
+        priority: 0.3,
+      }),
+    );
   });
 
   it("lists the about page", async () => {
     const entries = await sitemap();
-    expect(entries).toContainEqual({
-      url: "https://example.test/about",
-      changeFrequency: "monthly",
-      priority: 0.7,
-    });
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        url: "https://example.test/about",
+        changeFrequency: "monthly",
+        priority: 0.7,
+      }),
+    );
   });
 
   it("leaves the ranking out while ratings are hidden, and lists it once they are on", async () => {

@@ -38,6 +38,13 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 
 ## Stack and tooling
 
+- **ADR-054 English alongside Georgian (2026-10-18).** Shared pages use `next-intl` 4.14.9 for
+  request-scoped language in server/client components. English uses `/en`; Georgian keeps
+  its current addresses, with no automatic browser-language redirect. This dependency avoids
+  a second set of pages and custom request-context code. Interface copy is translated in
+  explicit dictionaries; authored news/events and uploaded documents retain their originals
+  with language labels. Administration remains Georgian. No database changes.
+
 - **ADR-001 Stack:** Next.js + TypeScript + Supabase + Vercel, the stack the AI engineer is
   most fluent in. **ADR-002:** PWA first; store apps only if presence ever matters.
 - **ADR-007 Current stable majors** ("floors, not pins"): Next 16 (Turbopack, `proxy.ts`

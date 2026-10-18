@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { BrandLockup } from "@/components/BrandLockup";
 import { buttonClasses } from "@/components/Button";
 import { useChromePathname } from "@/components/ChromePathname";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { useCloseAboveMd } from "@/components/useCloseAboveMd";
 import { useFocusTrap } from "@/components/useFocusTrap";
 
@@ -35,6 +37,7 @@ export function MobileMenu({
   sessionSlot?: ReactNode;
   cta?: ReactNode;
 }) {
+  const t = useCopy();
   const [open, setOpen] = useState(false);
   const pathname = useChromePathname();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -74,7 +77,7 @@ export function MobileMenu({
         aria-expanded={open}
         className={buttonClasses("ghost", "sm")}
       >
-        {MENU}
+        {t(MENU)}
       </button>
 
       {open ? (
@@ -82,21 +85,22 @@ export function MobileMenu({
           ref={panelRef}
           role="dialog"
           aria-modal="true"
-          aria-label={MENU_DIALOG_LABEL}
+          aria-label={t(MENU_DIALOG_LABEL)}
           className="fixed inset-0 z-50 flex flex-col bg-paper"
         >
           <div className="flex items-center justify-between masthead-rule px-5 pb-2.5 pt-4">
             <BrandLockup onClick={close} />
+            <LanguageSwitch onNavigate={close} />
             <button
               type="button"
               onClick={() => setOpen(false)}
               className={buttonClasses("primary", "sm")}
             >
-              {CLOSE}
+              {t(CLOSE)}
             </button>
           </div>
 
-          <nav aria-label={MENU_NAV_LABEL} className="flex-1 overflow-y-auto px-5">
+          <nav aria-label={t(MENU_NAV_LABEL)} className="flex-1 overflow-y-auto px-5">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -105,7 +109,7 @@ export function MobileMenu({
                 aria-current={pathname === item.href ? "page" : undefined}
                 className="block border-b border-hairline py-4 font-serif text-[1.18rem] font-bold text-ink no-underline aria-[current=page]:text-brand"
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
             {sessionSlot ? <div className="py-4">{sessionSlot}</div> : null}

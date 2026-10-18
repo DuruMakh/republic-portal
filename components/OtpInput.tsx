@@ -1,4 +1,5 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { useId, useRef } from "react";
 
@@ -13,13 +14,14 @@ export function OtpInput({
   onChange: (value: string) => void;
   error?: string;
 }) {
+  const t = useCopy();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const errorId = useId();
   const digits = Array.from({ length: LENGTH }, (_, i) => value[i] ?? "");
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex justify-center gap-2.5 sm:gap-4" role="group" aria-label="SMS კოდი">
+      <div className="flex justify-center gap-2.5 sm:gap-4" role="group" aria-label={t("SMS კოდი")}>
         {digits.map((digit, i) => (
           <input
             key={i}
@@ -29,7 +31,7 @@ export function OtpInput({
             value={digit}
             inputMode="numeric"
             autoComplete={i === 0 ? "one-time-code" : "off"}
-            aria-label={`ციფრი ${i + 1}`}
+            aria-label={`${t("ციფრი ")}${i + 1}`}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             data-testid={`otp-${i}`}
@@ -58,7 +60,7 @@ export function OtpInput({
       </div>
       {error ? (
         <p id={errorId} className="mt-2 text-center text-[14px] font-semibold text-danger">
-          {error}
+          {t(error ?? "")}
         </p>
       ) : null}
     </div>

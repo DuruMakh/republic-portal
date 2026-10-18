@@ -1,6 +1,9 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "next-intl";
+import { localePath } from "@/lib/i18n/routing";
 import { Caps } from "@/components/Caps";
 import { CopyButton } from "@/components/CopyButton";
 import { QrCode } from "@/components/QrCode";
@@ -42,13 +45,17 @@ export function ReferralCard({
   teamNote?: boolean;
   tone?: "light" | "wine";
 }) {
+  const t = useCopy();
+  const locale = useLocale() === "en" ? "en" : "ka";
   const [url, setUrl] = useState<string>();
   const wine = tone === "wine";
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- origin is only known client-side (ADR-011); one-time sync of the client-only URL, gated by `code`, not a cascading loop
-    setUrl(buildReferralUrl(window.location.origin, code));
-  }, [code]);
+    const referralUrl = new URL(buildReferralUrl(window.location.origin, code));
+    referralUrl.pathname = localePath(referralUrl.pathname, locale);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- origin is only known client-side (ADR-011); synchronize the link when its code or language changes
+    setUrl(referralUrl.toString());
+  }, [code, locale]);
 
   return (
     <section
@@ -71,7 +78,7 @@ export function ReferralCard({
         <p
           className={`m-0 text-[12px] font-bold tracking-[.14em] ${wine ? "text-sand" : "text-brand"}`}
         >
-          <Caps>შენი პერსონალური რეფერალური ბმული</Caps>
+          <Caps>{t("შენი პერსონალური რეფერალური ბმული")}</Caps>
         </p>
         {url ? (
           <>
@@ -91,7 +98,7 @@ export function ReferralCard({
               <CopyButton text={url} tone={wine ? "light" : "ink"} />
             </div>
             <div className="mt-6">
-              <QrCode value={url} label="რეფერალური ბმულის QR კოდი" size={180} />
+              <QrCode value={url} label={t("რეფერალური ბმულის QR კოდი")} size={180} />
             </div>
           </>
         ) : null}
@@ -108,7 +115,7 @@ export function ReferralCard({
                 index === 0 ? (wine ? "border-b border-limestone/16" : "border-b border-rule") : ""
               }`}
             >
-              <dt className={`text-[15px] ${wine ? "text-sand" : "text-secondary"}`}>{label}</dt>
+              <dt className={`text-[15px] ${wine ? "text-sand" : "text-secondary"}`}>{t(label)}</dt>
               <dd
                 className={`m-0 font-serif text-[24px] font-bold ${wine ? "text-limestone" : "text-ink"}`}
                 data-testid={testId}
@@ -123,7 +130,7 @@ export function ReferralCard({
             className={`mt-4 mb-0 text-[15px] leading-[1.6] ${wine ? "text-sand" : "text-secondary"}`}
             data-testid="referral-team-note"
           >
-            ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.
+            {t("ყველა, ვინც ამ ბმულით დარეგისტრირდება, ავტომატურად შენს გუნდში ჩაითვლება.")}
           </p>
         ) : null}
       </div>

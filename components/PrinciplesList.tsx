@@ -1,5 +1,7 @@
 "use client";
 
+import { useCopy } from "@/lib/i18n/copy";
+
 import { Caps } from "@/components/Caps";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { PrinciplesRoots } from "@/components/PrinciplesRoots";
@@ -26,6 +28,7 @@ function subscribeToHash(onChange: () => void) {
  * scrolls to it.
  */
 export function PrinciplesList() {
+  const t = useCopy();
   const hash = useSyncExternalStore(
     subscribeToHash,
     () => window.location.hash,
@@ -50,7 +53,7 @@ export function PrinciplesList() {
 
   return (
     <section
-      aria-label={PRINCIPLES_LIST_LABEL}
+      aria-label={t(PRINCIPLES_LIST_LABEL)}
       className="flex flex-col max-sm:border-t-2 max-sm:border-ink"
     >
       {PRINCIPLES.map((principle, i) => {
@@ -83,6 +86,7 @@ function PrincipleSection({
   ruled: boolean;
   last: boolean;
 }) {
+  const t = useCopy();
   const principle = PRINCIPLES[number - 1];
   if (!principle) return null;
   const { title, lead, body, roots } = principle;
@@ -112,7 +116,7 @@ function PrincipleSection({
             {numeral}
           </span>
           <span className="text-[21px] leading-[1.1] font-black [font-stretch:62.5%]">
-            <Caps>{title}</Caps>
+            <Caps>{t(title)}</Caps>
           </span>
           <svg
             aria-hidden="true"
@@ -148,10 +152,10 @@ function PrincipleSection({
             id={`${id}-title`}
             className="m-0 font-display text-[clamp(34px,3.9vw,56px)] leading-none font-bold text-balance max-sm:hidden"
           >
-            {title}
+            {t(title)}
           </h2>
           <p className="font-serif text-[19px] leading-[1.5] font-medium text-ink sm:mt-[30px] sm:text-[clamp(22px,2vw,28px)] sm:leading-[1.45]">
-            {lead}
+            {t(lead)}
           </p>
           {body.map((text, i) => (
             <p
@@ -160,7 +164,7 @@ function PrincipleSection({
                 i === 0 ? "mt-3 sm:mt-[22px]" : "mt-2.5 sm:mt-[18px]"
               }`}
             >
-              {text}
+              {t(text)}
             </p>
           ))}
         </div>

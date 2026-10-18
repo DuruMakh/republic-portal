@@ -1,9 +1,27 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 import { Pill } from "./Pill";
 import { NewsCard } from "./NewsCard";
 
 describe("NewsCard", () => {
+  it("labels original Georgian news and keeps the English destination", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <NewsCard
+          href="/me/news/testi"
+          title="ქართული ამბავი"
+          publishedAt="10 July 2026"
+          imageUrl={null}
+          excerptText="ქართული ტექსტი"
+        />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/en/me/news/testi");
+    expect(screen.getByRole("heading", { name: "ქართული ამბავი" })).toHaveAttribute("lang", "ka");
+    expect(screen.getByText("This content is available in Georgian.")).toBeInTheDocument();
+  });
+
   it("renders a link with title, date and excerpt", () => {
     render(
       <NewsCard

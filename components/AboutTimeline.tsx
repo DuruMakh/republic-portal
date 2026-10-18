@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { ABOUT_TIMELINE, ABOUT_TIMELINE_FLAG, ABOUT_TIMELINE_LABEL } from "@/lib/about-copy";
 
 /** Container side padding, so the phone's swipe row can run edge to edge. */
@@ -21,10 +22,11 @@ function Tulips({ className }: { className: string }) {
  * a dot on the line, the event on the right); on a phone a row of cards to swipe through.
  */
 export function AboutTimeline() {
+  const t = useCopy();
   const last = ABOUT_TIMELINE.length - 1;
   return (
     <ol
-      aria-label={ABOUT_TIMELINE_LABEL}
+      aria-label={t(ABOUT_TIMELINE_LABEL)}
       className={`${BLEED} m-0 mt-7 flex list-none items-stretch gap-3 overflow-x-auto py-0 [scrollbar-width:none] snap-x snap-mandatory sm:mx-0 sm:mt-2 sm:block sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden`}
     >
       {ABOUT_TIMELINE.map((entry, i) => (
@@ -41,7 +43,7 @@ export function AboutTimeline() {
               {entry.year}
             </span>
             <span className="block whitespace-nowrap text-[12px] font-semibold text-secondary sm:mt-1.5 sm:text-[12.5px] sm:leading-[1.35]">
-              {entry.date}
+              {t(entry.date)}
             </span>
             {entry.art === "tulips" ? <Tulips className="mt-3 hidden w-[58px] sm:block" /> : null}
           </span>
@@ -55,19 +57,19 @@ export function AboutTimeline() {
               className="absolute -left-[7px] top-[7px] hidden h-3 w-3 rounded-full bg-sandstone shadow-[0_0_0_2px_var(--color-brand)] sm:block"
             />
             <span className="mt-3.5 block text-[16px] font-bold leading-[1.35] sm:mt-0 sm:text-[16.5px] sm:leading-[1.4]">
-              {entry.title}
+              {t(entry.title)}
             </span>
             <span className="mt-1.5 block font-serif text-[15px] leading-[1.6] text-prose sm:mt-1 sm:text-[15.5px]">
               {entry.lines.map((line, j) => (
                 <span key={line}>
                   {j > 0 ? <br /> : null}
-                  {line}
+                  {t(line)}
                 </span>
               ))}
               {entry.source ? (
                 <>
                   {" "}
-                  <span className="whitespace-nowrap">{entry.source}</span>
+                  <span className="whitespace-nowrap">{t(entry.source)}</span>
                 </>
               ) : null}
             </span>
@@ -81,7 +83,7 @@ export function AboutTimeline() {
                   height={24}
                   className="block h-5 w-[34px] shadow-[0_0_0_1px_rgba(26,22,17,.12)] sm:h-6 sm:w-10"
                 />
-                {ABOUT_TIMELINE_FLAG}
+                {t(ABOUT_TIMELINE_FLAG)}
               </span>
             ) : null}
             {entry.art === "tulips" ? <Tulips className="mt-3 block w-[46px] sm:hidden" /> : null}

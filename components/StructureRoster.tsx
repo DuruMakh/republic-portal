@@ -1,7 +1,9 @@
+import { useCopy } from "@/lib/i18n/copy";
 import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { StructurePebble } from "@/components/StructurePebble";
 import type { BoardMember } from "@/lib/board-members";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 
 /** A silhouette card held for a seat until the owner publishes the roster. */
 function Placeholder() {
@@ -29,12 +31,19 @@ function MemberCard({ member }: { member: BoardMember }) {
           className="object-cover"
         />
       </span>
-      <span className="mt-2.5 block font-serif text-[16px] font-semibold text-ink sm:mt-4 sm:text-[19px]">
+      <span
+        lang="ka"
+        className="mt-2.5 block font-serif text-[16px] font-semibold text-ink sm:mt-4 sm:text-[19px]"
+      >
         {member.name}
       </span>
-      <span className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]">
+      <span
+        lang="ka"
+        className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]"
+      >
         {member.bio}
       </span>
+      <OriginalLanguageNote />
       <span className="mt-3 block">
         <SocialLinks person={member.name} links={member.socials} />
       </span>
@@ -57,6 +66,7 @@ export function StructureRoster({
   notice: string;
   seats: number;
 }) {
+  const t = useCopy();
   const empty = members.length === 0;
   return (
     <section
@@ -70,17 +80,17 @@ export function StructureRoster({
             id="roster-title"
             className="m-0 font-display text-[38px] leading-[.98] font-bold sm:text-[clamp(44px,5.5vw,80px)] sm:leading-[.95]"
           >
-            {heading}
+            {t(heading)}
           </h2>
           {empty ? (
             <p className="inline-flex items-center gap-2.5 border border-rule bg-chalk px-3.5 py-2.5 text-[14px] font-semibold sm:px-4 sm:text-[15px]">
               <StructurePebble className="h-2 w-2.5 bg-teal" />
-              {notice}
+              {t(notice)}
             </p>
           ) : null}
         </div>
         <ul
-          aria-label={heading}
+          aria-label={t(heading)}
           className="mt-6 grid grid-cols-2 gap-x-3.5 gap-y-[18px] sm:mt-[clamp(40px,4.5vw,64px)] sm:grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] sm:gap-[clamp(16px,2vw,28px)]"
         >
           {empty

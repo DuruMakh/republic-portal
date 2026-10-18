@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { UnityKicker } from "@/components/UnityKicker";
 import { mtavruli } from "@/lib/mtavruli";
 
@@ -18,7 +19,8 @@ export function StructureHero({
   ringTitle: string;
   ringCaption: string;
 }) {
-  const [first, ...rest] = title.split(" ");
+  const t = useCopy();
+  const [first, ...rest] = t(title).split(" ");
   return (
     <section
       aria-labelledby="st-title"
@@ -26,7 +28,7 @@ export function StructureHero({
     >
       <div className="unity-container flex flex-wrap items-center gap-x-[clamp(32px,5vw,80px)] gap-y-[22px] sm:gap-y-[clamp(32px,5vw,80px)]">
         <div className="min-w-0 flex-[1.4_1_460px]">
-          <UnityKicker>{kicker}</UnityKicker>
+          <UnityKicker>{t(kicker)}</UnityKicker>
           <h1
             id="st-title"
             className="mt-5 font-display text-[40px] leading-[.96] font-bold tracking-[-.005em] sm:mt-[26px] sm:text-[clamp(46px,5.8vw,84px)] sm:leading-[.92]"
@@ -35,7 +37,7 @@ export function StructureHero({
             <span className="block text-brand">{rest.join(" ")}</span>
           </h1>
           <p className="mt-5 max-w-[24em] font-serif text-[19px] leading-[1.55] text-prose sm:mt-[30px] sm:text-[clamp(21px,1.9vw,27px)] sm:leading-normal">
-            {lede}
+            {t(lede)}
           </p>
         </div>
         <div className="flex min-w-0 flex-[1_1_360px] justify-center">
@@ -51,10 +53,10 @@ export function StructureHero({
               className="absolute inset-0 flex flex-col items-center justify-center text-center"
             >
               <span className="text-[21px] leading-none font-black [font-stretch:62.5%] sm:text-[clamp(26px,2.6vw,38px)]">
-                {mtavruli(ringTitle)}
+                {mtavruli(t(ringTitle))}
               </span>
               <span className="mt-1 font-serif text-[14px] text-secondary sm:mt-1.5 sm:text-[16px]">
-                {ringCaption}
+                {t(ringCaption)}
               </span>
             </div>
           </div>

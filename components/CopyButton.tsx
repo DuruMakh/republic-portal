@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Caps } from "@/components/Caps";
+import { useCopy } from "@/lib/i18n/copy";
 
 /**
  * Copy-to-clipboard in the „ერთობა“ look: a small square outline button with spaced capitals.
  * `tone="light"` is the limestone outline for wine panels.
  */
 export function CopyButton({ text, tone = "ink" }: { text: string; tone?: "ink" | "light" }) {
+  const t = useCopy();
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -39,7 +41,7 @@ export function CopyButton({ text, tone = "ink" }: { text: string; tone?: "ink" 
           : "border-ink text-ink hover:bg-ink hover:text-limestone"
       }`}
     >
-      <Caps>{copied ? "დაკოპირდა ✓" : "კოპირება"}</Caps>
+      <Caps>{t(copied ? "დაკოპირდა ✓" : "კოპირება")}</Caps>
     </button>
   );
 }

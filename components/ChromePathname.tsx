@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, useContext, type ReactNode } from "react";
+import { stripLocale } from "@/lib/i18n/routing";
 
 const PinnedPathname = createContext<string | null>(null);
 
@@ -32,6 +33,6 @@ const ROOT_ALIAS = "/index";
 /** The path the site chrome reasons about: the live one, unless a PinChromePathname pins it. */
 export function useChromePathname(): string {
   const live = usePathname();
-  const path = useContext(PinnedPathname) ?? live;
+  const path = stripLocale(useContext(PinnedPathname) ?? live ?? "/");
   return path === ROOT_ALIAS ? "/" : path;
 }

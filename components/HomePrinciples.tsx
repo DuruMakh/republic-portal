@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useCopy } from "@/lib/i18n/copy";
+import Link from "@/lib/i18n/navigation";
 import { Caps } from "@/components/Caps";
 import { UnityButtonLink } from "@/components/UnityButtonLink";
 import { UnityKicker } from "@/components/UnityKicker";
@@ -31,6 +32,7 @@ const MOTTO_STRIP = "min-w-5 flex-1 sm:min-w-8 sm:h-[22px]! sm:bg-size-[auto_22p
  * state motto between two braids over the faint coat of arms.
  */
 export function HomePrinciples() {
+  const t = useCopy();
   return (
     <section
       aria-labelledby="home-principles-title"
@@ -39,17 +41,17 @@ export function HomePrinciples() {
       <div className="unity-container">
         <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
           <div>
-            <UnityKicker>{HOME_PRINCIPLES_KICKER}</UnityKicker>
+            <UnityKicker>{t(HOME_PRINCIPLES_KICKER)}</UnityKicker>
             <h2
               id="home-principles-title"
               className="m-0 mt-[18px] font-display text-[40px] font-bold leading-[.98] sm:mt-[22px] sm:text-[clamp(42px,5.3vw,76px)] sm:leading-[.96]"
             >
-              {HOME_PRINCIPLES_TITLE}
+              {t(HOME_PRINCIPLES_TITLE)}
             </h2>
           </div>
           <p className="m-0 mb-1.5 hidden sm:block">
             <UnityTextLink href={PRINCIPLES_HREF} className="text-[17px]">
-              {PRINCIPLES_HOME_LINK}
+              {t(PRINCIPLES_HOME_LINK)}
             </UnityTextLink>
           </p>
         </div>
@@ -68,7 +70,7 @@ export function HomePrinciples() {
                   {GEORGIAN_NUMERALS[i]}
                 </span>
                 <span className="text-[15.5px] font-semibold leading-[1.4] sm:text-[18px]">
-                  {title}
+                  {t(title)}
                 </span>
                 <span aria-hidden="true" className="text-secondary sm:hidden">
                   →
@@ -83,7 +85,7 @@ export function HomePrinciples() {
           size="sm"
           className="mt-[22px] h-[52px]! w-full sm:hidden"
         >
-          {HOME_PRINCIPLES_ALL}
+          {t(HOME_PRINCIPLES_ALL)}
         </UnityButtonLink>
 
         <div className="relative isolate mb-7 mt-[104px] flex items-center gap-3 sm:mb-0 sm:mt-[clamp(64px,8.4vw,120px)] sm:gap-[clamp(18px,2.2vw,32px)]">
@@ -100,12 +102,12 @@ export function HomePrinciples() {
           <figure className="relative m-0 flex-none text-center">
             <blockquote className="m-0">
               <p className="m-0 whitespace-nowrap font-serif text-[25px] font-medium leading-[1.1] text-brand sm:text-[clamp(28px,2.7vw,38px)]">
-                {HOME_MOTTO}
+                {t(HOME_MOTTO)}
               </p>
             </blockquote>
             <figcaption className="absolute left-1/2 top-full mt-2.5 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-[.1em] text-secondary sm:static sm:translate-x-0 sm:text-[12px] sm:tracking-[.14em]">
               <span className="inline-block bg-limestone px-1 py-px shadow-[0_0_10px_6px_var(--color-limestone)]">
-                <Caps>{HOME_MOTTO_SOURCE}</Caps>
+                <Caps>{t(HOME_MOTTO_SOURCE)}</Caps>
               </span>
             </figcaption>
           </figure>

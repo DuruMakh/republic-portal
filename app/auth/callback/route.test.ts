@@ -109,4 +109,37 @@ describe("GET /auth/callback", () => {
     expectRedirect(response, "/login?error=oauth_callback");
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
+
+  it("keeps a new English visitor's referral when completing Google sign-in", async () => {
+    mocks.rpc.mockResolvedValue({ data: { exists: false }, error: null });
+
+    const response = await GET(callbackRequest("?code=good&next=%2Fen%2Fjoin%3Fref%3DD00101"));
+
+    expectRedirect(response, "/en/join?ref=D00101");
+  });
+
+  it("returns existing English members to their English account", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: { exists: true, standing: "member", role: "member", delegateStatus: null },
+      error: null,
+    });
+
+    const response = await GET(callbackRequest("?code=good&next=%2Fen%2Fjoin"));
+
+    expectRedirect(response, "/en/me/profile");
+  });
+
+  it("keeps English on the retry screen after a failed Google callback", async () => {
+    const response = await GET(callbackRequest("?next=%2Fen%2Fjoin%3Fref%3DD00101"));
+
+    expectRedirect(response, "/en/login?error=oauth_callback&next=%2Fen%2Fjoin%3Fref%3DD00101");
+  });
+
+  it("rejects an encoded external return target even if it contains an English path", async () => {
+    mocks.rpc.mockResolvedValue({ data: { exists: false }, error: null });
+
+    const response = await GET(callbackRequest("?code=good&next=%2F%252Fevil.example%2Fen%2Fjoin"));
+
+    expectRedirect(response, "/join");
+  });
 });

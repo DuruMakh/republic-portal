@@ -5,6 +5,7 @@ import { useChromePathname } from "@/components/ChromePathname";
 import { StickyBar } from "@/components/StickyBar";
 import { useSignedIn } from "@/components/useSignedIn";
 import { showsJoinCta } from "@/lib/mobile-nav";
+import { useCopy } from "@/lib/i18n/copy";
 
 // „შემოგვიერთდი“ is the shipped HEADER_CTA_LABEL from app/(public)/layout.tsx; the
 // cabinet label is spliced from the reference bundle's CTA bar. No time or price line
@@ -21,6 +22,7 @@ const CABINET = "ჩემი კაბინეტი →";
  * with HeaderSessionAction; the guest CTA is the correct cached default.
  */
 export function MobileJoinCta() {
+  const t = useCopy();
   const pathname = useChromePathname();
   const signedIn = useSignedIn();
 
@@ -38,11 +40,11 @@ export function MobileJoinCta() {
       <div className="px-5 pt-3 pb-3.5">
         {signedIn ? (
           <ButtonLink href="/me" size="lg" className="w-full">
-            {CABINET}
+            {t(CABINET)}
           </ButtonLink>
         ) : (
           <ButtonLink href="/join" size="lg" className="w-full">
-            {JOIN}
+            {t(JOIN)}
           </ButtonLink>
         )}
       </div>

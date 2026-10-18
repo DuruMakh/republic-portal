@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { UnityButtonLink } from "@/components/UnityButtonLink";
 import { UnityTextLink } from "@/components/UnityTextLink";
 
@@ -11,6 +12,7 @@ const FLAG_ALT = "საქართველოს სახელმწიფ�
  * flag drops under the text; phones use a compact centered banner and the sticky join bar.
  */
 export function UnityClosing({ link }: { link?: { href: string; label: string } }) {
+  const t = useCopy();
   return (
     <section
       aria-labelledby="closing-title"
@@ -21,7 +23,7 @@ export function UnityClosing({ link }: { link?: { href: string; label: string } 
           id="closing-title"
           className="m-0 font-display text-[clamp(48px,16vw,64px)] font-bold leading-[.9] tracking-[-.005em] sm:text-[clamp(56px,8.4vw,124px)]"
         >
-          {TITLE}
+          {t(TITLE)}
         </h2>
         {/* Phones join from the sticky join bar, so only the second link shows there. */}
         <div
@@ -29,12 +31,12 @@ export function UnityClosing({ link }: { link?: { href: string; label: string } 
         >
           <span className="hidden sm:contents">
             <UnityButtonLink href="/join" variant="cream" size="lg" arrow>
-              {JOIN}
+              {t(JOIN)}
             </UnityButtonLink>
           </span>
           {link ? (
             <UnityTextLink href={link.href} tone="light" className="text-[17px]">
-              {link.label}
+              {t(link.label)}
             </UnityTextLink>
           ) : null}
         </div>
@@ -42,7 +44,7 @@ export function UnityClosing({ link }: { link?: { href: string; label: string } 
       {/* eslint-disable-next-line @next/next/no-img-element -- art-directed decorative photo */}
       <img
         src="/unity/closing-flag.webp"
-        alt={FLAG_ALT}
+        alt={t(FLAG_ALT)}
         width={2880}
         height={1068}
         loading="lazy"
@@ -51,7 +53,7 @@ export function UnityClosing({ link }: { link?: { href: string; label: string } 
       {/* eslint-disable-next-line @next/next/no-img-element -- art-directed decorative photo */}
       <img
         src="/unity/closing-flag-mobile.webp"
-        alt={FLAG_ALT}
+        alt={t(FLAG_ALT)}
         width={780}
         height={760}
         loading="lazy"

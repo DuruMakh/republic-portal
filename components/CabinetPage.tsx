@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import type { ReactNode } from "react";
 import { Caps } from "@/components/Caps";
 import { UnityKicker } from "@/components/UnityKicker";
@@ -184,10 +185,11 @@ export function CabinetPerks({
   perks: readonly string[];
   tone?: "wine" | "light";
 }) {
+  const t = useCopy();
   return (
     <ul className="m-0 flex list-none flex-col gap-3 p-0">
       {perks.map((perk) => (
-        <li key={perk} className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-3">
+        <li key={t(perk)} className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-3">
           <span
             aria-hidden="true"
             className={`mt-px inline-flex size-6 items-center justify-center rounded-full text-[13px] font-bold ${
@@ -199,7 +201,7 @@ export function CabinetPerks({
           <span
             className={`text-[16px] leading-[1.55] md:text-[17px] ${tone === "wine" ? "text-limestone" : "text-ink"}`}
           >
-            {perk}
+            {t(perk)}
           </span>
         </li>
       ))}

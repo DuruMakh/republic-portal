@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { showRatings } from "./lib/ratings-switch";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -23,8 +24,11 @@ const nextConfig: NextConfig = {
     // While ratings are hidden (ADR-052) there is no ranking to send anyone to, and a cached
     // permanent redirect into a 404 would outlive the switch: /delegates is a plain 404 then.
     if (!showRatings()) return [];
-    return [{ source: "/delegates", destination: "/leaderboard", permanent: true }];
+    return [
+      { source: "/delegates", destination: "/leaderboard", permanent: true },
+      { source: "/en/delegates", destination: "/en/leaderboard", permanent: true },
+    ];
   },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin("./lib/i18n/request.ts")(nextConfig);

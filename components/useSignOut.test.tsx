@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -37,6 +38,19 @@ describe("useSignOut (security audit M3)", () => {
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(deleted).toEqual(["cross-origin", "pages"]);
     expect(mocks.push).toHaveBeenCalledWith("/");
+  });
+
+  it("returns an English account to the English home page after signing out", async () => {
+    const { result } = renderHook(() => useSignOut(), {
+      wrapper: ({ children }) => (
+        <NextIntlClientProvider locale="en" messages={{}}>
+          {children}
+        </NextIntlClientProvider>
+      ),
+    });
+    await result.current();
+    expect(mocks.push).toHaveBeenCalledWith("/en");
+    expect(deleted).toEqual(["cross-origin", "pages"]);
   });
 
   it("still signs out and leaves when the cache API fails", async () => {

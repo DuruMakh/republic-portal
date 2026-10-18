@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { HomePebbles } from "@/components/HomePebbles";
 import { UnityTextLink } from "@/components/UnityTextLink";
 import { HOME_JOIN_STEPS, HOME_JOIN_TITLE } from "@/lib/home-copy";
@@ -14,6 +15,7 @@ const BADGE_SHAPES = [
  * ladder on wider screens; a numbered path joined by a red line on the phone.
  */
 export function HomeJoinSteps() {
+  const t = useCopy();
   return (
     <section
       aria-labelledby="home-join-title"
@@ -24,7 +26,7 @@ export function HomeJoinSteps() {
           id="home-join-title"
           className="m-0 font-display text-[40px] font-bold leading-[.98] sm:text-[clamp(42px,5.3vw,76px)] sm:leading-[.96]"
         >
-          {HOME_JOIN_TITLE}
+          {t(HOME_JOIN_TITLE)}
         </h2>
         <ol className="m-0 mt-8 list-none p-0 sm:mt-[clamp(48px,5vw,72px)] sm:grid sm:grid-cols-[repeat(auto-fit,minmax(min(280px,100%),1fr))] sm:gap-x-[clamp(24px,3vw,48px)] sm:gap-y-[clamp(40px,4vw,56px)]">
           {HOME_JOIN_STEPS.map((step, i) => (
@@ -53,14 +55,14 @@ export function HomeJoinSteps() {
               </div>
               <div className="flex min-w-0 flex-col sm:flex-1">
                 <h3 className="m-0 font-serif text-[25px] font-semibold leading-[1.2] sm:mt-[26px] sm:text-[clamp(28px,2.6vw,36px)] sm:leading-[1.15]">
-                  {step.title}
+                  {t(step.title)}
                 </h3>
                 <p className="m-0 mt-2 text-[16px] leading-[1.6] text-prose sm:mt-3 sm:flex-1 sm:text-[18px] sm:leading-[1.65]">
-                  {step.text}
+                  {t(step.text)}
                 </p>
                 <p className="m-0 mt-2.5 sm:mt-[22px]">
                   <UnityTextLink href={step.link.href} className="text-[16px] sm:text-[17px]">
-                    {step.link.label}
+                    {t(step.link.label)}
                   </UnityTextLink>
                 </p>
               </div>

@@ -45,8 +45,10 @@ sign-in, roles, personal data or payments.
 
 - TypeScript strict. No `any`, no `@ts-ignore`.
 - Domain logic = pure functions in `lib/` (no React/Next imports). UI components in
-  `components/`. Route groups: app/(public), app/(member), app/(delegate), app/(admin).
-- All user-facing text in Georgian. Reuse design-system components (DESIGN.md) — never
+  `components/`. Route groups live under `app/[locale]/`: (unity), (public), (member), (delegate), (admin).
+- Georgian is the default; public pages and member/delegate accounts also support English at `/en`.
+  Keep both interface translations current; authored content retains its original language.
+  Reuse design-system components (DESIGN.md) — never
   restyle ad hoc.
 - Validation with zod at every boundary (form + API). Server is the source of truth.
 - Database: schema changes only via supabase/migrations/. Never mutate data by hand.

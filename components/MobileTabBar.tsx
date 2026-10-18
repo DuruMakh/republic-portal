@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
+import { useChromePathname } from "@/components/ChromePathname";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/Badge";
 import { MobileMoreSheet } from "@/components/MobileMoreSheet";
@@ -24,7 +25,8 @@ const TABBAR_LABEL = "კაბინეტის ნავიგაცია";
  * truncates, and the 12.5px label stays above the 0.74rem floor in DESIGN.md §2.3.
  */
 export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: CabinetNavItem[] }) {
-  const pathname = usePathname();
+  const t = useCopy();
+  const pathname = useChromePathname();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Route changes must close the sheet, or navigating from within it leaves
@@ -57,7 +59,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
     <>
       <StickyBar>
         <nav
-          aria-label={TABBAR_LABEL}
+          aria-label={t(TABBAR_LABEL)}
           className="flex bg-limestone px-1 text-[12.5px] font-semibold [font-stretch:87.5%]"
         >
           {tabs.map((tab) => {
@@ -71,7 +73,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
               >
                 {on ? marker : null}
                 <span className="relative">
-                  {tab.label}
+                  {t(tab.label)}
                   {tab.count ? (
                     <span className="absolute -right-[15px] -top-[13px]">
                       <Badge>{tab.count}</Badge>
@@ -89,7 +91,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
             className={`${slot} cursor-pointer ${moreActive ? "font-bold text-brand" : "text-ink"}`}
           >
             {moreActive ? marker : null}
-            {MORE}
+            {t(MORE)}
           </button>
         </nav>
       </StickyBar>

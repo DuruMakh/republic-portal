@@ -1,4 +1,6 @@
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { UnityKicker } from "@/components/UnityKicker";
@@ -22,6 +24,7 @@ export function NewsCard({
   /** row = cabinet brief (default) · lead = full-width opener · tile = grid card (news index + homepage) */
   variant?: "row" | "lead" | "tile";
 }) {
+  const t = useCopy();
   if (variant === "row") {
     // The cabinet feed row of the „ერთობა“ redesign: wide thumbnail, red kicker, serif title.
     return (
@@ -39,14 +42,20 @@ export function NewsCard({
         ) : null}
         <div className={`flex min-w-0 flex-col ${imageUrl ? "" : "sm:col-span-2"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <UnityKicker>სიახლეები</UnityKicker>
+            <UnityKicker>{t("სიახლეები")}</UnityKicker>
             {pill}
           </div>
-          <h3 className="mt-3.5 mb-0 font-serif text-[20px] font-bold leading-[1.35] transition-colors group-hover:text-brand md:text-[24px]">
+          <h3
+            lang="ka"
+            className="mt-3.5 mb-0 font-serif text-[20px] font-bold leading-[1.35] transition-colors group-hover:text-brand md:text-[24px]"
+          >
             {title}
           </h3>
           <p className="mt-1.5 mb-0 text-[13.5px] text-secondary">{publishedAt}</p>
-          <p className="mt-2 mb-0 text-[16px] leading-[1.6] text-prose">{excerptText}</p>
+          <p lang="ka" className="mt-2 mb-0 text-[16px] leading-[1.6] text-prose">
+            {excerptText}
+          </p>
+          <OriginalLanguageNote />
         </div>
       </Link>
     );
@@ -69,10 +78,11 @@ export function NewsCard({
       ) : null}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Eyebrow>სიახლეები</Eyebrow>
+          <Eyebrow>{t("სიახლეები")}</Eyebrow>
           {pill}
         </div>
         <h3
+          lang="ka"
           className={`mt-1 font-serif font-bold text-ink group-hover:text-brand ${
             lead ? "text-3xl" : "text-lg"
           }`}
@@ -80,7 +90,10 @@ export function NewsCard({
           {title}
         </h3>
         <p className="mt-1 text-[0.74rem] text-muted-fg">{publishedAt}</p>
-        <p className={`mt-1 text-sm text-muted-fg ${lead ? "" : "line-clamp-2"}`}>{excerptText}</p>
+        <p lang="ka" className={`mt-1 text-sm text-muted-fg ${lead ? "" : "line-clamp-2"}`}>
+          {excerptText}
+        </p>
+        <OriginalLanguageNote />
       </div>
     </Link>
   );

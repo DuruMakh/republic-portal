@@ -1,5 +1,7 @@
-import Link from "next/link";
+import { useCopy } from "@/lib/i18n/copy";
+import Link from "@/lib/i18n/navigation";
 import { UnityKicker } from "@/components/UnityKicker";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 
 /** The design's hatched sandstone block, standing in for a missing photo. */
 const PLACEHOLDER =
@@ -25,6 +27,7 @@ export function UnityNewsTile({
   excerptText: string;
   lead?: boolean;
 }) {
+  const t = useCopy();
   const photo = imageUrl ? (
     // Raw <img>, not next/image: the photo is hosted in Supabase Storage, which is not a
     // configured next/image host (same as NewsCard). The title names the link, so alt is empty.
@@ -56,10 +59,11 @@ export function UnityNewsTile({
       <div className="flex min-w-0 flex-col">
         {lead ? (
           <span aria-hidden="true" className="hidden sm:block">
-            <UnityKicker>სიახლეები</UnityKicker>
+            <UnityKicker>{t("სიახლეები")}</UnityKicker>
           </span>
         ) : null}
         <h3
+          lang="ka"
           className={`m-0 font-serif font-semibold transition-colors group-hover/tile:text-brand ${
             lead
               ? "order-2 mt-1.5 text-[21px] leading-[1.35] sm:order-none sm:mt-[18px] sm:text-[clamp(28px,2.6vw,38px)] sm:leading-[1.25]"
@@ -74,6 +78,7 @@ export function UnityNewsTile({
           {publishedAt}
         </span>
         <span
+          lang="ka"
           className={`order-3 mt-2 text-[15.5px] leading-[1.6] text-secondary ${
             lead
               ? "line-clamp-2 sm:order-none sm:mt-4 sm:line-clamp-none sm:font-serif sm:text-[18px] sm:leading-[1.65] sm:text-prose"
@@ -82,6 +87,7 @@ export function UnityNewsTile({
         >
           {excerptText}
         </span>
+        <OriginalLanguageNote className="order-4 mt-2 block text-[13px] leading-[1.5] text-secondary" />
       </div>
     </Link>
   );

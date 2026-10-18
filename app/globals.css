@@ -131,6 +131,11 @@
   font-family: var(--font-sans);
 }
 
+/* The Georgian display face uses a legacy Latin encoding; English needs real Latin glyphs. */
+html[lang="en"] .unity-fonts {
+  --font-display: var(--font-noto-sans-georgian), "Segoe UI", system-ui, sans-serif;
+}
+
 /* „ერთობა“ page width: up to 1240px of content plus side padding that grows with the screen. */
 @utility unity-container {
   box-sizing: content-box;

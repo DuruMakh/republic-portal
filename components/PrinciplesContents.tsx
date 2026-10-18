@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { Caps } from "@/components/Caps";
 import {
   GEORGIAN_NUMERALS,
@@ -13,6 +14,7 @@ import {
  * folded rows do its job there).
  */
 export function PrinciplesContents() {
+  const t = useCopy();
   return (
     <nav
       id={PRINCIPLES_CONTENTS_ANCHOR}
@@ -21,7 +23,7 @@ export function PrinciplesContents() {
     >
       <div className="unity-container">
         <div id="toc-title" className="text-[13px] font-bold tracking-[.14em] text-brand">
-          <Caps>{PRINCIPLES_CONTENTS}</Caps>
+          <Caps>{t(PRINCIPLES_CONTENTS)}</Caps>
         </div>
         <ol className="mt-6 list-none columns-[3_280px] gap-x-10 border-t-2 border-ink p-0">
           {PRINCIPLES.map(({ title }, i) => (
@@ -37,7 +39,7 @@ export function PrinciplesContents() {
                   {GEORGIAN_NUMERALS[i]}
                 </span>
                 <span className="text-[16px] leading-[1.45] font-semibold transition-colors group-hover:text-brand">
-                  {title}
+                  {t(title)}
                 </span>
               </a>
             </li>

@@ -2,6 +2,7 @@
 
 import { ButtonLink } from "@/components/ButtonLink";
 import { useSignedIn } from "@/components/useSignedIn";
+import { useCopy } from "@/lib/i18n/copy";
 
 /**
  * The header's single account action (spec §3.1). Guests get the join door, labelled by the
@@ -12,15 +13,16 @@ import { useSignedIn } from "@/components/useSignedIn";
  * session-agnostic: guest is always the server-rendered default.
  */
 export function HeaderSessionAction({ joinLabel }: { joinLabel: string }) {
+  const t = useCopy();
   const signedIn = useSignedIn();
 
   return signedIn ? (
     <ButtonLink href="/me" size="sm">
-      კაბინეტი
+      {t("კაბინეტი")}
     </ButtonLink>
   ) : (
     <ButtonLink href="/join" size="sm">
-      {joinLabel}
+      {t(joinLabel)}
     </ButtonLink>
   );
 }

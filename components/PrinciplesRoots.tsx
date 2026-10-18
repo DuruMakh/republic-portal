@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { Caps } from "@/components/Caps";
 import { PRINCIPLE_ROOTS_LABEL, type PrincipleRoot } from "@/lib/principles-copy";
 
@@ -12,15 +13,16 @@ export function PrinciplesRoots({
   roots: readonly PrincipleRoot[];
   className?: string;
 }) {
+  const t = useCopy();
   return (
-    <aside aria-label={PRINCIPLE_ROOTS_LABEL} className={`flow-root ${className}`}>
+    <aside aria-label={t(PRINCIPLE_ROOTS_LABEL)} className={`flow-root ${className}`}>
       <div className="flex items-center gap-2.5 text-[11.5px] font-bold tracking-[.14em] text-brand">
         <span
           aria-hidden="true"
           className="block h-3 w-[34px] flex-none bg-[url(/unity/ornament-wine.svg)] bg-size-[auto_12px] bg-left bg-repeat-x"
         />
         <span>
-          <Caps>{PRINCIPLE_ROOTS_LABEL}</Caps>
+          <Caps>{t(PRINCIPLE_ROOTS_LABEL)}</Caps>
         </span>
       </div>
       {roots.map((root, i) => {
@@ -32,8 +34,8 @@ export function PrinciplesRoots({
                 key={root.date}
                 className={`${gap} text-[15px] leading-[1.55] text-prose sm:text-[15.5px]`}
               >
-                <strong className="block font-bold text-ink">{root.date}</strong>
-                {root.text}
+                <strong className="block font-bold text-ink">{t(root.date)}</strong>
+                {t(root.text)}
               </p>
             );
           case "quote":
@@ -41,16 +43,16 @@ export function PrinciplesRoots({
               <figure key={root.text} className={`${gap} m-0`}>
                 <blockquote className="m-0">
                   <p className="font-serif text-[16px] leading-[1.5] font-medium text-ink sm:text-[16.5px]">
-                    {root.text}
+                    {t(root.text)}
                   </p>
                 </blockquote>
                 <figcaption className="mt-1.5 text-[12.5px] leading-[1.45] text-secondary">
                   {root.author ? (
                     <>
-                      <span className="font-bold text-prose">{root.author}</span>,{" "}
+                      <span className="font-bold text-prose">{t(root.author)}</span>,{" "}
                     </>
                   ) : null}
-                  {root.source}
+                  {t(root.source)}
                 </figcaption>
               </figure>
             );
@@ -61,13 +63,13 @@ export function PrinciplesRoots({
                 className={`${gap} font-serif text-[34px] leading-none tracking-[.04em] text-brand`}
               >
                 <span aria-hidden="true">{root.sample}</span>
-                <span className="sr-only">{root.label}</span>
+                <span className="sr-only">{t(root.label)}</span>
               </p>
             );
           case "note":
             return (
               <p key={root.text} className={`${gap} text-[14.5px] leading-[1.55] text-prose`}>
-                {root.text}
+                {t(root.text)}
               </p>
             );
         }

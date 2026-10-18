@@ -1,5 +1,7 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { StructurePebble } from "@/components/StructurePebble";
 import { Caps } from "@/components/Caps";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 
 // The design's scatter of tilts, picked per pebble so the field looks hand-laid.
 const TILTS = [
@@ -32,6 +34,7 @@ export function StructureVote({
   historyText: string;
   historyImageAlt: string;
 }) {
+  const t = useCopy();
   return (
     <>
       <div className="mt-7 border border-rule bg-chalk px-4 pt-[26px] pb-[18px] sm:mt-[clamp(40px,4.5vw,64px)] sm:px-[clamp(20px,3vw,40px)] sm:pt-[clamp(28px,4vw,56px)] sm:pb-7">
@@ -54,22 +57,22 @@ export function StructureVote({
         <div className="mt-[22px] flex justify-between gap-4 border-t border-rule pt-3.5 text-[14px] font-semibold sm:mt-7 sm:pt-[18px] sm:text-[15px]">
           <span className="inline-flex items-center gap-2 sm:gap-2.5">
             <StructurePebble className="h-2.5 w-[13px] bg-teal sm:h-[11px] sm:w-3.5" />
-            {forLabel}
+            {t(forLabel)}
           </span>
           <span className="inline-flex items-center gap-2 sm:gap-2.5">
             <StructurePebble className="h-2.5 w-[13px] bg-[#CFC4B3] sm:h-[11px] sm:w-3.5" />
-            {againstLabel}
+            {t(againstLabel)}
           </span>
         </div>
       </div>
       <aside
-        aria-label={historyLabel}
+        aria-label={t(historyLabel)}
         className="mt-[22px] grid grid-cols-[64px_minmax(0,1fr)] items-center gap-[18px] bg-sandstone px-[18px] py-5 sm:mt-7 sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-8 sm:px-9 sm:py-7"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- small archival photo, fixed size */}
         <img
           src="/unity/doc-constitution-cover.jpg"
-          alt={historyImageAlt}
+          alt={t(historyImageAlt)}
           width={891}
           height={1275}
           loading="lazy"
@@ -82,12 +85,13 @@ export function StructureVote({
               className="block h-3 w-[34px] flex-none bg-[url(/unity/ornament-wine.svg)] bg-[length:auto_12px] bg-left bg-repeat-x"
             />
             <span>
-              <Caps>{historyLabel}</Caps>
+              <Caps>{t(historyLabel)}</Caps>
             </span>
           </div>
           <p className="mt-3 font-serif text-[16px] leading-[1.6] text-pretty text-ink sm:text-[19px]">
-            {historyText}
+            {t(historyText)}
           </p>
+          <OriginalLanguageNote document />
         </div>
       </aside>
     </>

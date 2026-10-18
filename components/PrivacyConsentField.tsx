@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { useCopy } from "@/lib/i18n/copy";
+import { useLocale } from "next-intl";
+import Link from "@/lib/i18n/navigation";
 import { UnityCheckboxField } from "@/components/UnityField";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
 
@@ -16,6 +18,8 @@ export function PrivacyConsentField({
   onChange: (checked: boolean) => void;
   error?: string;
 }) {
+  const t = useCopy();
+  const locale = useLocale();
   return (
     <div className="flex flex-col gap-1.5">
       <UnityCheckboxField
@@ -25,23 +29,25 @@ export function PrivacyConsentField({
         aria-invalid={error ? true : undefined}
         label={
           <>
-            ვადასტურებ, რომ 18 წლის ან უფროსი ვარ და ვეთანხმები ჩემი პერსონალური მონაცემების
-            დამუშავებას{" "}
+            {t(
+              "ვადასტურებ, რომ 18 წლის ან უფროსი ვარ და ვეთანხმები ჩემი პერსონალური მონაცემების დამუშავებას",
+            )}{" "}
             <Link
               href={PRIVACY_POLICY_PATH}
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-brand underline decoration-1 underline-offset-[5px] hover:text-brand-dark"
             >
-              კონფიდენციალურობის პოლიტიკის
-            </Link>{" "}
-            შესაბამისად.
+              {t("კონფიდენციალურობის პოლიტიკის")}
+            </Link>
+            {locale === "ka" ? " " : ""}
+            {t("შესაბამისად.")}
           </>
         }
       />
       {error ? (
         <p role="alert" className="text-[14px] font-semibold text-danger">
-          {error}
+          {t(error ?? "")}
         </p>
       ) : null}
     </div>

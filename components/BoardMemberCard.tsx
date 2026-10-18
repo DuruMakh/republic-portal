@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { BoardMember } from "@/lib/board-members";
 import { SocialLinks } from "./SocialLinks";
+import { OriginalLanguageNote } from "./OriginalLanguageNote";
 
 export function BoardMemberCard({ member }: { member: BoardMember }) {
   return (
@@ -14,8 +15,13 @@ export function BoardMemberCard({ member }: { member: BoardMember }) {
           className="object-cover"
         />
       </div>
-      <h3 className="font-serif text-[1.08rem] leading-snug font-bold text-ink">{member.name}</h3>
-      <p className="text-[0.86rem] leading-relaxed text-muted-fg">{member.bio}</p>
+      <h3 lang="ka" className="font-serif text-[1.08rem] leading-snug font-bold text-ink">
+        {member.name}
+      </h3>
+      <p lang="ka" className="text-[0.86rem] leading-relaxed text-muted-fg">
+        {member.bio}
+      </p>
+      <OriginalLanguageNote />
       <SocialLinks person={member.name} links={member.socials} />
     </article>
   );

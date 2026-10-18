@@ -18,7 +18,7 @@ import { defaultCache } from "@serwist/next/worker";
 import { NetworkOnly, Serwist } from "serwist";
 // Relative, not "@/": scripts/build-sw.mjs bundles this file with esbuild, which does
 // not read tsconfig paths.
-import { isNeverCached } from "../lib/sw-routes";
+import { isNeverCached, offlineDocument } from "../lib/sw-routes";
 
 /**
  * Build revision, injected by scripts/build-sw.mjs via an esbuild `define`
@@ -37,6 +37,7 @@ const revision = __SW_REVISION__;
 const serwist = new Serwist({
   precacheEntries: [
     { url: "/offline", revision },
+    { url: "/en/offline", revision },
     // The offline page's own images, so it is whole without a connection.
     { url: "/unity/logo.png", revision },
     { url: "/public-pages/map-dots-grey.svg", revision },
@@ -68,6 +69,12 @@ const serwist = new Serwist({
   ],
   fallbacks: {
     entries: [
+      {
+        url: "/en/offline",
+        matcher: ({ request }) =>
+          request.destination === "document" &&
+          offlineDocument(new URL(request.url).pathname) === "/en/offline",
+      },
       {
         url: "/offline",
         matcher: ({ request }) => request.destination === "document",

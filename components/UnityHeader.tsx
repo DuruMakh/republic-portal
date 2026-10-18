@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { Caps } from "@/components/Caps";
 import { useChromePathname } from "@/components/ChromePathname";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { useFocusTrap } from "@/components/useFocusTrap";
 import { useSignedIn } from "@/components/useSignedIn";
 import { mobileBackTarget } from "@/lib/mobile-nav";
@@ -40,6 +42,7 @@ export function UnityHeader({
   eventsShown: boolean;
   ratingsShown: boolean;
 }) {
+  const t = useCopy();
   const pathname = useChromePathname();
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
@@ -69,11 +72,14 @@ export function UnityHeader({
             href={back.href}
             className="text-[15px] font-semibold text-ink no-underline hover:text-brand"
           >
-            {BACK}
+            {t(BACK)}
           </Link>
-          <span className="text-[12px] font-bold tracking-[.14em] text-brand">
-            <Caps>{back.label}</Caps>
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] font-bold tracking-[.14em] text-brand">
+              <Caps>{t(back.label)}</Caps>
+            </span>
+            <LanguageSwitch />
+          </div>
         </header>
       ) : null}
       <header
@@ -84,18 +90,18 @@ export function UnityHeader({
         }`}
       >
         <div className="unity-container flex h-[68px] items-center justify-between gap-6 min-[900px]:h-[88px]">
-          <Link href="/" aria-label={HOME_LABEL} className="flex shrink-0">
+          <Link href="/" aria-label={t(HOME_LABEL)} className="flex shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark */}
             <img
               src={dark ? "/unity/logo-light.png" : "/unity/logo.png"}
-              alt={BRAND}
+              alt={t(BRAND)}
               width={dark ? 955 : 687}
               height={dark ? 321 : 231}
               className="block h-[38px] w-auto min-[900px]:h-[46px]"
             />
           </Link>
           <nav
-            aria-label="მთავარი ნავიგაცია"
+            aria-label={t("მთავარი ნავიგაცია")}
             className="hidden items-center gap-[clamp(18px,2.2vw,34px)] whitespace-nowrap text-[13px] font-semibold tracking-[.08em] min-[900px]:flex"
           >
             {navItems.map((item) => {
@@ -115,12 +121,13 @@ export function UnityHeader({
                         : "border-transparent text-ink hover:text-brand"
                   }`}
                 >
-                  <Caps>{item.label}</Caps>
+                  <Caps>{t(item.label)}</Caps>
                 </Link>
               );
             })}
           </nav>
           <div className="flex items-center gap-2.5">
+            <LanguageSwitch />
             <Link
               href={action.href}
               className={`hidden h-11 items-center whitespace-nowrap px-5 text-[13px] font-bold tracking-[.08em] no-underline transition-colors min-[900px]:inline-flex ${
@@ -129,14 +136,14 @@ export function UnityHeader({
                   : "bg-brand text-white hover:bg-brand-dark hover:text-white"
               }`}
             >
-              <Caps>{action.label}</Caps>
+              <Caps>{t(action.label)}</Caps>
             </Link>
             <button
               ref={triggerRef}
               type="button"
               onClick={() => setOpen(true)}
               aria-expanded={open}
-              aria-label={MENU}
+              aria-label={t(MENU)}
               className="-mr-1 inline-flex h-12 w-12 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-current min-[900px]:hidden"
             >
               <svg width="24" height="16" viewBox="0 0 24 16" aria-hidden="true" className="block">
@@ -156,41 +163,44 @@ export function UnityHeader({
             ref={panelRef}
             role="dialog"
             aria-modal="true"
-            aria-label={MENU}
+            aria-label={t(MENU)}
             className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-wine text-limestone [&_:focus-visible]:outline-limestone"
           >
             <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-limestone/14 px-5">
               {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark */}
               <img
                 src="/unity/logo-light.png"
-                alt={BRAND}
+                alt={t(BRAND)}
                 width={955}
                 height={321}
                 className="block h-[38px] w-auto"
               />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={CLOSE}
-                className="-mr-1 inline-flex h-12 w-12 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-limestone"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  aria-hidden="true"
-                  className="block"
+              <div className="flex items-center gap-2.5">
+                <LanguageSwitch onNavigate={close} />
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label={t(CLOSE)}
+                  className="-mr-1 inline-flex h-12 w-12 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-limestone"
                 >
-                  <path
-                    d="M2 2 L18 18 M18 2 L2 18"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    className="block"
+                  >
+                    <path
+                      d="M2 2 L18 18 M18 2 L2 18"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <nav aria-label={MENU} className="flex flex-col px-5 pt-3">
+            <nav aria-label={t(MENU)} className="flex flex-col px-5 pt-3">
               {navItems.map((item) => {
                 const current = pathname === item.href;
                 return (
@@ -203,7 +213,7 @@ export function UnityHeader({
                       current ? "text-white hover:text-white" : "text-limestone hover:text-white"
                     }`}
                   >
-                    <Caps>{item.label}</Caps>
+                    <Caps>{t(item.label)}</Caps>
                     {current ? (
                       <span aria-hidden="true" className="pebble block h-[11px] w-3.5 bg-sand" />
                     ) : null}
@@ -217,7 +227,7 @@ export function UnityHeader({
                 onClick={() => setOpen(false)}
                 className="flex h-14 items-center justify-center bg-limestone text-[14px] font-bold tracking-[.08em] text-wine no-underline hover:bg-white hover:text-wine"
               >
-                <Caps>{action.label}</Caps>
+                <Caps>{t(action.label)}</Caps>
               </Link>
             </div>
           </div>

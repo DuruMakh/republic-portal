@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   verify: vi.fn(),
 }));
 
-vi.mock("@/app/(unity)/join/phone-actions", () => ({
+vi.mock("@/app/[locale]/(unity)/join/phone-actions", () => ({
   sendPhoneVerificationAction: mocks.send,
   verifyPhoneVerificationAction: mocks.verify,
 }));

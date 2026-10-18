@@ -19,6 +19,7 @@ describe("redirects", () => {
     vi.stubEnv("SHOW_RATINGS", "true");
     expect(await nextConfig.redirects?.()).toEqual([
       { source: "/delegates", destination: "/leaderboard", permanent: true },
+      { source: "/en/delegates", destination: "/en/leaderboard", permanent: true },
     ]);
   });
 });

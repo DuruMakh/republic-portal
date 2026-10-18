@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { GEORGIAN_NUMERALS, PRINCIPLES_SEAL_LABEL, principleAnchor } from "@/lib/principles-copy";
 
 // Where each numeral sits on the ring, clockwise from the top, as % of the seal (the design's
@@ -22,9 +23,10 @@ const RING = [
  * around it, each a link to its principle (on phones the link also opens that principle's row).
  */
 export function PrinciplesSeal() {
+  const t = useCopy();
   return (
     <nav
-      aria-label={PRINCIPLES_SEAL_LABEL}
+      aria-label={t(PRINCIPLES_SEAL_LABEL)}
       className="flex min-w-0 flex-[1_1_360px] justify-center"
     >
       <div className="relative aspect-square w-[320px] sm:w-[min(100%,500px)]">
@@ -48,13 +50,13 @@ export function PrinciplesSeal() {
             <a
               key={numeral}
               href={`#${principleAnchor(i + 1)}`}
-              aria-label={`შეთანხმების პუნქტი ${i + 1}`}
+              aria-label={`${t("შეთანხმების პუნქტი")} ${i + 1}`}
               style={{ left: `${left}%`, top: `${top}%` }}
               className={`absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-brand bg-limestone font-aso leading-none font-light text-brand no-underline transition-colors hover:bg-brand hover:text-white sm:size-[52px] ${
                 numeral.length > 1 ? "text-[16px] sm:text-[19px]" : "text-[18px] sm:text-[21px]"
               }`}
             >
-              {numeral}
+              <span aria-hidden="true">{numeral}</span>
             </a>
           );
         })}

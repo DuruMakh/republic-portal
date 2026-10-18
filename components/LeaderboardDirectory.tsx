@@ -1,5 +1,7 @@
 "use client";
 
+import { useCopy } from "@/lib/i18n/copy";
+
 import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { inputClasses } from "@/components/Field";
@@ -21,6 +23,7 @@ export function LeaderboardDirectory({
   delegates: RankedDelegate[];
   regions: Region[];
 }) {
+  const t = useCopy();
   const [query, setQuery] = useState("");
   const [regionId, setRegionId] = useState("");
 
@@ -39,8 +42,8 @@ export function LeaderboardDirectory({
       <div className="mb-5 flex flex-wrap gap-3">
         <input
           className={`${inputClasses} min-w-[220px] flex-1`}
-          placeholder="ძებნა სახელით..."
-          aria-label="ძებნა სახელით"
+          placeholder={t("ძებნა სახელით...")}
+          aria-label={t("ძებნა სახელით")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -48,12 +51,12 @@ export function LeaderboardDirectory({
           className="max-w-[280px]"
           value={regionId}
           onChange={(e) => setRegionId(e.target.value)}
-          aria-label="მხარე"
+          aria-label={t("მხარე")}
         >
-          <option value="">ყველა მხარე</option>
+          <option value="">{t("ყველა მხარე")}</option>
           {regions.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.name_ka}
+              {t(r.name_ka)}
             </option>
           ))}
         </Select>
@@ -69,7 +72,7 @@ export function LeaderboardDirectory({
       ) : (
         <Card>
           <div className="text-center text-muted-fg">
-            ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.
+            {t("ამ პარამეტრებით დელეგატი ვერ მოიძებნა. სცადე სხვა ძებნა ან აირჩიე „ყველა მხარე“.")}
           </div>
         </Card>
       )}
@@ -77,7 +80,7 @@ export function LeaderboardDirectory({
         className="mt-6 border-t-2 border-ink pt-3 text-center text-sm text-muted-fg"
         data-testid="delegate-count"
       >
-        ნაჩვენებია {formatCountKa(filtered.length)} დელეგატი
+        {t("ნაჩვენებია")} {formatCountKa(filtered.length)} {t("დელეგატი")}
       </p>
     </div>
   );

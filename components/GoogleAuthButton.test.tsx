@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 
 const signInWithOAuthMock = vi.fn();
 
@@ -21,6 +22,20 @@ afterEach(() => {
 });
 
 describe("GoogleAuthButton", () => {
+  it("preserves English and the referral through the shared Google callback", async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <GoogleAuthButton nextPath="/join?ref=D00101" label="Google-ით გაგრძელება" />
+      </NextIntlClientProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+    await waitFor(() => expect(signInWithOAuthMock).toHaveBeenCalled());
+    const options = signInWithOAuthMock.mock.calls[0]?.[0] as { options: { redirectTo: string } };
+    const callback = new URL(options.options.redirectTo);
+    expect(callback.pathname).toBe("/auth/callback");
+    expect(callback.searchParams.get("next")).toBe("/en/join?ref=D00101");
+  });
+
   it("renders the official Google mark as part of one accessible provider action", () => {
     render(<GoogleAuthButton nextPath="/join" label="Google-ით გაგრძელება" />);
 

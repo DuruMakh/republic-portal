@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { Caps } from "@/components/Caps";
 import { CabinetNote } from "@/components/CabinetPage";
 import { CopyButton } from "@/components/CopyButton";
@@ -12,6 +13,7 @@ const BANK_ROWS = [
 ] as const;
 
 export function TransferInstructions({ referenceCode }: { referenceCode: string | null }) {
+  const t = useCopy();
   // legacy pre-Phase-2 accounts have no code (spec §3.8) — show nothing
   if (!referenceCode) return null;
   return (
@@ -19,7 +21,7 @@ export function TransferInstructions({ referenceCode }: { referenceCode: string 
       <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-8">
         <div className="min-w-0">
           <p className="m-0 text-[12px] font-bold tracking-[.14em] text-secondary">
-            <Caps>შენი პირადი კოდი</Caps>
+            <Caps>{t("შენი პირადი კოდი")}</Caps>
           </p>
           <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-3.5">
             <span
@@ -31,28 +33,28 @@ export function TransferInstructions({ referenceCode }: { referenceCode: string 
             <CopyButton text={referenceCode} />
           </div>
           <p className="mt-3 mb-0 text-[15px] leading-[1.6] text-prose">
-            მიუთითე ეს კოდი ყველა გადარიცხვის დანიშნულებაში.
+            {t("მიუთითე ეს კოდი ყველა გადარიცხვის დანიშნულებაში.")}
           </p>
         </div>
         <div className="justify-self-start border border-rule bg-chalk p-2 sm:justify-self-end">
-          <QrCode value={referenceCode} label="პირადი კოდი — QR" size={128} />
+          <QrCode value={referenceCode} label={t("პირადი კოდი — QR")} size={128} />
         </div>
       </div>
       {BANK_DETAILS.placeholder ? (
         <div className="mt-6 border-t border-rule pt-6">
           <CabinetNote testId="bank-placeholder">
-            საბანკო რეკვიზიტები მალე დაემატება — ეს დროებითი მონაცემებია.
+            {t("საბანკო რეკვიზიტები მალე დაემატება — ეს დროებითი მონაცემებია.")}
           </CabinetNote>
         </div>
       ) : null}
       <dl className="mt-3.5 mb-0 border-t border-rule">
         {BANK_ROWS.map((row) => (
           <div
-            key={row.label}
+            key={t(row.label)}
             className="grid gap-1 border-b border-rule py-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-4"
           >
             <dt className="pt-[3px] text-[12px] font-bold tracking-[.12em] text-secondary">
-              <Caps>{row.label}</Caps>
+              <Caps>{t(row.label)}</Caps>
             </dt>
             <dd
               className={`m-0 text-[16px] font-semibold text-ink ${row.mono ? "font-mono tracking-[.02em]" : ""}`}
@@ -63,9 +65,11 @@ export function TransferInstructions({ referenceCode }: { referenceCode: string 
         ))}
       </dl>
       <p className="mt-[18px] mb-0 text-[15px] leading-[1.65] text-prose">
-        გადმორიცხე <strong className="font-serif text-ink">{MEMBERSHIP_FEE_GEL} ₾</strong>{" "}
-        ყოველთვიურად ამ ანგარიშზე და დანიშნულებაში მიუთითე შენი პირადი კოდი — ასე დავაკავშირებთ
-        გადმორიცხვას შენს წევრობასთან.
+        {t("გადმორიცხე ")}
+        <strong className="font-serif text-ink">{MEMBERSHIP_FEE_GEL} ₾</strong>{" "}
+        {t(
+          "ყოველთვიურად ამ ანგარიშზე და დანიშნულებაში მიუთითე შენი პირადი კოდი — ასე დავაკავშირებთ გადმორიცხვას შენს წევრობასთან.",
+        )}
       </p>
     </div>
   );

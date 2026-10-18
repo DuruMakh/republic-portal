@@ -13,10 +13,15 @@ export const PROTECTED_PREFIXES = [
   "/auth",
 ] as const;
 
+export function offlineDocument(pathname: string): "/offline" | "/en/offline" {
+  return /^\/en(?:\/|$)/.test(pathname) ? "/en/offline" : "/offline";
+}
+
 export function isNeverCached(url: URL, sameOrigin: boolean): boolean {
   // Cross-origin = Supabase (auth, data, storage). The public site never needs it offline.
   if (!sameOrigin) return true;
-  return PROTECTED_PREFIXES.some((p) => url.pathname === p || url.pathname.startsWith(`${p}/`));
+  const pathname = url.pathname.replace(/^\/(?:en|ka)(?=\/|$)/, "") || "/";
+  return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 /**
