@@ -26,7 +26,7 @@ const TD = "border-b border-rule px-3 py-3 sm:px-4 sm:py-3.5";
 const FINANCES_METADATA: Metadata = {
   title: `${TITLE} — ქართული რესპუბლიკა`,
   description: INTRO,
-  openGraph: { images: ["/og-default.png"] },
+  openGraph: { images: ["/og-default.png?v=civic-portal"] },
 };
 
 // While hidden the page presents the generic not-found title and never its own (ADR-034): a

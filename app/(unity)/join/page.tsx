@@ -5,7 +5,7 @@ import JoinForm from "./JoinForm";
 export const metadata: Metadata = {
   title: "რეგისტრაცია — ქართული რესპუბლიკა",
   description: "გახდი მხარდამჭერი — მხოლოდ ძირითადი მონაცემები, დანარჩენს კაბინეტში ნახავ.",
-  openGraph: { images: ["/og-default.png"] },
+  openGraph: { images: ["/og-default.png?v=civic-portal"] },
 };
 
 export default function JoinPage() {

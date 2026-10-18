@@ -39,7 +39,7 @@ export async function generateMetadata({
     openGraph: {
       title: event.title,
       description: excerpt(event.description),
-      images: ["/og-default.png"],
+      images: ["/og-default.png?v=civic-portal"],
     },
   };
 }
