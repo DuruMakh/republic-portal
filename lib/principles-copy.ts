@@ -34,8 +34,6 @@ export interface Principle {
   /** The rest of the text, one entry per paragraph. */
   body: readonly string[];
   roots: readonly PrincipleRoot[];
-  /** Principle 1's note carries the 9 April tulips. */
-  rootsArt?: boolean;
 }
 
 export const PRINCIPLES: readonly Principle[] = [
@@ -46,12 +44,13 @@ export const PRINCIPLES: readonly Principle[] = [
       "ქართველი ერის ურყევი ნება, იცხოვროს საკუთარ, დამოუკიდებელ სახელმწიფოში, დადასტურებულია როგორც 1918 წლის 26 მაისისა და 1991 წლის 9 აპრილის დამოუკიდებლობის გამოცხადების აქტებით, ისე 1921 წლის თებერვალსა და 1989 წლის 9 აპრილს თავისუფლებისა და დამოუკიდებლობისთვის გაღებული მსხვერპლით. ეს ნება უზენაესია და არ ექვემდებარება გადახედვას.",
       "ქართველი ერი არასოდეს შეეგუება ქართული სახელმწიფოებრიობისა და ქართული მიწის ნებისმიერი ფორმით ხელყოფის მცდელობას.",
     ],
-    rootsArt: true,
     roots: [
       {
-        kind: "event",
-        date: "9\u00a0აპრილი 1989",
-        text: "საბჭოთა ჯარმა რუსთაველის გამზირზე მშვიდობიანი აქცია დაარბია. დაიღუპა 21 ადამიანი.",
+        // Excerpt from the 1989 speech transcribed at https://www.radiotavisupleba.ge/a/31189953.html.
+        kind: "quote",
+        text: "„საქართველომ უნდა მოიპოვოს დამოუკიდებლობა! საქართველო ღირსია სრული თავისუფლების!“",
+        author: "მერაბ კოსტავა",
+        source: "გამოსვლა, 1989",
       },
       {
         kind: "event",

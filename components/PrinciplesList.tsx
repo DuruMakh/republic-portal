@@ -85,7 +85,7 @@ function PrincipleSection({
 }) {
   const principle = PRINCIPLES[number - 1];
   if (!principle) return null;
-  const { title, lead, body, roots, rootsArt } = principle;
+  const { title, lead, body, roots } = principle;
   const id = principleAnchor(number);
   const numeral = GEORGIAN_NUMERALS[number - 1];
 
@@ -140,7 +140,6 @@ function PrincipleSection({
           </div>
           <PrinciplesRoots
             roots={roots}
-            art={rootsArt}
             className="mt-5 max-w-[340px] max-sm:order-last max-sm:mt-[22px] max-sm:max-w-none"
           />
         </div>
