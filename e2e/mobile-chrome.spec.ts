@@ -167,6 +167,7 @@ test.describe("mobile tab labels", () => {
       await page.goto(`${prefix}/styleguide-mobile-tabbar`);
       const labels = page.locator("nav a > span:first-child");
       await expect(labels).toHaveCount(4);
+      await page.evaluate(() => document.fonts.ready);
 
       const behavior = await labels.evaluateAll((elements) =>
         elements.map((element) => {

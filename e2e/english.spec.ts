@@ -95,8 +95,7 @@ test("English test member sign-in keeps the account and sign-out in English", as
 test("English delegates can open their team and keep English on mobile", async ({ page }) => {
   await page.goto("/en/login");
   await page.getByRole("button", { name: "Delegate", exact: true }).click();
-  await expect(page).toHaveURL(/\/en\/me(?:\/|\?|$)/, { timeout: 20_000 });
-  await page.goto("/en/delegate");
+  await expect(page).toHaveURL(/\/en\/delegate$/, { timeout: 20_000 });
   await page.getByRole("link", { name: /View your team/ }).click();
   await expect(page).toHaveURL(/\/en\/delegate\/team$/);
   await expect(page.getByRole("heading", { name: "My team", exact: true })).toBeVisible();
