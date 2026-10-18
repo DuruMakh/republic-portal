@@ -41,4 +41,10 @@ describe("useChromePathname", () => {
     render(<Probe />);
     expect(screen.getByTestId("path").textContent).toBe("/news/index-of-things");
   });
+
+  it("applies the same chrome rules to the English address", () => {
+    vi.mocked(usePathname).mockReturnValue("/en/me/membership");
+    render(<Probe />);
+    expect(screen.getByTestId("path").textContent).toBe("/me/membership");
+  });
 });

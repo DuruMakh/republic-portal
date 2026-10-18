@@ -5,7 +5,7 @@ import { MobileBackHeader } from "./MobileBackHeader";
 describe("MobileBackHeader", () => {
   it("links to the declared parent, not to browser history", () => {
     render(<MobileBackHeader href="/news" label="სიახლეები" />);
-    const link = screen.getByRole("link");
+    const link = screen.getByRole("link", { name: "← უკან" });
     expect(link).toHaveAttribute("href", "/news");
   });
 

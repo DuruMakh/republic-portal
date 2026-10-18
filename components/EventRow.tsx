@@ -1,6 +1,9 @@
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useLocale } from "next-intl";
+import { useCopy } from "@/lib/i18n/copy";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 import { contentPill } from "@/lib/admin";
-import { eventDateBadgeKa, formatEventTimeKa } from "@/lib/community";
+import { eventDateBadge, formatEventTime } from "@/lib/i18n/format";
 import type { PublicEventItem } from "@/lib/supabase/public";
 
 /**
@@ -8,7 +11,8 @@ import type { PublicEventItem } from "@/lib/supabase/public";
  * serif title and place, and a cancelled tag. `past` greys the day and dims the row.
  */
 export function EventRow({ event, past = false }: { event: PublicEventItem; past?: boolean }) {
-  const { day, monthYear } = eventDateBadgeKa(event.starts_at);
+  const locale = useLocale() === "en" ? "en" : "ka";
+  const { day, monthYear } = eventDateBadge(event.starts_at, locale);
   const cancelled = event.status === "cancelled";
   return (
     <Link
@@ -30,15 +34,19 @@ export function EventRow({ event, past = false }: { event: PublicEventItem; past
       </span>
       {/* Phones read time, title, place; wide screens put the title first, time and place under it. */}
       <span className="grid min-w-0 grid-cols-1 content-center gap-1 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-5 sm:gap-y-1.5">
-        <span className="font-serif text-[18px] font-semibold leading-[1.35] max-sm:order-2 sm:col-span-2 sm:text-[22px]">
+        <span
+          lang="ka"
+          className="font-serif text-[18px] font-semibold leading-[1.35] max-sm:order-2 sm:col-span-2 sm:text-[22px]"
+        >
           {event.title}
         </span>
         <span className="text-[13.5px] font-semibold text-secondary max-sm:order-1 sm:text-[15px]">
-          {formatEventTimeKa(event.starts_at, event.ends_at)}
+          {formatEventTime(event.starts_at, event.ends_at, locale)}
         </span>
-        <span className="text-[14px] text-secondary max-sm:order-3 sm:text-[15px]">
+        <span lang="ka" className="text-[14px] text-secondary max-sm:order-3 sm:text-[15px]">
           {event.location}
         </span>
+        <OriginalLanguageNote className="order-4 block text-[13px] text-secondary sm:col-span-2" />
         {cancelled ? (
           <span className="mt-1.5 max-sm:order-4 sm:hidden">
             <CancelledTag />
@@ -56,9 +64,10 @@ export function EventRow({ event, past = false }: { event: PublicEventItem; past
 }
 
 function CancelledTag() {
+  const t = useCopy();
   return (
     <span className="inline-flex h-[26px] items-center whitespace-nowrap border border-[#e3b3bc] bg-[#f6e3e6] px-2.5 text-[12px] font-bold leading-none tracking-[.04em] text-brand">
-      {contentPill("cancelled").label}
+      {t(contentPill("cancelled").label)}
     </span>
   );
 }

@@ -1,10 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { isNeverCached, runtimeCachesToClear } from "./sw-routes";
+import { isNeverCached, runtimeCachesToClear, offlineDocument } from "./sw-routes";
 
 const at = (href: string) => new URL(href);
 
 describe("service-worker never-cache rule (security audit M3)", () => {
+  it("keeps the offline explanation in the requested language", () => {
+    expect(offlineDocument("/en/me/profile")).toBe("/en/offline");
+    expect(offlineDocument("/me/profile")).toBe("/offline");
+    expect(offlineDocument("/enough")).toBe("/offline");
+  });
   it("never caches anything from another origin, Supabase above all", () => {
     expect(isNeverCached(at("https://abc.supabase.co/auth/v1/user"), false)).toBe(true);
     expect(isNeverCached(at("https://abc.supabase.co/rest/v1/cities?select=*"), false)).toBe(true);
@@ -23,6 +28,11 @@ describe("service-worker never-cache rule (security audit M3)", () => {
       "/login",
       "/join",
       "/auth/callback",
+      "/en/me",
+      "/en/me/profile",
+      "/en/delegate/team",
+      "/en/join",
+      "/en/login",
     ]) {
       expect(isNeverCached(at(`https://site.test${path}`), true)).toBe(true);
     }

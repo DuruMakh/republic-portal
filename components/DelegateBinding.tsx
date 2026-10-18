@@ -1,4 +1,5 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { Pill } from "@/components/Pill";
 import { Select } from "@/components/Select";
@@ -20,13 +21,14 @@ export function DelegateBinding({
   value: string | null; // delegate id; null = ცენტრალური მოძრაობა
   onChange: (id: string | null) => void;
 }) {
+  const t = useCopy();
   return (
     <div>
       <p className="text-[0.74rem] font-bold uppercase tracking-[.08em] text-muted-fg">
-        აირჩიე შენი დელეგატი
+        {t("აირჩიე შენი დელეგატი")}
       </p>
       <p className="mb-3 mt-1 text-sm text-muted-fg">
-        დელეგატი წარადგენს შენს ხმას შენს მხარეში. ნებისმიერ დროს შეგიძლია შეცვალო.
+        {t("დელეგატი წარადგენს შენს ხმას შენს მხარეში. ნებისმიერ დროს შეგიძლია შეცვალო.")}
       </p>
       {referral ? (
         <div>
@@ -36,32 +38,32 @@ export function DelegateBinding({
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-serif font-bold text-ink">{referral.fullName}</p>
-              <p className="text-[0.74rem] text-muted-fg">{referral.regionNameKa}</p>
+              <p className="text-[0.74rem] text-muted-fg">{t(referral.regionNameKa)}</p>
             </div>
             <Pill status="approved" />
           </div>
           <p className="mt-3 text-[0.74rem] text-muted-fg">
-            🔗 შენ შემოხვედი რეფერალური ბმულით — დელეგატი უკვე მინიჭებულია.
+            {t("🔗 შენ შემოხვედი რეფერალური ბმულით — დელეგატი უკვე მინიჭებულია.")}
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
           <Select
-            aria-label="დელეგატი"
+            aria-label={t("დელეგატი")}
             value={value ?? "central"}
             onChange={(e) => onChange(e.target.value === "central" ? null : e.target.value)}
           >
             <option value="central" className="font-serif">
-              არ მყავს დელეგატი
+              {t("არ მყავს დელეგატი")}
             </option>
             {options.map((d) => (
               <option key={d.id} value={d.id} className="font-serif">
-                {d.fullName} · {d.regionNameKa}
+                {d.fullName} · {t(d.regionNameKa)}
               </option>
             ))}
           </Select>
           <p className="text-[0.74rem] text-muted-fg">
-            აჩვენება მხოლოდ არჩეული მხარის დამტკიცებული დელეგატები.
+            {t("აჩვენება მხოლოდ არჩეული მხარის დამტკიცებული დელეგატები.")}
           </p>
         </div>
       )}

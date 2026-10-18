@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { mtavruli } from "@/lib/mtavruli";
 
 /**
@@ -16,6 +17,7 @@ const LETTERS = ["ა", "ბ", "გ", "დ"] as const;
 
 /** The terms as the /me/delegacy confirm flow shows them, with old-Georgian letter numerals. */
 export function DelegateTerms() {
+  const t = useCopy();
   return (
     <ol className="m-0 list-none border-t-2 border-ink p-0">
       {DELEGATE_TERMS.map((term, i) => (
@@ -30,7 +32,7 @@ export function DelegateTerms() {
             {mtavruli(LETTERS[i] ?? "")}
           </span>
           <span className="font-serif text-[17px] leading-[1.65] text-ink md:text-[20px]">
-            {term}
+            {t(term)}
           </span>
         </li>
       ))}

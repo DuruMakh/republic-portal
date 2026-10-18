@@ -149,7 +149,10 @@ test.describe("delegate page", () => {
     expect(ogTitle).toContain("გიორგი მაისურაძე");
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute("content");
     expect(ogImage).toBeTruthy();
-    const image = await request.get(ogImage!);
+    // Metadata keeps the canonical origin; fetch its path from this test server so
+    // another checkout on the default port cannot answer this image check.
+    const imageUrl = new URL(ogImage!);
+    const image = await request.get(new URL(imageUrl.pathname + imageUrl.search, page.url()).href);
     expect(image.status()).toBe(200);
     expect(image.headers()["content-type"]).toContain("image/png");
   });

@@ -159,31 +159,37 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
 test.describe("mobile tab labels", () => {
   // The narrowest supported width is the binding case: labels that fit at 320px fit wider.
   const width = 320;
-  test(`${width}px labels fit their slots without ellipsis`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 844 });
-    await page.goto("/styleguide-mobile-tabbar");
-    const labels = page.locator("nav a > span:first-child");
-    await expect(labels).toHaveCount(4);
+  for (const prefix of ["", "/en"]) {
+    test(`${width}px ${prefix || "Georgian"} labels fit their slots without ellipsis`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${prefix}/styleguide-mobile-tabbar`);
+      const labels = page.locator("nav a > span:first-child");
+      await expect(labels).toHaveCount(4);
+      await page.evaluate(() => document.fonts.ready);
 
-    const behavior = await labels.evaluateAll((elements) =>
-      elements.map((element) => {
-        const label = element.getBoundingClientRect();
-        const slot = element.parentElement?.getBoundingClientRect();
-        return {
-          text: element.textContent,
-          textOverflow: getComputedStyle(element).textOverflow,
-          labelLeft: label.left,
-          labelRight: label.right,
-          slotLeft: slot?.left,
-          slotRight: slot?.right,
-          fits: slot ? label.left >= slot.left - 0.5 && label.right <= slot.right + 0.5 : false,
-        };
-      }),
-    );
+      const behavior = await labels.evaluateAll((elements) =>
+        elements.map((element) => {
+          const label = element.getBoundingClientRect();
+          const slot = element.parentElement?.getBoundingClientRect();
+          return {
+            text: element.textContent,
+            textOverflow: getComputedStyle(element).textOverflow,
+            labelLeft: label.left,
+            labelRight: label.right,
+            slotLeft: slot?.left,
+            slotRight: slot?.right,
+            fits: slot ? label.left >= slot.left - 0.5 && label.right <= slot.right + 0.5 : false,
+          };
+        }),
+      );
 
-    for (const label of behavior) {
-      expect(label.textOverflow).not.toBe("ellipsis");
-      expect(label.fits, JSON.stringify(label)).toBe(true);
-    }
-  });
+      for (const label of behavior) {
+        expect(label.textOverflow).not.toBe("ellipsis");
+        expect(label.fits, JSON.stringify(label)).toBe(true);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    });
+  }
 });

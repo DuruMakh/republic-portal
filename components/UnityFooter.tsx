@@ -1,4 +1,5 @@
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 
 type FooterLink = { href: string; label: string };
 
@@ -17,6 +18,7 @@ export function UnityFooter({
   legalLinks: FooterLink[];
   copyright: string;
 }) {
+  const t = useCopy();
   return (
     <footer className="bg-teal text-sand [&_:focus-visible]:outline-limestone">
       <div className="unity-container relative isolate pb-7 pt-11 sm:pb-9 sm:pt-[clamp(56px,6vw,80px)]">
@@ -33,13 +35,13 @@ export function UnityFooter({
           {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark */}
           <img
             src="/unity/logo-light.png"
-            alt={BRAND}
+            alt={t(BRAND)}
             width={955}
             height={321}
             className="block h-11 w-auto self-start sm:h-[52px]"
           />
           <nav
-            aria-label="ქვედა ნავიგაცია"
+            aria-label={t("ქვედა ნავიგაცია")}
             className="grid grid-flow-col grid-cols-2 grid-rows-4 gap-x-5 gap-y-1 text-[16px] sm:grid-cols-[repeat(2,minmax(0,max-content))] sm:gap-x-16 sm:gap-y-3.5"
           >
             {navLinks.map((link) => (
@@ -48,17 +50,17 @@ export function UnityFooter({
                 href={link.href}
                 className="py-2 text-limestone no-underline hover:text-white sm:py-0"
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </nav>
         </div>
         <div className="mt-[26px] flex flex-col gap-2.5 border-t border-limestone/14 pt-[18px] text-[13px] leading-[1.6] sm:mt-14 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-8 sm:gap-y-4 sm:pt-6 sm:text-[14px]">
-          <span>{copyright}</span>
+          <span>{t(copyright)}</span>
           <span className="flex flex-wrap gap-[18px] sm:gap-6">
             {legalLinks.map((link) => (
               <Link key={link.href} href={link.href} className="text-sand hover:text-white">
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </span>

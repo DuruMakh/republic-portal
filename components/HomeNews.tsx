@@ -1,7 +1,10 @@
-import Link from "next/link";
+import { useCopy } from "@/lib/i18n/copy";
+import { useLocale } from "next-intl";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
+import Link from "@/lib/i18n/navigation";
 import { UnityKicker } from "@/components/UnityKicker";
 import { UnityTextLink } from "@/components/UnityTextLink";
-import { formatDateKa } from "@/lib/cabinet";
+import { formatDate } from "@/lib/i18n/format";
 import { HOME_NEWS_ALL, HOME_NEWS_EMPTY, HOME_NEWS_TITLE } from "@/lib/home-copy";
 import type { PublicNewsItem } from "@/lib/supabase/public";
 
@@ -14,23 +17,25 @@ const BLEED =
  * photo gets the design's hatched stand-in.
  */
 export function HomeNews({ items }: { items: readonly PublicNewsItem[] }) {
+  const t = useCopy();
+  const locale = useLocale() === "en" ? "en" : "ka";
   return (
     <section aria-labelledby="home-news-title" className="pb-10 sm:pb-[clamp(48px,5vw,76px)]">
       <div className="unity-container">
         <div className="flex items-center justify-between gap-4 border-t border-rule pt-8 sm:pt-[clamp(36px,3.5vw,52px)]">
           {/* The kicker is the visible title; the heading names the section for assistive tech. */}
           <h2 id="home-news-title" className="sr-only">
-            {HOME_NEWS_TITLE}
+            {t(HOME_NEWS_TITLE)}
           </h2>
           <div aria-hidden="true">
-            <UnityKicker>{HOME_NEWS_TITLE}</UnityKicker>
+            <UnityKicker>{t(HOME_NEWS_TITLE)}</UnityKicker>
           </div>
           <UnityTextLink href="/news" className="text-[15px] sm:text-[16px]">
-            {HOME_NEWS_ALL}
+            {t(HOME_NEWS_ALL)}
           </UnityTextLink>
         </div>
         {items.length === 0 ? (
-          <p className="m-0 mt-[22px] text-secondary sm:mt-8">{HOME_NEWS_EMPTY}</p>
+          <p className="m-0 mt-[22px] text-secondary sm:mt-8">{t(HOME_NEWS_EMPTY)}</p>
         ) : (
           <ul
             className={`m-0 mt-[22px] flex list-none snap-x snap-mandatory gap-3.5 overflow-x-auto p-0 [scrollbar-width:none] sm:mt-8 sm:grid sm:grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] sm:gap-[clamp(28px,3vw,44px)] sm:overflow-visible [&::-webkit-scrollbar]:hidden ${BLEED}`}
@@ -59,11 +64,15 @@ export function HomeNews({ items }: { items: readonly PublicNewsItem[] }) {
                     />
                   )}
                   <span className="mt-3 text-[13px] text-secondary sm:mt-[18px] sm:text-[14px]">
-                    {formatDateKa(item.published_at)}
+                    {formatDate(item.published_at, locale)}
                   </span>
-                  <span className="mt-1 font-serif text-[19px] font-semibold leading-[1.35] transition-colors group-hover/news:text-brand sm:mt-1.5 sm:text-[22px]">
+                  <span
+                    lang="ka"
+                    className="mt-1 font-serif text-[19px] font-semibold leading-[1.35] transition-colors group-hover/news:text-brand sm:mt-1.5 sm:text-[22px]"
+                  >
                     {item.title}
                   </span>
+                  <OriginalLanguageNote />
                 </Link>
               </li>
             ))}

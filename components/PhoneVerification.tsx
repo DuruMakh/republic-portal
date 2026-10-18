@@ -1,4 +1,5 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { useEffect, useRef, useState } from "react";
 import { UnityButton } from "@/components/UnityButton";
@@ -11,7 +12,7 @@ import {
 import {
   sendPhoneVerificationAction,
   verifyPhoneVerificationAction,
-} from "@/app/(unity)/join/phone-actions";
+} from "@/app/[locale]/(unity)/join/phone-actions";
 
 interface PhoneVerificationProps {
   phone: string;
@@ -28,6 +29,7 @@ export function PhoneVerification({
   onChallengeChanged,
   onVerified,
 }: PhoneVerificationProps) {
+  const t = useCopy();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -115,15 +117,15 @@ export function PhoneVerification({
   return (
     <div className="flex flex-col" data-expires-at={expiresAt}>
       <p className="text-[16px] leading-[1.6] text-secondary sm:text-[17px]">
-        გამოგზავნილია SMS კოდი ნომერზე{" "}
-        <strong className="whitespace-nowrap font-bold text-ink">{phone}</strong>. შეიყვანე 6-ნიშნა
-        კოდი.
+        {t("გამოგზავნილია SMS კოდი ნომერზე")}{" "}
+        <strong className="whitespace-nowrap font-bold text-ink">{phone}</strong>
+        {t(". შეიყვანე 6-ნიშნა კოდი.")}
       </p>
       <div className="mt-7 sm:mt-9">
-        <OtpInput value={code} onChange={setCode} error={error} />
+        <OtpInput value={code} onChange={setCode} error={t(error ?? "")} />
       </div>
       <UnityButton onClick={verify} disabled={busy} className="mt-8 w-full sm:mt-10">
-        დადასტურება
+        {t("დადასტურება")}
       </UnityButton>
       <button
         type="button"
@@ -131,7 +133,7 @@ export function PhoneVerification({
         disabled={cooldownActive || busy}
         onClick={resend}
       >
-        {cooldown > 0 ? `ხელახლა გაგზავნა (${cooldown}წმ)` : "ხელახლა გაგზავნა"}
+        {cooldown > 0 ? `${t("ხელახლა გაგზავნა (")}${cooldown}${t("წმ)")}` : t("ხელახლა გაგზავნა")}
       </button>
     </div>
   );

@@ -1,3 +1,5 @@
+import { useCopy } from "@/lib/i18n/copy";
+
 type Status =
   | "draft"
   | "registered"
@@ -22,12 +24,13 @@ const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
 };
 
 export function Pill({ status, label }: { status: Status; label?: string }) {
+  const t = useCopy();
   const config = STATUS_CONFIG[status];
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 text-[0.74rem] font-bold tracking-[.06em] ${config.className}`}
     >
-      {label ?? config.label}
+      {label ?? t(config.label)}
     </span>
   );
 }

@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { StructurePebble } from "@/components/StructurePebble";
 import { Caps } from "@/components/Caps";
 
@@ -101,9 +102,10 @@ function Arrow() {
  * them with the outline letter beside the title, as the phone design does.
  */
 export function StructureFlow({ label, items }: { label: string; items: readonly FlowItem[] }) {
+  const t = useCopy();
   return (
     <nav
-      aria-label={label}
+      aria-label={t(label)}
       className="border-y border-rule bg-sandstone py-8 min-[900px]:py-[clamp(48px,5vw,72px)]"
     >
       <div className="unity-container flex flex-col items-stretch min-[900px]:flex-row min-[900px]:justify-center min-[900px]:gap-3">
@@ -116,6 +118,7 @@ export function StructureFlow({ label, items }: { label: string; items: readonly
 }
 
 function FlowCard({ item, arrow }: { item: FlowItem; arrow: boolean }) {
+  const t = useCopy();
   const board = item.href === "#board";
   // Grid areas: on phones the outline letter sits beside the title and note; on wide screens it
   // sits at the title's end and the illustration and note run full width beneath.
@@ -124,11 +127,11 @@ function FlowCard({ item, arrow }: { item: FlowItem; arrow: boolean }) {
       {arrow ? <Arrow /> : null}
       <a
         href={item.href}
-        aria-label={item.label}
+        aria-label={t(item.label)}
         className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border border-rule bg-chalk p-[18px] text-ink no-underline transition-colors motion-reduce:transition-none [grid-template-areas:'title_letter'_'ill_letter'_'note_letter'] hover:border-brand hover:text-ink min-[900px]:flex-[1_1_260px] min-[900px]:content-start min-[900px]:items-end min-[900px]:gap-y-3.5 min-[900px]:px-[26px] min-[900px]:pt-[26px] min-[900px]:pb-6 min-[900px]:[grid-template-areas:'title_letter'_'ill_ill'_'note_note']"
       >
         <span className="block text-[26px] leading-none font-black [font-stretch:62.5%] [grid-area:title] min-[900px]:text-[30px]">
-          <Caps>{item.label}</Caps>
+          <Caps>{t(item.label)}</Caps>
         </span>
         <span
           aria-hidden="true"
@@ -142,7 +145,7 @@ function FlowCard({ item, arrow }: { item: FlowItem; arrow: boolean }) {
           <Illustration href={item.href} />
         </span>
         <span className="mt-2 block text-[14px] leading-normal text-prose [grid-area:note] min-[900px]:mt-0 min-[900px]:self-start min-[900px]:text-[15px] min-[900px]:leading-[1.55]">
-          {item.note}
+          {t(item.note)}
         </span>
       </a>
     </>

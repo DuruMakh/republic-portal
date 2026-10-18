@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeAdminClient } from "@/app/(admin)/admin/_test-utils/fake-supabase";
+import { fakeAdminClient } from "@/app/[locale]/(admin)/admin/_test-utils/fake-supabase";
 
 /**
  * The account-deletion photo sweep (spec 2026-10-08 §5). It runs after the account is already

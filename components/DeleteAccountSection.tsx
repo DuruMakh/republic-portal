@@ -1,4 +1,5 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { useState } from "react";
 import { UnityField } from "@/components/UnityField";
@@ -25,17 +26,19 @@ export function DeleteAccountSection({
   isDelegate: boolean;
   action: (input: unknown) => Promise<{ ok: false; error: string }>;
 }) {
+  const t = useCopy();
   const [word, setWord] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const matches = word.trim() === ACCOUNT_DELETION_CONFIRM_WORD;
+  const matches = word.trim() === t(ACCOUNT_DELETION_CONFIRM_WORD);
 
   async function onDelete() {
+    if (!matches) return;
     setBusy(true);
     setError(null);
     let result: { ok: false; error: string };
     try {
-      result = await action({ confirm: word });
+      result = await action({ confirm: ACCOUNT_DELETION_CONFIRM_WORD });
     } catch (e) {
       // Success never resolves: the action redirects to /account-deleted, and Next's client
       // starts that navigation itself before rejecting the call with NEXT_REDIRECT. Rethrowing
@@ -56,21 +59,21 @@ export function DeleteAccountSection({
       <div className="grid gap-7 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-end md:gap-14">
         <div className="flex flex-col gap-3">
           <h2 className="m-0 font-serif text-[22px] font-semibold leading-[1.3] text-brand md:text-[24px]">
-            {ACCOUNT_DELETE_HEADING}
+            {t(ACCOUNT_DELETE_HEADING)}
           </h2>
-          <p className="m-0 text-[15.5px] leading-[1.65] text-prose">{ACCOUNT_DELETE_LEDE}</p>
+          <p className="m-0 text-[15.5px] leading-[1.65] text-prose">{t(ACCOUNT_DELETE_LEDE)}</p>
           {isDelegate ? (
             <p className="m-0 text-[15.5px] leading-[1.65] text-prose">
-              {ACCOUNT_DELETE_DELEGATE_NOTE}
+              {t(ACCOUNT_DELETE_DELEGATE_NOTE)}
             </p>
           ) : null}
         </div>
         {isStaff ? (
-          <p className="m-0 text-[15.5px] font-semibold text-ink">{ACCOUNT_DELETE_STAFF_NOTE}</p>
+          <p className="m-0 text-[15.5px] font-semibold text-ink">{t(ACCOUNT_DELETE_STAFF_NOTE)}</p>
         ) : (
           <div className="flex flex-col gap-5">
             <UnityField
-              label={ACCOUNT_DELETE_CONFIRM_LABEL}
+              label={t(ACCOUNT_DELETE_CONFIRM_LABEL)}
               name="deleteConfirm"
               value={word}
               autoComplete="off"
@@ -83,12 +86,12 @@ export function DeleteAccountSection({
                 onClick={onDelete}
                 disabled={!matches || busy}
               >
-                {busy ? ACCOUNT_DELETE_BUSY : ACCOUNT_DELETE_BUTTON}
+                {t(busy ? ACCOUNT_DELETE_BUSY : ACCOUNT_DELETE_BUTTON)}
               </UnityButton>
             </div>
             {error ? (
               <p role="alert" className="m-0 text-[15px] font-semibold text-danger">
-                {error}
+                {t(error ?? "")}
               </p>
             ) : null}
           </div>

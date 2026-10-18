@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { TEST_PERSONAS } from "@/lib/test-personas";
@@ -7,10 +8,11 @@ import { TEST_PERSONAS } from "@/lib/test-personas";
  * when testSignInEnabled(); the server action passed in re-checks the same gate on every call.
  */
 export function TestSignInPanel({ action }: { action: (formData: FormData) => Promise<void> }) {
+  const t = useCopy();
   return (
-    <Card variant="callout" title="სატესტო შესვლა">
+    <Card variant="callout" title={t("სატესტო შესვლა")}>
       <p className="mb-4 text-sm text-ink">
-        მხოლოდ სატესტო ბმულზე: შედი ფიქტიური ანგარიშით, Google-ის გარეშე.
+        {t("მხოლოდ სატესტო ბმულზე: შედი ფიქტიური ანგარიშით, Google-ის გარეშე.")}
       </p>
       <form action={action} className="flex flex-wrap gap-2">
         {TEST_PERSONAS.map((persona) => (
@@ -22,7 +24,7 @@ export function TestSignInPanel({ action }: { action: (formData: FormData) => Pr
             variant="ghost"
             size="sm"
           >
-            {persona.label}
+            {t(persona.label)}
           </Button>
         ))}
       </form>

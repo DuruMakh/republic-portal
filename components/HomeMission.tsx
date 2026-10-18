@@ -1,3 +1,5 @@
+import { useCopy } from "@/lib/i18n/copy";
+import { useLocale } from "next-intl";
 import { CountUp } from "@/components/CountUp";
 import { HomePebbles } from "@/components/HomePebbles";
 import {
@@ -88,14 +90,28 @@ function Flag({ phone }: { phone: boolean }) {
  * its stop on the path.
  */
 export function HomeMission({ stats }: { stats: PublicStats }) {
+  const t = useCopy();
+  const english = useLocale() === "en";
   const counters = [
-    { label: HOME_STAT_SUPPORTERS, value: stats.registered_total, id: "stat-registered-total" },
-    { label: HOME_STAT_MEMBERS, value: stats.members_total, id: "stat-members-total" },
-    { label: HOME_STAT_DELEGATES, value: stats.approved_delegates, id: "stat-approved-delegates" },
+    {
+      label: english ? "Supporters" : HOME_STAT_SUPPORTERS,
+      value: stats.registered_total,
+      id: "stat-registered-total",
+    },
+    {
+      label: english ? "Members" : HOME_STAT_MEMBERS,
+      value: stats.members_total,
+      id: "stat-members-total",
+    },
+    {
+      label: english ? "Delegates" : HOME_STAT_DELEGATES,
+      value: stats.approved_delegates,
+      id: "stat-approved-delegates",
+    },
   ] as const;
 
   return (
-    <section aria-label={HOME_MISSION_LABEL} className="group/mission relative">
+    <section aria-label={t(HOME_MISSION_LABEL)} className="group/mission relative">
       <div className="unity-container relative z-[2] pt-7 sm:pt-[clamp(32px,3.5vw,52px)]">
         <dl className="m-0 grid grid-cols-3">
           {counters.map((c, i) => (
@@ -119,7 +135,8 @@ export function HomeMission({ stats }: { stats: PublicStats }) {
           ))}
         </dl>
         <p className="m-0 mt-10 font-serif text-[27px] font-medium leading-[1.26] tracking-[-.005em] text-ink [text-wrap:balance] sm:mt-[clamp(72px,8vw,120px)] sm:max-w-[17em] sm:text-[clamp(30px,3.3vw,46px)] sm:leading-[1.22]">
-          {HOME_MISSION[0]} <span className="text-brand">{HOME_MISSION[1]}</span> {HOME_MISSION[2]}
+          {t(HOME_MISSION[0])} <span className="text-brand">{t(HOME_MISSION[1])}</span>{" "}
+          {t(HOME_MISSION[2])}
         </p>
       </div>
 
@@ -182,7 +199,7 @@ export function HomeMission({ stats }: { stats: PublicStats }) {
                 {GEORGIAN_NUMERALS[i]}
               </span>
               <span className="font-serif text-[17px] leading-[1.35] text-limestone [text-wrap:pretty] sm:text-[clamp(19px,1.6vw,22px)] sm:leading-[1.42]">
-                {step}
+                {t(step)}
               </span>
             </li>
           ))}

@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 import { useEffect, useRef } from "react";
 import type { CabinetNavItem } from "@/lib/cabinet";
 import { useFocusTrap } from "@/components/useFocusTrap";
@@ -30,6 +31,7 @@ export function MobileMoreSheet({
   activeHref?: string | null;
   onClose: () => void;
 }) {
+  const t = useCopy();
   const signOut = useSignOut();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,7 @@ export function MobileMoreSheet({
       <button
         type="button"
         data-testid="more-scrim"
-        aria-label={CLOSE}
+        aria-label={t(CLOSE)}
         onClick={onClose}
         className="flex-1 bg-ink/40"
       />
@@ -67,7 +69,7 @@ export function MobileMoreSheet({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={SHEET_LABEL}
+        aria-label={t(SHEET_LABEL)}
         className="border-t-2 border-ink bg-paper px-5 pt-4 pb-[calc(1rem_+_env(safe-area-inset-bottom))]"
       >
         {items.map((item) => (
@@ -80,7 +82,7 @@ export function MobileMoreSheet({
               item.href === activeHref ? "text-brand" : "text-ink"
             }`}
           >
-            {item.label}
+            {t(item.label)}
           </Link>
         ))}
         <Link
@@ -88,14 +90,14 @@ export function MobileMoreSheet({
           onClick={onClose}
           className="block border-b border-hairline py-3.5 text-[0.86rem] font-bold text-muted-fg no-underline hover:text-brand"
         >
-          {BACK_TO_PUBLIC}
+          {t(BACK_TO_PUBLIC)}
         </Link>
         <button
           type="button"
           onClick={signOut}
           className="w-full py-3.5 text-left text-[0.86rem] font-bold text-brand"
         >
-          {SIGN_OUT}
+          {t(SIGN_OUT)}
         </button>
       </div>
     </div>

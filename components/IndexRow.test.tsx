@@ -1,8 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { IndexRow } from "./IndexRow";
+import { NextIntlClientProvider } from "next-intl";
 
 describe("IndexRow", () => {
+  it("keeps English members in English when opening their delegate", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <IndexRow name="Alice" meta="Tbilisi" href="/delegates/alice" />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.getByRole("link", { name: "Alice" })).toHaveAttribute(
+      "href",
+      "/en/delegates/alice",
+    );
+  });
+
   it("marks only rank 1 in brand colour", () => {
     render(<IndexRow rank={1} name="Alice" meta="Region A" figure="100" figureLabel="votes" />);
     render(<IndexRow rank={2} name="Bob" meta="Region B" figure="90" figureLabel="votes" />);

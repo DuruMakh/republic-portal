@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 import type { ReactNode } from "react";
 
 import { BrandLockup } from "@/components/BrandLockup";
 import { useChromePathname } from "@/components/ChromePathname";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { MobileBackHeader } from "@/components/MobileBackHeader";
 import { MobileMenu } from "@/components/MobileMenu";
 import { mobileBackTarget } from "@/lib/mobile-nav";
@@ -45,6 +47,7 @@ export function Masthead({
   /** showRatings(), passed the same way: a delegate profile gets no back header to the hidden ranking (ADR-052). */
   ratingsShown?: boolean;
 }) {
+  const t = useCopy();
   const pathname = useChromePathname();
 
   const navLinks = navItems.map((item) => (
@@ -54,7 +57,7 @@ export function Masthead({
       className="no-underline text-ink hover:text-brand aria-[current=page]:text-brand"
       aria-current={pathname === item.href ? "page" : undefined}
     >
-      {item.label}
+      {t(item.label)}
     </Link>
   ));
 
@@ -81,24 +84,29 @@ export function Masthead({
         <div className="flex items-center gap-2.5">
           <BrandLockup />
           {tag ? (
-            <span className="text-[0.74rem] font-semibold tracking-[.14em] text-brand">{tag}</span>
+            <span className="text-[0.74rem] font-semibold tracking-[.14em] text-brand">
+              {t(tag)}
+            </span>
           ) : null}
         </div>
-        {hasNav ? (
-          <>
-            <nav
-              aria-label="მთავარი ნავიგაცია"
-              className="hidden items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold md:flex sm:gap-4"
-            >
-              {navLinks}
-              {sessionSlot}
-              {cta}
-            </nav>
-            {navItems.length > 0 ? (
-              <MobileMenu navItems={navItems} sessionSlot={sessionSlot} cta={cta} />
-            ) : null}
-          </>
-        ) : null}
+        <div className="flex items-center gap-3">
+          {!pathname.startsWith("/admin") ? <LanguageSwitch /> : null}
+          {hasNav ? (
+            <>
+              <nav
+                aria-label={t("მთავარი ნავიგაცია")}
+                className="hidden items-center gap-3 overflow-x-auto whitespace-nowrap text-[0.8rem] font-semibold md:flex sm:gap-4"
+              >
+                {navLinks}
+                {sessionSlot}
+                {cta}
+              </nav>
+              {navItems.length > 0 ? (
+                <MobileMenu navItems={navItems} sessionSlot={sessionSlot} cta={cta} />
+              ) : null}
+            </>
+          ) : null}
+        </div>
       </header>
     </>
   );

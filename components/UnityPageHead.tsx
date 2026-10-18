@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Caps } from "@/components/Caps";
 import { UnityKicker } from "@/components/UnityKicker";
 import { UnityTextLink } from "@/components/UnityTextLink";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 
 /**
  * The opening of a „ერთობა“ content page (news, events, finances, contact, rules, privacy): the
@@ -78,10 +79,12 @@ export function UnityArticleHead({
       <UnityKicker>{kicker}</UnityKicker>
       <h1
         id="page-title"
+        lang="ka"
         className="m-0 mt-[18px] max-w-[16em] font-serif text-[32px] font-semibold leading-[1.16] tracking-[-.005em] [text-wrap:balance] sm:mt-[26px] sm:text-[clamp(40px,4vw,56px)] sm:leading-[1.12] sm:tracking-[-.01em]"
       >
         {title}
       </h1>
+      <OriginalLanguageNote />
     </>
   );
 }

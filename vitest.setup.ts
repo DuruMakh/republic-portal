@@ -1,6 +1,25 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
+
+// Existing isolated component tests have no app layout. English tests use the real provider.
+vi.mock("next-intl", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next-intl")>();
+  return {
+    ...actual,
+    useLocale: () => {
+      try {
+        return actual.useLocale();
+      } catch {
+        return "ka";
+      }
+    },
+  };
+});
+vi.mock("next-intl/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next-intl/server")>();
+  return { ...actual, getLocale: async () => "ka" };
+});
 
 // Mutable prefers-reduced-motion flag backing the matchMedia stub below.
 // Defaults to true (reduced motion) so existing tests keep today's

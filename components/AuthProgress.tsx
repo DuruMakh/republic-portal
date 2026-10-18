@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 export type AuthProgressStep = "google" | "phone" | "cabinet";
 
 const STEPS: ReadonlyArray<{ id: AuthProgressStep; number: string; label: string }> = [
@@ -11,10 +12,14 @@ const STEPS: ReadonlyArray<{ id: AuthProgressStep; number: string; label: string
  * numerals, the current step underlined in red, a finished step ticked in green.
  */
 export function AuthProgress({ currentStep }: { currentStep: AuthProgressStep }) {
+  const t = useCopy();
   const currentIndex = STEPS.findIndex((step) => step.id === currentStep);
 
   return (
-    <ol aria-label="რეგისტრაციის ნაბიჯები" className="flex list-none border-y-2 border-ink p-0">
+    <ol
+      aria-label={t("რეგისტრაციის ნაბიჯები")}
+      className="flex list-none border-y-2 border-ink p-0"
+    >
       {STEPS.map((step, index) => {
         const state =
           index < currentIndex ? "complete" : index === currentIndex ? "current" : "upcoming";
@@ -33,7 +38,7 @@ export function AuthProgress({ currentStep }: { currentStep: AuthProgressStep })
               {step.number}
             </span>
             <span className="text-[13px] font-bold leading-[1.3] text-secondary group-data-[state=current]:text-ink min-[900px]:text-[15px]">
-              <span>{step.label}</span>
+              <span>{t(step.label)}</span>
               {state === "complete" ? (
                 <span aria-hidden="true" className="text-ok-deep">
                   {" "}

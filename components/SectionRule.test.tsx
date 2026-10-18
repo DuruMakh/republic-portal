@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SectionRule } from "./SectionRule";
+import Link from "next/link";
 
 describe("SectionRule", () => {
   it("renders the label text and the action node", () => {
-    render(<SectionRule label="Recent activity" action={<a href="/all">See all</a>} />);
+    render(<SectionRule label="Recent activity" action={<Link href="/all">See all</Link>} />);
     expect(screen.getByText("Recent activity")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See all" })).toHaveAttribute("href", "/all");
   });

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ButtonLink";
 import { CenteredNotice } from "@/components/CenteredNotice";
+import { useCopy } from "@/lib/i18n/copy";
 
 /** Browser-tab title for every not-found page (the framework's own default is English). */
 export const NOT_FOUND_METADATA: Metadata = {
@@ -18,11 +19,12 @@ export const NOT_FOUND_HOME = "დაბრუნდი მთავარ გ�
  * uses; the button offers the single way out.
  */
 export function NotFoundNotice() {
+  const t = useCopy();
   return (
     <CenteredNotice
       title={NOT_FOUND_TITLE}
       description={NOT_FOUND_DESCRIPTION}
-      actions={<ButtonLink href="/">{NOT_FOUND_HOME}</ButtonLink>}
+      actions={<ButtonLink href="/">{t(NOT_FOUND_HOME)}</ButtonLink>}
     />
   );
 }

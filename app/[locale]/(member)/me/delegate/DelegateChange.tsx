@@ -1,0 +1,143 @@
+"use client";
+import { useCopy } from "@/lib/i18n/copy";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "@/lib/i18n/navigation";
+import { UnityButton } from "@/components/UnityButton";
+import { UnitySelectField } from "@/components/UnitySelectField";
+import { changeDelegateSchema } from "@/lib/cabinet-schemas";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
+import { changeDelegateAction } from "../actions";
+
+const CENTRAL = "central";
+
+export interface PickerDelegate {
+  id: string;
+  first_name: string;
+  last_name: string;
+  region_id: number | null;
+}
+
+export function DelegateChange({
+  regions,
+  delegates,
+  currentDelegateId,
+  initialRegionId,
+}: {
+  regions: { id: number; name_ka: string }[];
+  delegates: PickerDelegate[];
+  currentDelegateId: string | null;
+  initialRegionId: number;
+}) {
+  const t = useCopy();
+  const router = useRouter();
+  const [regionId, setRegionId] = useState(initialRegionId);
+  // Seed to the current delegate only if it's a visible (approved) option; a
+  // no-longer-approved binding isn't in `delegates`, so seeding its id would leave
+  // the controlled Select pointing at a missing <option> (blank, dead-end submit).
+  const [choice, setChoice] = useState(
+    currentDelegateId !== null && delegates.some((d) => d.id === currentDelegateId)
+      ? currentDelegateId
+      : CENTRAL,
+  );
+  const [message, setMessage] = useState<{ kind: "ok" | "error" | "info"; text: string }>();
+  const [busy, setBusy] = useState(false);
+
+  const options = useMemo(
+    () => delegates.filter((d) => d.region_id === regionId),
+    [delegates, regionId],
+  );
+
+  function changeRegion(nextRegionId: number) {
+    setRegionId(nextRegionId);
+    setChoice((prev) => {
+      if (prev === CENTRAL) return prev;
+      const visible = delegates.some((d) => d.region_id === nextRegionId && d.id === prev);
+      return visible ? prev : CENTRAL;
+    });
+  }
+
+  async function change() {
+    setMessage(undefined);
+    const selected = choice === CENTRAL ? null : choice;
+    if (selected === currentDelegateId) {
+      setMessage({ kind: "info", text: "ეს დელეგატი უკვე არჩეულია" });
+      return; // the RPC would no-op anyway (spec §4.2) — save the round-trip
+    }
+    const parsed = changeDelegateSchema.safeParse({ delegateId: selected });
+    if (!parsed.success) {
+      setMessage({ kind: "error", text: parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR });
+      return;
+    }
+    setBusy(true);
+    let result: Awaited<ReturnType<typeof changeDelegateAction>>;
+    try {
+      result = await changeDelegateAction(parsed.data);
+    } catch {
+      setMessage({ kind: "error", text: GENERIC_FUNNEL_ERROR });
+      return;
+    } finally {
+      setBusy(false);
+    }
+    if (!result.ok) {
+      setMessage({ kind: "error", text: result.error });
+      return;
+    }
+    setMessage({ kind: "ok", text: "დელეგატი შეიცვალა ✓" });
+    router.refresh(); // current-delegate card + summary re-render server-side
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <UnitySelectField
+        label={t("რეგიონი")}
+        id="change-region"
+        value={regionId}
+        onChange={(e) => changeRegion(Number(e.target.value))}
+      >
+        {regions.map((r) => (
+          <option key={r.id} value={r.id}>
+            {t(r.name_ka)}
+          </option>
+        ))}
+      </UnitySelectField>
+      <UnitySelectField
+        label={t("დელეგატი")}
+        id="change-delegate"
+        value={choice}
+        onChange={(e) => setChoice(e.target.value)}
+      >
+        <option value={CENTRAL}>
+          {currentDelegateId === null ? t("არ მყავს დელეგატი (მიმდინარე)") : t("არ მყავს დელეგატი")}
+        </option>
+        {options.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.first_name} {d.last_name}
+            {d.id === currentDelegateId ? t(" (მიმდინარე)") : ""}
+          </option>
+        ))}
+      </UnitySelectField>
+      <p className="m-0 text-[14px] leading-[1.55] text-secondary">
+        {t("აჩვენებს მხოლოდ დამტკიცებულ დელეგატებს არჩეულ რეგიონში.")}
+      </p>
+      {message ? (
+        <p
+          role="status"
+          className={`m-0 text-[15px] font-bold ${
+            message.kind === "ok"
+              ? "text-ok-deep"
+              : message.kind === "error"
+                ? "text-brand"
+                : "text-secondary"
+          }`}
+          data-testid="change-delegate-message"
+        >
+          {t(message.text)}
+        </p>
+      ) : null}
+      <UnityButton variant="ink" className="w-full" onClick={change} disabled={busy}>
+        {t("დელეგატის შეცვლა")}
+      </UnityButton>
+    </div>
+  );
+}

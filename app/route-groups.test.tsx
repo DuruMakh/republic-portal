@@ -2,11 +2,11 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import AdminNotFound from "./(admin)/not-found";
-import DelegateNotFound from "./(delegate)/not-found";
-import MemberNotFound from "./(member)/not-found";
+import AdminNotFound from "./[locale]/(admin)/not-found";
+import DelegateNotFound from "./[locale]/(delegate)/not-found";
+import MemberNotFound from "./[locale]/(member)/not-found";
 
-const APP_DIR = path.join(process.cwd(), "app");
+const APP_DIR = path.join(process.cwd(), "app", "[locale]");
 
 const groups = readdirSync(APP_DIR, { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && /^\(.+\)$/.test(entry.name))

@@ -1,4 +1,5 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/Button";
@@ -16,6 +17,7 @@ export function OtpVerification({
   phone: string;
   onVerified: () => void | Promise<void>;
 }) {
+  const t = useCopy();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -110,20 +112,22 @@ export function OtpVerification({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-fg">
-        გამოგზავნილია SMS კოდი ნომერზე <strong className="text-ink">{phone}</strong>. შეიყვანე
-        6-ნიშნა კოდი.
+        {t("გამოგზავნილია SMS კოდი ნომერზე ")}
+        <strong className="text-ink">{phone}</strong>
+        {t(". შეიყვანე 6-ნიშნა კოდი.")}
       </p>
-      <OtpInput value={code} onChange={setCode} error={error} />
+      <OtpInput value={code} onChange={setCode} error={t(error ?? "")} />
       {devOtp ? (
         <p
           className="border border-hairline bg-paper-bright px-3 py-2 text-[0.8rem]"
           data-testid="dev-otp"
         >
-          სატესტო კოდი: <strong>{devOtp}</strong>
+          {t("სატესტო კოდი: ")}
+          <strong>{devOtp}</strong>
         </p>
       ) : null}
       <Button onClick={verify} disabled={busy}>
-        დადასტურება
+        {t("დადასტურება")}
       </Button>
       <button
         type="button"
@@ -131,7 +135,7 @@ export function OtpVerification({
         disabled={cooldown > 0}
         onClick={resend}
       >
-        {cooldown > 0 ? `ხელახლა გაგზავნა (${cooldown}წმ)` : "ხელახლა გაგზავნა"}
+        {cooldown > 0 ? `${t("ხელახლა გაგზავნა (")}${cooldown}${t("წმ)")}` : t("ხელახლა გაგზავნა")}
       </button>
     </div>
   );

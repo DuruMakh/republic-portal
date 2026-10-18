@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 import { ACCOUNT_DELETION_CONFIRM_WORD } from "@/lib/account-deletion";
 import {
   ACCOUNT_DELETE_BUSY,
@@ -26,6 +27,25 @@ function typeWord(value: string) {
 }
 
 describe("DeleteAccountSection", () => {
+  it("requires the English confirmation and submits the existing server confirmation value", async () => {
+    action.mockClear();
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <DeleteAccountSection isStaff={false} isDelegate={false} action={action} />
+      </NextIntlClientProvider>,
+    );
+    const button = screen.getByRole("button", { name: "Delete account" });
+    expect(button).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: "To confirm, type: DELETE" }), {
+      target: { value: "DELETE" },
+    });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(action).toHaveBeenCalledWith({ confirm: ACCOUNT_DELETION_CONFIRM_WORD }),
+    );
+  });
+
   it("shows the heading and the plain-language lede", () => {
     render(<DeleteAccountSection isStaff={false} isDelegate={false} action={action} />);
     expect(screen.getByRole("heading", { name: ACCOUNT_DELETE_HEADING })).toBeInTheDocument();

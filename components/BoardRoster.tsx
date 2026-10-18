@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import type { BoardMember } from "@/lib/board-members";
 import { BoardMemberCard } from "./BoardMemberCard";
 
@@ -27,17 +28,18 @@ export function BoardRoster({
   notice: string;
   placeholders: number;
 }) {
+  const t = useCopy();
   const empty = members.length === 0;
   return (
     <section id="roster" aria-labelledby="roster-title" className="scroll-mt-24 md:scroll-mt-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
         <h2 id="roster-title" className="display-heading text-[clamp(2rem,4vw,3.1rem)] text-ink">
-          {heading}
+          {t(heading)}
         </h2>
         {empty ? (
           <p className="inline-flex items-center gap-2 border border-line bg-paper-bright px-3.5 py-[7px] text-[0.85rem] font-bold text-muted-fg">
             <span aria-hidden="true" className="h-2 w-2 rounded-full bg-brand" />
-            {notice}
+            {t(notice)}
           </p>
         ) : null}
       </div>

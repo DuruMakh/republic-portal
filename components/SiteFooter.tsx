@@ -1,4 +1,5 @@
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 
 /**
  * Teal site footer (spec §3.2, ADR-048): copyright left, link row right, on the
@@ -13,18 +14,19 @@ export function SiteFooter({
   copyright: string;
   links: { href: string; label: string }[];
 }) {
+  const t = useCopy();
   return (
     <footer className="bg-teal px-5 py-6 text-[0.8rem] text-paper sm:px-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>{copyright}</div>
-        <nav aria-label="ქვედა ნავიგაცია" className="flex flex-wrap gap-5 font-semibold">
+        <div>{t(copyright)}</div>
+        <nav aria-label={t("ქვედა ნავიგაცია")} className="flex flex-wrap gap-5 font-semibold">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className="text-paper hover:decoration-2 focus-visible:outline-paper"
             >
-              {link.label}
+              {t(link.label)}
             </Link>
           ))}
         </nav>

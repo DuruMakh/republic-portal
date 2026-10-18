@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
 import type { ComponentProps } from "react";
 import { buttonClasses, type ButtonSize, type ButtonVariant } from "./Button";
 

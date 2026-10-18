@@ -63,41 +63,56 @@ async function footprint(userId: string) {
   };
 }
 
-test("a member deletes their account and their data is gone", async ({ page }) => {
-  // createGoogleBackedTestUser also installs the member's browser session
-  const { id } = await createGoogleBackedTestUser(page, PHONE);
-  await seedCompletedMember({
-    userId: id,
-    phone: PHONE,
-    firstName: "Account",
-    lastName: "Deletion",
-    personalId: journeyPersonalId(JOURNEY.accountDelete),
+for (const locale of ["ka", "en"] as const) {
+  test(`a ${locale} member deletes their account and their data is gone`, async ({ page }) => {
+    const prefix = locale === "en" ? "/en" : "";
+    // createGoogleBackedTestUser also installs the member's browser session
+    const { id } = await createGoogleBackedTestUser(page, PHONE);
+    await seedCompletedMember({
+      userId: id,
+      phone: PHONE,
+      firstName: "Account",
+      lastName: "Deletion",
+      personalId: journeyPersonalId(JOURNEY.accountDelete),
+    });
+    // the "gone" checks below prove something only if all three existed first
+    expect(await footprint(id)).toEqual({ profiles: 1, memberships: 1, signInAccount: true });
+
+    await page.goto(`${prefix}/me/profile`);
+    const word = page.getByRole("textbox", {
+      name: locale === "en" ? "To confirm, type: DELETE" : ACCOUNT_DELETE_CONFIRM_LABEL,
+      exact: true,
+    });
+    const remove = page.getByRole("button", {
+      name: locale === "en" ? "Delete account" : ACCOUNT_DELETE_BUTTON,
+      exact: true,
+    });
+
+    // locked until the confirmation word is typed
+    await expect(remove).toBeDisabled();
+    // Retried as one block: a fill that lands before the page has hydrated is dropped and would
+    // leave the button locked. Clearing first makes each retry a real change for the field.
+    await expect(async () => {
+      await word.fill("");
+      await word.fill(locale === "en" ? "DELETE" : ACCOUNT_DELETION_CONFIRM_WORD);
+      await expect(remove).toBeEnabled({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await remove.click();
+
+    await expect(page).toHaveURL(new RegExp(`${prefix}/account-deleted$`), { timeout: 15_000 });
+    await expect(page.locator("html")).toHaveAttribute("lang", locale);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: locale === "en" ? "Account deleted" : ACCOUNT_DELETED_TITLE,
+      }),
+    ).toBeVisible();
+
+    // signed out: the cabinet asks for a login again
+    await page.goto(`${prefix}/me`);
+    await expect(page).toHaveURL(new RegExp(`${prefix}/login$`));
+
+    // and nothing of the person is left
+    expect(await footprint(id)).toEqual({ profiles: 0, memberships: 0, signInAccount: false });
   });
-  // the "gone" checks below prove something only if all three existed first
-  expect(await footprint(id)).toEqual({ profiles: 1, memberships: 1, signInAccount: true });
-
-  await page.goto("/me/profile");
-  const word = page.getByRole("textbox", { name: ACCOUNT_DELETE_CONFIRM_LABEL, exact: true });
-  const remove = page.getByRole("button", { name: ACCOUNT_DELETE_BUTTON, exact: true });
-
-  // locked until the confirmation word is typed
-  await expect(remove).toBeDisabled();
-  // Retried as one block: a fill that lands before the page has hydrated is dropped and would
-  // leave the button locked. Clearing first makes each retry a real change for the field.
-  await expect(async () => {
-    await word.fill("");
-    await word.fill(ACCOUNT_DELETION_CONFIRM_WORD);
-    await expect(remove).toBeEnabled({ timeout: 1_000 });
-  }).toPass({ timeout: 15_000 });
-  await remove.click();
-
-  await expect(page).toHaveURL(/\/account-deleted$/, { timeout: 15_000 });
-  await expect(page.getByRole("heading", { level: 1, name: ACCOUNT_DELETED_TITLE })).toBeVisible();
-
-  // signed out: the cabinet asks for a login again
-  await page.goto("/me");
-  await expect(page).toHaveURL(/\/login/);
-
-  // and nothing of the person is left
-  expect(await footprint(id)).toEqual({ profiles: 0, memberships: 0, signInAccount: false });
-});
+}

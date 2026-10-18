@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import { Caps } from "@/components/Caps";
 import { ABOUT_GOAL_STEPS } from "@/lib/about-copy";
 
@@ -83,6 +84,7 @@ function Pebbles({ step }: { step: number }) {
  * down between the pictures.
  */
 export function AboutGoalSteps() {
+  const t = useCopy();
   const last = ABOUT_GOAL_STEPS.length - 1;
   return (
     <ol className="m-0 mt-8 list-none p-0 sm:mt-[clamp(48px,5vw,72px)] sm:grid sm:grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] sm:gap-x-[clamp(24px,3vw,48px)] sm:gap-y-[clamp(40px,4vw,56px)]">
@@ -108,10 +110,10 @@ export function AboutGoalSteps() {
           <div className="min-w-0 sm:mt-[22px]">
             <span className="block text-[22px] font-black leading-none text-teal [font-stretch:62.5%] sm:text-[28px]">
               {`0${i + 1} · `}
-              <Caps>{step.label}</Caps>
+              <Caps>{t(step.label)}</Caps>
             </span>
             <p className="m-0 mt-2.5 font-serif text-[17px] leading-[1.55] text-ink sm:mt-3.5 sm:text-[21px]">
-              {step.text}
+              {t(step.text)}
             </p>
           </div>
         </li>

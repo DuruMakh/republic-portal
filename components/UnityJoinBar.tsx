@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/i18n/navigation";
+import { useCopy } from "@/lib/i18n/copy";
 
 import { Caps } from "@/components/Caps";
 import { useChromePathname } from "@/components/ChromePathname";
@@ -16,6 +17,7 @@ const CABINET = "ჩემი კაბინეტი →";
  * shown where showsJoinCta says no (the join, terms, login and privacy pages).
  */
 export function UnityJoinBar() {
+  const t = useCopy();
   const pathname = useChromePathname();
   const signedIn = useSignedIn();
   // After the hook, as in MobileJoinCta (hook order).
@@ -26,7 +28,7 @@ export function UnityJoinBar() {
         href={signedIn ? "/me" : "/join"}
         className="flex h-[54px] items-center justify-center bg-brand text-[14px] font-bold tracking-[.08em] text-white no-underline hover:bg-brand-dark hover:text-white"
       >
-        <Caps>{signedIn ? CABINET : JOIN}</Caps>
+        <Caps>{t(signedIn ? CABINET : JOIN)}</Caps>
       </Link>
     </div>
   );

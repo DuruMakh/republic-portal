@@ -1,7 +1,10 @@
 "use client";
 
+import { useCopy } from "@/lib/i18n/copy";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusTrap } from "@/components/useFocusTrap";
+import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 import { DOCUMENTS_CLOSE, DOCUMENTS_ZOOM, type DocumentFan } from "@/lib/archive-documents";
 
 // Where each page lies in the fan (left, right, on top) and how it opens out while the fan is
@@ -31,6 +34,7 @@ export function UnityDocumentFan({
   frameClassName?: string;
   captionClassName?: string;
 }) {
+  const t = useCopy();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
   const opener = useRef<number | null>(null);
@@ -57,7 +61,7 @@ export function UnityDocumentFan({
               triggers.current[index] = el;
             }}
             type="button"
-            aria-label={`${DOCUMENTS_ZOOM} — ${doc.name}`}
+            aria-label={`${t(DOCUMENTS_ZOOM)} — ${t(doc.name)}`}
             onClick={() => {
               opener.current = index;
               setOpenIndex(index);
@@ -79,7 +83,8 @@ export function UnityDocumentFan({
       <figcaption
         className={`mt-[18px] text-[12.5px] leading-[1.55] text-secondary sm:mt-[22px] sm:text-[13px] sm:leading-[1.6] ${captionClassName}`}
       >
-        {caption}
+        {t(caption)}
+        <OriginalLanguageNote document />
       </figcaption>
 
       {open ? (
@@ -87,7 +92,7 @@ export function UnityDocumentFan({
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-label={open.name}
+          aria-label={t(open.name)}
           className="fixed inset-0 z-50 flex flex-col items-center justify-start gap-[18px] bg-ink/94 px-4 pb-7 pt-16 sm:justify-center sm:px-8 sm:pb-10 [&_:focus-visible]:outline-limestone"
         >
           <button
@@ -100,17 +105,18 @@ export function UnityDocumentFan({
           {/* eslint-disable-next-line @next/next/no-img-element -- archive scan shown at full size */}
           <img
             src={open.src}
-            alt={open.name}
+            alt={t(open.name)}
             width={open.width}
             height={open.height}
             className="pointer-events-none relative block h-auto max-h-[calc(100dvh-180px)] w-auto max-w-full shadow-[0_2px_4px_rgba(0,0,0,.3),0_40px_90px_rgba(0,0,0,.55)]"
           />
           <p className="pointer-events-none relative m-0 max-w-[46em] text-center text-[13px] leading-[1.6] text-sand sm:text-[14px]">
-            {open.caption}
+            {t(open.caption)}
+            <OriginalLanguageNote document className="mt-2 block" />
           </p>
           <button
             type="button"
-            aria-label={DOCUMENTS_CLOSE}
+            aria-label={t(DOCUMENTS_CLOSE)}
             onClick={close}
             className="absolute right-4 top-4 flex size-12 cursor-pointer items-center justify-center border border-sand/60 bg-transparent p-0 text-limestone transition-colors hover:bg-limestone/12"
           >

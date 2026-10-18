@@ -5,6 +5,7 @@ import {
   NOT_FOUND_TITLE,
 } from "@/components/NotFoundNotice";
 import { UnityButtonLink } from "@/components/UnityButtonLink";
+import { useCopy } from "@/lib/i18n/copy";
 
 /**
  * The „ერთობა“ system notice (not found, error, account deleted): a centred serif heading and a
@@ -19,6 +20,7 @@ export function UnityNotice({
   description?: string;
   actions?: ReactNode;
 }) {
+  const t = useCopy();
   return (
     <main
       aria-labelledby="page-title"
@@ -36,11 +38,11 @@ export function UnityNotice({
           id="page-title"
           className="m-0 font-serif text-[32px] font-semibold leading-[1.2] sm:text-[48px]"
         >
-          {title}
+          {t(title)}
         </h1>
         {description ? (
           <p className="mx-auto mb-0 mt-4 max-w-[30em] text-[16px] leading-[1.65] text-secondary sm:text-[18px]">
-            {description}
+            {t(description)}
           </p>
         ) : null}
         {actions ? (
@@ -55,11 +57,12 @@ export function UnityNotice({
 
 /** The redesigned site's "page not found" notice, with the one way home. */
 export function UnityNotFoundNotice() {
+  const t = useCopy();
   return (
     <UnityNotice
       title={NOT_FOUND_TITLE}
       description={NOT_FOUND_DESCRIPTION}
-      actions={<UnityButtonLink href="/">{NOT_FOUND_HOME}</UnityButtonLink>}
+      actions={<UnityButtonLink href="/">{t(NOT_FOUND_HOME)}</UnityButtonLink>}
     />
   );
 }

@@ -1,6 +1,9 @@
 "use client";
+import { useCopy } from "@/lib/i18n/copy";
 
 import Image from "next/image";
+import { useLocale } from "next-intl";
+import { localePath } from "@/lib/i18n/routing";
 import { useState } from "react";
 import { safeAuthNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
@@ -8,6 +11,8 @@ import { createClient } from "@/lib/supabase/client";
 const OAUTH_FAILURE_MESSAGE = "Google-ით შესვლა ვერ მოხერხდა — სცადეთ თავიდან.";
 
 export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label: string }) {
+  const t = useCopy();
+  const locale = useLocale() === "en" ? "en" : "ka";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -17,7 +22,7 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
 
     try {
       const callbackUrl = new URL("/auth/callback", window.location.origin);
-      callbackUrl.searchParams.set("next", safeAuthNext(nextPath));
+      callbackUrl.searchParams.set("next", localePath(safeAuthNext(nextPath), locale));
       const { error: oauthError } = await createClient().auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: callbackUrl.toString() },
@@ -48,11 +53,11 @@ export function GoogleAuthButton({ nextPath, label }: { nextPath: string; label:
           width={20}
           height={20}
         />
-        <span>{label}</span>
+        <span>{t(label)}</span>
       </button>
       {error ? (
         <p role="alert" className="text-sm font-semibold text-danger">
-          {error}
+          {t(error ?? "")}
         </p>
       ) : null}
     </div>

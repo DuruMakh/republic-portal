@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useCopy } from "@/lib/i18n/copy";
+import Link from "@/lib/i18n/navigation";
 import { formatCountKa } from "@/lib/format";
 import type { RankedDelegate } from "@/lib/ranking";
 
@@ -11,6 +12,7 @@ const RANK_FIGURE_LABEL = "წევრი";
  * №1 in text-brand -- restyled with IndexRow's class language, but kept as its own
  * component (whole-row link + data-testid="leader-row" stay load-bearing for e2e). */
 export function LeaderRow({ delegate }: { delegate: RankedDelegate }) {
+  const t = useCopy();
   return (
     <Link
       href={`/delegates/${delegate.slug}`}
@@ -24,18 +26,18 @@ export function LeaderRow({ delegate }: { delegate: RankedDelegate }) {
         {delegate.rank}.
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-serif font-bold text-ink">
+        <span lang="ka" className="block truncate font-serif font-bold text-ink">
           {delegate.first_name} {delegate.last_name}
         </span>
         <span className="mt-0.5 block text-[0.74rem] tracking-[.06em] text-muted-fg">
-          {delegate.region_name_ka}
+          {t(delegate.region_name_ka ?? "")}
         </span>
       </span>
       <span className="text-right">
         <span className="block font-serif font-bold tabular-nums text-ink">
           {formatCountKa(delegate.members)}
         </span>
-        <span className="block text-[0.74rem] text-muted-fg">{RANK_FIGURE_LABEL}</span>
+        <span className="block text-[0.74rem] text-muted-fg">{t(RANK_FIGURE_LABEL)}</span>
       </span>
     </Link>
   );

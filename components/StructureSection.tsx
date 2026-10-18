@@ -1,3 +1,4 @@
+import { useCopy } from "@/lib/i18n/copy";
 import type { ReactNode } from "react";
 import { PEBBLE_ALT, StructurePebble } from "@/components/StructurePebble";
 import { Caps } from "@/components/Caps";
@@ -24,6 +25,7 @@ export function StructureSection({
   wideLede?: boolean;
   children: ReactNode;
 }) {
+  const t = useCopy();
   return (
     <section
       id={id}
@@ -37,12 +39,12 @@ export function StructureSection({
               id={`${id}-title`}
               className="m-0 font-display text-[44px] leading-[.95] font-bold sm:text-[clamp(44px,5.5vw,80px)]"
             >
-              {title}
+              {t(title)}
             </h2>
             <p
               className={`mt-3.5 font-serif ${wideLede ? "max-w-[34em]" : "max-w-[32em]"} text-[18px] leading-[1.55] text-prose sm:mt-[18px] sm:text-[clamp(19px,1.6vw,22px)]`}
             >
-              {lede}
+              {t(lede)}
             </p>
           </div>
           <span
@@ -69,18 +71,20 @@ export function StructureColumns({ children }: { children: ReactNode }) {
 
 /** The small grey capitals above a list or the rule cards. */
 export function StructureLabel({ children }: { children: string }) {
+  const t = useCopy();
   return (
     <div className="text-[12px] font-bold tracking-[.14em] text-secondary sm:text-[13px]">
-      <Caps>{children}</Caps>
+      <Caps>{t(children)}</Caps>
     </div>
   );
 }
 
 /** A labelled list under an ink rule, each line led by a small teal pebble. */
 export function StructureBulletList({ label, items }: { label: string; items: readonly string[] }) {
+  const t = useCopy();
   return (
     <div className="min-w-0">
-      <StructureLabel>{label}</StructureLabel>
+      <StructureLabel>{t(label)}</StructureLabel>
       <ul className="mt-3 border-t-2 border-ink sm:mt-4">
         {items.map((item, i) => (
           <li
@@ -91,7 +95,7 @@ export function StructureBulletList({ label, items }: { label: string; items: re
               alt={i % 2 === 1}
               className={`h-[9px] w-3 bg-teal sm:h-2.5 sm:w-[13px] ${i % 2 ? "rotate-[40deg]" : ""}`}
             />
-            {item}
+            {t(item)}
           </li>
         ))}
       </ul>
@@ -101,9 +105,10 @@ export function StructureBulletList({ label, items }: { label: string; items: re
 
 /** How one becomes a member: numbered pebbles joined by a rule, the last one filled. */
 export function StructureSteps({ label, steps }: { label: string; steps: readonly string[] }) {
+  const t = useCopy();
   return (
     <div className="min-w-0">
-      <StructureLabel>{label}</StructureLabel>
+      <StructureLabel>{t(label)}</StructureLabel>
       <ol className="mt-[18px] sm:mt-[22px]">
         {steps.map((step, i) => {
           const last = i === steps.length - 1;
@@ -127,7 +132,7 @@ export function StructureSteps({ label, steps }: { label: string; steps: readonl
               <span
                 className={`font-serif text-[18px] leading-[1.45] sm:text-[20px] ${last ? "font-semibold" : ""}`}
               >
-                {step}
+                {t(step)}
               </span>
             </li>
           );
