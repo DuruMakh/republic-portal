@@ -17,7 +17,7 @@ const INTRO = "მოძრაობის შეხვედრები და
 const EVENTS_METADATA: Metadata = {
   title: `${TITLE} — ქართული რესპუბლიკა`,
   description: INTRO,
-  openGraph: { images: ["/og-default.png"] },
+  openGraph: { images: ["/og-default.png?v=civic-portal"] },
 };
 
 // While hidden the page presents the generic not-found title, never its own — the same reason

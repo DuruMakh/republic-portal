@@ -34,7 +34,7 @@ export async function generateMetadata({
       type: "article",
       title: article.title,
       description: excerpt(article.body),
-      images: [article.image_url ?? "/og-default.png"],
+      images: [article.image_url ?? "/og-default.png?v=civic-portal"],
     },
   };
 }

@@ -10,7 +10,7 @@ const svg = `
   <text x="72" y="318" font-family="Noto Serif Georgian, Sylfaen, serif"
         font-size="60" font-weight="700" fill="#1A1611">ქართული რესპუბლიკა</text>
   <text x="74" y="368" font-family="Noto Sans Georgian, Sylfaen, sans-serif"
-        font-size="30" font-weight="600" fill="#6E6659">სამოქალაქო პლატფორმა</text>
+        font-size="30" font-weight="600" fill="#6E6659">სამოქალაქო პორტალი</text>
 </svg>`;
 
 const roundelSize = 200;

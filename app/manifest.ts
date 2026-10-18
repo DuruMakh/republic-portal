@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "ქართული რესპუბლიკა",
     short_name: "რესპუბლიკა",
-    description: "სამოქალაქო პლატფორმა",
+    description: "სამოქალაქო პორტალი",
     start_url: "/",
     display: "standalone",
     background_color: "#F7F2E9",

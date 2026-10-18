@@ -34,10 +34,10 @@ const asomtavruli = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "ქართული რესპუბლიკა",
-  description: "სამოქალაქო პლატფორმა",
+  description: "სამოქალაქო პორტალი",
   openGraph: {
     siteName: "ქართული რესპუბლიკა",
-    images: ["/og-default.png"],
+    images: ["/og-default.png?v=civic-portal"],
   },
 };
 

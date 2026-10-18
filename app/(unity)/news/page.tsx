@@ -15,7 +15,7 @@ const INTRO = "მოძრაობის სიახლეები და �
 export const metadata: Metadata = {
   title: `${TITLE} — ქართული რესპუბლიკა`,
   description: INTRO,
-  openGraph: { images: ["/og-default.png"] },
+  openGraph: { images: ["/og-default.png?v=civic-portal"] },
 };
 
 export default async function NewsPage() {
