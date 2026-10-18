@@ -25,7 +25,7 @@ import {
   ABOUT_UNITY_CLOSE,
   ABOUT_UNITY_LEAD,
 } from "@/lib/about-copy";
-import { showRatings } from "@/lib/ratings-switch";
+import { createServerSupabase } from "@/lib/supabase/server";
 import { SUPPORT_EYEBROW } from "@/lib/support-copy";
 
 // app/layout.tsx sets a plain string title, so each public page carries the site-name suffix.
@@ -35,8 +35,11 @@ const SECTION_TITLE =
   "m-0 mt-[18px] font-display text-[38px] font-bold leading-[.98] sm:mt-[22px] sm:text-[clamp(42px,5.3vw,76px)] sm:leading-[.96]";
 
 /** /about in the owner's „ერთობა“ design: who we are, what we aim for, and where we come from. */
-export default function AboutPage() {
-  const ratingsShown = showRatings();
+export default async function AboutPage() {
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <main>
@@ -129,7 +132,7 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <AboutPortalCards ratingsShown={ratingsShown} />
+          <AboutPortalCards signedIn={user !== null} />
         </div>
       </section>
 

@@ -54,9 +54,12 @@ export const ABOUT_PORTAL_SUB = "ეს არის სივრცე, სა�
 export type AboutPortalCard = {
   title: string;
   /** The lower block: a Mtavruli label, a line of text and a link. */
-  detail: { label: string; text: string; link: { href: string; label: string } };
-  /** True for the block that shows or links to the delegate ranking (hidden with ratings). */
-  isRating?: boolean;
+  detail: {
+    label: string;
+    text: string;
+    /** `signedInHref`, when set, replaces `href` for a signed-in visitor. */
+    link: { href: string; signedInHref?: string; label: string };
+  };
 };
 
 export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
@@ -71,19 +74,18 @@ export const ABOUT_PORTAL_CARDS: readonly AboutPortalCard[] = [
   {
     title: "ორგანიზება",
     detail: {
-      label: "დელეგატი",
-      text: "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.",
-      link: { href: "/join/terms", label: "გაეცანი წესებს →" },
+      label: "წევრი",
+      text: "წევრად გასახდომად შეავსე განაცხადი.",
+      link: { href: "/join", signedInHref: "/me/membership", label: "გახდი წევრი →" },
     },
   },
   {
     title: "ლიდერების არჩევა",
     detail: {
-      label: "დელეგატების რეიტინგი",
-      text: "ავტომატურად ლაგდება წევრების რაოდენობის მიხედვით.",
-      link: { href: "/leaderboard", label: "სრულად →" },
+      label: "დელეგატი",
+      text: "მოძრაობის წარმომადგენელი თავის ქალაქში, სოფელში, უბანში.",
+      link: { href: "/join/terms", label: "გაეცანი წესებს →" },
     },
-    isRating: true,
   },
   {
     title: "გადაწყვეტილებების მიღების პროცესში მონაწილეობა",
