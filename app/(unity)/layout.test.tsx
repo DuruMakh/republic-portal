@@ -70,7 +70,7 @@ describe("ერთობა layout", () => {
     renderLayout();
     fireEvent.click(screen.getByRole("button", { name: MENU }));
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByRole("link", { name: "პრინციპები" })).toHaveAttribute(
+    expect(within(dialog).getByRole("link", { name: "შეთანხმება" })).toHaveAttribute(
       "href",
       "/principles",
     );

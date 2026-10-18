@@ -64,7 +64,7 @@ describe("hero", () => {
       "href",
       "/join",
     );
-    expect(screen.getByRole("link", { name: "გაეცანი პრინციპებს →" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "გაეცანი შეთანხმებას →" })).toHaveAttribute(
       "href",
       "/principles",
     );
@@ -121,14 +121,13 @@ describe("principles preview", () => {
     render(await HomePage());
 
     const section = screen.getByRole("region", { name: "რა გვაერთიანებს" });
-    expect(within(section).getByRole("link", { name: "ყველა პრინციპი →" })).toHaveAttribute(
+    expect(within(section).getByRole("link", { name: "სრული შეთანხმება →" })).toHaveAttribute(
       "href",
       "/principles",
     );
-    expect(within(section).getByRole("link", { name: "ყველა პრინციპი · 12" })).toHaveAttribute(
-      "href",
-      "/principles",
-    );
+    expect(
+      within(section).getByRole("link", { name: "სრული შეთანხმება · 12 პუნქტი" }),
+    ).toHaveAttribute("href", "/principles");
     PRINCIPLES.forEach(({ title }, i) => {
       expect(within(section).getByRole("link", { name: title })).toHaveAttribute(
         "href",

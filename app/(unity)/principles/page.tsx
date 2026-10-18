@@ -39,7 +39,7 @@ export default function PrinciplesPage() {
             >
               {PRINCIPLES_PAGE_TITLE}
             </h1>
-            <p className="mt-5 max-w-[24em] font-serif text-[19px] leading-[1.55] text-prose sm:mt-8 sm:text-[clamp(21px,1.9vw,27px)] sm:leading-[1.5]">
+            <p className="mt-5 max-w-[32em] font-serif text-[17px] leading-[1.55] text-prose sm:mt-8 sm:text-[20px] sm:leading-[1.5]">
               {PRINCIPLES_LEDE}
             </p>
             <p className="mt-9 text-[17px] max-sm:hidden">

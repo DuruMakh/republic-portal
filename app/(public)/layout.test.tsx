@@ -99,7 +99,7 @@ describe("public layout — about link", () => {
     expect(header.getByRole("link", { name: ABOUT })).toHaveAttribute("href", "/about");
     const labels = header.getAllByRole("link").map((a) => a.textContent);
     expect(labels.indexOf(ABOUT)).toBe(labels.indexOf("მთავარი") + 1);
-    expect(labels.indexOf("ჩვენი პრინციპები")).toBe(labels.indexOf(ABOUT) + 1);
+    expect(labels.indexOf("შეთანხმება")).toBe(labels.indexOf(ABOUT) + 1);
     expect(
       within(screen.getByRole("contentinfo")).getByRole("link", { name: ABOUT }),
     ).toHaveAttribute("href", "/about");
@@ -112,9 +112,9 @@ describe("public layout — about link", () => {
 });
 
 describe("public layout — principles link", () => {
-  const PRINCIPLES = "ჩვენი პრინციპები";
+  const PRINCIPLES = "შეთანხმება";
 
-  it("links ჩვენი პრინციპები from the header, the footer and the phone menu", () => {
+  it("links შეთანხმება from the header, the footer and the phone menu", () => {
     renderLayout();
     expect(
       within(screen.getByRole("banner")).getByRole("link", { name: PRINCIPLES }),

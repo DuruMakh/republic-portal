@@ -10,6 +10,7 @@ import {
   INDEPENDENCE_ACT,
   type DocumentFan,
 } from "@/lib/archive-documents";
+import { PRINCIPLES_TITLE } from "@/lib/principles-copy";
 
 export const HOME_HERO_KICKER = "სამოქალაქო პლატფორმა";
 /** The headline in its two lines: the second is set in sand. */
@@ -17,7 +18,7 @@ export const HOME_HEADLINE = ["ერთად შევქმნათ", "ქ�
 export const HOME_LEDE =
   "იდეები მხოლოდ მაშინ ცვლიან ქვეყანას, როდესაც ადამიანები მათ გარშემო ერთიანდებიან.";
 export const HOME_HERO_JOIN = "გახდი მხარდამჭერი";
-export const HOME_HERO_PRINCIPLES = "გაეცანი პრინციპებს →";
+export const HOME_HERO_PRINCIPLES = "გაეცანი შეთანხმებას →";
 export const HOME_MAP_CAPTION = "საქართველო ეკუთვნის ხალხს";
 
 export const HOME_MISSION_LABEL = "პორტალის მიზანი";
@@ -57,10 +58,10 @@ export const HOME_JOIN_STEPS = [
   },
 ] as const;
 
-export const HOME_PRINCIPLES_KICKER = "პრინციპები";
+export const HOME_PRINCIPLES_KICKER = PRINCIPLES_TITLE;
 export const HOME_PRINCIPLES_TITLE = "რა გვაერთიანებს";
 /** The phone's button under the first six principles. */
-export const HOME_PRINCIPLES_ALL = "ყველა პრინციპი · 12";
+export const HOME_PRINCIPLES_ALL = "სრული შეთანხმება · 12 პუნქტი";
 export const HOME_MOTTO = "„ძალა ერთობაშია“";
 export const HOME_MOTTO_SOURCE = "საქართველოს სახელმწიფო გერბის დევიზი";
 

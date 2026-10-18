@@ -5,7 +5,7 @@ import { UnityHeader } from "@/components/UnityHeader";
 import { UnityJoinBar } from "@/components/UnityJoinBar";
 import { ABOUT_HREF } from "@/lib/about-copy";
 import { showEvents } from "@/lib/events-switch";
-import { PRINCIPLES_HREF } from "@/lib/principles-copy";
+import { PRINCIPLES_HREF, PRINCIPLES_NAV_LABEL } from "@/lib/principles-copy";
 import { PRIVACY_POLICY_PATH } from "@/lib/privacy";
 import { FINANCES_HREF, filterFinanceLinks, showPublicFinances } from "@/lib/public-finances";
 import { filterRatingLinks, RATINGS_HREF, showRatings } from "@/lib/ratings-switch";
@@ -17,7 +17,7 @@ const FOOTER_COPYRIGHT = "© 2026 ქართული რესპუბლი
 const navItems = [
   { href: "/", label: "მთავარი" },
   { href: ABOUT_HREF, label: "ჩვენ შესახებ" },
-  { href: PRINCIPLES_HREF, label: "პრინციპები" },
+  { href: PRINCIPLES_HREF, label: PRINCIPLES_NAV_LABEL },
   { href: STRUCTURE_HREF, label: "სტრუქტურა" },
   { href: RATINGS_HREF, label: "რეიტინგი" },
 ];
@@ -26,7 +26,7 @@ const navItems = [
 const footerLinks = [
   { href: "/", label: "მთავარი" },
   { href: ABOUT_HREF, label: "ჩვენ შესახებ" },
-  { href: PRINCIPLES_HREF, label: "პრინციპები" },
+  { href: PRINCIPLES_HREF, label: PRINCIPLES_NAV_LABEL },
   { href: STRUCTURE_HREF, label: "სტრუქტურა" },
   { href: "/news", label: "სიახლეები" },
   { href: RATINGS_HREF, label: "რეიტინგი" },

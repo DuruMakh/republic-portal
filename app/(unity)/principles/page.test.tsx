@@ -32,11 +32,11 @@ describe("/principles", () => {
 
   it("rings the knot with the twelve numerals, each linking to its principle", () => {
     render(<PrinciplesPage />);
-    const seal = screen.getByRole("navigation", { name: "პრინციპების ბეჭედი" });
+    const seal = screen.getByRole("navigation", { name: "შეთანხმების ბეჭედი" });
     const links = within(seal).getAllByRole("link");
     expect(links).toHaveLength(12);
     links.forEach((link, i) => {
-      expect(link).toHaveAccessibleName(`პრინციპი ${i + 1}`);
+      expect(link).toHaveAccessibleName(`შეთანხმების პუნქტი ${i + 1}`);
       expect(link).toHaveTextContent(GEORGIAN_NUMERALS[i] ?? "");
       expect(link).toHaveAttribute("href", `#principle-${i + 1}`);
     });
