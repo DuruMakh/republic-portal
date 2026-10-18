@@ -2,7 +2,7 @@ import { Caps } from "@/components/Caps";
 import { PRINCIPLE_ROOTS_LABEL, type PrincipleRoot } from "@/lib/principles-copy";
 
 /**
- * A principle's „ისტორიული ფესვი“ note: under a small braid and label, the dates and quotations
+ * A principle's heritage note: under a small braid and label, the dates and quotations
  * the principle grows from. Principle 1's note carries the 9 April tulips, floated right.
  */
 export function PrinciplesRoots({
@@ -15,10 +15,7 @@ export function PrinciplesRoots({
   className?: string;
 }) {
   return (
-    <aside
-      aria-label={PRINCIPLE_ROOTS_LABEL}
-      className={`flow-root border-t border-[#cfc4b3] pt-4 ${className}`}
-    >
+    <aside aria-label={PRINCIPLE_ROOTS_LABEL} className={`flow-root ${className}`}>
       <div className="flex items-center gap-2.5 text-[11.5px] font-bold tracking-[.14em] text-brand">
         <span
           aria-hidden="true"
