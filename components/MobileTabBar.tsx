@@ -50,7 +50,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
   const moreActive = more.some((item) => item.href === activeHref);
   // „ერთობა“ redesign: one condensed line per tab, the count as a bubble over the label's corner.
   const slot =
-    "relative flex flex-auto min-w-12 h-14 items-center justify-center px-1 text-center whitespace-nowrap no-underline";
+    "relative flex flex-auto min-w-max h-14 items-center justify-center text-center whitespace-nowrap no-underline";
   const marker = (
     <span aria-hidden="true" className="absolute inset-x-2 -top-0.5 h-[3px] bg-brand" />
   );
@@ -60,7 +60,7 @@ export function MobileTabBar({ tabs, more }: { tabs: CabinetNavItem[]; more: Cab
       <StickyBar>
         <nav
           aria-label={t(TABBAR_LABEL)}
-          className="flex bg-limestone px-1 text-[12.5px] font-semibold [font-stretch:87.5%]"
+          className="flex bg-limestone text-[12.5px] font-semibold [font-stretch:87.5%]"
         >
           {tabs.map((tab) => {
             const on = tab.href === activeHref;

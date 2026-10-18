@@ -159,12 +159,20 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
 test.describe("mobile tab labels", () => {
   // The narrowest supported width is the binding case: labels that fit at 320px fit wider.
   const width = 320;
-  for (const prefix of ["", "/en"]) {
-    test(`${width}px ${prefix || "Georgian"} labels fit their slots without ellipsis`, async ({
+  for (const { prefix, uncondensed } of [
+    { prefix: "", uncondensed: false },
+    { prefix: "/en", uncondensed: false },
+    { prefix: "", uncondensed: true },
+    { prefix: "/en", uncondensed: true },
+  ]) {
+    test(`${width}px ${prefix || "Georgian"}${uncondensed ? " uncondensed" : ""} labels fit their slots without ellipsis`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(`${prefix}/styleguide-mobile-tabbar`);
+      if (uncondensed) {
+        await page.addStyleTag({ content: "nav { font-stretch: normal !important; }" });
+      }
       const labels = page.locator("nav a > span:first-child");
       await expect(labels).toHaveCount(4);
       await page.evaluate(() => document.fonts.ready);
@@ -189,6 +197,7 @@ test.describe("mobile tab labels", () => {
         expect(label.textOverflow).not.toBe("ellipsis");
         expect(label.fits, JSON.stringify(label)).toBe(true);
       }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     });
   }
 });
