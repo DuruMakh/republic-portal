@@ -4,7 +4,6 @@ import {
   PRINCIPLES,
   principleAnchor,
   principleFromHash,
-  principleLabel,
 } from "./principles-copy";
 
 describe("principles copy", () => {
@@ -38,10 +37,8 @@ describe("principles copy", () => {
     for (const { roots } of PRINCIPLES) expect(roots.length).toBeGreaterThan(0);
   });
 
-  it("gives each principle an anchor, a label and a Georgian numeral", () => {
+  it("gives each principle an anchor and a Georgian numeral", () => {
     expect(principleAnchor(3)).toBe("principle-3");
-    expect(principleLabel(3)).toBe("პრინციპი 03");
-    expect(principleLabel(12)).toBe("პრინციპი 12");
     expect(GEORGIAN_NUMERALS).toHaveLength(PRINCIPLES.length);
   });
 

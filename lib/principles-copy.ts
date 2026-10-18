@@ -301,11 +301,6 @@ export function principleFromHash(hash: string): number | null {
   return number >= 1 && number <= PRINCIPLES.length ? number : null;
 }
 
-/** The small label under each numeral: „პრინციპი 03“. */
-export function principleLabel(number: number): string {
-  return `პრინციპი ${String(number).padStart(2, "0")}`;
-}
-
 /** Old Georgian alphabetic numerals 1–12: the page's decorative ornament per principle. */
 export const GEORGIAN_NUMERALS = [
   "ა",

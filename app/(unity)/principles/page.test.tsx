@@ -67,7 +67,9 @@ describe("/principles", () => {
         if (root.kind === "event") expect(note.textContent).toContain(root.date);
         if (root.kind === "quote") expect(note.textContent).toContain(root.text);
       }
-      expect(section).toHaveTextContent(`ᲞᲠᲘᲜᲪᲘᲞᲘ ${String(i + 1).padStart(2, "0")}`);
+      expect(
+        screen.queryByText(`ᲞᲠᲘᲜᲪᲘᲞᲘ ${String(i + 1).padStart(2, "0")}`),
+      ).not.toBeInTheDocument();
     });
   });
 

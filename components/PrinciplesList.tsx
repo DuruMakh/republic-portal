@@ -11,7 +11,6 @@ import {
   PRINCIPLES_QUOTE,
   principleAnchor,
   principleFromHash,
-  principleLabel,
 } from "@/lib/principles-copy";
 
 // Below Tailwind's `sm` the principles fold into rows (the phone design).
@@ -23,7 +22,7 @@ function subscribeToHash(onChange: () => void) {
 }
 
 /**
- * The twelve principles. From `sm` up each is an open section (numeral, label and historical
+ * The twelve principles. From `sm` up each is an open section (numeral and historical
  * roots on the left, title, lead and text on the right), with the principle 5 quote band after
  * the fifth. On phones they fold into rows, one open at a time (the first to begin with), and a
  * link to #principle-N opens that row and scrolls to it.
@@ -144,9 +143,6 @@ function PrincipleSection({
             className="-mb-[.08em] font-aso text-[clamp(96px,11vw,168px)] leading-[1.05] font-light text-transparent [-webkit-text-stroke:1.5px_var(--color-brand)] max-sm:hidden"
           >
             {numeral}
-          </div>
-          <div className="mt-1.5 text-[13px] font-bold tracking-[.14em] text-brand max-sm:hidden">
-            <Caps>{principleLabel(number)}</Caps>
           </div>
           <PrinciplesRoots
             roots={roots}
