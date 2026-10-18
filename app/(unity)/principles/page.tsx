@@ -21,7 +21,7 @@ export const metadata: Metadata = { title: `${PRINCIPLES_PAGE_TITLE} — ${SUPPO
 
 /**
  * /principles in the owner's „ერთობა“ design: the seal hero, the contents band, the twelve
- * principles (folded into rows on phones) with the principle 2 quote band, and the closing.
+ * principles (folded into rows on phones), and the closing.
  */
 export default function PrinciplesPage() {
   return (

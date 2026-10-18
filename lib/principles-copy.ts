@@ -18,7 +18,6 @@ export const PRINCIPLES_CONTENTS_ANCHOR = "contents";
 export const PRINCIPLES_SEAL_LABEL = "პრინციპების ბეჭედი";
 export const PRINCIPLES_LIST_LABEL = "პრინციპები";
 export const PRINCIPLE_ROOTS_LABEL = "ჩვენი მემკვიდრეობა";
-export const PRINCIPLES_QUOTE_LABEL = "ციტატა";
 export const PRINCIPLES_CLOSING_LINK = { href: "/structure", label: "ორგანიზაციული სტრუქტურა →" };
 
 /** One entry of a principle's „ჩვენი მემკვიდრეობა“ note. */
@@ -289,13 +288,6 @@ export const PRINCIPLES: readonly Principle[] = [
     ],
   },
 ];
-
-/** The wine pull-quote band: a line from principle 2, its last words in sand. */
-export const PRINCIPLES_QUOTE = {
-  principle: 2,
-  text: "ხელისუფლება არის ქართველი ერის მიერ შეზღუდული ვადით დაქირავებული, ანგარიშვალდებული მსახური და ",
-  highlight: "არა მისი ბატონი.",
-} as const;
 
 /** The anchor each principle's section carries, e.g. #principle-3. */
 export function principleAnchor(number: number): string {

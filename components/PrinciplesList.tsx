@@ -1,14 +1,12 @@
 "use client";
 
 import { Caps } from "@/components/Caps";
-import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
-import { PrinciplesQuote } from "@/components/PrinciplesQuote";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { PrinciplesRoots } from "@/components/PrinciplesRoots";
 import {
   GEORGIAN_NUMERALS,
   PRINCIPLES,
   PRINCIPLES_LIST_LABEL,
-  PRINCIPLES_QUOTE,
   principleAnchor,
   principleFromHash,
 } from "@/lib/principles-copy";
@@ -23,9 +21,9 @@ function subscribeToHash(onChange: () => void) {
 
 /**
  * The twelve principles. From `sm` up each is an open section (numeral and historical
- * roots on the left, title, lead and text on the right), with the principle 2 quote band after
- * the second. On phones they fold into rows, one open at a time (the first to begin with), and a
- * link to #principle-N opens that row and scrolls to it.
+ * roots on the left, title, lead and text on the right). On phones they fold into rows, one
+ * open at a time (the first to begin with), and a link to #principle-N opens that row and
+ * scrolls to it.
  */
 export function PrinciplesList() {
   const hash = useSyncExternalStore(
@@ -58,18 +56,14 @@ export function PrinciplesList() {
       {PRINCIPLES.map((principle, i) => {
         const number = i + 1;
         return (
-          <Fragment key={principle.title}>
-            <PrincipleSection
-              number={number}
-              open={state.open === number}
-              onToggle={() => toggle(number)}
-              ruled={number !== 1 && number !== PRINCIPLES_QUOTE.principle + 1}
-              last={number === PRINCIPLES.length}
-            />
-            {number === PRINCIPLES_QUOTE.principle ? (
-              <PrinciplesQuote className="max-sm:hidden" />
-            ) : null}
-          </Fragment>
+          <PrincipleSection
+            key={principle.title}
+            number={number}
+            open={state.open === number}
+            onToggle={() => toggle(number)}
+            ruled={number !== 1}
+            last={number === PRINCIPLES.length}
+          />
         );
       })}
     </section>

@@ -75,12 +75,11 @@ describe("/principles", () => {
     });
   });
 
-  it("quotes principle 2 in the wine band immediately after its section", () => {
+  it("continues directly from principle 2 to 3 without a separate quote band", () => {
     render(<PrinciplesPage />);
-    const band = screen.getByRole("region", { name: "ციტატა" });
-    expect(band.previousElementSibling).toHaveAttribute("id", "principle-2");
-    expect(band.nextElementSibling).toHaveAttribute("id", "principle-3");
-    expect(band).toHaveTextContent(
+    expect(screen.queryByRole("region", { name: "ციტატა" })).not.toBeInTheDocument();
+    expect(article(2).nextElementSibling).toBe(article(3));
+    expect(article(2)).toHaveTextContent(
       "ხელისუფლება არის ქართველი ერის მიერ შეზღუდული ვადით დაქირავებული, ანგარიშვალდებული მსახური და არა მისი ბატონი.",
     );
   });
