@@ -9,10 +9,10 @@ export const PRINCIPLES_TITLE = "ჩვენი პრინციპები"
 export const PRINCIPLES_NAV_LABEL = PRINCIPLES_TITLE;
 
 /** The page itself: its headline (also the tab title), kicker and lede. */
-export const PRINCIPLES_PAGE_TITLE = "პრინციპები";
+export const PRINCIPLES_PAGE_TITLE = "შეთანხმება";
 export const PRINCIPLES_KICKER = "ქართული რესპუბლიკა";
 export const PRINCIPLES_LEDE =
-  "ჩვენი მიზანია ქართველი ერის გაერთიანება საერთო პრინციპების, ღირებულებებისა და მიზნების გარშემო.";
+  "ეს შეთანხმება აერთიანებს იდეებს, რომელთა განხორციელებისთვისაც „ქართული რესპუბლიკა“ მზად არის მთელი ძალისხმევა გაიღოს. ჩვენი მიზანია, ამ იდეების გარშემო გავაერთიანოთ თანამოაზრეები და ისინი საქართველოს მოსახლეობის უდიდესი უმრავლესობის საერთო მიზნებად ვაქციოთ.";
 export const PRINCIPLES_CONTENTS = "სარჩევი";
 export const PRINCIPLES_CONTENTS_ANCHOR = "contents";
 export const PRINCIPLES_SEAL_LABEL = "პრინციპების ბეჭედი";

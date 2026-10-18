@@ -20,10 +20,10 @@ afterEach(() => {
 describe("/principles", () => {
   it("opens with the headline, lede and a link down to the contents", () => {
     render(<PrinciplesPage />);
-    expect(screen.getByRole("heading", { level: 1, name: "პრინციპები" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "შეთანხმება" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "ჩვენი მიზანია ქართველი ერის გაერთიანება საერთო პრინციპების, ღირებულებებისა და მიზნების გარშემო.",
+        "ეს შეთანხმება აერთიანებს იდეებს, რომელთა განხორციელებისთვისაც „ქართული რესპუბლიკა“ მზად არის მთელი ძალისხმევა გაიღოს. ჩვენი მიზანია, ამ იდეების გარშემო გავაერთიანოთ თანამოაზრეები და ისინი საქართველოს მოსახლეობის უდიდესი უმრავლესობის საერთო მიზნებად ვაქციოთ.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "სარჩევი" })).toHaveAttribute("href", "#contents");
@@ -124,6 +124,6 @@ describe("/principles", () => {
   });
 
   it("carries the site-name suffix in its tab title", () => {
-    expect(metadata.title).toBe("პრინციპები — ქართული რესპუბლიკა");
+    expect(metadata.title).toBe("შეთანხმება — ქართული რესპუბლიკა");
   });
 });
