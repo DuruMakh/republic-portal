@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/middleware", () => ({ updateSession }));
 
 const { proxy } = await import("./proxy");
 
-const SWITCHES = ["SHOW_PUBLIC_FINANCES", "SHOW_EVENTS", "SHOW_RATINGS"] as const;
+const SWITCHES = ["SHOW_PUBLIC_FINANCES", "SHOW_EVENTS", "SHOW_RATINGS", "SHOW_ENGLISH"] as const;
 const original = Object.fromEntries(SWITCHES.map((name) => [name, process.env[name]]));
 
 beforeEach(() => {
@@ -44,6 +44,7 @@ describe("proxy", () => {
   it.each(["/en/transparency", "/en/events/any-event-slug", "/en/leaderboard"])(
     "keeps hidden English page %s inaccessible",
     async (path) => {
+      process.env.SHOW_ENGLISH = "true";
       const response = await call(path);
       expect(response.status).toBe(404);
       expect(response.headers.get("x-middleware-rewrite")).toBe(
@@ -74,6 +75,35 @@ describe("proxy", () => {
       expect(response.headers.get("x-middleware-rewrite")).toBe(`http://localhost:3000/ka${path}`);
     }
     expect(updateSession).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    ["/en", "http://localhost:3000/"],
+    ["/en/about", "http://localhost:3000/about"],
+    ["/en/about?ref=AB2C3D", "http://localhost:3000/about?ref=AB2C3D"],
+    ["/en/join/terms", "http://localhost:3000/join/terms"],
+  ])("sends %s to its Georgian page while English is hidden", async (path, georgian) => {
+    const response = await call(path);
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(georgian);
+    expect(updateSession).not.toHaveBeenCalled();
+  });
+
+  it("serves the English pages once the English switch is on", async () => {
+    process.env.SHOW_ENGLISH = "true";
+    const response = await call("/en/about");
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-request-x-portal-locale")).toBe("en");
+    expect(updateSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps Georgian pages unchanged whether or not English is on", async () => {
+    for (const value of [undefined, "true"]) {
+      if (value === undefined) delete process.env.SHOW_ENGLISH;
+      else process.env.SHOW_ENGLISH = value;
+      const response = await call("/about");
+      expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost:3000/ka/about");
+    }
   });
 
   it("refreshes the session on ordinary pages", async () => {

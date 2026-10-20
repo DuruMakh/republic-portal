@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { ENGLISH_SHOWN } from "./english-switch";
+
+test.skip(!ENGLISH_SHOWN, "English is hidden — see english-hidden.spec.ts");
 
 test.setTimeout(60_000);
 

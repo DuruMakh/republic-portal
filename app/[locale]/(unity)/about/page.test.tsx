@@ -55,6 +55,16 @@ describe("/about", () => {
     }
   });
 
+  it("names the goal without mentioning elections", async () => {
+    render(await AboutPage());
+    const goal = screen.getByRole("heading", { level: 2, name: copy.ABOUT_GOAL_TITLE });
+    const section = goal.closest("section")!;
+    expect(section.textContent).not.toMatch(/არჩევნ/);
+    expect(copy.ABOUT_GOAL_STEPS[2].text).toBe(
+      "ხალხის ნების გამარჯვება და სახელმწიფო, რომელიც მთელი ერის ინტერესებს ემსახურება",
+    );
+  });
+
   it("links the portal cards to joining, the delegate rules and the structure", async () => {
     render(await AboutPage());
     expect(screen.getByRole("link", { name: "გახდი მხარდამჭერი →" })).toHaveAttribute(

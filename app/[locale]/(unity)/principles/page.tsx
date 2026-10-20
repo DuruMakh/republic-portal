@@ -15,6 +15,7 @@ import {
   PRINCIPLES_CONTENTS_ANCHOR,
   PRINCIPLES_KICKER,
   PRINCIPLES_LEDE,
+  PRINCIPLES_LEDE_CLOSE,
   PRINCIPLES_PAGE_TITLE,
 } from "@/lib/principles-copy";
 
@@ -50,6 +51,9 @@ export default function PrinciplesPage() {
             </h1>
             <p className="mt-5 max-w-[32em] font-serif text-[17px] leading-[1.55] text-prose sm:mt-8 sm:text-[20px] sm:leading-[1.5]">
               {t(PRINCIPLES_LEDE)}
+            </p>
+            <p className="mt-4 max-w-[32em] font-serif text-[17px] leading-[1.55] font-semibold text-ink sm:mt-5 sm:text-[20px] sm:leading-[1.5]">
+              {t(PRINCIPLES_LEDE_CLOSE)}
             </p>
             <p className="mt-9 text-[17px] max-sm:hidden">
               <UnityTextLink href={`#${PRINCIPLES_CONTENTS_ANCHOR}`}>

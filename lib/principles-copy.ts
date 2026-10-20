@@ -8,11 +8,16 @@ export const PRINCIPLES_HREF = "/principles";
 export const PRINCIPLES_TITLE = "შეთანხმება";
 export const PRINCIPLES_NAV_LABEL = PRINCIPLES_TITLE;
 
-/** The page itself: its headline (also the tab title), kicker and lede. */
-export const PRINCIPLES_PAGE_TITLE = PRINCIPLES_TITLE;
+/**
+ * The page itself: its headline (also the tab title), kicker, lede and closing line. The
+ * headline, lede and closing line are the owner's text, supplied in chat on 2026-10-20; the
+ * navigation keeps the shorter PRINCIPLES_TITLE.
+ */
+export const PRINCIPLES_PAGE_TITLE = "მოდით შევთანხმდეთ";
 export const PRINCIPLES_KICKER = "ქართული რესპუბლიკა";
 export const PRINCIPLES_LEDE =
-  "ეს შეთანხმება აერთიანებს იდეებს, რომელთა განხორციელებისთვისაც „ქართული რესპუბლიკა“ მზად არის მთელი ძალისხმევა გაიღოს. ჩვენი მიზანია, ამ იდეების გარშემო გავაერთიანოთ თანამოაზრეები და ისინი საქართველოს მოსახლეობის უდიდესი უმრავლესობის საერთო მიზნებად ვაქციოთ.";
+  "რადგან დღეს ერი დაყოფილია; რადგან დაყოფა მტერს უწყობს ხელს; ვალდებულები ვართ შევთანხმდეთ და გავერთიანდეთ იმ მიზნებისა და ღირებულებების ირგვლივ, რომლებსაც ქართველების უმრავლესობა ვიზიარებთ.";
+export const PRINCIPLES_LEDE_CLOSE = "ამიტომ მოდით შევთანხმდეთ";
 export const PRINCIPLES_CONTENTS = "სარჩევი";
 export const PRINCIPLES_CONTENTS_ANCHOR = "contents";
 export const PRINCIPLES_SEAL_LABEL = "შეთანხმების ბეჭედი";

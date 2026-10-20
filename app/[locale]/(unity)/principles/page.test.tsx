@@ -18,14 +18,18 @@ afterEach(() => {
 });
 
 describe("/principles", () => {
-  it("opens with the headline, lede and a link down to the contents", () => {
+  it("opens with the call to agree as its headline, then the reasons and a link down to the contents", () => {
     render(<PrinciplesPage />);
-    expect(screen.getByRole("heading", { level: 1, name: "შეთანხმება" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "მოდით შევთანხმდეთ" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "ეს შეთანხმება აერთიანებს იდეებს, რომელთა განხორციელებისთვისაც „ქართული რესპუბლიკა“ მზად არის მთელი ძალისხმევა გაიღოს. ჩვენი მიზანია, ამ იდეების გარშემო გავაერთიანოთ თანამოაზრეები და ისინი საქართველოს მოსახლეობის უდიდესი უმრავლესობის საერთო მიზნებად ვაქციოთ.",
+        "რადგან დღეს ერი დაყოფილია; რადგან დაყოფა მტერს უწყობს ხელს; ვალდებულები ვართ შევთანხმდეთ და გავერთიანდეთ იმ მიზნებისა და ღირებულებების ირგვლივ, რომლებსაც ქართველების უმრავლესობა ვიზიარებთ.",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByText("ამიტომ მოდით შევთანხმდეთ")).toBeInTheDocument();
+    expect(screen.queryByText(/ეს შეთანხმება აერთიანებს/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "სარჩევი" })).toHaveAttribute("href", "#contents");
     expect(document.getElementById("contents")).not.toBeNull();
   });
@@ -124,6 +128,6 @@ describe("/principles", () => {
   });
 
   it("carries the site-name suffix in its tab title", async () => {
-    expect((await generateMetadata()).title).toBe("შეთანხმება — ქართული რესპუბლიკა");
+    expect((await generateMetadata()).title).toBe("მოდით შევთანხმდეთ — ქართული რესპუბლიკა");
   });
 });

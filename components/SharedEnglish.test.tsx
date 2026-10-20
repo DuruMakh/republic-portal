@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import PublicError from "@/app/[locale]/(unity)/error";
 import OfflinePage from "@/app/[locale]/offline/page";
 import { CopyButton } from "./CopyButton";
+import { EnglishShownProvider } from "./EnglishShown";
 import { Masthead } from "./Masthead";
 import { MobileTabBar } from "./MobileTabBar";
 import { Pill } from "./Pill";
@@ -20,7 +21,7 @@ vi.mock("@/components/useSignOut", () => ({ useSignOut: () => vi.fn() }));
 function english(children: ReactNode) {
   return (
     <NextIntlClientProvider locale="en" messages={{}}>
-      {children}
+      <EnglishShownProvider shown>{children}</EnglishShownProvider>
     </NextIntlClientProvider>
   );
 }
