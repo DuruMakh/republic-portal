@@ -9,8 +9,10 @@ import * as support from "@/lib/support-copy";
 export const publicMessages: Record<string, string> = {
   საქართველო: "Georgia",
   [principles.PRINCIPLES_TITLE]: "Agreement",
+  [principles.PRINCIPLES_PAGE_TITLE]: "Let us agree",
   [principles.PRINCIPLES_LEDE]:
-    "This agreement brings together the ideas that Georgian Republic is ready to devote its full efforts to realising. Our goal is to unite like-minded people around these ideas and make them shared goals for the great majority of Georgia’s population.",
+    "Because the nation is divided today, and because division plays into the enemy’s hands, we are obliged to agree and to unite around the goals and values that most of us Georgians share.",
+  [principles.PRINCIPLES_LEDE_CLOSE]: "So let us agree",
   [principles.PRINCIPLES_CONTENTS]: "Contents",
   [principles.PRINCIPLES_SEAL_LABEL]: "Agreement seal",
   [principles.PRINCIPLES_LIST_LABEL]: "Agreement principles",
@@ -263,7 +265,7 @@ export const publicMessages: Record<string, string> = {
   [about.ABOUT_GOAL_STEPS[1].text]:
     "Build this unity into a strong political force created by the people",
   [about.ABOUT_GOAL_STEPS[2].label]: "Victory",
-  [about.ABOUT_GOAL_STEPS[2].text]: "Win elections",
+  [about.ABOUT_GOAL_STEPS[2].text]: "The victory of the nation’s will",
   [about.ABOUT_PORTAL_KICKER]: "The portal",
   [about.ABOUT_PORTAL_LEAD]:
     "This portal exists to help build and strengthen that political unity.",

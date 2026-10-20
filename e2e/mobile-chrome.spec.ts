@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { EVENTS_SHOWN } from "./events-switch";
 import { FINANCES_PUBLIC } from "./finances-switch";
+import { ENGLISH_SHOWN } from "./english-switch";
 import { RATINGS_SHOWN } from "./ratings-switch";
 import { STRUCTURE_NAV_LABEL } from "../lib/structure-copy";
 
@@ -159,7 +160,7 @@ test.describe("desktop chrome is unchanged at 1280px", () => {
 test.describe("mobile tab labels", () => {
   // The narrowest supported width is the binding case: labels that fit at 320px fit wider.
   const width = 320;
-  for (const prefix of ["", "/en"]) {
+  for (const prefix of ENGLISH_SHOWN ? ["", "/en"] : [""]) {
     test(`${width}px ${prefix || "Georgian"} labels fit their slots without ellipsis`, async ({
       page,
     }) => {

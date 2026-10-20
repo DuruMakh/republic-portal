@@ -43,7 +43,7 @@ export const ABOUT_GOAL_STEPS = [
     label: "პოლიტიკური ძალა",
     text: "ამ ერთობის ჩამოყალიბება ხალხის მიერ შექმნილ, ძლიერ პოლიტიკურ ძალად",
   },
-  { label: "გამარჯვება", text: "არჩევნებში გამარჯვება" },
+  { label: "გამარჯვება", text: "ერის ნების გამარჯვება" },
 ] as const;
 
 export const ABOUT_PORTAL_KICKER = "პორტალი";

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian } from "next/font/google";
 import localFont from "next/font/local";
 import { siteUrl } from "@/lib/site";
+import { EnglishShownProvider } from "@/components/EnglishShown";
+import { showEnglish } from "@/lib/english-switch";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
@@ -89,7 +91,7 @@ export default async function RootLayout({
         className={`${notoSans.variable} ${notoSerif.variable} ${gordeziani.variable} ${asomtavruli.variable}`}
       >
         <NextIntlClientProvider locale={locale} messages={{}} timeZone="Asia/Tbilisi">
-          {children}
+          <EnglishShownProvider shown={showEnglish()}>{children}</EnglishShownProvider>
         </NextIntlClientProvider>
         <ServiceWorkerRegistration />
       </body>

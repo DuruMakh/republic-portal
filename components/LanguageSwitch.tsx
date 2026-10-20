@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useSyncExternalStore, type MouseEvent } from "react";
+import { useEnglishShown } from "@/components/EnglishShown";
 import { localePath, type Locale } from "@/lib/i18n/routing";
 
 function browserAddress() {
@@ -22,8 +23,15 @@ function subscribe(onChange: () => void) {
 // A fixed server fallback also keeps static not-found pages free of hydration mismatches.
 const serverAddress = () => "/";
 
-/** A language change always retains the actual address, including referral and section details. */
-export function LanguageSwitch({
+/**
+ * A language change always retains the actual address, including referral and section details.
+ * Renders nothing while the English version is hidden (SHOW_ENGLISH, lib/english-switch.ts).
+ */
+export function LanguageSwitch(props: { className?: string; onNavigate?: () => void }) {
+  return useEnglishShown() ? <LanguageLinks {...props} /> : null;
+}
+
+function LanguageLinks({
   className = "",
   onNavigate,
 }: {

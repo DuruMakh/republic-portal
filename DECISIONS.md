@@ -43,7 +43,9 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   its current addresses, with no automatic browser-language redirect. This dependency avoids
   a second set of pages and custom request-context code. Interface copy is translated in
   explicit dictionaries; authored news/events and uploaded documents retain their originals
-  with language labels. Administration remains Georgian. No database changes.
+  with language labels. Administration remains Georgian. No database changes. Hidden for now
+  (changed 2026-10-20, owner): `SHOW_ENGLISH` unset sends every `/en` address to its Georgian
+  page and removes the language switch and English sitemap entries; `true` restores them all.
 
 - **ADR-001 Stack:** Next.js + TypeScript + Supabase + Vercel, the stack the AI engineer is
   most fluent in. **ADR-002:** PWA first; store apps only if presence ever matters.

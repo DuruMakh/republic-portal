@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { showEnglish } from "@/lib/english-switch";
 import { showEvents } from "@/lib/events-switch";
 import { hiddenBySwitch } from "@/lib/hidden-routes";
 import { showPublicFinances } from "@/lib/public-finances";
@@ -13,7 +14,13 @@ export async function proxy(request: NextRequest) {
   // These headers are derived from the URL, never trusted from a caller.
   request.headers.set("x-portal-locale", locale);
   request.headers.set("x-portal-pathname", pathname);
-  if (/^\/ka(?:\/|$)/.test(incoming) || (locale === "en" && /^\/admin(?:\/|$)/.test(pathname))) {
+  // While the English version is hidden (owner decision 2026-10-20), an /en address, a shared
+  // link or a search result alike, lands on the same Georgian page. A temporary redirect: the
+  // addresses come back when the switch is on.
+  if (
+    /^\/ka(?:\/|$)/.test(incoming) ||
+    (locale === "en" && (!showEnglish() || /^\/admin(?:\/|$)/.test(pathname)))
+  ) {
     const destination = request.nextUrl.clone();
     destination.pathname = pathname;
     return NextResponse.redirect(destination);

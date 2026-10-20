@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { showEnglish } from "@/lib/english-switch";
 import { showRatings } from "@/lib/ratings-switch";
 import { siteUrl } from "@/lib/site";
 import { fetchPublicDelegates } from "@/lib/supabase/public";
@@ -29,6 +30,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
   ];
+  // hidden by default (owner decision 2026-10-20): /en addresses redirect, so they stay out too
+  if (!showEnglish()) return entries;
   return entries.flatMap((entry) => {
     const en = `${base}${localePath(entry.url.slice(base.length) || "/", "en")}`;
     const alternates = { languages: { ka: entry.url, en } };

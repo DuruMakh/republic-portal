@@ -14,6 +14,7 @@ import {
   journeyPhone,
   seedCompletedMember,
 } from "./funnel-helpers";
+import { ENGLISH_SHOWN } from "./english-switch";
 import { serviceClient } from "./otp-helpers";
 
 // Account deletion (spec 2026-10-08-account-deletion-design.md): a completed member signs in
@@ -63,7 +64,8 @@ async function footprint(userId: string) {
   };
 }
 
-for (const locale of ["ka", "en"] as const) {
+// English runs only while the English version is shown (SHOW_ENGLISH, see english-switch.ts).
+for (const locale of ENGLISH_SHOWN ? (["ka", "en"] as const) : (["ka"] as const)) {
   test(`a ${locale} member deletes their account and their data is gone`, async ({ page }) => {
     const prefix = locale === "en" ? "/en" : "";
     // createGoogleBackedTestUser also installs the member's browser session

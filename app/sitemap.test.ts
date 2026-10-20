@@ -7,6 +7,7 @@ import sitemap from "./sitemap";
 
 beforeEach(() => {
   vi.stubEnv("SHOW_RATINGS", undefined);
+  vi.stubEnv("SHOW_ENGLISH", undefined);
 });
 
 afterEach(() => {
@@ -14,7 +15,16 @@ afterEach(() => {
 });
 
 describe("sitemap", () => {
+  it("lists only Georgian addresses while English is hidden", async () => {
+    const entries = await sitemap();
+    expect(entries.map((entry) => entry.url).filter((url) => url.includes("/en"))).toEqual([]);
+    expect(entries.find((entry) => entry.url === "https://example.test/about")?.alternates).toBe(
+      undefined,
+    );
+  });
+
   it("pairs English and Georgian public addresses without publishing hidden routes", async () => {
+    vi.stubEnv("SHOW_ENGLISH", "true");
     const entries = await sitemap();
     expect(entries.map((entry) => entry.url)).toContain("https://example.test/en/principles");
     expect(entries.map((entry) => entry.url)).not.toContain("https://example.test/en/leaderboard");
