@@ -60,9 +60,7 @@ describe("/about", () => {
     const goal = screen.getByRole("heading", { level: 2, name: copy.ABOUT_GOAL_TITLE });
     const section = goal.closest("section")!;
     expect(section.textContent).not.toMatch(/არჩევნ/);
-    expect(copy.ABOUT_GOAL_STEPS[2].text).toBe(
-      "ხალხის ნების გამარჯვება და სახელმწიფო, რომელიც მთელი ერის ინტერესებს ემსახურება",
-    );
+    expect(copy.ABOUT_GOAL_STEPS[2].text).toBe("ერის ნების გამარჯვება");
   });
 
   it("links the portal cards to joining, the delegate rules and the structure", async () => {
