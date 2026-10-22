@@ -5,12 +5,15 @@ import { HomeNews } from "@/components/HomeNews";
 import { HomePrinciples } from "@/components/HomePrinciples";
 import { HomeRoots } from "@/components/HomeRoots";
 import { HomeStructure } from "@/components/HomeStructure";
+import { JsonLd } from "@/components/JsonLd";
 import { UnityClosing } from "@/components/UnityClosing";
 import { UnityOrnament } from "@/components/UnityOrnament";
 import type { Metadata } from "next";
 import { HOME_SEO_DESCRIPTION, HOME_SEO_TITLE } from "@/lib/home-copy";
 import { languageAlternates } from "@/lib/i18n/metadata";
 import { getCopy, getLocale } from "@/lib/i18n/server";
+import { siteUrl } from "@/lib/site";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
 import { fetchPublicNews, fetchPublicStats } from "@/lib/supabase/public";
 
 export const revalidate = 60;
@@ -39,6 +42,7 @@ export default async function HomePage() {
 
   return (
     <main>
+      <JsonLd data={[organizationJsonLd(siteUrl()), websiteJsonLd(siteUrl())]} />
       <HomeHero />
       <HomeMission stats={stats} />
       <HomeJoinSteps />

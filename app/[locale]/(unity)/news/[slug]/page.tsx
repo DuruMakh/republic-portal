@@ -3,12 +3,15 @@ import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
+import { JsonLd } from "@/components/JsonLd";
 import { UnityClosing } from "@/components/UnityClosing";
 import { UnityArticleHead } from "@/components/UnityPageHead";
 import { UnityTextLink } from "@/components/UnityTextLink";
 import { excerpt } from "@/lib/content-render";
 import { formatDate } from "@/lib/i18n/format";
 import { CONTACT_CLOSING_LINK } from "@/lib/public-pages-copy";
+import { siteUrl } from "@/lib/site";
+import { newsArticleJsonLd } from "@/lib/structured-data";
 import { fetchPublicNews, fetchPublicNewsBySlug } from "@/lib/supabase/public";
 import { generateMetadata as notFoundMetadata } from "./not-found";
 
@@ -57,6 +60,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
       <section className="pb-16 pt-7 sm:pb-[clamp(88px,9vw,136px)] sm:pt-[clamp(56px,6vw,88px)]">
         <div className="unity-container">
           <article>
+            <JsonLd data={newsArticleJsonLd(siteUrl(), article)} />
             <div className="mx-auto max-w-[860px]">
               <UnityArticleHead
                 backHref="/news"
