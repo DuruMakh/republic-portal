@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { useCopy } from "@/lib/i18n/copy";
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 /**
  * The service worker's fallback when a page cannot load offline (app/sw.ts precaches it, with

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { cabinetNavItems } from "@/lib/cabinet";
 import { mobileTabs } from "@/lib/mobile-nav";
@@ -23,6 +25,9 @@ const DEMO_ITEMS = cabinetNavItems("member").map((item) =>
   item.href === "/me/polls" ? { ...item, count: 3 } : item,
 );
 const { tabs, more } = mobileTabs(DEMO_ITEMS, "member");
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 export default function MobileTabBarDemoPage() {
   return (

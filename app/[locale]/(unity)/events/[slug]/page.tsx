@@ -1,5 +1,5 @@
 import { getCopy, getLocale } from "@/lib/i18n/server";
-import { languageAlternates } from "@/lib/i18n/metadata";
+import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import type { Metadata } from "next";
 import Link from "@/lib/i18n/navigation";
 import { notFound } from "next/navigation";
@@ -42,6 +42,7 @@ export async function generateMetadata({
     title: `${event.title} — ${t("ქართული რესპუბლიკა")}`,
     description: `${formatEventTime(event.starts_at, event.ends_at, locale)} · ${event.location}`,
     openGraph: {
+      ...openGraphDefaults(locale),
       title: event.title,
       description: excerpt(event.description),
       images: ["/og-default.png?v=civic-portal"],
