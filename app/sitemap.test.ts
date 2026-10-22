@@ -78,6 +78,21 @@ describe("sitemap", () => {
     expect(shown.map((e) => e.url)).toContain("https://example.test/leaderboard");
   });
 
+  it("pairs each news article with its English address once English is on", async () => {
+    vi.stubEnv("SHOW_ENGLISH", "true");
+    data.fetchPublicNews.mockResolvedValue([news("story", "2026-10-20T10:00:00Z")]);
+    const entries = await sitemap();
+    expect(entry(entries, "https://example.test/en/news/story")).toMatchObject({
+      lastModified: new Date("2026-10-20T10:00:00Z"),
+      alternates: {
+        languages: {
+          ka: "https://example.test/news/story",
+          en: "https://example.test/en/news/story",
+        },
+      },
+    });
+  });
+
   it("lists every news article with its publication date", async () => {
     data.fetchPublicNews.mockResolvedValue([
       news("second", "2026-10-20T10:00:00Z"),

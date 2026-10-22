@@ -62,6 +62,12 @@ describe("newsArticleJsonLd", () => {
     ).toBe("https://cdn.example/a.jpg");
   });
 
+  it("leaves a protocol-relative image address alone", () => {
+    expect(newsArticleJsonLd(base, { ...article, image_url: "//cdn.example/a.jpg" }).image).toBe(
+      "//cdn.example/a.jpg",
+    );
+  });
+
   it("cuts a long title to the 110 characters search engines read", () => {
     const headline = newsArticleJsonLd(base, { ...article, title: "ა".repeat(200) }).headline;
     expect(headline).toBe("ა".repeat(110));

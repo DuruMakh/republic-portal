@@ -43,7 +43,8 @@ export function newsArticleJsonLd(
     headline: Array.from(article.title).slice(0, HEADLINE_LENGTH).join(""),
     datePublished: article.published_at,
     url: `${base}/news/${article.slug}`,
-    image: image.startsWith("/") ? `${base}${image}` : image,
+    // site-relative only: a protocol-relative //host/... address already names its host
+    image: /^\/(?!\/)/.test(image) ? `${base}${image}` : image,
     publisher: organization(base),
   };
 }
