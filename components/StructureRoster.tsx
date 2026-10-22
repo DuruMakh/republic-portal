@@ -20,7 +20,8 @@ function Placeholder() {
 }
 
 // The name scales with the card (cqi = 1% of its width) so the longest name stays on one line
-// (owner order, 2026-10-22): 7.6cqi fits ~13 em of Georgian serif, 11px is the design floor.
+// (owner order, 2026-10-22). 7cqi fits ~14 em: the longest name is 12.5 em on Windows but 13.5 em
+// on Linux CI (and Android), so keep the margin. 11px is the design floor.
 function MemberCard({ member }: { member: BoardMember }) {
   return (
     <li className="@container min-w-0">
@@ -35,7 +36,7 @@ function MemberCard({ member }: { member: BoardMember }) {
       </span>
       <span
         lang="ka"
-        className="mt-2.5 block font-serif text-[clamp(11px,7.6cqi,19px)] font-semibold whitespace-nowrap text-ink sm:mt-4"
+        className="mt-2.5 block font-serif text-[clamp(11px,7cqi,19px)] font-semibold whitespace-nowrap text-ink sm:mt-4"
       >
         {member.name}
       </span>
