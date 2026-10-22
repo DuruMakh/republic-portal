@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian } from "next/font/google";
 import localFont from "next/font/local";
-import { siteUrl } from "@/lib/site";
+import { siteUrl, siteVerification } from "@/lib/site";
 import { EnglishShownProvider } from "@/components/EnglishShown";
 import { showEnglish } from "@/lib/english-switch";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -42,6 +42,7 @@ const baseMetadata: Metadata = {
   title: "ქართული რესპუბლიკა",
   description: "სამოქალაქო პორტალი",
   openGraph: { ...openGraphDefaults("ka"), images: ["/og-default.png?v=civic-portal"] },
+  ...siteVerification(),
 };
 
 export function generateStaticParams() {

@@ -31,6 +31,12 @@ import { generateMetadata as newsArticleMetadata } from "./news/[slug]/page";
 import { generateMetadata as eventsMetadata } from "./events/page";
 import { generateMetadata as eventMetadata } from "./events/[slug]/page";
 import { generateMetadata as transparencyMetadata } from "./transparency/page";
+import { generateMetadata as loginMetadata } from "./login/page";
+import { metadata as adminLayoutMetadata } from "../(admin)/layout";
+import { metadata as styleguideMetadata } from "../(public)/styleguide/page";
+import { metadata as tabbarStyleguideMetadata } from "../styleguide-mobile-tabbar/page";
+import { metadata as offlineMetadata } from "../offline/page";
+import { NOINDEX } from "@/lib/i18n/metadata";
 
 const slug = Promise.resolve({ slug: "story" });
 
@@ -110,5 +116,24 @@ describe("/news/[slug] share preview", () => {
   it("stays an article", async () => {
     const openGraph = (await newsArticleMetadata({ params: slug })).openGraph;
     expect(openGraph).toMatchObject({ type: "article" });
+  });
+});
+
+describe("/login metadata", () => {
+  it("names the page and keeps it out of search results", async () => {
+    const metadata = await loginMetadata();
+    expect(metadata.title).toBe("შესვლა — ქართული რესპუბლიკა");
+    expect(metadata.robots).toEqual(NOINDEX);
+  });
+});
+
+describe.each<[string, Metadata]>([
+  ["the admin area", adminLayoutMetadata],
+  ["/styleguide", styleguideMetadata],
+  ["/styleguide-mobile-tabbar", tabbarStyleguideMetadata],
+  ["/offline", offlineMetadata],
+])("%s", (_name, metadata) => {
+  it("stays out of search results", () => {
+    expect(metadata.robots).toEqual(NOINDEX);
   });
 });

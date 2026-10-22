@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { showEnglish } from "@/lib/english-switch";
 import { localePath, type Locale } from "./routing";
 
+/** For pages that must never appear in search results. */
+export const NOINDEX = { index: false, follow: false } as const;
+
 /**
  * The share-preview fields every page needs. A page that sets its own `openGraph` replaces the
  * layout's object instead of merging with it, so such pages spread this first.

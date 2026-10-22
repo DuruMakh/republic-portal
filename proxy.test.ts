@@ -89,6 +89,16 @@ describe("proxy", () => {
     expect(updateSession).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["/ka", "http://localhost:3000/"],
+    ["/ka/about", "http://localhost:3000/about"],
+    ["/ka/delegates/x/opengraph-image-1", "http://localhost:3000/delegates/x/opengraph-image-1"],
+  ])("sends the internal address %s to its public one for good", async (path, target) => {
+    const response = await call(path);
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(target);
+  });
+
   it("serves the English pages once the English switch is on", async () => {
     process.env.SHOW_ENGLISH = "true";
     const response = await call("/en/about");
