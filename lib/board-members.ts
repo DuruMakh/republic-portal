@@ -56,7 +56,7 @@ export const boardMemberSchema = z
 
 export type BoardMember = z.infer<typeof boardMemberSchema>;
 
-// Owner's list of 2026-10-08, in the order sent. Photos: the owner's studio set of
+// Owner's list of 2026-10-08; the owner's own card goes last (2026-10-22). Photos: studio set of
 // 2026-10-21, cropped 4:5 to 800x1000.
 export const BOARD_MEMBERS: readonly BoardMember[] = [
   {
@@ -84,19 +84,19 @@ export const BOARD_MEMBERS: readonly BoardMember[] = [
     ],
   },
   {
-    name: "დურუ მახარაძე",
-    photo: "/board/duru-makharadze.jpg",
-    socials: [
-      { network: "facebook", url: "https://www.facebook.com/duru.makharadze" },
-      { network: "linkedin", url: "https://www.linkedin.com/in/duru-makharadze-2b35a4205/" },
-    ],
-  },
-  {
     name: "გიორგი მჭედლიშვილი",
     photo: "/board/giorgi-mchedlishvili.jpg",
     socials: [
       { network: "facebook", url: "https://www.facebook.com/giorgi.mchedlishvili.9484" },
       { network: "tiktok", url: "https://www.tiktok.com/@g.mtchedlishvili" },
+    ],
+  },
+  {
+    name: "დურუ მახარაძე",
+    photo: "/board/duru-makharadze.jpg",
+    socials: [
+      { network: "facebook", url: "https://www.facebook.com/duru.makharadze" },
+      { network: "linkedin", url: "https://www.linkedin.com/in/duru-makharadze-2b35a4205/" },
     ],
   },
 ];

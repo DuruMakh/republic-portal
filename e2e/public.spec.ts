@@ -355,6 +355,33 @@ test.describe("structure page", () => {
     ).toBeInViewport();
   });
 
+  // Owner order (2026-10-22): every board member's name fits on one line, phone to desktop.
+  for (const width of [1440, 1280, 1024, 768, 414, 375, 360]) {
+    test(`each roster name stays on one line at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/structure");
+      await page.evaluate(() => document.fonts.ready);
+      const names = page
+        .getByRole("region", { name: "ბორდის შემადგენლობა" })
+        .locator("li > [lang=ka]");
+      await expect(names).toHaveCount(5);
+      for (const name of await names.all()) {
+        const fit = await name.evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const card = el.parentElement!.getBoundingClientRect();
+          const text = range.getBoundingClientRect();
+          return { lines: range.getClientRects().length, overflow: text.right - card.right };
+        });
+        expect(fit.lines, `${await name.textContent()} at ${width}px`).toBe(1);
+        expect(
+          fit.overflow,
+          `${await name.textContent()} spills out of its card`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+    });
+  }
+
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 360, height: 780 } });
 

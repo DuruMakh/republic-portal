@@ -67,13 +67,13 @@ describe("boardMemberSchema", () => {
 });
 
 describe("BOARD_MEMBERS", () => {
-  it("holds the five board members the owner sent on 2026-10-08, in their order", () => {
+  it("holds the five board members, the owner's own card last (owner order, 2026-10-22)", () => {
     expect(BOARD_MEMBERS.map((m) => m.name)).toEqual([
       "გიორგი თავართქილაძე",
       "ლევან ნიშნიანიძე",
       "ნუკრი კაკულია",
-      "დურუ მახარაძე",
       "გიორგი მჭედლიშვილი",
+      "დურუ მახარაძე",
     ]);
   });
 
