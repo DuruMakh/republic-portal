@@ -13,6 +13,9 @@ import {
 
 export const ABOUT_HREF = "/about";
 export const ABOUT_TITLE = "ჩვენ შესახებ";
+/** The search-result description (owner-approved 2026-10-22). */
+export const ABOUT_SEO_DESCRIPTION =
+  "ვინ ვართ, რის გვჯერა და რა არის ჩვენი მიზანი: ერთობიდან გამარჯვებამდე.";
 
 /** The hero headline: the red first words, then the rest. */
 export const ABOUT_INTRO_LEAD = "ქართული რესპუბლიკა";

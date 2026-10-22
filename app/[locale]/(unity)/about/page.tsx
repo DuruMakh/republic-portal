@@ -23,6 +23,7 @@ import {
   ABOUT_ROOTS_INTRO,
   ABOUT_ROOTS_KICKER,
   ABOUT_ROOTS_TITLE,
+  ABOUT_SEO_DESCRIPTION,
   ABOUT_TITLE,
   ABOUT_UNITY_CLOSE,
   ABOUT_UNITY_LEAD,
@@ -34,6 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
   return {
     title: t(ABOUT_TITLE) + " — " + t("ქართული რესპუბლიკა"),
+    description: t(ABOUT_SEO_DESCRIPTION),
     ...languageAlternates("/about", await getLocale()),
   };
 }

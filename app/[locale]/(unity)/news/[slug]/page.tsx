@@ -1,5 +1,5 @@
 import { getCopy, getLocale } from "@/lib/i18n/server";
-import { languageAlternates } from "@/lib/i18n/metadata";
+import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContentBody } from "@/components/ContentBody";
@@ -30,16 +30,18 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await fetchPublicNewsBySlug(slug);
   if (!article) return notFoundMetadata();
+  const locale = await getLocale();
   return {
     title: `${article.title} — ${t("ქართული რესპუბლიკა")}`,
     description: excerpt(article.body),
     openGraph: {
+      ...openGraphDefaults(locale),
       type: "article",
       title: article.title,
       description: excerpt(article.body),
       images: [article.image_url ?? "/og-default.png?v=civic-portal"],
     },
-    ...languageAlternates(`/news/${slug}`, await getLocale()),
+    ...languageAlternates(`/news/${slug}`, locale),
   };
 }
 
