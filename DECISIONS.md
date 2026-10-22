@@ -12,7 +12,6 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - When a decision changes, edit its entry here and add "(changed YYYY-MM-DD)". Do not add a
   correction entry. Move what it replaced to "Retired or replaced" at the bottom.
 - New number: one above the highest here AND in every open PR; recheck right before merging.
-  ADR-050 is claimed by open PR #48, which must renumber its clashing 047.
 
 ## Delivery and environments
 
@@ -147,6 +146,10 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 - **ADR-038 `/structure`** is information only, with a condensed display type and pebble motif
   scoped to it; the board roster lives in `lib/board-members.ts`. The header reads მთავარი,
   რეიტინგი, სტრუქტურა.
+- **ADR-050 The board roster is filled** (owner, 2026-10-08; photos 2026-10-21): five members
+  in `BOARD_MEMBERS`, bios optional (owner: none for now), photos in `public/board/` as 4:5
+  JPEGs from the owner's studio set, social links as the networks' logos in muted grey (Font
+  Awesome Free 6.5.2 paths, CC BY 4.0, credited in `components/SocialLinks.tsx`).
 - **ADR-027 Mobile:** a sticky bottom tab bar on normal page scroll; tabs chosen per role by
   how often people return; singular tab labels because of the minimum text size.
 - **ADR-022 Selects stay native** under the design-system styling.

@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { BOARD_MEMBERS, boardMemberSchema } from "./board-members";
 
-// Latin placeholders only: real members' Georgian names arrive later via owner-approved edits.
+// Latin placeholders for the schema cases; the real roster is pinned in the BOARD_MEMBERS block.
 const valid = {
   name: "Test Member",
   photo: "/board/test-member.jpg",
@@ -19,6 +19,11 @@ describe("boardMemberSchema", () => {
   it("accepts a complete member, and one with no social links", () => {
     expect(boardMemberSchema.safeParse(valid).success).toBe(true);
     expect(boardMemberSchema.safeParse({ ...valid, socials: [] }).success).toBe(true);
+  });
+
+  it("accepts a member with no bio (owner decision 2026-10-08: bios may come later)", () => {
+    const noBio = { name: valid.name, photo: valid.photo, socials: valid.socials };
+    expect(boardMemberSchema.safeParse(noBio).success).toBe(true);
   });
 
   it("rejects contact fields the owner ruled out (email, phone)", () => {
@@ -62,6 +67,16 @@ describe("boardMemberSchema", () => {
 });
 
 describe("BOARD_MEMBERS", () => {
+  it("holds the five board members the owner sent on 2026-10-08, in their order", () => {
+    expect(BOARD_MEMBERS.map((m) => m.name)).toEqual([
+      "გიორგი თავართქილაძე",
+      "ლევან ნიშნიანიძე",
+      "ნუკრი კაკულია",
+      "დურუ მახარაძე",
+      "გიორგი მჭედლიშვილი",
+    ]);
+  });
+
   it("has unique names (they key the roster cards)", () => {
     const names = BOARD_MEMBERS.map((m) => m.name);
     expect(new Set(names).size).toBe(names.length);

@@ -37,13 +37,17 @@ function MemberCard({ member }: { member: BoardMember }) {
       >
         {member.name}
       </span>
-      <span
-        lang="ka"
-        className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]"
-      >
-        {member.bio}
-      </span>
-      <OriginalLanguageNote />
+      {member.bio ? (
+        <>
+          <span
+            lang="ka"
+            className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]"
+          >
+            {member.bio}
+          </span>
+          <OriginalLanguageNote />
+        </>
+      ) : null}
       <span className="mt-3 block">
         <SocialLinks person={member.name} links={member.socials} />
       </span>
