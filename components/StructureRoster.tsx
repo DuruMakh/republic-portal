@@ -19,9 +19,12 @@ function Placeholder() {
   );
 }
 
+// The name scales with the card (cqi = 1% of its width) so the longest name stays on one line
+// (owner order, 2026-10-22). 7cqi fits ~14 em: the longest name is 12.5 em on Windows but 13.5 em
+// on Linux CI (and Android), so keep the margin. 11px is the design floor.
 function MemberCard({ member }: { member: BoardMember }) {
   return (
-    <li className="min-w-0">
+    <li className="@container min-w-0">
       <span className="relative block aspect-[4/5] overflow-hidden bg-sandstone">
         <Image
           src={member.photo}
@@ -33,17 +36,21 @@ function MemberCard({ member }: { member: BoardMember }) {
       </span>
       <span
         lang="ka"
-        className="mt-2.5 block font-serif text-[16px] font-semibold text-ink sm:mt-4 sm:text-[19px]"
+        className="mt-2.5 block font-serif text-[clamp(11px,7cqi,19px)] font-semibold whitespace-nowrap text-ink sm:mt-4"
       >
         {member.name}
       </span>
-      <span
-        lang="ka"
-        className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]"
-      >
-        {member.bio}
-      </span>
-      <OriginalLanguageNote />
+      {member.bio ? (
+        <>
+          <span
+            lang="ka"
+            className="mt-1 block text-[14px] leading-normal text-secondary sm:text-[15px]"
+          >
+            {member.bio}
+          </span>
+          <OriginalLanguageNote />
+        </>
+      ) : null}
       <span className="mt-3 block">
         <SocialLinks person={member.name} links={member.socials} />
       </span>

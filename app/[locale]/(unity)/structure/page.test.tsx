@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { BOARD_MEMBERS } from "@/lib/board-members";
+import { BOARD_SIZE } from "@/lib/board-rules";
 import { mtavruli } from "@/lib/mtavruli";
 import * as copy from "@/lib/structure-copy";
 import StructurePage from "./page";
 
 describe("/structure", () => {
   // One render: the hero, the flow strip, every approved copy constant, both rule cards, the
-  // general vote with its 1921 aside, the coming-soon roster and the closing band.
+  // general vote with its 1921 aside, the board roster and the closing band.
   it("renders the „ერთობა“ page", () => {
     const { container } = render(<StructurePage />);
 
@@ -33,7 +35,6 @@ describe("/structure", () => {
       copy.VOTE_LEAD,
       copy.VOTE_FOR,
       copy.VOTE_AGAINST,
-      copy.ROSTER_NOTICE,
       copy.DESIGN_ONLY_COPY.rulesHint,
       ...copy.BOARD_DUTIES,
       ...copy.MEMBERS_PATH_STEPS,
@@ -67,8 +68,12 @@ describe("/structure", () => {
       screen.getByRole("img", { name: copy.DESIGN_ONLY_COPY.historyImageAlt }),
     ).toHaveAttribute("src", "/unity/doc-constitution-cover.jpg");
 
-    // The roster is still empty, so it shows five silhouettes, never the design's [placeholders].
-    expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(5);
+    // The roster is filled (owner list, 2026-10-08): one card per member, no silhouettes.
+    const roster = screen.getByRole("list", { name: copy.ROSTER_HEADING });
+    expect(within(roster).getAllByRole("listitem")).toHaveLength(BOARD_MEMBERS.length);
+    expect(BOARD_MEMBERS.length).toBe(BOARD_SIZE);
+    expect(screen.queryByText(copy.ROSTER_NOTICE)).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(0);
     expect(container.textContent).not.toMatch(/\[/);
 
     // Closing band.

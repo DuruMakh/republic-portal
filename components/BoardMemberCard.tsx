@@ -18,10 +18,14 @@ export function BoardMemberCard({ member }: { member: BoardMember }) {
       <h3 lang="ka" className="font-serif text-[1.08rem] leading-snug font-bold text-ink">
         {member.name}
       </h3>
-      <p lang="ka" className="text-[0.86rem] leading-relaxed text-muted-fg">
-        {member.bio}
-      </p>
-      <OriginalLanguageNote />
+      {member.bio ? (
+        <>
+          <p lang="ka" className="text-[0.86rem] leading-relaxed text-muted-fg">
+            {member.bio}
+          </p>
+          <OriginalLanguageNote />
+        </>
+      ) : null}
       <SocialLinks person={member.name} links={member.socials} />
     </article>
   );

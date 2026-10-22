@@ -46,4 +46,19 @@ describe("BoardRoster", () => {
     expect(screen.queryByText("მალე")).not.toBeInTheDocument();
     expect(container.querySelectorAll('[data-placeholder="true"]')).toHaveLength(0);
   });
+
+  it("a member without a bio gets a card with no empty bio line", () => {
+    const noBio = { name: member.name, photo: member.photo, socials: member.socials };
+    render(
+      <BoardRoster
+        members={[noBio]}
+        heading="ბორდის შემადგენლობა"
+        notice="მალე"
+        placeholders={5}
+      />,
+    );
+    const card = screen.getByRole("article");
+    expect(screen.getByRole("heading", { level: 3, name: "Test Member" })).toBeInTheDocument();
+    expect(card.querySelector("p")).toBeNull();
+  });
 });

@@ -312,7 +312,7 @@ test.describe("transparency", () => {
 });
 
 test.describe("structure page", () => {
-  test("the header link opens it; sections, rules, roster notice and anchors work", async ({
+  test("the header link opens it; sections, rules, roster cards and anchors work", async ({
     page,
   }) => {
     await page.goto("/");
@@ -330,7 +330,20 @@ test.describe("structure page", () => {
     await expect(page.getByRole("group", { name: "5-დან 3 ხმა" })).toBeVisible();
     await twoThirds.getByRole("button", { name: "ბორდის წევრი 4" }).click();
     await expect(page.getByText("გადაწყვეტილება არ მიიღება")).toBeVisible();
-    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toBeVisible();
+    // The roster is filled (owner list, 2026-10-08): five cards, photos loaded, no notice.
+    const roster = page.getByRole("region", { name: "ბორდის შემადგენლობა" });
+    await expect(roster.getByRole("listitem")).toHaveCount(5);
+    const photo = roster.getByRole("img", { name: "დურუ მახარაძე" });
+    await photo.scrollIntoViewIfNeeded();
+    await expect(photo).toHaveJSProperty("complete", true);
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+    await expect(roster.getByRole("link", { name: "LinkedIn: დურუ მახარაძე" })).toHaveAttribute(
+      "href",
+      "https://www.linkedin.com/in/duru-makharadze-2b35a4205/",
+    );
+    await expect(page.getByText("ბორდის შემადგენლობა მალე გამოქვეყნდება")).toHaveCount(0);
 
     await page
       .getByRole("navigation", { name: "ორგანიზაციული სტრუქტურა" })
@@ -341,6 +354,33 @@ test.describe("structure page", () => {
       page.getByRole("heading", { level: 2, name: "საერთო კენჭისყრა", exact: true }),
     ).toBeInViewport();
   });
+
+  // Owner order (2026-10-22): every board member's name fits on one line, phone to desktop.
+  for (const width of [1440, 1280, 1024, 768, 414, 375, 360]) {
+    test(`each roster name stays on one line at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/structure");
+      await page.evaluate(() => document.fonts.ready);
+      const names = page
+        .getByRole("region", { name: "ბორდის შემადგენლობა" })
+        .locator("li > [lang=ka]");
+      await expect(names).toHaveCount(5);
+      for (const name of await names.all()) {
+        const fit = await name.evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const card = el.parentElement!.getBoundingClientRect();
+          const text = range.getBoundingClientRect();
+          return { lines: range.getClientRects().length, overflow: text.right - card.right };
+        });
+        expect(fit.lines, `${await name.textContent()} at ${width}px`).toBe(1);
+        expect(
+          fit.overflow,
+          `${await name.textContent()} spills out of its card`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+    });
+  }
 
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 360, height: 780 } });
