@@ -12,9 +12,7 @@ describe("foreign phone numbers migration", () => {
   });
 
   it("knows the twilio provider", () => {
-    expect(orderedMigrationSql()).toContain(
-      "check (provider in ('verify_ge', 'twilio', 'test'))",
-    );
+    expect(orderedMigrationSql()).toContain("check (provider in ('verify_ge', 'twilio', 'test'))");
     expect(latestDefinition("complete_phone_verification_send")).toContain(
       "p_provider not in ('verify_ge', 'twilio', 'test')",
     );
