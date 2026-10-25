@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import type { createAdminClient } from "@/lib/supabase/admin";
+import type { PhoneVerificationProviderName } from "./contracts";
 import { timestampMicros } from "./timestamps";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -11,7 +12,7 @@ export interface ChallengeRow {
   user_id: string;
   phone: string;
   purpose: "registration";
-  provider: "verify_ge" | "test";
+  provider: PhoneVerificationProviderName;
   provider_request_id: string;
   verify_attempts: number;
   expires_at: string;
@@ -81,7 +82,7 @@ export async function completePhoneVerificationSend(
   input: {
     reservationId: string;
     userId: string;
-    provider: "verify_ge" | "test";
+    provider: PhoneVerificationProviderName;
     providerRequestId: string;
     expiresAt: string;
   },

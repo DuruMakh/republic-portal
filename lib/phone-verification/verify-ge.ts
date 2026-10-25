@@ -3,9 +3,9 @@ import "server-only";
 import {
   PHONE_VERIFICATION_CODE_LENGTH,
   PHONE_VERIFICATION_TTL_SECONDS,
-  type PhoneVerificationFailureCode,
   type PhoneVerificationProvider,
 } from "./contracts";
+import { PhoneVerificationProviderError } from "./errors";
 
 const VERIFY_GE_BASE_URL = "https://otp-service-production-ge.up.railway.app/api/v1";
 
@@ -21,13 +21,6 @@ type VerifyGeResponse = {
   data?: unknown;
   error?: unknown;
 };
-
-export class PhoneVerificationProviderError extends Error {
-  constructor(readonly code: PhoneVerificationFailureCode) {
-    super(code);
-    this.name = "PhoneVerificationProviderError";
-  }
-}
 
 function asObject(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;

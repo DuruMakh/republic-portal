@@ -368,8 +368,10 @@ export const accountMessages: Record<string, string> = {
   "არასწორი დელეგატი": "Invalid delegate",
   "თარიღი უნდა იყოს წარსულში.": "The date must be in the past.",
   "გასაგრძელებლად მონიშნე თანხმობა.": "Select the consent box to continue.",
-  "შეიყვანე ქართული მობილურის ნომერი (5XX XX XX XX).":
-    "Enter a Georgian mobile number (5XX XX XX XX).",
+  "შეიყვანე სწორი მობილურის ნომერი. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …":
+    "Enter a valid mobile number. For a number from abroad, include the country code, e.g. +49 …",
+  "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით.":
+    "We can't send codes to numbers from this country yet.",
   "ძალიან ბევრი კოდი მოითხოვე — სცადე ცოტა ხანში.":
     "You have requested too many codes. Please try again later.",
   "კოდი არასწორია.": "Incorrect code.",
