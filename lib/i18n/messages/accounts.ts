@@ -237,8 +237,8 @@ export const accountMessages: Record<string, string> = {
   "მაგ. ნინო": "e.g. Nino",
   "მაგ. ბერიძე": "e.g. Beridze",
   "ნომერი დადასტურებულია": "Phone number verified",
-  "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად.":
-    "Verify.ge will receive your number only to send and verify the one-time registration code.",
+  "SMS სერვისი ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …":
+    "The SMS service will receive your number only to send and verify the one-time registration code. Enter a number from abroad with its country code, e.g. +49 …",
   დარეგისტრირება: "Register",
   "წევრის რეგისტრაცია": "Member registration",
   "მხოლოდ ძირითადი მონაცემები — დანარჩენს კაბინეტში ნახავ.":

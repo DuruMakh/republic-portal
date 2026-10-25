@@ -219,7 +219,7 @@ export function GoogleJoinForm() {
       if (!result.ok) {
         if (result.code === "not_authenticated" || result.code === "google_required") {
           returnToGoogle(result.message);
-        } else if (result.code === "invalid_phone") {
+        } else if (result.code === "invalid_phone" || result.code === "country_not_supported") {
           setErrors({ phone: result.message });
         } else if (result.code === "privacy_consent_required") {
           setErrors({ privacyConsent: result.message });
@@ -423,7 +423,7 @@ export function GoogleJoinForm() {
               {phase === "retry"
                 ? t("ნომერი დადასტურებულია")
                 : t(
-                    "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად.",
+                    "SMS სერვისი ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …",
                   )}
             </p>
           </div>
