@@ -22,6 +22,7 @@ describe("createPhoneVerificationProvider", () => {
     const environment = {
       PHONE_VERIFICATION_PROVIDER: "test",
       NEXT_PUBLIC_APP_ENV: "preview",
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
     };
 
     expect(createPhoneVerificationProvider(environment)).toBe(provider);
@@ -49,6 +50,28 @@ describe("createPhoneVerificationProvider", () => {
       }),
     ).toThrow("test phone verification provider is forbidden in production");
     expect(createTestPhoneVerificationProviderMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [undefined, "http://127.0.0.1:54321", undefined],
+    ["Development", "http://127.0.0.1:54321", undefined],
+    ["development", "http://127.0.0.1:54321", "production"],
+    ["development", "https://uorvlshbrlbdnbauxsws.supabase.co", undefined],
+    ["development", "https://unknown.supabase.co", undefined],
+    ["development", undefined, undefined],
+  ])("refuses an unsafe injected environment (%s, %s, %s)", (appEnv, url, vercelEnv) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    expect(() =>
+      createPhoneVerificationProvider({
+        PHONE_VERIFICATION_PROVIDER: "test",
+        NEXT_PUBLIC_APP_ENV: appEnv,
+        NEXT_PUBLIC_SUPABASE_URL: url,
+        VERCEL_ENV: vercelEnv,
+      }),
+    ).toThrow(/forbidden/);
+    expect(createTestPhoneVerificationProviderMock).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
   });
 
   it.each([undefined, "other"])("rejects an unsupported provider value of %s", (value) => {

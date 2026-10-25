@@ -39,9 +39,21 @@ export function isTestDatabaseUrl(url: string | undefined): boolean {
  * production site is built with APP_ENV=preview on staging (ADR-047). The other two are
  * allow-lists, so an unset or mistyped flag keeps it off.
  */
-export function testSignInEnabled(): boolean {
-  if (process.env.VERCEL_ENV === "production") return false;
-  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
+export type TestSignInEnvironment = {
+  NEXT_PUBLIC_APP_ENV?: string;
+  NEXT_PUBLIC_SUPABASE_URL?: string;
+  VERCEL_ENV?: string;
+};
+
+export function testSignInEnabled(
+  environment: TestSignInEnvironment = {
+    NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+  },
+): boolean {
+  if (environment.VERCEL_ENV === "production") return false;
+  const appEnv = environment.NEXT_PUBLIC_APP_ENV;
   if (appEnv !== "preview" && appEnv !== "development") return false;
-  return isTestDatabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  return isTestDatabaseUrl(environment.NEXT_PUBLIC_SUPABASE_URL);
 }

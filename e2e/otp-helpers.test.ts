@@ -100,7 +100,7 @@ function fakeStaging(opts: {
 const FIXTURE_PASSWORD = /^E2e-[0-9a-f]{32}!Aa1$/;
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
   vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
@@ -309,7 +309,7 @@ describe("installSupabaseSession", () => {
     await installSupabaseSession(page, session);
 
     expect(createServerClient).toHaveBeenCalledWith(
-      "https://staging.example.supabase.co",
+      "http://127.0.0.1:54321",
       "anon-key",
       expect.objectContaining({
         cookies: expect.objectContaining({
@@ -362,7 +362,9 @@ describe("installSupabaseSession", () => {
       vi.stubEnv(name, "");
       const { page, addCookies } = fakePage();
 
-      await expect(installSupabaseSession(page, session)).rejects.toThrow(/public Supabase/i);
+      await expect(installSupabaseSession(page, session)).rejects.toThrow(
+        /public Supabase|test database/i,
+      );
 
       expect(createServerClient).not.toHaveBeenCalled();
       expect(addCookies).not.toHaveBeenCalled();
@@ -371,6 +373,17 @@ describe("installSupabaseSession", () => {
 });
 
 describe("service-role fixture boundary", () => {
+  test.each([
+    undefined,
+    "https://uorvlshbrlbdnbauxsws.supabase.co",
+    "https://unknown.supabase.co",
+    "http://localhost:9999",
+  ])("refuses destination %s before fixture login or service access", async (url) => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", url);
+    expect(() => serviceClient()).toThrow(/test database/i);
+    await expect(loginAs({} as Page, "550001239")).rejects.toThrow(/test database/i);
+    expect(createClient).not.toHaveBeenCalled();
+  });
   test.each([undefined, "test", "staging", "production", "Preview"])(
     "rejects before creating a service client when NEXT_PUBLIC_APP_ENV is %s",
     (appEnv) => {

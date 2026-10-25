@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { testSignInEnabled } from "@/lib/env";
 
 /** How long a dev code stays servable — and the cutoff the inbox is pruned at. */
 const CODE_TTL_MS = 60 * 60 * 1000;
@@ -8,8 +9,7 @@ const POLL_ATTEMPTS = 10;
 const POLL_INTERVAL_MS = 500;
 
 export async function GET(request: NextRequest) {
-  const env = process.env.NEXT_PUBLIC_APP_ENV;
-  if (!(env === "development" || env === "preview")) {
+  if (!testSignInEnabled()) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
   const phone = request.nextUrl.searchParams.get("phone");

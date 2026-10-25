@@ -1,10 +1,11 @@
 import "server-only";
+import { testSignInEnabled, type TestSignInEnvironment } from "../env";
 
 import type { PhoneVerificationProvider } from "./contracts";
 import { createTestPhoneVerificationProvider } from "./test-provider";
 import { createVerifyGeProvider } from "./verify-ge";
 
-type PhoneVerificationEnvironment = {
+type PhoneVerificationEnvironment = TestSignInEnvironment & {
   PHONE_VERIFICATION_PROVIDER?: string;
   NEXT_PUBLIC_APP_ENV?: string;
   VERIFY_GE_API_KEY?: string;
@@ -16,6 +17,8 @@ export function createPhoneVerificationProvider(
   const configured = environment ?? {
     PHONE_VERIFICATION_PROVIDER: process.env.PHONE_VERIFICATION_PROVIDER,
     NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
     VERIFY_GE_API_KEY: process.env.VERIFY_GE_API_KEY,
   };
 
@@ -24,7 +27,7 @@ export function createPhoneVerificationProvider(
   }
 
   if (configured.PHONE_VERIFICATION_PROVIDER === "test") {
-    if (configured.NEXT_PUBLIC_APP_ENV === "production") {
+    if (!testSignInEnabled(configured)) {
       throw new Error("test phone verification provider is forbidden in production");
     }
 

@@ -50,7 +50,7 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   most fluent in. **ADR-002:** PWA first; store apps only if presence ever matters.
 - **ADR-007 Current stable majors** ("floors, not pins"): Next 16 (Turbopack, `proxy.ts`
   instead of `middleware.ts`), TypeScript 6. ESLint stays on 9 until eslint-config-next
-  supports 10. Next is at 16.3.8 since the October security release (ADR-045).
+  supports 10. Next is at 16.4.1 after the October Server Actions security patch (ADR-045).
 - **ADR-008 Hand-built service worker:** `app/sw.ts` bundled by `scripts/build-sw.mjs`
   (esbuild, postbuild), because @serwist/next does not support Turbopack. Inert in dev.
 - **ADR-012 Typed Supabase clients:** the ssr factories are typed through

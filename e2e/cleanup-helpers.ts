@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { isTestDatabaseUrl } from "../lib/env";
 
 /** Remediation for leftover users — the sweep script is the standing tool. */
 export const SWEEP_HINT =
@@ -10,6 +11,9 @@ export function assertE2eFixtureEnvironment(): void {
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
   if (appEnv !== "development" && appEnv !== "preview") {
     throw new Error("e2e fixtures are allowed only in development or preview");
+  }
+  if (!isTestDatabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL)) {
+    throw new Error("e2e fixtures require an approved test database URL");
   }
 }
 

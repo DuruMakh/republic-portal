@@ -150,14 +150,14 @@ function freshnessBound(chain: ChainCall[]): number | null {
 }
 
 function useEnabledEnv(): void {
-  const originalAppEnv = process.env.NEXT_PUBLIC_APP_ENV;
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_APP_ENV = "preview"; // endpoint enabled in dev/preview only
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    vi.stubEnv("VERCEL_ENV", "");
     createAdminClientMock.mockReset();
   });
   afterEach(() => {
-    if (originalAppEnv === undefined) delete process.env.NEXT_PUBLIC_APP_ENV;
-    else process.env.NEXT_PUBLIC_APP_ENV = originalAppEnv;
+    vi.unstubAllEnvs();
   });
 }
 
@@ -213,9 +213,22 @@ describe("GET /api/dev/otp — closed outside development/preview", () => {
     vi.unstubAllEnvs();
   });
 
-  // The route reads ONLY the flag (never the database URL), and the contract is an
-  // EXACT match on "development" / "preview": a differently-cased or padded value
-  // is not an alias, it is a closed gate.
+  it.each([
+    ["http://127.0.0.1:54321", "production"],
+    ["https://uorvlshbrlbdnbauxsws.supabase.co", ""],
+    ["https://unknown.supabase.co", ""],
+    ["http://127.0.0.1:9999", ""],
+    [undefined, ""],
+  ])("refuses unsafe destination %s on %s before privileged access", async (url, vercelEnv) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", url);
+    vi.stubEnv("VERCEL_ENV", vercelEnv);
+    createAdminClientMock.mockReturnValue(makeAdmin({ profile: noProfile, otp: freshOtp }));
+    const res = await GET(makeRequest("+995555000020"));
+    expect(res.status).toBe(404);
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+  });
+
   it.each([
     { label: "production", appEnv: "production" },
     { label: "staging", appEnv: "staging" },
