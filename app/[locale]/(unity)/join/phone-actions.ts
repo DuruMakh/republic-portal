@@ -133,7 +133,9 @@ export async function sendPhoneVerificationAction(
     return { ok: true, challengeId: completed.id, phone, expiresAt: completed.expiresAt };
   } catch (caught) {
     const code = providerFailure(caught);
-    return failure(code === "too_many_requests" ? code : "service_unavailable");
+    // refusals the user can act on pass through; anything else stays a redacted outage
+    const actionable = ["too_many_requests", "invalid_phone", "country_not_supported"];
+    return failure(actionable.includes(code) ? code : "service_unavailable");
   }
 }
 

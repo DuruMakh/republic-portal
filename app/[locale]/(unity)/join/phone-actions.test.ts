@@ -247,8 +247,8 @@ describe("phone verification server actions", () => {
       code: "phone_in_use",
       message: PHONE_VERIFICATION_MESSAGES.phone_in_use,
     });
+    expect(mocks.reserveAttempt).not.toHaveBeenCalled();
     expect(mocks.verify).not.toHaveBeenCalled();
-    expect(mocks.consume).not.toHaveBeenCalled();
     expect(mocks.consume).not.toHaveBeenCalled();
     expect(mocks.updateUserById).not.toHaveBeenCalled();
   });
@@ -409,4 +409,15 @@ describe("phone verification server actions", () => {
     expect(mocks.verify).not.toHaveBeenCalled();
     expect(mocks.consume).not.toHaveBeenCalled();
   });
+
+  it.each(["invalid_phone", "country_not_supported", "too_many_requests"] as const)(
+    "tells the user a provider refusal of %s as it is, not as an outage",
+    async (code) => {
+      authenticate();
+      mocks.send.mockRejectedValue(new PhoneVerificationProviderError(code));
+      await expect(
+        sendPhoneVerificationAction({ phone: "+31 6 54798014", privacyConsent: true }),
+      ).resolves.toEqual({ ok: false, code, message: PHONE_VERIFICATION_MESSAGES[code] });
+    },
+  );
 });

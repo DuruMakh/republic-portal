@@ -40,11 +40,11 @@ afterEach(() => {
 describe("Twilio Verify provider", () => {
   it("sends an SMS verification with Basic auth and returns the verification SID", async () => {
     const { fetcher, provider } = setup();
-    fetcher.mockResolvedValue(jsonResponse({ sid: "VE1", status: "pending" }, 201));
+    fetcher.mockImplementation(async () => jsonResponse({ sid: "VE1", status: "pending" }, 201));
 
     await expect(send(provider)).resolves.toEqual({ provider: "twilio", requestId: "VE1" });
 
-    const [url, init] = fetcher.mock.calls[0]!;
+    const [url, init] = fetcher.mock.calls.at(-1)!;
     expect(url).toBe("https://verify.twilio.com/v2/Services/VA1/Verifications");
     expect(init?.method).toBe("POST");
     const headers = new Headers(init?.headers);
@@ -62,6 +62,7 @@ describe("Twilio Verify provider", () => {
     [60200, 400, "invalid_phone"],
     [21211, 400, "invalid_phone"],
     [21614, 400, "invalid_phone"],
+    [60205, 400, "invalid_phone"],
     [60605, 403, "country_not_supported"],
     [60410, 403, "country_not_supported"],
     [60203, 429, "too_many_requests"],
@@ -70,18 +71,18 @@ describe("Twilio Verify provider", () => {
   ])("maps send error %i to %s", async (code, status, expected) => {
     const { fetcher, provider } = setup();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    fetcher.mockResolvedValue(jsonResponse({ code, status, message: "x" }, status));
+    fetcher.mockImplementation(async () => jsonResponse({ code, status, message: "x" }, status));
     await expect(captureError(() => send(provider))).resolves.toBe(expected);
   });
 
   it("treats a bare 429, a non-JSON body and a network failure as the right failure", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const limited = setup();
-    limited.fetcher.mockResolvedValue(new Response("slow down", { status: 429 }));
+    limited.fetcher.mockImplementation(async () => new Response("slow down", { status: 429 }));
     await expect(captureError(() => send(limited.provider))).resolves.toBe("too_many_requests");
 
     const garbled = setup();
-    garbled.fetcher.mockResolvedValue(new Response("<html>", { status: 502 }));
+    garbled.fetcher.mockImplementation(async () => new Response("<html>", { status: 502 }));
     await expect(captureError(() => send(garbled.provider))).resolves.toBe("service_unavailable");
 
     const offline = setup();
@@ -91,7 +92,7 @@ describe("Twilio Verify provider", () => {
 
   it("checks a code against the verification SID", async () => {
     const { fetcher, provider } = setup();
-    fetcher.mockResolvedValue(jsonResponse({ sid: "VE1", status: "approved" }));
+    fetcher.mockImplementation(async () => jsonResponse({ sid: "VE1", status: "approved" }));
 
     await expect(provider.verify({ requestId: "VE1", code: "123456" })).resolves.toEqual({
       verified: true,
@@ -106,7 +107,7 @@ describe("Twilio Verify provider", () => {
 
   it("reports a wrong code as not verified", async () => {
     const { fetcher, provider } = setup();
-    fetcher.mockResolvedValue(jsonResponse({ sid: "VE1", status: "pending" }));
+    fetcher.mockImplementation(async () => jsonResponse({ sid: "VE1", status: "pending" }));
     await expect(provider.verify({ requestId: "VE1", code: "000000" })).resolves.toEqual({
       verified: false,
     });
@@ -119,7 +120,7 @@ describe("Twilio Verify provider", () => {
   ])("maps verify error %i to %s", async (code, status, expected) => {
     const { fetcher, provider } = setup();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    fetcher.mockResolvedValue(jsonResponse({ code, status, message: "x" }, status));
+    fetcher.mockImplementation(async () => jsonResponse({ code, status, message: "x" }, status));
     await expect(
       captureError(() => provider.verify({ requestId: "VE1", code: "123456" })),
     ).resolves.toBe(expected);
@@ -128,12 +129,12 @@ describe("Twilio Verify provider", () => {
   it("never logs the phone number or the code", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const sendFail = setup();
-    sendFail.fetcher.mockResolvedValue(
+    sendFail.fetcher.mockImplementation(async () =>
       jsonResponse({ code: 20003, status: 401, message: `bad ${phone}` }, 401),
     );
     await captureError(() => send(sendFail.provider));
     const verifyFail = setup();
-    verifyFail.fetcher.mockResolvedValue(
+    verifyFail.fetcher.mockImplementation(async () =>
       jsonResponse({ code: 20003, status: 401, message: "bad 123456" }, 401),
     );
     await captureError(() => verifyFail.provider.verify({ requestId: "VE1", code: "123456" }));
@@ -144,5 +145,41 @@ describe("Twilio Verify provider", () => {
     expect(written).not.toContain("123456");
     expect(written).toContain("twilio_send_failed");
     expect(written).toContain("twilio_verification_failed");
+  });
+
+  it("cancels a still-pending verification for the number first, so a resend gets a new code", async () => {
+    const { fetcher, provider } = setup();
+    fetcher
+      .mockResolvedValueOnce(jsonResponse({ sid: "VE0", status: "canceled" }))
+      .mockResolvedValueOnce(jsonResponse({ sid: "VE2", status: "pending" }, 201));
+
+    await expect(send(provider)).resolves.toEqual({ provider: "twilio", requestId: "VE2" });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const [cancelUrl, cancelInit] = fetcher.mock.calls[0]!;
+    expect(cancelUrl).toBe(
+      "https://verify.twilio.com/v2/Services/VA1/Verifications/%2B31654798014",
+    );
+    expect(cancelInit?.method).toBe("POST");
+    expect(Object.fromEntries(new URLSearchParams(String(cancelInit?.body)))).toEqual({
+      Status: "canceled",
+    });
+    expect(fetcher.mock.calls[1]![0]).toBe(
+      "https://verify.twilio.com/v2/Services/VA1/Verifications",
+    );
+  });
+
+  it("sends anyway when there is nothing to cancel or the cancel fails", async () => {
+    const none = setup();
+    none.fetcher
+      .mockResolvedValueOnce(jsonResponse({ code: 20404, status: 404 }, 404))
+      .mockResolvedValueOnce(jsonResponse({ sid: "VE3", status: "pending" }, 201));
+    await expect(send(none.provider)).resolves.toEqual({ provider: "twilio", requestId: "VE3" });
+
+    const offline = setup();
+    offline.fetcher
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(jsonResponse({ sid: "VE4", status: "pending" }, 201));
+    await expect(send(offline.provider)).resolves.toEqual({ provider: "twilio", requestId: "VE4" });
   });
 });

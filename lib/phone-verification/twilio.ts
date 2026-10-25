@@ -16,6 +16,7 @@ const SEND_ERRORS: Record<number, PhoneVerificationFailureCode> = {
   60200: "invalid_phone",
   21211: "invalid_phone",
   21614: "invalid_phone",
+  60205: "invalid_phone", // a landline: SMS is not supported
   60605: "country_not_supported",
   60410: "country_not_supported",
   60203: "too_many_requests",
@@ -94,6 +95,10 @@ export function createTwilioProvider(
 
   return {
     async send(input) {
+      // Twilio keeps one verification per number for 10 minutes and a repeat request resends
+      // that same code under the same SID, which our challenge ledger cannot accept. Ending any
+      // pending one first gives every send a new SID and code. Nothing to cancel is fine.
+      await post(`Verifications/${encodeURIComponent(input.phone)}`, { Status: "canceled" });
       const reply = await post("Verifications", { To: input.phone, Channel: "sms" });
       const sid = reply?.body?.sid;
       if (reply && reply.status < 300 && typeof sid === "string" && sid.length > 0) {
