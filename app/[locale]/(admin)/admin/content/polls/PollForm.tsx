@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
@@ -19,7 +19,13 @@ interface OptionRow {
   value: string;
 }
 
-export function PollForm({ poll }: { poll: EditablePoll | null }) {
+export function PollForm({
+  poll,
+  onEditStateChange,
+}: {
+  poll: EditablePoll | null;
+  onEditStateChange?: (dirty: boolean, saving: boolean) => void;
+}) {
   const router = useRouter();
   const [question, setQuestion] = useState(poll?.question ?? "");
   const initialOptions = poll?.options ?? ["", ""];
@@ -32,6 +38,13 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const snapshot = JSON.stringify([question.trim(), options.map((o) => o.value.trim()), endsAt]);
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
+  const dirty = snapshot !== savedSnapshot;
+  useEffect(() => {
+    onEditStateChange?.(dirty, pending);
+  }, [dirty, pending, onEditStateChange]);
+
   function setOption(key: number, value: string) {
     setOptions((prev) => prev.map((o) => (o.key === key ? { ...o, value } : o)));
   }
@@ -39,6 +52,7 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
   function submit() {
     setError(null);
     setSaved(false);
+    const submittedSnapshot = snapshot;
     startTransition(async () => {
       const result = await savePollAction({
         id: poll?.id,
@@ -54,6 +68,7 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
         router.push(`/admin/content/polls/${result.id}`);
         return;
       }
+      setSavedSnapshot(submittedSnapshot);
       setSaved(true);
       router.refresh();
     });
@@ -128,7 +143,9 @@ export function PollForm({ poll }: { poll: EditablePoll | null }) {
         <Button disabled={pending} onClick={submit}>
           შენახვა
         </Button>
-        {saved ? <span className="text-sm font-semibold text-ok">შენახულია.</span> : null}
+        {saved && !dirty && !pending ? (
+          <span className="text-sm font-semibold text-ok">შენახულია.</span>
+        ) : null}
       </div>
       {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>

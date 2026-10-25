@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { closePollAction, deletePollAction, openPollAction } from "./actions";
 
-export function PollActions({ id, status }: { id: string; status: "draft" | "open" | "closed" }) {
+export function PollActions({
+  id,
+  status,
+  openBlocked = false,
+}: {
+  id: string;
+  status: "draft" | "open" | "closed";
+  openBlocked?: boolean;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [armed, setArmed] = useState<"close" | "delete" | null>(null);
@@ -33,7 +41,7 @@ export function PollActions({ id, status }: { id: string; status: "draft" | "ope
       <div className="flex flex-wrap items-center gap-3">
         {status === "draft" ? (
           <>
-            <Button disabled={pending} onClick={() => run((i) => openPollAction(i))}>
+            <Button disabled={pending || openBlocked} onClick={() => run((i) => openPollAction(i))}>
               გახსნა
             </Button>
             {armed === "delete" ? (
@@ -75,6 +83,9 @@ export function PollActions({ id, status }: { id: string; status: "draft" | "ope
           <p className="text-sm font-semibold text-muted-fg">გამოკითხვა დახურულია.</p>
         ) : null}
       </div>
+      {status === "draft" && openBlocked ? (
+        <p className="text-sm text-muted-fg">ჯერ შეინახე ცვლილებები.</p>
+      ) : null}
       {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>
   );

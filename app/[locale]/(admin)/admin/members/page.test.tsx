@@ -131,3 +131,48 @@ describe("members list — the deletion notice (?deleted=1)", () => {
     expect(previous.getAttribute("href")).not.toContain("deleted");
   });
 });
+
+describe("member category and stable ordering", () => {
+  it.each([
+    ["profile_completed", ["Completed", "Active"]],
+    ["active_member", ["Active"]],
+    ["registered", ["Supporter"]],
+  ])("%s returns the intended category with shared filters", async (status, names) => {
+    server.getAdminRoles.mockResolvedValue(["finance"]);
+    const s = fakeSession({
+      from: (table, chain) => {
+        if (table === "cities") return ok([{ id: 2, region_id: 1, name_ka: "City" }]);
+        if (table !== "admin_members") return ok([]);
+        let data = [
+          { ...MEMBER, id: "1", first_name: "Completed", status: "profile_completed" },
+          { ...MEMBER, id: "2", first_name: "Active", status: "active_member" },
+          { ...MEMBER, id: "3", first_name: "Supporter", status: "registered" },
+        ];
+        for (const step of chain) {
+          if (step.args[0] !== "status") continue;
+          if (step.method === "eq") data = data.filter((m) => m.status === step.args[1]);
+          if (step.method === "in")
+            data = data.filter((m) => (step.args[1] as string[]).includes(m.status));
+        }
+        return { ...ok(data), count: data.length };
+      },
+    });
+    server.createServerSupabase.mockResolvedValue(s.client);
+    render(
+      await AdminMembersPage({
+        searchParams: Promise.resolve({ status, regionId: "1", cityId: "2", search: "Beridze" }),
+      }),
+    );
+    for (const name of ["Completed", "Active", "Supporter"]) {
+      expect(screen.queryByText(new RegExp(name)) !== null).toBe(names.includes(name));
+    }
+    const query = s.tableCalls().find((c) => c.name === "admin_members")!;
+    expect(query.chain).toContainEqual({ method: "eq", args: ["region_id", 1] });
+    expect(query.chain).toContainEqual({ method: "eq", args: ["city_id", 2] });
+    expect(query.chain.find((c) => c.method === "or")?.args[0]).toContain("Beridze");
+    expect(query.chain.filter((c) => c.method === "order")).toEqual([
+      { method: "order", args: ["created_at", { ascending: false }] },
+      { method: "order", args: ["id", { ascending: false }] },
+    ]);
+  });
+});

@@ -85,13 +85,18 @@ export default async function AdminMembersPage({
   }
   if (filter.regionId) query = query.eq("region_id", filter.regionId);
   if (effectiveCityId) query = query.eq("city_id", effectiveCityId);
-  if (filter.status) query = query.eq("status", filter.status);
+  if (filter.status === "profile_completed") {
+    query = query.in("status", ["profile_completed", "active_member"]);
+  } else if (filter.status) query = query.eq("status", filter.status);
   const from = (filter.page - 1) * PAGE_SIZE;
   const {
     data: members,
     count,
     error,
-  } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+  } = await query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, from + PAGE_SIZE - 1);
   if (error) throw new Error(`admin_members failed: ${error.message}`);
 
   const total = count ?? 0;
@@ -162,8 +167,7 @@ export default async function AdminMembersPage({
             სტატუსი
             <Select variant="admin" name="status" defaultValue={filter.status ?? ""}>
               <option value="">ყველა სტატუსი</option>
-              {/* No active_member option: it reads „წევრი" too now (ADR-037), and the audited
-                  export filters on one status value, so the two cannot share one option. */}
+              {/* The Member category includes completed and active members (ADR-037). */}
               <option value="profile_completed">{MEMBER_STATUS_LABELS_KA.profile_completed}</option>
               <option value="registered">{MEMBER_STATUS_LABELS_KA.registered}</option>
             </Select>

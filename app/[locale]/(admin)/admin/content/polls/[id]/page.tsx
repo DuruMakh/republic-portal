@@ -8,7 +8,7 @@ import { formatCountKa } from "@/lib/format";
 import { formatEventTimeKa, isoToTbilisiLocal, leadingOptions, percentages } from "@/lib/community";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { PollActions } from "../PollActions";
-import { PollForm } from "../PollForm";
+import { PollDraftEditor } from "../PollDraftEditor";
 
 export const metadata: Metadata = { title: "გამოკითხვა — ქართული რესპუბლიკა" };
 
@@ -20,6 +20,8 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
     supabase.from("admin_poll_options").select("*").eq("poll_id", id).order("position"),
   ]);
   if (pollRes.error) throw new Error(`admin_polls by id failed: ${pollRes.error.message}`);
+  if (optionsRes.error)
+    throw new Error(`admin_poll_options by id failed: ${optionsRes.error.message}`);
   if (!pollRes.data) notFound();
   const poll = pollRes.data;
   const options = optionsRes.data ?? [];
@@ -46,18 +48,18 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Card>
-          {poll.status === "draft" ? (
-            <PollForm
-              poll={{
-                id: poll.id,
-                question: poll.question,
-                options: options.map((o) => o.label),
-                endsAtLocal: poll.ends_at ? isoToTbilisiLocal(poll.ends_at) : "",
-              }}
-            />
-          ) : (
+      {poll.status === "draft" ? (
+        <PollDraftEditor
+          poll={{
+            id: poll.id,
+            question: poll.question,
+            options: options.map((o) => o.label),
+            endsAtLocal: poll.ends_at ? isoToTbilisiLocal(poll.ends_at) : "",
+          }}
+        />
+      ) : (
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+          <Card>
             <div>
               <h2 className="text-lg font-bold text-ink">{poll.question}</h2>
               <div className="mt-4 flex flex-col gap-3.5">
@@ -79,14 +81,14 @@ export default async function EditPollPage({ params }: { params: Promise<{ id: s
                 ))}
               </div>
             </div>
-          )}
-        </Card>
+          </Card>
 
-        <Card>
-          <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
-          <PollActions id={poll.id} status={poll.status} />
-        </Card>
-      </div>
+          <Card>
+            <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
+            <PollActions id={poll.id} status={poll.status} />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

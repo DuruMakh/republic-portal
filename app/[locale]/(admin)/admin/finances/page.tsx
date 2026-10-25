@@ -60,6 +60,7 @@ export default async function AdminFinancesPage({
     .from("admin_payments")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .range(txFrom, txFrom + TX_PAGE_SIZE - 1);
   if (txError) throw new Error(`admin_payments failed: ${txError.message}`);
 

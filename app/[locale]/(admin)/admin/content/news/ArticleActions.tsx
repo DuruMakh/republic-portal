@@ -9,10 +9,12 @@ export function ArticleActions({
   id,
   status,
   everPublished,
+  publishBlocked = false,
 }: {
   id: string;
   status: "draft" | "published";
   everPublished: boolean;
+  publishBlocked?: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,10 @@ export function ArticleActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-3">
         {status === "draft" ? (
-          <Button disabled={pending} onClick={() => run((i) => publishNewsAction(i))}>
+          <Button
+            disabled={pending || publishBlocked}
+            onClick={() => run((i) => publishNewsAction(i))}
+          >
             გამოქვეყნება
           </Button>
         ) : (
@@ -72,6 +77,9 @@ export function ArticleActions({
           )
         ) : null}
       </div>
+      {status === "draft" && publishBlocked ? (
+        <p className="text-sm text-muted-fg">ჯერ შეინახე ცვლილებები.</p>
+      ) : null}
       {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>
   );
