@@ -5,6 +5,8 @@ import { PhoneVerificationProviderError } from "./errors";
 
 // Twilio Verify v2 over plain fetch (ADR-055): SMS codes for foreign numbers only.
 const TWILIO_VERIFY_BASE_URL = "https://verify.twilio.com/v2/Services";
+// A hung call must not hold the registration screen; the user can simply try again.
+const TWILIO_TIMEOUT_MS = 10_000;
 
 export interface TwilioConfig {
   apiKeySid: string;
@@ -86,6 +88,7 @@ export function createTwilioProvider(
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams(form).toString(),
+        signal: AbortSignal.timeout(TWILIO_TIMEOUT_MS),
       });
       return await readReply(response);
     } catch {

@@ -182,4 +182,13 @@ describe("Twilio Verify provider", () => {
       .mockResolvedValueOnce(jsonResponse({ sid: "VE4", status: "pending" }, 201));
     await expect(send(offline.provider)).resolves.toEqual({ provider: "twilio", requestId: "VE4" });
   });
+
+  it("gives every Twilio call a time limit", async () => {
+    const { fetcher, provider } = setup();
+    fetcher.mockImplementation(async () => jsonResponse({ sid: "VE1", status: "approved" }, 201));
+    await send(provider);
+    await provider.verify({ requestId: "VE1", code: "123456" });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    for (const [, init] of fetcher.mock.calls) expect(init?.signal).toBeInstanceOf(AbortSignal);
+  });
 });

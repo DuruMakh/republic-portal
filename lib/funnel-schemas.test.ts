@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   EMPLOYMENT_PRESETS,
+  legacyRegisterSchema,
   membershipProfileSchema,
   otpSchema,
   registerActionSchema,
@@ -50,6 +51,22 @@ describe("registerSchema", () => {
       if (result.success) continue;
       const issue = result.error.issues.find((i) => i.path[0] === "privacyConsent");
       expect(issue?.message).toBe(PRIVACY_CONSENT_REQUIRED_MESSAGE);
+    }
+  });
+});
+
+describe("legacyRegisterSchema (old phone sign-in, Georgian numbers only)", () => {
+  const base = { firstName: "ნინო", lastName: "ბერიძე", privacyConsent: true };
+  it("keeps Georgian numbers and refuses foreign ones", () => {
+    expect(legacyRegisterSchema.parse({ ...base, phone: "555 12 34 56" }).phone).toBe(
+      "+995555123456",
+    );
+    const foreign = legacyRegisterSchema.safeParse({ ...base, phone: "+31 6 54798014" });
+    expect(foreign.success).toBe(false);
+    if (!foreign.success) {
+      expect(foreign.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
+      );
     }
   });
 });

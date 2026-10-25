@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
 import { parseRegistrationPhone } from "./phone-number";
+import { normalizeGeorgianPhone } from "./validation";
 
 export const EMPLOYMENT_PRESETS = [
   "დასაქმებული",
@@ -60,6 +61,22 @@ export const registerSchema = z.object({
   // does not reach z.literal's issues (see tierSchema below), so an explicit errorMap.
   privacyConsent: z.literal(true, {
     errorMap: () => ({ message: PRIVACY_CONSENT_REQUIRED_MESSAGE }),
+  }),
+});
+
+/**
+ * The old phone-OTP sign-up (NEXT_PUBLIC_AUTH_MODE=phone, unused in production) sends its SMS
+ * through Supabase Auth, outside the Twilio routing and the foreign brake, so it stays Georgian.
+ */
+export const legacyRegisterSchema = registerSchema.extend({
+  phone: z.string().transform((v, ctx) => {
+    const georgian = normalizeGeorgianPhone(v);
+    if (georgian !== null) return georgian;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
+    });
+    return z.NEVER;
   }),
 });
 

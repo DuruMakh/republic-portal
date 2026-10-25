@@ -18,7 +18,7 @@ import {
   type ActionResult,
   type CabinetState,
 } from "@/lib/funnel";
-import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
+import { legacyRegisterSchema, registerActionSchema } from "@/lib/funnel-schemas";
 import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/client";
 import { registerAction } from "./actions";
@@ -128,7 +128,7 @@ export function LegacyJoinForm() {
 
   async function submitForm() {
     setFormError(undefined);
-    const parsed = registerSchema.safeParse({
+    const parsed = legacyRegisterSchema.safeParse({
       firstName,
       lastName,
       phone: phoneInput,
