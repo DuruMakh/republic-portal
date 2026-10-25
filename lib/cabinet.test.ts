@@ -144,6 +144,10 @@ describe("formatPhoneKa", () => {
     expect(formatPhoneKa("+995599123456")).toBe("+995 599 12 34 56");
     expect(formatPhoneKa("995599123456")).toBe("+995 599 12 34 56");
   });
+  it("formats foreign numbers internationally, with and without +", () => {
+    expect(formatPhoneKa("+31654798014")).toBe("+31 6 54798014");
+    expect(formatPhoneKa("31654798014")).toBe("+31 6 54798014");
+  });
   it("unknown shapes pass through; empty → —", () => {
     expect(formatPhoneKa("12345")).toBe("12345");
     expect(formatPhoneKa(null)).toBe("—");

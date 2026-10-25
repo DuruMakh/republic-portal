@@ -1,3 +1,4 @@
+import { parsePhoneNumberFromString } from "libphonenumber-js/mobile";
 import { EMPLOYMENT_PRESETS } from "./funnel-schemas";
 import type { CabinetState, CabinetStatePresent } from "./funnel";
 
@@ -147,11 +148,18 @@ export function memberSinceKa(isoTimestamp: string | null): string | null {
   return `${d.getUTCFullYear()} წლის ${month}`;
 }
 
-/** "+9955XXXXXXXX" / "9955XXXXXXXX" → "+995 5XX XX XX XX" (prototype spacing). */
+/**
+ * "+9955XXXXXXXX" / "9955XXXXXXXX" → "+995 5XX XX XX XX" (prototype spacing); a foreign number
+ * (auth stores it without +) in its international format.
+ */
 export function formatPhoneKa(phone: string | null | undefined): string {
   if (!phone) return "—";
-  const m = /^\+?995(5\d{8})$/.exec(phone.replace(/\s/g, ""));
-  if (!m) return phone;
+  const compact = phone.replace(/\s/g, "");
+  const m = /^\+?995(5\d{8})$/.exec(compact);
+  if (!m) {
+    const foreign = parsePhoneNumberFromString(compact.startsWith("+") ? compact : `+${compact}`);
+    return foreign?.isValid() ? foreign.formatInternational() : phone;
+  }
   const n = m[1]!; // regex group 1 always present on match
   return `+995 ${n.slice(0, 3)} ${n.slice(3, 5)} ${n.slice(5, 7)} ${n.slice(7, 9)}`;
 }

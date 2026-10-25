@@ -206,6 +206,8 @@ export const accountMessages: Record<string, string> = {
   "Google-ით შესვლა": "Sign in with Google",
   "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)":
     "Enter a Georgian mobile number (5XX XX XX XX)",
+  "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)":
+    "Enter a mobile number (5XX XX XX XX, or a number from abroad with its country code)",
   "კოდის გაგზავნა ვერ მოხერხდა, სცადეთ თავიდან": "We could not send the code. Please try again.",
   "მონაცემების წამოღება ვერ მოხერხდა — სცადე თავიდან.":
     "We could not load your details — please try again.",

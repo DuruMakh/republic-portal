@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
-import { normalizeGeorgianPhone } from "./validation";
+import { parseRegistrationPhone } from "./phone-number";
 
 export const EMPLOYMENT_PRESETS = [
   "დასაქმებული",
@@ -18,13 +18,13 @@ export const nameSchema = z
 
 const phoneSchema = z
   .string()
-  .refine((v) => normalizeGeorgianPhone(v) !== null, {
-    message: "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
+  .refine((v) => parseRegistrationPhone(v).ok, {
+    message: "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
   })
   .transform((v) => {
-    const normalized = normalizeGeorgianPhone(v);
-    if (normalized === null) throw new Error("unreachable: refine guarantees a valid phone");
-    return normalized;
+    const parsed = parseRegistrationPhone(v);
+    if (!parsed.ok) throw new Error("unreachable: refine guarantees a valid phone");
+    return parsed.phone;
   });
 
 export const otpSchema = z.object({

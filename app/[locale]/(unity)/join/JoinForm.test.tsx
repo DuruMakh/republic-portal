@@ -312,6 +312,11 @@ describe("GoogleJoinForm", () => {
     expect(mocks.replace).toHaveBeenCalledWith("/me");
   });
 
+  it("prefills a confirmed foreign phone that auth stores without +", async () => {
+    await reachGoogleForm(googleUser({ phone: "31654798014", phone_confirmed_at: EXPIRES_AT }));
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toHaveValue("+31654798014");
+  });
+
   it("sends exactly one SMS when the confirmed phone has no consumed proof", async () => {
     mocks.registerGoogle.mockResolvedValueOnce({
       ok: false,

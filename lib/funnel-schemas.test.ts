@@ -20,6 +20,17 @@ describe("registerSchema", () => {
     const parsed = registerSchema.parse(base);
     expect(parsed.phone).toBe("+995555123456");
   });
+  it("accepts a foreign mobile from an allowed country, refuses others with one message", () => {
+    expect(registerSchema.parse({ ...base, phone: "+31 6 54798014" }).phone).toBe("+31654798014");
+    for (const phone of ["+7 912 345 67 89", "31654798014"]) {
+      const result = registerSchema.safeParse({ ...base, phone });
+      expect(result.success).toBe(false);
+      if (result.success) continue;
+      expect(result.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
+      );
+    }
+  });
   it("accepts an optional referral code and rejects junk", () => {
     expect(registerSchema.safeParse({ ...base, refCode: "7K3M9Q" }).success).toBe(true);
     expect(registerSchema.safeParse({ ...base, refCode: "bad code!" }).success).toBe(false);
