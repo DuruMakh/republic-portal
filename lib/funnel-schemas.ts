@@ -16,16 +16,18 @@ export const nameSchema = z
   .min(1, { message: "შეავსე ეს ველი" })
   .max(60, { message: "მაქსიმუმ 60 სიმბოლო" });
 
-const phoneSchema = z
-  .string()
-  .refine((v) => parseRegistrationPhone(v).ok, {
-    message: "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
-  })
-  .transform((v) => {
-    const parsed = parseRegistrationPhone(v);
-    if (!parsed.ok) throw new Error("unreachable: refine guarantees a valid phone");
-    return parsed.phone;
+const phoneSchema = z.string().transform((v, ctx) => {
+  const parsed = parseRegistrationPhone(v);
+  if (parsed.ok) return parsed.phone;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message:
+      parsed.reason === "country_not_supported"
+        ? "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით."
+        : "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
   });
+  return z.NEVER;
+});
 
 export const otpSchema = z.object({
   code: z.string().regex(/^\d{6}$/, { message: "შეიყვანე 6-ნიშნა კოდი" }),

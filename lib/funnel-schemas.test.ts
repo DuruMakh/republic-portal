@@ -20,9 +20,16 @@ describe("registerSchema", () => {
     const parsed = registerSchema.parse(base);
     expect(parsed.phone).toBe("+995555123456");
   });
-  it("accepts a foreign mobile from an allowed country, refuses others with one message", () => {
+  it("accepts a foreign mobile from an allowed country; says which refusal it is", () => {
     expect(registerSchema.parse({ ...base, phone: "+31 6 54798014" }).phone).toBe("+31654798014");
-    for (const phone of ["+7 912 345 67 89", "31654798014"]) {
+    const russian = registerSchema.safeParse({ ...base, phone: "+7 912 345 67 89" });
+    expect(russian.success).toBe(false);
+    if (!russian.success) {
+      expect(russian.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით.",
+      );
+    }
+    for (const phone of ["31654798014", "+31 20 123 4567"]) {
       const result = registerSchema.safeParse({ ...base, phone });
       expect(result.success).toBe(false);
       if (result.success) continue;
