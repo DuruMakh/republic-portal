@@ -40,7 +40,7 @@ import {
 const LOGIN_AUTH_PHONE = `995${LOGIN_PHONE}`; // auth stores phones without '+'
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
   vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");

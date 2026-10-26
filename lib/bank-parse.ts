@@ -32,7 +32,8 @@ const CODE_RE = new RegExp(
 // dd.mm.yyyy or yyyy-mm-dd
 const DATE_RE = /\b(?:(\d{2})\.(\d{2})\.(\d{4})|(\d{4})-(\d{2})-(\d{2}))\b/g;
 // Collect whole numeric tokens, including signs, parentheses and malformed
-// fractions. Validate only AFTER choosing the decimal or integer candidate class.
+// fractions. Validate only AFTER selecting candidates, retaining explicit signs
+// and accounting tokens even when decimals take priority over unsigned integers.
 const MONEY_RE =
   /(?<![A-Za-z0-9.,()+-])(?:[-+(]\s*)*[.,]*\d+(?: \d{3})*(?:[.,+-]\d*)*(?:\s*\))*(?![A-Za-z0-9.,()+-])/g;
 const VALID_AMOUNT_RE = /^\+?(?:\d+|\d{1,3}(?: \d{3})+)(?:[.,]\d{2})?$/;
@@ -74,8 +75,8 @@ function parseLine(line: string, index: number): ParsedStatementRow {
 
   let amountGel: number | null = null;
   const tokens = [...cleaned.matchAll(MONEY_RE)].map((m) => m[0]);
-  const decimals = tokens.filter((token) => /[.,]/.test(token));
-  const candidates = decimals.length > 0 ? decimals : tokens;
+  const hasDecimal = tokens.some((token) => /[.,]/.test(token));
+  const candidates = hasDecimal ? tokens.filter((token) => /[.,()+-]/.test(token)) : tokens;
   if (candidates.length > 1) {
     problems.push("ambiguous_amount");
   } else if (candidates.length === 1) {

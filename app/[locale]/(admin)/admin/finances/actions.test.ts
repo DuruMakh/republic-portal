@@ -214,12 +214,18 @@ describe("previewBulkAction — unsafe bank tokens", () => {
     ["20.00 fee .50", "ambiguous_amount", null, "2026-10-08"],
     ["20.00 fee -.50", "ambiguous_amount", null, "2026-10-08"],
     ["20.00 fee ,50", "ambiguous_amount", null, "2026-10-08"],
+    ["-20 fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["(20) fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["20- fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["+20 fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["-1 2345.00", "ambiguous_amount", null, "2026-10-08"],
     ["20 31.02.2026", "bad_date", 20, null],
     ["20 2026-04-31 01.07.2026", "bad_date", 20, null],
     ["20 01.07.2026 2026-04-31", "bad_date", 20, null],
     ["20 01.01.2025", "bad_date", 20, "2025-01-01"],
     ["20", "ok", 20, "2026-10-08"],
     ["1000.00", "ok", 1000, "2026-10-08"],
+    ["20.00 document 7", "ok", 20, "2026-10-08"],
   ])(
     "previews %s as %s with its exact amount and date",
     async (tokens, status, amountGel, paidAt) => {

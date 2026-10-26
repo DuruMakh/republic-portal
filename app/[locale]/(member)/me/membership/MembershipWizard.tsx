@@ -92,9 +92,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
 
   useEffect(() => {
     if (!focusRequest) return;
-    formRef.current
-      ?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled), [data-form-error]')
-      ?.focus();
+    const target =
+      formRef.current?.querySelector<HTMLElement>(
+        '[aria-invalid="true"]:not(:disabled), [data-form-error]',
+      ) ?? formRef.current?.querySelector<HTMLElement>("[data-regions-feedback]");
+    target?.focus();
   }, [focusRequest]);
 
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
@@ -435,7 +437,13 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           ) : null}
           {regionsStatus === "error" ? (
             <div>
-              <p id="mw-regions-load-error" role="alert" className="m-0 text-[15px] text-danger">
+              <p
+                id="mw-regions-load-error"
+                role="alert"
+                data-regions-feedback
+                tabIndex={-1}
+                className="m-0 text-[15px] text-danger"
+              >
                 {t("მხარეები ვერ ჩაიტვირთა.")}
               </p>
               <UnityButton variant="ghost" size="sm" onClick={() => setRegionsRetry((n) => n + 1)}>
@@ -444,7 +452,12 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             </div>
           ) : null}
           {regionsStatus === "ready" && regions.length === 0 ? (
-            <p role="status" className="m-0 text-[15px] text-secondary">
+            <p
+              role="status"
+              data-regions-feedback
+              tabIndex={-1}
+              className="m-0 text-[15px] text-secondary"
+            >
               {t("მხარეები ვერ მოიძებნა.")}
             </p>
           ) : null}

@@ -637,6 +637,35 @@ describe("MembershipWizard — read recovery and focus", () => {
     expect(screen.queryByRole("button", { name: "მხარეების თავიდან ცდა" })).toBeNull();
   });
 
+  it.each([
+    { response: { data: null, error: { message: "offline" } }, message: "მხარეები ვერ ჩაიტვირთა." },
+    { response: { data: [] }, message: "მხარეები ვერ მოიძებნა." },
+  ])(
+    "focuses existing region feedback after submission: $message",
+    async ({ response, message }) => {
+      readOptions.mockResolvedValue(response);
+      render(
+        <MembershipWizard initialState={cab({ hasPersonalId: true, employment: "სტუდენტი" })} />,
+      );
+      const birthDate = screen.getByLabelText(/დაბადების თარიღი/);
+      birthDate.focus();
+      const feedback = await screen.findByText(message);
+      expect(birthDate).toHaveFocus();
+      fireEvent.change(birthDate, { target: { value: "1990-05-20" } });
+      expect(birthDate).toHaveFocus();
+      expect(screen.getByRole("combobox", { name: "მხარე" })).toBeDisabled();
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
+      expect(feedback).toHaveFocus();
+      expect(screen.getAllByText(message)).toHaveLength(1);
+      expect(birthDate).toHaveValue("1990-05-20");
+      expect(screen.getByRole("combobox", { name: "სამუშაო ადგილი / სტატუსი" })).toHaveValue(
+        "სტუდენტი",
+      );
+      expect(saveMembershipProfileAction).not.toHaveBeenCalled();
+    },
+  );
+
   it("focuses validation only after submission and focuses an existing step heading after navigation", async () => {
     render(<MembershipWizard initialState={cab()} />);
     expect(screen.getByLabelText(/დაბადების თარიღი/)).not.toHaveFocus();

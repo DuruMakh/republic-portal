@@ -53,6 +53,11 @@ describe("parseStatementRows (spec §3.5, §5)", () => {
     "20.00 fee .50",
     "20.00 fee -.50",
     "20.00 fee ,50",
+    "-20 fee 1.00",
+    "(20) fee 1.00",
+    "20- fee 1.00",
+    "+20 fee 1.00",
+    "-1 2345.00",
   ])("keeps every candidate when deciding ambiguity: %s", (tokens) => {
     const [row] = parseStatementRows(`GR-ABC234 ${tokens}`);
     expect(row!.amountGel).toBeNull();
