@@ -128,7 +128,7 @@ describe("ProfileForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() => expect(updateProfileAction).toHaveBeenCalled());
     expect(updateProfileAction.mock.calls[0]?.[0]).toMatchObject({ employment: "მეწარმე" });
-    expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
+    expect(await screen.findByRole("status")).toHaveTextContent("პროფილი განახლდა ✓");
     fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), {
       target: { value: "გიორგი" },
     });
@@ -156,25 +156,18 @@ describe("ProfileForm", () => {
   });
 });
 
-it("retains edited text on a failed cities read and retries without allowing stale submission", async () => {
+it("announces a cities read error while retaining edited text", async () => {
   readCities.mockResolvedValueOnce({ data: null, error: { message: "offline" } });
   renderForm("სტუდენტი");
   fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), { target: { value: "ანა" } });
-  expect(await screen.findByRole("alert")).toHaveTextContent("ქალაქები ვერ ჩაიტვირთა.");
-  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveAttribute(
-    "aria-describedby",
-    "profile-cities-load-error",
-  );
-  fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
-  expect(updateProfileAction).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "ქალაქების თავიდან ცდა" }));
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "რაღაც შეცდომა მოხდა — სცადე თავიდან.",
   );
   expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveValue("ანა");
+  expect(screen.getByRole("button", { name: "შენახვა" })).toBeEnabled();
 });
 
-it("associates validation with the first invalid field and announces a successful save", async () => {
+it("associates validation with the first invalid field and focuses it after submission", async () => {
   renderForm("სტუდენტი");
   await waitFor(() =>
     expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
@@ -186,33 +179,45 @@ it("associates validation with the first invalid field and announces a successfu
   expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveFocus();
 });
 
-it("ignores a late city response and clears the old city immediately on a user region change", async () => {
+it("keeps the prior city and save available during reads, ignoring a late response", async () => {
   let resolveOld!: (value: { data: { id: number; name_ka: string }[] }) => void;
-  readCities.mockReturnValueOnce(
+  readCities.mockResolvedValueOnce({ data: CITIES_BY_REGION[1] }).mockReturnValueOnce(
     new Promise((resolve) => {
       resolveOld = resolve;
     }),
   );
   renderForm("სტუდენტი");
+  const city = screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" });
+  await waitFor(() => expect(city).toHaveValue("3"));
   fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
-  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("0");
-  expect(screen.getByRole("button", { name: "შენახვა" })).toBeDisabled();
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9"),
-  );
-  await act(async () => resolveOld({ data: CITIES_BY_REGION[1]! }));
-  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9");
+  expect(city).toHaveValue("3");
+  expect(city).toBeEnabled();
+  expect(screen.getByRole("button", { name: "შენახვა" })).toBeEnabled();
+  fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "1" } });
+  await waitFor(() => expect(readCities).toHaveBeenCalledTimes(3));
+  await act(async () => resolveOld({ data: CITIES_BY_REGION[2]! }));
+  expect(city).toHaveValue("3");
 });
 
-it("shows successful empty cities separately from an error", async () => {
-  readCities.mockResolvedValue({ data: [] });
-  renderForm("სტუდენტი");
-  await waitFor(() =>
-    expect(screen.getByRole("status")).toHaveTextContent("ამ მხარეში ქალაქები ვერ მოიძებნა."),
-  );
-  expect(screen.queryByRole("alert")).toBeNull();
-  fireEvent.submit(
-    screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" }).closest("form")!,
-  );
-  expect(updateProfileAction).not.toHaveBeenCalled();
-});
+it.each(["returned", "rejected"])(
+  "focuses and announces a %s save error while retaining edits",
+  async (failure) => {
+    if (failure === "returned")
+      updateProfileAction.mockResolvedValueOnce({
+        ok: false,
+        error: "რაღაც შეცდომა მოხდა — სცადე თავიდან.",
+      });
+    else updateProfileAction.mockRejectedValueOnce(new Error("offline"));
+    renderForm("სტუდენტი");
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+    );
+    const firstName = screen.getByRole("textbox", { name: "სახელი" });
+    fireEvent.change(firstName, { target: { value: "ანა" } });
+    fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveFocus();
+    expect(firstName).toHaveValue("ანა");
+    expect(screen.getByRole("button", { name: "შენახვა" })).toBeEnabled();
+  },
+);

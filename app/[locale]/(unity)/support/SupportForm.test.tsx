@@ -64,7 +64,7 @@ describe("SupportForm", () => {
     const button = screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL });
     fireEvent.click(button);
     expect(await screen.findByRole("alert")).toHaveTextContent(SUPPORT_FAILURE);
-    expect(screen.getByRole("alert")).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
     await waitFor(() => expect(button).not.toBeDisabled());
     expect(screen.getByLabelText(/შეტყობინება/)).toHaveValue(MESSAGE);
   });

@@ -9,21 +9,27 @@ export function OtpInput({
   value,
   onChange,
   error,
+  errorAttempt = 0,
 }: {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  errorAttempt?: number;
 }) {
   const t = useCopy();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
-  const previousError = useRef(error);
+  const previousError = useRef({ error, errorAttempt });
   const errorId = useId();
   const digits = Array.from({ length: LENGTH }, (_, i) => value[i] ?? "");
 
   useEffect(() => {
-    if (error && error !== previousError.current) refs.current[0]?.focus();
-    previousError.current = error;
-  }, [error]);
+    if (
+      error &&
+      (error !== previousError.current.error || errorAttempt !== previousError.current.errorAttempt)
+    )
+      refs.current[0]?.focus();
+    previousError.current = { error, errorAttempt };
+  }, [error, errorAttempt]);
 
   return (
     <div className="flex flex-col gap-1.5">

@@ -20,6 +20,7 @@ export function OtpVerification({
   const t = useCopy();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
+  const [errorAttempt, setErrorAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_S);
   const [devOtp, setDevOtp] = useState<string>();
@@ -65,6 +66,7 @@ export function OtpVerification({
     setError(undefined);
     const parsed = otpSchema.safeParse({ code });
     if (!parsed.success) {
+      setErrorAttempt((attempt) => attempt + 1);
       setError(parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR);
       return;
     }
@@ -116,7 +118,12 @@ export function OtpVerification({
         <strong className="text-ink">{phone}</strong>
         {t(". შეიყვანე 6-ნიშნა კოდი.")}
       </p>
-      <OtpInput value={code} onChange={setCode} error={t(error ?? "")} />
+      <OtpInput
+        value={code}
+        onChange={setCode}
+        error={t(error ?? "")}
+        errorAttempt={errorAttempt}
+      />
       {devOtp ? (
         <p
           className="border border-hairline bg-paper-bright px-3 py-2 text-[0.8rem]"

@@ -68,3 +68,46 @@ it("focuses the first digit on a new submission error without taking focus on mo
   rerender(<OtpInput value="123456" onChange={() => undefined} error="კოდი არასწორია" />);
   expect(screen.getByTestId("otp-0")).toHaveFocus();
 });
+
+it("focuses on repeated error attempts while leaving mounting and value changes alone", () => {
+  const { rerender } = render(
+    <OtpInput
+      value="1"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={0}
+    />,
+  );
+  const firstDigit = screen.getByTestId("otp-0");
+  const thirdDigit = screen.getByTestId("otp-2");
+  expect(firstDigit).not.toHaveFocus();
+  thirdDigit.focus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={0}
+    />,
+  );
+  expect(thirdDigit).toHaveFocus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={1}
+    />,
+  );
+  expect(firstDigit).toHaveFocus();
+  thirdDigit.focus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={2}
+    />,
+  );
+  expect(firstDigit).toHaveFocus();
+});

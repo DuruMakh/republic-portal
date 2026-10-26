@@ -48,8 +48,6 @@ export function ProfileForm({
   const [employmentChoice, setEmploymentChoice] = useState(initialEmployment.choice);
   const [employmentCustom, setEmploymentCustom] = useState(initialEmployment.custom);
   const [cities, setCities] = useState<CityOption[]>([]);
-  const [citiesStatus, setCitiesStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [citiesRetry, setCitiesRetry] = useState(0);
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -69,28 +67,26 @@ export function ProfileForm({
   useEffect(() => {
     let cancelled = false;
     const supabase = createClient();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one read per region or explicit retry
-    setCitiesStatus("loading");
     void Promise.resolve(
       supabase.from("cities").select("id, name_ka").eq("region_id", regionId).order("name_ka"),
     )
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error || !data) {
-          setCitiesStatus("error");
+          setError(GENERIC_FUNNEL_ERROR);
           return;
         }
-        setCitiesStatus("ready");
+        setError(undefined); // clear a prior transient cities-fetch error once it recovers
         setCities(data);
         setCityId((current) => (data.some((c) => c.id === current) ? current : (data[0]?.id ?? 0)));
       })
       .catch(() => {
-        if (!cancelled) setCitiesStatus("error");
+        if (!cancelled) setError(GENERIC_FUNNEL_ERROR);
       });
     return () => {
       cancelled = true;
     };
-  }, [regionId, citiesRetry]);
+  }, [regionId]);
 
   function touch() {
     setSaved(false);
@@ -124,11 +120,6 @@ export function ProfileForm({
       return;
     }
     setFieldErrors({});
-    if (citiesStatus !== "ready" || !cities.some((city) => city.id === cityId)) {
-      setError(GENERIC_FUNNEL_ERROR);
-      setFocusRequest((n) => n + 1);
-      return;
-    }
     setBusy(true);
     let result: Awaited<ReturnType<typeof updateProfileAction>>;
     try {
@@ -214,9 +205,6 @@ export function ProfileForm({
             onChange={(e) => {
               touch();
               setRegionId(Number(e.target.value));
-              setCityId(0);
-              setCities([]);
-              setCitiesStatus("loading");
             }}
           >
             {regions.map((r) => (
@@ -228,24 +216,13 @@ export function ProfileForm({
           <UnitySelectField
             label={t("ქალაქი / მუნიციპალიტეტი")}
             id="profile-city"
-            aria-describedby={
-              citiesStatus === "error"
-                ? "profile-cities-load-error"
-                : fieldErrors.cityId
-                  ? "profile-city-error"
-                  : undefined
-            }
             error={t(fieldErrors.cityId ?? "")}
-            disabled={citiesStatus !== "ready" || cities.length === 0}
             value={cityId}
             onChange={(e) => {
               touch();
               setCityId(Number(e.target.value));
             }}
           >
-            <option value={0} disabled>
-              {t("აირჩიე ქალაქი")}
-            </option>
             {cities.map((c) => (
               <option key={c.id} value={c.id}>
                 {t(c.name_ka)}
@@ -253,26 +230,6 @@ export function ProfileForm({
             ))}
           </UnitySelectField>
         </div>
-        {citiesStatus === "loading" ? (
-          <p role="status" className="m-0 text-[15px] text-secondary">
-            {t("ქალაქები იტვირთება…")}
-          </p>
-        ) : null}
-        {citiesStatus === "error" ? (
-          <div>
-            <p id="profile-cities-load-error" role="alert" className="m-0 text-[15px] text-danger">
-              {t("ქალაქები ვერ ჩაიტვირთა.")}
-            </p>
-            <UnityButton variant="ghost" size="sm" onClick={() => setCitiesRetry((n) => n + 1)}>
-              {t("ქალაქების თავიდან ცდა")}
-            </UnityButton>
-          </div>
-        ) : null}
-        {citiesStatus === "ready" && cities.length === 0 ? (
-          <p role="status" className="m-0 text-[15px] text-secondary">
-            {t("ამ მხარეში ქალაქები ვერ მოიძებნა.")}
-          </p>
-        ) : null}
         <UnitySelectField
           label={t("სამუშაო ადგილი / სტატუსი")}
           id="profile-employment"
@@ -318,12 +275,7 @@ export function ProfileForm({
           </p>
         ) : null}
         <div className="flex justify-end">
-          <UnityButton
-            type="submit"
-            variant="ink"
-            size="sm"
-            disabled={busy || citiesStatus !== "ready"}
-          >
+          <UnityButton type="submit" variant="ink" size="sm" disabled={busy}>
             {t("შენახვა")}
           </UnityButton>
         </div>

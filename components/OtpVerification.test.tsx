@@ -63,3 +63,21 @@ describe("OtpVerification.verify", () => {
     await waitFor(() => expect(confirm).not.toBeDisabled());
   });
 });
+
+it("focuses the first digit after each incomplete-code submission", () => {
+  render(<OtpVerification phone={PHONE} onVerified={vi.fn()} />);
+  const firstDigit = screen.getByTestId("otp-0");
+  const confirm = screen.getByRole("button", { name: "დადასტურება" });
+  expect(firstDigit).not.toHaveFocus();
+  fireEvent.change(firstDigit, { target: { value: "12" } });
+  expect(screen.getByTestId("otp-2")).toHaveFocus();
+  confirm.focus();
+  fireEvent.click(confirm);
+  expect(firstDigit).toHaveFocus();
+  fireEvent.change(screen.getByTestId("otp-2"), { target: { value: "3" } });
+  expect(screen.getByTestId("otp-3")).toHaveFocus();
+  confirm.focus();
+  fireEvent.click(confirm);
+  expect(firstDigit).toHaveFocus();
+  expect(verifyOtpMock).not.toHaveBeenCalled();
+});

@@ -32,6 +32,7 @@ export function PhoneVerification({
   const t = useCopy();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
+  const [errorAttempt, setErrorAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(PHONE_VERIFICATION_RESEND_SECONDS);
   const inFlightRef = useRef(false);
@@ -57,6 +58,7 @@ export function PhoneVerification({
     setError(undefined);
     const parsed = otpSchema.safeParse({ code });
     if (!parsed.success) {
+      setErrorAttempt((attempt) => attempt + 1);
       setError(parsed.error.issues[0]?.message ?? "შეიყვანე 6-ნიშნა კოდი");
       return;
     }
@@ -122,7 +124,12 @@ export function PhoneVerification({
         {t(". შეიყვანე 6-ნიშნა კოდი.")}
       </p>
       <div className="mt-7 sm:mt-9">
-        <OtpInput value={code} onChange={setCode} error={t(error ?? "")} />
+        <OtpInput
+          value={code}
+          onChange={setCode}
+          error={t(error ?? "")}
+          errorAttempt={errorAttempt}
+        />
       </div>
       <UnityButton onClick={verify} disabled={busy} className="mt-8 w-full sm:mt-10">
         {t("დადასტურება")}
