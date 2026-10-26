@@ -17,6 +17,7 @@ export type BulkStatus =
   | "ok"
   | "no_code"
   | "no_amount"
+  | "invalid_amount"
   | "ambiguous_amount"
   | "unknown_code"
   | "duplicate"
