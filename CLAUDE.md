@@ -4,7 +4,8 @@
 
 Production app for "ქართული რესპუბლიკა" (Georgian civic platform).
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
-UX contract: prototype/kronika-d3/ (spec docs/superpowers/specs/2026-07-23-kronika-redesign-design.md). Decisions: DECISIONS.md (what holds today; full history in docs/decisions-history.md).
+Current design guidance: DESIGN.md and DECISIONS.md (what holds today; full history in docs/decisions-history.md).
+Unity is adopted page by page (ADR-053); prototype/kronika-d3/ remains the reference for unchanged Kronika surfaces.
 
 ## Process (non-negotiable)
 

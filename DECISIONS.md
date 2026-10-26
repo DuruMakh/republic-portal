@@ -106,7 +106,7 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
   in the cabinet; delegacy is a member-only request reviewed by admins.
 - **ADR-022 The personal ID is asked at membership,** not at sign-up.
 - **ADR-041 Privacy consent:** one required box (18+ and personal-data processing) at
-  registration; `register()` stores the date and policy version and refuses a stale version.
+  registration; `register_google()` stores the date and policy version and refuses a stale version.
   The version lives in `lib/privacy.ts`.
 - **ADR-034 One header account button:** join for guests, cabinet when signed in. This relies
   on `NEXT_PUBLIC_AUTH_MODE=google`; phone mode would need the sign-in button back.

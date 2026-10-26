@@ -330,6 +330,10 @@ const appResidueCount = appResidue.reduce((n, r) => n + r.minted.length, 0);
 
 const doc = `# Security audit — coverage table
 
+> **Historical evidence — 27 July 2026, source commit \`49891cd\`.** This document
+> regenerates the stored audit records; it does not run live checks. Counts and
+> failures below describe that audit, not the current application's security status.
+
 **The whole matrix: ${manifest.length} surfaces × ${A.length} actor positions =
 ${num(ledger.length)} graded cells — ${num(whole.clear)} clear, ${whole.finding} findings,
 ${whole["needs-live-proof"]} needs-live-proof.** Four passes, each appended below:

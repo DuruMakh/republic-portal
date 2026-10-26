@@ -1,5 +1,9 @@
 # Security audit — coverage table
 
+> **Historical evidence — 27 July 2026, source commit `49891cd`.** This document
+> regenerates the stored audit records; it does not run live checks. Counts and
+> failures below describe that audit, not the current application's security status.
+
 **The whole matrix: 155 surfaces × 12 actor positions =
 1,860 graded cells — 1,702 clear, 0 findings,
 158 needs-live-proof.** Four passes, each appended below:
