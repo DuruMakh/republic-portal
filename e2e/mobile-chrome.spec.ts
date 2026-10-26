@@ -47,6 +47,49 @@ const PUBLIC_CHROME_ROUTES = [
 test.describe("mobile chrome at 390x844", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
+  test("browser Back and Forward close the Unity menu and release scrolling", async ({ page }) => {
+    await page.goto("/news");
+    await page.locator("a[href^='/news/']").first().click();
+    await expect(page).toHaveURL(/\/news\/.+/, { timeout: 15_000 });
+    const articleUrl = page.url();
+    await page.getByRole("link", { name: BACK_LABEL, exact: true }).click();
+    await expect(page).toHaveURL(/\/news$/, { timeout: 15_000 });
+    await page.getByRole("button", { name: MENU }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.screenshot({
+      path: "output/playwright/audit-minimal-repairs/task-3-mobile-menu-open.png",
+      style: "nextjs-portal { visibility: hidden; }",
+    });
+    await page.goBack();
+    await expect(page).toHaveURL(articleUrl);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: MENU, includeHidden: true })).toBeHidden();
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+    // The hidden desktop header must no longer capture Tab on an article.
+    await page.getByRole("link", { name: BACK_LABEL, exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(page.locator(":focus")).toBeVisible();
+    expect(
+      await page.locator(":focus").evaluate((element) => element.closest('[role="dialog"]')),
+    ).toBeNull();
+    await page.keyboard.press("PageDown");
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
+    await page.screenshot({
+      path: "output/playwright/audit-minimal-repairs/task-3-mobile-history-closed.png",
+      style: "nextjs-portal { visibility: hidden; }",
+    });
+    await page.goForward();
+    await expect(page).toHaveURL(/\/news$/);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.getByRole("button", { name: MENU }).press("Enter");
+    await expect(page.getByRole("button", { name: "დახურვა" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: MENU })).toBeFocused();
+  });
+
   // The menu's own behaviour (open, Escape, focus trap) is MobileMenu's unit test.
   test("the public masthead shows the menu button, not the inline nav, and stays pinned while the document scrolls", async ({
     page,

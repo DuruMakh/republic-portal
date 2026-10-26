@@ -7,6 +7,7 @@ const refreshMock = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: refreshMock }) }));
 
 import { PollCard } from "./PollCard";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 
 const POLL_ID = "6f1b0a9e-0000-4000-8000-0000000000aa";
 const OPT_A = "6f1b0a9e-0000-4000-8000-0000000000a1";
@@ -150,5 +151,25 @@ describe("PollCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "დიახ" }));
     expect(await screen.findByText("გამოკითხვა დახურულია.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "დიახ" })).toBeInTheDocument();
+  });
+
+  it("announces rejected votes and allows retry", async () => {
+    voteMock.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ ok: true });
+    render(
+      <PollCard
+        pollId={POLL_ID}
+        question="Q?"
+        view="buttons"
+        deadlineKa={null}
+        options={[{ optionId: OPT_A, label: "დიახ", pct: 0, votes: 0, mine: false }]}
+        total={0}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "დიახ" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_FUNNEL_ERROR);
+    expect(screen.getByRole("alert")).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("button", { name: "დიახ" })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: "დიახ" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("შენი ხმა მიღებულია ✓");
   });
 });

@@ -1,10 +1,17 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextIntlClientProvider } from "next-intl";
 import { ProfileForm } from "./ProfileForm";
 
 const updateProfileAction = vi.fn();
-beforeEach(() => updateProfileAction.mockReset());
+const readCities = vi.fn();
+beforeEach(() => {
+  updateProfileAction.mockReset();
+  readCities.mockReset();
+  readCities.mockImplementation((regionId: number) =>
+    Promise.resolve({ data: CITIES_BY_REGION[regionId] ?? [] }),
+  );
+});
 vi.mock("../actions", () => ({
   updateProfileAction: (input: unknown) => updateProfileAction(input),
 }));
@@ -24,10 +31,7 @@ vi.mock("@/lib/supabase/client", () => ({
     from: () => ({
       select: () => ({
         eq: (_column: string, regionId: number) => ({
-          order: () =>
-            Promise.resolve({
-              data: CITIES_BY_REGION[regionId] ?? [],
-            }),
+          order: () => readCities(regionId),
         }),
       }),
     }),
@@ -150,4 +154,65 @@ describe("ProfileForm", () => {
       expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
     );
   });
+});
+
+it("retains edited text on a failed cities read and retries without allowing stale submission", async () => {
+  readCities.mockResolvedValueOnce({ data: null, error: { message: "offline" } });
+  renderForm("სტუდენტი");
+  fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), { target: { value: "ანა" } });
+  expect(await screen.findByRole("alert")).toHaveTextContent("ქალაქები ვერ ჩაიტვირთა.");
+  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveAttribute(
+    "aria-describedby",
+    "profile-cities-load-error",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  expect(updateProfileAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "ქალაქების თავიდან ცდა" }));
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+  );
+  expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveValue("ანა");
+});
+
+it("associates validation with the first invalid field and announces a successful save", async () => {
+  renderForm("სტუდენტი");
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("3"),
+  );
+  fireEvent.change(screen.getByRole("textbox", { name: "სახელი" }), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  expect(await screen.findByText("შეავსე ეს ველი")).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByRole("textbox", { name: "სახელი" })).toHaveFocus();
+});
+
+it("ignores a late city response and clears the old city immediately on a user region change", async () => {
+  let resolveOld!: (value: { data: { id: number; name_ka: string }[] }) => void;
+  readCities.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveOld = resolve;
+    }),
+  );
+  renderForm("სტუდენტი");
+  fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
+  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("0");
+  expect(screen.getByRole("button", { name: "შენახვა" })).toBeDisabled();
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9"),
+  );
+  await act(async () => resolveOld({ data: CITIES_BY_REGION[1]! }));
+  expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9");
+});
+
+it("shows successful empty cities separately from an error", async () => {
+  readCities.mockResolvedValue({ data: [] });
+  renderForm("სტუდენტი");
+  await waitFor(() =>
+    expect(screen.getByRole("status")).toHaveTextContent("ამ მხარეში ქალაქები ვერ მოიძებნა."),
+  );
+  expect(screen.queryByRole("alert")).toBeNull();
+  fireEvent.submit(
+    screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" }).closest("form")!,
+  );
+  expect(updateProfileAction).not.toHaveBeenCalled();
 });

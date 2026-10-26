@@ -43,6 +43,11 @@ describe("RegisteredProfileForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Complete this field")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "First name" })).toHaveFocus();
+    expect(screen.getByRole("textbox", { name: "First name" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
     expect(updateRegisteredNameAction).not.toHaveBeenCalled();
   });
 
@@ -85,7 +90,7 @@ describe("RegisteredProfileForm", () => {
       firstName: "გიორგი",
       lastName: "ბერიძე",
     });
-    expect(await screen.findByTestId("profile-saved")).toHaveTextContent("პროფილი განახლდა ✓");
+    expect(await screen.findByRole("status")).toHaveTextContent("პროფილი განახლდა ✓");
     fireEvent.change(screen.getByRole("textbox", { name: "გვარი" }), {
       target: { value: "მაისურაძე" },
     });

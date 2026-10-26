@@ -3,10 +3,11 @@ import { OriginalLanguageNote } from "@/components/OriginalLanguageNote";
 
 import { useCopy } from "@/lib/i18n/copy";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { formatCountKa } from "@/lib/format";
 import { leadingOptions, type PollViewState } from "@/lib/community";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { voteAction } from "./actions";
 
 export interface PollCardOption {
@@ -35,17 +36,28 @@ export function PollCard({
   const t = useCopy();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
   const [pending, startTransition] = useTransition();
 
   function vote(optionId: string) {
     setError(null);
+    setSaved(false);
     startTransition(async () => {
-      const result = await voteAction({ pollId, optionId });
-      if (!result.ok) {
-        setError(result.error);
-        return;
+      try {
+        const result = await voteAction({ pollId, optionId });
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+        setSaved(true);
+        router.refresh();
+      } catch {
+        setError(GENERIC_FUNNEL_ERROR);
       }
-      router.refresh();
     });
   }
 
@@ -114,7 +126,19 @@ export function PollCard({
       )}
 
       {error ? (
-        <p className="mt-4 mb-0 text-[15px] font-semibold text-brand">{t(error ?? "")}</p>
+        <p
+          ref={errorRef}
+          role="alert"
+          tabIndex={-1}
+          className="mt-4 mb-0 text-[15px] font-semibold text-brand"
+        >
+          {t(error ?? "")}
+        </p>
+      ) : null}
+      {saved ? (
+        <p role="status" className="mt-4 mb-0 text-[15px] font-semibold text-ok-deep">
+          {t("შენი ხმა მიღებულია ✓")}
+        </p>
       ) : null}
     </section>
   );

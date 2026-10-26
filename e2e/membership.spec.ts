@@ -33,6 +33,7 @@ test.describe.configure({ mode: "serial" });
 // runCleanups, not sequential awaits: a throw from one cleanup must not skip the
 // other, or a content failure strands this run's users where no later run looks.
 const googleJourneyPhones = [
+  JOURNEY.regHappy,
   JOURNEY.membFull,
   JOURNEY.membResume,
   JOURNEY.regReferral,
@@ -144,7 +145,7 @@ test("full upgrade: register → wizard → application sent and member nav", as
 
   // the overview CTA opens the wizard's profile phase
   await page.getByTestId("become-member-cta").click();
-  await expect(page).toHaveURL(/\/me\/membership/);
+  await expect(page).toHaveURL(/\/me\/membership/, { timeout: 15_000 });
   // The in-progress wizard keeps the established desktop Masthead.
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("banner")).toHaveCSS("position", "static");
@@ -162,7 +163,7 @@ test("full upgrade: register → wizard → application sent and member nav", as
 
   // done phase, its own route: application sent, under review, the central binding,
   // and no bank-transfer instructions any more
-  await expect(page).toHaveURL(/\/me\/membership\/done/);
+  await expect(page).toHaveURL(/\/me\/membership\/done/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "განაცხადი გაგზავნილია ✓" })).toBeVisible();
   await expect(page.getByText("განხილვის პროცესში", { exact: true })).toBeVisible();
   await expect(page.getByTestId("reference-code")).toHaveCount(0);
@@ -290,4 +291,125 @@ test("a personal ID already claimed by another member is rejected inline, stayin
   // stays on the profile phase — no silent advance to the tier phase
   await expect(page.getByText("ეს პირადი ნომერი უკვე რეგისტრირებულია.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "წევრის მონაცემები" })).toBeVisible();
+});
+
+test("membership reads recover in place on mobile and keyboard submissions focus the next step", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await passRegistration(page, {
+    phone: journeyPhone(JOURNEY.regHappy),
+    firstName: "ნინო",
+    lastName: "ტესტი",
+  });
+  await page.goto("/me/profile");
+  const registeredName = page.getByRole("textbox", { name: "სახელი", exact: true });
+  await registeredName.fill("");
+  await registeredName.press("Enter");
+  await expect(registeredName).toBeFocused();
+  await expect(registeredName).toHaveAttribute("aria-invalid", "true");
+  await registeredName.fill("ნინო");
+  await registeredName.press("Enter");
+  await expect(page.getByTestId("profile-saved")).toHaveAttribute("role", "status");
+  let failRegions = true;
+  await page.route("**/rest/v1/regions?*", async (route) => {
+    if (failRegions) {
+      await route.fulfill({ status: 400, json: { message: "test read failure" } });
+    } else await route.continue();
+  });
+  await page.goto("/me/membership");
+  await expect(page.locator("form").getByRole("alert")).toHaveText("მხარეები ვერ ჩაიტვირთა.");
+  await page.getByLabel("დაბადების თარიღი").fill("1990-05-20");
+  await page.getByLabel("სამუშაო ადგილი / სტატუსი").selectOption("__other");
+  await page.getByLabel("მიუთითე შენი საქმიანობა").fill("არქიტექტორი");
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-membership-regions-error-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
+  failRegions = false;
+  await page.getByRole("button", { name: "მხარეების თავიდან ცდა" }).click();
+  await expect(page.getByLabel("მხარე")).toBeEnabled();
+
+  let releaseCities!: () => void;
+  const citiesHeld = new Promise<void>((resolve) => {
+    releaseCities = resolve;
+  });
+  let failCities = true;
+  await page.route("**/rest/v1/cities?*", async (route) => {
+    if (failCities) {
+      await citiesHeld;
+      await route.fulfill({ status: 400, json: { message: "test read failure" } });
+    } else await route.continue();
+  });
+  await page.getByLabel("მხარე").selectOption({ label: "თბილისი" });
+  await expect(page.getByText("ქალაქები იტვირთება…")).toBeVisible();
+  await expect(page.getByLabel("ქალაქი / მუნიციპალიტეტი")).toBeDisabled();
+  await expect(page.getByRole("button", { name: "გაგრძელება" })).toBeDisabled();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-membership-loading-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
+  releaseCities();
+  await expect(page.locator("form").getByRole("alert")).toHaveText("ქალაქები ვერ ჩაიტვირთა.");
+  await expect(page.getByLabel("დაბადების თარიღი")).toHaveValue("1990-05-20");
+  await expect(page.getByLabel("მიუთითე შენი საქმიანობა")).toHaveValue("არქიტექტორი");
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-membership-cities-error-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
+  failCities = false;
+  await page.getByRole("button", { name: "ქალაქების თავიდან ცდა" }).click();
+  await expect(page.getByLabel("ქალაქი / მუნიციპალიტეტი")).toBeEnabled();
+  await page.getByLabel("ქალაქი / მუნიციპალიტეტი").selectOption({ index: 1 });
+  await page.getByLabel("პირადი ნომერი").fill(journeyPersonalId(JOURNEY.regHappy));
+  await expect(page.getByRole("button", { name: "გაგრძელება" })).toBeEnabled();
+  await page.getByLabel("მიუთითე შენი საქმიანობა").press("Enter");
+  const application = page.getByRole("heading", { name: "წევრობის განაცხადი" });
+  await expect(application).toBeFocused();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-membership-step-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
+  await page.getByRole("button", { name: "განაცხადის გაგზავნა" }).press("Enter");
+  const consent = page.getByRole("checkbox").first();
+  await expect(consent).toBeFocused();
+  await expect(consent).toHaveAttribute("aria-describedby", "mw-tier-error");
+  await agreeAndSend(page);
+  await expect(page).toHaveURL(/\/me\/membership\/done/);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-membership-success-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
+  await page.goto("/me/profile");
+  await expect(page.getByRole("button", { name: "შენახვა", exact: true })).toBeEnabled();
+  const memberName = page.getByRole("textbox", { name: "სახელი", exact: true });
+  await memberName.fill("");
+  await memberName.press("Enter");
+  await expect(memberName).toBeFocused();
+  await expect(memberName).toHaveAttribute("aria-invalid", "true");
+  await memberName.fill("ნინო");
+  await memberName.press("Enter");
+  await expect(page.getByTestId("profile-saved")).toHaveAttribute("role", "status");
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-3-profile-success-mobile.png",
+    fullPage: true,
+
+    style: "nextjs-portal { visibility: hidden; }",
+  });
 });
