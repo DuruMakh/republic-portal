@@ -11,7 +11,7 @@ import { installSupabaseSession } from "./otp-helpers";
 const APP_BASE_URL = "http://localhost:3000";
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
   vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
   createServerClient.mockImplementation((_url, _key, options) => ({
