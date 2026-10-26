@@ -134,7 +134,7 @@ export async function setNewsCoverAction(formData: FormData): Promise<NewsAction
     return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP სურათი." };
   }
   if (cover.size > PHOTO_MAX_BYTES) {
-    return { ok: false, error: "სურათი არ უნდა აღემატებოდეს 5 MB-ს." };
+    return { ok: false, error: "სურათი არ უნდა აღემატებოდეს 4 MB-ს." };
   }
   // Security audit M4: the bucket is public — store the cover without its hidden
   // location/time/device data, upright.

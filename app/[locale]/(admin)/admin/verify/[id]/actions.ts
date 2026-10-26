@@ -54,7 +54,7 @@ export async function updateDelegateProfileAction(formData: FormData): Promise<S
       return { ok: false, error: "დაშვებულია მხოლოდ JPEG, PNG ან WebP ფოტო." };
     }
     if (photo.size > PHOTO_MAX_BYTES) {
-      return { ok: false, error: "ფოტო არ უნდა აღემატებოდეს 5 MB-ს." };
+      return { ok: false, error: "ფოტო არ უნდა აღემატებოდეს 4 MB-ს." };
     }
     // Security audit M4: the bucket is public — store the photo without its hidden
     // location/time/device data, upright.

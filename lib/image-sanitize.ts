@@ -19,7 +19,7 @@ export function isUploadMime(value: string): value is UploadMime {
 }
 
 /**
- * A 5 MB file can still declare a canvas big enough to exhaust the function's memory when
+ * A 4 MB file can still declare a canvas big enough to exhaust the function's memory when
  * decoded. 40 megapixels covers every phone camera; larger is refused before decoding.
  */
 const MAX_INPUT_PIXELS = 40_000_000;

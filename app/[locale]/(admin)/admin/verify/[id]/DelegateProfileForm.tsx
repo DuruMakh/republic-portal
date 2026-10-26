@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { adminControlClasses } from "@/components/Field";
 import { PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import type { SaveProfileResult } from "./actions";
 
 export function DelegateProfileForm({
@@ -39,15 +40,20 @@ export function DelegateProfileForm({
         return;
       }
       if (photo.size > PHOTO_MAX_BYTES) {
-        setNotice({ kind: "error", text: "ფოტო არ უნდა აღემატებოდეს 5 MB-ს." });
+        setNotice({ kind: "error", text: "ფოტო არ უნდა აღემატებოდეს 4 MB-ს." });
         return;
       }
     }
     setBusy(true);
-    const result = await save(formData);
-    setBusy(false);
-    if (result.ok) setNotice({ kind: "ok", text: "პროფილი განახლდა ✓" });
-    else setNotice({ kind: "error", text: result.error });
+    try {
+      const result = await save(formData);
+      if (result.ok) setNotice({ kind: "ok", text: "პროფილი განახლდა ✓" });
+      else setNotice({ kind: "error", text: result.error });
+    } catch {
+      setNotice({ kind: "error", text: GENERIC_FUNNEL_ERROR });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -66,7 +72,7 @@ export function DelegateProfileForm({
         <span className="text-xs font-normal text-muted-fg">{bio.length} / 1000</span>
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold text-ink">
-        ფოტო (JPEG/PNG/WebP, მაქს. 5 MB)
+        ფოტო (JPEG/PNG/WebP, მაქს. 4 MB)
         <input
           type="file"
           name="photo"
@@ -90,7 +96,10 @@ export function DelegateProfileForm({
         </Button>
       </div>
       {notice ? (
-        <p className={`text-sm ${notice.kind === "ok" ? "text-ok" : "text-danger"}`}>
+        <p
+          role={notice.kind === "error" ? "alert" : "status"}
+          className={`text-sm ${notice.kind === "ok" ? "text-ok" : "text-danger"}`}
+        >
           {notice.text}
         </p>
       ) : null}

@@ -7,6 +7,7 @@ import {
   memberLookupSchema,
   membersFilterSchema,
   pageParamSchema,
+  PHOTO_MAX_BYTES,
   recordPaymentSchema,
   rejectDelegateSchema,
   todayTbilisiIso,
@@ -14,6 +15,10 @@ import {
 } from "./admin-schemas";
 
 const UUID = "6e08c9a1-2f5e-4b7a-9c3d-1a2b3c4d5e6f";
+
+it("caps uploaded images at 4 MiB", () => {
+  expect(PHOTO_MAX_BYTES).toBe(4_194_304);
+});
 
 describe("todayTbilisiIso", () => {
   it("returns YYYY-MM-DD", () => {

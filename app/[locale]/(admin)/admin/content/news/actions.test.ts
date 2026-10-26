@@ -134,6 +134,25 @@ describe("setNewsCoverAction — service-role upload", () => {
     return fd;
   }
 
+  it.each([4_194_304, 4_194_305])(
+    "enforces the 4 MiB server boundary at %i bytes",
+    async (bytes) => {
+      mocks.getAdminRoles.mockResolvedValue(["editor"]);
+      session({ from: () => ok({ image_url: null, slug: null }), rpc: () => ok() });
+      // Not decodable: sanitizer is mocked here, with real decoding covered separately.
+      const file = new File([new Uint8Array(bytes)], "c.jpg", { type: "image/jpeg" });
+      const result = await setNewsCoverAction(form(newsId, file));
+      expect(result).toEqual(
+        bytes === 4_194_304
+          ? { ok: true }
+          : { ok: false, error: "სურათი არ უნდა აღემატებოდეს 4 MB-ს." },
+      );
+      expect(admin.storageCalls.filter((c) => c.method === "upload")).toHaveLength(
+        bytes === 4_194_304 ? 1 : 0,
+      );
+    },
+  );
+
   it("rejects a malformed id before reading roles or creating any client", async () => {
     await expect(setNewsCoverAction(form("x", cover()))).resolves.toEqual({
       ok: false,

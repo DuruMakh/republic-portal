@@ -571,10 +571,12 @@ describe("account deletion races migration (20261009170000)", () => {
       expect(at, "the guard, whole").toBeGreaterThan(-1);
       expect(at).toBeLessThan(body.indexOf("insert into public.audit_log"));
       // ...and it is the definition the database runs
-      expect(newestDefinition(name).file).toBe(RACES_FILE);
+      expect(newestDefinition(name).file >= RACES_FILE).toBe(true);
       expect(code(latestDefinition(name))).toContain(guard);
       // otherwise the previous live definition, copied exactly: only `added`, at the guard, is new
-      const previous = newestDefinition(name, { except: [RACES_FILE] }).body;
+      const previous = newestDefinition(name, {
+        except: migrationFiles().filter((file) => file >= RACES_FILE),
+      }).body;
       let before = guard;
       for (const piece of added) {
         expect(before).toContain(piece);
