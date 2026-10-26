@@ -206,6 +206,8 @@ export const accountMessages: Record<string, string> = {
   "Google-ით შესვლა": "Sign in with Google",
   "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)":
     "Enter a Georgian mobile number (5XX XX XX XX)",
+  "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)":
+    "Enter a mobile number (5XX XX XX XX, or a number from abroad with its country code)",
   "კოდის გაგზავნა ვერ მოხერხდა, სცადეთ თავიდან": "We could not send the code. Please try again.",
   "მონაცემების წამოღება ვერ მოხერხდა — სცადე თავიდან.":
     "We could not load your details — please try again.",
@@ -235,8 +237,8 @@ export const accountMessages: Record<string, string> = {
   "მაგ. ნინო": "e.g. Nino",
   "მაგ. ბერიძე": "e.g. Beridze",
   "ნომერი დადასტურებულია": "Phone number verified",
-  "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად.":
-    "Verify.ge will receive your number only to send and verify the one-time registration code.",
+  "SMS სერვისი ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …":
+    "The SMS service will receive your number only to send and verify the one-time registration code. Enter a number from abroad with its country code, e.g. +49 …",
   დარეგისტრირება: "Register",
   "წევრის რეგისტრაცია": "Member registration",
   "მხოლოდ ძირითადი მონაცემები — დანარჩენს კაბინეტში ნახავ.":
@@ -366,8 +368,10 @@ export const accountMessages: Record<string, string> = {
   "არასწორი დელეგატი": "Invalid delegate",
   "თარიღი უნდა იყოს წარსულში.": "The date must be in the past.",
   "გასაგრძელებლად მონიშნე თანხმობა.": "Select the consent box to continue.",
-  "შეიყვანე ქართული მობილურის ნომერი (5XX XX XX XX).":
-    "Enter a Georgian mobile number (5XX XX XX XX).",
+  "შეიყვანე სწორი მობილურის ნომერი. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …":
+    "Enter a valid mobile number. For a number from abroad, include the country code, e.g. +49 …",
+  "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით.":
+    "We can't send codes to numbers from this country yet.",
   "ძალიან ბევრი კოდი მოითხოვე — სცადე ცოტა ხანში.":
     "You have requested too many codes. Please try again later.",
   "კოდი არასწორია.": "Incorrect code.",

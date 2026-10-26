@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PRIVACY_CONSENT_REQUIRED_MESSAGE } from "./privacy";
+import { parseRegistrationPhone } from "./phone-number";
 import { normalizeGeorgianPhone } from "./validation";
 
 export const EMPLOYMENT_PRESETS = [
@@ -16,16 +17,18 @@ export const nameSchema = z
   .min(1, { message: "შეავსე ეს ველი" })
   .max(60, { message: "მაქსიმუმ 60 სიმბოლო" });
 
-const phoneSchema = z
-  .string()
-  .refine((v) => normalizeGeorgianPhone(v) !== null, {
-    message: "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
-  })
-  .transform((v) => {
-    const normalized = normalizeGeorgianPhone(v);
-    if (normalized === null) throw new Error("unreachable: refine guarantees a valid phone");
-    return normalized;
+const phoneSchema = z.string().transform((v, ctx) => {
+  const parsed = parseRegistrationPhone(v);
+  if (parsed.ok) return parsed.phone;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message:
+      parsed.reason === "country_not_supported"
+        ? "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით."
+        : "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
   });
+  return z.NEVER;
+});
 
 export const otpSchema = z.object({
   code: z.string().regex(/^\d{6}$/, { message: "შეიყვანე 6-ნიშნა კოდი" }),
@@ -58,6 +61,22 @@ export const registerSchema = z.object({
   // does not reach z.literal's issues (see tierSchema below), so an explicit errorMap.
   privacyConsent: z.literal(true, {
     errorMap: () => ({ message: PRIVACY_CONSENT_REQUIRED_MESSAGE }),
+  }),
+});
+
+/**
+ * The old phone-OTP sign-up (NEXT_PUBLIC_AUTH_MODE=phone, unused in production) sends its SMS
+ * through Supabase Auth, outside the Twilio routing and the foreign brake, so it stays Georgian.
+ */
+export const legacyRegisterSchema = registerSchema.extend({
+  phone: z.string().transform((v, ctx) => {
+    const georgian = normalizeGeorgianPhone(v);
+    if (georgian !== null) return georgian;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
+    });
+    return z.NEVER;
   }),
 });
 

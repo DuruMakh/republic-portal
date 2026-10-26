@@ -19,7 +19,7 @@ import { registerActionSchema, registerSchema } from "@/lib/funnel-schemas";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
 import { PRIVACY_CONSENT_REQUIRED_MESSAGE, PRIVACY_POLICY_PATH } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/client";
-import { normalizeGeorgianPhone } from "@/lib/validation";
+import { parseRegistrationPhone } from "@/lib/phone-number";
 import {
   registerGoogleAction,
   type GoogleRegistrationActionResult,
@@ -100,10 +100,12 @@ export function GoogleJoinForm() {
           return;
         }
         if (user.phone && user.phone_confirmed_at) {
-          const normalizedPhone = normalizeGeorgianPhone(user.phone);
-          if (normalizedPhone !== null) {
-            setPhoneInput(normalizedPhone);
-            setConfirmedPhone(normalizedPhone);
+          // auth stores the confirmed number without "+"
+          const stored = user.phone.startsWith("+") ? user.phone : `+${user.phone}`;
+          const confirmed = parseRegistrationPhone(stored);
+          if (confirmed.ok) {
+            setPhoneInput(confirmed.phone);
+            setConfirmedPhone(confirmed.phone);
           }
         }
         setPhase("form");
@@ -217,7 +219,7 @@ export function GoogleJoinForm() {
       if (!result.ok) {
         if (result.code === "not_authenticated" || result.code === "google_required") {
           returnToGoogle(result.message);
-        } else if (result.code === "invalid_phone") {
+        } else if (result.code === "invalid_phone" || result.code === "country_not_supported") {
           setErrors({ phone: result.message });
         } else if (result.code === "privacy_consent_required") {
           setErrors({ privacyConsent: result.message });
@@ -421,7 +423,7 @@ export function GoogleJoinForm() {
               {phase === "retry"
                 ? t("ნომერი დადასტურებულია")
                 : t(
-                    "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად.",
+                    "SMS სერვისი ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …",
                   )}
             </p>
           </div>

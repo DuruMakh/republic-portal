@@ -17,18 +17,21 @@ export type PhoneVerificationFailureCode =
   | "expired_code"
   | "phone_in_use"
   | "service_unavailable"
-  | "privacy_consent_required";
+  | "privacy_consent_required"
+  | "country_not_supported";
 
 export const PHONE_VERIFICATION_MESSAGES = {
   not_authenticated: "სესია ამოიწურა — შედი Google-ით თავიდან.",
   google_required: "რეგისტრაციისთვის გამოიყენე Google-ით შესვლა.",
-  invalid_phone: "შეიყვანე ქართული მობილურის ნომერი (5XX XX XX XX).",
+  invalid_phone:
+    "შეიყვანე სწორი მობილურის ნომერი. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …",
   too_many_requests: "ძალიან ბევრი კოდი მოითხოვე — სცადე ცოტა ხანში.",
   invalid_code: "კოდი არასწორია.",
   expired_code: "კოდის მოქმედების დრო ამოიწურა — მოითხოვე ახალი.",
   phone_in_use: "ეს ნომერი უკვე გამოყენებულია სხვა ანგარიშზე.",
   service_unavailable: "კოდის სერვისი დროებით მიუწვდომელია — სცადე თავიდან.",
   privacy_consent_required: PRIVACY_CONSENT_REQUIRED_MESSAGE,
+  country_not_supported: "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით.",
 } satisfies Record<PhoneVerificationFailureCode, string>;
 
 export type PhoneVerificationFailure = {
@@ -49,8 +52,10 @@ export interface SendPhoneVerificationInput {
   idempotencyKey: string;
 }
 
+export type PhoneVerificationProviderName = "verify_ge" | "twilio" | "test";
+
 export interface SentPhoneVerification {
-  provider: "verify_ge" | "test";
+  provider: PhoneVerificationProviderName;
   requestId: string;
 }
 
