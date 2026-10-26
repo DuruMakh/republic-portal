@@ -33,6 +33,10 @@ describe("parseStatementRows (spec §3.5, §5)", () => {
     "20.0",
     "20.00.00",
     "1,234.56",
+    ".20",
+    ",20",
+    "-.50",
+    "20.00-",
   ])("rejects the entire invalid amount %s", (token) => {
     const [row] = parseStatementRows(`GR-ABC234 ${token}`);
     expect(row!.amountGel).toBeNull();
@@ -46,17 +50,23 @@ describe("parseStatementRows (spec §3.5, §5)", () => {
     "20 fee -1",
     "20 balance 10001",
     "20.00 malformed 1.234",
+    "20.00 fee .50",
+    "20.00 fee -.50",
+    "20.00 fee ,50",
   ])("keeps every candidate when deciding ambiguity: %s", (tokens) => {
     const [row] = parseStatementRows(`GR-ABC234 ${tokens}`);
     expect(row!.amountGel).toBeNull();
     expect(row!.problems).toEqual(["ambiguous_amount"]);
   });
 
-  it.each(["-20.00", "10001.00", "20.001"])("never falls back to an integer after %s", (token) => {
-    const [row] = parseStatementRows(`GR-ABC234 ${token} document 7`);
-    expect(row!.amountGel).toBeNull();
-    expect(row!.problems).toEqual(["invalid_amount"]);
-  });
+  it.each(["-20.00", "10001.00", "20.001", ".20", ",20", "-.50", "20.00-"])(
+    "never falls back to an integer after %s",
+    (token) => {
+      const [row] = parseStatementRows(`GR-ABC234 ${token} document 7`);
+      expect(row!.amountGel).toBeNull();
+      expect(row!.problems).toEqual(["invalid_amount"]);
+    },
+  );
 
   it.each(["I", "L", "O", "0", "1", "A"])("rejects a reference with trailing %s", (suffix) => {
     const [row] = parseStatementRows(`GR-ABC234${suffix} 20.00`);

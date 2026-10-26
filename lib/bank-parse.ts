@@ -34,7 +34,7 @@ const DATE_RE = /\b(?:(\d{2})\.(\d{2})\.(\d{4})|(\d{4})-(\d{2})-(\d{2}))\b/g;
 // Collect whole numeric tokens, including signs, parentheses and malformed
 // fractions. Validate only AFTER choosing the decimal or integer candidate class.
 const MONEY_RE =
-  /(?<![A-Za-z0-9.,()+-])(?:[-+(]\s*)*\d+(?: \d{3})*(?:[.,]\d*)*(?:\s*\))*(?![A-Za-z0-9.,()+-])/g;
+  /(?<![A-Za-z0-9.,()+-])(?:[-+(]\s*)*[.,]*\d+(?: \d{3})*(?:[.,+-]\d*)*(?:\s*\))*(?![A-Za-z0-9.,()+-])/g;
 const VALID_AMOUNT_RE = /^\+?(?:\d+|\d{1,3}(?: \d{3})+)(?:[.,]\d{2})?$/;
 
 function plausibleDate(y: number, m: number, d: number): boolean {
