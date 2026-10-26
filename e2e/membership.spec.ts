@@ -295,6 +295,7 @@ test("a personal ID already claimed by another member is rejected inline, stayin
 
 test("membership reads recover in place on mobile and keyboard submissions focus the next step", async ({
   page,
+  context,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await passRegistration(page, {
@@ -312,7 +313,8 @@ test("membership reads recover in place on mobile and keyboard submissions focus
   await registeredName.press("Enter");
   await expect(page.getByTestId("profile-saved")).toHaveAttribute("role", "status");
   let failRegions = true;
-  await page.route("**/rest/v1/regions?*", async (route) => {
+  // Production's service worker forwards these reads; context routes intercept its requests too.
+  await context.route("**/rest/v1/regions?*", async (route) => {
     if (failRegions) {
       await route.fulfill({ status: 400, json: { message: "test read failure" } });
     } else await route.continue();
@@ -338,7 +340,7 @@ test("membership reads recover in place on mobile and keyboard submissions focus
     releaseCities = resolve;
   });
   let failCities = true;
-  await page.route("**/rest/v1/cities?*", async (route) => {
+  await context.route("**/rest/v1/cities?*", async (route) => {
     if (failCities) {
       await citiesHeld;
       await route.fulfill({ status: 400, json: { message: "test read failure" } });
