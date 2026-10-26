@@ -167,7 +167,7 @@ describe("PollCard", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "დიახ" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_FUNNEL_ERROR);
-    expect(screen.getByRole("alert")).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
     await waitFor(() => expect(screen.getByRole("button", { name: "დიახ" })).not.toBeDisabled());
     fireEvent.click(screen.getByRole("button", { name: "დიახ" }));
     expect(await screen.findByRole("status")).toHaveTextContent("შენი ხმა მიღებულია ✓");
