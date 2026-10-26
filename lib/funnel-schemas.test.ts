@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   EMPLOYMENT_PRESETS,
+  legacyRegisterSchema,
   membershipProfileSchema,
   otpSchema,
   registerActionSchema,
@@ -20,6 +21,24 @@ describe("registerSchema", () => {
     const parsed = registerSchema.parse(base);
     expect(parsed.phone).toBe("+995555123456");
   });
+  it("accepts a foreign mobile from an allowed country; says which refusal it is", () => {
+    expect(registerSchema.parse({ ...base, phone: "+31 6 54798014" }).phone).toBe("+31654798014");
+    const russian = registerSchema.safeParse({ ...base, phone: "+7 912 345 67 89" });
+    expect(russian.success).toBe(false);
+    if (!russian.success) {
+      expect(russian.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "ამ ქვეყნის ნომერზე კოდს ჯერ ვერ ვაგზავნით.",
+      );
+    }
+    for (const phone of ["31654798014", "+31 20 123 4567"]) {
+      const result = registerSchema.safeParse({ ...base, phone });
+      expect(result.success).toBe(false);
+      if (result.success) continue;
+      expect(result.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "შეიყვანეთ მობილურის ნომერი (5XX XX XX XX, ან საზღვარგარეთის ნომერი ქვეყნის კოდით)",
+      );
+    }
+  });
   it("accepts an optional referral code and rejects junk", () => {
     expect(registerSchema.safeParse({ ...base, refCode: "7K3M9Q" }).success).toBe(true);
     expect(registerSchema.safeParse({ ...base, refCode: "bad code!" }).success).toBe(false);
@@ -32,6 +51,22 @@ describe("registerSchema", () => {
       if (result.success) continue;
       const issue = result.error.issues.find((i) => i.path[0] === "privacyConsent");
       expect(issue?.message).toBe(PRIVACY_CONSENT_REQUIRED_MESSAGE);
+    }
+  });
+});
+
+describe("legacyRegisterSchema (old phone sign-in, Georgian numbers only)", () => {
+  const base = { firstName: "ნინო", lastName: "ბერიძე", privacyConsent: true };
+  it("keeps Georgian numbers and refuses foreign ones", () => {
+    expect(legacyRegisterSchema.parse({ ...base, phone: "555 12 34 56" }).phone).toBe(
+      "+995555123456",
+    );
+    const foreign = legacyRegisterSchema.safeParse({ ...base, phone: "+31 6 54798014" });
+    expect(foreign.success).toBe(false);
+    if (!foreign.success) {
+      expect(foreign.error.issues.find((i) => i.path[0] === "phone")?.message).toBe(
+        "შეიყვანეთ ქართული მობილურის ნომერი (5XX XX XX XX)",
+      );
     }
   });
 });

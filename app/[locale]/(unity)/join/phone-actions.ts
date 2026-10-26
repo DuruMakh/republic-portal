@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { normalizeGeorgianPhone } from "@/lib/validation";
+import { parseRegistrationPhone } from "@/lib/phone-number";
+import { testSignInEnabled } from "@/lib/env";
 import {
   buildPhoneVerificationIdempotencyKey,
   PHONE_VERIFICATION_MAX_ATTEMPTS,
@@ -14,7 +15,7 @@ import {
   type SendPhoneVerificationActionResult,
   type VerifyPhoneVerificationActionResult,
 } from "@/lib/phone-verification/contracts";
-import { createPhoneVerificationProvider } from "@/lib/phone-verification/provider";
+import { createProviderByName, providerNameFor } from "@/lib/phone-verification/provider";
 import {
   completePhoneVerificationSend,
   consumeChallenge,
@@ -23,7 +24,7 @@ import {
   reservePhoneVerificationAttempt,
   reservePhoneVerificationSend,
 } from "@/lib/phone-verification/store";
-import { PhoneVerificationProviderError } from "@/lib/phone-verification/verify-ge";
+import { PhoneVerificationProviderError } from "@/lib/phone-verification/errors";
 
 const sendSchema = z.object({ phone: z.string() });
 // Sending the number to the SMS provider is processing, so consent comes first
@@ -79,8 +80,19 @@ export async function sendPhoneVerificationAction(
 
   const parsed = sendSchema.safeParse(input);
   if (!parsed.success) return failure("invalid_phone");
-  const phone = normalizeGeorgianPhone(parsed.data.phone);
-  if (!phone) return failure("invalid_phone");
+  const number = parseRegistrationPhone(parsed.data.phone);
+  if (!number.ok) {
+    return failure(number.reason === "country_not_supported" ? number.reason : "invalid_phone");
+  }
+  const { phone } = number;
+  // ADR-055: Georgian numbers go to Verify.ge, foreign ones to Twilio when it is configured.
+  let providerName: ReturnType<typeof providerNameFor>;
+  try {
+    providerName = providerNameFor(number.region);
+  } catch {
+    return failure("service_unavailable");
+  }
+  if (!providerName) return failure("country_not_supported");
 
   const nowMs = Date.now();
   let admin: ReturnType<typeof createAdminClient>;
@@ -104,7 +116,8 @@ export async function sendPhoneVerificationAction(
     });
     if (!reservation) return failure("too_many_requests");
 
-    const provider = createPhoneVerificationProvider();
+    const provider = createProviderByName(providerName);
+    if (!provider) return failure("service_unavailable");
     const sent = await provider.send({
       phone,
       purpose: "registration",
@@ -121,7 +134,9 @@ export async function sendPhoneVerificationAction(
     return { ok: true, challengeId: completed.id, phone, expiresAt: completed.expiresAt };
   } catch (caught) {
     const code = providerFailure(caught);
-    return failure(code === "too_many_requests" ? code : "service_unavailable");
+    // refusals the user can act on pass through; anything else stays a redacted outage
+    const actionable = ["too_many_requests", "invalid_phone", "country_not_supported"];
+    return failure(actionable.includes(code) ? code : "service_unavailable");
   }
 }
 
@@ -141,6 +156,10 @@ export async function verifyPhoneVerificationAction(
   if (!parsed.success) {
     const invalidChallenge = parsed.error.issues.some((issue) => issue.path[0] === "challengeId");
     return failure(invalidChallenge ? "expired_code" : "invalid_code");
+  }
+
+  if (process.env.PHONE_VERIFICATION_PROVIDER === "test" && !testSignInEnabled()) {
+    return failure("service_unavailable");
   }
 
   let admin: ReturnType<typeof createAdminClient>;
@@ -173,9 +192,6 @@ export async function verifyPhoneVerificationAction(
     if (challenge.verify_attempts >= PHONE_VERIFICATION_MAX_ATTEMPTS) {
       return failure("too_many_requests");
     }
-    if (process.env.PHONE_VERIFICATION_PROVIDER !== challenge.provider) {
-      return failure("service_unavailable");
-    }
 
     const reservedAttempt = await reservePhoneVerificationAttempt(admin, {
       challengeId: challenge.id,
@@ -183,7 +199,10 @@ export async function verifyPhoneVerificationAction(
     });
     if (reservedAttempt === null) return failure("too_many_requests");
 
-    const provider = createPhoneVerificationProvider();
+    // Only the provider that sent the code may check it, and only while still allowed here.
+    const provider = createProviderByName(challenge.provider);
+    if (!provider) return failure("service_unavailable");
+
     try {
       const result = await provider.verify({
         requestId: challenge.provider_request_id,

@@ -312,6 +312,11 @@ describe("GoogleJoinForm", () => {
     expect(mocks.replace).toHaveBeenCalledWith("/me");
   });
 
+  it("prefills a confirmed foreign phone that auth stores without +", async () => {
+    await reachGoogleForm(googleUser({ phone: "31654798014", phone_confirmed_at: EXPIRES_AT }));
+    expect(screen.getByRole("textbox", { name: "ტელეფონის ნომერი" })).toHaveValue("+31654798014");
+  });
+
   it("sends exactly one SMS when the confirmed phone has no consumed proof", async () => {
     mocks.registerGoogle.mockResolvedValueOnce({
       ok: false,
@@ -553,13 +558,27 @@ describe("GoogleJoinForm", () => {
     expect(screen.queryByText(PRIVACY_CONSENT_REQUIRED_MESSAGE)).toBeNull();
   });
 
-  it("plainly discloses Verify.ge's one-time use of the phone number", async () => {
+  it("plainly discloses the SMS service's one-time use of the number, and how to type one from abroad", async () => {
     await reachGoogleForm();
 
     expect(
       screen.getByText(
-        "Verify.ge ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად.",
+        "SMS სერვისი ნომერს მიიღებს მხოლოდ რეგისტრაციის ერთჯერადი კოდის გასაგზავნად და დასადასტურებლად. საზღვარგარეთის ნომერი შეიყვანე ქვეყნის კოდით, მაგ. +49 …",
       ),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Verify.ge/)).toBeNull();
+  });
+
+  it("puts a country refusal of the SMS send on the phone field", async () => {
+    mocks.sendPhone.mockResolvedValue({
+      ok: false,
+      code: "country_not_supported",
+      message: PHONE_VERIFICATION_MESSAGES.country_not_supported,
+    });
+    await sendGoogleCodeExpectingNoCodeScreen();
+
+    const field = screen.getByRole("textbox", { name: "ტელეფონის ნომერი" });
+    await waitFor(() => expect(field).toHaveAttribute("aria-invalid", "true"));
+    expect(screen.getByText(PHONE_VERIFICATION_MESSAGES.country_not_supported)).toBeInTheDocument();
   });
 });

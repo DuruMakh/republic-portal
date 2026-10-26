@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { createVerifyGeProvider, PhoneVerificationProviderError } from "./verify-ge";
+import { PhoneVerificationProviderError } from "./errors";
+import { createVerifyGeProvider } from "./verify-ge";
 
 const serverSecret = "server-secret";
 const idempotencyKey = "a".repeat(64);

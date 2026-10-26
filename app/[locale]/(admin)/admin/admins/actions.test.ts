@@ -126,4 +126,25 @@ describe("findAdminCandidateAction — super_admin-only phone lookup", () => {
       args: ["phone", ["+995555123456", "995555123456"]],
     });
   });
+
+  it("looks a member with a foreign number up by both stored formats", async () => {
+    mocks.getAdminRoles.mockResolvedValue(["super_admin"]);
+    const s = session({
+      from: () =>
+        ok({
+          id: userId,
+          first_name: "Nino",
+          last_name: "Beridze",
+          phone: "+31654798014",
+          registration_completed_at: "2026-08-01T00:00:00Z",
+          status: "profile_completed",
+        }),
+    });
+    const res = await findAdminCandidateAction("+31 6 5479 8014");
+    expect(res).toMatchObject({ ok: true, candidate: { id: userId, phone: "+31654798014" } });
+    expect(s.tableCalls()[0]!.chain).toContainEqual({
+      method: "in",
+      args: ["phone", ["+31654798014", "31654798014"]],
+    });
+  });
 });

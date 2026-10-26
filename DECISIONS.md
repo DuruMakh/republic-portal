@@ -99,9 +99,16 @@ tests cite them. The full original entries (reasoning, rejected options, inciden
 
 ## Sign-in and registration
 
-- **ADR-031/033 Google is the identity; Verify.ge proves a phone once, at registration.** It
-  sits behind `PhoneVerificationProvider`, calls the endpoint that accepts the dashboard key,
-  and logs no numbers or codes. The `test` provider is refused in production.
+- **ADR-031/033 Google is the identity; a phone is proven once, at registration** (changed
+  2026-10-25): Verify.ge for Georgian numbers, Twilio for foreign ones (ADR-055). Both sit
+  behind `PhoneVerificationProvider` and log no numbers or codes. The `test` provider is
+  refused in production.
+- **ADR-055 Foreign numbers get SMS codes from Twilio Verify (2026-10-25).** Verify.ge cannot
+  deliver abroad. Only countries in `FOREIGN_SMS_COUNTRIES` (`lib/phone-number.ts`; no Russia)
+  and at most 100 foreign sends a day (`reserve_phone_verification_send`). libphonenumber-js
+  (mobile metadata) parses numbers, because `+1` and `+44` mix allowed and refused territories,
+  so the country must come from the numbering plan. Without the `TWILIO_*` env vars, foreign
+  numbers are refused.
 - **ADR-018 Progressive registration:** a light sign-up makes a supporter; membership is a form
   in the cabinet; delegacy is a member-only request reviewed by admins.
 - **ADR-022 The personal ID is asked at membership,** not at sign-up.

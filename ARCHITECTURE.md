@@ -27,9 +27,11 @@ Vercel hosts production only; changes are checked on a local Supabase stack (REA
 ## Auth flow
 
 Google sign-in via Supabase OAuth creates the session through `/auth/callback`;
-`@supabase/ssr` refreshes its cookie in `proxy.ts`. Verify.ge proves phone ownership
-once during registration, through `PhoneVerificationProvider`; it is not the sign-in
-method (ADR-031/033). The test provider is refused in production. Legacy phone-code
+`@supabase/ssr` refreshes its cookie in `proxy.ts`. Verify.ge proves Georgian phone ownership
+once during registration; supported foreign numbers use Twilio Verify (ADR-055), through
+`PhoneVerificationProvider`. Phone proof is not the sign-in method (ADR-031/033). The test
+provider requires an explicit preview/development environment, an approved test database,
+and a non-production Vercel deployment. Legacy phone-code
 screens remain in source, but the current mode is `NEXT_PUBLIC_AUTH_MODE=google`.
 
 ## Registration funnel (Phase 2)

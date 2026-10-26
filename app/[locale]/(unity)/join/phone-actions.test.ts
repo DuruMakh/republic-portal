@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
-import { PhoneVerificationProviderError } from "@/lib/phone-verification/verify-ge";
+import { PhoneVerificationProviderError } from "@/lib/phone-verification/errors";
 import type { ChallengeRow } from "@/lib/phone-verification/store";
 
 vi.mock("server-only", () => ({}));
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   createAdminClient: vi.fn(),
   updateUserById: vi.fn(),
   createProvider: vi.fn(),
+  providerNameFor: vi.fn(),
   send: vi.fn(),
   verify: vi.fn(),
   reserveSend: vi.fn(),
@@ -24,7 +25,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabase: mocks.createServerSupabase }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.createAdminClient }));
 vi.mock("@/lib/phone-verification/provider", () => ({
-  createPhoneVerificationProvider: mocks.createProvider,
+  createProviderByName: mocks.createProvider,
+  providerNameFor: mocks.providerNameFor,
 }));
 vi.mock("@/lib/phone-verification/store", () => ({
   reservePhoneVerificationSend: mocks.reserveSend,
@@ -67,12 +69,16 @@ describe("phone verification server actions", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-11T12:00:00.000Z"));
-    process.env.PHONE_VERIFICATION_PROVIDER = "test";
+    vi.stubEnv("PHONE_VERIFICATION_PROVIDER", "test");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    vi.stubEnv("VERCEL_ENV", "development");
     mocks.createServerSupabase.mockResolvedValue({ auth: { getUser: mocks.getUser } });
     mocks.createAdminClient.mockReturnValue({
       auth: { admin: { updateUserById: mocks.updateUserById } },
     });
     mocks.createProvider.mockReturnValue({ send: mocks.send, verify: mocks.verify });
+    mocks.providerNameFor.mockReturnValue("test");
     mocks.reserveSend.mockResolvedValue({ reservationId });
     mocks.completeSend.mockResolvedValue({ id: challengeId, expiresAt: activeRow.expires_at });
     mocks.phoneInUse.mockResolvedValue(false);
@@ -83,6 +89,8 @@ describe("phone verification server actions", () => {
     mocks.verify.mockResolvedValue({ verified: true });
     mocks.updateUserById.mockResolvedValue({ data: {}, error: null });
   });
+
+  afterEach(() => vi.unstubAllEnvs());
 
   it("rejects missing or non-Google sessions before privileged dependencies", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
@@ -129,6 +137,35 @@ describe("phone verification server actions", () => {
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
+
+  it.each(["send", "verify"])(
+    "refuses test-provider %s on a live deployment before privileged access",
+    async (action) => {
+      authenticate();
+      const provider = await vi.importActual<typeof import("@/lib/phone-verification/provider")>(
+        "@/lib/phone-verification/provider",
+      );
+      mocks.providerNameFor.mockImplementation(provider.providerNameFor);
+      mocks.createProvider.mockImplementation(provider.createProviderByName);
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+      vi.stubEnv("VERCEL_ENV", "production");
+      try {
+        const result =
+          action === "send"
+            ? await sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true })
+            : await verifyPhoneVerificationAction({ challengeId, code: "123456" });
+        expect(result).toMatchObject({ ok: false, code: "service_unavailable" });
+        expect(mocks.createAdminClient).not.toHaveBeenCalled();
+        expect(mocks.reserveSend).not.toHaveBeenCalled();
+        expect(mocks.read).not.toHaveBeenCalled();
+        expect(mocks.send).not.toHaveBeenCalled();
+        expect(mocks.verify).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    },
+  );
 
   it("atomically reserves the send before provider work and completes one canonical challenge", async () => {
     authenticate();
@@ -331,4 +368,90 @@ describe("phone verification server actions", () => {
       message: PHONE_VERIFICATION_MESSAGES.service_unavailable,
     });
   });
+
+  it("refuses a number from a country off the list before any privileged work", async () => {
+    authenticate();
+    await expect(
+      sendPhoneVerificationAction({ phone: "+7 912 345 67 89", privacyConsent: true }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "country_not_supported",
+      message: PHONE_VERIFICATION_MESSAGES.country_not_supported,
+    });
+    expect(mocks.createAdminClient).not.toHaveBeenCalled();
+    expect(mocks.reserveSend).not.toHaveBeenCalled();
+  });
+
+  it("refuses a foreign number while no provider serves it, without reserving", async () => {
+    authenticate();
+    mocks.providerNameFor.mockReturnValue(null);
+    await expect(
+      sendPhoneVerificationAction({ phone: "+31 6 54798014", privacyConsent: true }),
+    ).resolves.toMatchObject({ ok: false, code: "country_not_supported" });
+    expect(mocks.providerNameFor).toHaveBeenCalledWith("foreign");
+    expect(mocks.reserveSend).not.toHaveBeenCalled();
+    expect(mocks.createProvider).not.toHaveBeenCalled();
+  });
+
+  it("sends a foreign number through the provider chosen for it and records that provider", async () => {
+    authenticate();
+    mocks.providerNameFor.mockReturnValue("twilio");
+    mocks.send.mockResolvedValue({ provider: "twilio", requestId: "VE1" });
+    await expect(
+      sendPhoneVerificationAction({ phone: "+31 6 54798014", privacyConsent: true }),
+    ).resolves.toMatchObject({ ok: true, phone: "+31654798014" });
+    expect(mocks.providerNameFor).toHaveBeenCalledWith("foreign");
+    expect(mocks.createProvider).toHaveBeenCalledWith("twilio");
+    expect(mocks.reserveSend).toHaveBeenCalledWith(expect.anything(), {
+      userId,
+      phone: "+31654798014",
+      idempotencyKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(mocks.completeSend).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ provider: "twilio", providerRequestId: "VE1" }),
+    );
+  });
+
+  it("asks for the Georgian provider for a Georgian number", async () => {
+    authenticate();
+    mocks.providerNameFor.mockReturnValue("verify_ge");
+    await sendPhoneVerificationAction({ phone: "555 12 34 56", privacyConsent: true });
+    expect(mocks.providerNameFor).toHaveBeenCalledWith("georgia");
+    expect(mocks.createProvider).toHaveBeenCalledWith("verify_ge");
+  });
+
+  it("checks a code with the provider stored on the challenge", async () => {
+    authenticate();
+    mocks.read.mockResolvedValue({ ...activeRow, provider: "twilio", phone: "+31654798014" });
+    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
+      ok: true,
+      phone: "+31654798014",
+    });
+    expect(mocks.createProvider).toHaveBeenCalledWith("twilio");
+  });
+
+  it("never verifies a challenge whose provider is no longer available", async () => {
+    authenticate();
+    mocks.read.mockResolvedValue({ ...activeRow, provider: "twilio" });
+    mocks.createProvider.mockReturnValue(null);
+    await expect(verifyPhoneVerificationAction({ challengeId, code: "123456" })).resolves.toEqual({
+      ok: false,
+      code: "service_unavailable",
+      message: PHONE_VERIFICATION_MESSAGES.service_unavailable,
+    });
+    expect(mocks.verify).not.toHaveBeenCalled();
+    expect(mocks.consume).not.toHaveBeenCalled();
+  });
+
+  it.each(["invalid_phone", "country_not_supported", "too_many_requests"] as const)(
+    "tells the user a provider refusal of %s as it is, not as an outage",
+    async (code) => {
+      authenticate();
+      mocks.send.mockRejectedValue(new PhoneVerificationProviderError(code));
+      await expect(
+        sendPhoneVerificationAction({ phone: "+31 6 54798014", privacyConsent: true }),
+      ).resolves.toEqual({ ok: false, code, message: PHONE_VERIFICATION_MESSAGES[code] });
+    },
+  );
 });

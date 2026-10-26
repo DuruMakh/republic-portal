@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildPhoneVerificationIdempotencyKey } from "./contracts";
+import { accountMessages } from "../i18n/messages/accounts";
+import { buildPhoneVerificationIdempotencyKey, PHONE_VERIFICATION_MESSAGES } from "./contracts";
 
 describe("phone verification contract", () => {
   it("creates a stable opaque idempotency key inside one resend window", () => {
@@ -27,5 +28,10 @@ describe("phone verification contract", () => {
     expect(buildPhoneVerificationIdempotencyKey({ ...base, nowMs: 0 })).not.toBe(
       buildPhoneVerificationIdempotencyKey({ ...base, nowMs: 60_000 }),
     );
+  });
+
+  it("has an English translation for every message the user can see", () => {
+    const missing = Object.values(PHONE_VERIFICATION_MESSAGES).filter((m) => !accountMessages[m]);
+    expect(missing).toEqual([]);
   });
 });

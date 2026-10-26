@@ -5,6 +5,7 @@ import { z } from "zod";
 import { hasAnyRole } from "@/lib/admin";
 import { grantRoleSchema, revokeRoleSchema } from "@/lib/admin-schemas";
 import { GENERIC_FUNNEL_ERROR, mapFunnelError } from "@/lib/funnel";
+import { parseRegistrationPhone } from "@/lib/phone-number";
 import { createServerSupabase, getAdminRoles } from "@/lib/supabase/server";
 
 export type AdminRoleActionResult = { ok: true } | { ok: false; error: string };
@@ -16,11 +17,12 @@ const phoneInput = z
   .string()
   .trim()
   .transform((v) => v.replaceAll(/[\s-]/g, ""))
-  .refine((v) => /^(\+?995)?5\d{8}$/.test(v), "ტელეფონის ფორმატი არასწორია.");
+  .refine((v) => parseRegistrationPhone(v).ok, "ტელეფონის ფორმატი არასწორია.");
 
 function normalizePhone(v: string): string {
-  const digits = v.replace(/^\+/, "");
-  return digits.startsWith("995") ? `+${digits}` : `+995${digits}`;
+  const parsed = parseRegistrationPhone(v);
+  if (!parsed.ok) throw new Error("unreachable: phoneInput guarantees a valid phone");
+  return parsed.phone;
 }
 
 export async function findAdminCandidateAction(phone: unknown): Promise<AdminCandidateResult> {
