@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { AdminNav } from "@/components/AdminNav";
 import { AuthProgress } from "@/components/AuthProgress";
 import { BoardRoster } from "@/components/BoardRoster";
@@ -139,6 +141,9 @@ const EVENT_ROW_DEMO_ITEMS: PublicEventItem[] = [
     published_at: "2026-07-01T00:00:00.000Z",
   },
 ];
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 export default function StyleguidePage() {
   const demoPaymentStatus = paymentStatusKa(null);

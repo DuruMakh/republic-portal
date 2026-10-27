@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Georgian, Noto_Serif_Georgian } from "next/font/google";
 import localFont from "next/font/local";
-import { siteUrl } from "@/lib/site";
+import { siteUrl, siteVerification } from "@/lib/site";
 import { EnglishShownProvider } from "@/components/EnglishShown";
 import { showEnglish } from "@/lib/english-switch";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
+import { openGraphDefaults } from "@/lib/i18n/metadata";
 import { isLocale } from "@/lib/i18n/routing";
 import "../globals.css";
 
@@ -40,10 +41,8 @@ const baseMetadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "ქართული რესპუბლიკა",
   description: "სამოქალაქო პორტალი",
-  openGraph: {
-    siteName: "ქართული რესპუბლიკა",
-    images: ["/og-default.png?v=civic-portal"],
-  },
+  openGraph: { ...openGraphDefaults("ka"), images: ["/og-default.png?v=civic-portal"] },
+  ...siteVerification(),
 };
 
 export function generateStaticParams() {
@@ -61,7 +60,7 @@ export async function generateMetadata({
     ...baseMetadata,
     title: "Georgian Republic",
     description: "Civic portal",
-    openGraph: { ...baseMetadata.openGraph, siteName: "Georgian Republic", locale: "en_GB" },
+    openGraph: { ...openGraphDefaults("en"), images: ["/og-default.png?v=civic-portal"] },
   };
 }
 

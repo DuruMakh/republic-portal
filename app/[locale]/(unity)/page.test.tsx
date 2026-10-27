@@ -249,3 +249,14 @@ describe("hidden surfaces", () => {
     expect(data.fetchPublicDelegates).not.toHaveBeenCalled();
   });
 });
+
+describe("structured data", () => {
+  it("describes the organisation and the website to search engines", async () => {
+    const { container } = render(await HomePage());
+    const script = container.querySelector('script[type="application/ld+json"]');
+    const types = JSON.parse(script?.textContent ?? "[]").map(
+      (o: { "@type": string }) => o["@type"],
+    );
+    expect(types).toEqual(["Organization", "WebSite"]);
+  });
+});
