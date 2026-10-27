@@ -50,6 +50,11 @@ export function UnityHeader({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dark = pathname === "/";
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- close the persistent menu after navigation, including browser history
+    setOpen(false);
+  }, [pathname]);
+
   // Escape, the Tab cycle and the body-scroll lock come from useFocusTrap, as in MobileMenu.
   const close = useCallback(() => setOpen(false), []);
   useFocusTrap({ active: open, containerRef: panelRef, onEscape: close });

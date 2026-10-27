@@ -1,7 +1,7 @@
 # Architecture
 
 One Next.js App Router app. Public pages server-rendered (SEO/OG); cabinets/admin are
-authed client views. Supabase = Postgres + phone-OTP auth + storage, RLS on everything.
+protected server-rendered views. Supabase = Postgres + Google sign-in + storage, RLS on everything.
 Vercel hosts production only; changes are checked on a local Supabase stack (README).
 
 ## Layout
@@ -26,17 +26,22 @@ Vercel hosts production only; changes are checked on a local Supabase stack (REA
 
 ## Auth flow
 
-Phone → supabase.auth.signInWithOtp → Send-SMS hook (Postgres fn) delivers code:
-dev/staging writes to dev_otp_inbox (surfaced on-screen); production will call a Georgian
-SMS provider (Phase 6). verifyOtp creates the session (cookie via @supabase/ssr session refresh in proxy.ts — Next 16's successor to middleware.ts).
+Google sign-in via Supabase OAuth creates the session through `/auth/callback`;
+`@supabase/ssr` refreshes its cookie in `proxy.ts`. Verify.ge proves Georgian phone ownership
+once during registration; supported foreign numbers use Twilio Verify (ADR-055), through
+`PhoneVerificationProvider`. Phone proof is not the sign-in method (ADR-031/033). The test
+provider requires an explicit preview/development environment, an approved test database,
+and a non-production Vercel deployment. Legacy phone-code
+screens remain in source, but the current mode is `NEXT_PUBLIC_AUTH_MODE=google`.
 
 ## Registration funnel (Phase 2)
 
-/join is the one-door light registration (ADR-018): a single screen collects name,
-surname, personal ID and phone, verifies an OTP in place, then calls the one SECURITY
-DEFINER RPC, register() — atomic and idempotent, so a repeat call from an
-already-registered phone is a state read, never a rewrite. cabinet_state() is the one
-state read for every cabinet/registration surface (discriminated CabinetState union,
+/join is the one-door light registration (ADR-018): after Google sign-in it collects
+name, surname, phone and privacy consent, verifies the phone, then calls the SECURITY
+DEFINER RPC, register_google(). It checks Google identity and recent phone proof before
+calling the internal, atomic and idempotent register(); direct client execution of
+register() is revoked. Personal ID is asked only at membership (ADR-022).
+cabinet_state() is the one state read for every cabinet/registration surface (discriminated CabinetState union,
 lib/funnel.ts); standing ('registered' | 'member') drives registered/member cabinet
 routing and nav, and an APPROVED delegacy overrides it (below). Becoming a member
 happens entirely inside the cabinet, in two RPCs:
@@ -62,7 +67,7 @@ close-then-open membership history; member_change_tier) and delegate reads
 code) are SECURITY DEFINER RPCs. cabinet_state() also returns
 status/registrationCompletedAt/createdAt. deriveDestination (lib/cabinet.ts)
 sends existing users to their cabinet from login and /join. Registration is
-progressive, not a one-way funnel: register() opens the cabinet immediately;
+progressive, not a one-way funnel: register_google() opens the cabinet immediately;
 becoming a member happens later via the in-cabinet wizard
 (become_member_save_profile then become_member_complete). The public header
 carries one account action: the join door for guests, swapping to the cabinet

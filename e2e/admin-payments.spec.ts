@@ -11,6 +11,7 @@ import {
   serviceClient,
 } from "./admin-helpers";
 import { seedCompletedMember } from "./funnel-helpers";
+import { todayTbilisiIso } from "../lib/admin-schemas";
 
 const PAYER = 2; // phase4Phone(2) — fresh member, ცენტრალური მოძრაობა, tier 10
 
@@ -27,6 +28,7 @@ test.beforeAll(async () => {
     personalId: phase4PersonalId(PAYER),
   });
 });
+
 test.afterAll(() => cleanupPhase4Users([PAYER]));
 
 // One finance session records, bulk-records and voids. How each pasted line is
@@ -114,5 +116,79 @@ test("finance records a payment, confirms a bulk paste and voids a payment", asy
     expect(await getAuditRows("payment.void", String(voided[0]!.id))).toBe(1);
     // two live payments still cover the member, so the void demotes nothing
     expect(await memberStatus()).toBe(statusBefore);
+  });
+});
+
+test("bank preview blocks unsafe tokens and confirms only the complete valid amount", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const db = serviceClient();
+  const code = await getReferenceCode(phase4Phone(PAYER));
+  const payerId = await profileIdByPhone(db, phase4Phone(PAYER));
+  const payments = async () => {
+    const { data, error } = await db
+      .from("payments")
+      .select("id, amount_gel, paid_at")
+      .eq("member_id", payerId);
+    if (error) throw new Error(`payments read failed: ${error.message}`);
+    return data ?? [];
+  };
+  const before = await payments();
+  const today = todayTbilisiIso();
+  await loginAs(page, ADMIN_PHONES.finance);
+  await page.goto("/admin/finances");
+  const paste = [
+    `${code} 1000.00`,
+    `${code} -20.00`,
+    `${code} -20`,
+    `${code} (20.00)`,
+    `${code} 0.00`,
+    `${code} 10001.00`,
+    `${code} 20.00 fee -1.00`,
+    `${code} 20.00 balance 10001.00`,
+    `${code} 20.001 document 7`,
+    `${code}I 20.00`,
+    `${code}0 20.00`,
+    `${code} 20 31.02.2026`,
+    `${code} 20 2026-04-31 01.07.2026`,
+    `${code} 20 01.07.2026 2026-04-31`,
+  ].join("\n");
+  await page.getByLabel(/ამონაწერის სტრიქონები/).fill(paste);
+  await page.getByRole("button", { name: "გადამოწმება" }).click();
+  const body = page.getByTestId("bulk-preview-body");
+  const rows = body.locator("tr");
+  await expect(rows).toHaveCount(14);
+  await expect(rows.nth(0).locator("td").nth(2)).toHaveText("1000.00");
+  await expect(rows.nth(0).locator("td").nth(3)).toHaveText(today);
+  await expect(body.getByText("ნაპოვნია", { exact: true })).toHaveCount(1);
+  await expect(body.getByText("არასწორი თანხა", { exact: true })).toHaveCount(6);
+  await expect(body.getByText("გაურკვეველი თანხა", { exact: true })).toHaveCount(2);
+  await expect(body.getByText("კოდი ვერ მოიძებნა", { exact: true })).toHaveCount(2);
+  await expect(
+    body.getByText("თარიღი არასწორია ან დიაპაზონს გარეთაა", { exact: true }),
+  ).toHaveCount(3);
+  await expect(rows.nth(11).locator("td").nth(3)).toHaveText("—");
+  await expect(rows.nth(12).locator("td").nth(3)).toHaveText("—");
+  await expect(rows.nth(13).locator("td").nth(3)).toHaveText("—");
+  await expect(page.getByRole("button", { name: "დადასტურება (1)", exact: true })).toBeEnabled();
+  await rows.first().locator("td").last().scrollIntoViewIfNeeded();
+  await body.locator("../../..").screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-4-bank-preview.png",
+  });
+  expect(await payments()).toHaveLength(before.length);
+
+  await page.getByRole("button", { name: "დადასტურება (1)", exact: true }).click();
+  await expect(page.getByText(/აღირიცხა 1 გადახდა/)).toBeVisible();
+  await expect(rows).toHaveCount(13);
+  const after = await payments();
+  const recorded = after.filter((payment) => !before.some((prior) => prior.id === payment.id));
+  expect(recorded).toHaveLength(1);
+  expect(Number(recorded[0]!.amount_gel)).toBe(1000);
+  expect(recorded[0]!.paid_at).toBe(today);
+  expect(await getAuditRows("payment.record", String(recorded[0]!.id))).toBe(1);
+  await rows.first().locator("td").last().scrollIntoViewIfNeeded();
+  await body.locator("../../..").screenshot({
+    path: "output/playwright/audit-minimal-repairs/task-4-bank-confirmed.png",
   });
 });

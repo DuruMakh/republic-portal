@@ -139,7 +139,7 @@ export async function previewBulkAction(text: unknown): Promise<BulkPreviewResul
   // statement lines for one payment must not both preview as recordable
   const batchKeys = new Set<string>();
   const rows: BulkPreviewRow[] = parsedRows.map((r) => {
-    const paidAt = r.paidAt ?? today; // the date that WILL be recorded is shown
+    const paidAt = r.problems.includes("invalid_date") ? null : (r.paidAt ?? today);
     const base: BulkPreviewRow = {
       index: r.index,
       line: r.line,
@@ -154,9 +154,11 @@ export async function previewBulkAction(text: unknown): Promise<BulkPreviewResul
     if (r.problems.includes("no_code")) return { ...base, status: "no_code" };
     if (r.problems.includes("ambiguous_amount")) return { ...base, status: "ambiguous_amount" };
     if (r.problems.includes("no_amount")) return { ...base, status: "no_amount" };
+    if (r.problems.includes("invalid_amount")) return { ...base, status: "invalid_amount" };
     // outside the confirm schema's window (2026-01-01..today) — classify HERE so a
     // single out-of-range date can never abort the whole all-or-nothing confirm
-    if (paidAt < "2026-01-01" || paidAt > today) return { ...base, status: "bad_date" };
+    if (paidAt === null || paidAt < "2026-01-01" || paidAt > today)
+      return { ...base, status: "bad_date" };
     const member = byCode.get(r.code as string);
     if (!member) return { ...base, status: "unknown_code" };
     const name = `${member.first_name} ${member.last_name}`;

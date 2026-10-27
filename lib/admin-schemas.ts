@@ -59,7 +59,7 @@ export const delegateNameSchema = z.object({
   lastName: nameSchema,
 });
 
-export const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+export const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
 /** Accepted upload mime types → stored file extension (spec §3.4). */
 export const PHOTO_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",

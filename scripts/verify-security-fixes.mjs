@@ -1,5 +1,8 @@
 /**
- * Live regression harness for the security check-up's fix wave (Task 12).
+ * RETIRED hosted-staging regression harness for the July 2026 security check-up (Task 12).
+ * Hosted staging was deleted on 9 October 2026 (ADR-051). This is historical tooling,
+ * not a verifier for the current Docker + local Supabase workflow. Its hosted-only
+ * destination guard remains intact; the commands and results described below are historical.
  *
  * Every fix in this wave is a DATABASE fix, and a database fix is only proven
  * against the database. `lib/security/schema-guards.test.ts` models the same

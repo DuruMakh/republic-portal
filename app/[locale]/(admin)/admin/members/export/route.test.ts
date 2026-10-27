@@ -158,3 +158,23 @@ describe("GET /admin/members/export — failures", () => {
     }
   });
 });
+
+describe("Member filter export forwarding", () => {
+  it.each(["profile_completed", "active_member"])(
+    "preserves %s and other filters for the audited database function",
+    async (status) => {
+      exportAs(["finance"]);
+      const s = fakeSession({ rpc: () => ok([row()]), from: () => ok([{ id: 2 }]) });
+      mocks.createServerSupabase.mockResolvedValue(s.client);
+      const res = await get(`?status=${status}&regionId=1&cityId=2&search=Beridze`);
+      expect(res.status).toBe(200);
+      expect(s.rpcCalls()[0]!.args).toMatchObject({
+        p_status: status,
+        p_region_id: 1,
+        p_city_id: 2,
+        p_search: "Beridze",
+        p_include_ids: false,
+      });
+    },
+  );
+});

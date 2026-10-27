@@ -13,7 +13,7 @@ import { cleanupPhase4Users, phase4Phone } from "./admin-helpers";
 // literals: admin-helpers reads E2E_TEST_PHONE at module load, so a hardcoded
 // expectation would flip for anyone with that variable exported.
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
   vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
   createClient.mockReset();

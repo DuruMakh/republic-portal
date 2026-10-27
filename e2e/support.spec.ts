@@ -9,6 +9,7 @@ import {
   SUPPORT_HEADING,
   SUPPORT_SUBMIT_LABEL,
   SUPPORT_SUCCESS,
+  SUPPORT_FAILURE,
 } from "../lib/support-copy";
 import { serviceClient } from "./otp-helpers";
 
@@ -60,11 +61,35 @@ test.describe("support", () => {
     await page.getByLabel(/სახელი/).fill(NAME);
     await page.getByLabel(/ტელეფონი/).fill("+995555123456");
     await page.getByLabel(/შეტყობინება/).fill(MESSAGE);
+    await page.route("**/support", async (route) => {
+      if (route.request().method() === "POST") await route.abort("failed");
+      else await route.continue();
+    });
     await page.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }).click();
+    await expect(page.locator("form").getByRole("alert")).toHaveText(SUPPORT_FAILURE);
+    await expect(page.locator("form").getByRole("alert")).toBeFocused();
+    await expect(page.getByLabel(/შეტყობინება/)).toHaveValue(MESSAGE);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.screenshot({
+      path: "output/playwright/audit-minimal-repairs/task-3-support-error.png",
+      fullPage: true,
+
+      style: "nextjs-portal { visibility: hidden; }",
+    });
+    await page.unroute("**/support");
+    await page.getByLabel(/ტელეფონი/).press("Enter");
 
     // Needs the migration applied. Until the owner pushes it, the row cannot be
     // written and this assertion is the one that will say so.
     await expect(page.getByText(SUPPORT_SUCCESS)).toBeVisible();
+    await expect(page.getByText(SUPPORT_SUCCESS)).toBeFocused();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.screenshot({
+      path: "output/playwright/audit-minimal-repairs/task-3-support-success.png",
+      fullPage: true,
+
+      style: "nextjs-portal { visibility: hidden; }",
+    });
 
     // DB truth: exactly this run's one row reached the owner's inbox. (The "no way to
     // reply" refusal is SupportForm's own unit test.)
@@ -74,5 +99,22 @@ test.describe("support", () => {
       .like("message", `%${RUN}%`);
     expect(error).toBeNull();
     expect(count).toBe(1);
+  });
+
+  test("keyboard submission focuses the first invalid field", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/support");
+    await page.getByLabel(/სახელი/).press("Enter");
+    const name = page.getByRole("textbox", { name: "სახელი" });
+    await expect(name).toBeFocused();
+    await expect(name).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator(`#${await name.getAttribute("aria-describedby")}`)).toBeVisible();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.screenshot({
+      path: "output/playwright/audit-minimal-repairs/task-3-support-invalid-mobile.png",
+      fullPage: true,
+
+      style: "nextjs-portal { visibility: hidden; }",
+    });
   });
 });

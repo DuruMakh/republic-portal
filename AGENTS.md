@@ -4,7 +4,8 @@
 
 Production app for "ქართული რესპუბლიკა" (Georgian civic platform).
 Spec: docs/superpowers/specs/2026-07-12-republic-portal-production-design.md
-UX contract: prototype/index.html. Decisions: DECISIONS.md (what holds today; full history in docs/decisions-history.md).
+Current design guidance: DESIGN.md and DECISIONS.md (what holds today; full history in docs/decisions-history.md).
+Unity is adopted page by page (ADR-053); prototype/kronika-d3/ remains the reference for unchanged Kronika surfaces.
 
 ## Communication language
 
@@ -45,7 +46,7 @@ The user may ask questions or give tasks in Georgian. Conduct work in English an
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

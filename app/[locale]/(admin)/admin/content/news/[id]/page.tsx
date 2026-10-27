@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/Card";
-import { AdminPageHeader, AdminSectionTitle } from "@/components/AdminUi";
+import { AdminPageHeader } from "@/components/AdminUi";
 import { notFound } from "next/navigation";
 import { Pill } from "@/components/Pill";
 import { contentPill } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { ArticleActions } from "../ArticleActions";
-import { CoverUpload } from "../CoverUpload";
-import { NewsForm } from "../NewsForm";
+import { NewsEditor } from "../NewsEditor";
 
 export const metadata: Metadata = { title: "სიახლის რედაქტირება — ქართული რესპუბლიკა" };
 
@@ -43,29 +40,17 @@ export default async function EditNewsPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <NewsForm
+      <NewsEditor
         article={{
           id: article.id,
           title: article.title,
           body: article.body,
           visibility: article.visibility,
         }}
+        status={article.status}
+        everPublished={article.published_at !== null}
+        imageUrl={article.image_url}
       />
-
-      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Card>
-          <AdminSectionTitle className="mb-5">ყდის სურათი</AdminSectionTitle>
-          <CoverUpload newsId={article.id} imageUrl={article.image_url} />
-        </Card>
-        <Card>
-          <AdminSectionTitle className="mb-5">მოქმედებები</AdminSectionTitle>
-          <ArticleActions
-            id={article.id}
-            status={article.status}
-            everPublished={article.published_at !== null}
-          />
-        </Card>
-      </div>
     </div>
   );
 }

@@ -1,24 +1,35 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
+import { PHOTO_MAX_BYTES, PHOTO_TYPES } from "@/lib/admin-schemas";
+import { GENERIC_FUNNEL_ERROR } from "@/lib/funnel";
 import { setNewsCoverAction } from "./actions";
 
 export function CoverUpload({ newsId, imageUrl }: { newsId: string; imageUrl: string | null }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  function submit() {
+  async function submit() {
     const file = fileRef.current?.files?.[0];
     if (!file) {
       setError("აირჩიე ფაილი.");
       return;
     }
+    if (!PHOTO_TYPES[file.type]) {
+      setError("დაშვებულია მხოლოდ JPEG, PNG ან WebP სურათი.");
+      return;
+    }
+    if (file.size > PHOTO_MAX_BYTES) {
+      setError("სურათი არ უნდა აღემატებოდეს 4 MB-ს.");
+      return;
+    }
     setError(null);
-    startTransition(async () => {
+    setPending(true);
+    try {
       const formData = new FormData();
       formData.set("newsId", newsId);
       formData.set("cover", file);
@@ -29,7 +40,11 @@ export function CoverUpload({ newsId, imageUrl }: { newsId: string; imageUrl: st
       }
       if (fileRef.current) fileRef.current.value = "";
       router.refresh();
-    });
+    } catch {
+      setError(GENERIC_FUNNEL_ERROR);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -52,9 +67,13 @@ export function CoverUpload({ newsId, imageUrl }: { newsId: string; imageUrl: st
         </Button>
       </div>
       <p className="text-xs text-muted-fg">
-        JPEG/PNG/WebP, მაქს. 5 MB. გამოჩნდება ბარათზე და OG სურათად.
+        JPEG/PNG/WebP, მაქს. 4 MB. გამოჩნდება ბარათზე და OG სურათად.
       </p>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -13,12 +13,13 @@ const STATUS_LABELS: Record<BulkStatus, string> = {
   ok: "ნაპოვნია",
   no_code: "კოდი ვერ მოიძებნა",
   no_amount: "თანხა ვერ დადგინდა",
+  invalid_amount: "არასწორი თანხა",
   ambiguous_amount: "გაურკვეველი თანხა",
   unknown_code: "უცნობი კოდი",
   duplicate: "დუბლიკატი",
   duplicate_line: "განმეორებული ხაზი",
   not_completed: "დაუსრულებელი რეგისტრაცია",
-  bad_date: "თარიღი დიაპაზონს გარეთაა",
+  bad_date: "თარიღი არასწორია ან დიაპაზონს გარეთაა",
 };
 
 export function BulkMatch({

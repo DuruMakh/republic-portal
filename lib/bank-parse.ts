@@ -7,7 +7,8 @@
  */
 import { FUNNEL_CODE_ALPHABET } from "./funnel";
 
-export type ParserProblem = "no_code" | "no_amount" | "ambiguous_amount";
+export type ParserProblem =
+  "no_code" | "no_amount" | "ambiguous_amount" | "invalid_amount" | "invalid_date";
 
 export interface ParsedStatementRow {
   index: number;
@@ -25,16 +26,17 @@ export interface ParsedStatementRow {
 // and shadows the real code later on the line;
 // trailing lookahead: an over-long body must not match at all (no silent truncation)
 const CODE_RE = new RegExp(
-  `(?<![A-Za-z0-9])GR-?([${FUNNEL_CODE_ALPHABET}]{6})(?![${FUNNEL_CODE_ALPHABET}])`,
+  `(?<![A-Za-z0-9])GR-?([${FUNNEL_CODE_ALPHABET}]{6})(?![A-Za-z0-9])`,
   "i",
 );
 // dd.mm.yyyy or yyyy-mm-dd
-const DATE_DOT_RE = /\b(\d{2})\.(\d{2})\.(\d{4})\b/;
-const DATE_ISO_RE = /\b(\d{4})-(\d{2})-(\d{2})\b/;
-// decimals: optional space-thousands, dot/comma + exactly two digits
-const DECIMAL_RE = /(?<![\d.,])\d{1,3}(?: \d{3})*[.,]\d{2}(?![\d.,])/g;
-// integer fallback: standalone 1–5 digit runs
-const INT_RE = /(?<![\d.,])\d{1,5}(?![\d.,])/g;
+const DATE_RE = /\b(?:(\d{2})\.(\d{2})\.(\d{4})|(\d{4})-(\d{2})-(\d{2}))\b/g;
+// Collect whole numeric tokens, including signs, parentheses and malformed
+// fractions. Validate only AFTER selecting candidates, retaining explicit signs
+// and accounting tokens even when decimals take priority over unsigned integers.
+const MONEY_RE =
+  /(?<![A-Za-z0-9.,()+-])(?:[-+(]\s*)*[.,]*\d+(?: \d{3})*(?:[.,+-]\d*)*(?:\s*\))*(?![A-Za-z0-9.,()+-])/g;
+const VALID_AMOUNT_RE = /^\+?(?:\d+|\d{1,3}(?: \d{3})+)(?:[.,]\d{2})?$/;
 
 function plausibleDate(y: number, m: number, d: number): boolean {
   if (y < 2000 || y > 2100) return false;
@@ -43,29 +45,6 @@ function plausibleDate(y: number, m: number, d: number): boolean {
   // then rejects — aborting a whole bulk batch with a generic error
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
-}
-
-function extractDate(line: string): { iso: string; raw: string } | null {
-  // spec §5: the FIRST plausible date token wins, regardless of format — so
-  // collect each format's first match and pick the one starting earliest.
-  const candidates: { at: number; iso: string; raw: string }[] = [];
-  const dot = DATE_DOT_RE.exec(line);
-  if (dot) {
-    // `!`: a successful match guarantees capture groups 1–3 exist
-    const [dd, mm, yyyy] = [dot[1]!, dot[2]!, dot[3]!];
-    if (plausibleDate(Number(yyyy), Number(mm), Number(dd)))
-      candidates.push({ at: dot.index, iso: `${yyyy}-${mm}-${dd}`, raw: dot[0] });
-  }
-  const iso = DATE_ISO_RE.exec(line);
-  if (iso) {
-    // `!`: a successful match guarantees capture groups 1–3 exist
-    const [yyyy, mm, dd] = [iso[1]!, iso[2]!, iso[3]!];
-    if (plausibleDate(Number(yyyy), Number(mm), Number(dd)))
-      candidates.push({ at: iso.index, iso: `${yyyy}-${mm}-${dd}`, raw: iso[0] });
-  }
-  candidates.sort((a, b) => a.at - b.at);
-  const first = candidates[0];
-  return first ? { iso: first.iso, raw: first.raw } : null;
 }
 
 function toAmount(token: string): number {
@@ -79,28 +58,34 @@ function parseLine(line: string, index: number): ParsedStatementRow {
   const code = codeMatch ? `GR-${codeMatch[1]!.toUpperCase()}` : null;
   if (!code) problems.push("no_code");
 
-  const date = extractDate(line);
+  let paidAt: string | null = null;
+  for (const date of line.matchAll(DATE_RE)) {
+    const [yyyy, mm, dd] = date[1] ? [date[3]!, date[2]!, date[1]] : [date[4]!, date[5]!, date[6]!];
+    if (!plausibleDate(Number(yyyy), Number(mm), Number(dd))) {
+      if (!problems.includes("invalid_date")) problems.push("invalid_date");
+    } else if (paidAt === null) paidAt = `${yyyy}-${mm}-${dd}`;
+  }
+  if (problems.includes("invalid_date")) paidAt = null;
 
   // strip code + date substrings (every occurrence) so their digits never
   // become amount candidates
   let cleaned = line;
   if (codeMatch) cleaned = cleaned.replaceAll(codeMatch[0], " ");
-  if (date) cleaned = cleaned.replaceAll(date.raw, " ");
+  cleaned = cleaned.replace(DATE_RE, " ");
 
   let amountGel: number | null = null;
-  const decimals = [...cleaned.matchAll(DECIMAL_RE)].map((m) => toAmount(m[0]));
-  const plausibleDecimals = decimals.filter((n) => n > 0 && n <= 10000);
-  if (plausibleDecimals.length === 1) {
-    amountGel = plausibleDecimals[0]!;
-  } else if (plausibleDecimals.length > 1) {
+  const tokens = [...cleaned.matchAll(MONEY_RE)].map((m) => m[0]);
+  const hasDecimal = tokens.some((token) => /[.,]/.test(token));
+  const candidates = hasDecimal ? tokens.filter((token) => /[.,()+-]/.test(token)) : tokens;
+  if (candidates.length > 1) {
     problems.push("ambiguous_amount");
+  } else if (candidates.length === 1) {
+    const token = candidates[0]!;
+    const amount = toAmount(token);
+    if (VALID_AMOUNT_RE.test(token) && amount > 0 && amount <= 10000) amountGel = amount;
+    else problems.push("invalid_amount");
   } else {
-    const ints = [...cleaned.matchAll(INT_RE)]
-      .map((m) => Number(m[0]))
-      .filter((n) => n > 0 && n <= 10000);
-    if (ints.length === 1) amountGel = ints[0]!;
-    else if (ints.length > 1) problems.push("ambiguous_amount");
-    else problems.push("no_amount");
+    problems.push("no_amount");
   }
 
   return {
@@ -108,7 +93,7 @@ function parseLine(line: string, index: number): ParsedStatementRow {
     line,
     code,
     amountGel,
-    paidAt: date?.iso ?? null,
+    paidAt,
     duplicateOfIndex: null,
     problems,
   };

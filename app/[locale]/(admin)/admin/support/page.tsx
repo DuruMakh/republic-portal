@@ -43,6 +43,7 @@ export default async function AdminSupportPage({
     .from("admin_support_messages")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .range(rangeFrom, rangeFrom + PAGE_SIZE - 1);
   // Throwing, like every sibling admin page: swallowing this rendered a broken
   // or unmigrated inbox as "there are no messages", which is indistinguishable

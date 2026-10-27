@@ -41,6 +41,7 @@ export default async function AdminTransferPage({
     // mirror admin_reassign_member's gate: only rows the RPC will accept
     .or("registration_completed_at.not.is.null,status.eq.active_member")
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
   if (error) throw new Error(`admin_members failed: ${error.message}`);
 

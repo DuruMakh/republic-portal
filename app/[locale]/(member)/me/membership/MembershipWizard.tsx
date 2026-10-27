@@ -1,7 +1,7 @@
 "use client";
 import { useCopy } from "@/lib/i18n/copy";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { CabinetPage, CabinetPanel, CabinetPerks } from "@/components/CabinetPage";
 import { DelegateBinding, type DelegateOption } from "@/components/DelegateBinding";
@@ -33,6 +33,7 @@ function isFieldKey(key: unknown): key is FieldKey {
 // The wizard only ever renders "profile" and "tier" — a completed member never
 // reaches this component (the page gate redirects to /me/membership/done first).
 type WizardPhase = "profile" | "tier";
+type ReadStatus = "idle" | "loading" | "ready" | "error";
 
 const CONSENT_REQUIRED_MESSAGE = "გასაგზავნად მონიშნე ორივე თანხმობა.";
 
@@ -73,6 +74,30 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   const [workFree, setWorkFree] = useState("");
   const [delegateId, setDelegateId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [regionsStatus, setRegionsStatus] = useState<ReadStatus>("loading");
+  const [citiesStatus, setCitiesStatus] = useState<ReadStatus>("idle");
+  const [delegatesStatus, setDelegatesStatus] = useState<ReadStatus>("idle");
+  const [regionsRetry, setRegionsRetry] = useState(0);
+  const [citiesRetry, setCitiesRetry] = useState(0);
+  const [delegatesRetry, setDelegatesRetry] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previousPhase = useRef(phase);
+  const [focusRequest, setFocusRequest] = useState(0);
+
+  useEffect(() => {
+    if (previousPhase.current !== phase) headingRef.current?.focus();
+    previousPhase.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const target =
+      formRef.current?.querySelector<HTMLElement>(
+        '[aria-invalid="true"]:not(:disabled), [data-form-error]',
+      ) ?? formRef.current?.querySelector<HTMLElement>("[data-regions-feedback]");
+    target?.focus();
+  }, [focusRequest]);
 
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -111,51 +136,105 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   }, [initialized, initialState]);
 
   useEffect(() => {
+    let cancelled = false;
     const supabase = createClient();
-    void supabase
-      .from("regions")
-      .select("id, name_ka")
-      .order("id")
-      .then(({ data }) => setRegions(data ?? []));
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- each explicit retry starts one read
+    setRegionsStatus("loading");
+    void Promise.resolve(supabase.from("regions").select("id, name_ka").order("id"))
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setRegionsStatus("error");
+          return;
+        }
+        setRegions(data);
+        setRegionsStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setRegionsStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [regionsRetry]);
 
   useEffect(() => {
-    if (regionId === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting dependent selects when the region is cleared, not a cascading loop
-      setCities([]);
-      setDelegateOptions([]);
-      return;
-    }
+    if (regionId === null) return;
+    let cancelled = false;
     const supabase = createClient();
-    void supabase
-      .from("cities")
-      .select("id, name_ka")
-      .eq("region_id", regionId)
-      .order("name_ka")
-      .then(({ data }) => setCities(data ?? []));
-    if (!referral) {
-      void supabase
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one read per selected region or explicit retry
+    setCitiesStatus("loading");
+    void Promise.resolve(
+      supabase.from("cities").select("id, name_ka").eq("region_id", regionId).order("name_ka"),
+    )
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setCitiesStatus("error");
+          return;
+        }
+        setCities(data);
+        setCityId((current) => (data.some((city) => city.id === current) ? current : null));
+        setCitiesStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setCitiesStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [regionId, citiesRetry]);
+
+  useEffect(() => {
+    if (regionId === null || referral) return;
+    let cancelled = false;
+    const supabase = createClient();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one read per selected region or explicit retry
+    setDelegatesStatus("loading");
+    void Promise.resolve(
+      supabase
         .from("public_delegates")
         .select("id, first_name, last_name, region_name_ka")
         .eq("region_id", regionId)
-        .order("active_supporters", { ascending: false })
-        .then(({ data }) =>
-          setDelegateOptions(
-            (data ?? []).map((d) => ({
-              id: d.id as string,
-              fullName: `${d.first_name} ${d.last_name}`,
-              regionNameKa: (d.region_name_ka as string | null) ?? "",
-            })),
-          ),
+        .order("active_supporters", { ascending: false }),
+    )
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setDelegatesStatus("error");
+          return;
+        }
+        setDelegateOptions(
+          data.map((d) => ({
+            id: d.id as string,
+            fullName: `${d.first_name} ${d.last_name}`,
+            regionNameKa: (d.region_name_ka as string | null) ?? "",
+          })),
         );
-    }
-  }, [regionId, referral]);
+        setDelegateId((current) =>
+          data.some((delegate) => delegate.id === current) ? current : null,
+        );
+        setDelegatesStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setDelegatesStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [regionId, referral, delegatesRetry]);
 
   function changeRegion(value: string) {
     const next = value ? Number(value) : null;
     setRegionId(next);
     setCityId(null);
-    if (!referral) setDelegateId(null);
+    setCities([]);
+    setCitiesStatus(next === null ? "idle" : "loading");
+    if (!referral) {
+      setDelegateId(null);
+      setDelegateOptions([]);
+      setDelegatesStatus(next === null ? "idle" : "loading");
+    }
   }
 
   async function submitProfile() {
@@ -184,16 +263,29 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
         }
       }
       setErrors(next);
+      setFocusRequest((n) => n + 1);
       if (unmapped !== undefined) setFormError(unmapped);
       return;
     }
     setErrors({});
+    if (
+      regionsStatus !== "ready" ||
+      !regions.some((region) => region.id === regionId) ||
+      citiesStatus !== "ready" ||
+      !cities.some((city) => city.id === cityId) ||
+      (!referral && delegatesStatus !== "ready")
+    ) {
+      setFormError(GENERIC_FUNNEL_ERROR);
+      setFocusRequest((n) => n + 1);
+      return;
+    }
     setBusy(true);
     let result: Awaited<ReturnType<typeof saveMembershipProfileAction>>;
     try {
       result = await saveMembershipProfileAction(parsed.data);
     } catch {
       setFormError(GENERIC_FUNNEL_ERROR);
+      setFocusRequest((n) => n + 1);
       return;
     } finally {
       setBusy(false);
@@ -204,6 +296,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       } else {
         setFormError(result.error);
       }
+      setFocusRequest((n) => n + 1);
       return;
     }
     // review finding F2: only trust a fresh capture when this submission actually
@@ -228,6 +321,7 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   async function completeTier() {
     if (!dataConsent || !duesConsent) {
       setTierError(CONSENT_REQUIRED_MESSAGE);
+      setFocusRequest((n) => n + 1);
       return;
     }
     setTierError(undefined);
@@ -237,12 +331,14 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       result = await completeMembershipAction({ tier });
     } catch {
       setTierError(GENERIC_FUNNEL_ERROR);
+      setFocusRequest((n) => n + 1);
       return;
     } finally {
       setTierBusy(false);
     }
     if (!result.ok) {
       setTierError(result.error);
+      setFocusRequest((n) => n + 1);
       return;
     }
     // done lives at /me/membership/done — both the client push and any
@@ -254,7 +350,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   if (phase === "profile") {
     phaseContent = (
       <>
-        <h2 className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]">
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]"
+        >
           {t("წევრის მონაცემები")}
         </h2>
         <div className="mt-6 flex flex-col gap-6 md:mt-8">
@@ -284,9 +384,17 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             <UnitySelectField
               label={t("მხარე")}
               id="mw-region"
+              aria-describedby={
+                regionsStatus === "error"
+                  ? "mw-regions-load-error"
+                  : errors.regionId
+                    ? "mw-region-error"
+                    : undefined
+              }
               value={regionId === null ? "" : String(regionId)}
               onChange={(e) => changeRegion(e.target.value)}
               error={t(errors.regionId ?? "")}
+              disabled={regionsStatus !== "ready" || regions.length === 0}
             >
               <option value="" disabled>
                 {t("აირჩიე მხარე")}
@@ -300,9 +408,17 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
             <UnitySelectField
               label={t("ქალაქი / მუნიციპალიტეტი")}
               id="mw-city"
+              aria-describedby={
+                citiesStatus === "error"
+                  ? "mw-cities-load-error"
+                  : errors.cityId
+                    ? "mw-city-error"
+                    : undefined
+              }
               value={cityId === null ? "" : String(cityId)}
               onChange={(e) => setCityId(e.target.value ? Number(e.target.value) : null)}
               error={t(errors.cityId ?? "")}
+              disabled={citiesStatus !== "ready" || cities.length === 0}
             >
               <option value="" disabled>
                 {regionId === null ? t("ჯერ აირჩიე მხარე") : t("აირჩიე ქალაქი")}
@@ -314,6 +430,57 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               ))}
             </UnitySelectField>
           </div>
+          {regionsStatus === "loading" ? (
+            <p role="status" className="m-0 text-[15px] text-secondary">
+              {t("მხარეები იტვირთება…")}
+            </p>
+          ) : null}
+          {regionsStatus === "error" ? (
+            <div>
+              <p
+                id="mw-regions-load-error"
+                role="alert"
+                data-regions-feedback
+                tabIndex={-1}
+                className="m-0 text-[15px] text-danger"
+              >
+                {t("მხარეები ვერ ჩაიტვირთა.")}
+              </p>
+              <UnityButton variant="ghost" size="sm" onClick={() => setRegionsRetry((n) => n + 1)}>
+                {t("მხარეების თავიდან ცდა")}
+              </UnityButton>
+            </div>
+          ) : null}
+          {regionsStatus === "ready" && regions.length === 0 ? (
+            <p
+              role="status"
+              data-regions-feedback
+              tabIndex={-1}
+              className="m-0 text-[15px] text-secondary"
+            >
+              {t("მხარეები ვერ მოიძებნა.")}
+            </p>
+          ) : null}
+          {citiesStatus === "loading" ? (
+            <p role="status" className="m-0 text-[15px] text-secondary">
+              {t("ქალაქები იტვირთება…")}
+            </p>
+          ) : null}
+          {citiesStatus === "error" ? (
+            <div>
+              <p id="mw-cities-load-error" role="alert" className="m-0 text-[15px] text-danger">
+                {t("ქალაქები ვერ ჩაიტვირთა.")}
+              </p>
+              <UnityButton variant="ghost" size="sm" onClick={() => setCitiesRetry((n) => n + 1)}>
+                {t("ქალაქების თავიდან ცდა")}
+              </UnityButton>
+            </div>
+          ) : null}
+          {citiesStatus === "ready" && cities.length === 0 ? (
+            <p role="status" className="m-0 text-[15px] text-secondary">
+              {t("ამ მხარეში ქალაქები ვერ მოიძებნა.")}
+            </p>
+          ) : null}
           <UnitySelectField
             label={t("სამუშაო ადგილი / სტატუსი")}
             id="mw-work"
@@ -341,21 +508,66 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
               error={t(errors.employment ?? "")}
             />
           ) : null}
-          <DelegateBinding
-            referral={
-              referral
-                ? {
-                    fullName: `${referral.firstName} ${referral.lastName}`,
-                    regionNameKa: referral.regionNameKa,
-                  }
-                : null
+          <fieldset
+            aria-describedby={delegatesStatus === "error" ? "mw-delegates-load-error" : undefined}
+            disabled={!referral && (regionId === null || delegatesStatus !== "ready")}
+            className="m-0 min-w-0 border-0 p-0"
+          >
+            <DelegateBinding
+              referral={
+                referral
+                  ? {
+                      fullName: `${referral.firstName} ${referral.lastName}`,
+                      regionNameKa: referral.regionNameKa,
+                    }
+                  : null
+              }
+              options={delegateOptions}
+              value={delegateId}
+              onChange={setDelegateId}
+            />
+          </fieldset>
+          {!referral && delegatesStatus === "loading" ? (
+            <p role="status" className="m-0 text-[15px] text-secondary">
+              {t("დელეგატები იტვირთება…")}
+            </p>
+          ) : null}
+          {!referral && delegatesStatus === "error" ? (
+            <div>
+              <p id="mw-delegates-load-error" role="alert" className="m-0 text-[15px] text-danger">
+                {t("დელეგატები ვერ ჩაიტვირთა.")}
+              </p>
+              <UnityButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setDelegatesRetry((n) => n + 1)}
+              >
+                {t("დელეგატების თავიდან ცდა")}
+              </UnityButton>
+            </div>
+          ) : null}
+          {!referral && delegatesStatus === "ready" && delegateOptions.length === 0 ? (
+            <p role="status" className="m-0 text-[15px] text-secondary">
+              {t("ამ მხარეში დელეგატები არ არის.")}
+            </p>
+          ) : null}
+          {formError ? (
+            <p role="alert" data-form-error tabIndex={-1} className="m-0 text-[15px] text-danger">
+              {t(formError ?? "")}
+            </p>
+          ) : null}
+          <UnityButton
+            type="submit"
+            disabled={
+              busy ||
+              (regionId !== null &&
+                (regionsStatus !== "ready" ||
+                  citiesStatus !== "ready" ||
+                  (!referral && delegatesStatus !== "ready")))
             }
-            options={delegateOptions}
-            value={delegateId}
-            onChange={setDelegateId}
-          />
-          {formError ? <p className="m-0 text-[15px] text-danger">{t(formError ?? "")}</p> : null}
-          <UnityButton onClick={submitProfile} disabled={busy} arrow className="w-full">
+            arrow
+            className="w-full"
+          >
             {t("გაგრძელება")}
           </UnityButton>
         </div>
@@ -364,7 +576,11 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
   } else {
     phaseContent = (
       <>
-        <h2 className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]">
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="m-0 border-b-2 border-ink pb-3.5 font-serif text-[26px] font-semibold leading-[1.25] md:pb-[18px] md:text-[32px]"
+        >
           {t("წევრობის განაცხადი")}
         </h2>
         <p className="mt-6 mb-0 text-[12px] font-bold tracking-[.14em] text-secondary md:mt-8">
@@ -398,6 +614,10 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           <UnityCheckboxField
             label={t("თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად")}
             checked={dataConsent}
+            aria-invalid={(tierError === CONSENT_REQUIRED_MESSAGE && !dataConsent) || undefined}
+            aria-describedby={
+              tierError === CONSENT_REQUIRED_MESSAGE && !dataConsent ? "mw-tier-error" : undefined
+            }
             onChange={(e) => {
               setDataConsent(e.target.checked);
               clearConsentError();
@@ -406,6 +626,10 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           <UnityCheckboxField
             label={`${t("თანახმა ვარ, მომავალში, როცა საწევრო შემოიღება, ვიხდიდე ყოველთვიურ საწევროს — ")}${MEMBERSHIP_FEE_GEL}${t(" ₾ თვეში")}`}
             checked={duesConsent}
+            aria-invalid={(tierError === CONSENT_REQUIRED_MESSAGE && !duesConsent) || undefined}
+            aria-describedby={
+              tierError === CONSENT_REQUIRED_MESSAGE && !duesConsent ? "mw-tier-error" : undefined
+            }
             onChange={(e) => {
               setDuesConsent(e.target.checked);
               clearConsentError();
@@ -413,12 +637,18 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
           />
         </div>
         {tierError ? (
-          <p role="alert" className="mt-4 mb-0 text-[15px] text-danger">
+          <p
+            id="mw-tier-error"
+            role="alert"
+            data-form-error
+            tabIndex={-1}
+            className="mt-4 mb-0 text-[15px] text-danger"
+          >
             {t(tierError ?? "")}
           </p>
         ) : null}
         <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:flex-wrap md:mt-9">
-          <UnityButton onClick={completeTier} disabled={tierBusy}>
+          <UnityButton type="submit" disabled={tierBusy}>
             {t("განაცხადის გაგზავნა")}
           </UnityButton>
           <UnityButton variant="ghost" onClick={() => setPhase("profile")} disabled={tierBusy}>
@@ -437,7 +667,18 @@ export function MembershipWizard({ initialState }: { initialState: CabinetStateP
       </div>
       <div className="mt-[26px] grid items-start gap-11 md:mt-12 md:grid-cols-[minmax(0,1fr)_minmax(0,400px)] md:gap-[clamp(40px,5vw,80px)]">
         <div className="min-w-0 max-w-[720px]">
-          <div className="border border-rule bg-chalk p-6 md:px-12 md:py-11">{phaseContent}</div>
+          <form
+            ref={formRef}
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (phase === "profile") void submitProfile();
+              else void completeTier();
+            }}
+            className="border border-rule bg-chalk p-6 md:px-12 md:py-11"
+          >
+            {phaseContent}
+          </form>
           <span aria-hidden="true" className="mx-1.5 mt-[5px] block h-px bg-ink md:mx-2.5" />
         </div>
         <CabinetPanel tone="wine" as="aside" className="md:px-11 md:pb-[150px] md:pt-11">

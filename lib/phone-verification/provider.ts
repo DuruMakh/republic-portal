@@ -1,4 +1,5 @@
 import "server-only";
+import { testSignInEnabled, type TestSignInEnvironment } from "../env";
 
 import type { PhoneRegion } from "../phone-number";
 import type { PhoneVerificationProvider, PhoneVerificationProviderName } from "./contracts";
@@ -6,9 +7,8 @@ import { createTestPhoneVerificationProvider } from "./test-provider";
 import { createTwilioProvider } from "./twilio";
 import { createVerifyGeProvider } from "./verify-ge";
 
-type PhoneVerificationEnvironment = {
+type PhoneVerificationEnvironment = TestSignInEnvironment & {
   PHONE_VERIFICATION_PROVIDER?: string;
-  NEXT_PUBLIC_APP_ENV?: string;
   VERIFY_GE_API_KEY?: string;
   TWILIO_API_KEY_SID?: string;
   TWILIO_API_KEY_SECRET?: string;
@@ -20,6 +20,8 @@ function readEnvironment(environment?: PhoneVerificationEnvironment): PhoneVerif
     environment ?? {
       PHONE_VERIFICATION_PROVIDER: process.env.PHONE_VERIFICATION_PROVIDER,
       NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
       VERIFY_GE_API_KEY: process.env.VERIFY_GE_API_KEY,
       TWILIO_API_KEY_SID: process.env.TWILIO_API_KEY_SID,
       TWILIO_API_KEY_SECRET: process.env.TWILIO_API_KEY_SECRET,
@@ -36,7 +38,12 @@ function twilioConfigured(env: PhoneVerificationEnvironment): boolean {
 
 /** The providers this deployment may use: `test` alone, or Verify.ge plus Twilio when configured. */
 function allowedProviders(env: PhoneVerificationEnvironment): PhoneVerificationProviderName[] {
-  if (env.PHONE_VERIFICATION_PROVIDER === "test") return ["test"];
+  if (env.PHONE_VERIFICATION_PROVIDER === "test") {
+    if (!testSignInEnabled(env)) {
+      throw new Error("test phone verification provider is forbidden in production");
+    }
+    return ["test"];
+  }
   if (env.PHONE_VERIFICATION_PROVIDER === "verify_ge") {
     return twilioConfigured(env) ? ["verify_ge", "twilio"] : ["verify_ge"];
   }
@@ -66,13 +73,8 @@ export function createProviderByName(
   environment?: PhoneVerificationEnvironment,
 ): PhoneVerificationProvider | null {
   const env = readEnvironment(environment);
-  if (name === "test" && env.PHONE_VERIFICATION_PROVIDER === "test") {
-    if (env.NEXT_PUBLIC_APP_ENV === "production") {
-      throw new Error("test phone verification provider is forbidden in production");
-    }
-    return createTestPhoneVerificationProvider(env);
-  }
   if (!allowedProviders(env).includes(name)) return null;
+  if (name === "test") return createTestPhoneVerificationProvider(env);
   if (name === "verify_ge") return createVerifyGeProvider(env.VERIFY_GE_API_KEY ?? "");
   return createTwilioProvider({
     apiKeySid: env.TWILIO_API_KEY_SID ?? "",

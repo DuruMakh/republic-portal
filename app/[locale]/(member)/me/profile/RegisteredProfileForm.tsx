@@ -1,7 +1,7 @@
 "use client";
 import { useCopy } from "@/lib/i18n/copy";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { CabinetPanel, CabinetPanelTitle, CabinetReadonlyField } from "@/components/CabinetPage";
 import { UnityField } from "@/components/UnityField";
@@ -38,6 +38,18 @@ export function RegisteredProfileForm({
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"firstName" | "lastName", string>>>(
+    {},
+  );
+  const formRef = useRef<HTMLFormElement>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled), [data-form-error]')
+      ?.focus();
+  }, [focusRequest]);
 
   function touch() {
     setSaved(false);
@@ -48,21 +60,30 @@ export function RegisteredProfileForm({
     setSaved(false);
     const parsed = registeredNameUpdateSchema.safeParse({ firstName, lastName });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR);
+      const next: typeof fieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (key === "firstName" || key === "lastName") next[key] ??= issue.message;
+      }
+      setFieldErrors(next);
+      setFocusRequest((n) => n + 1);
       return;
     }
+    setFieldErrors({});
     setBusy(true);
     let result: Awaited<ReturnType<typeof updateRegisteredNameAction>>;
     try {
       result = await updateRegisteredNameAction(parsed.data);
     } catch {
       setError(GENERIC_FUNNEL_ERROR);
+      setFocusRequest((n) => n + 1);
       return;
     } finally {
       setBusy(false);
     }
     if (!result.ok) {
       setError(result.error);
+      setFocusRequest((n) => n + 1);
       return;
     }
     setSaved(true);
@@ -72,11 +93,20 @@ export function RegisteredProfileForm({
   return (
     <CabinetPanel>
       <CabinetPanelTitle>{t("პირადი მონაცემები")}</CabinetPanelTitle>
-      <div className="mt-7 flex flex-col gap-7">
+      <form
+        ref={formRef}
+        className="mt-7 flex flex-col gap-7"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+      >
         <div className="grid gap-7 sm:grid-cols-2">
           <UnityField
             label={t("სახელი")}
             name="firstName"
+            error={t(fieldErrors.firstName ?? "")}
             value={firstName}
             onChange={(e) => {
               touch();
@@ -86,6 +116,7 @@ export function RegisteredProfileForm({
           <UnityField
             label={t("გვარი")}
             name="lastName"
+            error={t(fieldErrors.lastName ?? "")}
             value={lastName}
             onChange={(e) => {
               touch();
@@ -108,18 +139,26 @@ export function RegisteredProfileForm({
             />
           ) : null}
         </div>
-        {error ? <p className="m-0 text-[15px] text-danger">{t(error ?? "")}</p> : null}
+        {error ? (
+          <p role="alert" data-form-error tabIndex={-1} className="m-0 text-[15px] text-danger">
+            {t(error ?? "")}
+          </p>
+        ) : null}
         {saved ? (
-          <p className="m-0 text-[15px] font-bold text-ok-deep" data-testid="profile-saved">
+          <p
+            role="status"
+            className="m-0 text-[15px] font-bold text-ok-deep"
+            data-testid="profile-saved"
+          >
             {t("პროფილი განახლდა ✓")}
           </p>
         ) : null}
         <div className="flex justify-end">
-          <UnityButton variant="ink" size="sm" onClick={save} disabled={busy}>
+          <UnityButton type="submit" variant="ink" size="sm" disabled={busy}>
             {t("შენახვა")}
           </UnityButton>
         </div>
-      </div>
+      </form>
     </CabinetPanel>
   );
 }

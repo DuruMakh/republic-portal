@@ -1,7 +1,7 @@
 "use client";
 import { useCopy } from "@/lib/i18n/copy";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { CabinetPanel, CabinetPanelTitle, CabinetReadonlyField } from "@/components/CabinetPage";
 import { UnityField } from "@/components/UnityField";
@@ -51,6 +51,18 @@ export function ProfileForm({
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<"firstName" | "lastName" | "regionId" | "cityId" | "employment", string>>
+  >({});
+  const formRef = useRef<HTMLFormElement>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled), [data-form-error]')
+      ?.focus();
+  }, [focusRequest]);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,21 +103,37 @@ export function ProfileForm({
       employment: formToEmployment({ choice: employmentChoice, custom: employmentCustom }),
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? GENERIC_FUNNEL_ERROR);
+      const next: typeof fieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (
+          key === "firstName" ||
+          key === "lastName" ||
+          key === "regionId" ||
+          key === "cityId" ||
+          key === "employment"
+        )
+          next[key] ??= issue.message;
+      }
+      setFieldErrors(next);
+      setFocusRequest((n) => n + 1);
       return;
     }
+    setFieldErrors({});
     setBusy(true);
     let result: Awaited<ReturnType<typeof updateProfileAction>>;
     try {
       result = await updateProfileAction(parsed.data);
     } catch {
       setError(GENERIC_FUNNEL_ERROR);
+      setFocusRequest((n) => n + 1);
       return;
     } finally {
       setBusy(false);
     }
     if (!result.ok) {
       setError(result.error);
+      setFocusRequest((n) => n + 1);
       return;
     }
     setSaved(true);
@@ -115,11 +143,20 @@ export function ProfileForm({
   return (
     <CabinetPanel>
       <CabinetPanelTitle>{t("პირადი მონაცემები")}</CabinetPanelTitle>
-      <div className="mt-7 flex flex-col gap-7">
+      <form
+        ref={formRef}
+        className="mt-7 flex flex-col gap-7"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+      >
         <div className="grid gap-7 sm:grid-cols-2">
           <UnityField
             label={t("სახელი")}
             name="firstName"
+            error={t(fieldErrors.firstName ?? "")}
             value={firstName}
             onChange={(e) => {
               touch();
@@ -129,6 +166,7 @@ export function ProfileForm({
           <UnityField
             label={t("გვარი")}
             name="lastName"
+            error={t(fieldErrors.lastName ?? "")}
             value={lastName}
             onChange={(e) => {
               touch();
@@ -162,6 +200,7 @@ export function ProfileForm({
           <UnitySelectField
             label={t("მხარე")}
             id="profile-region"
+            error={t(fieldErrors.regionId ?? "")}
             value={regionId}
             onChange={(e) => {
               touch();
@@ -177,6 +216,7 @@ export function ProfileForm({
           <UnitySelectField
             label={t("ქალაქი / მუნიციპალიტეტი")}
             id="profile-city"
+            error={t(fieldErrors.cityId ?? "")}
             value={cityId}
             onChange={(e) => {
               touch();
@@ -193,6 +233,7 @@ export function ProfileForm({
         <UnitySelectField
           label={t("სამუშაო ადგილი / სტატუსი")}
           id="profile-employment"
+          error={t(fieldErrors.employment ?? "")}
           value={employmentChoice}
           onChange={(e) => {
             touch();
@@ -210,6 +251,7 @@ export function ProfileForm({
           <UnityField
             label={t("მიუთითე საქმიანობა")}
             name="employmentCustom"
+            error={t(fieldErrors.employment ?? "")}
             value={employmentCustom}
             maxLength={100}
             onChange={(e) => {
@@ -218,18 +260,26 @@ export function ProfileForm({
             }}
           />
         ) : null}
-        {error ? <p className="m-0 text-[15px] text-danger">{t(error ?? "")}</p> : null}
+        {error ? (
+          <p role="alert" data-form-error tabIndex={-1} className="m-0 text-[15px] text-danger">
+            {t(error ?? "")}
+          </p>
+        ) : null}
         {saved ? (
-          <p className="m-0 text-[15px] font-bold text-ok-deep" data-testid="profile-saved">
+          <p
+            role="status"
+            className="m-0 text-[15px] font-bold text-ok-deep"
+            data-testid="profile-saved"
+          >
             {t("პროფილი განახლდა ✓")}
           </p>
         ) : null}
         <div className="flex justify-end">
-          <UnityButton variant="ink" size="sm" onClick={save} disabled={busy}>
+          <UnityButton type="submit" variant="ink" size="sm" disabled={busy}>
             {t("შენახვა")}
           </UnityButton>
         </div>
-      </div>
+      </form>
     </CabinetPanel>
   );
 }

@@ -32,6 +32,7 @@ describe("SupportForm", () => {
     fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
     expect(await screen.findByText(SUPPORT_NEED_CONTACT)).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/ელ-ფოსტა/)).toHaveFocus();
   });
 
   it("submits with only a phone, then replaces the form with the success line so a message cannot be double-sent", async () => {
@@ -39,7 +40,7 @@ describe("SupportForm", () => {
     render(<SupportForm submit={submit} />);
     fill({ phone: "+995555123456" });
     fireEvent.click(screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL }));
-    expect(await screen.findByText(SUPPORT_SUCCESS)).toBeInTheDocument();
+    expect(await screen.findByText(SUPPORT_SUCCESS)).toHaveFocus();
     expect(submit).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: SUPPORT_SUBMIT_LABEL })).not.toBeInTheDocument();
   });
@@ -62,7 +63,8 @@ describe("SupportForm", () => {
     fill({ email: "someone@example.com" });
     const button = screen.getByRole("button", { name: SUPPORT_SUBMIT_LABEL });
     fireEvent.click(button);
-    expect(await screen.findByText(SUPPORT_FAILURE)).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(SUPPORT_FAILURE);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
     await waitFor(() => expect(button).not.toBeDisabled());
     expect(screen.getByLabelText(/შეტყობინება/)).toHaveValue(MESSAGE);
   });

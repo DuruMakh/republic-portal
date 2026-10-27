@@ -47,6 +47,25 @@ describe("isTestDatabaseUrl", () => {
 });
 
 describe("testSignInEnabled", () => {
+  it.each([
+    [undefined, "http://127.0.0.1:54321", undefined, false],
+    ["Development", "http://127.0.0.1:54321", undefined, false],
+    ["development", "http://127.0.0.1:54321", "production", false],
+    ["development", "https://uorvlshbrlbdnbauxsws.supabase.co", undefined, false],
+    ["development", "https://unknown.supabase.co", undefined, false],
+    ["development", "http://localhost:54321", undefined, true],
+    ["development", "http://127.0.0.1:54321", undefined, true],
+  ])("checks a complete injected environment (%s, %s, %s)", (appEnv, url, vercelEnv, enabled) => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(
+      testSignInEnabled({
+        NEXT_PUBLIC_APP_ENV: appEnv,
+        NEXT_PUBLIC_SUPABASE_URL: url,
+        VERCEL_ENV: vercelEnv,
+      }),
+    ).toBe(enabled);
+  });
+
   it("is on for a preview pointed at staging", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://orcxtbedkexoclbfgvzd.supabase.co");

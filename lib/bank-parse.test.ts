@@ -2,6 +2,115 @@ import { describe, expect, it } from "vitest";
 import { parseStatementRows } from "./bank-parse";
 
 describe("parseStatementRows (spec §3.5, §5)", () => {
+  it.each([
+    ["20", 20],
+    ["20.00", 20],
+    ["1000.00", 1000],
+    ["10000.00", 10000],
+    ["1 234,56", 1234.56],
+    ["+20.00", 20],
+    ["+20", 20],
+  ])("keeps the complete positive amount %s", (token, amount) => {
+    const [row] = parseStatementRows(`GR-ABC234 ${token}`);
+    expect(row!.amountGel).toBe(amount);
+    expect(row!.problems).toEqual([]);
+  });
+
+  it.each([
+    "-20.00",
+    "-20",
+    "(20.00)",
+    "( 20.00 )",
+    "- 20.00",
+    "(20)",
+    "0",
+    "0.00",
+    "10001",
+    "10001.00",
+    "100000.00",
+    "123456",
+    "20.001",
+    "20.0",
+    "20.00.00",
+    "1,234.56",
+    ".20",
+    ",20",
+    "-.50",
+    "20.00-",
+  ])("rejects the entire invalid amount %s", (token) => {
+    const [row] = parseStatementRows(`GR-ABC234 ${token}`);
+    expect(row!.amountGel).toBeNull();
+    expect(row!.problems).toEqual(["invalid_amount"]);
+  });
+
+  it.each([
+    "20.00 fee -1.00",
+    "20.00 balance 10001.00",
+    "20.00 fee 0.00",
+    "20 fee -1",
+    "20 balance 10001",
+    "20.00 malformed 1.234",
+    "20.00 fee .50",
+    "20.00 fee -.50",
+    "20.00 fee ,50",
+    "-20 fee 1.00",
+    "(20) fee 1.00",
+    "20- fee 1.00",
+    "+20 fee 1.00",
+    "-1 2345.00",
+  ])("keeps every candidate when deciding ambiguity: %s", (tokens) => {
+    const [row] = parseStatementRows(`GR-ABC234 ${tokens}`);
+    expect(row!.amountGel).toBeNull();
+    expect(row!.problems).toEqual(["ambiguous_amount"]);
+  });
+
+  it.each(["-20.00", "10001.00", "20.001", ".20", ",20", "-.50", "20.00-"])(
+    "never falls back to an integer after %s",
+    (token) => {
+      const [row] = parseStatementRows(`GR-ABC234 ${token} document 7`);
+      expect(row!.amountGel).toBeNull();
+      expect(row!.problems).toEqual(["invalid_amount"]);
+    },
+  );
+
+  it.each(["I", "L", "O", "0", "1", "A"])("rejects a reference with trailing %s", (suffix) => {
+    const [row] = parseStatementRows(`GR-ABC234${suffix} 20.00`);
+    expect(row!.code).toBeNull();
+    expect(row!.problems).toEqual(["no_code"]);
+  });
+
+  it.each([
+    "31.02.2026",
+    "2026-04-31",
+    "99.99.2026",
+    "01.01.1999",
+    "31.02.2026 01.07.2026",
+    "01.07.2026 2026-04-31",
+  ])("marks invalid supplied dates unresolved: %s", (dates) => {
+    const [row] = parseStatementRows(`${dates} GR-ABC234 20`);
+    expect(row!.paidAt).toBeNull();
+    expect(row!.amountGel).toBe(20);
+    expect(row!.problems).toEqual(["invalid_date"]);
+  });
+
+  it("removes every supported date token before integer fallback", () => {
+    const [row] = parseStatementRows("2026-07-15 01.08.2026 GR-ABC234 20");
+    expect(row!.paidAt).toBe("2026-07-15");
+    expect(row!.amountGel).toBe(20);
+    expect(row!.problems).toEqual([]);
+  });
+
+  it("keeps an absent date distinguishable from invalid supplied dates", () => {
+    const [row] = parseStatementRows("GR-ABC234 20");
+    expect(row!.paidAt).toBeNull();
+    expect(row!.problems).toEqual([]);
+  });
+
+  it("preserves decimal-first classification over an unrelated integer", () => {
+    const [row] = parseStatementRows("GR-ABC234 20.00 document 7");
+    expect(row!.amountGel).toBe(20);
+    expect(row!.problems).toEqual([]);
+  });
   it("extracts code, decimal amount and date from a TSV bank row", () => {
     const [r] = parseStatementRows("01.07.2026\tDOC123456\t20.00\tგადმორიცხვა GR-ABC234 საწევრო");
     expect(r!.code).toBe("GR-ABC234");

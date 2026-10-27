@@ -1,9 +1,10 @@
-# DESIGN.md — the Kronika design system
+# DESIGN.md — current design guidance
 
-The visual + interaction reference for the production app. **One material system** now spans
-every surface (adopted at v0.9.0; DECISIONS.md ADR-020). The living gallery is `/styleguide`.
-The sources of visual truth are the contract bundle `prototype/kronika-d3/` and the spec
-`docs/superpowers/specs/2026-07-23-kronika-redesign-design.md`.
+Read this document with current `DECISIONS.md`. Unity is replacing Kronika page by page
+(ADR-053): redesigned pages use `components/Unity*.tsx`; unchanged surfaces retain Kronika.
+The sections below and `/styleguide` describe Kronika (ADR-020), with `prototype/kronika-d3/`
+and `docs/superpowers/specs/2026-07-23-kronika-redesign-design.md` as its reference. Apply the
+existing components and appearance of the surface being changed.
 
 > **Never restyle ad hoc.** Reuse or extend a component. Anything not expressible through the
 > tokens and components below is a component change plus a `/styleguide` entry — never inline
@@ -205,7 +206,7 @@ It is the first stop of any visual review. **If you add or change a component, u
 
 ## Georgian integrity gate (mandatory)
 
-All user-facing strings are Georgian and are **byte-spliced from source, never hand-typed** —
+Georgian user-facing strings are **byte-spliced from source, never hand-typed** —
 models silently normalize `U+201C`/`U+201D` quotes to ASCII and can substitute Latin or Greek
 homoglyphs into a Georgian word. Splice from the shipped app source or `prototype/kronika-d3/`
 (and the spec's Appendix B copy inventory), then gate every touched file:

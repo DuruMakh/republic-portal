@@ -37,6 +37,7 @@ describe("OtpInput", () => {
   });
   it("associates the error with every box via aria-invalid and aria-describedby", () => {
     render(<OtpInput value="" onChange={() => undefined} error="კოდი არასწორია" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("კოდი არასწორია");
     for (let i = 0; i < 6; i++) {
       const box = screen.getByTestId(`otp-${i}`);
       expect(box).toHaveAttribute("aria-invalid", "true");
@@ -59,4 +60,54 @@ describe("OtpInput", () => {
     fireEvent.keyDown(screen.getByTestId("otp-1"), { key: "Backspace" });
     expect(screen.getByTestId("otp-0")).toHaveFocus();
   });
+});
+
+it("focuses the first digit on a new submission error without taking focus on mount", () => {
+  const { rerender } = render(<OtpInput value="123456" onChange={() => undefined} />);
+  expect(screen.getByTestId("otp-0")).not.toHaveFocus();
+  rerender(<OtpInput value="123456" onChange={() => undefined} error="კოდი არასწორია" />);
+  expect(screen.getByTestId("otp-0")).toHaveFocus();
+});
+
+it("focuses on repeated error attempts while leaving mounting and value changes alone", () => {
+  const { rerender } = render(
+    <OtpInput
+      value="1"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={0}
+    />,
+  );
+  const firstDigit = screen.getByTestId("otp-0");
+  const thirdDigit = screen.getByTestId("otp-2");
+  expect(firstDigit).not.toHaveFocus();
+  thirdDigit.focus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={0}
+    />,
+  );
+  expect(thirdDigit).toHaveFocus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={1}
+    />,
+  );
+  expect(firstDigit).toHaveFocus();
+  thirdDigit.focus();
+  rerender(
+    <OtpInput
+      value="12"
+      onChange={() => undefined}
+      error="შეიყვანე 6-ნიშნა კოდი"
+      errorAttempt={2}
+    />,
+  );
+  expect(firstDigit).toHaveFocus();
 });

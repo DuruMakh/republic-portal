@@ -95,6 +95,26 @@ const rows: BulkPreviewRow[] = [
     memberName: null,
     months: null,
   },
+  {
+    index: 9,
+    line: "GR-ABC234 -20.00",
+    code: "GR-ABC234",
+    amountGel: null,
+    paidAt: "2026-07-01",
+    status: "invalid_amount",
+    memberName: null,
+    months: null,
+  },
+  {
+    index: 10,
+    line: "GR-ABC234 20.00 31.02.2026",
+    code: "GR-ABC234",
+    amountGel: 20,
+    paidAt: null,
+    status: "bad_date",
+    memberName: null,
+    months: null,
+  },
 ];
 
 describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
@@ -115,7 +135,9 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
     expect(screen.getByText("თანხა ვერ დადგინდა")).toBeInTheDocument();
     expect(screen.getByText("განმეორებული ხაზი")).toBeInTheDocument();
     expect(screen.getByText("დაუსრულებელი რეგისტრაცია")).toBeInTheDocument();
-    expect(screen.getByText("თარიღი დიაპაზონს გარეთაა")).toBeInTheDocument();
+    expect(screen.getByText("არასწორი თანხა")).toBeInTheDocument();
+    expect(screen.getAllByText("თარიღი არასწორია ან დიაპაზონს გარეთაა")).toHaveLength(2);
+    expect(screen.getByTestId("bulk-preview-body").lastElementChild).toHaveTextContent("—");
     expect(screen.getByText(/ჩაიწერება: 1/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /დადასტურება/ }));
@@ -126,7 +148,7 @@ describe("BulkMatch (spec §3.5 — classify, then confirm only ✓)", () => {
     // spec §3.5: non-✓ rows STAY on screen for manual handling; the ✓ row is gone
     expect(screen.getByText("უცნობი კოდი")).toBeInTheDocument();
     expect(screen.queryByText("ნაპოვნია")).not.toBeInTheDocument();
-    expect(screen.getByText(/დარჩენილი 8 რიგი აღრიცხე ერთეულად/)).toBeInTheDocument();
+    expect(screen.getByText(/დარჩენილი 10 რიგი აღრიცხე ერთეულად/)).toBeInTheDocument();
   });
 
   it("zero ✓ rows disables the confirm button", async () => {

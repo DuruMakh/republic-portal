@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { parseRegistrationPhone } from "@/lib/phone-number";
+import { testSignInEnabled } from "@/lib/env";
 import {
   buildPhoneVerificationIdempotencyKey,
   PHONE_VERIFICATION_MAX_ATTEMPTS,
@@ -155,6 +156,10 @@ export async function verifyPhoneVerificationAction(
   if (!parsed.success) {
     const invalidChallenge = parsed.error.issues.some((issue) => issue.path[0] === "challengeId");
     return failure(invalidChallenge ? "expired_code" : "invalid_code");
+  }
+
+  if (process.env.PHONE_VERIFICATION_PROVIDER === "test" && !testSignInEnabled()) {
+    return failure("service_unavailable");
   }
 
   let admin: ReturnType<typeof createAdminClient>;

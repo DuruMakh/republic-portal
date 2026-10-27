@@ -75,6 +75,7 @@ export default async function AdminAuditPage({
     error,
   } = await query
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .range(rangeFrom, rangeFrom + PAGE_SIZE - 1);
   if (error) throw new Error(`admin_audit failed: ${error.message}`);
 

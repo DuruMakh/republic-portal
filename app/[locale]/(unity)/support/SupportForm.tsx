@@ -3,7 +3,7 @@
 import { useCopy } from "@/lib/i18n/copy";
 import { useLocale } from "next-intl";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { UnityButton } from "@/components/UnityButton";
 import { UnityField, UnityTextareaField } from "@/components/UnityField";
 import {
@@ -39,6 +39,20 @@ export function SupportForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const successRef = useRef<HTMLParagraphElement>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled), [role="alert"]')
+      ?.focus();
+  }, [focusRequest]);
+
+  useEffect(() => {
+    if (sent) successRef.current?.focus();
+  }, [sent]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -63,6 +77,7 @@ export function SupportForm({
       }
       setFieldErrors(next);
       setFormError(unattached);
+      setFocusRequest((n) => n + 1);
       return;
     }
 
@@ -73,6 +88,7 @@ export function SupportForm({
       const result = await submit(input);
       if (!result.ok) {
         setFormError(result.error);
+        setFocusRequest((n) => n + 1);
         return;
       }
       setSent(true);
@@ -81,6 +97,7 @@ export function SupportForm({
       // a redeploy. Without this the button stayed disabled forever with no
       // message, and the typed text was recoverable only by a reload.
       setFormError(SUPPORT_FAILURE);
+      setFocusRequest((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -88,12 +105,23 @@ export function SupportForm({
 
   if (sent) {
     return (
-      <p className="m-0 font-serif text-[19px] leading-[1.6] text-prose">{t(SUPPORT_SUCCESS)}</p>
+      <p
+        ref={successRef}
+        tabIndex={-1}
+        className="m-0 font-serif text-[19px] leading-[1.6] text-prose"
+      >
+        {t(SUPPORT_SUCCESS)}
+      </p>
     );
   }
 
   return (
-    <form className="flex flex-col gap-[26px] sm:gap-[30px]" onSubmit={onSubmit} noValidate>
+    <form
+      ref={formRef}
+      className="flex flex-col gap-[26px] sm:gap-[30px]"
+      onSubmit={onSubmit}
+      noValidate
+    >
       <UnityField
         label={english ? "Name" : SUPPORT_NAME_LABEL}
         value={name}
@@ -140,7 +168,9 @@ export function SupportForm({
         }
       />
       {formError ? (
-        <p className="m-0 text-[15px] font-semibold text-brand">{t(formError)}</p>
+        <p role="alert" tabIndex={-1} className="m-0 text-[15px] font-semibold text-brand">
+          {t(formError)}
+        </p>
       ) : null}
       <UnityButton type="submit" disabled={busy} className="w-full">
         {t(SUPPORT_SUBMIT_LABEL)}

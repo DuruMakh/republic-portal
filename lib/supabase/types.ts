@@ -1,6 +1,6 @@
 /**
- * Hand-maintained Database definitions (ADR-005: staging is the only database,
- * no local Docker — so no `supabase gen types`). Source of truth:
+ * Hand-maintained Database definitions (ADR-012). Development and CI use
+ * Docker + local Supabase (ADR-051). Source of truth:
  * supabase/migrations/*. Update this file in the same commit as any migration.
  * Only columns/functions app code touches are listed; additive DB drift is
  * harmless at runtime. Insert/Update are `never` where no typed-client code

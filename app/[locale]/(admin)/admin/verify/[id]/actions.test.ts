@@ -67,6 +67,24 @@ function approvedTarget(rpc: FakeHandlers["rpc"] = () => ok()) {
 }
 
 describe("updateDelegateProfileAction", () => {
+  it.each([4_194_304, 4_194_305])(
+    "enforces the 4 MiB server boundary at %i bytes",
+    async (bytes) => {
+      mocks.getAdminRoles.mockResolvedValue(["verifier"]);
+      approvedTarget();
+      // Not decodable: sanitizer is mocked here, with real decoding covered separately.
+      const photo = new File([new Uint8Array(bytes)], "p.jpg", { type: "image/jpeg" });
+      const result = await updateDelegateProfileAction(form({ delegateId, photo }));
+      expect(result).toEqual(
+        bytes === 4_194_304
+          ? { ok: true }
+          : { ok: false, error: "ფოტო არ უნდა აღემატებოდეს 4 MB-ს." },
+      );
+      expect(admin.storageCalls.filter((c) => c.method === "upload")).toHaveLength(
+        bytes === 4_194_304 ? 1 : 0,
+      );
+    },
+  );
   it("rejects a malformed form before reading roles or creating any client", async () => {
     const res = await updateDelegateProfileAction(form({ delegateId: "x", photo: jpeg() }));
     expect(res).toEqual({

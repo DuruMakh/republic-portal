@@ -8,7 +8,7 @@ import { fakeContentClient } from "./cleanup-test-support";
 import { cleanupCommunityContent } from "./community-helpers";
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://staging.example.supabase.co");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
   vi.stubEnv("NEXT_PUBLIC_APP_ENV", "preview");
   createClient.mockReset();

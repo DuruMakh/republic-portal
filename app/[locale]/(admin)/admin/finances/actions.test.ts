@@ -154,6 +154,19 @@ describe("voidPaymentAction", () => {
 describe("confirmBulkAction", () => {
   const row = { referenceCode: "GR-ABCDEF", amountGel: 20, paidAt: "2026-10-01" };
 
+  it.each([
+    { ...row, amountGel: -20 },
+    { ...row, amountGel: 10001 },
+    { ...row, paidAt: "2026-02-31" },
+    { ...row, paidAt: null },
+  ])("rejects invalid submitted rows before any database call: %j", async (invalid) => {
+    await expect(confirmBulkAction([invalid])).resolves.toMatchObject({
+      ok: false,
+      rowIndex: null,
+    });
+    expect(mocks.createServerSupabase).not.toHaveBeenCalled();
+  });
+
   it("rejects an empty batch before creating any Supabase client", async () => {
     await expect(confirmBulkAction([])).resolves.toMatchObject({ ok: false, rowIndex: null });
     expect(mocks.createServerSupabase).not.toHaveBeenCalled();
@@ -187,6 +200,56 @@ describe("confirmBulkAction", () => {
     ]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/finances");
   });
+});
+
+describe("previewBulkAction — unsafe bank tokens", () => {
+  it.each([
+    ["-20.00", "invalid_amount", null, "2026-10-08"],
+    ["10001.00", "invalid_amount", null, "2026-10-08"],
+    ["20.00 fee -1.00", "ambiguous_amount", null, "2026-10-08"],
+    [".20 document 7", "invalid_amount", null, "2026-10-08"],
+    [",20 document 7", "invalid_amount", null, "2026-10-08"],
+    ["-.50 document 7", "invalid_amount", null, "2026-10-08"],
+    ["20.00- document 7", "invalid_amount", null, "2026-10-08"],
+    ["20.00 fee .50", "ambiguous_amount", null, "2026-10-08"],
+    ["20.00 fee -.50", "ambiguous_amount", null, "2026-10-08"],
+    ["20.00 fee ,50", "ambiguous_amount", null, "2026-10-08"],
+    ["-20 fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["(20) fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["20- fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["+20 fee 1.00", "ambiguous_amount", null, "2026-10-08"],
+    ["-1 2345.00", "ambiguous_amount", null, "2026-10-08"],
+    ["20 31.02.2026", "bad_date", 20, null],
+    ["20 2026-04-31 01.07.2026", "bad_date", 20, null],
+    ["20 01.07.2026 2026-04-31", "bad_date", 20, null],
+    ["20 01.01.2025", "bad_date", 20, "2025-01-01"],
+    ["20", "ok", 20, "2026-10-08"],
+    ["1000.00", "ok", 1000, "2026-10-08"],
+    ["20.00 document 7", "ok", 20, "2026-10-08"],
+  ])(
+    "previews %s as %s with its exact amount and date",
+    async (tokens, status, amountGel, paidAt) => {
+      mocks.getAdminRoles.mockResolvedValue(["finance"]);
+      session({
+        from: (table) =>
+          ok(
+            table === "admin_members"
+              ? [
+                  {
+                    id: memberId,
+                    first_name: "Test",
+                    last_name: "Payer",
+                    membership_tier: 10,
+                    reference_code: "GR-ABC234",
+                  },
+                ]
+              : [],
+          ),
+      });
+      const result = await previewBulkAction(`GR-ABC234 ${tokens}`);
+      expect(result).toMatchObject({ ok: true, rows: [{ status, amountGel, paidAt }] });
+    },
+  );
 });
 
 describe.each([

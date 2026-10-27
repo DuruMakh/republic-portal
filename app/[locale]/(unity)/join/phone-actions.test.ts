@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PHONE_VERIFICATION_MESSAGES } from "@/lib/phone-verification/contracts";
 import { PhoneVerificationProviderError } from "@/lib/phone-verification/errors";
 import type { ChallengeRow } from "@/lib/phone-verification/store";
@@ -69,7 +69,10 @@ describe("phone verification server actions", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-11T12:00:00.000Z"));
-    process.env.PHONE_VERIFICATION_PROVIDER = "test";
+    vi.stubEnv("PHONE_VERIFICATION_PROVIDER", "test");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    vi.stubEnv("VERCEL_ENV", "development");
     mocks.createServerSupabase.mockResolvedValue({ auth: { getUser: mocks.getUser } });
     mocks.createAdminClient.mockReturnValue({
       auth: { admin: { updateUserById: mocks.updateUserById } },
@@ -86,6 +89,8 @@ describe("phone verification server actions", () => {
     mocks.verify.mockResolvedValue({ verified: true });
     mocks.updateUserById.mockResolvedValue({ data: {}, error: null });
   });
+
+  afterEach(() => vi.unstubAllEnvs());
 
   it("rejects missing or non-Google sessions before privileged dependencies", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
@@ -132,6 +137,35 @@ describe("phone verification server actions", () => {
     });
     expect(mocks.createAdminClient).not.toHaveBeenCalled();
   });
+
+  it.each(["send", "verify"])(
+    "refuses test-provider %s on a live deployment before privileged access",
+    async (action) => {
+      authenticate();
+      const provider = await vi.importActual<typeof import("@/lib/phone-verification/provider")>(
+        "@/lib/phone-verification/provider",
+      );
+      mocks.providerNameFor.mockImplementation(provider.providerNameFor);
+      mocks.createProvider.mockImplementation(provider.createProviderByName);
+      vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+      vi.stubEnv("VERCEL_ENV", "production");
+      try {
+        const result =
+          action === "send"
+            ? await sendPhoneVerificationAction({ phone: "555123456", privacyConsent: true })
+            : await verifyPhoneVerificationAction({ challengeId, code: "123456" });
+        expect(result).toMatchObject({ ok: false, code: "service_unavailable" });
+        expect(mocks.createAdminClient).not.toHaveBeenCalled();
+        expect(mocks.reserveSend).not.toHaveBeenCalled();
+        expect(mocks.read).not.toHaveBeenCalled();
+        expect(mocks.send).not.toHaveBeenCalled();
+        expect(mocks.verify).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    },
+  );
 
   it("atomically reserves the send before provider work and completes one canonical challenge", async () => {
     authenticate();

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextIntlClientProvider } from "next-intl";
 import {
@@ -26,7 +26,10 @@ const REGIONS = [
   { id: 2, name_ka: "იმერეთი" },
 ];
 const CITIES_BY_REGION: Record<number, { id: number; name_ka: string }[]> = {
-  1: [{ id: 5, name_ka: "თბილისი" }],
+  1: [
+    { id: 5, name_ka: "თბილისი" },
+    { id: 6, name_ka: "რუსთავი" },
+  ],
   2: [{ id: 9, name_ka: "ქუთაისი" }],
 };
 const DELEGATES_BY_REGION: Record<
@@ -36,30 +39,16 @@ const DELEGATES_BY_REGION: Record<
   1: [{ id: "d1", first_name: "გია", last_name: "გიგოშვილი", region_name_ka: "თბილისი" }],
 };
 
+const readOptions = vi.fn();
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
-    from: (table: string) => {
-      if (table === "regions") {
-        return { select: () => ({ order: () => Promise.resolve({ data: REGIONS }) }) };
-      }
-      if (table === "cities") {
-        return {
-          select: () => ({
-            eq: (_column: string, regionId: number) => ({
-              order: () => Promise.resolve({ data: CITIES_BY_REGION[regionId] ?? [] }),
-            }),
-          }),
-        };
-      }
-      // public_delegates
-      return {
-        select: () => ({
-          eq: (_column: string, regionId: number) => ({
-            order: () => Promise.resolve({ data: DELEGATES_BY_REGION[regionId] ?? [] }),
-          }),
-        }),
-      };
-    },
+    from: (table: string) => ({
+      select: () => ({
+        order: () => readOptions(table),
+        eq: (_column: string, regionId: number) => ({ order: () => readOptions(table, regionId) }),
+      }),
+    }),
   }),
 }));
 
@@ -90,6 +79,17 @@ beforeEach(() => {
   saveMembershipProfileAction.mockReset();
   completeMembershipAction.mockReset();
   pushMock.mockReset();
+  readOptions.mockReset();
+  readOptions.mockImplementation((table: string, regionId: number) =>
+    Promise.resolve({
+      data:
+        table === "regions"
+          ? REGIONS
+          : table === "cities"
+            ? (CITIES_BY_REGION[regionId] ?? [])
+            : (DELEGATES_BY_REGION[regionId] ?? []),
+    }),
+  );
 });
 
 const DATA_CONSENT = "თანახმა ვარ, ჩემი პირადი მონაცემები დამუშავდეს წევრობის გასაფორმებლად";
@@ -139,6 +139,9 @@ describe("MembershipWizard — profile phase", () => {
 
   it("shows Georgian validation errors and does not call the action when required fields are empty", async () => {
     render(<MembershipWizard initialState={cab({})} />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText("მიუთითე საქმიანობა.")).toBeInTheDocument();
     expect(screen.getByText("აირჩიე მხარე.")).toBeInTheDocument();
@@ -154,6 +157,9 @@ describe("MembershipWizard — profile phase", () => {
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
@@ -163,7 +169,7 @@ describe("MembershipWizard — profile phase", () => {
       employment: "სტუდენტი",
       delegateId: null,
     });
-    expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
+    expect(await screen.findByText("წევრობის განაცხადი")).toHaveFocus();
   });
 
   it("shows a Georgian error and re-enables the button when the save action rejects", async () => {
@@ -175,6 +181,7 @@ describe("MembershipWizard — profile phase", () => {
       target: { value: "1990-05-20" },
     });
     const submitButton = screen.getByRole("button", { name: "გაგრძელება" });
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
     fireEvent.click(submitButton);
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText(GENERIC_FUNNEL_ERROR)).toBeInTheDocument();
@@ -197,6 +204,9 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
@@ -225,6 +235,9 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({
@@ -243,6 +256,9 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(saveMembershipProfileAction.mock.calls[0]?.[0]).toMatchObject({ personalId: null });
@@ -264,6 +280,9 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText(DUPLICATE_PERSONAL_ID_MESSAGE)).toBeInTheDocument();
     // still the profile phase — no separate form-level banner duplicating the same message
@@ -297,6 +316,9 @@ describe("MembershipWizard — personal ID at membership (owner fix #10)", () =>
     fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
       target: { value: "1990-05-20" },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
 
@@ -390,9 +412,264 @@ describe("MembershipWizard — tier phase", () => {
     fireEvent.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
     expect(await screen.findByText("აირჩიე საწევრო პაკეტი.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "← მონაცემების შესწორება" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
     await waitFor(() => expect(saveMembershipProfileAction).toHaveBeenCalled());
     expect(await screen.findByText("წევრობის განაცხადი")).toBeInTheDocument();
     expect(screen.queryByText("აირჩიე საწევრო პაკეტი.")).toBeNull();
+  });
+});
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+describe("MembershipWizard — read recovery and focus", () => {
+  it("ignores older city/delegate responses after the user changes region", async () => {
+    const oldCities = deferred<{ data: (typeof CITIES_BY_REGION)[1] }>();
+    const oldDelegates = deferred<{ data: (typeof DELEGATES_BY_REGION)[1] }>();
+    readOptions.mockImplementation((table: string, region: number) => {
+      if (table === "regions") return Promise.resolve({ data: REGIONS });
+      if (region === 1) return table === "cities" ? oldCities.promise : oldDelegates.promise;
+      return Promise.resolve({
+        data:
+          table === "cities"
+            ? CITIES_BY_REGION[2]
+            : [{ id: "d2", first_name: "ანა", last_name: "ტესტი", region_name_ka: "იმერეთი" }],
+      });
+    });
+    render(<MembershipWizard initialState={cab({ regionId: 1, cityId: 5 })} />);
+    await screen.findByRole("option", { name: "იმერეთი" });
+    fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("");
+    await screen.findByRole("option", { name: "ქუთაისი" });
+    fireEvent.change(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" }), {
+      target: { value: "9" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "დელეგატი" }), {
+      target: { value: "d2" },
+    });
+    await act(async () => {
+      oldCities.resolve({ data: CITIES_BY_REGION[1]! });
+      oldDelegates.resolve({ data: DELEGATES_BY_REGION[1]! });
+    });
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("9");
+    expect(screen.getByRole("combobox", { name: "დელეგატი" })).toHaveValue("d2");
+    expect(screen.queryByRole("option", { name: /გია/ })).toBeNull();
+  });
+
+  it("retries failed regions in English without erasing entered text", async () => {
+    readOptions.mockResolvedValueOnce({ data: null, error: { message: "offline" } });
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <MembershipWizard initialState={cab()} />
+      </NextIntlClientProvider>,
+    );
+    fireEvent.change(screen.getByLabelText(/Date of birth/), { target: { value: "1990-05-20" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Regions could not be loaded.");
+    expect(screen.getByRole("combobox", { name: "Region" })).toHaveAttribute(
+      "aria-describedby",
+      "mw-regions-load-error",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Retry regions" }));
+    await screen.findByRole("option", { name: "Tbilisi" });
+    expect(screen.getByLabelText(/Date of birth/)).toHaveValue("1990-05-20");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it.each(["cities", "public_delegates"])(
+    "blocks stale submission and retries failed %s",
+    async (failedTable) => {
+      let failed = true;
+      readOptions.mockImplementation((table: string, region: number) => {
+        if (table === failedTable && failed) return Promise.reject(new Error("offline"));
+        return Promise.resolve({
+          data:
+            table === "regions"
+              ? REGIONS
+              : table === "cities"
+                ? CITIES_BY_REGION[region]
+                : (DELEGATES_BY_REGION[region] ?? []),
+        });
+      });
+      render(
+        <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
+      );
+      fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
+        target: { value: "1990-05-20" },
+      });
+      await screen.findByRole("alert");
+      fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
+      expect(saveMembershipProfileAction).not.toHaveBeenCalled();
+      failed = false;
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: failedTable === "cities" ? "ქალაქების თავიდან ცდა" : "დელეგატების თავიდან ცდა",
+        }),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+      );
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("5");
+      expect(screen.getByLabelText(/დაბადების თარიღი/)).toHaveValue("1990-05-20");
+    },
+  );
+
+  it("distinguishes successful empty lists from failures", async () => {
+    readOptions.mockImplementation((table: string) =>
+      Promise.resolve({ data: table === "regions" ? REGIONS : [] }),
+    );
+    render(<MembershipWizard initialState={cab({ regionId: 1, cityId: 5 })} />);
+    expect(await screen.findByText("ამ მხარეში ქალაქები ვერ მოიძებნა.")).toBeInTheDocument();
+    expect(screen.getByText("ამ მხარეში დელეგატები არ არის.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toBeDisabled();
+  });
+
+  it("keeps valid resumed city and delegate choices", async () => {
+    render(
+      <MembershipWizard
+        initialState={cab({
+          regionId: 1,
+          cityId: 6,
+          pendingDelegate: { id: "d1", firstName: "გია", lastName: "გიგოშვილი" },
+        })}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "დელეგატი" })).toHaveValue("d1"),
+    );
+    expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toHaveValue("6");
+  });
+
+  it("renders dependent read errors, retry and empty copy in the existing English test locale", async () => {
+    let failed = true;
+    readOptions.mockImplementation((table: string) =>
+      Promise.resolve(
+        table === "regions"
+          ? { data: REGIONS }
+          : failed
+            ? { data: null, error: { message: "offline" } }
+            : { data: [] },
+      ),
+    );
+    render(
+      <NextIntlClientProvider locale="en" messages={{}}>
+        <MembershipWizard initialState={cab({ regionId: 1 })} />
+      </NextIntlClientProvider>,
+    );
+    await screen.findByText("Cities could not be loaded.");
+    await screen.findByText("Delegates could not be loaded.");
+    failed = false;
+    fireEvent.click(screen.getByRole("button", { name: "Retry cities" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry delegates" }));
+    expect(await screen.findByText("No cities were found in this region.")).toBeInTheDocument();
+    expect(await screen.findByText("There are no delegates in this region.")).toBeInTheDocument();
+  });
+
+  it("preserves a referral-bound delegate when the user changes region", async () => {
+    const id = "6f1b0a9e-0000-4000-8000-0000000000aa";
+    saveMembershipProfileAction.mockResolvedValue({ ok: true, state: cab(PROFILED) });
+    render(
+      <MembershipWizard
+        initialState={cab({
+          regionId: 1,
+          cityId: 5,
+          employment: "სტუდენტი",
+          referral: { firstName: "გია", lastName: "გიგოშვილი", regionNameKa: "თბილისი" },
+          pendingDelegate: { id, firstName: "გია", lastName: "გიგოშვილი" },
+        })}
+      />,
+    );
+    await screen.findByRole("option", { name: "იმერეთი" });
+    fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
+    await screen.findByRole("option", { name: "ქუთაისი" });
+    fireEvent.change(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" }), {
+      target: { value: "9" },
+    });
+    fireEvent.change(screen.getByLabelText(/დაბადების თარიღი/), {
+      target: { value: "1990-05-20" },
+    });
+    expect(screen.queryByRole("combobox", { name: "დელეგატი" })).toBeNull();
+    expect(screen.getByText("გია გიგოშვილი")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    await waitFor(() =>
+      expect(saveMembershipProfileAction).toHaveBeenCalledWith(
+        expect.objectContaining({ delegateId: id, cityId: 9 }),
+      ),
+    );
+  });
+
+  it("does not permit a saved city to be sent while its replacement list is loading", async () => {
+    const replacement = deferred<{ data: (typeof CITIES_BY_REGION)[2] }>();
+    const read = readOptions.getMockImplementation()!;
+    readOptions.mockImplementation((table: string, region: number) =>
+      table === "cities" && region === 2 ? replacement.promise : read(table, region),
+    );
+    render(
+      <MembershipWizard initialState={cab({ regionId: 1, cityId: 5, employment: "სტუდენტი" })} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "გაგრძელება" })).not.toBeDisabled(),
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "მხარე" }), { target: { value: "2" } });
+    const city = screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" });
+    expect(city).toBeDisabled();
+    expect(city).toHaveValue("");
+    fireEvent.submit(city.closest("form")!);
+    expect(saveMembershipProfileAction).not.toHaveBeenCalled();
+    await act(async () => replacement.resolve({ data: CITIES_BY_REGION[2]! }));
+  });
+
+  it("shows a successful empty regions response without an error or retry", async () => {
+    readOptions.mockResolvedValue({ data: [] });
+    render(<MembershipWizard initialState={cab()} />);
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("მხარეები ვერ მოიძებნა."),
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("button", { name: "მხარეების თავიდან ცდა" })).toBeNull();
+  });
+
+  it.each([
+    { response: { data: null, error: { message: "offline" } }, message: "მხარეები ვერ ჩაიტვირთა." },
+    { response: { data: [] }, message: "მხარეები ვერ მოიძებნა." },
+  ])(
+    "focuses existing region feedback after submission: $message",
+    async ({ response, message }) => {
+      readOptions.mockResolvedValue(response);
+      render(
+        <MembershipWizard initialState={cab({ hasPersonalId: true, employment: "სტუდენტი" })} />,
+      );
+      const birthDate = screen.getByLabelText(/დაბადების თარიღი/);
+      birthDate.focus();
+      const feedback = await screen.findByText(message);
+      expect(birthDate).toHaveFocus();
+      fireEvent.change(birthDate, { target: { value: "1990-05-20" } });
+      expect(birthDate).toHaveFocus();
+      expect(screen.getByRole("combobox", { name: "მხარე" })).toBeDisabled();
+      expect(screen.getByRole("combobox", { name: "ქალაქი / მუნიციპალიტეტი" })).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
+      expect(feedback).toHaveFocus();
+      expect(screen.getAllByText(message)).toHaveLength(1);
+      expect(birthDate).toHaveValue("1990-05-20");
+      expect(screen.getByRole("combobox", { name: "სამუშაო ადგილი / სტატუსი" })).toHaveValue(
+        "სტუდენტი",
+      );
+      expect(saveMembershipProfileAction).not.toHaveBeenCalled();
+    },
+  );
+
+  it("focuses validation only after submission and focuses an existing step heading after navigation", async () => {
+    render(<MembershipWizard initialState={cab()} />);
+    expect(screen.getByLabelText(/დაბადების თარიღი/)).not.toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    expect(screen.getByLabelText(/დაბადების თარიღი/)).toHaveFocus();
   });
 });

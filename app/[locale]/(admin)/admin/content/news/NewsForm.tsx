@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -16,7 +16,13 @@ export interface EditableArticle {
   visibility: "public" | "members";
 }
 
-export function NewsForm({ article }: { article: EditableArticle | null }) {
+export function NewsForm({
+  article,
+  onEditStateChange,
+}: {
+  article: EditableArticle | null;
+  onEditStateChange?: (dirty: boolean, saving: boolean) => void;
+}) {
   const router = useRouter();
   const [title, setTitle] = useState(article?.title ?? "");
   const [body, setBody] = useState(article?.body ?? "");
@@ -27,9 +33,17 @@ export function NewsForm({ article }: { article: EditableArticle | null }) {
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const snapshot = JSON.stringify([title.trim(), body.trim(), visibility]);
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
+  const dirty = snapshot !== savedSnapshot;
+  useEffect(() => {
+    onEditStateChange?.(dirty, pending);
+  }, [dirty, pending, onEditStateChange]);
+
   function submit() {
     setError(null);
     setSaved(false);
+    const submittedSnapshot = snapshot;
     startTransition(async () => {
       const result = await saveNewsAction({ id: article?.id, title, body, visibility });
       if (!result.ok) {
@@ -40,6 +54,7 @@ export function NewsForm({ article }: { article: EditableArticle | null }) {
         router.push(`/admin/content/news/${result.id}`);
         return;
       }
+      setSavedSnapshot(submittedSnapshot);
       setSaved(true);
       router.refresh();
     });
@@ -90,7 +105,9 @@ export function NewsForm({ article }: { article: EditableArticle | null }) {
             <Button disabled={pending} onClick={submit}>
               შენახვა
             </Button>
-            {saved ? <span className="text-sm font-semibold text-ok">შენახულია.</span> : null}
+            {saved && !dirty && !pending ? (
+              <span className="text-sm font-semibold text-ok">შენახულია.</span>
+            ) : null}
           </div>
           {error ? <p className="text-sm text-danger">{error}</p> : null}
         </div>

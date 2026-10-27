@@ -1,7 +1,7 @@
 "use client";
 import { useCopy } from "@/lib/i18n/copy";
 
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 const LENGTH = 6;
 
@@ -9,15 +9,27 @@ export function OtpInput({
   value,
   onChange,
   error,
+  errorAttempt = 0,
 }: {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  errorAttempt?: number;
 }) {
   const t = useCopy();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const previousError = useRef({ error, errorAttempt });
   const errorId = useId();
   const digits = Array.from({ length: LENGTH }, (_, i) => value[i] ?? "");
+
+  useEffect(() => {
+    if (
+      error &&
+      (error !== previousError.current.error || errorAttempt !== previousError.current.errorAttempt)
+    )
+      refs.current[0]?.focus();
+    previousError.current = { error, errorAttempt };
+  }, [error, errorAttempt]);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -59,7 +71,11 @@ export function OtpInput({
         ))}
       </div>
       {error ? (
-        <p id={errorId} className="mt-2 text-center text-[14px] font-semibold text-danger">
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-2 text-center text-[14px] font-semibold text-danger"
+        >
           {t(error ?? "")}
         </p>
       ) : null}
