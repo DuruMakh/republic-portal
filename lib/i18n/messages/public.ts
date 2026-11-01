@@ -252,7 +252,7 @@ export const publicMessages: Record<string, string> = {
   [about.ABOUT_BELIEFS[1]]:
     "That Georgia should be governed by people who serve the interests of the whole nation, rather than just a handful of oligarchs or officials.",
   [about.ABOUT_BELIEFS[2]]:
-    "That we can build a state where nobody feels oppressed, everyone has an equal opportunity to prosper, and every Georgian family can live with dignity.",
+    "That we can build a state where nobody feels oppressed, everyone has an equal opportunity to succeed, and every Georgian family can live with dignity.",
   [about.ABOUT_UNITY_LEAD]:
     "We also believe that Georgians cannot achieve all this without solidarity and unity,",
   [about.ABOUT_UNITY_CLOSE]: "but we certainly can if we come together.",
