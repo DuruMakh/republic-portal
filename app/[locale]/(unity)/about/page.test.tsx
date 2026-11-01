@@ -33,6 +33,13 @@ describe("/about", () => {
     );
   });
 
+  it("promises an equal opportunity to succeed, not to get rich", async () => {
+    render(await AboutPage());
+    const beliefs = screen.getByRole("list", { name: copy.ABOUT_INTRO });
+    expect(beliefs).toHaveTextContent("წარმატების თანაბარი შესაძლებლობა");
+    expect(beliefs).not.toHaveTextContent("გამდიდრების");
+  });
+
   it("carries the unity band, the three goal steps and the portal text", async () => {
     render(await AboutPage());
     expect(screen.getByText(copy.ABOUT_UNITY_CLOSE)).toBeInTheDocument();
