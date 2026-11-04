@@ -265,7 +265,8 @@ export const publicMessages: Record<string, string> = {
   [about.ABOUT_GOAL_STEPS[1].text]:
     "Build this unity into a strong political force created by the people",
   [about.ABOUT_GOAL_STEPS[2].label]: "Victory",
-  [about.ABOUT_GOAL_STEPS[2].text]: "The victory of the nation’s will",
+  [about.ABOUT_GOAL_STEPS[2].text]:
+    "A government that serves the people and carries out the nation’s will",
   [about.ABOUT_PORTAL_KICKER]: "The portal",
   [about.ABOUT_PORTAL_LEAD]:
     "This portal exists to help build and strengthen that political unity.",
