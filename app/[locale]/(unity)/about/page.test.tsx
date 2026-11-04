@@ -67,7 +67,9 @@ describe("/about", () => {
     const goal = screen.getByRole("heading", { level: 2, name: copy.ABOUT_GOAL_TITLE });
     const section = goal.closest("section")!;
     expect(section.textContent).not.toMatch(/არჩევნ/);
-    expect(copy.ABOUT_GOAL_STEPS[2].text).toBe("ერის ნების გამარჯვება");
+    expect(copy.ABOUT_GOAL_STEPS[2].text).toBe(
+      "ხელისუფლება, რომელიც ხალხს ემსახურება და ერის ნებას აღასრულებს",
+    );
   });
 
   it("links the portal cards to joining, the delegate rules and the structure", async () => {
