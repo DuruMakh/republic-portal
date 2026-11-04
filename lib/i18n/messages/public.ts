@@ -24,7 +24,7 @@ export const publicMessages: Record<string, string> = {
     "The Georgian nation’s unwavering will to live in its own independent state is affirmed by the declarations of independence of 26 May 1918 and 9 April 1991, and by the sacrifices made for freedom and independence in February 1921 and on 9 April 1989. That will is supreme and is not open to reconsideration.",
   [principles.PRINCIPLES[0]!.body[1]!]:
     "The Georgian nation will never accept any attempt to infringe upon Georgian statehood or Georgian land, in any form.",
-  [principles.PRINCIPLES[1]!.title]: "Building a nation-state",
+  [principles.PRINCIPLES[1]!.title]: "The nation-state and government by the people",
   [principles.PRINCIPLES[1]!.lead]:
     "Georgia’s independence is an essential prerequisite for building a Georgian nation-state.",
   [principles.PRINCIPLES[1]!.body[0]!]:
