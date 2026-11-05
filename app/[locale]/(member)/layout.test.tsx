@@ -15,7 +15,8 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/components/useSignOut", () => ({ useSignOut: () => vi.fn() }));
 
-import MemberLayout from "./layout";
+import MemberLayout, { metadata } from "./layout";
+import { NOINDEX } from "@/lib/i18n/metadata";
 
 const NAV = "კაბინეტის ნავიგაცია";
 
@@ -58,5 +59,11 @@ describe("member cabinet nav — events (ADR-042)", () => {
       "href",
       "/me/events",
     );
+  });
+});
+
+describe("search engines", () => {
+  it("keep the member area out of their results", () => {
+    expect(metadata.robots).toEqual(NOINDEX);
   });
 });

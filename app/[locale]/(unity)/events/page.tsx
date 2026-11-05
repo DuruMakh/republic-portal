@@ -1,5 +1,5 @@
 import { getCopy, getLocale } from "@/lib/i18n/server";
-import { languageAlternates } from "@/lib/i18n/metadata";
+import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EventRow } from "@/components/EventRow";
@@ -22,12 +22,13 @@ const INTRO = "მოძრაობის შეხვედრები და
 // address below it with the site-wide not-found page first (ADR-040). It stays as a second line.
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
+  const locale = await getLocale();
   if (!showEvents()) return { ...NOT_FOUND_METADATA, title: t(String(NOT_FOUND_METADATA.title)) };
   return {
     title: `${t(TITLE)} — ${t("ქართული რესპუბლიკა")}`,
     description: t(INTRO),
-    openGraph: { images: ["/og-default.png?v=civic-portal"] },
-    ...languageAlternates("/events", await getLocale()),
+    openGraph: { ...openGraphDefaults(locale), images: ["/og-default.png?v=civic-portal"] },
+    ...languageAlternates("/events", locale),
   };
 }
 

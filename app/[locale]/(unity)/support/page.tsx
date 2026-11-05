@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
   return {
     title: t(SUPPORT_HEADING) + " — " + t("ქართული რესპუბლიკა"),
+    description: t(SUPPORT_LEDE),
     ...languageAlternates("/support", await getLocale()),
   };
 }

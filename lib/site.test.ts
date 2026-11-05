@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { siteUrl } from "./site";
+import { siteUrl, siteVerification } from "./site";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -32,5 +32,17 @@ describe("siteUrl", () => {
   it("falls back to localhost", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ENV", "development");
     expect(siteUrl()).toBe("http://localhost:3000");
+  });
+});
+
+describe("siteVerification", () => {
+  it("carries the Google Search Console code when one is set", () => {
+    vi.stubEnv("GOOGLE_SITE_VERIFICATION", " abc123 ");
+    expect(siteVerification()).toEqual({ verification: { google: "abc123" } });
+  });
+
+  it.each([undefined, "", "   "])("adds nothing when the code is %j", (value) => {
+    vi.stubEnv("GOOGLE_SITE_VERIFICATION", value);
+    expect(siteVerification()).toEqual({});
   });
 });

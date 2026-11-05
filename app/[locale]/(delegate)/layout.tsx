@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { localePath } from "@/lib/i18n/routing";
 
 import { getCopy, getLocale } from "@/lib/i18n/server";
@@ -16,6 +18,9 @@ import { createServerSupabase, getCabinetState } from "@/lib/supabase/server";
 // own on-page Eyebrow with the same text is retired below (redundant now that the masthead
 // carries it), matching the member/(admin) cabinet convention (Task 15).
 const DELEGATE_TAG = "დელეგატის კაბინეტი";
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 /**
  * Delegate gate (R2): APPROVED delegates only. Pending/rejected requesters and

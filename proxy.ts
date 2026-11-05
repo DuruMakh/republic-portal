@@ -14,13 +14,16 @@ export async function proxy(request: NextRequest) {
   // These headers are derived from the URL, never trusted from a caller.
   request.headers.set("x-portal-locale", locale);
   request.headers.set("x-portal-pathname", pathname);
+  // /ka is the internal Georgian prefix and never public: its addresses move for good.
+  if (/^\/ka(?:\/|$)/.test(incoming)) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = pathname;
+    return NextResponse.redirect(destination, 308);
+  }
   // While the English version is hidden (owner decision 2026-10-20), an /en address, a shared
   // link or a search result alike, lands on the same Georgian page. A temporary redirect: the
   // addresses come back when the switch is on.
-  if (
-    /^\/ka(?:\/|$)/.test(incoming) ||
-    (locale === "en" && (!showEnglish() || /^\/admin(?:\/|$)/.test(pathname)))
-  ) {
+  if (locale === "en" && (!showEnglish() || /^\/admin(?:\/|$)/.test(pathname))) {
     const destination = request.nextUrl.clone();
     destination.pathname = pathname;
     return NextResponse.redirect(destination);

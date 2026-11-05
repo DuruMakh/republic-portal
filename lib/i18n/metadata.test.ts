@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { languageAlternates } from "./metadata";
+import { languageAlternates, openGraphDefaults } from "./metadata";
 
 beforeEach(() => {
   vi.stubEnv("SHOW_ENGLISH", undefined);
@@ -21,6 +21,24 @@ describe("languageAlternates", () => {
         canonical: "/en/about",
         languages: { ka: "/about", en: "/en/about", "x-default": "/about" },
       },
+    });
+  });
+});
+
+describe("openGraphDefaults", () => {
+  it("names the Georgian site and locale for Georgian pages", () => {
+    expect(openGraphDefaults("ka")).toEqual({
+      siteName: "ქართული რესპუბლიკა",
+      locale: "ka_GE",
+      type: "website",
+    });
+  });
+
+  it("names the English site and locale for English pages", () => {
+    expect(openGraphDefaults("en")).toEqual({
+      siteName: "Georgian Republic",
+      locale: "en_GB",
+      type: "website",
     });
   });
 });

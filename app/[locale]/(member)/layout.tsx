@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { localePath } from "@/lib/i18n/routing";
 
 import { getCopy, getLocale } from "@/lib/i18n/server";
@@ -21,6 +23,9 @@ const CABINET_TAG = "პირადი კაბინეტი";
 // muted "back to the public site" link next to the cabinet nav. New usage
 // (no prior shipped occurrence); verified via codepoint escapes before commit.
 const BACK_TO_PUBLIC = "← საჯარო";
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 /**
  * Registration gate (spec §3.2/§4.2): any registered visitor enters /me/*;

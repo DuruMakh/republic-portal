@@ -183,6 +183,9 @@ export const publicMessages: Record<string, string> = {
   [home.HOME_HEADLINE[0]]: "Unite to Build",
   [home.HOME_HEADLINE[1]]: "Georgian Republic",
   [home.HOME_LEDE]: "Ideas change a country only when people come together around them.",
+  [home.HOME_SEO_TITLE]: "Georgian Republic — civic portal",
+  [home.HOME_SEO_DESCRIPTION]:
+    "A civic portal uniting Georgians around shared goals and values. Read the agreement and become a supporter.",
   [home.HOME_HERO_JOIN]: "Become a supporter",
   [home.HOME_HERO_PRINCIPLES]: "Read the agreement →",
   [home.HOME_MAP_CAPTION]: "Georgia belongs to its people",
@@ -246,6 +249,8 @@ export const publicMessages: Record<string, string> = {
   [home.HOME_MILESTONES[3]!.text]:
     "Independence was restored “…on the basis of Georgia’s Act of Independence of 26 May 1918.”",
   [about.ABOUT_TITLE]: "About us",
+  [about.ABOUT_SEO_DESCRIPTION]:
+    "Who we are, what we believe and what we aim for: from unity to victory.",
   [about.ABOUT_INTRO_REST]: "is a community of people who believe:",
   [about.ABOUT_BELIEFS[0]]:
     "That Georgia and the Georgian state belong to the Georgian nation, rather than a narrow, corrupt elite that enriches itself at our expense and turns the country’s wealth into private property.",

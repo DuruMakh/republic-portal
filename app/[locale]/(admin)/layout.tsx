@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/i18n/metadata";
 import { redirect } from "next/navigation";
 import { ADMIN_CONTAINER, AdminHeader } from "@/components/AdminHeader";
 import { UnityOrnament } from "@/components/UnityOrnament";
 import { adminTabs } from "@/lib/admin";
 import { deriveDestination } from "@/lib/cabinet";
 import { createServerSupabase, getAdminRoles, getCabinetState } from "@/lib/supabase/server";
+
+/** Never in search results. */
+export const metadata: Metadata = { robots: NOINDEX };
 
 /**
  * Admin gate (spec §3.1): session + ≥1 admin role, server-side on every request —

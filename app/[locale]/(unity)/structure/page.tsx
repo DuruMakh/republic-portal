@@ -50,6 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
   return {
     title: t(STRUCTURE_TITLE) + " — " + t("ქართული რესპუბლიკა"),
+    description: t(STRUCTURE_INTRO),
     ...languageAlternates("/structure", await getLocale()),
   };
 }

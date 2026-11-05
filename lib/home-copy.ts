@@ -12,6 +12,11 @@ import {
 } from "@/lib/archive-documents";
 import { PRINCIPLES_TITLE } from "@/lib/principles-copy";
 
+/** The homepage's search-result title and description (owner-approved 2026-10-22). */
+export const HOME_SEO_TITLE = "ქართული რესპუბლიკა — სამოქალაქო პორტალი";
+export const HOME_SEO_DESCRIPTION =
+  "სამოქალაქო პორტალი, რომელიც ქართველებს აერთიანებს საერთო მიზნებისა და ღირებულებების გარშემო. გაეცანი შეთანხმებას და გახდი მხარდამჭერი.";
+
 export const HOME_HERO_KICKER = "სამოქალაქო პორტალი";
 /** The headline in its two lines: the second is set in sand. */
 export const HOME_HEADLINE = ["ერთად შევქმნათ", "ქართული რესპუბლიკა"] as const;

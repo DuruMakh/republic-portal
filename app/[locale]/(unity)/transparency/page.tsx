@@ -1,5 +1,5 @@
 import { getCopy, getLocale } from "@/lib/i18n/server";
-import { languageAlternates } from "@/lib/i18n/metadata";
+import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Caps } from "@/components/Caps";
@@ -32,13 +32,14 @@ const TD = "border-b border-rule px-3 py-3 sm:px-4 sm:py-3.5";
 // the site-wide not-found page first (ADR-040). It stays for the build and as a second line.
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
+  const locale = await getLocale();
   if (!showPublicFinances())
     return { ...NOT_FOUND_METADATA, title: t(String(NOT_FOUND_METADATA.title)) };
   return {
     title: `${t(TITLE)} — ${t("ქართული რესპუბლიკა")}`,
     description: t(INTRO),
-    openGraph: { images: ["/og-default.png?v=civic-portal"] },
-    ...languageAlternates("/transparency", await getLocale()),
+    openGraph: { ...openGraphDefaults(locale), images: ["/og-default.png?v=civic-portal"] },
+    ...languageAlternates("/transparency", locale),
   };
 }
 

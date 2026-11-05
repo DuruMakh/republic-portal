@@ -1,4 +1,4 @@
-import { languageAlternates } from "@/lib/i18n/metadata";
+import { languageAlternates, openGraphDefaults } from "@/lib/i18n/metadata";
 import { getCopy, getLocale } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { UnityClosing } from "@/components/UnityClosing";
@@ -16,11 +16,12 @@ const INTRO = "მოძრაობის სიახლეები და �
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy();
+  const locale = await getLocale();
   return {
     title: t(TITLE) + " — " + t("ქართული რესპუბლიკა"),
     description: t(INTRO),
-    openGraph: { images: ["/og-default.png?v=civic-portal"] },
-    ...languageAlternates("/news", await getLocale()),
+    openGraph: { ...openGraphDefaults(locale), images: ["/og-default.png?v=civic-portal"] },
+    ...languageAlternates("/news", locale),
   };
 }
 
